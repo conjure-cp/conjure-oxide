@@ -15,7 +15,8 @@ and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 (rank3) -> (and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ])),
 (abelian) -> (and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])),
-__0 =aux occurrences[(n - 1)]
+__0 =aux occurrences[(n - 1)],
+optimise(minimise=false, value=__0)
 
 --
 
@@ -53,6 +54,12 @@ new SAT encoding decisions:
 
 --
 
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
 occurrences
    ~~> select_representation ([("ReprGeneral", 10000)])
 occurrences
@@ -63,11 +70,20 @@ new variables:
 
 --
 
+optimise(minimise=false, value=__0)
+   ~~> select_sat_objective ([("SAT", 18400)])
+true
+new SAT encoding decisions:
+  optimise(minimise=false, value=0+weighted(1*__0#int_log_1, 2*__0#int_log_2, 4*__0#int_log_3, 8*__0#int_log_4, -16*__0#int_log_5) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 1, upper: 9 } }]) using None
+
+--
+
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 or([and([__1,__2;int(1..)]);int(1..)])
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 and([ M[i, i] = diagonal[i] | i : D ]),
@@ -75,6 +91,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 or([and([__1,__2;int(1..)]);int(1..)])
 new variables:
   find M#components_1: int(1..3)
@@ -173,6 +190,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 or([and([__1,__2;int(1..)]);int(1..)]),
 or([and([__3,__4;int(1..)]);int(1..)]),
 or([and([__5,__6;int(1..)]);int(1..)]),
@@ -183,6 +201,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 or([and([__1,__2;int(1..)]);int(1..)]),
 or([and([__3,__4;int(1..)]);int(1..)]),
 or([and([__5,__6;int(1..)]);int(1..)]),
@@ -491,6 +510,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 and([__1,__2;int(1..)]),
 and([__3,__4;int(1..)]),
 and([__5,__6;int(1..)]),
@@ -510,6 +530,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 and([__1,__2;int(1..)]),
 and([__3,__4;int(1..)]),
 and([__5,__6;int(1..)]),
@@ -661,6 +682,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __27,
 __28,
 __29,
@@ -680,6 +702,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __28,
 __29,
 __30,
@@ -702,6 +725,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __28,
 __29,
 __30,
@@ -720,6 +744,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __29,
 __30,
 __31,
@@ -741,6 +766,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __29,
 __30,
 __31,
@@ -758,6 +784,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __30,
 __31,
 __32,
@@ -778,6 +805,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __30,
 __31,
 __32,
@@ -794,6 +822,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __31,
 __32,
 __33,
@@ -813,6 +842,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __31,
 __32,
 __33,
@@ -828,6 +858,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __32,
 __33,
 __34,
@@ -846,6 +877,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __32,
 __33,
 __34,
@@ -860,6 +892,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __33,
 __34,
 __35,
@@ -877,6 +910,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __33,
 __34,
 __35,
@@ -890,6 +924,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __34,
 __35,
 __36,
@@ -906,6 +941,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __34,
 __35,
 __36,
@@ -918,6 +954,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __35,
 __36,
 __37,
@@ -933,6 +970,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __35,
 __36,
 __37,
@@ -944,6 +982,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __36,
 __37,
 __38,
@@ -958,6 +997,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __36,
 __37,
 __38,
@@ -968,6 +1008,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __37,
 __38,
 __39
@@ -981,6 +1022,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __37,
 __38,
 __39
@@ -990,6 +1032,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __38,
 __39
 new SAT encoding decisions:
@@ -1002,6 +1045,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __38,
 __39
    ~~> remove_single_atom ([("SAT", 8400)])
@@ -1010,6 +1054,7 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __39
 new SAT encoding decisions:
   assert(__38) using tseitin
@@ -1021,13 +1066,15 @@ and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b :
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
+true,
 __39
    ~~> remove_single_atom ([("SAT", 8400)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2]
+__0 =aux occurrences[2],
+true
 new SAT encoding decisions:
   assert(__39) using tseitin
 
@@ -1071,12 +1118,14 @@ and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__40
+__40,
+true
    ~~> remove_single_atom ([("SAT", 8400)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   assert(__40) using tseitin
 
@@ -1149,11 +1198,13 @@ new SAT encoding decisions:
 __44,
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> remove_single_atom ([("SAT", 8400)])
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   assert(__44) using tseitin
 
@@ -1491,11 +1542,13 @@ M#components_9
 
 and([product([M#components_1,1;int(1..)]) = product([1,M#components_1;int(1..)]),product([M#components_1,2;int(1..)]) = product([1,M#components_2;int(1..)]),product([M#components_1,3;int(1..)]) = product([1,M#components_3;int(1..)]),product([M#components_2,1;int(1..)]) = product([1,M#components_4;int(1..)]),product([M#components_2,2;int(1..)]) = product([1,M#components_5;int(1..)]),product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_1,2;int(1..)]) = product([1,M#components_2;int(1..)]),product([M#components_1,3;int(1..)]) = product([1,M#components_3;int(1..)]),product([M#components_2,1;int(1..)]) = product([1,M#components_4;int(1..)]),product([M#components_2,2;int(1..)]) = product([1,M#components_5;int(1..)]),product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(1*M#components_1#int_log_1, 2*M#components_1#int_log_2, -4*M#components_1#int_log_3, -1*M#components_1#int_log_1, -2*M#components_1#int_log_2, 4*M#components_1#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
 
@@ -1503,11 +1556,13 @@ new SAT encoding decisions:
 
 and([product([M#components_1,2;int(1..)]) = product([1,M#components_2;int(1..)]),product([M#components_1,3;int(1..)]) = product([1,M#components_3;int(1..)]),product([M#components_2,1;int(1..)]) = product([1,M#components_4;int(1..)]),product([M#components_2,2;int(1..)]) = product([1,M#components_5;int(1..)]),product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_1,3;int(1..)]) = product([1,M#components_3;int(1..)]),product([M#components_2,1;int(1..)]) = product([1,M#components_4;int(1..)]),product([M#components_2,2;int(1..)]) = product([1,M#components_5;int(1..)]),product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(2*M#components_1#int_log_1, 4*M#components_1#int_log_2, -8*M#components_1#int_log_3, -1*M#components_2#int_log_1, -2*M#components_2#int_log_2, 4*M#components_2#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
 
@@ -1515,11 +1570,13 @@ new SAT encoding decisions:
 
 and([product([M#components_1,3;int(1..)]) = product([1,M#components_3;int(1..)]),product([M#components_2,1;int(1..)]) = product([1,M#components_4;int(1..)]),product([M#components_2,2;int(1..)]) = product([1,M#components_5;int(1..)]),product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_2,1;int(1..)]) = product([1,M#components_4;int(1..)]),product([M#components_2,2;int(1..)]) = product([1,M#components_5;int(1..)]),product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(3*M#components_1#int_log_1, 6*M#components_1#int_log_2, -12*M#components_1#int_log_3, -1*M#components_3#int_log_1, -2*M#components_3#int_log_2, 4*M#components_3#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 3, upper: 9 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
 
@@ -1527,11 +1584,13 @@ new SAT encoding decisions:
 
 and([product([M#components_2,1;int(1..)]) = product([1,M#components_4;int(1..)]),product([M#components_2,2;int(1..)]) = product([1,M#components_5;int(1..)]),product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_2,2;int(1..)]) = product([1,M#components_5;int(1..)]),product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(1*M#components_2#int_log_1, 2*M#components_2#int_log_2, -4*M#components_2#int_log_3, -1*M#components_4#int_log_1, -2*M#components_4#int_log_2, 4*M#components_4#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
 
@@ -1539,11 +1598,13 @@ new SAT encoding decisions:
 
 and([product([M#components_2,2;int(1..)]) = product([1,M#components_5;int(1..)]),product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(2*M#components_2#int_log_1, 4*M#components_2#int_log_2, -8*M#components_2#int_log_3, -1*M#components_5#int_log_1, -2*M#components_5#int_log_2, 4*M#components_5#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
 
@@ -1551,11 +1612,13 @@ new SAT encoding decisions:
 
 and([product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(3*M#components_2#int_log_1, 6*M#components_2#int_log_2, -12*M#components_2#int_log_3, -1*M#components_6#int_log_1, -2*M#components_6#int_log_2, 4*M#components_6#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 3, upper: 9 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
 
@@ -1563,11 +1626,13 @@ new SAT encoding decisions:
 
 and([product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(1*M#components_3#int_log_1, 2*M#components_3#int_log_2, -4*M#components_3#int_log_3, -1*M#components_7#int_log_1, -2*M#components_7#int_log_2, 4*M#components_7#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
 
@@ -1575,11 +1640,13 @@ new SAT encoding decisions:
 
 and([product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(2*M#components_3#int_log_1, 4*M#components_3#int_log_2, -8*M#components_3#int_log_3, -1*M#components_8#int_log_1, -2*M#components_8#int_log_2, 4*M#components_8#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
 
@@ -1587,11 +1654,13 @@ new SAT encoding decisions:
 
 and([product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(3*M#components_3#int_log_1, 6*M#components_3#int_log_2, -12*M#components_3#int_log_3, -1*M#components_9#int_log_1, -2*M#components_9#int_log_2, 4*M#components_9#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 3, upper: 9 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
 
@@ -1599,11 +1668,13 @@ new SAT encoding decisions:
 
 and([product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(1*M#components_4#int_log_1, 2*M#components_4#int_log_2, -4*M#components_4#int_log_3, -2*M#components_1#int_log_1, -4*M#components_1#int_log_2, 8*M#components_1#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -6, upper: -2 } }]
 
@@ -1611,11 +1682,13 @@ new SAT encoding decisions:
 
 and([product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(2*M#components_4#int_log_1, 4*M#components_4#int_log_2, -8*M#components_4#int_log_3, -2*M#components_2#int_log_1, -4*M#components_2#int_log_2, 8*M#components_2#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -6, upper: -2 } }]
 
@@ -1623,11 +1696,13 @@ new SAT encoding decisions:
 
 and([product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(3*M#components_4#int_log_1, 6*M#components_4#int_log_2, -12*M#components_4#int_log_3, -2*M#components_3#int_log_1, -4*M#components_3#int_log_2, 8*M#components_3#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 3, upper: 9 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -6, upper: -2 } }]
 
@@ -1635,11 +1710,13 @@ new SAT encoding decisions:
 
 and([product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(1*M#components_5#int_log_1, 2*M#components_5#int_log_2, -4*M#components_5#int_log_3, -2*M#components_4#int_log_1, -4*M#components_4#int_log_2, 8*M#components_4#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -6, upper: -2 } }]
 
@@ -1647,11 +1724,13 @@ new SAT encoding decisions:
 
 and([product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(2*M#components_5#int_log_1, 4*M#components_5#int_log_2, -8*M#components_5#int_log_3, -2*M#components_5#int_log_1, -4*M#components_5#int_log_2, 8*M#components_5#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -6, upper: -2 } }]
 
@@ -1659,11 +1738,13 @@ new SAT encoding decisions:
 
 and([product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(3*M#components_5#int_log_1, 6*M#components_5#int_log_2, -12*M#components_5#int_log_3, -2*M#components_6#int_log_1, -4*M#components_6#int_log_2, 8*M#components_6#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 3, upper: 9 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -6, upper: -2 } }]
 
@@ -1671,11 +1752,13 @@ new SAT encoding decisions:
 
 and([product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(1*M#components_6#int_log_1, 2*M#components_6#int_log_2, -4*M#components_6#int_log_3, -2*M#components_7#int_log_1, -4*M#components_7#int_log_2, 8*M#components_7#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -6, upper: -2 } }]
 
@@ -1683,11 +1766,13 @@ new SAT encoding decisions:
 
 and([product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(2*M#components_6#int_log_1, 4*M#components_6#int_log_2, -8*M#components_6#int_log_3, -2*M#components_8#int_log_1, -4*M#components_8#int_log_2, 8*M#components_8#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -6, upper: -2 } }]
 
@@ -1695,11 +1780,13 @@ new SAT encoding decisions:
 
 and([product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(3*M#components_6#int_log_1, 6*M#components_6#int_log_2, -12*M#components_6#int_log_3, -2*M#components_9#int_log_1, -4*M#components_9#int_log_2, 8*M#components_9#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 3, upper: 9 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -6, upper: -2 } }]
 
@@ -1707,11 +1794,13 @@ new SAT encoding decisions:
 
 and([product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(1*M#components_7#int_log_1, 2*M#components_7#int_log_2, -4*M#components_7#int_log_3, -3*M#components_1#int_log_1, -6*M#components_1#int_log_2, 12*M#components_1#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -9, upper: -3 } }]
 
@@ -1719,11 +1808,13 @@ new SAT encoding decisions:
 
 and([product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(2*M#components_7#int_log_1, 4*M#components_7#int_log_2, -8*M#components_7#int_log_3, -3*M#components_2#int_log_1, -6*M#components_2#int_log_2, 12*M#components_2#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -9, upper: -3 } }]
 
@@ -1731,11 +1822,13 @@ new SAT encoding decisions:
 
 and([product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(3*M#components_7#int_log_1, 6*M#components_7#int_log_2, -12*M#components_7#int_log_3, -3*M#components_3#int_log_1, -6*M#components_3#int_log_2, 12*M#components_3#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 3, upper: 9 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -9, upper: -3 } }]
 
@@ -1743,11 +1836,13 @@ new SAT encoding decisions:
 
 and([product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(1*M#components_8#int_log_1, 2*M#components_8#int_log_2, -4*M#components_8#int_log_3, -3*M#components_4#int_log_1, -6*M#components_4#int_log_2, 12*M#components_4#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -9, upper: -3 } }]
 
@@ -1755,11 +1850,13 @@ new SAT encoding decisions:
 
 and([product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(2*M#components_8#int_log_1, 4*M#components_8#int_log_2, -8*M#components_8#int_log_3, -3*M#components_5#int_log_1, -6*M#components_5#int_log_2, 12*M#components_5#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -9, upper: -3 } }]
 
@@ -1767,11 +1864,13 @@ new SAT encoding decisions:
 
 and([product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(3*M#components_8#int_log_1, 6*M#components_8#int_log_2, -12*M#components_8#int_log_3, -3*M#components_6#int_log_1, -6*M#components_6#int_log_2, 12*M#components_6#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 3, upper: 9 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -9, upper: -3 } }]
 
@@ -1779,11 +1878,13 @@ new SAT encoding decisions:
 
 and([product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(1*M#components_9#int_log_1, 2*M#components_9#int_log_2, -4*M#components_9#int_log_3, -3*M#components_7#int_log_1, -6*M#components_7#int_log_2, 12*M#components_7#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -9, upper: -3 } }]
 
@@ -1791,11 +1892,13 @@ new SAT encoding decisions:
 
 and([product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true,product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(2*M#components_9#int_log_1, 4*M#components_9#int_log_2, -8*M#components_9#int_log_3, -3*M#components_8#int_log_1, -6*M#components_8#int_log_2, 12*M#components_8#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -9, upper: -3 } }]
 
@@ -1803,11 +1906,13 @@ new SAT encoding decisions:
 
 and([product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 and([true;int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+true
 new SAT encoding decisions:
   weighted(3*M#components_9#int_log_1, 6*M#components_9#int_log_2, -12*M#components_9#int_log_3, -3*M#components_9#int_log_1, -6*M#components_9#int_log_2, 12*M#components_9#int_log_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 3, upper: 9 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -9, upper: -3 } }]
 
@@ -1969,10 +2074,12 @@ new SAT encoding decisions:
 
 true,
 false,
-__51
+__51,
+true
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
-false
+false,
+true
 new SAT encoding decisions:
   assert(__51) using tseitin
 
@@ -2105,12 +2212,14 @@ findAux __51: bool
 such that
 
 true,
-false
+false,
+true
 
 sat encoding decisions:
 
 define(__1 <-> integer-weighted(1*__0#int_log_1, 2*__0#int_log_2, 4*__0#int_log_3, 8*__0#int_log_4, -16*__0#int_log_5) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 1, upper: 9 } }],
 define(__2 <-> integer-weighted(1*__0#int_log_1, 2*__0#int_log_2, 4*__0#int_log_3, 8*__0#int_log_4, -16*__0#int_log_5) LessEqual 9) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 1, upper: 9 } }],
+optimise(minimise=false, value=0+weighted(1*__0#int_log_1, 2*__0#int_log_2, 4*__0#int_log_3, 8*__0#int_log_4, -16*__0#int_log_5) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 1, upper: 9 } }]) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
 define(__3 <-> integer-weighted(1*occurrences#components_1#int_log_1, 2*occurrences#components_1#int_log_2, 4*occurrences#components_1#int_log_3, 8*occurrences#components_1#int_log_4, -16*occurrences#components_1#int_log_5) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 1, upper: 9 } }],
 define(__4 <-> integer-weighted(1*occurrences#components_1#int_log_1, 2*occurrences#components_1#int_log_2, 4*occurrences#components_1#int_log_3, 8*occurrences#components_1#int_log_4, -16*occurrences#components_1#int_log_5) LessEqual 9) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 1, upper: 9 } }],
 define(__5 <-> integer-weighted(1*occurrences#components_2#int_log_1, 2*occurrences#components_2#int_log_2, 4*occurrences#components_2#int_log_3, 8*occurrences#components_2#int_log_4, -16*occurrences#components_2#int_log_5) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 1, upper: 9 } }],
