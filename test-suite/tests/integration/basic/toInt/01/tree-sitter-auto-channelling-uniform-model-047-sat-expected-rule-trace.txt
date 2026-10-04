@@ -94,7 +94,7 @@ new SAT encoding decisions:
 
 SATInt(Rank([(1, 5)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3;int(1..)] [1, 5]) = toInt(z)
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__6,__8,__10,__12;int(1..)] [1, 5]) = toInt(z)
+SATInt(Log, [__6,__8,__10,__12;int(1..)] [1, 5]) = SATInt(Log, [z,false;int(1..)] [0, 1])
 new variables:
   findAux __5: bool
   findAux __6: bool
@@ -118,13 +118,13 @@ new SAT encoding decisions:
 
 --
 
-SATInt(Log, [__6,__8,__10,__12;int(1..)] [1, 5]) = toInt(z)
+SATInt(Log, [__6,__8,__10,__12;int(1..)] [1, 5]) = SATInt(Log, [z,false;int(1..)] [0, 1])
    ~~> select_integer_relation ([("SAT", 18500)])
 __14
 new variables:
   findAux __14: bool
 new SAT encoding decisions:
-  define(__14 <-> integer-weighted(1*__6, 2*__8, 4*__10, -8*__12, -1*z) Equal 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 5 } }]
+  define(__14 <-> integer-weighted(1*__6, 2*__8, 4*__10, -8*__12, -1*z, 2*false) Equal 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 5 } }, PbTermGroup { start: 4, end: 6, structure: BoundedBinary { lower: -1, upper: 0 } }]
 
 --
 
@@ -180,6 +180,6 @@ define(__10 <-> !((x#int_rank_3) <-> (__9))) using tseitin,
 define(__11 <-> and([x#int_rank_3,__9;int(1..)])) using tseitin,
 define(__12 <-> !((false) <-> (__11))) using tseitin,
 define(__13 <-> and([false,__11;int(1..)])) using tseitin,
-define(__14 <-> integer-weighted(1*__6, 2*__8, 4*__10, -8*__12, -1*z) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 5 } }],
+define(__14 <-> integer-weighted(1*__6, 2*__8, 4*__10, -8*__12, -1*z, 2*false) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 5 } }, PbTermGroup { start: 4, end: 6, structure: BoundedBinary { lower: -1, upper: 0 } }],
 assert(__14) using tseitin
 

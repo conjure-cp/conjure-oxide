@@ -257,7 +257,7 @@ sum([product([2,toInt(__10);int(1..)]),-(toInt(a));int(1..)])
 
 SATInt(Rank([(0, 1)]), [p#int_rank_1;int(1..)] [0, 1]) = toInt(__1)
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__11,__13;int(1..)] [0, 1]) = toInt(__1)
+SATInt(Log, [__11,__13;int(1..)] [0, 1]) = SATInt(Log, [__1,false;int(1..)] [0, 1])
 new variables:
   findAux __11: bool
   findAux __12: bool
@@ -271,13 +271,13 @@ new SAT encoding decisions:
 
 --
 
-SATInt(Log, [__11,__13;int(1..)] [0, 1]) = toInt(__1)
+SATInt(Log, [__11,__13;int(1..)] [0, 1]) = SATInt(Log, [__1,false;int(1..)] [0, 1])
    ~~> select_integer_relation ([("SAT", 18500)])
 __15
 new variables:
   findAux __15: bool
 new SAT encoding decisions:
-  define(__15 <-> integer-weighted(1*__11, -2*__13, -1*__1) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__15 <-> integer-weighted(1*__11, -2*__13, -1*__1, 2*false) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -1, upper: 0 } }]
 
 --
 
@@ -347,7 +347,7 @@ new SAT encoding decisions:
 
 toInt(__6) = SATInt(Rank([(0, 1)]), [p#int_rank_1;int(1..)] [0, 1])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-toInt(__6) = SATInt(Log, [__26,__28;int(1..)] [0, 1])
+SATInt(Log, [__6,false;int(1..)] [0, 1]) = SATInt(Log, [__26,__28;int(1..)] [0, 1])
 new variables:
   findAux __26: bool
   findAux __27: bool
@@ -361,13 +361,13 @@ new SAT encoding decisions:
 
 --
 
-toInt(__6) = SATInt(Log, [__26,__28;int(1..)] [0, 1])
+SATInt(Log, [__6,false;int(1..)] [0, 1]) = SATInt(Log, [__26,__28;int(1..)] [0, 1])
    ~~> select_integer_relation ([("SAT", 18500)])
 __30
 new variables:
   findAux __30: bool
 new SAT encoding decisions:
-  define(__30 <-> integer-weighted(1*__6, -1*__26, 2*__28) Equal 0) using None with [PbTermGroup { start: 1, end: 3, structure: BoundedBinary { lower: -1, upper: 0 } }]
+  define(__30 <-> integer-weighted(1*__6, -2*false, -1*__26, 2*__28) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -1, upper: 0 } }]
 
 --
 
@@ -448,7 +448,7 @@ define(__11 <-> !((p#int_rank_1) <-> (false))) using tseitin,
 define(__12 <-> and([p#int_rank_1,false;int(1..)])) using tseitin,
 define(__13 <-> !((false) <-> (__12))) using tseitin,
 define(__14 <-> and([false,__12;int(1..)])) using tseitin,
-define(__15 <-> integer-weighted(1*__11, -2*__13, -1*__1) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__15 <-> integer-weighted(1*__11, -2*__13, -1*__1, 2*false) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -1, upper: 0 } }],
 assert(__15) using tseitin,
 define(__16 <-> !((weighted#int_rank_1) <-> (false))) using tseitin,
 define(__17 <-> !(__16)) using tseitin,
@@ -465,6 +465,6 @@ define(__26 <-> !((p#int_rank_1) <-> (false))) using tseitin,
 define(__27 <-> and([p#int_rank_1,false;int(1..)])) using tseitin,
 define(__28 <-> !((false) <-> (__27))) using tseitin,
 define(__29 <-> and([false,__27;int(1..)])) using tseitin,
-define(__30 <-> integer-weighted(1*__6, -1*__26, 2*__28) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 1, end: 3, structure: BoundedBinary { lower: -1, upper: 0 } }],
+define(__30 <-> integer-weighted(1*__6, -2*false, -1*__26, 2*__28) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -1, upper: 0 } }],
 assert(__30) using tseitin
 

@@ -907,7 +907,7 @@ new SAT encoding decisions:
 
 SATInt(Rank([(0, 1)]), [z#int_rank_1;int(1..)] [0, 1]) = toInt(__0)
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__23,__25;int(1..)] [0, 1]) = toInt(__0)
+SATInt(Log, [__23,__25;int(1..)] [0, 1]) = SATInt(Log, [__0,false;int(1..)] [0, 1])
 new variables:
   findAux __23: bool
   findAux __24: bool
@@ -921,13 +921,13 @@ new SAT encoding decisions:
 
 --
 
-SATInt(Log, [__23,__25;int(1..)] [0, 1]) = toInt(__0)
+SATInt(Log, [__23,__25;int(1..)] [0, 1]) = SATInt(Log, [__0,false;int(1..)] [0, 1])
    ~~> select_integer_relation ([("SAT", 18500)])
 __27
 new variables:
   findAux __27: bool
 new SAT encoding decisions:
-  define(__27 <-> integer-weighted(1*__23, -2*__25, -1*__0) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__27 <-> integer-weighted(1*__23, -2*__25, -1*__0, 2*false) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -1, upper: 0 } }]
 
 --
 
@@ -1087,7 +1087,7 @@ define(__23 <-> !((z#int_rank_1) <-> (false))) using tseitin,
 define(__24 <-> and([z#int_rank_1,false;int(1..)])) using tseitin,
 define(__25 <-> !((false) <-> (__24))) using tseitin,
 define(__26 <-> and([false,__24;int(1..)])) using tseitin,
-define(__27 <-> integer-weighted(1*__23, -2*__25, -1*__0) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__27 <-> integer-weighted(1*__23, -2*__25, -1*__0, 2*false) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -1, upper: 0 } }],
 assert(__27) using tseitin,
 define(__28 <-> !((y#int_rank_1) <-> (false))) using tseitin,
 define(__29 <-> and([y#int_rank_1,false;int(1..)])) using tseitin,
