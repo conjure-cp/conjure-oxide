@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-04, branch `sat-ir` after ordinary objective tightening was connected.
+Inventory date: 2026-10-04, branch `sat-ir` after reusable cardinality bounds and dominance count sharing were connected.
 
-388 of 635 runnable integration fixtures have SAT enabled, exercising 21,613 SAT portfolios. Full acceptance for the objective-tightening stage passed all 1,573 workspace tests (14 skipped), including workspace doctests. The earlier integer relation migration also passed full normal golden verification. The remaining 247 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+389 of 636 runnable integration fixtures have SAT enabled, exercising 21,673 SAT portfolios. Full acceptance for the cardinality-reuse stage passed all 1,575 workspace tests (14 skipped), including workspace doctests. The earlier integer relation migration also passed full normal golden verification. The remaining 247 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -356,7 +356,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Suggested investigation order
 
-1. Connect general reusable cardinality bounds and repeated dominance-counter sharing; PB objective tightening and dedicated AMO/cardinality-provider reification are connected.
+1. Investigate weighted dominance-counter sharing and cost-aware selection; reusable cardinality bounds, dominance count sharing, PB objective tightening and dedicated AMO/cardinality-provider reification are connected.
 2. Tune cost-aware representation/encoding selection and further isolate the original sparse-partial termination; bounded probes already show packed Direct growth.
 3. Fix the ground-domain crash and determine whether constant-matrix indexing is a shared frontend issue.
 4. Repair matrix equality/disequality lowering for the five reconfirmed loading errors.
@@ -366,7 +366,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Passing performance follow-ups
 
-The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. Ready guarded/reified counts now use dedicated AMO/cardinality decisions. Weighted and linear comparisons retain PB-backed equivalence decisions. PB objective tightening now reuses native RustSAT state. General cardinality-bound reuse and repeated dominance-counter sharing remain separate library connections.
+The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. Ready guarded/reified counts now use dedicated AMO/cardinality decisions. Weighted and linear comparisons retain PB-backed equivalence decisions. PB objective tightening now reuses native RustSAT state. Cardinality bounds now reuse state across dominance updates. General weighted dominance-counter sharing remains a separate library connection.
 
 ## Cross-backend masked lookup follow-up
 
@@ -388,3 +388,14 @@ The production SAT adaptor previously enumerated feasible assignments while igno
 The separate Z3 adaptor still ignores ordinary objectives. A CLI probe of `sat-ir/objective-min` returns `x=-3,y=0,g=false` (cost -2), although `x=-3,y=2,g=true` has the optimum cost -6. The new objective regressions therefore use SAT, Minion and Conjure references. Existing intermediate-optimisation fixtures keep their Conjure exemption because Conjure exposes the final result rather than the intermediate sequence.
 
 General reusable cardinality bounds and repeated dominance-counter sharing remain deferred; this stage connects PB objective tightening. Mixed representations/channelling, cost-aware selection and the original sparse-partial packed-Direct growth remain separate work items.
+
+
+## Reusable cardinality bounds and dominance counts
+
+Initial model compilation and dominance updates now share solver-local counters by input polarity and multiplicity. RustSAT totalizers incrementally extend upper/lower structural encodings; only enforcement is guarded. Pindakaas sorting networks retain one-shot threshold predicates for repeated/complementary bounds, with separate native networks for different thresholds. The selected AMO provider still handles upper thresholds of one.
+
+The two-count Pareto regression matches 20 independently enumerated nondominated assignments under both cardinality providers. Runtime probes record 86 count-compilation calls, 84 reusing an existing input set. Repeated bounds allocate no new auxiliaries in exhaustive multi-batch projection tests. This establishes cardinality sharing; it does not establish reuse of general weighted PB dominance counters or incremental construction of Pindakaas sorting networks. Those remain separate follow-ups. No new upstream library bug was confirmed.
+
+The new count-based Pareto model exposes a separate Oxide Minion gap: mid-search dominance rewriting leaves a sum in a scalar comparison position, and `parse_atom` rejects it with `expected atomic expression`. Removing dominance allows the same constraints to solve. Flattening the initial bound into six weighted Boolean terms still leaves the Pareto-sum injection failing. This is before native Minion encoding, not a confirmed upstream Minion bug. The regression therefore selects SAT and checks its 20 assignments by independent enumeration; repairing Minion compound dominance lowering remains separate work.
+
+Full four-thread acceptance passed all 1,575 tests (14 skipped), including workspace doctests. All four final normal golden checks passed. Sixty explicit dominance portfolios and twelve Boolean-only reification portfolios passed; the sixty recorded dominance portfolios match the independently enumerated frontier. Coverage is 389/636 runnable fixtures and 21,673 SAT portfolios, with 247 fixtures still disabled. Existing timing budgets are preserved; the new regression has a deliberate five-second budget.
