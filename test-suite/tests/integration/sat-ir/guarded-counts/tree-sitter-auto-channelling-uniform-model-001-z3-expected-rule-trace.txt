@@ -1,0 +1,198 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find g: bool
+find duplicate: bool
+find eq: bool
+find ge: bool
+find gt: bool
+find le: bool
+find lt: bool
+find ne: bool
+find reversed: bool
+find y: int(0..3)
+find z: int(0..1)
+
+such that
+
+z = toInt(sum([toInt(a),toInt(b),toInt(c);int(1..3)]) <= 1),
+y = sum([toInt(a),toInt(b),toInt(c);int(1..3)]),
+sum([toInt(eq),toInt(ne),toInt(g);int(1..3)]) <= 2,
+sum([toInt(le),toInt(gt);int(1..2)]) <= 1,
+sum([toInt(eq),toInt(ne);int(1..2)]) != 0,
+(sum([toInt(a),toInt(b),toInt(c);int(1..3)]) <= 1) <-> (le),
+(sum([toInt(a),toInt(b),toInt(c);int(1..3)]) < 1) <-> (lt),
+(sum([toInt(a),toInt(b),toInt(c);int(1..3)]) = 1) <-> (eq),
+(sum([toInt(a),toInt(b),toInt(c);int(1..3)]) != 1) <-> (ne),
+(sum([toInt(a),toInt(b),toInt(c);int(1..3)]) >= 1) <-> (ge),
+(sum([toInt(a),toInt(b),toInt(c);int(1..3)]) > 1) <-> (gt),
+(1 >= sum([toInt(a),toInt(b),toInt(c);int(1..3)])) <-> (reversed),
+(sum([toInt(a),toInt(a),toInt(!(b)),1,0;int(1..5)]) = 2) <-> (duplicate),
+(g) -> (sum([toInt(a),toInt(b),toInt(c);int(1..3)]) <= 1),
+or([!(sum([toInt(a),toInt(b),toInt(c);int(1..3)]) = 2),g;int(1..)])
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#lia_1: int(0..1)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#lia_1: int(0..3)
+
+--
+
+z
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+z#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+!(sum([toInt(a),toInt(b),toInt(c);int(1..3)]) = 2)
+   ~~> negated_eq_to_neq ([("Base", 8800)])
+sum([toInt(a),toInt(b),toInt(c);int(1..3)]) != 2
+
+--
+
+sum([toInt(a),toInt(b),toInt(c);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c);int(1..)])
+
+--
+
+sum([toInt(eq),toInt(ne),toInt(g);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(eq),toInt(ne),toInt(g);int(1..)])
+
+--
+
+sum([toInt(le),toInt(gt);int(1..2)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(le),toInt(gt);int(1..)])
+
+--
+
+sum([toInt(eq),toInt(ne);int(1..2)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(eq),toInt(ne);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c);int(1..)])
+
+--
+
+sum([toInt(a),toInt(a),toInt(!(b)),1,0;int(1..5)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(a),toInt(!(b)),1,0;int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c);int(1..)])
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find g: bool
+find duplicate: bool
+find eq: bool
+find ge: bool
+find gt: bool
+find le: bool
+find lt: bool
+find ne: bool
+find reversed: bool
+find y: int(0..3)
+find z: int(0..1)
+find z#lia_1: int(0..1)
+find y#lia_1: int(0..3)
+
+such that
+
+z#lia_1 = toInt(sum([toInt(a),toInt(b),toInt(c);int(1..)]) <= 1),
+y#lia_1 = sum([toInt(a),toInt(b),toInt(c);int(1..)]),
+sum([toInt(eq),toInt(ne),toInt(g);int(1..)]) <= 2,
+sum([toInt(le),toInt(gt);int(1..)]) <= 1,
+sum([toInt(eq),toInt(ne);int(1..)]) != 0,
+(sum([toInt(a),toInt(b),toInt(c);int(1..)]) <= 1) <-> (le),
+(sum([toInt(a),toInt(b),toInt(c);int(1..)]) < 1) <-> (lt),
+(sum([toInt(a),toInt(b),toInt(c);int(1..)]) = 1) <-> (eq),
+(sum([toInt(a),toInt(b),toInt(c);int(1..)]) != 1) <-> (ne),
+(sum([toInt(a),toInt(b),toInt(c);int(1..)]) >= 1) <-> (ge),
+(sum([toInt(a),toInt(b),toInt(c);int(1..)]) > 1) <-> (gt),
+(1 >= sum([toInt(a),toInt(b),toInt(c);int(1..)])) <-> (reversed),
+(sum([toInt(a),toInt(a),toInt(!(b)),1;int(1..)]) = 2) <-> (duplicate),
+(g) -> (sum([toInt(a),toInt(b),toInt(c);int(1..)]) <= 1),
+or([sum([toInt(a),toInt(b),toInt(c);int(1..)]) != 2,g;int(1..)])
+
