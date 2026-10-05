@@ -1,0 +1,205 @@
+Model before rewriting:
+
+letting A be domain bool
+letting B be domain int(1..3)
+find x: A
+find y: B
+
+such that
+
+(x) -> (y < 3)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#int_rank_1: bool
+  find y#int_rank_2: bool
+new constraints:
+  or([!(y#int_rank_2),and([!(y#int_rank_1),true;int(1..)]);int(1..)])
+
+--
+
+y
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 3)]), [y#int_rank_1,y#int_rank_2;int(1..)] [1, 3])
+
+--
+
+SATInt(Rank([(1, 3)]), [y#int_rank_1,y#int_rank_2;int(1..)] [1, 3]) < 3
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Rank([(1, 3)]), [y#int_rank_1,y#int_rank_2;int(1..)] [1, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3])
+
+--
+
+!(y#int_rank_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> !(y#int_rank_2)) using tseitin
+
+--
+
+!(y#int_rank_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> !(y#int_rank_1)) using tseitin
+
+--
+
+and([__1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__1
+
+--
+
+or([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> or([__0,__1;int(1..)])) using tseitin
+
+--
+
+(x) -> (SATInt(Rank([(1, 3)]), [y#int_rank_1,y#int_rank_2;int(1..)] [1, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3])),
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+(x) -> (SATInt(Rank([(1, 3)]), [y#int_rank_1,y#int_rank_2;int(1..)] [1, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]))
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+SATInt(Rank([(1, 3)]), [y#int_rank_1,y#int_rank_2;int(1..)] [1, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__4,__6,__8;int(1..)] [1, 3]) < SATInt(Log, [__11,__14,__16;int(1..)] [3, 3])
+new variables:
+  findAux __3: bool
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
+  findAux __11: bool
+  findAux __12: bool
+  findAux __13: bool
+  findAux __14: bool
+  findAux __15: bool
+  findAux __16: bool
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__3 <-> !((y#int_rank_1) <-> (false))) using tseitin
+  define(__4 <-> !(__3)) using tseitin
+  define(__5 <-> or([y#int_rank_1,false;int(1..)])) using tseitin
+  define(__6 <-> !((y#int_rank_2) <-> (__5))) using tseitin
+  define(__7 <-> and([y#int_rank_2,__5;int(1..)])) using tseitin
+  define(__8 <-> !((false) <-> (__7))) using tseitin
+  define(__9 <-> and([false,__7;int(1..)])) using tseitin
+  define(__10 <-> !((false) <-> (false))) using tseitin
+  define(__11 <-> !(__10)) using tseitin
+  define(__12 <-> or([false,false;int(1..)])) using tseitin
+  define(__13 <-> !((false) <-> (__12))) using tseitin
+  define(__14 <-> !(__13)) using tseitin
+  define(__15 <-> or([false,__12;int(1..)])) using tseitin
+  define(__16 <-> !((false) <-> (__15))) using tseitin
+  define(__17 <-> and([false,__15;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__4,__6,__8;int(1..)] [1, 3]) < SATInt(Log, [__11,__14,__16;int(1..)] [3, 3])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> integer-weighted(1*__4, 2*__6, -4*__8, -1*__11, -2*__14, 4*__16) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -3 } }]
+
+--
+
+(x) -> (__18)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> (x) -> (__18)) using tseitin
+
+--
+
+__19
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__19) using tseitin
+
+--
+
+Final model:
+
+letting A be domain bool
+letting B be domain int(1..3)
+find x: A
+find y: B
+find y#int_rank_1: bool
+find y#int_rank_2: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> !(y#int_rank_2)) using tseitin,
+define(__1 <-> !(y#int_rank_1)) using tseitin,
+define(__2 <-> or([__0,__1;int(1..)])) using tseitin,
+assert(__2) using tseitin,
+define(__3 <-> !((y#int_rank_1) <-> (false))) using tseitin,
+define(__4 <-> !(__3)) using tseitin,
+define(__5 <-> or([y#int_rank_1,false;int(1..)])) using tseitin,
+define(__6 <-> !((y#int_rank_2) <-> (__5))) using tseitin,
+define(__7 <-> and([y#int_rank_2,__5;int(1..)])) using tseitin,
+define(__8 <-> !((false) <-> (__7))) using tseitin,
+define(__9 <-> and([false,__7;int(1..)])) using tseitin,
+define(__10 <-> !((false) <-> (false))) using tseitin,
+define(__11 <-> !(__10)) using tseitin,
+define(__12 <-> or([false,false;int(1..)])) using tseitin,
+define(__13 <-> !((false) <-> (__12))) using tseitin,
+define(__14 <-> !(__13)) using tseitin,
+define(__15 <-> or([false,__12;int(1..)])) using tseitin,
+define(__16 <-> !((false) <-> (__15))) using tseitin,
+define(__17 <-> and([false,__15;int(1..)])) using tseitin,
+define(__18 <-> integer-weighted(1*__4, 2*__6, -4*__8, -1*__11, -2*__14, 4*__16) Less 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -3 } }],
+define(__19 <-> (x) -> (__18)) using tseitin,
+assert(__19) using tseitin
+
