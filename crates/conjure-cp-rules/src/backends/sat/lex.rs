@@ -78,18 +78,26 @@ fn scalar_lex_comparison(expr: &Expression, symbols: &SymbolTable) -> Applicatio
         Expression::LexLt(_, lhs, rhs) | Expression::LexLeq(_, lhs, rhs) => (lhs, rhs),
         _ => return Err(RuleNotApplicable),
     };
-    for operand in [lhs, rhs] {
-        let entries = super::super::smt::lex::lex_operand_elements(operand)?;
-        if entries.iter().any(|entry| {
-            !entry
-                .domain_of()
-                .is_some_and(|domain| domain.is_int() || domain.is_bool())
-        }) {
+    let elements = |operand: &Expression| {
+        // Explicit matrices retain element order even after integer representation, and
+        // lexicographic order does not depend on their index values.
+        super::counting::matrix_entries(operand)
+            .map(Ok)
+            .unwrap_or_else(|| super::super::smt::lex::lex_operand_elements(operand))
+    };
+    let (lhs, rhs) = (elements(lhs)?, elements(rhs)?);
+    for entries in [&lhs, &rhs] {
+        if entries.iter().any(|entry| !is_scalar(entry)) {
             // Compound comparisons promote back to lex; their representation rules must run first.
             return Err(RuleNotApplicable);
         }
     }
-    super::super::smt::lex::expand_lex_lt_leq(expr, symbols)
+    let matrix = |entries| Moo::new(conjure_cp::into_matrix_expr!(entries));
+    let comparison = match expr {
+        Expression::LexLt(..) => Expression::LexLt(Metadata::new(), matrix(lhs), matrix(rhs)),
+        _ => Expression::LexLeq(Metadata::new(), matrix(lhs), matrix(rhs)),
+    };
+    super::super::smt::lex::expand_lex_lt_leq(&comparison, symbols)
 }
 
 /// Representation ordering constraints may already be flattened into scalar atoms.
@@ -167,6 +175,81 @@ mod tests {
     use super::*;
     use conjure_cp::ast::{Metadata, Moo, eval_constant};
     use conjure_cp::into_matrix_expr;
+
+    #[test]
+    fn scalar_lex_ignores_index_values_and_preserves_prefix_order() {
+        use conjure_cp::ast::{AbstractLiteral, Domain, Range};
+
+        let lists: &[&[i32]] = &[&[], &[0], &[1], &[0, 0], &[0, 1], &[1, 0]];
+        for lhs in lists {
+            for rhs in lists {
+                for strict in [false, true] {
+                    let operand = |values: &[i32], start: i32| {
+                        Moo::new(Expression::AbstractLiteral(
+                            Metadata::new(),
+                            AbstractLiteral::Matrix(
+                                values.iter().copied().map(Expression::from).collect(),
+                                Domain::int(vec![Range::Bounded(
+                                    start,
+                                    start + values.len() as i32 - 1,
+                                )]),
+                            ),
+                        ))
+                    };
+                    let (left, right) = (operand(lhs, 0), operand(rhs, -3));
+                    let expr = if strict {
+                        Expression::LexLt(Metadata::new(), left, right)
+                    } else {
+                        Expression::LexLeq(Metadata::new(), left, right)
+                    };
+                    let expanded = scalar_lex_comparison(&expr, &SymbolTable::new())
+                        .unwrap()
+                        .new_expression;
+                    assert_eq!(
+                        eval_constant(&expanded),
+                        Some((if strict { lhs < rhs } else { lhs <= rhs }).into()),
+                        "{lhs:?} {rhs:?} strict={strict}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn non_list_lex_accepts_every_terminal_integer_representation() {
+        use conjure_cp::ast::{AbstractLiteral, Domain, Range, SATIntEncoding};
+
+        for encoding in [
+            SATIntEncoding::Direct,
+            SATIntEncoding::Order,
+            SATIntEncoding::Log,
+            SATIntEncoding::Offset,
+            SATIntEncoding::Rank(vec![(1, 3)]),
+        ] {
+            let value = Expression::SATInt(
+                Metadata::new(),
+                encoding,
+                Moo::new(into_matrix_expr!(vec![true.into(), false.into()])),
+                (1, 3),
+            );
+            let operand = Moo::new(Expression::AbstractLiteral(
+                Metadata::new(),
+                AbstractLiteral::Matrix(
+                    vec![value.clone(), value],
+                    Domain::int(vec![Range::Single(0), Range::Single(2)]),
+                ),
+            ));
+            for strict in [false, true] {
+                let expr = if strict {
+                    Expression::LexLt(Metadata::new(), operand.clone(), operand.clone())
+                } else {
+                    Expression::LexLeq(Metadata::new(), operand.clone(), operand.clone())
+                };
+                let expanded = scalar_lex_comparison(&expr, &SymbolTable::new()).unwrap();
+                assert!(matches!(expanded.new_expression, Expression::Or(..)));
+            }
+        }
+    }
 
     #[test]
     fn scalar_lex_matches_sequence_order_for_empty_prefixes_and_first_differences() {
