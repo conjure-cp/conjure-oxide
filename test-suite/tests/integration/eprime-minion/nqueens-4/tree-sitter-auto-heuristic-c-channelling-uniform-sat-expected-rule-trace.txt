@@ -1,0 +1,3239 @@
+Model before rewriting:
+
+find row: matrix indexed by [int(0..7)] of int(0..7)
+find minorDiagonal: matrix indexed by [int(0..3)] of int(-3..3)
+find majorDiagonal: matrix indexed by [int(0..3)] of int(0..6)
+
+such that
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal)
+
+--
+
+row
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row
+new variables:
+  find row#components_1: int(0..7)
+  find row#components_2: int(0..7)
+  find row#components_3: int(0..7)
+  find row#components_4: int(0..7)
+  find row#components_5: int(0..7)
+  find row#components_6: int(0..7)
+  find row#components_7: int(0..7)
+  find row#components_8: int(0..7)
+
+--
+
+majorDiagonal
+   ~~> select_representation ([("ReprGeneral", 10000)])
+majorDiagonal
+new variables:
+  find majorDiagonal#components_1: int(0..6)
+  find majorDiagonal#components_2: int(0..6)
+  find majorDiagonal#components_3: int(0..6)
+  find majorDiagonal#components_4: int(0..6)
+
+--
+
+minorDiagonal
+   ~~> select_representation ([("ReprGeneral", 10000)])
+minorDiagonal
+new variables:
+  find minorDiagonal#components_1: int(-3..3)
+  find minorDiagonal#components_2: int(-3..3)
+  find minorDiagonal#components_3: int(-3..3)
+  find minorDiagonal#components_4: int(-3..3)
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal)
+new variables:
+  find majorDiagonal#components_1#int_offset_1: bool
+  find majorDiagonal#components_1#int_offset_2: bool
+  find majorDiagonal#components_1#int_offset_3: bool
+  find majorDiagonal#components_2#int_offset_1: bool
+  find majorDiagonal#components_2#int_offset_2: bool
+  find majorDiagonal#components_2#int_offset_3: bool
+  find majorDiagonal#components_3#int_offset_1: bool
+  find majorDiagonal#components_3#int_offset_2: bool
+  find majorDiagonal#components_3#int_offset_3: bool
+  find majorDiagonal#components_4#int_offset_1: bool
+  find majorDiagonal#components_4#int_offset_2: bool
+  find majorDiagonal#components_4#int_offset_3: bool
+  find minorDiagonal#components_1#int_offset_1: bool
+  find minorDiagonal#components_1#int_offset_2: bool
+  find minorDiagonal#components_1#int_offset_3: bool
+  find minorDiagonal#components_2#int_offset_1: bool
+  find minorDiagonal#components_2#int_offset_2: bool
+  find minorDiagonal#components_2#int_offset_3: bool
+  find minorDiagonal#components_3#int_offset_1: bool
+  find minorDiagonal#components_3#int_offset_2: bool
+  find minorDiagonal#components_3#int_offset_3: bool
+  find minorDiagonal#components_4#int_offset_1: bool
+  find minorDiagonal#components_4#int_offset_2: bool
+  find minorDiagonal#components_4#int_offset_3: bool
+  find row#components_1#int_offset_1: bool
+  find row#components_1#int_offset_2: bool
+  find row#components_1#int_offset_3: bool
+  find row#components_2#int_offset_1: bool
+  find row#components_2#int_offset_2: bool
+  find row#components_2#int_offset_3: bool
+  find row#components_3#int_offset_1: bool
+  find row#components_3#int_offset_2: bool
+  find row#components_3#int_offset_3: bool
+  find row#components_4#int_offset_1: bool
+  find row#components_4#int_offset_2: bool
+  find row#components_4#int_offset_3: bool
+  find row#components_5#int_offset_1: bool
+  find row#components_5#int_offset_2: bool
+  find row#components_5#int_offset_3: bool
+  find row#components_6#int_offset_1: bool
+  find row#components_6#int_offset_2: bool
+  find row#components_6#int_offset_3: bool
+  find row#components_7#int_offset_1: bool
+  find row#components_7#int_offset_2: bool
+  find row#components_7#int_offset_3: bool
+  find row#components_8#int_offset_1: bool
+  find row#components_8#int_offset_2: bool
+  find row#components_8#int_offset_3: bool
+new constraints:
+  or([!(row#components_1#int_offset_3),or([!(row#components_1#int_offset_2),or([!(row#components_1#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [row#components_1#int_offset_1,row#components_1#int_offset_2,row#components_1#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [row#components_1#int_offset_1,row#components_1#int_offset_2,row#components_1#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(row#components_2#int_offset_3),or([!(row#components_2#int_offset_2),or([!(row#components_2#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [row#components_2#int_offset_1,row#components_2#int_offset_2,row#components_2#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [row#components_2#int_offset_1,row#components_2#int_offset_2,row#components_2#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(row#components_3#int_offset_3),or([!(row#components_3#int_offset_2),or([!(row#components_3#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [row#components_3#int_offset_1,row#components_3#int_offset_2,row#components_3#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [row#components_3#int_offset_1,row#components_3#int_offset_2,row#components_3#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(row#components_4#int_offset_3),or([!(row#components_4#int_offset_2),or([!(row#components_4#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [row#components_4#int_offset_1,row#components_4#int_offset_2,row#components_4#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [row#components_4#int_offset_1,row#components_4#int_offset_2,row#components_4#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(row#components_5#int_offset_3),or([!(row#components_5#int_offset_2),or([!(row#components_5#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [row#components_5#int_offset_1,row#components_5#int_offset_2,row#components_5#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [row#components_5#int_offset_1,row#components_5#int_offset_2,row#components_5#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(row#components_6#int_offset_3),or([!(row#components_6#int_offset_2),or([!(row#components_6#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [row#components_6#int_offset_1,row#components_6#int_offset_2,row#components_6#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [row#components_6#int_offset_1,row#components_6#int_offset_2,row#components_6#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(row#components_7#int_offset_3),or([!(row#components_7#int_offset_2),or([!(row#components_7#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [row#components_7#int_offset_1,row#components_7#int_offset_2,row#components_7#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [row#components_7#int_offset_1,row#components_7#int_offset_2,row#components_7#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(row#components_8#int_offset_3),or([!(row#components_8#int_offset_2),or([!(row#components_8#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [row#components_8#int_offset_1,row#components_8#int_offset_2,row#components_8#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [row#components_8#int_offset_1,row#components_8#int_offset_2,row#components_8#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(majorDiagonal#components_1#int_offset_3),or([!(majorDiagonal#components_1#int_offset_2),and([!(majorDiagonal#components_1#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [majorDiagonal#components_1#int_offset_1,majorDiagonal#components_1#int_offset_2,majorDiagonal#components_1#int_offset_3;int(1..)] [0, 6]) >= 0,SATInt(Offset, [majorDiagonal#components_1#int_offset_1,majorDiagonal#components_1#int_offset_2,majorDiagonal#components_1#int_offset_3;int(1..)] [0, 6]) <= 6;int(1..)]);int(1..)])
+  or([!(majorDiagonal#components_2#int_offset_3),or([!(majorDiagonal#components_2#int_offset_2),and([!(majorDiagonal#components_2#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [majorDiagonal#components_2#int_offset_1,majorDiagonal#components_2#int_offset_2,majorDiagonal#components_2#int_offset_3;int(1..)] [0, 6]) >= 0,SATInt(Offset, [majorDiagonal#components_2#int_offset_1,majorDiagonal#components_2#int_offset_2,majorDiagonal#components_2#int_offset_3;int(1..)] [0, 6]) <= 6;int(1..)]);int(1..)])
+  or([!(majorDiagonal#components_3#int_offset_3),or([!(majorDiagonal#components_3#int_offset_2),and([!(majorDiagonal#components_3#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [majorDiagonal#components_3#int_offset_1,majorDiagonal#components_3#int_offset_2,majorDiagonal#components_3#int_offset_3;int(1..)] [0, 6]) >= 0,SATInt(Offset, [majorDiagonal#components_3#int_offset_1,majorDiagonal#components_3#int_offset_2,majorDiagonal#components_3#int_offset_3;int(1..)] [0, 6]) <= 6;int(1..)]);int(1..)])
+  or([!(majorDiagonal#components_4#int_offset_3),or([!(majorDiagonal#components_4#int_offset_2),and([!(majorDiagonal#components_4#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [majorDiagonal#components_4#int_offset_1,majorDiagonal#components_4#int_offset_2,majorDiagonal#components_4#int_offset_3;int(1..)] [0, 6]) >= 0,SATInt(Offset, [majorDiagonal#components_4#int_offset_1,majorDiagonal#components_4#int_offset_2,majorDiagonal#components_4#int_offset_3;int(1..)] [0, 6]) <= 6;int(1..)]);int(1..)])
+  or([!(minorDiagonal#components_1#int_offset_3),or([!(minorDiagonal#components_1#int_offset_2),and([!(minorDiagonal#components_1#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [minorDiagonal#components_1#int_offset_1,minorDiagonal#components_1#int_offset_2,minorDiagonal#components_1#int_offset_3;int(1..)] [-3, 3]) >= -3,SATInt(Offset, [minorDiagonal#components_1#int_offset_1,minorDiagonal#components_1#int_offset_2,minorDiagonal#components_1#int_offset_3;int(1..)] [-3, 3]) <= 3;int(1..)]);int(1..)])
+  or([!(minorDiagonal#components_2#int_offset_3),or([!(minorDiagonal#components_2#int_offset_2),and([!(minorDiagonal#components_2#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [minorDiagonal#components_2#int_offset_1,minorDiagonal#components_2#int_offset_2,minorDiagonal#components_2#int_offset_3;int(1..)] [-3, 3]) >= -3,SATInt(Offset, [minorDiagonal#components_2#int_offset_1,minorDiagonal#components_2#int_offset_2,minorDiagonal#components_2#int_offset_3;int(1..)] [-3, 3]) <= 3;int(1..)]);int(1..)])
+  or([!(minorDiagonal#components_3#int_offset_3),or([!(minorDiagonal#components_3#int_offset_2),and([!(minorDiagonal#components_3#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [minorDiagonal#components_3#int_offset_1,minorDiagonal#components_3#int_offset_2,minorDiagonal#components_3#int_offset_3;int(1..)] [-3, 3]) >= -3,SATInt(Offset, [minorDiagonal#components_3#int_offset_1,minorDiagonal#components_3#int_offset_2,minorDiagonal#components_3#int_offset_3;int(1..)] [-3, 3]) <= 3;int(1..)]);int(1..)])
+  or([!(minorDiagonal#components_4#int_offset_3),or([!(minorDiagonal#components_4#int_offset_2),and([!(minorDiagonal#components_4#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [minorDiagonal#components_4#int_offset_1,minorDiagonal#components_4#int_offset_2,minorDiagonal#components_4#int_offset_3;int(1..)] [-3, 3]) >= -3,SATInt(Offset, [minorDiagonal#components_4#int_offset_1,minorDiagonal#components_4#int_offset_2,minorDiagonal#components_4#int_offset_3;int(1..)] [-3, 3]) <= 3;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [row#components_1#int_offset_1,row#components_1#int_offset_2,row#components_1#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*row#components_1#int_offset_1, 2*row#components_1#int_offset_2, 4*row#components_1#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_1#int_offset_1,row#components_1#int_offset_2,row#components_1#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*row#components_1#int_offset_1, 2*row#components_1#int_offset_2, 4*row#components_1#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_2#int_offset_1,row#components_2#int_offset_2,row#components_2#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*row#components_2#int_offset_1, 2*row#components_2#int_offset_2, 4*row#components_2#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_2#int_offset_1,row#components_2#int_offset_2,row#components_2#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*row#components_2#int_offset_1, 2*row#components_2#int_offset_2, 4*row#components_2#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_3#int_offset_1,row#components_3#int_offset_2,row#components_3#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*row#components_3#int_offset_1, 2*row#components_3#int_offset_2, 4*row#components_3#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_3#int_offset_1,row#components_3#int_offset_2,row#components_3#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(1*row#components_3#int_offset_1, 2*row#components_3#int_offset_2, 4*row#components_3#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_4#int_offset_1,row#components_4#int_offset_2,row#components_4#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*row#components_4#int_offset_1, 2*row#components_4#int_offset_2, 4*row#components_4#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_4#int_offset_1,row#components_4#int_offset_2,row#components_4#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> integer-weighted(1*row#components_4#int_offset_1, 2*row#components_4#int_offset_2, 4*row#components_4#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_5#int_offset_1,row#components_5#int_offset_2,row#components_5#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> integer-weighted(1*row#components_5#int_offset_1, 2*row#components_5#int_offset_2, 4*row#components_5#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_5#int_offset_1,row#components_5#int_offset_2,row#components_5#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> integer-weighted(1*row#components_5#int_offset_1, 2*row#components_5#int_offset_2, 4*row#components_5#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_6#int_offset_1,row#components_6#int_offset_2,row#components_6#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(1*row#components_6#int_offset_1, 2*row#components_6#int_offset_2, 4*row#components_6#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_6#int_offset_1,row#components_6#int_offset_2,row#components_6#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> integer-weighted(1*row#components_6#int_offset_1, 2*row#components_6#int_offset_2, 4*row#components_6#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_7#int_offset_1,row#components_7#int_offset_2,row#components_7#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> integer-weighted(1*row#components_7#int_offset_1, 2*row#components_7#int_offset_2, 4*row#components_7#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_7#int_offset_1,row#components_7#int_offset_2,row#components_7#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> integer-weighted(1*row#components_7#int_offset_1, 2*row#components_7#int_offset_2, 4*row#components_7#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_8#int_offset_1,row#components_8#int_offset_2,row#components_8#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> integer-weighted(1*row#components_8#int_offset_1, 2*row#components_8#int_offset_2, 4*row#components_8#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [row#components_8#int_offset_1,row#components_8#int_offset_2,row#components_8#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> integer-weighted(1*row#components_8#int_offset_1, 2*row#components_8#int_offset_2, 4*row#components_8#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [majorDiagonal#components_1#int_offset_1,majorDiagonal#components_1#int_offset_2,majorDiagonal#components_1#int_offset_3;int(1..)] [0, 6]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> integer-weighted(1*majorDiagonal#components_1#int_offset_1, 2*majorDiagonal#components_1#int_offset_2, 4*majorDiagonal#components_1#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [majorDiagonal#components_1#int_offset_1,majorDiagonal#components_1#int_offset_2,majorDiagonal#components_1#int_offset_3;int(1..)] [0, 6]) <= 6
+   ~~> select_integer_relation ([("SAT", 18500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> integer-weighted(1*majorDiagonal#components_1#int_offset_1, 2*majorDiagonal#components_1#int_offset_2, 4*majorDiagonal#components_1#int_offset_3) LessEqual 6) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [majorDiagonal#components_2#int_offset_1,majorDiagonal#components_2#int_offset_2,majorDiagonal#components_2#int_offset_3;int(1..)] [0, 6]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> integer-weighted(1*majorDiagonal#components_2#int_offset_1, 2*majorDiagonal#components_2#int_offset_2, 4*majorDiagonal#components_2#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [majorDiagonal#components_2#int_offset_1,majorDiagonal#components_2#int_offset_2,majorDiagonal#components_2#int_offset_3;int(1..)] [0, 6]) <= 6
+   ~~> select_integer_relation ([("SAT", 18500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> integer-weighted(1*majorDiagonal#components_2#int_offset_1, 2*majorDiagonal#components_2#int_offset_2, 4*majorDiagonal#components_2#int_offset_3) LessEqual 6) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [majorDiagonal#components_3#int_offset_1,majorDiagonal#components_3#int_offset_2,majorDiagonal#components_3#int_offset_3;int(1..)] [0, 6]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> integer-weighted(1*majorDiagonal#components_3#int_offset_1, 2*majorDiagonal#components_3#int_offset_2, 4*majorDiagonal#components_3#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [majorDiagonal#components_3#int_offset_1,majorDiagonal#components_3#int_offset_2,majorDiagonal#components_3#int_offset_3;int(1..)] [0, 6]) <= 6
+   ~~> select_integer_relation ([("SAT", 18500)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> integer-weighted(1*majorDiagonal#components_3#int_offset_1, 2*majorDiagonal#components_3#int_offset_2, 4*majorDiagonal#components_3#int_offset_3) LessEqual 6) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [majorDiagonal#components_4#int_offset_1,majorDiagonal#components_4#int_offset_2,majorDiagonal#components_4#int_offset_3;int(1..)] [0, 6]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__22
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> integer-weighted(1*majorDiagonal#components_4#int_offset_1, 2*majorDiagonal#components_4#int_offset_2, 4*majorDiagonal#components_4#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [majorDiagonal#components_4#int_offset_1,majorDiagonal#components_4#int_offset_2,majorDiagonal#components_4#int_offset_3;int(1..)] [0, 6]) <= 6
+   ~~> select_integer_relation ([("SAT", 18500)])
+__23
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> integer-weighted(1*majorDiagonal#components_4#int_offset_1, 2*majorDiagonal#components_4#int_offset_2, 4*majorDiagonal#components_4#int_offset_3) LessEqual 6) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [minorDiagonal#components_1#int_offset_1,minorDiagonal#components_1#int_offset_2,minorDiagonal#components_1#int_offset_3;int(1..)] [-3, 3]) >= -3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__24
+new variables:
+  findAux __24: bool
+new SAT encoding decisions:
+  define(__24 <-> integer-weighted(1*minorDiagonal#components_1#int_offset_1, 2*minorDiagonal#components_1#int_offset_2, 4*minorDiagonal#components_1#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [minorDiagonal#components_1#int_offset_1,minorDiagonal#components_1#int_offset_2,minorDiagonal#components_1#int_offset_3;int(1..)] [-3, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__25
+new variables:
+  findAux __25: bool
+new SAT encoding decisions:
+  define(__25 <-> integer-weighted(1*minorDiagonal#components_1#int_offset_1, 2*minorDiagonal#components_1#int_offset_2, 4*minorDiagonal#components_1#int_offset_3) LessEqual 6) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [minorDiagonal#components_2#int_offset_1,minorDiagonal#components_2#int_offset_2,minorDiagonal#components_2#int_offset_3;int(1..)] [-3, 3]) >= -3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__26
+new variables:
+  findAux __26: bool
+new SAT encoding decisions:
+  define(__26 <-> integer-weighted(1*minorDiagonal#components_2#int_offset_1, 2*minorDiagonal#components_2#int_offset_2, 4*minorDiagonal#components_2#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [minorDiagonal#components_2#int_offset_1,minorDiagonal#components_2#int_offset_2,minorDiagonal#components_2#int_offset_3;int(1..)] [-3, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__27
+new variables:
+  findAux __27: bool
+new SAT encoding decisions:
+  define(__27 <-> integer-weighted(1*minorDiagonal#components_2#int_offset_1, 2*minorDiagonal#components_2#int_offset_2, 4*minorDiagonal#components_2#int_offset_3) LessEqual 6) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [minorDiagonal#components_3#int_offset_1,minorDiagonal#components_3#int_offset_2,minorDiagonal#components_3#int_offset_3;int(1..)] [-3, 3]) >= -3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__28
+new variables:
+  findAux __28: bool
+new SAT encoding decisions:
+  define(__28 <-> integer-weighted(1*minorDiagonal#components_3#int_offset_1, 2*minorDiagonal#components_3#int_offset_2, 4*minorDiagonal#components_3#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [minorDiagonal#components_3#int_offset_1,minorDiagonal#components_3#int_offset_2,minorDiagonal#components_3#int_offset_3;int(1..)] [-3, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__29
+new variables:
+  findAux __29: bool
+new SAT encoding decisions:
+  define(__29 <-> integer-weighted(1*minorDiagonal#components_3#int_offset_1, 2*minorDiagonal#components_3#int_offset_2, 4*minorDiagonal#components_3#int_offset_3) LessEqual 6) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [minorDiagonal#components_4#int_offset_1,minorDiagonal#components_4#int_offset_2,minorDiagonal#components_4#int_offset_3;int(1..)] [-3, 3]) >= -3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__30
+new variables:
+  findAux __30: bool
+new SAT encoding decisions:
+  define(__30 <-> integer-weighted(1*minorDiagonal#components_4#int_offset_1, 2*minorDiagonal#components_4#int_offset_2, 4*minorDiagonal#components_4#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+SATInt(Offset, [minorDiagonal#components_4#int_offset_1,minorDiagonal#components_4#int_offset_2,minorDiagonal#components_4#int_offset_3;int(1..)] [-3, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__31
+new variables:
+  findAux __31: bool
+new SAT encoding decisions:
+  define(__31 <-> integer-weighted(1*minorDiagonal#components_4#int_offset_1, 2*minorDiagonal#components_4#int_offset_2, 4*minorDiagonal#components_4#int_offset_3) LessEqual 6) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }]
+
+--
+
+!(majorDiagonal#components_1#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__32
+new variables:
+  findAux __32: bool
+new SAT encoding decisions:
+  define(__32 <-> !(majorDiagonal#components_1#int_offset_3)) using tseitin
+
+--
+
+!(majorDiagonal#components_2#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__33
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> !(majorDiagonal#components_2#int_offset_3)) using tseitin
+
+--
+
+!(majorDiagonal#components_3#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__34
+new variables:
+  findAux __34: bool
+new SAT encoding decisions:
+  define(__34 <-> !(majorDiagonal#components_3#int_offset_3)) using tseitin
+
+--
+
+!(majorDiagonal#components_4#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__35
+new variables:
+  findAux __35: bool
+new SAT encoding decisions:
+  define(__35 <-> !(majorDiagonal#components_4#int_offset_3)) using tseitin
+
+--
+
+!(minorDiagonal#components_1#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__36
+new variables:
+  findAux __36: bool
+new SAT encoding decisions:
+  define(__36 <-> !(minorDiagonal#components_1#int_offset_3)) using tseitin
+
+--
+
+!(minorDiagonal#components_2#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__37
+new variables:
+  findAux __37: bool
+new SAT encoding decisions:
+  define(__37 <-> !(minorDiagonal#components_2#int_offset_3)) using tseitin
+
+--
+
+!(minorDiagonal#components_3#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__38
+new variables:
+  findAux __38: bool
+new SAT encoding decisions:
+  define(__38 <-> !(minorDiagonal#components_3#int_offset_3)) using tseitin
+
+--
+
+!(minorDiagonal#components_4#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__39
+new variables:
+  findAux __39: bool
+new SAT encoding decisions:
+  define(__39 <-> !(minorDiagonal#components_4#int_offset_3)) using tseitin
+
+--
+
+!(majorDiagonal#components_1#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__40
+new variables:
+  findAux __40: bool
+new SAT encoding decisions:
+  define(__40 <-> !(majorDiagonal#components_1#int_offset_2)) using tseitin
+
+--
+
+!(majorDiagonal#components_2#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__41
+new variables:
+  findAux __41: bool
+new SAT encoding decisions:
+  define(__41 <-> !(majorDiagonal#components_2#int_offset_2)) using tseitin
+
+--
+
+!(majorDiagonal#components_3#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__42
+new variables:
+  findAux __42: bool
+new SAT encoding decisions:
+  define(__42 <-> !(majorDiagonal#components_3#int_offset_2)) using tseitin
+
+--
+
+!(majorDiagonal#components_4#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__43
+new variables:
+  findAux __43: bool
+new SAT encoding decisions:
+  define(__43 <-> !(majorDiagonal#components_4#int_offset_2)) using tseitin
+
+--
+
+!(minorDiagonal#components_1#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__44
+new variables:
+  findAux __44: bool
+new SAT encoding decisions:
+  define(__44 <-> !(minorDiagonal#components_1#int_offset_2)) using tseitin
+
+--
+
+!(minorDiagonal#components_2#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__45
+new variables:
+  findAux __45: bool
+new SAT encoding decisions:
+  define(__45 <-> !(minorDiagonal#components_2#int_offset_2)) using tseitin
+
+--
+
+!(minorDiagonal#components_3#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__46
+new variables:
+  findAux __46: bool
+new SAT encoding decisions:
+  define(__46 <-> !(minorDiagonal#components_3#int_offset_2)) using tseitin
+
+--
+
+!(minorDiagonal#components_4#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__47
+new variables:
+  findAux __47: bool
+new SAT encoding decisions:
+  define(__47 <-> !(minorDiagonal#components_4#int_offset_2)) using tseitin
+
+--
+
+!(majorDiagonal#components_1#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__48
+new variables:
+  findAux __48: bool
+new SAT encoding decisions:
+  define(__48 <-> !(majorDiagonal#components_1#int_offset_1)) using tseitin
+
+--
+
+!(majorDiagonal#components_2#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__49
+new variables:
+  findAux __49: bool
+new SAT encoding decisions:
+  define(__49 <-> !(majorDiagonal#components_2#int_offset_1)) using tseitin
+
+--
+
+!(majorDiagonal#components_3#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__50
+new variables:
+  findAux __50: bool
+new SAT encoding decisions:
+  define(__50 <-> !(majorDiagonal#components_3#int_offset_1)) using tseitin
+
+--
+
+!(majorDiagonal#components_4#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__51
+new variables:
+  findAux __51: bool
+new SAT encoding decisions:
+  define(__51 <-> !(majorDiagonal#components_4#int_offset_1)) using tseitin
+
+--
+
+!(minorDiagonal#components_1#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__52
+new variables:
+  findAux __52: bool
+new SAT encoding decisions:
+  define(__52 <-> !(minorDiagonal#components_1#int_offset_1)) using tseitin
+
+--
+
+!(minorDiagonal#components_2#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__53
+new variables:
+  findAux __53: bool
+new SAT encoding decisions:
+  define(__53 <-> !(minorDiagonal#components_2#int_offset_1)) using tseitin
+
+--
+
+!(minorDiagonal#components_3#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__54
+new variables:
+  findAux __54: bool
+new SAT encoding decisions:
+  define(__54 <-> !(minorDiagonal#components_3#int_offset_1)) using tseitin
+
+--
+
+!(minorDiagonal#components_4#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__55
+new variables:
+  findAux __55: bool
+new SAT encoding decisions:
+  define(__55 <-> !(minorDiagonal#components_4#int_offset_1)) using tseitin
+
+--
+
+or([__32,or([__40,and([__48;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([__32,__40,and([__48;int(1..)]);int(1..)])
+
+--
+
+or([__33,or([__41,and([__49;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([__33,__41,and([__49;int(1..)]);int(1..)])
+
+--
+
+or([__34,or([__42,and([__50;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([__34,__42,and([__50;int(1..)]);int(1..)])
+
+--
+
+or([__35,or([__43,and([__51;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([__35,__43,and([__51;int(1..)]);int(1..)])
+
+--
+
+or([__36,or([__44,and([__52;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([__36,__44,and([__52;int(1..)]);int(1..)])
+
+--
+
+or([__37,or([__45,and([__53;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([__37,__45,and([__53;int(1..)]);int(1..)])
+
+--
+
+or([__38,or([__46,and([__54;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([__38,__46,and([__54;int(1..)]);int(1..)])
+
+--
+
+or([__39,or([__47,and([__55;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([__39,__47,and([__55;int(1..)]);int(1..)])
+
+--
+
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__4,__5;int(1..)])
+
+--
+
+or([and([__6,__7;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__6,__7;int(1..)])
+
+--
+
+or([and([__8,__9;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__8,__9;int(1..)])
+
+--
+
+or([and([__10,__11;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__10,__11;int(1..)])
+
+--
+
+or([and([__12,__13;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__12,__13;int(1..)])
+
+--
+
+or([and([__14,__15;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__14,__15;int(1..)])
+
+--
+
+or([and([__16,__17;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__16,__17;int(1..)])
+
+--
+
+or([and([__18,__19;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__18,__19;int(1..)])
+
+--
+
+or([and([__20,__21;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__20,__21;int(1..)])
+
+--
+
+or([and([__22,__23;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__22,__23;int(1..)])
+
+--
+
+or([and([__24,__25;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__24,__25;int(1..)])
+
+--
+
+or([and([__26,__27;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__26,__27;int(1..)])
+
+--
+
+or([and([__28,__29;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__28,__29;int(1..)])
+
+--
+
+or([and([__30,__31;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__30,__31;int(1..)])
+
+--
+
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
+
+--
+
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__2,__3;int(1..)])
+
+--
+
+and([__48;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__48
+
+--
+
+and([__49;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__49
+
+--
+
+and([__50;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__50
+
+--
+
+and([__51;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__51
+
+--
+
+and([__52;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__52
+
+--
+
+and([__53;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__53
+
+--
+
+and([__54;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__54
+
+--
+
+and([__55;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__55
+
+--
+
+and([__6,__7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__56
+new variables:
+  findAux __56: bool
+new SAT encoding decisions:
+  define(__56 <-> and([__6,__7;int(1..)])) using tseitin
+
+--
+
+and([__8,__9;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__57
+new variables:
+  findAux __57: bool
+new SAT encoding decisions:
+  define(__57 <-> and([__8,__9;int(1..)])) using tseitin
+
+--
+
+and([__10,__11;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__58
+new variables:
+  findAux __58: bool
+new SAT encoding decisions:
+  define(__58 <-> and([__10,__11;int(1..)])) using tseitin
+
+--
+
+and([__12,__13;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__59
+new variables:
+  findAux __59: bool
+new SAT encoding decisions:
+  define(__59 <-> and([__12,__13;int(1..)])) using tseitin
+
+--
+
+and([__14,__15;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__60
+new variables:
+  findAux __60: bool
+new SAT encoding decisions:
+  define(__60 <-> and([__14,__15;int(1..)])) using tseitin
+
+--
+
+and([__16,__17;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__61
+new variables:
+  findAux __61: bool
+new SAT encoding decisions:
+  define(__61 <-> and([__16,__17;int(1..)])) using tseitin
+
+--
+
+and([__18,__19;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__62
+new variables:
+  findAux __62: bool
+new SAT encoding decisions:
+  define(__62 <-> and([__18,__19;int(1..)])) using tseitin
+
+--
+
+and([__20,__21;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__63
+new variables:
+  findAux __63: bool
+new SAT encoding decisions:
+  define(__63 <-> and([__20,__21;int(1..)])) using tseitin
+
+--
+
+and([__22,__23;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__64
+new variables:
+  findAux __64: bool
+new SAT encoding decisions:
+  define(__64 <-> and([__22,__23;int(1..)])) using tseitin
+
+--
+
+and([__24,__25;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__65
+new variables:
+  findAux __65: bool
+new SAT encoding decisions:
+  define(__65 <-> and([__24,__25;int(1..)])) using tseitin
+
+--
+
+and([__26,__27;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__66
+new variables:
+  findAux __66: bool
+new SAT encoding decisions:
+  define(__66 <-> and([__26,__27;int(1..)])) using tseitin
+
+--
+
+and([__28,__29;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__67
+new variables:
+  findAux __67: bool
+new SAT encoding decisions:
+  define(__67 <-> and([__28,__29;int(1..)])) using tseitin
+
+--
+
+and([__30,__31;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__68
+new variables:
+  findAux __68: bool
+new SAT encoding decisions:
+  define(__68 <-> and([__30,__31;int(1..)])) using tseitin
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__69
+new variables:
+  findAux __69: bool
+new SAT encoding decisions:
+  define(__69 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+and([__2,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__70
+new variables:
+  findAux __70: bool
+new SAT encoding decisions:
+  define(__70 <-> and([__2,__3;int(1..)])) using tseitin
+
+--
+
+and([__4,__5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__71
+new variables:
+  findAux __71: bool
+new SAT encoding decisions:
+  define(__71 <-> and([__4,__5;int(1..)])) using tseitin
+
+--
+
+or([__32,__40,__48;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__72
+new variables:
+  findAux __72: bool
+new SAT encoding decisions:
+  define(__72 <-> or([__32,__40,__48;int(1..)])) using tseitin
+
+--
+
+or([__33,__41,__49;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__73
+new variables:
+  findAux __73: bool
+new SAT encoding decisions:
+  define(__73 <-> or([__33,__41,__49;int(1..)])) using tseitin
+
+--
+
+or([__34,__42,__50;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__74
+new variables:
+  findAux __74: bool
+new SAT encoding decisions:
+  define(__74 <-> or([__34,__42,__50;int(1..)])) using tseitin
+
+--
+
+or([__35,__43,__51;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__75
+new variables:
+  findAux __75: bool
+new SAT encoding decisions:
+  define(__75 <-> or([__35,__43,__51;int(1..)])) using tseitin
+
+--
+
+or([__36,__44,__52;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__76
+new variables:
+  findAux __76: bool
+new SAT encoding decisions:
+  define(__76 <-> or([__36,__44,__52;int(1..)])) using tseitin
+
+--
+
+or([__37,__45,__53;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__77
+new variables:
+  findAux __77: bool
+new SAT encoding decisions:
+  define(__77 <-> or([__37,__45,__53;int(1..)])) using tseitin
+
+--
+
+or([__38,__46,__54;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__78
+new variables:
+  findAux __78: bool
+new SAT encoding decisions:
+  define(__78 <-> or([__38,__46,__54;int(1..)])) using tseitin
+
+--
+
+or([__39,__47,__55;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__79
+new variables:
+  findAux __79: bool
+new SAT encoding decisions:
+  define(__79 <-> or([__39,__47,__55;int(1..)])) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+__69,
+true,
+__70,
+true,
+__71,
+true,
+__56,
+true,
+__57,
+true,
+__58,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+__70,
+true,
+__71,
+true,
+__56,
+true,
+__57,
+true,
+__58,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__69) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+__70,
+true,
+__71,
+true,
+__56,
+true,
+__57,
+true,
+__58,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+__71,
+true,
+__56,
+true,
+__57,
+true,
+__58,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__70) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+__71,
+true,
+__56,
+true,
+__57,
+true,
+__58,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+__56,
+true,
+__57,
+true,
+__58,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__71) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+__56,
+true,
+__57,
+true,
+__58,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+__57,
+true,
+__58,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__56) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+__57,
+true,
+__58,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+__58,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__57) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+__58,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__58) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__59,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__59) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__60,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__60) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__72,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__72) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__61,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__61) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__73,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__73) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__62,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__62) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__74,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__74) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__63,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__63) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__75,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__75) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__64,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__64) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__76,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__76) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__65,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__65) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__77,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__66,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__77) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__66,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__78,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__66) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__78,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__67,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__78) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__67,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__79,
+__68
+new SAT encoding decisions:
+  assert(__67) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__79,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__68
+new SAT encoding decisions:
+  assert(__79) using tseitin
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__68
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(row),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__68) using tseitin
+
+--
+
+allDifferent(row)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([row#components_1,row#components_2,row#components_3,row#components_4,row#components_5,row#components_6,row#components_7,row#components_8;int(0..7)])
+
+--
+
+row#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_1
+
+--
+
+row#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_2
+
+--
+
+row#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_3
+
+--
+
+row#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_4
+
+--
+
+row#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_5
+
+--
+
+row#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_6
+
+--
+
+row#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_7
+
+--
+
+row#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_8
+
+--
+
+allDifferent([row#components_1,row#components_2,row#components_3,row#components_4,row#components_5,row#components_6,row#components_7,row#components_8;int(0..7)])
+   ~~> select_alldifferent ([("SAT", 18500)])
+__80
+new variables:
+  findAux __80: bool
+new SAT encoding decisions:
+  define(__80 <-> allDifferent(0+weighted(1*row#components_1#int_offset_1, 2*row#components_1#int_offset_2, 4*row#components_1#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_2#int_offset_1, 2*row#components_2#int_offset_2, 4*row#components_2#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_3#int_offset_1, 2*row#components_3#int_offset_2, 4*row#components_3#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_4#int_offset_1, 2*row#components_4#int_offset_2, 4*row#components_4#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_5#int_offset_1, 2*row#components_5#int_offset_2, 4*row#components_5#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_6#int_offset_1, 2*row#components_6#int_offset_2, 4*row#components_6#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_7#int_offset_1, 2*row#components_7#int_offset_2, 4*row#components_7#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_8#int_offset_1, 2*row#components_8#int_offset_2, 4*row#components_8#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }])) using None, AMO None, PB None
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+__80,
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(majorDiagonal),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__80) using tseitin
+
+--
+
+allDifferent(majorDiagonal)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([majorDiagonal#components_1,majorDiagonal#components_2,majorDiagonal#components_3,majorDiagonal#components_4;int(0..3)])
+
+--
+
+majorDiagonal#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+majorDiagonal#components_1
+
+--
+
+majorDiagonal#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+majorDiagonal#components_2
+
+--
+
+majorDiagonal#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+majorDiagonal#components_3
+
+--
+
+majorDiagonal#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+majorDiagonal#components_4
+
+--
+
+allDifferent([majorDiagonal#components_1,majorDiagonal#components_2,majorDiagonal#components_3,majorDiagonal#components_4;int(0..3)])
+   ~~> select_alldifferent ([("SAT", 18500)])
+__81
+new variables:
+  findAux __81: bool
+new SAT encoding decisions:
+  define(__81 <-> allDifferent(0+weighted(1*majorDiagonal#components_1#int_offset_1, 2*majorDiagonal#components_1#int_offset_2, 4*majorDiagonal#components_1#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }], 0+weighted(1*majorDiagonal#components_2#int_offset_1, 2*majorDiagonal#components_2#int_offset_2, 4*majorDiagonal#components_2#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }], 0+weighted(1*majorDiagonal#components_3#int_offset_1, 2*majorDiagonal#components_3#int_offset_2, 4*majorDiagonal#components_3#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }], 0+weighted(1*majorDiagonal#components_4#int_offset_1, 2*majorDiagonal#components_4#int_offset_2, 4*majorDiagonal#components_4#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }])) using None, AMO None, PB None
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+__81,
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+allDifferent(minorDiagonal),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__81) using tseitin
+
+--
+
+allDifferent(minorDiagonal)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([minorDiagonal#components_1,minorDiagonal#components_2,minorDiagonal#components_3,minorDiagonal#components_4;int(0..3)])
+
+--
+
+minorDiagonal#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+minorDiagonal#components_1
+
+--
+
+minorDiagonal#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+minorDiagonal#components_2
+
+--
+
+minorDiagonal#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+minorDiagonal#components_3
+
+--
+
+minorDiagonal#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+minorDiagonal#components_4
+
+--
+
+allDifferent([minorDiagonal#components_1,minorDiagonal#components_2,minorDiagonal#components_3,minorDiagonal#components_4;int(0..3)])
+   ~~> select_alldifferent ([("SAT", 18500)])
+__82
+new variables:
+  findAux __82: bool
+new SAT encoding decisions:
+  define(__82 <-> allDifferent(-3+weighted(1*minorDiagonal#components_1#int_offset_1, 2*minorDiagonal#components_1#int_offset_2, 4*minorDiagonal#components_1#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }], -3+weighted(1*minorDiagonal#components_2#int_offset_1, 2*minorDiagonal#components_2#int_offset_2, 4*minorDiagonal#components_2#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }], -3+weighted(1*minorDiagonal#components_3#int_offset_1, 2*minorDiagonal#components_3#int_offset_2, 4*minorDiagonal#components_3#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }], -3+weighted(1*minorDiagonal#components_4#int_offset_1, 2*minorDiagonal#components_4#int_offset_2, 4*minorDiagonal#components_4#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }])) using None, AMO None, PB None
+
+--
+
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+__82,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__82) using tseitin
+
+--
+
+[ and([majorDiagonal[queen] = sum([queen,row[queen];int(1..)]),minorDiagonal[queen] = (queen - row[queen]);int(1..2)]) | queen : int(0..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[and([majorDiagonal#components_1 = sum([0,row#components_1;int(1..)]),minorDiagonal#components_1 = (0 - row#components_1);int(1..2)]),and([majorDiagonal#components_2 = sum([1,row#components_2;int(1..)]),minorDiagonal#components_2 = (1 - row#components_2);int(1..2)]),and([majorDiagonal#components_3 = sum([2,row#components_3;int(1..)]),minorDiagonal#components_3 = (2 - row#components_3);int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]
+
+--
+
+majorDiagonal#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+majorDiagonal#components_1
+
+--
+
+minorDiagonal#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+minorDiagonal#components_1
+
+--
+
+majorDiagonal#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+majorDiagonal#components_2
+
+--
+
+minorDiagonal#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+minorDiagonal#components_2
+
+--
+
+majorDiagonal#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+majorDiagonal#components_3
+
+--
+
+minorDiagonal#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+minorDiagonal#components_3
+
+--
+
+majorDiagonal#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+majorDiagonal#components_4
+
+--
+
+minorDiagonal#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+minorDiagonal#components_4
+
+--
+
+row#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_1
+
+--
+
+row#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_2
+
+--
+
+row#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_3
+
+--
+
+row#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_4
+
+--
+
+row#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_1
+
+--
+
+row#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_2
+
+--
+
+row#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_3
+
+--
+
+row#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+row#components_4
+
+--
+
+and([and([majorDiagonal#components_1 = sum([0,row#components_1;int(1..)]),minorDiagonal#components_1 = (0 - row#components_1);int(1..2)]),and([majorDiagonal#components_2 = sum([1,row#components_2;int(1..)]),minorDiagonal#components_2 = (1 - row#components_2);int(1..2)]),and([majorDiagonal#components_3 = sum([2,row#components_3;int(1..)]),minorDiagonal#components_3 = (2 - row#components_3);int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+and([and([true,minorDiagonal#components_1 = (0 - row#components_1);int(1..2)]),and([majorDiagonal#components_2 = sum([1,row#components_2;int(1..)]),minorDiagonal#components_2 = (1 - row#components_2);int(1..2)]),and([majorDiagonal#components_3 = sum([2,row#components_3;int(1..)]),minorDiagonal#components_3 = (2 - row#components_3);int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  weighted(1*majorDiagonal#components_1#int_offset_1, 2*majorDiagonal#components_1#int_offset_2, 4*majorDiagonal#components_1#int_offset_3, -1*row#components_1#int_offset_1, -2*row#components_1#int_offset_2, -4*row#components_1#int_offset_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+and([and([true,minorDiagonal#components_1 = (0 - row#components_1);int(1..2)]),and([majorDiagonal#components_2 = sum([1,row#components_2;int(1..)]),minorDiagonal#components_2 = (1 - row#components_2);int(1..2)]),and([majorDiagonal#components_3 = sum([2,row#components_3;int(1..)]),minorDiagonal#components_3 = (2 - row#components_3);int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+and([and([true,true;int(1..2)]),and([majorDiagonal#components_2 = sum([1,row#components_2;int(1..)]),minorDiagonal#components_2 = (1 - row#components_2);int(1..2)]),and([majorDiagonal#components_3 = sum([2,row#components_3;int(1..)]),minorDiagonal#components_3 = (2 - row#components_3);int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  weighted(1*minorDiagonal#components_1#int_offset_1, 2*minorDiagonal#components_1#int_offset_2, 4*minorDiagonal#components_1#int_offset_3, 1*row#components_1#int_offset_1, 2*row#components_1#int_offset_2, 4*row#components_1#int_offset_3) Exactly 3 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+and([and([majorDiagonal#components_2 = sum([1,row#components_2;int(1..)]),minorDiagonal#components_2 = (1 - row#components_2);int(1..2)]),and([majorDiagonal#components_3 = sum([2,row#components_3;int(1..)]),minorDiagonal#components_3 = (2 - row#components_3);int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+and([and([true,minorDiagonal#components_2 = (1 - row#components_2);int(1..2)]),and([majorDiagonal#components_3 = sum([2,row#components_3;int(1..)]),minorDiagonal#components_3 = (2 - row#components_3);int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  weighted(1*majorDiagonal#components_2#int_offset_1, 2*majorDiagonal#components_2#int_offset_2, 4*majorDiagonal#components_2#int_offset_3, -1*row#components_2#int_offset_1, -2*row#components_2#int_offset_2, -4*row#components_2#int_offset_3) Exactly 1 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+and([and([true,minorDiagonal#components_2 = (1 - row#components_2);int(1..2)]),and([majorDiagonal#components_3 = sum([2,row#components_3;int(1..)]),minorDiagonal#components_3 = (2 - row#components_3);int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+and([and([true,true;int(1..2)]),and([majorDiagonal#components_3 = sum([2,row#components_3;int(1..)]),minorDiagonal#components_3 = (2 - row#components_3);int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  weighted(1*minorDiagonal#components_2#int_offset_1, 2*minorDiagonal#components_2#int_offset_2, 4*minorDiagonal#components_2#int_offset_3, 1*row#components_2#int_offset_1, 2*row#components_2#int_offset_2, 4*row#components_2#int_offset_3) Exactly 4 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+and([and([majorDiagonal#components_3 = sum([2,row#components_3;int(1..)]),minorDiagonal#components_3 = (2 - row#components_3);int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+and([and([true,minorDiagonal#components_3 = (2 - row#components_3);int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  weighted(1*majorDiagonal#components_3#int_offset_1, 2*majorDiagonal#components_3#int_offset_2, 4*majorDiagonal#components_3#int_offset_3, -1*row#components_3#int_offset_1, -2*row#components_3#int_offset_2, -4*row#components_3#int_offset_3) Exactly 2 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+and([and([true,minorDiagonal#components_3 = (2 - row#components_3);int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+and([and([true,true;int(1..2)]),and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  weighted(1*minorDiagonal#components_3#int_offset_1, 2*minorDiagonal#components_3#int_offset_2, 4*minorDiagonal#components_3#int_offset_3, 1*row#components_3#int_offset_1, 2*row#components_3#int_offset_2, 4*row#components_3#int_offset_3) Exactly 5 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+and([and([majorDiagonal#components_4 = sum([3,row#components_4;int(1..)]),minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+and([and([true,minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  weighted(1*majorDiagonal#components_4#int_offset_1, 2*majorDiagonal#components_4#int_offset_2, 4*majorDiagonal#components_4#int_offset_3, -1*row#components_4#int_offset_1, -2*row#components_4#int_offset_2, -4*row#components_4#int_offset_3) Exactly 3 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+and([and([true,minorDiagonal#components_4 = (3 - row#components_4);int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+and([and([true,true;int(1..2)]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  weighted(1*minorDiagonal#components_4#int_offset_1, 2*minorDiagonal#components_4#int_offset_2, 4*minorDiagonal#components_4#int_offset_3, 1*row#components_4#int_offset_1, 2*row#components_4#int_offset_2, 4*row#components_4#int_offset_3) Exactly 6 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+Final model:
+
+find row: matrix indexed by [int(0..7)] of int(0..7)
+find minorDiagonal: matrix indexed by [int(0..3)] of int(-3..3)
+find majorDiagonal: matrix indexed by [int(0..3)] of int(0..6)
+find row#components_1: int(0..7)
+find row#components_2: int(0..7)
+find row#components_3: int(0..7)
+find row#components_4: int(0..7)
+find row#components_5: int(0..7)
+find row#components_6: int(0..7)
+find row#components_7: int(0..7)
+find row#components_8: int(0..7)
+find majorDiagonal#components_1: int(0..6)
+find majorDiagonal#components_2: int(0..6)
+find majorDiagonal#components_3: int(0..6)
+find majorDiagonal#components_4: int(0..6)
+find minorDiagonal#components_1: int(-3..3)
+find minorDiagonal#components_2: int(-3..3)
+find minorDiagonal#components_3: int(-3..3)
+find minorDiagonal#components_4: int(-3..3)
+find row#components_1#int_offset_1: bool
+find row#components_1#int_offset_2: bool
+find row#components_1#int_offset_3: bool
+find row#components_2#int_offset_1: bool
+find row#components_2#int_offset_2: bool
+find row#components_2#int_offset_3: bool
+find row#components_3#int_offset_1: bool
+find row#components_3#int_offset_2: bool
+find row#components_3#int_offset_3: bool
+find row#components_4#int_offset_1: bool
+find row#components_4#int_offset_2: bool
+find row#components_4#int_offset_3: bool
+find row#components_5#int_offset_1: bool
+find row#components_5#int_offset_2: bool
+find row#components_5#int_offset_3: bool
+find row#components_6#int_offset_1: bool
+find row#components_6#int_offset_2: bool
+find row#components_6#int_offset_3: bool
+find row#components_7#int_offset_1: bool
+find row#components_7#int_offset_2: bool
+find row#components_7#int_offset_3: bool
+find row#components_8#int_offset_1: bool
+find row#components_8#int_offset_2: bool
+find row#components_8#int_offset_3: bool
+find majorDiagonal#components_1#int_offset_1: bool
+find majorDiagonal#components_1#int_offset_2: bool
+find majorDiagonal#components_1#int_offset_3: bool
+find majorDiagonal#components_2#int_offset_1: bool
+find majorDiagonal#components_2#int_offset_2: bool
+find majorDiagonal#components_2#int_offset_3: bool
+find majorDiagonal#components_3#int_offset_1: bool
+find majorDiagonal#components_3#int_offset_2: bool
+find majorDiagonal#components_3#int_offset_3: bool
+find majorDiagonal#components_4#int_offset_1: bool
+find majorDiagonal#components_4#int_offset_2: bool
+find majorDiagonal#components_4#int_offset_3: bool
+find minorDiagonal#components_1#int_offset_1: bool
+find minorDiagonal#components_1#int_offset_2: bool
+find minorDiagonal#components_1#int_offset_3: bool
+find minorDiagonal#components_2#int_offset_1: bool
+find minorDiagonal#components_2#int_offset_2: bool
+find minorDiagonal#components_2#int_offset_3: bool
+find minorDiagonal#components_3#int_offset_1: bool
+find minorDiagonal#components_3#int_offset_2: bool
+find minorDiagonal#components_3#int_offset_3: bool
+find minorDiagonal#components_4#int_offset_1: bool
+find minorDiagonal#components_4#int_offset_2: bool
+find minorDiagonal#components_4#int_offset_3: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: bool
+findAux __57: bool
+findAux __58: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+findAux __65: bool
+findAux __66: bool
+findAux __67: bool
+findAux __68: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+
+such that
+
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*row#components_1#int_offset_1, 2*row#components_1#int_offset_2, 4*row#components_1#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__1 <-> integer-weighted(1*row#components_1#int_offset_1, 2*row#components_1#int_offset_2, 4*row#components_1#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__2 <-> integer-weighted(1*row#components_2#int_offset_1, 2*row#components_2#int_offset_2, 4*row#components_2#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__3 <-> integer-weighted(1*row#components_2#int_offset_1, 2*row#components_2#int_offset_2, 4*row#components_2#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__4 <-> integer-weighted(1*row#components_3#int_offset_1, 2*row#components_3#int_offset_2, 4*row#components_3#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__5 <-> integer-weighted(1*row#components_3#int_offset_1, 2*row#components_3#int_offset_2, 4*row#components_3#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__6 <-> integer-weighted(1*row#components_4#int_offset_1, 2*row#components_4#int_offset_2, 4*row#components_4#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__7 <-> integer-weighted(1*row#components_4#int_offset_1, 2*row#components_4#int_offset_2, 4*row#components_4#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__8 <-> integer-weighted(1*row#components_5#int_offset_1, 2*row#components_5#int_offset_2, 4*row#components_5#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__9 <-> integer-weighted(1*row#components_5#int_offset_1, 2*row#components_5#int_offset_2, 4*row#components_5#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__10 <-> integer-weighted(1*row#components_6#int_offset_1, 2*row#components_6#int_offset_2, 4*row#components_6#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__11 <-> integer-weighted(1*row#components_6#int_offset_1, 2*row#components_6#int_offset_2, 4*row#components_6#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__12 <-> integer-weighted(1*row#components_7#int_offset_1, 2*row#components_7#int_offset_2, 4*row#components_7#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__13 <-> integer-weighted(1*row#components_7#int_offset_1, 2*row#components_7#int_offset_2, 4*row#components_7#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__14 <-> integer-weighted(1*row#components_8#int_offset_1, 2*row#components_8#int_offset_2, 4*row#components_8#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__15 <-> integer-weighted(1*row#components_8#int_offset_1, 2*row#components_8#int_offset_2, 4*row#components_8#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__16 <-> integer-weighted(1*majorDiagonal#components_1#int_offset_1, 2*majorDiagonal#components_1#int_offset_2, 4*majorDiagonal#components_1#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__17 <-> integer-weighted(1*majorDiagonal#components_1#int_offset_1, 2*majorDiagonal#components_1#int_offset_2, 4*majorDiagonal#components_1#int_offset_3) LessEqual 6) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__18 <-> integer-weighted(1*majorDiagonal#components_2#int_offset_1, 2*majorDiagonal#components_2#int_offset_2, 4*majorDiagonal#components_2#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__19 <-> integer-weighted(1*majorDiagonal#components_2#int_offset_1, 2*majorDiagonal#components_2#int_offset_2, 4*majorDiagonal#components_2#int_offset_3) LessEqual 6) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__20 <-> integer-weighted(1*majorDiagonal#components_3#int_offset_1, 2*majorDiagonal#components_3#int_offset_2, 4*majorDiagonal#components_3#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__21 <-> integer-weighted(1*majorDiagonal#components_3#int_offset_1, 2*majorDiagonal#components_3#int_offset_2, 4*majorDiagonal#components_3#int_offset_3) LessEqual 6) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__22 <-> integer-weighted(1*majorDiagonal#components_4#int_offset_1, 2*majorDiagonal#components_4#int_offset_2, 4*majorDiagonal#components_4#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__23 <-> integer-weighted(1*majorDiagonal#components_4#int_offset_1, 2*majorDiagonal#components_4#int_offset_2, 4*majorDiagonal#components_4#int_offset_3) LessEqual 6) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__24 <-> integer-weighted(1*minorDiagonal#components_1#int_offset_1, 2*minorDiagonal#components_1#int_offset_2, 4*minorDiagonal#components_1#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__25 <-> integer-weighted(1*minorDiagonal#components_1#int_offset_1, 2*minorDiagonal#components_1#int_offset_2, 4*minorDiagonal#components_1#int_offset_3) LessEqual 6) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__26 <-> integer-weighted(1*minorDiagonal#components_2#int_offset_1, 2*minorDiagonal#components_2#int_offset_2, 4*minorDiagonal#components_2#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__27 <-> integer-weighted(1*minorDiagonal#components_2#int_offset_1, 2*minorDiagonal#components_2#int_offset_2, 4*minorDiagonal#components_2#int_offset_3) LessEqual 6) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__28 <-> integer-weighted(1*minorDiagonal#components_3#int_offset_1, 2*minorDiagonal#components_3#int_offset_2, 4*minorDiagonal#components_3#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__29 <-> integer-weighted(1*minorDiagonal#components_3#int_offset_1, 2*minorDiagonal#components_3#int_offset_2, 4*minorDiagonal#components_3#int_offset_3) LessEqual 6) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__30 <-> integer-weighted(1*minorDiagonal#components_4#int_offset_1, 2*minorDiagonal#components_4#int_offset_2, 4*minorDiagonal#components_4#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__31 <-> integer-weighted(1*minorDiagonal#components_4#int_offset_1, 2*minorDiagonal#components_4#int_offset_2, 4*minorDiagonal#components_4#int_offset_3) LessEqual 6) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }],
+define(__32 <-> !(majorDiagonal#components_1#int_offset_3)) using tseitin,
+define(__33 <-> !(majorDiagonal#components_2#int_offset_3)) using tseitin,
+define(__34 <-> !(majorDiagonal#components_3#int_offset_3)) using tseitin,
+define(__35 <-> !(majorDiagonal#components_4#int_offset_3)) using tseitin,
+define(__36 <-> !(minorDiagonal#components_1#int_offset_3)) using tseitin,
+define(__37 <-> !(minorDiagonal#components_2#int_offset_3)) using tseitin,
+define(__38 <-> !(minorDiagonal#components_3#int_offset_3)) using tseitin,
+define(__39 <-> !(minorDiagonal#components_4#int_offset_3)) using tseitin,
+define(__40 <-> !(majorDiagonal#components_1#int_offset_2)) using tseitin,
+define(__41 <-> !(majorDiagonal#components_2#int_offset_2)) using tseitin,
+define(__42 <-> !(majorDiagonal#components_3#int_offset_2)) using tseitin,
+define(__43 <-> !(majorDiagonal#components_4#int_offset_2)) using tseitin,
+define(__44 <-> !(minorDiagonal#components_1#int_offset_2)) using tseitin,
+define(__45 <-> !(minorDiagonal#components_2#int_offset_2)) using tseitin,
+define(__46 <-> !(minorDiagonal#components_3#int_offset_2)) using tseitin,
+define(__47 <-> !(minorDiagonal#components_4#int_offset_2)) using tseitin,
+define(__48 <-> !(majorDiagonal#components_1#int_offset_1)) using tseitin,
+define(__49 <-> !(majorDiagonal#components_2#int_offset_1)) using tseitin,
+define(__50 <-> !(majorDiagonal#components_3#int_offset_1)) using tseitin,
+define(__51 <-> !(majorDiagonal#components_4#int_offset_1)) using tseitin,
+define(__52 <-> !(minorDiagonal#components_1#int_offset_1)) using tseitin,
+define(__53 <-> !(minorDiagonal#components_2#int_offset_1)) using tseitin,
+define(__54 <-> !(minorDiagonal#components_3#int_offset_1)) using tseitin,
+define(__55 <-> !(minorDiagonal#components_4#int_offset_1)) using tseitin,
+define(__56 <-> and([__6,__7;int(1..)])) using tseitin,
+define(__57 <-> and([__8,__9;int(1..)])) using tseitin,
+define(__58 <-> and([__10,__11;int(1..)])) using tseitin,
+define(__59 <-> and([__12,__13;int(1..)])) using tseitin,
+define(__60 <-> and([__14,__15;int(1..)])) using tseitin,
+define(__61 <-> and([__16,__17;int(1..)])) using tseitin,
+define(__62 <-> and([__18,__19;int(1..)])) using tseitin,
+define(__63 <-> and([__20,__21;int(1..)])) using tseitin,
+define(__64 <-> and([__22,__23;int(1..)])) using tseitin,
+define(__65 <-> and([__24,__25;int(1..)])) using tseitin,
+define(__66 <-> and([__26,__27;int(1..)])) using tseitin,
+define(__67 <-> and([__28,__29;int(1..)])) using tseitin,
+define(__68 <-> and([__30,__31;int(1..)])) using tseitin,
+define(__69 <-> and([__0,__1;int(1..)])) using tseitin,
+define(__70 <-> and([__2,__3;int(1..)])) using tseitin,
+define(__71 <-> and([__4,__5;int(1..)])) using tseitin,
+define(__72 <-> or([__32,__40,__48;int(1..)])) using tseitin,
+define(__73 <-> or([__33,__41,__49;int(1..)])) using tseitin,
+define(__74 <-> or([__34,__42,__50;int(1..)])) using tseitin,
+define(__75 <-> or([__35,__43,__51;int(1..)])) using tseitin,
+define(__76 <-> or([__36,__44,__52;int(1..)])) using tseitin,
+define(__77 <-> or([__37,__45,__53;int(1..)])) using tseitin,
+define(__78 <-> or([__38,__46,__54;int(1..)])) using tseitin,
+define(__79 <-> or([__39,__47,__55;int(1..)])) using tseitin,
+assert(__69) using tseitin,
+assert(__70) using tseitin,
+assert(__71) using tseitin,
+assert(__56) using tseitin,
+assert(__57) using tseitin,
+assert(__58) using tseitin,
+assert(__59) using tseitin,
+assert(__60) using tseitin,
+assert(__72) using tseitin,
+assert(__61) using tseitin,
+assert(__73) using tseitin,
+assert(__62) using tseitin,
+assert(__74) using tseitin,
+assert(__63) using tseitin,
+assert(__75) using tseitin,
+assert(__64) using tseitin,
+assert(__76) using tseitin,
+assert(__65) using tseitin,
+assert(__77) using tseitin,
+assert(__66) using tseitin,
+assert(__78) using tseitin,
+assert(__67) using tseitin,
+assert(__79) using tseitin,
+assert(__68) using tseitin,
+define(__80 <-> allDifferent(0+weighted(1*row#components_1#int_offset_1, 2*row#components_1#int_offset_2, 4*row#components_1#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_2#int_offset_1, 2*row#components_2#int_offset_2, 4*row#components_2#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_3#int_offset_1, 2*row#components_3#int_offset_2, 4*row#components_3#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_4#int_offset_1, 2*row#components_4#int_offset_2, 4*row#components_4#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_5#int_offset_1, 2*row#components_5#int_offset_2, 4*row#components_5#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_6#int_offset_1, 2*row#components_6#int_offset_2, 4*row#components_6#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_7#int_offset_1, 2*row#components_7#int_offset_2, 4*row#components_7#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*row#components_8#int_offset_1, 2*row#components_8#int_offset_2, 4*row#components_8#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
+assert(__80) using tseitin,
+define(__81 <-> allDifferent(0+weighted(1*majorDiagonal#components_1#int_offset_1, 2*majorDiagonal#components_1#int_offset_2, 4*majorDiagonal#components_1#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }], 0+weighted(1*majorDiagonal#components_2#int_offset_1, 2*majorDiagonal#components_2#int_offset_2, 4*majorDiagonal#components_2#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }], 0+weighted(1*majorDiagonal#components_3#int_offset_1, 2*majorDiagonal#components_3#int_offset_2, 4*majorDiagonal#components_3#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }], 0+weighted(1*majorDiagonal#components_4#int_offset_1, 2*majorDiagonal#components_4#int_offset_2, 4*majorDiagonal#components_4#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
+assert(__81) using tseitin,
+define(__82 <-> allDifferent(-3+weighted(1*minorDiagonal#components_1#int_offset_1, 2*minorDiagonal#components_1#int_offset_2, 4*minorDiagonal#components_1#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }], -3+weighted(1*minorDiagonal#components_2#int_offset_1, 2*minorDiagonal#components_2#int_offset_2, 4*minorDiagonal#components_2#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }], -3+weighted(1*minorDiagonal#components_3#int_offset_1, 2*minorDiagonal#components_3#int_offset_2, 4*minorDiagonal#components_3#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }], -3+weighted(1*minorDiagonal#components_4#int_offset_1, 2*minorDiagonal#components_4#int_offset_2, 4*minorDiagonal#components_4#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
+assert(__82) using tseitin,
+weighted(1*majorDiagonal#components_1#int_offset_1, 2*majorDiagonal#components_1#int_offset_2, 4*majorDiagonal#components_1#int_offset_3, -1*row#components_1#int_offset_1, -2*row#components_1#int_offset_2, -4*row#components_1#int_offset_3) Exactly 0 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+weighted(1*minorDiagonal#components_1#int_offset_1, 2*minorDiagonal#components_1#int_offset_2, 4*minorDiagonal#components_1#int_offset_3, 1*row#components_1#int_offset_1, 2*row#components_1#int_offset_2, 4*row#components_1#int_offset_3) Exactly 3 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 7 } }],
+weighted(1*majorDiagonal#components_2#int_offset_1, 2*majorDiagonal#components_2#int_offset_2, 4*majorDiagonal#components_2#int_offset_3, -1*row#components_2#int_offset_1, -2*row#components_2#int_offset_2, -4*row#components_2#int_offset_3) Exactly 1 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+weighted(1*minorDiagonal#components_2#int_offset_1, 2*minorDiagonal#components_2#int_offset_2, 4*minorDiagonal#components_2#int_offset_3, 1*row#components_2#int_offset_1, 2*row#components_2#int_offset_2, 4*row#components_2#int_offset_3) Exactly 4 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 7 } }],
+weighted(1*majorDiagonal#components_3#int_offset_1, 2*majorDiagonal#components_3#int_offset_2, 4*majorDiagonal#components_3#int_offset_3, -1*row#components_3#int_offset_1, -2*row#components_3#int_offset_2, -4*row#components_3#int_offset_3) Exactly 2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+weighted(1*minorDiagonal#components_3#int_offset_1, 2*minorDiagonal#components_3#int_offset_2, 4*minorDiagonal#components_3#int_offset_3, 1*row#components_3#int_offset_1, 2*row#components_3#int_offset_2, 4*row#components_3#int_offset_3) Exactly 5 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 7 } }],
+weighted(1*majorDiagonal#components_4#int_offset_1, 2*majorDiagonal#components_4#int_offset_2, 4*majorDiagonal#components_4#int_offset_3, -1*row#components_4#int_offset_1, -2*row#components_4#int_offset_2, -4*row#components_4#int_offset_3) Exactly 3 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+weighted(1*minorDiagonal#components_4#int_offset_1, 2*minorDiagonal#components_4#int_offset_2, 4*minorDiagonal#components_4#int_offset_3, 1*row#components_4#int_offset_1, 2*row#components_4#int_offset_2, 4*row#components_4#int_offset_3) Exactly 6 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 6 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 7 } }]
+

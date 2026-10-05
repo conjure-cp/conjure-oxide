@@ -1,0 +1,2307 @@
+Model before rewriting:
+
+letting n be 8
+letting AMOUNT_QUEENS be domain int(0..((n - 1)))
+find queens: matrix indexed by [AMOUNT_QUEENS] of AMOUNT_QUEENS
+
+such that
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0
+
+--
+
+queens
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens
+new variables:
+  find queens#components_1: int(0..7)
+  find queens#components_2: int(0..7)
+  find queens#components_3: int(0..7)
+  find queens#components_4: int(0..7)
+  find queens#components_5: int(0..7)
+  find queens#components_6: int(0..7)
+  find queens#components_7: int(0..7)
+  find queens#components_8: int(0..7)
+
+--
+
+queens
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens
+
+--
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0
+new variables:
+  find queens#components_1#int_offset_1: bool
+  find queens#components_1#int_offset_2: bool
+  find queens#components_1#int_offset_3: bool
+  find queens#components_2#int_offset_1: bool
+  find queens#components_2#int_offset_2: bool
+  find queens#components_2#int_offset_3: bool
+  find queens#components_3#int_offset_1: bool
+  find queens#components_3#int_offset_2: bool
+  find queens#components_3#int_offset_3: bool
+  find queens#components_4#int_offset_1: bool
+  find queens#components_4#int_offset_2: bool
+  find queens#components_4#int_offset_3: bool
+  find queens#components_5#int_offset_1: bool
+  find queens#components_5#int_offset_2: bool
+  find queens#components_5#int_offset_3: bool
+  find queens#components_6#int_offset_1: bool
+  find queens#components_6#int_offset_2: bool
+  find queens#components_6#int_offset_3: bool
+  find queens#components_7#int_offset_1: bool
+  find queens#components_7#int_offset_2: bool
+  find queens#components_7#int_offset_3: bool
+  find queens#components_8#int_offset_1: bool
+  find queens#components_8#int_offset_2: bool
+  find queens#components_8#int_offset_3: bool
+new constraints:
+  or([!(queens#components_1#int_offset_3),or([!(queens#components_1#int_offset_2),or([!(queens#components_1#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [queens#components_1#int_offset_1,queens#components_1#int_offset_2,queens#components_1#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [queens#components_1#int_offset_1,queens#components_1#int_offset_2,queens#components_1#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(queens#components_2#int_offset_3),or([!(queens#components_2#int_offset_2),or([!(queens#components_2#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [queens#components_2#int_offset_1,queens#components_2#int_offset_2,queens#components_2#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [queens#components_2#int_offset_1,queens#components_2#int_offset_2,queens#components_2#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(queens#components_3#int_offset_3),or([!(queens#components_3#int_offset_2),or([!(queens#components_3#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [queens#components_3#int_offset_1,queens#components_3#int_offset_2,queens#components_3#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [queens#components_3#int_offset_1,queens#components_3#int_offset_2,queens#components_3#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(queens#components_4#int_offset_3),or([!(queens#components_4#int_offset_2),or([!(queens#components_4#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [queens#components_4#int_offset_1,queens#components_4#int_offset_2,queens#components_4#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [queens#components_4#int_offset_1,queens#components_4#int_offset_2,queens#components_4#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(queens#components_5#int_offset_3),or([!(queens#components_5#int_offset_2),or([!(queens#components_5#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [queens#components_5#int_offset_1,queens#components_5#int_offset_2,queens#components_5#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [queens#components_5#int_offset_1,queens#components_5#int_offset_2,queens#components_5#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(queens#components_6#int_offset_3),or([!(queens#components_6#int_offset_2),or([!(queens#components_6#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [queens#components_6#int_offset_1,queens#components_6#int_offset_2,queens#components_6#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [queens#components_6#int_offset_1,queens#components_6#int_offset_2,queens#components_6#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(queens#components_7#int_offset_3),or([!(queens#components_7#int_offset_2),or([!(queens#components_7#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [queens#components_7#int_offset_1,queens#components_7#int_offset_2,queens#components_7#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [queens#components_7#int_offset_1,queens#components_7#int_offset_2,queens#components_7#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+  or([!(queens#components_8#int_offset_3),or([!(queens#components_8#int_offset_2),or([!(queens#components_8#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [queens#components_8#int_offset_1,queens#components_8#int_offset_2,queens#components_8#int_offset_3;int(1..)] [0, 7]) >= 0,SATInt(Offset, [queens#components_8#int_offset_1,queens#components_8#int_offset_2,queens#components_8#int_offset_3;int(1..)] [0, 7]) <= 7;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [queens#components_1#int_offset_1,queens#components_1#int_offset_2,queens#components_1#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*queens#components_1#int_offset_1, 2*queens#components_1#int_offset_2, 4*queens#components_1#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_1#int_offset_1,queens#components_1#int_offset_2,queens#components_1#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*queens#components_1#int_offset_1, 2*queens#components_1#int_offset_2, 4*queens#components_1#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_2#int_offset_1,queens#components_2#int_offset_2,queens#components_2#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*queens#components_2#int_offset_1, 2*queens#components_2#int_offset_2, 4*queens#components_2#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_2#int_offset_1,queens#components_2#int_offset_2,queens#components_2#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*queens#components_2#int_offset_1, 2*queens#components_2#int_offset_2, 4*queens#components_2#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_3#int_offset_1,queens#components_3#int_offset_2,queens#components_3#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_3#int_offset_1,queens#components_3#int_offset_2,queens#components_3#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_4#int_offset_1,queens#components_4#int_offset_2,queens#components_4#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_4#int_offset_1,queens#components_4#int_offset_2,queens#components_4#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_5#int_offset_1,queens#components_5#int_offset_2,queens#components_5#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_5#int_offset_1,queens#components_5#int_offset_2,queens#components_5#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_6#int_offset_1,queens#components_6#int_offset_2,queens#components_6#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_6#int_offset_1,queens#components_6#int_offset_2,queens#components_6#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_7#int_offset_1,queens#components_7#int_offset_2,queens#components_7#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_7#int_offset_1,queens#components_7#int_offset_2,queens#components_7#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_8#int_offset_1,queens#components_8#int_offset_2,queens#components_8#int_offset_3;int(1..)] [0, 7]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+SATInt(Offset, [queens#components_8#int_offset_1,queens#components_8#int_offset_2,queens#components_8#int_offset_3;int(1..)] [0, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3) LessEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
+
+--
+
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__2,__3;int(1..)])
+
+--
+
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__4,__5;int(1..)])
+
+--
+
+or([and([__6,__7;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__6,__7;int(1..)])
+
+--
+
+or([and([__8,__9;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__8,__9;int(1..)])
+
+--
+
+or([and([__10,__11;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__10,__11;int(1..)])
+
+--
+
+or([and([__12,__13;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__12,__13;int(1..)])
+
+--
+
+or([and([__14,__15;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__14,__15;int(1..)])
+
+--
+
+and([__2,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> and([__2,__3;int(1..)])) using tseitin
+
+--
+
+and([__4,__5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> and([__4,__5;int(1..)])) using tseitin
+
+--
+
+and([__6,__7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> and([__6,__7;int(1..)])) using tseitin
+
+--
+
+and([__8,__9;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> and([__8,__9;int(1..)])) using tseitin
+
+--
+
+and([__10,__11;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> and([__10,__11;int(1..)])) using tseitin
+
+--
+
+and([__12,__13;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> and([__12,__13;int(1..)])) using tseitin
+
+--
+
+and([__14,__15;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__22
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> and([__14,__15;int(1..)])) using tseitin
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__23
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+__23,
+true,
+__16,
+true,
+__17,
+true,
+__18,
+true,
+__19,
+true,
+__20,
+true,
+__21,
+true,
+__22
+   ~~> remove_single_atom ([("SAT", 8400)])
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+__16,
+true,
+__17,
+true,
+__18,
+true,
+__19,
+true,
+__20,
+true,
+__21,
+true,
+__22
+new SAT encoding decisions:
+  assert(__23) using tseitin
+
+--
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+__16,
+true,
+__17,
+true,
+__18,
+true,
+__19,
+true,
+__20,
+true,
+__21,
+true,
+__22
+   ~~> remove_single_atom ([("SAT", 8400)])
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+__17,
+true,
+__18,
+true,
+__19,
+true,
+__20,
+true,
+__21,
+true,
+__22
+new SAT encoding decisions:
+  assert(__16) using tseitin
+
+--
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+__17,
+true,
+__18,
+true,
+__19,
+true,
+__20,
+true,
+__21,
+true,
+__22
+   ~~> remove_single_atom ([("SAT", 8400)])
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+true,
+__18,
+true,
+__19,
+true,
+__20,
+true,
+__21,
+true,
+__22
+new SAT encoding decisions:
+  assert(__17) using tseitin
+
+--
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+true,
+__18,
+true,
+__19,
+true,
+__20,
+true,
+__21,
+true,
+__22
+   ~~> remove_single_atom ([("SAT", 8400)])
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+true,
+true,
+__19,
+true,
+__20,
+true,
+__21,
+true,
+__22
+new SAT encoding decisions:
+  assert(__18) using tseitin
+
+--
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+true,
+true,
+__19,
+true,
+__20,
+true,
+__21,
+true,
+__22
+   ~~> remove_single_atom ([("SAT", 8400)])
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+true,
+true,
+true,
+__20,
+true,
+__21,
+true,
+__22
+new SAT encoding decisions:
+  assert(__19) using tseitin
+
+--
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+true,
+true,
+true,
+__20,
+true,
+__21,
+true,
+__22
+   ~~> remove_single_atom ([("SAT", 8400)])
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__21,
+true,
+__22
+new SAT encoding decisions:
+  assert(__20) using tseitin
+
+--
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__21,
+true,
+__22
+   ~~> remove_single_atom ([("SAT", 8400)])
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__22
+new SAT encoding decisions:
+  assert(__21) using tseitin
+
+--
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__22
+   ~~> remove_single_atom ([("SAT", 8400)])
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__22) using tseitin
+
+--
+
+queens[0]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_1 = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__24
+new variables:
+  findAux __24: bool
+new SAT encoding decisions:
+  define(__24 <-> integer-weighted(1*queens#components_1#int_offset_1, 2*queens#components_1#int_offset_2, 4*queens#components_1#int_offset_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }]
+
+--
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+__24,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__24) using tseitin
+
+--
+
+allDifferent(queens)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([queens#components_1,queens#components_2,queens#components_3,queens#components_4,queens#components_5,queens#components_6,queens#components_7,queens#components_8;int(0..7)])
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+allDifferent([queens#components_1,queens#components_2,queens#components_3,queens#components_4,queens#components_5,queens#components_6,queens#components_7,queens#components_8;int(0..7)])
+   ~~> select_alldifferent ([("SAT", 18500)])
+__25
+new variables:
+  findAux __25: bool
+new SAT encoding decisions:
+  define(__25 <-> allDifferent(0+weighted(1*queens#components_1#int_offset_1, 2*queens#components_1#int_offset_2, 4*queens#components_1#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_2#int_offset_1, 2*queens#components_2#int_offset_2, 4*queens#components_2#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }])) using None, AMO None, PB None
+
+--
+
+__25,
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__25) using tseitin
+
+--
+
+[ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[and([(queens#components_2 - 1) != (queens#components_1 - 0),sum([queens#components_2,1;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_3 - 2) != (queens#components_1 - 0),sum([queens#components_3,2;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_3 - 2) != (queens#components_2 - 1),sum([queens#components_3,2;int(1..)]) != sum([queens#components_2,1;int(1..)]);int(1..)]),and([(queens#components_4 - 3) != (queens#components_1 - 0),sum([queens#components_4,3;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_4 - 3) != (queens#components_2 - 1),sum([queens#components_4,3;int(1..)]) != sum([queens#components_2,1;int(1..)]);int(1..)]),and([(queens#components_4 - 3) != (queens#components_3 - 2),sum([queens#components_4,3;int(1..)]) != sum([queens#components_3,2;int(1..)]);int(1..)]),and([(queens#components_5 - 4) != (queens#components_1 - 0),sum([queens#components_5,4;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_5 - 4) != (queens#components_2 - 1),sum([queens#components_5,4;int(1..)]) != sum([queens#components_2,1;int(1..)]);int(1..)]),and([(queens#components_5 - 4) != (queens#components_3 - 2),sum([queens#components_5,4;int(1..)]) != sum([queens#components_3,2;int(1..)]);int(1..)]),and([(queens#components_5 - 4) != (queens#components_4 - 3),sum([queens#components_5,4;int(1..)]) != sum([queens#components_4,3;int(1..)]);int(1..)]),and([(queens#components_6 - 5) != (queens#components_1 - 0),sum([queens#components_6,5;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_6 - 5) != (queens#components_2 - 1),sum([queens#components_6,5;int(1..)]) != sum([queens#components_2,1;int(1..)]);int(1..)]),and([(queens#components_6 - 5) != (queens#components_3 - 2),sum([queens#components_6,5;int(1..)]) != sum([queens#components_3,2;int(1..)]);int(1..)]),and([(queens#components_6 - 5) != (queens#components_4 - 3),sum([queens#components_6,5;int(1..)]) != sum([queens#components_4,3;int(1..)]);int(1..)]),and([(queens#components_6 - 5) != (queens#components_5 - 4),sum([queens#components_6,5;int(1..)]) != sum([queens#components_5,4;int(1..)]);int(1..)]),and([(queens#components_7 - 6) != (queens#components_1 - 0),sum([queens#components_7,6;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_7 - 6) != (queens#components_2 - 1),sum([queens#components_7,6;int(1..)]) != sum([queens#components_2,1;int(1..)]);int(1..)]),and([(queens#components_7 - 6) != (queens#components_3 - 2),sum([queens#components_7,6;int(1..)]) != sum([queens#components_3,2;int(1..)]);int(1..)]),and([(queens#components_7 - 6) != (queens#components_4 - 3),sum([queens#components_7,6;int(1..)]) != sum([queens#components_4,3;int(1..)]);int(1..)]),and([(queens#components_7 - 6) != (queens#components_5 - 4),sum([queens#components_7,6;int(1..)]) != sum([queens#components_5,4;int(1..)]);int(1..)]),and([(queens#components_7 - 6) != (queens#components_6 - 5),sum([queens#components_7,6;int(1..)]) != sum([queens#components_6,5;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_1 - 0),sum([queens#components_8,7;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_2 - 1),sum([queens#components_8,7;int(1..)]) != sum([queens#components_2,1;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_3 - 2),sum([queens#components_8,7;int(1..)]) != sum([queens#components_3,2;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_4 - 3),sum([queens#components_8,7;int(1..)]) != sum([queens#components_4,3;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_5 - 4),sum([queens#components_8,7;int(1..)]) != sum([queens#components_5,4;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_6 - 5),sum([queens#components_8,7;int(1..)]) != sum([queens#components_6,5;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_7 - 6),sum([queens#components_8,7;int(1..)]) != sum([queens#components_7,6;int(1..)]);int(1..)]);int(1..)]
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+(queens#components_2 - 1) != (queens#components_1 - 0)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__26
+new variables:
+  findAux __26: bool
+new SAT encoding decisions:
+  define(__26 <-> integer-weighted(1*queens#components_2#int_offset_1, 2*queens#components_2#int_offset_2, 4*queens#components_2#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_2,1;int(1..)]) != sum([queens#components_1,0;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__27
+new variables:
+  findAux __27: bool
+new SAT encoding decisions:
+  define(__27 <-> integer-weighted(1*queens#components_2#int_offset_1, 2*queens#components_2#int_offset_2, 4*queens#components_2#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_3 - 2) != (queens#components_1 - 0)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__28
+new variables:
+  findAux __28: bool
+new SAT encoding decisions:
+  define(__28 <-> integer-weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_3,2;int(1..)]) != sum([queens#components_1,0;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__29
+new variables:
+  findAux __29: bool
+new SAT encoding decisions:
+  define(__29 <-> integer-weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_3 - 2) != (queens#components_2 - 1)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__30
+new variables:
+  findAux __30: bool
+new SAT encoding decisions:
+  define(__30 <-> integer-weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_3,2;int(1..)]) != sum([queens#components_2,1;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__31
+new variables:
+  findAux __31: bool
+new SAT encoding decisions:
+  define(__31 <-> integer-weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual -1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_4 - 3) != (queens#components_1 - 0)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__32
+new variables:
+  findAux __32: bool
+new SAT encoding decisions:
+  define(__32 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_4,3;int(1..)]) != sum([queens#components_1,0;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__33
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_4 - 3) != (queens#components_2 - 1)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__34
+new variables:
+  findAux __34: bool
+new SAT encoding decisions:
+  define(__34 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_4,3;int(1..)]) != sum([queens#components_2,1;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__35
+new variables:
+  findAux __35: bool
+new SAT encoding decisions:
+  define(__35 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual -2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_4 - 3) != (queens#components_3 - 2)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__36
+new variables:
+  findAux __36: bool
+new SAT encoding decisions:
+  define(__36 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_4,3;int(1..)]) != sum([queens#components_3,2;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__37
+new variables:
+  findAux __37: bool
+new SAT encoding decisions:
+  define(__37 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual -1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_5 - 4) != (queens#components_1 - 0)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__38
+new variables:
+  findAux __38: bool
+new SAT encoding decisions:
+  define(__38 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 4) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_5,4;int(1..)]) != sum([queens#components_1,0;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__39
+new variables:
+  findAux __39: bool
+new SAT encoding decisions:
+  define(__39 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -4) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_5 - 4) != (queens#components_2 - 1)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__40
+new variables:
+  findAux __40: bool
+new SAT encoding decisions:
+  define(__40 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_5,4;int(1..)]) != sum([queens#components_2,1;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__41
+new variables:
+  findAux __41: bool
+new SAT encoding decisions:
+  define(__41 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual -3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_5 - 4) != (queens#components_3 - 2)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__42
+new variables:
+  findAux __42: bool
+new SAT encoding decisions:
+  define(__42 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_5,4;int(1..)]) != sum([queens#components_3,2;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__43
+new variables:
+  findAux __43: bool
+new SAT encoding decisions:
+  define(__43 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual -2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_5 - 4) != (queens#components_4 - 3)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__44
+new variables:
+  findAux __44: bool
+new SAT encoding decisions:
+  define(__44 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_5,4;int(1..)]) != sum([queens#components_4,3;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__45
+new variables:
+  findAux __45: bool
+new SAT encoding decisions:
+  define(__45 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual -1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_6 - 5) != (queens#components_1 - 0)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__46
+new variables:
+  findAux __46: bool
+new SAT encoding decisions:
+  define(__46 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 5) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_6,5;int(1..)]) != sum([queens#components_1,0;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__47
+new variables:
+  findAux __47: bool
+new SAT encoding decisions:
+  define(__47 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -5) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_6 - 5) != (queens#components_2 - 1)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__48
+new variables:
+  findAux __48: bool
+new SAT encoding decisions:
+  define(__48 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual 4) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_6,5;int(1..)]) != sum([queens#components_2,1;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__49
+new variables:
+  findAux __49: bool
+new SAT encoding decisions:
+  define(__49 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual -4) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_6 - 5) != (queens#components_3 - 2)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__50
+new variables:
+  findAux __50: bool
+new SAT encoding decisions:
+  define(__50 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_6,5;int(1..)]) != sum([queens#components_3,2;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__51
+new variables:
+  findAux __51: bool
+new SAT encoding decisions:
+  define(__51 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual -3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_6 - 5) != (queens#components_4 - 3)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__52
+new variables:
+  findAux __52: bool
+new SAT encoding decisions:
+  define(__52 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_6,5;int(1..)]) != sum([queens#components_4,3;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__53
+new variables:
+  findAux __53: bool
+new SAT encoding decisions:
+  define(__53 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual -2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_6 - 5) != (queens#components_5 - 4)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__54
+new variables:
+  findAux __54: bool
+new SAT encoding decisions:
+  define(__54 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_5#int_offset_1, -2*queens#components_5#int_offset_2, -4*queens#components_5#int_offset_3) NotEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_6,5;int(1..)]) != sum([queens#components_5,4;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__55
+new variables:
+  findAux __55: bool
+new SAT encoding decisions:
+  define(__55 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_5#int_offset_1, -2*queens#components_5#int_offset_2, -4*queens#components_5#int_offset_3) NotEqual -1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_7 - 6) != (queens#components_1 - 0)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__56
+new variables:
+  findAux __56: bool
+new SAT encoding decisions:
+  define(__56 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 6) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_7,6;int(1..)]) != sum([queens#components_1,0;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__57
+new variables:
+  findAux __57: bool
+new SAT encoding decisions:
+  define(__57 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -6) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_7 - 6) != (queens#components_2 - 1)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__58
+new variables:
+  findAux __58: bool
+new SAT encoding decisions:
+  define(__58 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual 5) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_7,6;int(1..)]) != sum([queens#components_2,1;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__59
+new variables:
+  findAux __59: bool
+new SAT encoding decisions:
+  define(__59 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual -5) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_7 - 6) != (queens#components_3 - 2)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__60
+new variables:
+  findAux __60: bool
+new SAT encoding decisions:
+  define(__60 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual 4) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_7,6;int(1..)]) != sum([queens#components_3,2;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__61
+new variables:
+  findAux __61: bool
+new SAT encoding decisions:
+  define(__61 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual -4) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_7 - 6) != (queens#components_4 - 3)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__62
+new variables:
+  findAux __62: bool
+new SAT encoding decisions:
+  define(__62 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_7,6;int(1..)]) != sum([queens#components_4,3;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__63
+new variables:
+  findAux __63: bool
+new SAT encoding decisions:
+  define(__63 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual -3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_7 - 6) != (queens#components_5 - 4)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__64
+new variables:
+  findAux __64: bool
+new SAT encoding decisions:
+  define(__64 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_5#int_offset_1, -2*queens#components_5#int_offset_2, -4*queens#components_5#int_offset_3) NotEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_7,6;int(1..)]) != sum([queens#components_5,4;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__65
+new variables:
+  findAux __65: bool
+new SAT encoding decisions:
+  define(__65 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_5#int_offset_1, -2*queens#components_5#int_offset_2, -4*queens#components_5#int_offset_3) NotEqual -2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_7 - 6) != (queens#components_6 - 5)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__66
+new variables:
+  findAux __66: bool
+new SAT encoding decisions:
+  define(__66 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_6#int_offset_1, -2*queens#components_6#int_offset_2, -4*queens#components_6#int_offset_3) NotEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_7,6;int(1..)]) != sum([queens#components_6,5;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__67
+new variables:
+  findAux __67: bool
+new SAT encoding decisions:
+  define(__67 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_6#int_offset_1, -2*queens#components_6#int_offset_2, -4*queens#components_6#int_offset_3) NotEqual -1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_8 - 7) != (queens#components_1 - 0)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__68
+new variables:
+  findAux __68: bool
+new SAT encoding decisions:
+  define(__68 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_8,7;int(1..)]) != sum([queens#components_1,0;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__69
+new variables:
+  findAux __69: bool
+new SAT encoding decisions:
+  define(__69 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -7) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_8 - 7) != (queens#components_2 - 1)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__70
+new variables:
+  findAux __70: bool
+new SAT encoding decisions:
+  define(__70 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual 6) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_8,7;int(1..)]) != sum([queens#components_2,1;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__71
+new variables:
+  findAux __71: bool
+new SAT encoding decisions:
+  define(__71 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual -6) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_8 - 7) != (queens#components_3 - 2)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__72
+new variables:
+  findAux __72: bool
+new SAT encoding decisions:
+  define(__72 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual 5) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_8,7;int(1..)]) != sum([queens#components_3,2;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__73
+new variables:
+  findAux __73: bool
+new SAT encoding decisions:
+  define(__73 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual -5) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_8 - 7) != (queens#components_4 - 3)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__74
+new variables:
+  findAux __74: bool
+new SAT encoding decisions:
+  define(__74 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual 4) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_8,7;int(1..)]) != sum([queens#components_4,3;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__75
+new variables:
+  findAux __75: bool
+new SAT encoding decisions:
+  define(__75 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual -4) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_8 - 7) != (queens#components_5 - 4)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__76
+new variables:
+  findAux __76: bool
+new SAT encoding decisions:
+  define(__76 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_5#int_offset_1, -2*queens#components_5#int_offset_2, -4*queens#components_5#int_offset_3) NotEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_8,7;int(1..)]) != sum([queens#components_5,4;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__77
+new variables:
+  findAux __77: bool
+new SAT encoding decisions:
+  define(__77 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_5#int_offset_1, -2*queens#components_5#int_offset_2, -4*queens#components_5#int_offset_3) NotEqual -3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_8 - 7) != (queens#components_6 - 5)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__78
+new variables:
+  findAux __78: bool
+new SAT encoding decisions:
+  define(__78 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_6#int_offset_1, -2*queens#components_6#int_offset_2, -4*queens#components_6#int_offset_3) NotEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_8,7;int(1..)]) != sum([queens#components_6,5;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__79
+new variables:
+  findAux __79: bool
+new SAT encoding decisions:
+  define(__79 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_6#int_offset_1, -2*queens#components_6#int_offset_2, -4*queens#components_6#int_offset_3) NotEqual -2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+(queens#components_8 - 7) != (queens#components_7 - 6)
+   ~~> select_integer_relation ([("SAT", 18500)])
+__80
+new variables:
+  findAux __80: bool
+new SAT encoding decisions:
+  define(__80 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_7#int_offset_1, -2*queens#components_7#int_offset_2, -4*queens#components_7#int_offset_3) NotEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+sum([queens#components_8,7;int(1..)]) != sum([queens#components_7,6;int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__81
+new variables:
+  findAux __81: bool
+new SAT encoding decisions:
+  define(__81 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_7#int_offset_1, -2*queens#components_7#int_offset_2, -4*queens#components_7#int_offset_3) NotEqual -1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }]
+
+--
+
+and([and([__26,__27;int(1..)]),and([__28,__29;int(1..)]),and([__30,__31;int(1..)]),and([__32,__33;int(1..)]),and([__34,__35;int(1..)]),and([__36,__37;int(1..)]),and([__38,__39;int(1..)]),and([__40,__41;int(1..)]),and([__42,__43;int(1..)]),and([__44,__45;int(1..)]),and([__46,__47;int(1..)]),and([__48,__49;int(1..)]),and([__50,__51;int(1..)]),and([__52,__53;int(1..)]),and([__54,__55;int(1..)]),and([__56,__57;int(1..)]),and([__58,__59;int(1..)]),and([__60,__61;int(1..)]),and([__62,__63;int(1..)]),and([__64,__65;int(1..)]),and([__66,__67;int(1..)]),and([__68,__69;int(1..)]),and([__70,__71;int(1..)]),and([__72,__73;int(1..)]),and([__74,__75;int(1..)]),and([__76,__77;int(1..)]),and([__78,__79;int(1..)]),and([__80,__81;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__26,__27,__28,__29,__30,__31,__32,__33,__34,__35,__36,__37,__38,__39,__40,__41,__42,__43,__44,__45,__46,__47,__48,__49,__50,__51,__52,__53,__54,__55,__56,__57,__58,__59,__60,__61,__62,__63,__64,__65,__66,__67,__68,__69,__70,__71,__72,__73,__74,__75,__76,__77,__78,__79,__80,__81;int(1..)])
+
+--
+
+and([__26,__27,__28,__29,__30,__31,__32,__33,__34,__35,__36,__37,__38,__39,__40,__41,__42,__43,__44,__45,__46,__47,__48,__49,__50,__51,__52,__53,__54,__55,__56,__57,__58,__59,__60,__61,__62,__63,__64,__65,__66,__67,__68,__69,__70,__71,__72,__73,__74,__75,__76,__77,__78,__79,__80,__81;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__82
+new variables:
+  findAux __82: bool
+new SAT encoding decisions:
+  define(__82 <-> and([__26,__27,__28,__29,__30,__31,__32,__33,__34,__35,__36,__37,__38,__39,__40,__41,__42,__43,__44,__45,__46,__47,__48,__49,__50,__51,__52,__53,__54,__55,__56,__57,__58,__59,__60,__61,__62,__63,__64,__65,__66,__67,__68,__69,__70,__71,__72,__73,__74,__75,__76,__77,__78,__79,__80,__81;int(1..)])) using tseitin
+
+--
+
+__82,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__82) using tseitin
+
+--
+
+Final model:
+
+letting n be 8
+letting AMOUNT_QUEENS be domain int(0..((n - 1)))
+find queens: matrix indexed by [AMOUNT_QUEENS] of AMOUNT_QUEENS
+find queens#components_1: int(0..7)
+find queens#components_2: int(0..7)
+find queens#components_3: int(0..7)
+find queens#components_4: int(0..7)
+find queens#components_5: int(0..7)
+find queens#components_6: int(0..7)
+find queens#components_7: int(0..7)
+find queens#components_8: int(0..7)
+find queens#components_1#int_offset_1: bool
+find queens#components_1#int_offset_2: bool
+find queens#components_1#int_offset_3: bool
+find queens#components_2#int_offset_1: bool
+find queens#components_2#int_offset_2: bool
+find queens#components_2#int_offset_3: bool
+find queens#components_3#int_offset_1: bool
+find queens#components_3#int_offset_2: bool
+find queens#components_3#int_offset_3: bool
+find queens#components_4#int_offset_1: bool
+find queens#components_4#int_offset_2: bool
+find queens#components_4#int_offset_3: bool
+find queens#components_5#int_offset_1: bool
+find queens#components_5#int_offset_2: bool
+find queens#components_5#int_offset_3: bool
+find queens#components_6#int_offset_1: bool
+find queens#components_6#int_offset_2: bool
+find queens#components_6#int_offset_3: bool
+find queens#components_7#int_offset_1: bool
+find queens#components_7#int_offset_2: bool
+find queens#components_7#int_offset_3: bool
+find queens#components_8#int_offset_1: bool
+find queens#components_8#int_offset_2: bool
+find queens#components_8#int_offset_3: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: bool
+findAux __57: bool
+findAux __58: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+findAux __65: bool
+findAux __66: bool
+findAux __67: bool
+findAux __68: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+
+such that
+
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*queens#components_1#int_offset_1, 2*queens#components_1#int_offset_2, 4*queens#components_1#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__1 <-> integer-weighted(1*queens#components_1#int_offset_1, 2*queens#components_1#int_offset_2, 4*queens#components_1#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__2 <-> integer-weighted(1*queens#components_2#int_offset_1, 2*queens#components_2#int_offset_2, 4*queens#components_2#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__3 <-> integer-weighted(1*queens#components_2#int_offset_1, 2*queens#components_2#int_offset_2, 4*queens#components_2#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__4 <-> integer-weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__5 <-> integer-weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__6 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__7 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__8 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__9 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__10 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__11 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__12 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__13 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__14 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__15 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3) LessEqual 7) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+define(__16 <-> and([__2,__3;int(1..)])) using tseitin,
+define(__17 <-> and([__4,__5;int(1..)])) using tseitin,
+define(__18 <-> and([__6,__7;int(1..)])) using tseitin,
+define(__19 <-> and([__8,__9;int(1..)])) using tseitin,
+define(__20 <-> and([__10,__11;int(1..)])) using tseitin,
+define(__21 <-> and([__12,__13;int(1..)])) using tseitin,
+define(__22 <-> and([__14,__15;int(1..)])) using tseitin,
+define(__23 <-> and([__0,__1;int(1..)])) using tseitin,
+assert(__23) using tseitin,
+assert(__16) using tseitin,
+assert(__17) using tseitin,
+assert(__18) using tseitin,
+assert(__19) using tseitin,
+assert(__20) using tseitin,
+assert(__21) using tseitin,
+assert(__22) using tseitin,
+define(__24 <-> integer-weighted(1*queens#components_1#int_offset_1, 2*queens#components_1#int_offset_2, 4*queens#components_1#int_offset_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }],
+assert(__24) using tseitin,
+define(__25 <-> allDifferent(0+weighted(1*queens#components_1#int_offset_1, 2*queens#components_1#int_offset_2, 4*queens#components_1#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_2#int_offset_1, 2*queens#components_2#int_offset_2, 4*queens#components_2#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }], 0+weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+assert(__25) using tseitin,
+define(__26 <-> integer-weighted(1*queens#components_2#int_offset_1, 2*queens#components_2#int_offset_2, 4*queens#components_2#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__27 <-> integer-weighted(1*queens#components_2#int_offset_1, 2*queens#components_2#int_offset_2, 4*queens#components_2#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__28 <-> integer-weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__29 <-> integer-weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__30 <-> integer-weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__31 <-> integer-weighted(1*queens#components_3#int_offset_1, 2*queens#components_3#int_offset_2, 4*queens#components_3#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual -1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__32 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__33 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__34 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__35 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__36 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__37 <-> integer-weighted(1*queens#components_4#int_offset_1, 2*queens#components_4#int_offset_2, 4*queens#components_4#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual -1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__38 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 4) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__39 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -4) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__40 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__41 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual -3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__42 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__43 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__44 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__45 <-> integer-weighted(1*queens#components_5#int_offset_1, 2*queens#components_5#int_offset_2, 4*queens#components_5#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual -1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__46 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 5) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__47 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -5) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__48 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual 4) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__49 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual -4) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__50 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__51 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual -3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__52 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__53 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__54 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_5#int_offset_1, -2*queens#components_5#int_offset_2, -4*queens#components_5#int_offset_3) NotEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__55 <-> integer-weighted(1*queens#components_6#int_offset_1, 2*queens#components_6#int_offset_2, 4*queens#components_6#int_offset_3, -1*queens#components_5#int_offset_1, -2*queens#components_5#int_offset_2, -4*queens#components_5#int_offset_3) NotEqual -1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__56 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 6) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__57 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -6) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__58 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual 5) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__59 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual -5) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__60 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual 4) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__61 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual -4) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__62 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__63 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual -3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__64 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_5#int_offset_1, -2*queens#components_5#int_offset_2, -4*queens#components_5#int_offset_3) NotEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__65 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_5#int_offset_1, -2*queens#components_5#int_offset_2, -4*queens#components_5#int_offset_3) NotEqual -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__66 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_6#int_offset_1, -2*queens#components_6#int_offset_2, -4*queens#components_6#int_offset_3) NotEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__67 <-> integer-weighted(1*queens#components_7#int_offset_1, 2*queens#components_7#int_offset_2, 4*queens#components_7#int_offset_3, -1*queens#components_6#int_offset_1, -2*queens#components_6#int_offset_2, -4*queens#components_6#int_offset_3) NotEqual -1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__68 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual 7) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__69 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_1#int_offset_1, -2*queens#components_1#int_offset_2, -4*queens#components_1#int_offset_3) NotEqual -7) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__70 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual 6) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__71 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_2#int_offset_1, -2*queens#components_2#int_offset_2, -4*queens#components_2#int_offset_3) NotEqual -6) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__72 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual 5) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__73 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_3#int_offset_1, -2*queens#components_3#int_offset_2, -4*queens#components_3#int_offset_3) NotEqual -5) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__74 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual 4) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__75 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_4#int_offset_1, -2*queens#components_4#int_offset_2, -4*queens#components_4#int_offset_3) NotEqual -4) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__76 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_5#int_offset_1, -2*queens#components_5#int_offset_2, -4*queens#components_5#int_offset_3) NotEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__77 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_5#int_offset_1, -2*queens#components_5#int_offset_2, -4*queens#components_5#int_offset_3) NotEqual -3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__78 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_6#int_offset_1, -2*queens#components_6#int_offset_2, -4*queens#components_6#int_offset_3) NotEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__79 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_6#int_offset_1, -2*queens#components_6#int_offset_2, -4*queens#components_6#int_offset_3) NotEqual -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__80 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_7#int_offset_1, -2*queens#components_7#int_offset_2, -4*queens#components_7#int_offset_3) NotEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__81 <-> integer-weighted(1*queens#components_8#int_offset_1, 2*queens#components_8#int_offset_2, 4*queens#components_8#int_offset_3, -1*queens#components_7#int_offset_1, -2*queens#components_7#int_offset_2, -4*queens#components_7#int_offset_3) NotEqual -1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 7 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -7, upper: 0 } }],
+define(__82 <-> and([__26,__27,__28,__29,__30,__31,__32,__33,__34,__35,__36,__37,__38,__39,__40,__41,__42,__43,__44,__45,__46,__47,__48,__49,__50,__51,__52,__53,__54,__55,__56,__57,__58,__59,__60,__61,__62,__63,__64,__65,__66,__67,__68,__69,__70,__71,__72,__73,__74,__75,__76,__77,__78,__79,__80,__81;int(1..)])) using tseitin,
+assert(__82) using tseitin
+

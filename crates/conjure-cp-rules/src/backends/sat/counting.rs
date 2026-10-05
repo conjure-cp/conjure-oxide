@@ -5,7 +5,8 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
-fn matrix_entries(expression: &Expr) -> Option<Vec<Expr>> {
+/// Matrix entries in index order, ignoring the index domain and expanding `flatten(...)`.
+pub(super) fn matrix_entries(expression: &Expr) -> Option<Vec<Expr>> {
     let expression = super::table::materialise(expression);
     if let Expr::Flatten(_, None, inner) = expression {
         fn leaves(expression: &Expr, output: &mut Vec<Expr>) -> Option<()> {

@@ -17,7 +17,7 @@ fn select_alldifferent(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         }
         _ => return Err(RuleNotApplicable),
     };
-    let elements = matrix.unwrap_list_cow().ok_or(RuleNotApplicable)?;
+    let elements = super::counting::matrix_entries(matrix).ok_or(RuleNotApplicable)?;
     let inputs = elements
         .iter()
         .map(super::pseudo_boolean::integer_view)
@@ -48,7 +48,7 @@ fn introduce_compound_alldifferent(expr: &Expr, symbols: &SymbolTable) -> Applic
         Expr::AllDifferentExcept(_, matrix, except) => (matrix, Some(except)),
         _ => return Err(RuleNotApplicable),
     };
-    let inputs = matrix.unwrap_list_cow().ok_or(RuleNotApplicable)?;
+    let inputs = super::counting::matrix_entries(matrix).ok_or(RuleNotApplicable)?;
     if inputs.is_empty()
         || inputs.iter().any(|input| {
             matches!(
@@ -180,6 +180,37 @@ mod tests {
         );
         let effect = select_alldifferent(&input, &SymbolTable::new()).unwrap();
         assert!(effect.new_sat_decisions[0].expressions().contains(&&bit));
+    }
+
+    #[test]
+    fn alldifferent_accepts_any_index_domain_and_flattened_operands() {
+        let zero_based = Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Matrix(
+                vec![0.into(), 1.into()],
+                Domain::int(vec![conjure_cp::ast::Range::Bounded(0, 1)]),
+            ),
+        );
+        let input = Expr::AllDiff(Metadata::new(), Moo::new(zero_based.clone()));
+        let effect = select_alldifferent(&input, &SymbolTable::new()).unwrap();
+        assert!(matches!(
+            &effect.new_sat_decisions[0],
+            SatEncodingDecision::AllDifferent { inputs, .. } if inputs.len() == 2
+        ));
+        let rows = conjure_cp::into_matrix_expr!(vec![
+            zero_based,
+            conjure_cp::into_matrix_expr!(vec![Expr::from(2)])
+        ]);
+        let input = Expr::AllDiff(
+            Metadata::new(),
+            Moo::new(Expr::Flatten(Metadata::new(), None, Moo::new(rows))),
+        );
+        let effect = select_alldifferent(&input, &SymbolTable::new()).unwrap();
+        assert!(matches!(
+            &effect.new_sat_decisions[0],
+            SatEncodingDecision::AllDifferent { inputs, .. }
+            if inputs.iter().map(|input| input.constant).collect::<Vec<_>>() == vec![0, 1, 2]
+        ));
     }
 
     #[test]
