@@ -1,5 +1,17 @@
 # SAT backend: known issues and coverage failures
 
+## Latest workspace verification (2026-10-05)
+
+See [the workspace verification report](sat_workspace_verification.md) for the
+full normal test run after the later allDifferent, lookup and lex fixes. The run
+passed 626 of 668 integration fixtures; its 42 failures split into 22 missing SAT
+snapshots, ten outdated snapshots, five memory limits, three timeouts and two
+panics. All other workspace tests and doctests passed. Scalar lex now accepts any
+one-dimensional matrix index domain and unequal lengths across all five integer
+representations. The ten outdated snapshots have since been refreshed and pass
+normal verification: 636 fixtures pass and 32 failures remain. The survey below
+is historical, including its residual counts.
+
 ## Full integration coverage sweep (2026-10-05)
 
 The latest complete coverage report passes **602 of 667 fixtures**, compared with 565 of 664 in the first survey. SAT is configured for every discovered fixture: 662 normally runnable and five globally skipped fixtures explicitly attempted. SAT uses `heuristic="x"` with uniform channelling in 622 fixtures and compact's normal representation and SAT encoding choices in 45 fixtures whose other backend profiles do not enumerate choices. No SAT encoding options are pinned; existing Minion/Z3 profiles are preserved.

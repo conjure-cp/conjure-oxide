@@ -2,6 +2,11 @@
 
 Survey date: 2026-10-05. Complete.
 
+Later normal workspace verification and snapshot follow-ups are recorded in
+[the workspace verification report](sat_workspace_verification.md). They use
+the current backend profiles and goldens; the survey totals below are preserved
+as historical SAT-only acceptance results.
+
 667 of 667 discovered fixtures have completed. SAT is configured for all 667 fixtures: 662 normally runnable and five globally skipped fixtures explicitly attempted by this survey. Two multi-source directories have no generated integration test and are excluded: `cnf/cnf2` and `bugs/experiment/wrong-json-model`.
 
 SAT uses `heuristic="x"` for 622 fixtures and `heuristic="c"` for 45 fixtures. Where other backend profiles exist, SAT follows whether they enumerate choices; SAT-only fixtures retain their configured all-choice profile. Every SAT run retains uniform channelling. Compact selects one representation and one option per encoding family using its normal policy; no SAT options are pinned. Existing Minion/Z3 choices are preserved through `[solver-options.sat]`. Four workers run the primary release integration survey. After the constant-bit power fix, all 15 power-containing fixtures are rerun with one worker under the same profiles and limits; their latest outcomes supersede the earlier attempts. A further four-worker follow-up reruns all 14 occurrence-constraint fixtures after accepting flattened matrix operands; its latest outcomes also supersede the earlier attempts. All runs use a 600-second fixture timeout and a 4 GiB resident-memory ceiling for each fixture and its descendants. A failed portfolio stops its modelling-choice sequence; the harness may continue with another configured parser/rewriter unless the failure panics. The survey continues with other fixtures. Tests run in an isolated fixture copy with `ACCEPT=true`; original goldens and timing baselines are protected.

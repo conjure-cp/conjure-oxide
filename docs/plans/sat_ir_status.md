@@ -2,6 +2,18 @@
 
 Branch: `sat-ir`. Conventional commits; never push.
 
+## Latest workspace verification (2026-10-05)
+
+The [normal workspace verification](sat_workspace_verification.md) follows the
+later allDifferent, lookup and scalar lex fixes. All five integer representations
+now handle scalar lex operands with arbitrary one-dimensional index domains.
+All 14 lex fixtures, 179 rule tests and `make check` pass. The full workspace run
+passed 1,586 tests with 42 integration failures; all doctests passed. After ten
+confirmed outdated snapshots were refreshed and normally verified, 636 of 668
+attempted integration fixtures pass. The remaining 32 are 22 missing SAT
+snapshots, eight resource limits and two panics. Five global skips were not
+attempted. The earlier isolated SAT survey below is retained as historical data.
+
 ## Full integration coverage sweep (2026-10-05)
 
 The latest complete coverage report passes **602 of 667 fixtures**, compared with 565 of 664 in the first survey. SAT is configured for every discovered fixture: 662 normally runnable and five globally skipped fixtures explicitly attempted. SAT uses `heuristic="x"` with uniform channelling in 622 fixtures and compact's normal representation and SAT encoding choices in 45 fixtures whose other backend profiles do not enumerate choices. No SAT encoding options are pinned; existing Minion/Z3 profiles are preserved.
