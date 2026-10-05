@@ -1,0 +1,95 @@
+Model before rewriting:
+
+find x: function (total) bool --> int(13, 17) 
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#packed_1: int(0..3)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#packed_1#int_offset_1: bool
+  find x#packed_1#int_offset_2: bool
+new constraints:
+  or([!(x#packed_1#int_offset_2),or([!(x#packed_1#int_offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [x#packed_1#int_offset_1,x#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0,SATInt(Offset, [x#packed_1#int_offset_1,x#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [x#packed_1#int_offset_1,x#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*x#packed_1#int_offset_1, 2*x#packed_1#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Offset, [x#packed_1#int_offset_1,x#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*x#packed_1#int_offset_1, 2*x#packed_1#int_offset_2) LessEqual 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+true,
+true,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+Final model:
+
+find x: function (total) bool --> int(13, 17) 
+find x#packed_1: int(0..3)
+find x#packed_1#int_offset_1: bool
+find x#packed_1#int_offset_2: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*x#packed_1#int_offset_1, 2*x#packed_1#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__1 <-> integer-weighted(1*x#packed_1#int_offset_1, 2*x#packed_1#int_offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
+assert(__2) using tseitin
+

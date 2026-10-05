@@ -576,11 +576,11 @@ true
 
 sat encoding decisions:
 
-at-most-one(x#int_direct_1, x#int_direct_2) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
-at-most-one(y#int_direct_1, y#int_direct_2) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
-at-most-one(z#int_direct_1, z#int_direct_2) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
-define(__0 <-> integer-weighted(1*x#int_direct_1, 2*x#int_direct_2, -1*y#int_direct_1, -2*y#int_direct_2) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
-define(__1 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, -1*z#int_direct_1, -2*z#int_direct_2) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
+at-most-one(x#int_direct_1, x#int_direct_2) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
+at-most-one(y#int_direct_1, y#int_direct_2) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
+at-most-one(z#int_direct_1, z#int_direct_2) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
+define(__0 <-> integer-weighted(1*x#int_direct_1, 2*x#int_direct_2, -1*y#int_direct_1, -2*y#int_direct_2) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
+define(__1 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, -1*z#int_direct_1, -2*z#int_direct_2) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
 define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
 define(__3 <-> or([x#int_direct_1,x#int_direct_2;int(1..)])) using tseitin,
 define(__4 <-> or([y#int_direct_1,y#int_direct_2;int(1..)])) using tseitin,
@@ -619,7 +619,7 @@ define(__32 <-> or([__29,__31;int(1..)])) using tseitin,
 define(__33 <-> or([and([__32,z#int_direct_1;int(1..)]),and([!(__32),__18;int(1..)]);int(1..)])) using tseitin,
 define(__34 <-> or([and([__32,z#int_direct_2;int(1..)]),and([!(__32),__19;int(1..)]);int(1..)])) using tseitin,
 define(__35 <-> or([and([__32,false;int(1..)]),and([!(__32),__20;int(1..)]);int(1..)])) using tseitin,
-define(__36 <-> integer-weighted(1*__33, 2*__34, -4*__35) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__36 <-> integer-weighted(1*__33, 2*__34, -4*__35) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
 assert(__36) using tseitin,
 define(__37 <-> !(y#int_direct_1)) using tseitin,
 define(__38 <-> and([x#int_direct_1,__37;int(1..)])) using tseitin,
@@ -651,6 +651,6 @@ define(__63 <-> or([__60,__62;int(1..)])) using tseitin,
 define(__64 <-> or([and([__63,z#int_direct_1;int(1..)]),and([!(__63),__49;int(1..)]);int(1..)])) using tseitin,
 define(__65 <-> or([and([__63,z#int_direct_2;int(1..)]),and([!(__63),__50;int(1..)]);int(1..)])) using tseitin,
 define(__66 <-> or([and([__63,false;int(1..)]),and([!(__63),__51;int(1..)]);int(1..)])) using tseitin,
-define(__67 <-> integer-weighted(1*__64, 2*__65, -4*__66) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__67 <-> integer-weighted(1*__64, 2*__65, -4*__66) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
 assert(__67) using tseitin
 

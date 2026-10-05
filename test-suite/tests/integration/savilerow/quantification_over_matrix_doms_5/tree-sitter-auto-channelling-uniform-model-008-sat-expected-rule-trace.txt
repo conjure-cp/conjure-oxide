@@ -14,56 +14,41 @@ and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,pro
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ])
 new variables:
-  find x#int_log_1: bool
-  find x#int_log_2: bool
-  find x#int_log_3: bool
+  find x#int_direct_1: bool
+  find x#int_direct_2: bool
 new constraints:
-  or([and([SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [1, 2]) >= 1,SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [1, 2]) <= 2;int(1..)]);int(1..)])
-
---
-
-SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [1, 2]) >= 1
-   ~~> select_integer_relation ([("SAT", 18500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
-
---
-
-SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [1, 2]) <= 2
-   ~~> select_integer_relation ([("SAT", 18500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) LessEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> and([__0,__1;int(1..)])) using tseitin
+  sum([toInt(x#int_direct_1),toInt(x#int_direct_2);int(1..)]) <= 1
+  or([x#int_direct_1,x#int_direct_2;int(1..)])
 
 --
 
 and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ]),
-__2
+sum([toInt(x#int_direct_1),toInt(x#int_direct_2);int(1..)]) <= 1,
+or([x#int_direct_1,x#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ]),
+or([x#int_direct_1,x#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#int_direct_1, x#int_direct_2) using None
+
+--
+
+or([x#int_direct_1,x#int_direct_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> or([x#int_direct_1,x#int_direct_2;int(1..)])) using tseitin
+
+--
+
+and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ]),
+__0
    ~~> remove_single_atom ([("SAT", 8400)])
 and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ])
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(__0) using tseitin
 
 --
 
@@ -78,12 +63,9 @@ Final model:
 letting k be 2
 letting n be 2
 find x: int(1..n)
-find x#int_log_1: bool
-find x#int_log_2: bool
-find x#int_log_3: bool
+find x#int_direct_1: bool
+find x#int_direct_2: bool
 findAux __0: bool
-findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -91,8 +73,7 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__1 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) LessEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
-assert(__2) using tseitin
+at-most-one(x#int_direct_1, x#int_direct_2) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
+define(__0 <-> or([x#int_direct_1,x#int_direct_2;int(1..)])) using tseitin,
+assert(__0) using tseitin
 

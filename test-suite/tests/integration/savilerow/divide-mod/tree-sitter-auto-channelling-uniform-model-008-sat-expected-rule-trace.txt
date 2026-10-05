@@ -36,26 +36,43 @@ true,
 true,
 true
 new variables:
-  find x#int_log_1: bool
-  find x#int_log_2: bool
+  find x#int_direct_1: bool
 new constraints:
-  or([SATInt(Log, [x#int_log_1,x#int_log_2;int(1..)] [1, 1]) = 1;int(1..)])
+  sum([toInt(x#int_direct_1);int(1..)]) <= 1
+  or([x#int_direct_1;int(1..)])
 
 --
 
-SATInt(Log, [x#int_log_1,x#int_log_2;int(1..)] [1, 1]) = 1
-   ~~> select_integer_relation ([("SAT", 18500)])
-__0
-new variables:
-  findAux __0: bool
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+sum([toInt(x#int_direct_1);int(1..)]) <= 1,
+or([x#int_direct_1;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+or([x#int_direct_1;int(1..)])
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#int_log_1, -2*x#int_log_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }]
+  at-most-one(x#int_direct_1) using None
 
 --
 
-or([__0;int(1..)])
+or([x#int_direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-__0
+x#int_direct_1
 
 --
 
@@ -68,7 +85,7 @@ true,
 true,
 true,
 true,
-__0
+x#int_direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 true,
@@ -80,16 +97,14 @@ true,
 true,
 true
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(x#int_direct_1) using tseitin
 
 --
 
 Final model:
 
 find x: int(1..1)
-find x#int_log_1: bool
-find x#int_log_2: bool
-findAux __0: bool
+find x#int_direct_1: bool
 
 such that
 
@@ -105,6 +120,6 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#int_log_1, -2*x#int_log_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }],
-assert(__0) using tseitin
+at-most-one(x#int_direct_1) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
+assert(x#int_direct_1) using tseitin
 

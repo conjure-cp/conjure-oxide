@@ -1,0 +1,200 @@
+Model before rewriting:
+
+find a: int(0..0)
+find b: int(0..0)
+
+such that
+
+b = |a|
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#int_order_1: bool
+new constraints:
+  b#int_order_1
+  or([SATInt(Order, [b#int_order_1;int(1..)] [0, 0]) = 0;int(1..)])
+
+--
+
+SATInt(Order, [b#int_order_1;int(1..)] [0, 0]) = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted() Equal 0) using None with []
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#int_order_1: bool
+new constraints:
+  a#int_order_1
+  or([SATInt(Order, [a#int_order_1;int(1..)] [0, 0]) = 0;int(1..)])
+
+--
+
+SATInt(Order, [a#int_order_1;int(1..)] [0, 0]) = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted() Equal 0) using None with []
+
+--
+
+b
+   ~~> integer_decision_representation_order ([("SAT", 9500)])
+SATInt(Order, [b#int_order_1;int(1..)] [0, 0])
+
+--
+
+a
+   ~~> integer_decision_representation_order ([("SAT", 9500)])
+SATInt(Order, [a#int_order_1;int(1..)] [0, 0])
+
+--
+
+or([__1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__1
+
+--
+
+or([__0;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__0
+
+--
+
+SATInt(Order, [b#int_order_1;int(1..)] [0, 0]) = |SATInt(Order, [a#int_order_1;int(1..)] [0, 0])|,
+b#int_order_1,
+__0,
+a#int_order_1,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+SATInt(Order, [b#int_order_1;int(1..)] [0, 0]) = |SATInt(Order, [a#int_order_1;int(1..)] [0, 0])|,
+__0,
+a#int_order_1,
+__1
+new SAT encoding decisions:
+  assert(b#int_order_1) using tseitin
+
+--
+
+SATInt(Order, [b#int_order_1;int(1..)] [0, 0]) = |SATInt(Order, [a#int_order_1;int(1..)] [0, 0])|,
+__0,
+a#int_order_1,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+SATInt(Order, [b#int_order_1;int(1..)] [0, 0]) = |SATInt(Order, [a#int_order_1;int(1..)] [0, 0])|,
+a#int_order_1,
+__1
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+SATInt(Order, [b#int_order_1;int(1..)] [0, 0]) = |SATInt(Order, [a#int_order_1;int(1..)] [0, 0])|,
+a#int_order_1,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+SATInt(Order, [b#int_order_1;int(1..)] [0, 0]) = |SATInt(Order, [a#int_order_1;int(1..)] [0, 0])|,
+__1
+new SAT encoding decisions:
+  assert(a#int_order_1) using tseitin
+
+--
+
+SATInt(Order, [b#int_order_1;int(1..)] [0, 0]) = |SATInt(Order, [a#int_order_1;int(1..)] [0, 0])|,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+SATInt(Order, [b#int_order_1;int(1..)] [0, 0]) = |SATInt(Order, [a#int_order_1;int(1..)] [0, 0])|
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+SATInt(Order, [b#int_order_1;int(1..)] [0, 0]) = |SATInt(Order, [a#int_order_1;int(1..)] [0, 0])|
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [false;int(1..)] [0, 0]) = |SATInt(Order, [a#int_order_1;int(1..)] [0, 0])|
+
+--
+
+|SATInt(Order, [a#int_order_1;int(1..)] [0, 0])|
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+|SATInt(Log, [false;int(1..)] [0, 0])|
+
+--
+
+|SATInt(Log, [false;int(1..)] [0, 0])|
+   ~~> cnf_int_abs ([("SAT", 4100)])
+SATInt(Log, [__4;int(1..)] [0, 0])
+new variables:
+  findAux __2: bool
+  findAux __3: bool
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__2 <-> !(false)) using tseitin
+  define(__3 <-> !(__2)) using tseitin
+  define(__4 <-> or([and([false,__3;int(1..)]),and([!(false),false;int(1..)]);int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [false;int(1..)] [0, 0]) = SATInt(Log, [__4;int(1..)] [0, 0])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(-1*false, 1*__4) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }, PbTermGroup { start: 1, end: 2, structure: BoundedBinary { lower: 0, upper: 0 } }]
+
+--
+
+__5
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__5) using tseitin
+
+--
+
+Final model:
+
+find a: int(0..0)
+find b: int(0..0)
+find b#int_order_1: bool
+findAux __0: bool
+find a#int_order_1: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [],
+define(__1 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [],
+assert(b#int_order_1) using tseitin,
+assert(__0) using tseitin,
+assert(a#int_order_1) using tseitin,
+assert(__1) using tseitin,
+define(__2 <-> !(false)) using tseitin,
+define(__3 <-> !(__2)) using tseitin,
+define(__4 <-> or([and([false,__3;int(1..)]),and([!(false),false;int(1..)]);int(1..)])) using tseitin,
+define(__5 <-> integer-weighted(-1*false, 1*__4) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }, PbTermGroup { start: 1, end: 2, structure: BoundedBinary { lower: 0, upper: 0 } }],
+assert(__5) using tseitin
+

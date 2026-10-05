@@ -13,57 +13,46 @@ and([ (j - i) <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 and([ (j - i) <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..)]))) ])
 new variables:
-  find x#int_log_1: bool
-  find x#int_log_2: bool
-  find x#int_log_3: bool
-  find x#int_log_4: bool
+  find x#int_direct_1: bool
+  find x#int_direct_2: bool
+  find x#int_direct_3: bool
+  find x#int_direct_4: bool
+  find x#int_direct_5: bool
+  find x#int_direct_6: bool
+  find x#int_direct_7: bool
 new constraints:
-  or([and([SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4;int(1..)] [0, 6]) >= 0,SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4;int(1..)] [0, 6]) <= 6;int(1..)]);int(1..)])
-
---
-
-SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4;int(1..)] [0, 6]) >= 0
-   ~~> select_integer_relation ([("SAT", 18500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, -8*x#int_log_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 6 } }]
-
---
-
-SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4;int(1..)] [0, 6]) <= 6
-   ~~> select_integer_relation ([("SAT", 18500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, -8*x#int_log_4) LessEqual 6) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 6 } }]
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> and([__0,__1;int(1..)])) using tseitin
+  sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6),toInt(x#int_direct_7);int(1..)]) <= 1
+  or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)])
 
 --
 
 and([ (j - i) <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..)]))) ]),
-__2
+sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6),toInt(x#int_direct_7);int(1..)]) <= 1,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([ (j - i) <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..)]))) ]),
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6, x#int_direct_7) using None
+
+--
+
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin
+
+--
+
+and([ (j - i) <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..)]))) ]),
+__0
    ~~> remove_single_atom ([("SAT", 8400)])
 and([ (j - i) <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..)]))) ])
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(__0) using tseitin
 
 --
 
@@ -165,169 +154,169 @@ x
 
 -1 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
-__3
+__1
 new variables:
-  findAux __3: bool
+  findAux __1: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 1) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__1 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 0 <= x
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+1 <= x
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual -1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+-1 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__4 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
-1 <= x
+0 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual -1) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__5 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
--1 <= x
+1 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __6
 new variables:
   findAux __6: bool
 new SAT encoding decisions:
-  define(__6 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 1) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__6 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual -1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
-0 <= x
+-1 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __7
 new variables:
   findAux __7: bool
 new SAT encoding decisions:
-  define(__7 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__7 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
-1 <= x
+0 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __8
 new variables:
   findAux __8: bool
 new SAT encoding decisions:
-  define(__8 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual -1) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__8 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
--1 <= x
+1 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __9
 new variables:
   findAux __9: bool
 new SAT encoding decisions:
-  define(__9 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 1) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__9 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual -1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
-0 <= x
+-1 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __10
 new variables:
   findAux __10: bool
 new SAT encoding decisions:
-  define(__10 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__10 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
-1 <= x
+0 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __11
 new variables:
   findAux __11: bool
 new SAT encoding decisions:
-  define(__11 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual -1) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__11 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
--1 <= x
+1 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __12
 new variables:
   findAux __12: bool
 new SAT encoding decisions:
-  define(__12 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 1) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
-
---
-
-0 <= x
-   ~~> select_integer_relation ([("SAT", 18500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
-
---
-
-1 <= x
-   ~~> select_integer_relation ([("SAT", 18500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual -1) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__12 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual -1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 -1 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
-__15
+__13
 new variables:
-  findAux __15: bool
+  findAux __13: bool
 new SAT encoding decisions:
-  define(__15 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 1) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__13 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 0 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
-__16
+__14
 new variables:
-  findAux __16: bool
+  findAux __14: bool
 new SAT encoding decisions:
-  define(__16 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__14 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 1 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
-__17
+__15
 new variables:
-  findAux __17: bool
+  findAux __15: bool
 new SAT encoding decisions:
-  define(__17 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual -1) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }]
+  define(__15 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual -1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
-and([__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14,__15,__16,__17;int(1..)])
+and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14,__15;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__18
+__16
 new variables:
-  findAux __18: bool
+  findAux __16: bool
 new SAT encoding decisions:
-  define(__18 <-> and([__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14,__15,__16,__17;int(1..)])) using tseitin
+  define(__16 <-> and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14,__15;int(1..)])) using tseitin
 
 --
 
-__18
+__16
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__18) using tseitin
+  assert(__16) using tseitin
 
 --
 
@@ -335,10 +324,13 @@ Final model:
 
 letting m be 6
 find x: int(0..6)
-find x#int_log_1: bool
-find x#int_log_2: bool
-find x#int_log_3: bool
-find x#int_log_4: bool
+find x#int_direct_1: bool
+find x#int_direct_2: bool
+find x#int_direct_3: bool
+find x#int_direct_4: bool
+find x#int_direct_5: bool
+find x#int_direct_6: bool
+find x#int_direct_7: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -356,8 +348,6 @@ findAux __13: bool
 findAux __14: bool
 findAux __15: bool
 findAux __16: bool
-findAux __17: bool
-findAux __18: bool
 
 such that
 
@@ -365,25 +355,24 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, -8*x#int_log_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 6 } }],
-define(__1 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, -8*x#int_log_4) LessEqual 6) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 6 } }],
-define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
-assert(__2) using tseitin,
-define(__3 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__4 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__5 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual -1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__6 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__7 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__8 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual -1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__9 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__10 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__11 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual -1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__12 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__13 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__14 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual -1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__15 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__16 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__17 <-> integer-weighted(-1*x#int_log_1, -2*x#int_log_2, -4*x#int_log_3, 8*x#int_log_4) LessEqual -1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -6, upper: 0 } }],
-define(__18 <-> and([__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14,__15,__16,__17;int(1..)])) using tseitin,
-assert(__18) using tseitin
+at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6, x#int_direct_7) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
+define(__0 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+define(__1 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__2 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__3 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__4 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__5 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__6 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__7 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__8 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__9 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__10 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__11 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__12 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__13 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__14 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__15 <-> integer-weighted(0*x#int_direct_1, -1*x#int_direct_2, -2*x#int_direct_3, -3*x#int_direct_4, -4*x#int_direct_5, -5*x#int_direct_6, -6*x#int_direct_7) LessEqual -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__16 <-> and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14,__15;int(1..)])) using tseitin,
+assert(__16) using tseitin
 

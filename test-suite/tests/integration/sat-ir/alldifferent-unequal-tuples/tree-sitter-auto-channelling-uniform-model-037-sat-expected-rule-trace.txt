@@ -86,287 +86,164 @@ y
 (allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
 (repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception))
 new variables:
-  find exception#components_2#int_offset_1: bool
-  find exception#components_2#int_offset_2: bool
-  find exception#components_2#int_offset_3: bool
-  find x#components_2#int_offset_1: bool
-  find x#components_2#int_offset_2: bool
-  find y#components_2#int_offset_1: bool
-  find y#components_2#int_offset_2: bool
+  find exception#components_2#int_direct_1: bool
+  find exception#components_2#int_direct_2: bool
+  find exception#components_2#int_direct_3: bool
+  find exception#components_2#int_direct_4: bool
+  find exception#components_2#int_direct_5: bool
+  find exception#components_2#int_direct_6: bool
+  find x#components_2#int_direct_1: bool
+  find x#components_2#int_direct_2: bool
+  find x#components_2#int_direct_3: bool
+  find y#components_2#int_direct_1: bool
+  find y#components_2#int_direct_2: bool
+  find y#components_2#int_direct_3: bool
+  find y#components_2#int_direct_4: bool
 new constraints:
-  or([!(exception#components_2#int_offset_3),and([!(exception#components_2#int_offset_2),or([!(exception#components_2#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
-  or([SATInt(Offset, [exception#components_2#int_offset_1,exception#components_2#int_offset_2,exception#components_2#int_offset_3;int(1..)] [-2, 3]) = -2,SATInt(Offset, [exception#components_2#int_offset_1,exception#components_2#int_offset_2,exception#components_2#int_offset_3;int(1..)] [-2, 3]) = 0,SATInt(Offset, [exception#components_2#int_offset_1,exception#components_2#int_offset_2,exception#components_2#int_offset_3;int(1..)] [-2, 3]) = 3;int(1..)])
-  or([!(x#components_2#int_offset_2),and([!(x#components_2#int_offset_1),true;int(1..)]);int(1..)])
-  or([SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [-2, 0]) = -2,SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [-2, 0]) = 0;int(1..)])
-  or([!(y#components_2#int_offset_2),or([!(y#components_2#int_offset_1),true;int(1..)]);int(1..)])
-  or([SATInt(Offset, [y#components_2#int_offset_1,y#components_2#int_offset_2;int(1..)] [0, 3]) = 0,SATInt(Offset, [y#components_2#int_offset_1,y#components_2#int_offset_2;int(1..)] [0, 3]) = 3;int(1..)])
+  sum([toInt(exception#components_2#int_direct_1),toInt(exception#components_2#int_direct_2),toInt(exception#components_2#int_direct_3),toInt(exception#components_2#int_direct_4),toInt(exception#components_2#int_direct_5),toInt(exception#components_2#int_direct_6);int(1..)]) <= 1
+  or([exception#components_2#int_direct_1,exception#components_2#int_direct_3,exception#components_2#int_direct_6;int(1..)])
+  sum([toInt(x#components_2#int_direct_1),toInt(x#components_2#int_direct_2),toInt(x#components_2#int_direct_3);int(1..)]) <= 1
+  or([x#components_2#int_direct_1,x#components_2#int_direct_3;int(1..)])
+  sum([toInt(y#components_2#int_direct_1),toInt(y#components_2#int_direct_2),toInt(y#components_2#int_direct_3),toInt(y#components_2#int_direct_4);int(1..)]) <= 1
+  or([y#components_2#int_direct_1,y#components_2#int_direct_4;int(1..)])
 
 --
 
-SATInt(Offset, [exception#components_2#int_offset_1,exception#components_2#int_offset_2,exception#components_2#int_offset_3;int(1..)] [-2, 3]) = -2
-   ~~> select_integer_relation ([("SAT", 18500)])
+(ordinary) <-> (allDifferent([x,y;int(1..2)])),
+(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+sum([toInt(exception#components_2#int_direct_1),toInt(exception#components_2#int_direct_2),toInt(exception#components_2#int_direct_3),toInt(exception#components_2#int_direct_4),toInt(exception#components_2#int_direct_5),toInt(exception#components_2#int_direct_6);int(1..)]) <= 1,
+or([exception#components_2#int_direct_1,exception#components_2#int_direct_3,exception#components_2#int_direct_6;int(1..)]),
+sum([toInt(x#components_2#int_direct_1),toInt(x#components_2#int_direct_2),toInt(x#components_2#int_direct_3);int(1..)]) <= 1,
+or([x#components_2#int_direct_1,x#components_2#int_direct_3;int(1..)]),
+sum([toInt(y#components_2#int_direct_1),toInt(y#components_2#int_direct_2),toInt(y#components_2#int_direct_3),toInt(y#components_2#int_direct_4);int(1..)]) <= 1,
+or([y#components_2#int_direct_1,y#components_2#int_direct_4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(ordinary) <-> (allDifferent([x,y;int(1..2)])),
+(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+or([exception#components_2#int_direct_1,exception#components_2#int_direct_3,exception#components_2#int_direct_6;int(1..)]),
+sum([toInt(x#components_2#int_direct_1),toInt(x#components_2#int_direct_2),toInt(x#components_2#int_direct_3);int(1..)]) <= 1,
+or([x#components_2#int_direct_1,x#components_2#int_direct_3;int(1..)]),
+sum([toInt(y#components_2#int_direct_1),toInt(y#components_2#int_direct_2),toInt(y#components_2#int_direct_3),toInt(y#components_2#int_direct_4);int(1..)]) <= 1,
+or([y#components_2#int_direct_1,y#components_2#int_direct_4;int(1..)])
+new SAT encoding decisions:
+  at-most-one(exception#components_2#int_direct_1, exception#components_2#int_direct_2, exception#components_2#int_direct_3, exception#components_2#int_direct_4, exception#components_2#int_direct_5, exception#components_2#int_direct_6) using None
+
+--
+
+(ordinary) <-> (allDifferent([x,y;int(1..2)])),
+(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+or([exception#components_2#int_direct_1,exception#components_2#int_direct_3,exception#components_2#int_direct_6;int(1..)]),
+sum([toInt(x#components_2#int_direct_1),toInt(x#components_2#int_direct_2),toInt(x#components_2#int_direct_3);int(1..)]) <= 1,
+or([x#components_2#int_direct_1,x#components_2#int_direct_3;int(1..)]),
+sum([toInt(y#components_2#int_direct_1),toInt(y#components_2#int_direct_2),toInt(y#components_2#int_direct_3),toInt(y#components_2#int_direct_4);int(1..)]) <= 1,
+or([y#components_2#int_direct_1,y#components_2#int_direct_4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(ordinary) <-> (allDifferent([x,y;int(1..2)])),
+(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+or([exception#components_2#int_direct_1,exception#components_2#int_direct_3,exception#components_2#int_direct_6;int(1..)]),
+or([x#components_2#int_direct_1,x#components_2#int_direct_3;int(1..)]),
+sum([toInt(y#components_2#int_direct_1),toInt(y#components_2#int_direct_2),toInt(y#components_2#int_direct_3),toInt(y#components_2#int_direct_4);int(1..)]) <= 1,
+or([y#components_2#int_direct_1,y#components_2#int_direct_4;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#components_2#int_direct_1, x#components_2#int_direct_2, x#components_2#int_direct_3) using None
+
+--
+
+(ordinary) <-> (allDifferent([x,y;int(1..2)])),
+(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+or([exception#components_2#int_direct_1,exception#components_2#int_direct_3,exception#components_2#int_direct_6;int(1..)]),
+or([x#components_2#int_direct_1,x#components_2#int_direct_3;int(1..)]),
+sum([toInt(y#components_2#int_direct_1),toInt(y#components_2#int_direct_2),toInt(y#components_2#int_direct_3),toInt(y#components_2#int_direct_4);int(1..)]) <= 1,
+or([y#components_2#int_direct_1,y#components_2#int_direct_4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(ordinary) <-> (allDifferent([x,y;int(1..2)])),
+(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+or([exception#components_2#int_direct_1,exception#components_2#int_direct_3,exception#components_2#int_direct_6;int(1..)]),
+or([x#components_2#int_direct_1,x#components_2#int_direct_3;int(1..)]),
+or([y#components_2#int_direct_1,y#components_2#int_direct_4;int(1..)])
+new SAT encoding decisions:
+  at-most-one(y#components_2#int_direct_1, y#components_2#int_direct_2, y#components_2#int_direct_3, y#components_2#int_direct_4) using None
+
+--
+
+or([exception#components_2#int_direct_1,exception#components_2#int_direct_3,exception#components_2#int_direct_6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*exception#components_2#int_offset_1, 2*exception#components_2#int_offset_2, 4*exception#components_2#int_offset_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }]
+  define(__0 <-> or([exception#components_2#int_direct_1,exception#components_2#int_direct_3,exception#components_2#int_direct_6;int(1..)])) using tseitin
 
 --
 
-SATInt(Offset, [exception#components_2#int_offset_1,exception#components_2#int_offset_2,exception#components_2#int_offset_3;int(1..)] [-2, 3]) = 0
-   ~~> select_integer_relation ([("SAT", 18500)])
+or([x#components_2#int_direct_1,x#components_2#int_direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*exception#components_2#int_offset_1, 2*exception#components_2#int_offset_2, 4*exception#components_2#int_offset_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }]
+  define(__1 <-> or([x#components_2#int_direct_1,x#components_2#int_direct_3;int(1..)])) using tseitin
 
 --
 
-SATInt(Offset, [exception#components_2#int_offset_1,exception#components_2#int_offset_2,exception#components_2#int_offset_3;int(1..)] [-2, 3]) = 3
-   ~~> select_integer_relation ([("SAT", 18500)])
+or([y#components_2#int_direct_1,y#components_2#int_direct_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*exception#components_2#int_offset_1, 2*exception#components_2#int_offset_2, 4*exception#components_2#int_offset_3) Equal 5) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }]
-
---
-
-SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [-2, 0]) = -2
-   ~~> select_integer_relation ([("SAT", 18500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
-
---
-
-SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [-2, 0]) = 0
-   ~~> select_integer_relation ([("SAT", 18500)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2) Equal 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
-
---
-
-SATInt(Offset, [y#components_2#int_offset_1,y#components_2#int_offset_2;int(1..)] [0, 3]) = 0
-   ~~> select_integer_relation ([("SAT", 18500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> integer-weighted(1*y#components_2#int_offset_1, 2*y#components_2#int_offset_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
-
---
-
-SATInt(Offset, [y#components_2#int_offset_1,y#components_2#int_offset_2;int(1..)] [0, 3]) = 3
-   ~~> select_integer_relation ([("SAT", 18500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> integer-weighted(1*y#components_2#int_offset_1, 2*y#components_2#int_offset_2) Equal 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
-
---
-
-!(exception#components_2#int_offset_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> !(exception#components_2#int_offset_3)) using tseitin
-
---
-
-!(x#components_2#int_offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> !(x#components_2#int_offset_2)) using tseitin
-
---
-
-!(exception#components_2#int_offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> !(exception#components_2#int_offset_2)) using tseitin
-
---
-
-!(x#components_2#int_offset_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> !(x#components_2#int_offset_1)) using tseitin
-
---
-
-and([__9;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__9
-
---
-
-and([__10;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__10
-
---
-
-or([__5,__6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> or([__5,__6;int(1..)])) using tseitin
-
---
-
-or([__0,__1,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__12
-new variables:
-  findAux __12: bool
-new SAT encoding decisions:
-  define(__12 <-> or([__0,__1,__2;int(1..)])) using tseitin
-
---
-
-or([__3,__4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> or([__3,__4;int(1..)])) using tseitin
-
---
-
-or([__7,__9;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> or([__7,__9;int(1..)])) using tseitin
-
---
-
-or([__8,__10;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__15
-new variables:
-  findAux __15: bool
-new SAT encoding decisions:
-  define(__15 <-> or([__8,__10;int(1..)])) using tseitin
+  define(__2 <-> or([y#components_2#int_direct_1,y#components_2#int_direct_4;int(1..)])) using tseitin
 
 --
 
 (ordinary) <-> (allDifferent([x,y;int(1..2)])),
 (allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
 (repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-__14,
-__12,
-__15,
-__13,
-true,
-__11
+__0,
+__1,
+__2
    ~~> remove_single_atom ([("SAT", 8400)])
 (ordinary) <-> (allDifferent([x,y;int(1..2)])),
 (allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
 (repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-__12,
-__15,
-__13,
-true,
-__11
+__1,
+__2
 new SAT encoding decisions:
-  assert(__14) using tseitin
+  assert(__0) using tseitin
 
 --
 
 (ordinary) <-> (allDifferent([x,y;int(1..2)])),
 (allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
 (repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-__12,
-__15,
-__13,
-true,
-__11
+__1,
+__2
    ~~> remove_single_atom ([("SAT", 8400)])
 (ordinary) <-> (allDifferent([x,y;int(1..2)])),
 (allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
 (repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-__15,
-__13,
-true,
-__11
+__2
 new SAT encoding decisions:
-  assert(__12) using tseitin
+  assert(__1) using tseitin
 
 --
 
 (ordinary) <-> (allDifferent([x,y;int(1..2)])),
 (allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
 (repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-__15,
-__13,
-true,
-__11
+__2
    ~~> remove_single_atom ([("SAT", 8400)])
 (ordinary) <-> (allDifferent([x,y;int(1..2)])),
 (allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-__13,
-true,
-__11
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception))
 new SAT encoding decisions:
-  assert(__15) using tseitin
-
---
-
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-__13,
-true,
-__11
-   ~~> remove_single_atom ([("SAT", 8400)])
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-true,
-__11
-new SAT encoding decisions:
-  assert(__13) using tseitin
-
---
-
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-true,
-__11
-   ~~> remove_single_atom ([("SAT", 8400)])
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-true
-new SAT encoding decisions:
-  assert(__11) using tseitin
+  assert(__2) using tseitin
 
 --
 
@@ -402,64 +279,62 @@ y#components_2
 
 x#components_2 != y#components_2
    ~~> select_integer_relation ([("SAT", 18500)])
-__16
+__3
 new variables:
-  findAux __16: bool
+  findAux __3: bool
 new SAT encoding decisions:
-  define(__16 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*y#components_2#int_offset_1, -2*y#components_2#int_offset_2) NotEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__3 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 0*y#components_2#int_direct_1, -1*y#components_2#int_direct_2, -2*y#components_2#int_direct_3, -3*y#components_2#int_direct_4) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 7, structure: Choice }]
 
 --
 
 x#components_1 != y#components_1
    ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__17
+__4
 new variables:
-  findAux __17: bool
+  findAux __4: bool
 new SAT encoding decisions:
-  define(__17 <-> !((x#components_1) <-> (y#components_1))) using tseitin
+  define(__4 <-> !((x#components_1) <-> (y#components_1))) using tseitin
 
 --
 
-or([__17,__16;int(1..)])
+or([__4,__3;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__18
+__5
 new variables:
-  findAux __18: bool
+  findAux __5: bool
 new SAT encoding decisions:
-  define(__18 <-> or([__17,__16;int(1..)])) using tseitin
+  define(__5 <-> or([__4,__3;int(1..)])) using tseitin
 
 --
 
-sat-allDifferent-comparisons([__18;int(1..)])
+sat-allDifferent-comparisons([__5;int(1..)])
    ~~> select_compound_alldifferent ([("SAT", 18500)])
-__19
+__6
 new variables:
-  findAux __19: bool
+  findAux __6: bool
 new SAT encoding decisions:
-  define(__19 <-> allDifferentComparisons(__18)) using None, AMO None, PB None
+  define(__6 <-> allDifferentComparisons(__5)) using None, AMO None, PB None
 
 --
 
-(ordinary) <-> (__19)
+(ordinary) <-> (__6)
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__20
+__7
 new variables:
-  findAux __20: bool
+  findAux __7: bool
 new SAT encoding decisions:
-  define(__20 <-> (ordinary) <-> (__19)) using tseitin
+  define(__7 <-> (ordinary) <-> (__6)) using tseitin
 
 --
 
-__20,
+__7,
 (allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-true
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception))
    ~~> remove_single_atom ([("SAT", 8400)])
 (allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-true
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception))
 new SAT encoding decisions:
-  assert(__20) using tseitin
+  assert(__7) using tseitin
 
 --
 
@@ -471,11 +346,11 @@ allDifferentExcept([x,y;int(1..)], exception)
 
 allDifferentExcept([x,y;int(1..)], exception)
    ~~> introduce_compound_alldifferent ([("SAT", 18400)])
-sat-allDifferent-comparisons([or([x != y,__21;int(1..)]);int(1..)])
+sat-allDifferent-comparisons([or([x != y,__8;int(1..)]);int(1..)])
 new variables:
-  findAux __21: bool
+  findAux __8: bool
 new constraints:
-  (__21) <-> (x = exception)
+  (__8) <-> (x = exception)
 
 --
 
@@ -499,11 +374,237 @@ exception#components_2
 
 x#components_2 = exception#components_2
    ~~> select_integer_relation ([("SAT", 18500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 2*exception#components_2#int_direct_1, 1*exception#components_2#int_direct_2, 0*exception#components_2#int_direct_3, -1*exception#components_2#int_direct_4, -2*exception#components_2#int_direct_5, -3*exception#components_2#int_direct_6) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 9, structure: Choice }]
+
+--
+
+x != y
+   ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
+or([x#components_1 != y#components_1,x#components_2 != y#components_2;int(1..)])
+
+--
+
+x#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_2
+
+--
+
+y#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#components_2
+
+--
+
+x#components_2 != y#components_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 0*y#components_2#int_direct_1, -1*y#components_2#int_direct_2, -2*y#components_2#int_direct_3, -3*y#components_2#int_direct_4) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 7, structure: Choice }]
+
+--
+
+or([or([x#components_1 != y#components_1,__10;int(1..)]),__8;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([x#components_1 != y#components_1,__10,__8;int(1..)])
+
+--
+
+x#components_1 = exception#components_1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> (x#components_1) <-> (exception#components_1)) using tseitin
+
+--
+
+and([__11,__9;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> and([__11,__9;int(1..)])) using tseitin
+
+--
+
+(__8) <-> (__12)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> (__8) <-> (__12)) using tseitin
+
+--
+
+x#components_1 != y#components_1
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> !((x#components_1) <-> (y#components_1))) using tseitin
+
+--
+
+or([__14,__10,__8;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> or([__14,__10,__8;int(1..)])) using tseitin
+
+--
+
+sat-allDifferent-comparisons([__15;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> allDifferentComparisons(__15)) using None, AMO None, PB None
+
+--
+
+(allowed) <-> (__16)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> (allowed) <-> (__16)) using tseitin
+
+--
+
+__17,
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+__13
+   ~~> remove_single_atom ([("SAT", 8400)])
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+__13
+new SAT encoding decisions:
+  assert(__17) using tseitin
+
+--
+
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+__13
+   ~~> remove_single_atom ([("SAT", 8400)])
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception))
+new SAT encoding decisions:
+  assert(__13) using tseitin
+
+--
+
+allDifferentExcept([x,x,y;int(1..3)], exception)
+   ~~> matrix_to_list ([("Base", 1998)])
+allDifferentExcept([x,x,y;int(1..)], exception)
+
+--
+
+allDifferentExcept([x,x,y;int(1..)], exception)
+   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
+sat-allDifferent-comparisons([or([x != x,__18;int(1..)]),or([x != y,__18;int(1..)]),or([x != y,__19;int(1..)]);int(1..)])
+new variables:
+  findAux __18: bool
+  findAux __19: bool
+new constraints:
+  (__18) <-> (x = exception)
+  (__19) <-> (x = exception)
+
+--
+
+x = exception
+   ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
+and([x#components_1 = exception#components_1,x#components_2 = exception#components_2;int(1..)])
+
+--
+
+x#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_2
+
+--
+
+exception#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+exception#components_2
+
+--
+
+x#components_2 = exception#components_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 2*exception#components_2#int_direct_1, 1*exception#components_2#int_direct_2, 0*exception#components_2#int_direct_3, -1*exception#components_2#int_direct_4, -2*exception#components_2#int_direct_5, -3*exception#components_2#int_direct_6) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 9, structure: Choice }]
+
+--
+
+x = exception
+   ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
+and([x#components_1 = exception#components_1,x#components_2 = exception#components_2;int(1..)])
+
+--
+
+x#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_2
+
+--
+
+exception#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+exception#components_2
+
+--
+
+x#components_2 = exception#components_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 2*exception#components_2#int_direct_1, 1*exception#components_2#int_direct_2, 0*exception#components_2#int_direct_3, -1*exception#components_2#int_direct_4, -2*exception#components_2#int_direct_5, -3*exception#components_2#int_direct_6) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 9, structure: Choice }]
+
+--
+
+x != y
+   ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
+or([x#components_1 != y#components_1,x#components_2 != y#components_2;int(1..)])
+
+--
+
+x#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_2
+
+--
+
+y#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#components_2
+
+--
+
+x#components_2 != y#components_2
+   ~~> select_integer_relation ([("SAT", 18500)])
 __22
 new variables:
   findAux __22: bool
 new SAT encoding decisions:
-  define(__22 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*exception#components_2#int_offset_1, -2*exception#components_2#int_offset_2, -4*exception#components_2#int_offset_3) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -5, upper: 0 } }]
+  define(__22 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 0*y#components_2#int_direct_1, -1*y#components_2#int_direct_2, -2*y#components_2#int_direct_3, -3*y#components_2#int_direct_4) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 7, structure: Choice }]
 
 --
 
@@ -531,13 +632,25 @@ __23
 new variables:
   findAux __23: bool
 new SAT encoding decisions:
-  define(__23 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*y#components_2#int_offset_1, -2*y#components_2#int_offset_2) NotEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__23 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 0*y#components_2#int_direct_1, -1*y#components_2#int_direct_2, -2*y#components_2#int_direct_3, -3*y#components_2#int_direct_4) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 7, structure: Choice }]
 
 --
 
-or([or([x#components_1 != y#components_1,__23;int(1..)]),__21;int(1..)])
+or([or([x#components_1 != y#components_1,__22;int(1..)]),__18;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-or([x#components_1 != y#components_1,__23,__21;int(1..)])
+or([x#components_1 != y#components_1,__22,__18;int(1..)])
+
+--
+
+or([or([x#components_1 != y#components_1,__23;int(1..)]),__19;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([x#components_1 != y#components_1,__23,__19;int(1..)])
+
+--
+
+or([__18;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__18
 
 --
 
@@ -551,388 +664,141 @@ new SAT encoding decisions:
 
 --
 
-and([__24,__22;int(1..)])
+and([__24,__20;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __25
 new variables:
   findAux __25: bool
 new SAT encoding decisions:
-  define(__25 <-> and([__24,__22;int(1..)])) using tseitin
+  define(__25 <-> and([__24,__20;int(1..)])) using tseitin
 
 --
 
-(__21) <-> (__25)
+(__19) <-> (__25)
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __26
 new variables:
   findAux __26: bool
 new SAT encoding decisions:
-  define(__26 <-> (__21) <-> (__25)) using tseitin
+  define(__26 <-> (__19) <-> (__25)) using tseitin
 
 --
 
-x#components_1 != y#components_1
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
+x#components_1 = exception#components_1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __27
 new variables:
   findAux __27: bool
 new SAT encoding decisions:
-  define(__27 <-> !((x#components_1) <-> (y#components_1))) using tseitin
+  define(__27 <-> (x#components_1) <-> (exception#components_1)) using tseitin
 
 --
 
-or([__27,__23,__21;int(1..)])
+and([__27,__21;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __28
 new variables:
   findAux __28: bool
 new SAT encoding decisions:
-  define(__28 <-> or([__27,__23,__21;int(1..)])) using tseitin
+  define(__28 <-> and([__27,__21;int(1..)])) using tseitin
 
 --
 
-sat-allDifferent-comparisons([__28;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
+(__18) <-> (__28)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __29
 new variables:
   findAux __29: bool
 new SAT encoding decisions:
-  define(__29 <-> allDifferentComparisons(__28)) using None, AMO None, PB None
+  define(__29 <-> (__18) <-> (__28)) using tseitin
 
 --
 
-(allowed) <-> (__29)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+x#components_1 != y#components_1
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
 __30
 new variables:
   findAux __30: bool
 new SAT encoding decisions:
-  define(__30 <-> (allowed) <-> (__29)) using tseitin
+  define(__30 <-> !((x#components_1) <-> (y#components_1))) using tseitin
 
 --
 
-__30,
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-true,
-__26
-   ~~> remove_single_atom ([("SAT", 8400)])
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-true,
-__26
-new SAT encoding decisions:
-  assert(__30) using tseitin
-
---
-
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-true,
-__26
-   ~~> remove_single_atom ([("SAT", 8400)])
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-true
-new SAT encoding decisions:
-  assert(__26) using tseitin
-
---
-
-allDifferentExcept([x,x,y;int(1..3)], exception)
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferentExcept([x,x,y;int(1..)], exception)
-
---
-
-allDifferentExcept([x,x,y;int(1..)], exception)
-   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
-sat-allDifferent-comparisons([or([x != x,__31;int(1..)]),or([x != y,__31;int(1..)]),or([x != y,__32;int(1..)]);int(1..)])
+or([__30,__22,__18;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__31
 new variables:
   findAux __31: bool
+new SAT encoding decisions:
+  define(__31 <-> or([__30,__22,__18;int(1..)])) using tseitin
+
+--
+
+x#components_1 != y#components_1
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
+__32
+new variables:
   findAux __32: bool
-new constraints:
-  (__31) <-> (x = exception)
-  (__32) <-> (x = exception)
+new SAT encoding decisions:
+  define(__32 <-> !((x#components_1) <-> (y#components_1))) using tseitin
 
 --
 
-x = exception
-   ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
-and([x#components_1 = exception#components_1,x#components_2 = exception#components_2;int(1..)])
-
---
-
-x#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#components_2
-
---
-
-exception#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-exception#components_2
-
---
-
-x#components_2 = exception#components_2
-   ~~> select_integer_relation ([("SAT", 18500)])
+or([__32,__23,__19;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __33
 new variables:
   findAux __33: bool
 new SAT encoding decisions:
-  define(__33 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*exception#components_2#int_offset_1, -2*exception#components_2#int_offset_2, -4*exception#components_2#int_offset_3) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -5, upper: 0 } }]
+  define(__33 <-> or([__32,__23,__19;int(1..)])) using tseitin
 
 --
 
-x = exception
-   ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
-and([x#components_1 = exception#components_1,x#components_2 = exception#components_2;int(1..)])
-
---
-
-x#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#components_2
-
---
-
-exception#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-exception#components_2
-
---
-
-x#components_2 = exception#components_2
-   ~~> select_integer_relation ([("SAT", 18500)])
+sat-allDifferent-comparisons([__18,__31,__33;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __34
 new variables:
   findAux __34: bool
 new SAT encoding decisions:
-  define(__34 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*exception#components_2#int_offset_1, -2*exception#components_2#int_offset_2, -4*exception#components_2#int_offset_3) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -5, upper: 0 } }]
+  define(__34 <-> allDifferentComparisons(__18, __31, __33)) using None, AMO None, PB None
 
 --
 
-x != y
-   ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
-or([x#components_1 != y#components_1,x#components_2 != y#components_2;int(1..)])
-
---
-
-x#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#components_2
-
---
-
-y#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y#components_2
-
---
-
-x#components_2 != y#components_2
-   ~~> select_integer_relation ([("SAT", 18500)])
+(repeated) <-> (__34)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __35
 new variables:
   findAux __35: bool
 new SAT encoding decisions:
-  define(__35 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*y#components_2#int_offset_1, -2*y#components_2#int_offset_2) NotEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__35 <-> (repeated) <-> (__34)) using tseitin
 
 --
 
-x != y
-   ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
-or([x#components_1 != y#components_1,x#components_2 != y#components_2;int(1..)])
-
---
-
-x#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#components_2
-
---
-
-y#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y#components_2
-
---
-
-x#components_2 != y#components_2
-   ~~> select_integer_relation ([("SAT", 18500)])
-__36
-new variables:
-  findAux __36: bool
-new SAT encoding decisions:
-  define(__36 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*y#components_2#int_offset_1, -2*y#components_2#int_offset_2) NotEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }]
-
---
-
-or([or([x#components_1 != y#components_1,__35;int(1..)]),__31;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-or([x#components_1 != y#components_1,__35,__31;int(1..)])
-
---
-
-or([or([x#components_1 != y#components_1,__36;int(1..)]),__32;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-or([x#components_1 != y#components_1,__36,__32;int(1..)])
-
---
-
-or([__31;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__31
-
---
-
-x#components_1 = exception#components_1
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__37
-new variables:
-  findAux __37: bool
-new SAT encoding decisions:
-  define(__37 <-> (x#components_1) <-> (exception#components_1)) using tseitin
-
---
-
-and([__37,__33;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__38
-new variables:
-  findAux __38: bool
-new SAT encoding decisions:
-  define(__38 <-> and([__37,__33;int(1..)])) using tseitin
-
---
-
-(__32) <-> (__38)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__39
-new variables:
-  findAux __39: bool
-new SAT encoding decisions:
-  define(__39 <-> (__32) <-> (__38)) using tseitin
-
---
-
-x#components_1 = exception#components_1
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__40
-new variables:
-  findAux __40: bool
-new SAT encoding decisions:
-  define(__40 <-> (x#components_1) <-> (exception#components_1)) using tseitin
-
---
-
-and([__40,__34;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__41
-new variables:
-  findAux __41: bool
-new SAT encoding decisions:
-  define(__41 <-> and([__40,__34;int(1..)])) using tseitin
-
---
-
-(__31) <-> (__41)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__42
-new variables:
-  findAux __42: bool
-new SAT encoding decisions:
-  define(__42 <-> (__31) <-> (__41)) using tseitin
-
---
-
-x#components_1 != y#components_1
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__43
-new variables:
-  findAux __43: bool
-new SAT encoding decisions:
-  define(__43 <-> !((x#components_1) <-> (y#components_1))) using tseitin
-
---
-
-or([__43,__35,__31;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__44
-new variables:
-  findAux __44: bool
-new SAT encoding decisions:
-  define(__44 <-> or([__43,__35,__31;int(1..)])) using tseitin
-
---
-
-x#components_1 != y#components_1
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__45
-new variables:
-  findAux __45: bool
-new SAT encoding decisions:
-  define(__45 <-> !((x#components_1) <-> (y#components_1))) using tseitin
-
---
-
-or([__45,__36,__32;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__46
-new variables:
-  findAux __46: bool
-new SAT encoding decisions:
-  define(__46 <-> or([__45,__36,__32;int(1..)])) using tseitin
-
---
-
-sat-allDifferent-comparisons([__31,__44,__46;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
-__47
-new variables:
-  findAux __47: bool
-new SAT encoding decisions:
-  define(__47 <-> allDifferentComparisons(__31, __44, __46)) using None, AMO None, PB None
-
---
-
-(repeated) <-> (__47)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__48
-new variables:
-  findAux __48: bool
-new SAT encoding decisions:
-  define(__48 <-> (repeated) <-> (__47)) using tseitin
-
---
-
-__48,
-true,
-__42,
-__39
+__35,
+__29,
+__26
    ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__42,
-__39
+__29,
+__26
 new SAT encoding decisions:
-  assert(__48) using tseitin
+  assert(__35) using tseitin
 
 --
 
-true,
-__42,
-__39
+__29,
+__26
    ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__39
+__26
 new SAT encoding decisions:
-  assert(__42) using tseitin
+  assert(__29) using tseitin
 
 --
 
-true,
-__39
+__26
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__39) using tseitin
+  assert(__26) using tseitin
 
 --
 
@@ -950,13 +816,19 @@ find x#components_1: bool
 find x#components_2: int(-2, 0)
 find y#components_1: bool
 find y#components_2: int(0, 3)
-find exception#components_2#int_offset_1: bool
-find exception#components_2#int_offset_2: bool
-find exception#components_2#int_offset_3: bool
-find x#components_2#int_offset_1: bool
-find x#components_2#int_offset_2: bool
-find y#components_2#int_offset_1: bool
-find y#components_2#int_offset_2: bool
+find exception#components_2#int_direct_1: bool
+find exception#components_2#int_direct_2: bool
+find exception#components_2#int_direct_3: bool
+find exception#components_2#int_direct_4: bool
+find exception#components_2#int_direct_5: bool
+find exception#components_2#int_direct_6: bool
+find x#components_2#int_direct_1: bool
+find x#components_2#int_direct_2: bool
+find x#components_2#int_direct_3: bool
+find y#components_2#int_direct_1: bool
+find y#components_2#int_direct_2: bool
+find y#components_2#int_direct_3: bool
+find y#components_2#int_direct_4: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -993,19 +865,6 @@ findAux __32: bool
 findAux __33: bool
 findAux __34: bool
 findAux __35: bool
-findAux __36: bool
-findAux __37: bool
-findAux __38: bool
-findAux __39: bool
-findAux __40: bool
-findAux __41: bool
-findAux __42: bool
-findAux __43: bool
-findAux __44: bool
-findAux __45: bool
-findAux __46: bool
-findAux __47: bool
-findAux __48: bool
 
 such that
 
@@ -1013,61 +872,49 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*exception#components_2#int_offset_1, 2*exception#components_2#int_offset_2, 4*exception#components_2#int_offset_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
-define(__1 <-> integer-weighted(1*exception#components_2#int_offset_1, 2*exception#components_2#int_offset_2, 4*exception#components_2#int_offset_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
-define(__2 <-> integer-weighted(1*exception#components_2#int_offset_1, 2*exception#components_2#int_offset_2, 4*exception#components_2#int_offset_3) Equal 5) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
-define(__3 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__4 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__5 <-> integer-weighted(1*y#components_2#int_offset_1, 2*y#components_2#int_offset_2) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__6 <-> integer-weighted(1*y#components_2#int_offset_1, 2*y#components_2#int_offset_2) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__7 <-> !(exception#components_2#int_offset_3)) using tseitin,
-define(__8 <-> !(x#components_2#int_offset_2)) using tseitin,
-define(__9 <-> !(exception#components_2#int_offset_2)) using tseitin,
-define(__10 <-> !(x#components_2#int_offset_1)) using tseitin,
-define(__11 <-> or([__5,__6;int(1..)])) using tseitin,
-define(__12 <-> or([__0,__1,__2;int(1..)])) using tseitin,
-define(__13 <-> or([__3,__4;int(1..)])) using tseitin,
-define(__14 <-> or([__7,__9;int(1..)])) using tseitin,
-define(__15 <-> or([__8,__10;int(1..)])) using tseitin,
-assert(__14) using tseitin,
-assert(__12) using tseitin,
-assert(__15) using tseitin,
+at-most-one(exception#components_2#int_direct_1, exception#components_2#int_direct_2, exception#components_2#int_direct_3, exception#components_2#int_direct_4, exception#components_2#int_direct_5, exception#components_2#int_direct_6) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+at-most-one(x#components_2#int_direct_1, x#components_2#int_direct_2, x#components_2#int_direct_3) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+at-most-one(y#components_2#int_direct_1, y#components_2#int_direct_2, y#components_2#int_direct_3, y#components_2#int_direct_4) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__0 <-> or([exception#components_2#int_direct_1,exception#components_2#int_direct_3,exception#components_2#int_direct_6;int(1..)])) using tseitin,
+define(__1 <-> or([x#components_2#int_direct_1,x#components_2#int_direct_3;int(1..)])) using tseitin,
+define(__2 <-> or([y#components_2#int_direct_1,y#components_2#int_direct_4;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin,
+assert(__2) using tseitin,
+define(__3 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 0*y#components_2#int_direct_1, -1*y#components_2#int_direct_2, -2*y#components_2#int_direct_3, -3*y#components_2#int_direct_4) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 7, structure: Choice }],
+define(__4 <-> !((x#components_1) <-> (y#components_1))) using tseitin,
+define(__5 <-> or([__4,__3;int(1..)])) using tseitin,
+define(__6 <-> allDifferentComparisons(__5)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+define(__7 <-> (ordinary) <-> (__6)) using tseitin,
+assert(__7) using tseitin,
+define(__9 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 2*exception#components_2#int_direct_1, 1*exception#components_2#int_direct_2, 0*exception#components_2#int_direct_3, -1*exception#components_2#int_direct_4, -2*exception#components_2#int_direct_5, -3*exception#components_2#int_direct_6) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 9, structure: Choice }],
+define(__10 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 0*y#components_2#int_direct_1, -1*y#components_2#int_direct_2, -2*y#components_2#int_direct_3, -3*y#components_2#int_direct_4) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 7, structure: Choice }],
+define(__11 <-> (x#components_1) <-> (exception#components_1)) using tseitin,
+define(__12 <-> and([__11,__9;int(1..)])) using tseitin,
+define(__13 <-> (__8) <-> (__12)) using tseitin,
+define(__14 <-> !((x#components_1) <-> (y#components_1))) using tseitin,
+define(__15 <-> or([__14,__10,__8;int(1..)])) using tseitin,
+define(__16 <-> allDifferentComparisons(__15)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+define(__17 <-> (allowed) <-> (__16)) using tseitin,
+assert(__17) using tseitin,
 assert(__13) using tseitin,
-assert(__11) using tseitin,
-define(__16 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*y#components_2#int_offset_1, -2*y#components_2#int_offset_2) NotEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__17 <-> !((x#components_1) <-> (y#components_1))) using tseitin,
-define(__18 <-> or([__17,__16;int(1..)])) using tseitin,
-define(__19 <-> allDifferentComparisons(__18)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
-define(__20 <-> (ordinary) <-> (__19)) using tseitin,
-assert(__20) using tseitin,
-define(__22 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*exception#components_2#int_offset_1, -2*exception#components_2#int_offset_2, -4*exception#components_2#int_offset_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -5, upper: 0 } }],
-define(__23 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*y#components_2#int_offset_1, -2*y#components_2#int_offset_2) NotEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__20 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 2*exception#components_2#int_direct_1, 1*exception#components_2#int_direct_2, 0*exception#components_2#int_direct_3, -1*exception#components_2#int_direct_4, -2*exception#components_2#int_direct_5, -3*exception#components_2#int_direct_6) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 9, structure: Choice }],
+define(__21 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 2*exception#components_2#int_direct_1, 1*exception#components_2#int_direct_2, 0*exception#components_2#int_direct_3, -1*exception#components_2#int_direct_4, -2*exception#components_2#int_direct_5, -3*exception#components_2#int_direct_6) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 9, structure: Choice }],
+define(__22 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 0*y#components_2#int_direct_1, -1*y#components_2#int_direct_2, -2*y#components_2#int_direct_3, -3*y#components_2#int_direct_4) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 7, structure: Choice }],
+define(__23 <-> integer-weighted(-2*x#components_2#int_direct_1, -1*x#components_2#int_direct_2, 0*x#components_2#int_direct_3, 0*y#components_2#int_direct_1, -1*y#components_2#int_direct_2, -2*y#components_2#int_direct_3, -3*y#components_2#int_direct_4) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 7, structure: Choice }],
 define(__24 <-> (x#components_1) <-> (exception#components_1)) using tseitin,
-define(__25 <-> and([__24,__22;int(1..)])) using tseitin,
-define(__26 <-> (__21) <-> (__25)) using tseitin,
-define(__27 <-> !((x#components_1) <-> (y#components_1))) using tseitin,
-define(__28 <-> or([__27,__23,__21;int(1..)])) using tseitin,
-define(__29 <-> allDifferentComparisons(__28)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
-define(__30 <-> (allowed) <-> (__29)) using tseitin,
-assert(__30) using tseitin,
-assert(__26) using tseitin,
-define(__33 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*exception#components_2#int_offset_1, -2*exception#components_2#int_offset_2, -4*exception#components_2#int_offset_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -5, upper: 0 } }],
-define(__34 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*exception#components_2#int_offset_1, -2*exception#components_2#int_offset_2, -4*exception#components_2#int_offset_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -5, upper: 0 } }],
-define(__35 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*y#components_2#int_offset_1, -2*y#components_2#int_offset_2) NotEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__36 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2, -1*y#components_2#int_offset_1, -2*y#components_2#int_offset_2) NotEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__37 <-> (x#components_1) <-> (exception#components_1)) using tseitin,
-define(__38 <-> and([__37,__33;int(1..)])) using tseitin,
-define(__39 <-> (__32) <-> (__38)) using tseitin,
-define(__40 <-> (x#components_1) <-> (exception#components_1)) using tseitin,
-define(__41 <-> and([__40,__34;int(1..)])) using tseitin,
-define(__42 <-> (__31) <-> (__41)) using tseitin,
-define(__43 <-> !((x#components_1) <-> (y#components_1))) using tseitin,
-define(__44 <-> or([__43,__35,__31;int(1..)])) using tseitin,
-define(__45 <-> !((x#components_1) <-> (y#components_1))) using tseitin,
-define(__46 <-> or([__45,__36,__32;int(1..)])) using tseitin,
-define(__47 <-> allDifferentComparisons(__31, __44, __46)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
-define(__48 <-> (repeated) <-> (__47)) using tseitin,
-assert(__48) using tseitin,
-assert(__42) using tseitin,
-assert(__39) using tseitin
+define(__25 <-> and([__24,__20;int(1..)])) using tseitin,
+define(__26 <-> (__19) <-> (__25)) using tseitin,
+define(__27 <-> (x#components_1) <-> (exception#components_1)) using tseitin,
+define(__28 <-> and([__27,__21;int(1..)])) using tseitin,
+define(__29 <-> (__18) <-> (__28)) using tseitin,
+define(__30 <-> !((x#components_1) <-> (y#components_1))) using tseitin,
+define(__31 <-> or([__30,__22,__18;int(1..)])) using tseitin,
+define(__32 <-> !((x#components_1) <-> (y#components_1))) using tseitin,
+define(__33 <-> or([__32,__23,__19;int(1..)])) using tseitin,
+define(__34 <-> allDifferentComparisons(__18, __31, __33)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+define(__35 <-> (repeated) <-> (__34)) using tseitin,
+assert(__35) using tseitin,
+assert(__29) using tseitin,
+assert(__26) using tseitin
 

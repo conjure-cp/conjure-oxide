@@ -17,20 +17,30 @@ y != false
 x,
 y != false
 new variables:
-  find z#int_order_1: bool
+  find z#int_offset_1: bool
 new constraints:
-  z#int_order_1
-  or([SATInt(Order, [z#int_order_1;int(1..)] [42, 42]) = 42;int(1..)])
+  and([!(z#int_offset_1),true;int(1..)])
+  or([SATInt(Offset, [z#int_offset_1;int(1..)] [42, 42]) = 42;int(1..)])
 
 --
 
-SATInt(Order, [z#int_order_1;int(1..)] [42, 42]) = 42
+SATInt(Offset, [z#int_offset_1;int(1..)] [42, 42]) = 42
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted() Equal 0) using None with []
+  define(__0 <-> integer-weighted(1*z#int_offset_1) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }]
+
+--
+
+!(z#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> !(z#int_offset_1)) using tseitin
 
 --
 
@@ -40,46 +50,52 @@ __0
 
 --
 
+and([__1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__1
+
+--
+
 y != false
    ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__1
+__2
 new variables:
-  findAux __1: bool
+  findAux __2: bool
 new SAT encoding decisions:
-  define(__1 <-> !((y) <-> (false))) using tseitin
+  define(__2 <-> !((y) <-> (false))) using tseitin
 
 --
 
 x,
+__2,
 __1,
-z#int_order_1,
 __0
    ~~> remove_single_atom ([("SAT", 8400)])
+__2,
 __1,
-z#int_order_1,
 __0
 new SAT encoding decisions:
   assert(x) using tseitin
 
 --
 
+__2,
 __1,
-z#int_order_1,
 __0
    ~~> remove_single_atom ([("SAT", 8400)])
-z#int_order_1,
+__1,
 __0
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(__2) using tseitin
 
 --
 
-z#int_order_1,
+__1,
 __0
    ~~> remove_single_atom ([("SAT", 8400)])
 __0
 new SAT encoding decisions:
-  assert(z#int_order_1) using tseitin
+  assert(__1) using tseitin
 
 --
 
@@ -96,9 +112,10 @@ Final model:
 find x: bool
 find y: bool
 find z: int(42)
-find z#int_order_1: bool
+find z#int_offset_1: bool
 findAux __0: bool
 findAux __1: bool
+findAux __2: bool
 
 such that
 
@@ -106,10 +123,11 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [],
-define(__1 <-> !((y) <-> (false))) using tseitin,
+define(__0 <-> integer-weighted(1*z#int_offset_1) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }],
+define(__1 <-> !(z#int_offset_1)) using tseitin,
+define(__2 <-> !((y) <-> (false))) using tseitin,
 assert(x) using tseitin,
+assert(__2) using tseitin,
 assert(__1) using tseitin,
-assert(z#int_order_1) using tseitin,
 assert(__0) using tseitin
 

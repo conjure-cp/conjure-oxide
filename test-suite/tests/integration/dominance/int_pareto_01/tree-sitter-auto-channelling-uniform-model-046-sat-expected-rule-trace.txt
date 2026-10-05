@@ -13,10 +13,31 @@ x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
 new variables:
-  find x#int_rank_1: bool
-  find x#int_rank_2: bool
+  find x#int_log_1: bool
+  find x#int_log_2: bool
+  find x#int_log_3: bool
 new constraints:
-  or([!(x#int_rank_2),or([!(x#int_rank_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [0, 3]) >= 0,SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+
+--
+
+SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [0, 3]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [0, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -24,75 +45,101 @@ y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
 new variables:
-  find y#int_rank_1: bool
-  find y#int_rank_2: bool
+  find y#int_log_1: bool
+  find y#int_log_2: bool
+  find y#int_log_3: bool
 new constraints:
-  or([!(y#int_rank_2),or([!(y#int_rank_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [0, 3]) >= 0,SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
 
 --
 
-y
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 3)]), [y#int_rank_1,y#int_rank_2;int(1..)] [0, 3])
-
---
-
-x
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 3)]), [x#int_rank_1,x#int_rank_2;int(1..)] [0, 3])
-
---
-
-sum([SATInt(Rank([(0, 3)]), [x#int_rank_1,x#int_rank_2;int(1..)] [0, 3]),SATInt(Rank([(0, 3)]), [y#int_rank_1,y#int_rank_2;int(1..)] [0, 3]);int(1..)])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-sum([SATInt(Log, [__0,__2,__4;int(1..)] [0, 3]),SATInt(Log, [__6,__8,__10;int(1..)] [0, 3]);int(1..)])
-new variables:
-  findAux __0: bool
-  findAux __1: bool
-  findAux __2: bool
-  findAux __3: bool
-  findAux __4: bool
-  findAux __5: bool
-  findAux __6: bool
-  findAux __7: bool
-  findAux __8: bool
-  findAux __9: bool
-  findAux __10: bool
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__0 <-> !((x#int_rank_1) <-> (false))) using tseitin
-  define(__1 <-> and([x#int_rank_1,false;int(1..)])) using tseitin
-  define(__2 <-> !((x#int_rank_2) <-> (__1))) using tseitin
-  define(__3 <-> and([x#int_rank_2,__1;int(1..)])) using tseitin
-  define(__4 <-> !((false) <-> (__3))) using tseitin
-  define(__5 <-> and([false,__3;int(1..)])) using tseitin
-  define(__6 <-> !((y#int_rank_1) <-> (false))) using tseitin
-  define(__7 <-> and([y#int_rank_1,false;int(1..)])) using tseitin
-  define(__8 <-> !((y#int_rank_2) <-> (__7))) using tseitin
-  define(__9 <-> and([y#int_rank_2,__7;int(1..)])) using tseitin
-  define(__10 <-> !((false) <-> (__9))) using tseitin
-  define(__11 <-> and([false,__9;int(1..)])) using tseitin
-
---
-
-sum([SATInt(Log, [__0,__2,__4;int(1..)] [0, 3]),SATInt(Log, [__6,__8,__10;int(1..)] [0, 3]);int(1..)]) >= 2
+sum([x,y;int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__12
+__2
 new variables:
-  findAux __12: bool
+  findAux __2: bool
 new SAT encoding decisions:
-  define(__12 <-> integer-weighted(1*__0, 2*__2, -4*__4, 1*__6, 2*__8, -4*__10) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__2 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3, 1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
-__12,
-true,
-true
+SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [0, 3]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [0, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
+
+--
+
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__3,__4;int(1..)])
+
+--
+
+and([__3,__4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> and([__3,__4;int(1..)])) using tseitin
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+__2,
+__6,
+__5
    ~~> remove_single_atom ([("SAT", 8400)])
-true,
+__6,
+__5
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+__6,
+__5
+   ~~> remove_single_atom ([("SAT", 8400)])
+__5
+new SAT encoding decisions:
+  assert(__6) using tseitin
+
+--
+
+__5
+   ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__12) using tseitin
+  assert(__5) using tseitin
 
 --
 
@@ -100,43 +147,34 @@ Final model:
 
 find x: int(0..3)
 find y: int(0..3)
-find x#int_rank_1: bool
-find x#int_rank_2: bool
-find y#int_rank_1: bool
-find y#int_rank_2: bool
+find x#int_log_1: bool
+find x#int_log_2: bool
+find x#int_log_3: bool
 findAux __0: bool
 findAux __1: bool
+find y#int_log_1: bool
+find y#int_log_2: bool
+find y#int_log_3: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
 findAux __5: bool
 findAux __6: bool
-findAux __7: bool
-findAux __8: bool
-findAux __9: bool
-findAux __10: bool
-findAux __11: bool
-findAux __12: bool
 
 such that
 
-true,
 true
 
 sat encoding decisions:
 
-define(__0 <-> !((x#int_rank_1) <-> (false))) using tseitin,
-define(__1 <-> and([x#int_rank_1,false;int(1..)])) using tseitin,
-define(__2 <-> !((x#int_rank_2) <-> (__1))) using tseitin,
-define(__3 <-> and([x#int_rank_2,__1;int(1..)])) using tseitin,
-define(__4 <-> !((false) <-> (__3))) using tseitin,
-define(__5 <-> and([false,__3;int(1..)])) using tseitin,
-define(__6 <-> !((y#int_rank_1) <-> (false))) using tseitin,
-define(__7 <-> and([y#int_rank_1,false;int(1..)])) using tseitin,
-define(__8 <-> !((y#int_rank_2) <-> (__7))) using tseitin,
-define(__9 <-> and([y#int_rank_2,__7;int(1..)])) using tseitin,
-define(__10 <-> !((false) <-> (__9))) using tseitin,
-define(__11 <-> and([false,__9;int(1..)])) using tseitin,
-define(__12 <-> integer-weighted(1*__0, 2*__2, -4*__4, 1*__6, 2*__8, -4*__10) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 3 } }],
-assert(__12) using tseitin
+define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__1 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__2 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3, 1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__3 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__4 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__5 <-> and([__3,__4;int(1..)])) using tseitin,
+define(__6 <-> and([__0,__1;int(1..)])) using tseitin,
+assert(__2) using tseitin,
+assert(__6) using tseitin,
+assert(__5) using tseitin
 

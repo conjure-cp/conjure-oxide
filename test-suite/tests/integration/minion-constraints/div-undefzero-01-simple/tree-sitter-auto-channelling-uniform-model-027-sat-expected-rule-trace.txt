@@ -258,13 +258,13 @@ true
 
 sat encoding decisions:
 
-at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6, x#int_direct_7, x#int_direct_8, x#int_direct_9, x#int_direct_10) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
-at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6, x#int_direct_7, x#int_direct_8, x#int_direct_9, x#int_direct_10) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
 define(__0 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10;int(1..)])) using tseitin,
 define(__1 <-> or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])) using tseitin,
 assert(__0) using tseitin,
 assert(__1) using tseitin,
-define(__2 <-> integer-weighted(2*y#int_direct_1, 3*y#int_direct_2, 4*y#int_direct_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+define(__2 <-> integer-weighted(2*y#int_direct_1, 3*y#int_direct_2, 4*y#int_direct_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
 assert((and([x#int_direct_1,y#int_direct_1;int(1..)])) -> (__3)) using tseitin,
 assert((and([x#int_direct_1,y#int_direct_2;int(1..)])) -> (__3)) using tseitin,
 assert((and([x#int_direct_1,y#int_direct_3;int(1..)])) -> (__3)) using tseitin,
@@ -295,8 +295,8 @@ assert((and([x#int_direct_9,y#int_direct_3;int(1..)])) -> (__5)) using tseitin,
 assert((and([x#int_direct_10,y#int_direct_1;int(1..)])) -> (__8)) using tseitin,
 assert((and([x#int_direct_10,y#int_direct_2;int(1..)])) -> (__6)) using tseitin,
 assert((and([x#int_direct_10,y#int_direct_3;int(1..)])) -> (__5)) using tseitin,
-at-most-one(__3, __4, __5, __6, __7, __8) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
-define(__9 <-> integer-weighted(0*__3, 1*__4, 2*__5, 3*__6, 4*__7, 5*__8) Equal 5) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Choice }],
+at-most-one(__3, __4, __5, __6, __7, __8) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__9 <-> integer-weighted(0*__3, 1*__4, 2*__5, 3*__6, 4*__7, 5*__8) Equal 5) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Choice }],
 define(__10 <-> and([__9,__2;int(1..)])) using tseitin,
 assert(__10) using tseitin
 

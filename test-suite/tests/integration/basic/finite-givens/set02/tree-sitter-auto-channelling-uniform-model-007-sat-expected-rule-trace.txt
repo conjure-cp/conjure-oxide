@@ -9,37 +9,36 @@ true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true
 new variables:
-  find x#int_log_1: bool
-  find x#int_log_2: bool
-  find x#int_log_3: bool
-  find x#int_log_4: bool
+  find x#int_direct_1: bool
 new constraints:
-  or([SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4;int(1..)] [4, 4]) = 4;int(1..)])
-
---
-
-SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4;int(1..)] [4, 4]) = 4
-   ~~> select_integer_relation ([("SAT", 18500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, -8*x#int_log_4) Equal 4) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 4, upper: 4 } }]
-
---
-
-or([__0;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__0
+  sum([toInt(x#int_direct_1);int(1..)]) <= 1
+  or([x#int_direct_1;int(1..)])
 
 --
 
 true,
-__0
+sum([toInt(x#int_direct_1);int(1..)]) <= 1,
+or([x#int_direct_1;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+or([x#int_direct_1;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#int_direct_1) using None
+
+--
+
+or([x#int_direct_1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+x#int_direct_1
+
+--
+
+true,
+x#int_direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(x#int_direct_1) using tseitin
 
 --
 
@@ -47,11 +46,7 @@ Final model:
 
 letting a be {1,2,3,4}
 find x: int((|a|))
-find x#int_log_1: bool
-find x#int_log_2: bool
-find x#int_log_3: bool
-find x#int_log_4: bool
-findAux __0: bool
+find x#int_direct_1: bool
 
 such that
 
@@ -59,6 +54,6 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, -8*x#int_log_4) Equal 4) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 4, upper: 4 } }],
-assert(__0) using tseitin
+at-most-one(x#int_direct_1) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
+assert(x#int_direct_1) using tseitin
 

@@ -1101,13 +1101,13 @@ true
 
 sat encoding decisions:
 
-at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3, a#int_direct_4) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
-at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3, b#int_direct_4) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3, a#int_direct_4) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
+at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3, b#int_direct_4) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
 define(__0 <-> or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4;int(1..)])) using tseitin,
 define(__1 <-> or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4;int(1..)])) using tseitin,
 assert(__0) using tseitin,
 assert(__1) using tseitin,
-define(__2 <-> integer-weighted(0*b#int_direct_1, 1*b#int_direct_2, 2*b#int_direct_3, 3*b#int_direct_4) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__2 <-> integer-weighted(0*b#int_direct_1, 1*b#int_direct_2, 2*b#int_direct_3, 3*b#int_direct_4) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
 define(__3 <-> or([a#int_direct_2,a#int_direct_4;int(1..)])) using tseitin,
 define(__4 <-> or([a#int_direct_3,a#int_direct_4;int(1..)])) using tseitin,
 define(__5 <-> or([b#int_direct_2,b#int_direct_4;int(1..)])) using tseitin,
@@ -1404,7 +1404,7 @@ define(__295 <-> or([and([__294,__290;int(1..)]),and([!(__294),false;int(1..)]);
 define(__296 <-> or([and([__294,__291;int(1..)]),and([!(__294),false;int(1..)]);int(1..)])) using tseitin,
 define(__297 <-> or([and([__294,__292;int(1..)]),and([!(__294),false;int(1..)]);int(1..)])) using tseitin,
 define(__298 <-> or([and([__294,__293;int(1..)]),and([!(__294),false;int(1..)]);int(1..)])) using tseitin,
-define(__299 <-> integer-weighted(1*__295, 2*__296, 4*__297, -8*__298) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__299 <-> integer-weighted(1*__295, 2*__296, 4*__297, -8*__298) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 2 } }],
 define(__300 <-> and([__299,__2;int(1..)])) using tseitin,
 assert(__300) using tseitin
 

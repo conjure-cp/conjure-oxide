@@ -210,19 +210,19 @@ true
 
 sat encoding decisions:
 
-at-most-one(a#int_direct_1, a#int_direct_2) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-at-most-one(b#int_direct_1, b#int_direct_2) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+at-most-one(a#int_direct_1, a#int_direct_2) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
+at-most-one(b#int_direct_1, b#int_direct_2) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
 define(__0 <-> or([a#int_direct_1,a#int_direct_2;int(1..)])) using tseitin,
 define(__1 <-> or([b#int_direct_1,b#int_direct_2;int(1..)])) using tseitin,
 assert(__0) using tseitin,
 assert(__1) using tseitin,
-define(__2 <-> integer-weighted(1*b#int_direct_1, 2*b#int_direct_2) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__2 <-> integer-weighted(1*b#int_direct_1, 2*b#int_direct_2) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 assert((and([a#int_direct_1,b#int_direct_1;int(1..)])) -> (__5)) using tseitin,
 assert((and([a#int_direct_1,b#int_direct_2;int(1..)])) -> (__3)) using tseitin,
 assert((and([a#int_direct_2,b#int_direct_1;int(1..)])) -> (__6)) using tseitin,
 assert((and([a#int_direct_2,b#int_direct_2;int(1..)])) -> (__4)) using tseitin,
-at-most-one(__3, __4, __5, __6) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-define(__7 <-> integer-weighted(1*__3, 2*__4, 3*__5, 4*__6) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+at-most-one(__3, __4, __5, __6) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
+define(__7 <-> integer-weighted(1*__3, 2*__4, 3*__5, 4*__6) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
 define(__8 <-> and([__7,__2;int(1..)])) using tseitin,
 assert(__8) using tseitin
 

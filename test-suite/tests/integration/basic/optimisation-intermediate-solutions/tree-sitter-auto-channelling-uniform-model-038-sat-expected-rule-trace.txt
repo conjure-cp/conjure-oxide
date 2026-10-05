@@ -13,32 +13,15 @@ x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
 new variables:
-  find x#int_offset_1: bool
-  find x#int_offset_2: bool
-  find x#int_offset_3: bool
+  find x#int_direct_1: bool
+  find x#int_direct_2: bool
+  find x#int_direct_3: bool
+  find x#int_direct_4: bool
+  find x#int_direct_5: bool
+  find x#int_direct_6: bool
 new constraints:
-  or([!(x#int_offset_3),and([!(x#int_offset_2),or([!(x#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [x#int_offset_1,x#int_offset_2,x#int_offset_3;int(1..)] [0, 5]) >= 0,SATInt(Offset, [x#int_offset_1,x#int_offset_2,x#int_offset_3;int(1..)] [0, 5]) <= 5;int(1..)]);int(1..)])
-
---
-
-SATInt(Offset, [x#int_offset_1,x#int_offset_2,x#int_offset_3;int(1..)] [0, 5]) >= 0
-   ~~> select_integer_relation ([("SAT", 18500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#int_offset_1, 2*x#int_offset_2, 4*x#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }]
-
---
-
-SATInt(Offset, [x#int_offset_1,x#int_offset_2,x#int_offset_3;int(1..)] [0, 5]) <= 5
-   ~~> select_integer_relation ([("SAT", 18500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#int_offset_1, 2*x#int_offset_2, 4*x#int_offset_3) LessEqual 5) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }]
+  sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6);int(1..)]) <= 1
+  or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6;int(1..)])
 
 --
 
@@ -46,98 +29,54 @@ optimise(minimise=false, value=x)
    ~~> select_sat_objective ([("SAT", 18400)])
 true
 new SAT encoding decisions:
-  optimise(minimise=false, value=0+weighted(1*x#int_offset_1, 2*x#int_offset_2, 4*x#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }]) using None
+  optimise(minimise=false, value=0+weighted(0*x#int_direct_1, 1*x#int_direct_2, 2*x#int_direct_3, 3*x#int_direct_4, 4*x#int_direct_5, 5*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(0:x#int_direct_1, 1:x#int_direct_2, 2:x#int_direct_3, 3:x#int_direct_4, 4:x#int_direct_5, 5:x#int_direct_6)) using None
 
 --
 
-!(x#int_offset_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__2
-new variables:
-  findAux __2: bool
+true,
+true,
+sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6);int(1..)]) <= 1,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+true,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6;int(1..)])
 new SAT encoding decisions:
-  define(__2 <-> !(x#int_offset_3)) using tseitin
+  at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6) using None
 
 --
 
-!(x#int_offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> !(x#int_offset_2)) using tseitin
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__3;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__3
-
---
-
-and([__0,__1;int(1..)])
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
+__0
 new variables:
-  findAux __4: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__4 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-or([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> or([__2,__3;int(1..)])) using tseitin
+  define(__0 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6;int(1..)])) using tseitin
 
 --
 
 true,
 true,
-__5,
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-__4
-new SAT encoding decisions:
-  assert(__5) using tseitin
-
---
-
-true,
-true,
-__4
+__0
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 true
 new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert(__0) using tseitin
 
 --
 
 Final model:
 
 find x: int(0..5)
-find x#int_offset_1: bool
-find x#int_offset_2: bool
-find x#int_offset_3: bool
+find x#int_direct_1: bool
+find x#int_direct_2: bool
+find x#int_direct_3: bool
+find x#int_direct_4: bool
+find x#int_direct_5: bool
+find x#int_direct_6: bool
 findAux __0: bool
-findAux __1: bool
-findAux __2: bool
-findAux __3: bool
-findAux __4: bool
-findAux __5: bool
 
 such that
 
@@ -146,13 +85,8 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#int_offset_1, 2*x#int_offset_2, 4*x#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
-define(__1 <-> integer-weighted(1*x#int_offset_1, 2*x#int_offset_2, 4*x#int_offset_3) LessEqual 5) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
-optimise(minimise=false, value=0+weighted(1*x#int_offset_1, 2*x#int_offset_2, 4*x#int_offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }]) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__2 <-> !(x#int_offset_3)) using tseitin,
-define(__3 <-> !(x#int_offset_2)) using tseitin,
-define(__4 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__5 <-> or([__2,__3;int(1..)])) using tseitin,
-assert(__5) using tseitin,
-assert(__4) using tseitin
+optimise(minimise=false, value=0+weighted(0*x#int_direct_1, 1*x#int_direct_2, 2*x#int_direct_3, 3*x#int_direct_4, 4*x#int_direct_5, 5*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(0:x#int_direct_1, 1:x#int_direct_2, 2:x#int_direct_3, 3:x#int_direct_4, 4:x#int_direct_5, 5:x#int_direct_6)) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+define(__0 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6;int(1..)])) using tseitin,
+assert(__0) using tseitin
 

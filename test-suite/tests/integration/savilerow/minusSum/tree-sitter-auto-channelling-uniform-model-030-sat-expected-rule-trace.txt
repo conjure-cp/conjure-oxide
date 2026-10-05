@@ -12,32 +12,14 @@ q
    ~~> select_representation ([("ReprGeneral", 10000)])
 q
 new variables:
-  find q#int_log_1: bool
-  find q#int_log_2: bool
-  find q#int_log_3: bool
-  find q#int_log_4: bool
+  find q#int_direct_1: bool
+  find q#int_direct_2: bool
+  find q#int_direct_3: bool
+  find q#int_direct_4: bool
+  find q#int_direct_5: bool
 new constraints:
-  or([and([SATInt(Log, [q#int_log_1,q#int_log_2,q#int_log_3,q#int_log_4;int(1..)] [1, 5]) >= 1,SATInt(Log, [q#int_log_1,q#int_log_2,q#int_log_3,q#int_log_4;int(1..)] [1, 5]) <= 5;int(1..)]);int(1..)])
-
---
-
-SATInt(Log, [q#int_log_1,q#int_log_2,q#int_log_3,q#int_log_4;int(1..)] [1, 5]) >= 1
-   ~~> select_integer_relation ([("SAT", 18500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*q#int_log_1, 2*q#int_log_2, 4*q#int_log_3, -8*q#int_log_4) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 5 } }]
-
---
-
-SATInt(Log, [q#int_log_1,q#int_log_2,q#int_log_3,q#int_log_4;int(1..)] [1, 5]) <= 5
-   ~~> select_integer_relation ([("SAT", 18500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*q#int_log_1, 2*q#int_log_2, 4*q#int_log_3, -8*q#int_log_4) LessEqual 5) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 5 } }]
+  sum([toInt(q#int_direct_1),toInt(q#int_direct_2),toInt(q#int_direct_3),toInt(q#int_direct_4),toInt(q#int_direct_5);int(1..)]) <= 1
+  or([q#int_direct_1,q#int_direct_2,q#int_direct_3,q#int_direct_4,q#int_direct_5;int(1..)])
 
 --
 
@@ -54,48 +36,52 @@ q
 --
 
 (q - 1) = (q - q),
-or([and([__0,__1;int(1..)]);int(1..)])
+sum([toInt(q#int_direct_1),toInt(q#int_direct_2),toInt(q#int_direct_3),toInt(q#int_direct_4),toInt(q#int_direct_5);int(1..)]) <= 1,
+or([q#int_direct_1,q#int_direct_2,q#int_direct_3,q#int_direct_4,q#int_direct_5;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(q - 1) = (q - q),
+or([q#int_direct_1,q#int_direct_2,q#int_direct_3,q#int_direct_4,q#int_direct_5;int(1..)])
+new SAT encoding decisions:
+  at-most-one(q#int_direct_1, q#int_direct_2, q#int_direct_3, q#int_direct_4, q#int_direct_5) using None
+
+--
+
+(q - 1) = (q - q),
+or([q#int_direct_1,q#int_direct_2,q#int_direct_3,q#int_direct_4,q#int_direct_5;int(1..)])
    ~~> select_pseudo_boolean ([("SAT", 19000)])
-or([and([__0,__1;int(1..)]);int(1..)])
+or([q#int_direct_1,q#int_direct_2,q#int_direct_3,q#int_direct_4,q#int_direct_5;int(1..)])
 new SAT encoding decisions:
-  weighted(1*q#int_log_1, 2*q#int_log_2, 4*q#int_log_3, -8*q#int_log_4, -1*q#int_log_1, -2*q#int_log_2, -4*q#int_log_3, 8*q#int_log_4, 1*q#int_log_1, 2*q#int_log_2, 4*q#int_log_3, -8*q#int_log_4) Exactly 1 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 5 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -5, upper: -1 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 1, upper: 5 } }]
+  weighted(1*q#int_direct_1, 2*q#int_direct_2, 3*q#int_direct_3, 4*q#int_direct_4, 5*q#int_direct_5, -1*q#int_direct_1, -2*q#int_direct_2, -3*q#int_direct_3, -4*q#int_direct_4, -5*q#int_direct_5, 1*q#int_direct_1, 2*q#int_direct_2, 3*q#int_direct_3, 4*q#int_direct_4, 5*q#int_direct_5) Exactly 1 using None with [PbTermGroup { start: 0, end: 5, structure: Choice }, PbTermGroup { start: 5, end: 10, structure: Choice }, PbTermGroup { start: 10, end: 15, structure: Choice }]
 
 --
 
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__0,__1;int(1..)])
+or([q#int_direct_1,q#int_direct_2,q#int_direct_3,q#int_direct_4,q#int_direct_5;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
+__0
 new variables:
-  findAux __2: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__2 <-> and([__0,__1;int(1..)])) using tseitin
+  define(__0 <-> or([q#int_direct_1,q#int_direct_2,q#int_direct_3,q#int_direct_4,q#int_direct_5;int(1..)])) using tseitin
 
 --
 
-__2
+__0
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(__0) using tseitin
 
 --
 
 Final model:
 
 find q: int(1..5)
-find q#int_log_1: bool
-find q#int_log_2: bool
-find q#int_log_3: bool
-find q#int_log_4: bool
+find q#int_direct_1: bool
+find q#int_direct_2: bool
+find q#int_direct_3: bool
+find q#int_direct_4: bool
+find q#int_direct_5: bool
 findAux __0: bool
-findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -103,9 +89,8 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*q#int_log_1, 2*q#int_log_2, 4*q#int_log_3, -8*q#int_log_4) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 5 } }],
-define(__1 <-> integer-weighted(1*q#int_log_1, 2*q#int_log_2, 4*q#int_log_3, -8*q#int_log_4) LessEqual 5) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 5 } }],
-weighted(1*q#int_log_1, 2*q#int_log_2, 4*q#int_log_3, -8*q#int_log_4, -1*q#int_log_1, -2*q#int_log_2, -4*q#int_log_3, 8*q#int_log_4, 1*q#int_log_1, 2*q#int_log_2, 4*q#int_log_3, -8*q#int_log_4) Exactly 1 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 5 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -5, upper: -1 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 1, upper: 5 } }],
-define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
-assert(__2) using tseitin
+at-most-one(q#int_direct_1, q#int_direct_2, q#int_direct_3, q#int_direct_4, q#int_direct_5) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+weighted(1*q#int_direct_1, 2*q#int_direct_2, 3*q#int_direct_3, 4*q#int_direct_4, 5*q#int_direct_5, -1*q#int_direct_1, -2*q#int_direct_2, -3*q#int_direct_3, -4*q#int_direct_4, -5*q#int_direct_5, 1*q#int_direct_1, 2*q#int_direct_2, 3*q#int_direct_3, 4*q#int_direct_4, 5*q#int_direct_5) Exactly 1 using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }, PbTermGroup { start: 5, end: 10, structure: Choice }, PbTermGroup { start: 10, end: 15, structure: Choice }],
+define(__0 <-> or([q#int_direct_1,q#int_direct_2,q#int_direct_3,q#int_direct_4,q#int_direct_5;int(1..)])) using tseitin,
+assert(__0) using tseitin
 

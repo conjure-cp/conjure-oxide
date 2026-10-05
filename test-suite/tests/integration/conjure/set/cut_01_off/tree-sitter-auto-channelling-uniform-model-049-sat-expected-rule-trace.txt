@@ -35,10 +35,41 @@ x#explicit_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#explicit_2
 new variables:
-  find x#explicit_2#int_rank_1: bool
-  find x#explicit_2#int_rank_2: bool
+  find x#explicit_2#int_log_1: bool
+  find x#explicit_2#int_log_2: bool
+  find x#explicit_2#int_log_3: bool
 new constraints:
-  or([!(x#explicit_2#int_rank_2),or([!(x#explicit_2#int_rank_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [x#explicit_2#int_log_1,x#explicit_2#int_log_2,x#explicit_2#int_log_3;int(1..)] [0, 3]) >= 0,SATInt(Log, [x#explicit_2#int_log_1,x#explicit_2#int_log_2,x#explicit_2#int_log_3;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+
+--
+
+2 <= x#explicit_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(-1*x#explicit_2#int_log_1, -2*x#explicit_2#int_log_2, 4*x#explicit_2#int_log_3) LessEqual -2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -3, upper: 0 } }]
+
+--
+
+SATInt(Log, [x#explicit_2#int_log_1,x#explicit_2#int_log_2,x#explicit_2#int_log_3;int(1..)] [0, 3]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*x#explicit_2#int_log_1, 2*x#explicit_2#int_log_2, -4*x#explicit_2#int_log_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Log, [x#explicit_2#int_log_1,x#explicit_2#int_log_2,x#explicit_2#int_log_3;int(1..)] [0, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*x#explicit_2#int_log_1, 2*x#explicit_2#int_log_2, -4*x#explicit_2#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -112,170 +143,159 @@ x#explicit_1
 
 --
 
-true,
-or([x#explicit_2 < 2,or([SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)]),
-or([x#explicit_2 < 3,or([SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]);int(1..)]),
-or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([3 <= x#explicit_2,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
-true
-   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-true,
-or([x#explicit_2 < 2,or([SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)]),
-or([x#explicit_2 < 3,or([SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]);int(1..)]),
-or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([3 <= x#explicit_2,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
-true
-new variables:
-  find x#explicit_1#components_1#int_rank_1: bool
-  find x#explicit_1#components_1#int_rank_2: bool
-  find x#explicit_1#components_2#int_rank_1: bool
-  find x#explicit_1#components_2#int_rank_2: bool
-  find x#explicit_1#components_3#int_rank_1: bool
-  find x#explicit_1#components_3#int_rank_2: bool
-new constraints:
-  or([!(x#explicit_1#components_1#int_rank_2),and([!(x#explicit_1#components_1#int_rank_1),true;int(1..)]);int(1..)])
-  or([!(x#explicit_1#components_2#int_rank_2),and([!(x#explicit_1#components_2#int_rank_1),true;int(1..)]);int(1..)])
-  or([!(x#explicit_1#components_3#int_rank_2),and([!(x#explicit_1#components_3#int_rank_1),true;int(1..)]);int(1..)])
-
---
-
-x#explicit_2
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-
---
-
-x#explicit_2
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-
---
-
-x#explicit_2
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-
---
-
-x#explicit_2
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-
---
-
-x#explicit_2
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-
---
-
-SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < 2
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])
-
---
-
-SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < 3
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3])
-
---
-
-1 <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-
---
-
-2 <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-
---
-
-3 <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-
---
-
-!(x#explicit_1#components_3#int_rank_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> !(x#explicit_1#components_3#int_rank_2)) using tseitin
-
---
-
-!(x#explicit_1#components_1#int_rank_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> !(x#explicit_1#components_1#int_rank_2)) using tseitin
-
---
-
-!(x#explicit_1#components_2#int_rank_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> !(x#explicit_1#components_2#int_rank_2)) using tseitin
-
---
-
-!(x#explicit_1#components_3#int_rank_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
+x#explicit_2 < 2
+   ~~> select_integer_relation ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> !(x#explicit_1#components_3#int_rank_1)) using tseitin
+  define(__3 <-> integer-weighted(1*x#explicit_2#int_log_1, 2*x#explicit_2#int_log_2, -4*x#explicit_2#int_log_3) Less 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
-!(x#explicit_1#components_1#int_rank_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
+x#explicit_2 < 3
+   ~~> select_integer_relation ([("SAT", 18500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> !(x#explicit_1#components_1#int_rank_1)) using tseitin
+  define(__4 <-> integer-weighted(1*x#explicit_2#int_log_1, 2*x#explicit_2#int_log_2, -4*x#explicit_2#int_log_3) Less 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
-!(x#explicit_1#components_2#int_rank_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
+1 <= x#explicit_2
+   ~~> select_integer_relation ([("SAT", 18500)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> !(x#explicit_1#components_2#int_rank_1)) using tseitin
+  define(__5 <-> integer-weighted(-1*x#explicit_2#int_log_1, -2*x#explicit_2#int_log_2, 4*x#explicit_2#int_log_3) LessEqual -1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -3, upper: 0 } }]
 
 --
 
-and([__3;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__3
+3 <= x#explicit_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(-1*x#explicit_2#int_log_1, -2*x#explicit_2#int_log_2, 4*x#explicit_2#int_log_3) LessEqual -3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -3, upper: 0 } }]
 
 --
 
-and([__4;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__4
+true,
+or([__3,or([SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)]),
+or([__4,or([SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]);int(1..)]),
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+or([__3,or([SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)]),
+or([__4,or([SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]);int(1..)]),
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
+or([and([__1,__2;int(1..)]);int(1..)])
+new variables:
+  find x#explicit_1#components_1#int_log_1: bool
+  find x#explicit_1#components_1#int_log_2: bool
+  find x#explicit_1#components_1#int_log_3: bool
+  find x#explicit_1#components_2#int_log_1: bool
+  find x#explicit_1#components_2#int_log_2: bool
+  find x#explicit_1#components_2#int_log_3: bool
+  find x#explicit_1#components_3#int_log_1: bool
+  find x#explicit_1#components_3#int_log_2: bool
+  find x#explicit_1#components_3#int_log_3: bool
+new constraints:
+  or([and([SATInt(Log, [x#explicit_1#components_1#int_log_1,x#explicit_1#components_1#int_log_2,x#explicit_1#components_1#int_log_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [x#explicit_1#components_1#int_log_1,x#explicit_1#components_1#int_log_2,x#explicit_1#components_1#int_log_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [x#explicit_1#components_2#int_log_1,x#explicit_1#components_2#int_log_2,x#explicit_1#components_2#int_log_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [x#explicit_1#components_2#int_log_1,x#explicit_1#components_2#int_log_2,x#explicit_1#components_2#int_log_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [x#explicit_1#components_3#int_log_1,x#explicit_1#components_3#int_log_2,x#explicit_1#components_3#int_log_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [x#explicit_1#components_3#int_log_1,x#explicit_1#components_3#int_log_2,x#explicit_1#components_3#int_log_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
 
 --
 
-and([__5;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__5
+SATInt(Log, [x#explicit_1#components_1#int_log_1,x#explicit_1#components_1#int_log_2,x#explicit_1#components_1#int_log_3;int(1..)] [1, 3]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> integer-weighted(1*x#explicit_1#components_1#int_log_1, 2*x#explicit_1#components_1#int_log_2, -4*x#explicit_1#components_1#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [x#explicit_1#components_1#int_log_1,x#explicit_1#components_1#int_log_2,x#explicit_1#components_1#int_log_3;int(1..)] [1, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> integer-weighted(1*x#explicit_1#components_1#int_log_1, 2*x#explicit_1#components_1#int_log_2, -4*x#explicit_1#components_1#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [x#explicit_1#components_2#int_log_1,x#explicit_1#components_2#int_log_2,x#explicit_1#components_2#int_log_3;int(1..)] [1, 3]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> integer-weighted(1*x#explicit_1#components_2#int_log_1, 2*x#explicit_1#components_2#int_log_2, -4*x#explicit_1#components_2#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [x#explicit_1#components_2#int_log_1,x#explicit_1#components_2#int_log_2,x#explicit_1#components_2#int_log_3;int(1..)] [1, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(1*x#explicit_1#components_2#int_log_1, 2*x#explicit_1#components_2#int_log_2, -4*x#explicit_1#components_2#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [x#explicit_1#components_3#int_log_1,x#explicit_1#components_3#int_log_2,x#explicit_1#components_3#int_log_3;int(1..)] [1, 3]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> integer-weighted(1*x#explicit_1#components_3#int_log_1, 2*x#explicit_1#components_3#int_log_2, -4*x#explicit_1#components_3#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [x#explicit_1#components_3#int_log_1,x#explicit_1#components_3#int_log_2,x#explicit_1#components_3#int_log_3;int(1..)] [1, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> integer-weighted(1*x#explicit_1#components_3#int_log_1, 2*x#explicit_1#components_3#int_log_2, -4*x#explicit_1#components_3#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+or([and([__7,__8;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__7,__8;int(1..)])
+
+--
+
+or([and([__9,__10;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__9,__10;int(1..)])
+
+--
+
+or([and([__11,__12;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__11,__12;int(1..)])
+
+--
+
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__1,__2;int(1..)])
 
 --
 
@@ -291,809 +311,392 @@ SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3])
 
 --
 
-or([__0,__3;int(1..)])
+and([__7,__8;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
+__13
 new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> or([__0,__3;int(1..)])) using tseitin
-
---
-
-or([__1,__4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> or([__1,__4;int(1..)])) using tseitin
-
---
-
-or([__2,__5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> or([__2,__5;int(1..)])) using tseitin
-
---
-
-true,
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]),SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]),SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
-or([SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
-true,
-__7,
-__8,
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]),SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]),SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
-or([SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
-true,
-__8,
-__6
-new SAT encoding decisions:
-  assert(__7) using tseitin
-
---
-
-true,
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]),SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]),SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
-or([SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
-true,
-__8,
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]),SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]),SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
-or([SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
-true,
-__6
-new SAT encoding decisions:
-  assert(__8) using tseitin
-
---
-
-true,
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]),SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]),SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
-or([SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
-true,
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]),SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]),SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
-or([SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
-true
-new SAT encoding decisions:
-  assert(__6) using tseitin
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-x#explicit_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_1
-
---
-
-x#explicit_1#components_1
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_1#int_rank_1,x#explicit_1#components_1#int_rank_2;int(1..)] [1, 3])
-
---
-
-SafeIndex(x#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2
-
---
-
-x#explicit_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_2
-
---
-
-x#explicit_1#components_2
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_2#int_rank_1,x#explicit_1#components_2#int_rank_2;int(1..)] [1, 3])
-
---
-
-SafeIndex(x#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2
-
---
-
-x#explicit_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_2
-
---
-
-x#explicit_1#components_2
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_2#int_rank_1,x#explicit_1#components_2#int_rank_2;int(1..)] [1, 3])
-
---
-
-SafeIndex(x#explicit_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_3
-
---
-
-x#explicit_1#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_3
-
---
-
-x#explicit_1#components_3
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_3#int_rank_1,x#explicit_1#components_3#int_rank_2;int(1..)] [1, 3])
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-x#explicit_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_1
-
---
-
-x#explicit_1#components_1
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_1#int_rank_1,x#explicit_1#components_1#int_rank_2;int(1..)] [1, 3])
-
---
-
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_1#int_rank_1,x#explicit_1#components_1#int_rank_2;int(1..)] [1, 3]) = 1
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_1#int_rank_1,x#explicit_1#components_1#int_rank_2;int(1..)] [1, 3]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])
-
---
-
-SafeIndex(x#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2
-
---
-
-x#explicit_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_2
-
---
-
-x#explicit_1#components_2
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_2#int_rank_1,x#explicit_1#components_2#int_rank_2;int(1..)] [1, 3])
-
---
-
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_2#int_rank_1,x#explicit_1#components_2#int_rank_2;int(1..)] [1, 3]) = 1
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_2#int_rank_1,x#explicit_1#components_2#int_rank_2;int(1..)] [1, 3]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])
-
---
-
-SafeIndex(x#explicit_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_3
-
---
-
-x#explicit_1#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_3
-
---
-
-x#explicit_1#components_3
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_3#int_rank_1,x#explicit_1#components_3#int_rank_2;int(1..)] [1, 3])
-
---
-
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_3#int_rank_1,x#explicit_1#components_3#int_rank_2;int(1..)] [1, 3]) = 1
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_3#int_rank_1,x#explicit_1#components_3#int_rank_2;int(1..)] [1, 3]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])
-
---
-
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_1#int_rank_1,x#explicit_1#components_1#int_rank_2;int(1..)] [1, 3]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__10,__12,__14;int(1..)] [1, 3]) = SATInt(Log, [__17,__19;int(1..)] [1, 1])
-new variables:
-  findAux __9: bool
-  findAux __10: bool
-  findAux __11: bool
-  findAux __12: bool
   findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> and([__7,__8;int(1..)])) using tseitin
+
+--
+
+and([__9,__10;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__14
+new variables:
   findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> and([__9,__10;int(1..)])) using tseitin
+
+--
+
+and([__11,__12;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__15
+new variables:
   findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> and([__11,__12;int(1..)])) using tseitin
+
+--
+
+and([__1,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__16
+new variables:
   findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> and([__1,__2;int(1..)])) using tseitin
+
+--
+
+true,
+or([__3,SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
+or([__4,SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
+__16,
+__13,
+__14,
+__15
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+or([__3,SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
+or([__4,SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
+__13,
+__14,
+__15
+new SAT encoding decisions:
+  assert(__16) using tseitin
+
+--
+
+true,
+or([__3,SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
+or([__4,SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
+__13,
+__14,
+__15
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+or([__3,SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
+or([__4,SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
+__14,
+__15
+new SAT encoding decisions:
+  assert(__13) using tseitin
+
+--
+
+true,
+or([__3,SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
+or([__4,SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
+__14,
+__15
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+or([__3,SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
+or([__4,SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
+__15
+new SAT encoding decisions:
+  assert(__14) using tseitin
+
+--
+
+true,
+or([__3,SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
+or([__4,SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
+__15
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+or([__3,SafeIndex(x#explicit_1,[1]) < SafeIndex(x#explicit_1,[2]);int(1..)]),
+or([__4,SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
+new SAT encoding decisions:
+  assert(__15) using tseitin
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+x#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_1
+
+--
+
+x#explicit_1#components_1
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [x#explicit_1#components_1#int_log_1,x#explicit_1#components_1#int_log_2,x#explicit_1#components_1#int_log_3;int(1..)] [1, 3])
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_2
+
+--
+
+SATInt(Log, [x#explicit_1#components_1#int_log_1,x#explicit_1#components_1#int_log_2,x#explicit_1#components_1#int_log_3;int(1..)] [1, 3]) < x#explicit_1#components_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__17
+new variables:
   findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> integer-weighted(1*x#explicit_1#components_1#int_log_1, 2*x#explicit_1#components_1#int_log_2, -4*x#explicit_1#components_1#int_log_3, -1*x#explicit_1#components_2#int_log_1, -2*x#explicit_1#components_2#int_log_2, 4*x#explicit_1#components_2#int_log_3) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+or([__3,__17;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__18
+new variables:
   findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> or([__3,__17;int(1..)])) using tseitin
+
+--
+
+true,
+__18,
+or([__4,SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+or([__4,SafeIndex(x#explicit_1,[2]) < SafeIndex(x#explicit_1,[3]);int(1..)]),
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
+new SAT encoding decisions:
+  assert(__18) using tseitin
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [x#explicit_1#components_2#int_log_1,x#explicit_1#components_2#int_log_2,x#explicit_1#components_2#int_log_3;int(1..)] [1, 3])
+
+--
+
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
+
+--
+
+x#explicit_1#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_3
+
+--
+
+SATInt(Log, [x#explicit_1#components_2#int_log_1,x#explicit_1#components_2#int_log_2,x#explicit_1#components_2#int_log_3;int(1..)] [1, 3]) < x#explicit_1#components_3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__19
+new variables:
   findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> integer-weighted(1*x#explicit_1#components_2#int_log_1, 2*x#explicit_1#components_2#int_log_2, -4*x#explicit_1#components_2#int_log_3, -1*x#explicit_1#components_3#int_log_1, -2*x#explicit_1#components_3#int_log_2, 4*x#explicit_1#components_3#int_log_3) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+or([__4,__19;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__20
+new variables:
   findAux __20: bool
 new SAT encoding decisions:
-  define(__9 <-> !((x#explicit_1#components_1#int_rank_1) <-> (false))) using tseitin
-  define(__10 <-> !(__9)) using tseitin
-  define(__11 <-> or([x#explicit_1#components_1#int_rank_1,false;int(1..)])) using tseitin
-  define(__12 <-> !((x#explicit_1#components_1#int_rank_2) <-> (__11))) using tseitin
-  define(__13 <-> and([x#explicit_1#components_1#int_rank_2,__11;int(1..)])) using tseitin
-  define(__14 <-> !((false) <-> (__13))) using tseitin
-  define(__15 <-> and([false,__13;int(1..)])) using tseitin
-  define(__16 <-> !((false) <-> (false))) using tseitin
-  define(__17 <-> !(__16)) using tseitin
-  define(__18 <-> or([false,false;int(1..)])) using tseitin
-  define(__19 <-> !((false) <-> (__18))) using tseitin
-  define(__20 <-> and([false,__18;int(1..)])) using tseitin
+  define(__20 <-> or([__4,__19;int(1..)])) using tseitin
 
 --
 
-SATInt(Log, [__10,__12,__14;int(1..)] [1, 3]) = SATInt(Log, [__17,__19;int(1..)] [1, 1])
+true,
+__20,
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+or([__5,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
+new SAT encoding decisions:
+  assert(__20) using tseitin
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+x#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_1
+
+--
+
+x#explicit_1#components_1 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __21
 new variables:
   findAux __21: bool
 new SAT encoding decisions:
-  define(__21 <-> integer-weighted(1*__10, 2*__12, -4*__14, -1*__17, 2*__19) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: -1 } }]
+  define(__21 <-> integer-weighted(1*x#explicit_1#components_1#int_log_1, 2*x#explicit_1#components_1#int_log_2, -4*x#explicit_1#components_1#int_log_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_2#int_rank_1,x#explicit_1#components_2#int_rank_2;int(1..)] [1, 3]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__23,__25,__27;int(1..)] [1, 3]) = SATInt(Log, [__30,__32;int(1..)] [1, 1])
+or([__5,__21;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__22
 new variables:
   findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> or([__5,__21;int(1..)])) using tseitin
+
+--
+
+true,
+__22,
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+or([__0,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
+new SAT encoding decisions:
+  assert(__22) using tseitin
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__23
+new variables:
   findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> integer-weighted(1*x#explicit_1#components_2#int_log_1, 2*x#explicit_1#components_2#int_log_2, -4*x#explicit_1#components_2#int_log_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+or([__0,__23;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__24
+new variables:
   findAux __24: bool
+new SAT encoding decisions:
+  define(__24 <-> or([__0,__23;int(1..)])) using tseitin
+
+--
+
+true,
+__24,
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+or([__6,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
+new SAT encoding decisions:
+  assert(__24) using tseitin
+
+--
+
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
+
+--
+
+x#explicit_1#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_3
+
+--
+
+x#explicit_1#components_3 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__25
+new variables:
   findAux __25: bool
+new SAT encoding decisions:
+  define(__25 <-> integer-weighted(1*x#explicit_1#components_3#int_log_1, 2*x#explicit_1#components_3#int_log_2, -4*x#explicit_1#components_3#int_log_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+or([__6,__25;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__26
+new variables:
   findAux __26: bool
-  findAux __27: bool
-  findAux __28: bool
-  findAux __29: bool
-  findAux __30: bool
-  findAux __31: bool
-  findAux __32: bool
-  findAux __33: bool
 new SAT encoding decisions:
-  define(__22 <-> !((x#explicit_1#components_2#int_rank_1) <-> (false))) using tseitin
-  define(__23 <-> !(__22)) using tseitin
-  define(__24 <-> or([x#explicit_1#components_2#int_rank_1,false;int(1..)])) using tseitin
-  define(__25 <-> !((x#explicit_1#components_2#int_rank_2) <-> (__24))) using tseitin
-  define(__26 <-> and([x#explicit_1#components_2#int_rank_2,__24;int(1..)])) using tseitin
-  define(__27 <-> !((false) <-> (__26))) using tseitin
-  define(__28 <-> and([false,__26;int(1..)])) using tseitin
-  define(__29 <-> !((false) <-> (false))) using tseitin
-  define(__30 <-> !(__29)) using tseitin
-  define(__31 <-> or([false,false;int(1..)])) using tseitin
-  define(__32 <-> !((false) <-> (__31))) using tseitin
-  define(__33 <-> and([false,__31;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__23,__25,__27;int(1..)] [1, 3]) = SATInt(Log, [__30,__32;int(1..)] [1, 1])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__34
-new variables:
-  findAux __34: bool
-new SAT encoding decisions:
-  define(__34 <-> integer-weighted(1*__23, 2*__25, -4*__27, -1*__30, 2*__32) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: -1 } }]
-
---
-
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_3#int_rank_1,x#explicit_1#components_3#int_rank_2;int(1..)] [1, 3]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__36,__38,__40;int(1..)] [1, 3]) = SATInt(Log, [__43,__45;int(1..)] [1, 1])
-new variables:
-  findAux __35: bool
-  findAux __36: bool
-  findAux __37: bool
-  findAux __38: bool
-  findAux __39: bool
-  findAux __40: bool
-  findAux __41: bool
-  findAux __42: bool
-  findAux __43: bool
-  findAux __44: bool
-  findAux __45: bool
-  findAux __46: bool
-new SAT encoding decisions:
-  define(__35 <-> !((x#explicit_1#components_3#int_rank_1) <-> (false))) using tseitin
-  define(__36 <-> !(__35)) using tseitin
-  define(__37 <-> or([x#explicit_1#components_3#int_rank_1,false;int(1..)])) using tseitin
-  define(__38 <-> !((x#explicit_1#components_3#int_rank_2) <-> (__37))) using tseitin
-  define(__39 <-> and([x#explicit_1#components_3#int_rank_2,__37;int(1..)])) using tseitin
-  define(__40 <-> !((false) <-> (__39))) using tseitin
-  define(__41 <-> and([false,__39;int(1..)])) using tseitin
-  define(__42 <-> !((false) <-> (false))) using tseitin
-  define(__43 <-> !(__42)) using tseitin
-  define(__44 <-> or([false,false;int(1..)])) using tseitin
-  define(__45 <-> !((false) <-> (__44))) using tseitin
-  define(__46 <-> and([false,__44;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__36,__38,__40;int(1..)] [1, 3]) = SATInt(Log, [__43,__45;int(1..)] [1, 1])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__47
-new variables:
-  findAux __47: bool
-new SAT encoding decisions:
-  define(__47 <-> integer-weighted(1*__36, 2*__38, -4*__40, -1*__43, 2*__45) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: -1 } }]
-
---
-
-SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__48,__50,__52;int(1..)] [0, 3]) < SATInt(Log, [__54,__57,__59;int(1..)] [2, 2])
-new variables:
-  findAux __48: bool
-  findAux __49: bool
-  findAux __50: bool
-  findAux __51: bool
-  findAux __52: bool
-  findAux __53: bool
-  findAux __54: bool
-  findAux __55: bool
-  findAux __56: bool
-  findAux __57: bool
-  findAux __58: bool
-  findAux __59: bool
-  findAux __60: bool
-new SAT encoding decisions:
-  define(__48 <-> !((x#explicit_2#int_rank_1) <-> (false))) using tseitin
-  define(__49 <-> and([x#explicit_2#int_rank_1,false;int(1..)])) using tseitin
-  define(__50 <-> !((x#explicit_2#int_rank_2) <-> (__49))) using tseitin
-  define(__51 <-> and([x#explicit_2#int_rank_2,__49;int(1..)])) using tseitin
-  define(__52 <-> !((false) <-> (__51))) using tseitin
-  define(__53 <-> and([false,__51;int(1..)])) using tseitin
-  define(__54 <-> !((false) <-> (false))) using tseitin
-  define(__55 <-> and([false,false;int(1..)])) using tseitin
-  define(__56 <-> !((false) <-> (__55))) using tseitin
-  define(__57 <-> !(__56)) using tseitin
-  define(__58 <-> or([false,__55;int(1..)])) using tseitin
-  define(__59 <-> !((false) <-> (__58))) using tseitin
-  define(__60 <-> and([false,__58;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__48,__50,__52;int(1..)] [0, 3]) < SATInt(Log, [__54,__57,__59;int(1..)] [2, 2])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__61
-new variables:
-  findAux __61: bool
-new SAT encoding decisions:
-  define(__61 <-> integer-weighted(1*__48, 2*__50, -4*__52, -1*__54, -2*__57, 4*__59) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -2 } }]
-
---
-
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_1#int_rank_1,x#explicit_1#components_1#int_rank_2;int(1..)] [1, 3]) < SATInt(Rank([(1, 3)]), [x#explicit_1#components_2#int_rank_1,x#explicit_1#components_2#int_rank_2;int(1..)] [1, 3])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__63,__65,__67;int(1..)] [1, 3]) < SATInt(Log, [__70,__72,__74;int(1..)] [1, 3])
-new variables:
-  findAux __62: bool
-  findAux __63: bool
-  findAux __64: bool
-  findAux __65: bool
-  findAux __66: bool
-  findAux __67: bool
-  findAux __68: bool
-  findAux __69: bool
-  findAux __70: bool
-  findAux __71: bool
-  findAux __72: bool
-  findAux __73: bool
-  findAux __74: bool
-  findAux __75: bool
-new SAT encoding decisions:
-  define(__62 <-> !((x#explicit_1#components_1#int_rank_1) <-> (false))) using tseitin
-  define(__63 <-> !(__62)) using tseitin
-  define(__64 <-> or([x#explicit_1#components_1#int_rank_1,false;int(1..)])) using tseitin
-  define(__65 <-> !((x#explicit_1#components_1#int_rank_2) <-> (__64))) using tseitin
-  define(__66 <-> and([x#explicit_1#components_1#int_rank_2,__64;int(1..)])) using tseitin
-  define(__67 <-> !((false) <-> (__66))) using tseitin
-  define(__68 <-> and([false,__66;int(1..)])) using tseitin
-  define(__69 <-> !((x#explicit_1#components_2#int_rank_1) <-> (false))) using tseitin
-  define(__70 <-> !(__69)) using tseitin
-  define(__71 <-> or([x#explicit_1#components_2#int_rank_1,false;int(1..)])) using tseitin
-  define(__72 <-> !((x#explicit_1#components_2#int_rank_2) <-> (__71))) using tseitin
-  define(__73 <-> and([x#explicit_1#components_2#int_rank_2,__71;int(1..)])) using tseitin
-  define(__74 <-> !((false) <-> (__73))) using tseitin
-  define(__75 <-> and([false,__73;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__63,__65,__67;int(1..)] [1, 3]) < SATInt(Log, [__70,__72,__74;int(1..)] [1, 3])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__76
-new variables:
-  findAux __76: bool
-new SAT encoding decisions:
-  define(__76 <-> integer-weighted(1*__63, 2*__65, -4*__67, -1*__70, -2*__72, 4*__74) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
-
---
-
-or([__61,__76;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__77
-new variables:
-  findAux __77: bool
-new SAT encoding decisions:
-  define(__77 <-> or([__61,__76;int(1..)])) using tseitin
+  define(__26 <-> or([__6,__25;int(1..)])) using tseitin
 
 --
 
 true,
-__77,
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]),SATInt(Rank([(1, 3)]), [x#explicit_1#components_2#int_rank_1,x#explicit_1#components_2#int_rank_2;int(1..)] [1, 3]) < SATInt(Rank([(1, 3)]), [x#explicit_1#components_3#int_rank_1,x#explicit_1#components_3#int_rank_2;int(1..)] [1, 3]);int(1..)]),
-or([SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__21;int(1..)]),
-or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__34;int(1..)]),
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__47;int(1..)]),
-true
+__26
    ~~> remove_single_atom ([("SAT", 8400)])
-true,
-or([SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]),SATInt(Rank([(1, 3)]), [x#explicit_1#components_2#int_rank_1,x#explicit_1#components_2#int_rank_2;int(1..)] [1, 3]) < SATInt(Rank([(1, 3)]), [x#explicit_1#components_3#int_rank_1,x#explicit_1#components_3#int_rank_2;int(1..)] [1, 3]);int(1..)]),
-or([SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__21;int(1..)]),
-or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__34;int(1..)]),
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__47;int(1..)]),
 true
 new SAT encoding decisions:
-  assert(__77) using tseitin
-
---
-
-SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]) < SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__78,__80,__82;int(1..)] [0, 3]) < SATInt(Log, [__85,__88,__90;int(1..)] [3, 3])
-new variables:
-  findAux __78: bool
-  findAux __79: bool
-  findAux __80: bool
-  findAux __81: bool
-  findAux __82: bool
-  findAux __83: bool
-  findAux __84: bool
-  findAux __85: bool
-  findAux __86: bool
-  findAux __87: bool
-  findAux __88: bool
-  findAux __89: bool
-  findAux __90: bool
-  findAux __91: bool
-new SAT encoding decisions:
-  define(__78 <-> !((x#explicit_2#int_rank_1) <-> (false))) using tseitin
-  define(__79 <-> and([x#explicit_2#int_rank_1,false;int(1..)])) using tseitin
-  define(__80 <-> !((x#explicit_2#int_rank_2) <-> (__79))) using tseitin
-  define(__81 <-> and([x#explicit_2#int_rank_2,__79;int(1..)])) using tseitin
-  define(__82 <-> !((false) <-> (__81))) using tseitin
-  define(__83 <-> and([false,__81;int(1..)])) using tseitin
-  define(__84 <-> !((false) <-> (false))) using tseitin
-  define(__85 <-> !(__84)) using tseitin
-  define(__86 <-> or([false,false;int(1..)])) using tseitin
-  define(__87 <-> !((false) <-> (__86))) using tseitin
-  define(__88 <-> !(__87)) using tseitin
-  define(__89 <-> or([false,__86;int(1..)])) using tseitin
-  define(__90 <-> !((false) <-> (__89))) using tseitin
-  define(__91 <-> and([false,__89;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__78,__80,__82;int(1..)] [0, 3]) < SATInt(Log, [__85,__88,__90;int(1..)] [3, 3])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__92
-new variables:
-  findAux __92: bool
-new SAT encoding decisions:
-  define(__92 <-> integer-weighted(1*__78, 2*__80, -4*__82, -1*__85, -2*__88, 4*__90) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -3 } }]
-
---
-
-SATInt(Rank([(1, 3)]), [x#explicit_1#components_2#int_rank_1,x#explicit_1#components_2#int_rank_2;int(1..)] [1, 3]) < SATInt(Rank([(1, 3)]), [x#explicit_1#components_3#int_rank_1,x#explicit_1#components_3#int_rank_2;int(1..)] [1, 3])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__94,__96,__98;int(1..)] [1, 3]) < SATInt(Log, [__101,__103,__105;int(1..)] [1, 3])
-new variables:
-  findAux __93: bool
-  findAux __94: bool
-  findAux __95: bool
-  findAux __96: bool
-  findAux __97: bool
-  findAux __98: bool
-  findAux __99: bool
-  findAux __100: bool
-  findAux __101: bool
-  findAux __102: bool
-  findAux __103: bool
-  findAux __104: bool
-  findAux __105: bool
-  findAux __106: bool
-new SAT encoding decisions:
-  define(__93 <-> !((x#explicit_1#components_2#int_rank_1) <-> (false))) using tseitin
-  define(__94 <-> !(__93)) using tseitin
-  define(__95 <-> or([x#explicit_1#components_2#int_rank_1,false;int(1..)])) using tseitin
-  define(__96 <-> !((x#explicit_1#components_2#int_rank_2) <-> (__95))) using tseitin
-  define(__97 <-> and([x#explicit_1#components_2#int_rank_2,__95;int(1..)])) using tseitin
-  define(__98 <-> !((false) <-> (__97))) using tseitin
-  define(__99 <-> and([false,__97;int(1..)])) using tseitin
-  define(__100 <-> !((x#explicit_1#components_3#int_rank_1) <-> (false))) using tseitin
-  define(__101 <-> !(__100)) using tseitin
-  define(__102 <-> or([x#explicit_1#components_3#int_rank_1,false;int(1..)])) using tseitin
-  define(__103 <-> !((x#explicit_1#components_3#int_rank_2) <-> (__102))) using tseitin
-  define(__104 <-> and([x#explicit_1#components_3#int_rank_2,__102;int(1..)])) using tseitin
-  define(__105 <-> !((false) <-> (__104))) using tseitin
-  define(__106 <-> and([false,__104;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__94,__96,__98;int(1..)] [1, 3]) < SATInt(Log, [__101,__103,__105;int(1..)] [1, 3])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__107
-new variables:
-  findAux __107: bool
-new SAT encoding decisions:
-  define(__107 <-> integer-weighted(1*__94, 2*__96, -4*__98, -1*__101, -2*__103, 4*__105) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
-
---
-
-or([__92,__107;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__108
-new variables:
-  findAux __108: bool
-new SAT encoding decisions:
-  define(__108 <-> or([__92,__107;int(1..)])) using tseitin
-
---
-
-true,
-__108,
-or([SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__21;int(1..)]),
-or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__34;int(1..)]),
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__47;int(1..)]),
-true
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-or([SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__21;int(1..)]),
-or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__34;int(1..)]),
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__47;int(1..)]),
-true
-new SAT encoding decisions:
-  assert(__108) using tseitin
-
---
-
-SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__110,__112;int(1..)] [1, 1]) <= SATInt(Log, [__114,__116,__118;int(1..)] [0, 3])
-new variables:
-  findAux __109: bool
-  findAux __110: bool
-  findAux __111: bool
-  findAux __112: bool
-  findAux __113: bool
-  findAux __114: bool
-  findAux __115: bool
-  findAux __116: bool
-  findAux __117: bool
-  findAux __118: bool
-  findAux __119: bool
-new SAT encoding decisions:
-  define(__109 <-> !((false) <-> (false))) using tseitin
-  define(__110 <-> !(__109)) using tseitin
-  define(__111 <-> or([false,false;int(1..)])) using tseitin
-  define(__112 <-> !((false) <-> (__111))) using tseitin
-  define(__113 <-> and([false,__111;int(1..)])) using tseitin
-  define(__114 <-> !((x#explicit_2#int_rank_1) <-> (false))) using tseitin
-  define(__115 <-> and([x#explicit_2#int_rank_1,false;int(1..)])) using tseitin
-  define(__116 <-> !((x#explicit_2#int_rank_2) <-> (__115))) using tseitin
-  define(__117 <-> and([x#explicit_2#int_rank_2,__115;int(1..)])) using tseitin
-  define(__118 <-> !((false) <-> (__117))) using tseitin
-  define(__119 <-> and([false,__117;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__110,__112;int(1..)] [1, 1]) <= SATInt(Log, [__114,__116,__118;int(1..)] [0, 3])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__120
-new variables:
-  findAux __120: bool
-new SAT encoding decisions:
-  define(__120 <-> integer-weighted(1*__110, -2*__112, -1*__114, -2*__116, 4*__118) LessEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -3, upper: 0 } }]
-
---
-
-or([__120,__21;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__121
-new variables:
-  findAux __121: bool
-new SAT encoding decisions:
-  define(__121 <-> or([__120,__21;int(1..)])) using tseitin
-
---
-
-true,
-__121,
-or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__34;int(1..)]),
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__47;int(1..)]),
-true
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__34;int(1..)]),
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__47;int(1..)]),
-true
-new SAT encoding decisions:
-  assert(__121) using tseitin
-
---
-
-SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__122,__125,__127;int(1..)] [2, 2]) <= SATInt(Log, [__129,__131,__133;int(1..)] [0, 3])
-new variables:
-  findAux __122: bool
-  findAux __123: bool
-  findAux __124: bool
-  findAux __125: bool
-  findAux __126: bool
-  findAux __127: bool
-  findAux __128: bool
-  findAux __129: bool
-  findAux __130: bool
-  findAux __131: bool
-  findAux __132: bool
-  findAux __133: bool
-  findAux __134: bool
-new SAT encoding decisions:
-  define(__122 <-> !((false) <-> (false))) using tseitin
-  define(__123 <-> and([false,false;int(1..)])) using tseitin
-  define(__124 <-> !((false) <-> (__123))) using tseitin
-  define(__125 <-> !(__124)) using tseitin
-  define(__126 <-> or([false,__123;int(1..)])) using tseitin
-  define(__127 <-> !((false) <-> (__126))) using tseitin
-  define(__128 <-> and([false,__126;int(1..)])) using tseitin
-  define(__129 <-> !((x#explicit_2#int_rank_1) <-> (false))) using tseitin
-  define(__130 <-> and([x#explicit_2#int_rank_1,false;int(1..)])) using tseitin
-  define(__131 <-> !((x#explicit_2#int_rank_2) <-> (__130))) using tseitin
-  define(__132 <-> and([x#explicit_2#int_rank_2,__130;int(1..)])) using tseitin
-  define(__133 <-> !((false) <-> (__132))) using tseitin
-  define(__134 <-> and([false,__132;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__122,__125,__127;int(1..)] [2, 2]) <= SATInt(Log, [__129,__131,__133;int(1..)] [0, 3])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__135
-new variables:
-  findAux __135: bool
-new SAT encoding decisions:
-  define(__135 <-> integer-weighted(1*__122, 2*__125, -4*__127, -1*__129, -2*__131, 4*__133) LessEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
-
---
-
-or([__135,__34;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__136
-new variables:
-  findAux __136: bool
-new SAT encoding decisions:
-  define(__136 <-> or([__135,__34;int(1..)])) using tseitin
-
---
-
-true,
-__136,
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__47;int(1..)]),
-true
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-or([SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3]),__47;int(1..)]),
-true
-new SAT encoding decisions:
-  assert(__136) using tseitin
-
---
-
-SATInt(Rank([(3, 3)]), [false;int(1..)] [3, 3]) <= SATInt(Rank([(0, 3)]), [x#explicit_2#int_rank_1,x#explicit_2#int_rank_2;int(1..)] [0, 3])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__138,__141,__143;int(1..)] [3, 3]) <= SATInt(Log, [__145,__147,__149;int(1..)] [0, 3])
-new variables:
-  findAux __137: bool
-  findAux __138: bool
-  findAux __139: bool
-  findAux __140: bool
-  findAux __141: bool
-  findAux __142: bool
-  findAux __143: bool
-  findAux __144: bool
-  findAux __145: bool
-  findAux __146: bool
-  findAux __147: bool
-  findAux __148: bool
-  findAux __149: bool
-  findAux __150: bool
-new SAT encoding decisions:
-  define(__137 <-> !((false) <-> (false))) using tseitin
-  define(__138 <-> !(__137)) using tseitin
-  define(__139 <-> or([false,false;int(1..)])) using tseitin
-  define(__140 <-> !((false) <-> (__139))) using tseitin
-  define(__141 <-> !(__140)) using tseitin
-  define(__142 <-> or([false,__139;int(1..)])) using tseitin
-  define(__143 <-> !((false) <-> (__142))) using tseitin
-  define(__144 <-> and([false,__142;int(1..)])) using tseitin
-  define(__145 <-> !((x#explicit_2#int_rank_1) <-> (false))) using tseitin
-  define(__146 <-> and([x#explicit_2#int_rank_1,false;int(1..)])) using tseitin
-  define(__147 <-> !((x#explicit_2#int_rank_2) <-> (__146))) using tseitin
-  define(__148 <-> and([x#explicit_2#int_rank_2,__146;int(1..)])) using tseitin
-  define(__149 <-> !((false) <-> (__148))) using tseitin
-  define(__150 <-> and([false,__148;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__138,__141,__143;int(1..)] [3, 3]) <= SATInt(Log, [__145,__147,__149;int(1..)] [0, 3])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__151
-new variables:
-  findAux __151: bool
-new SAT encoding decisions:
-  define(__151 <-> integer-weighted(1*__138, 2*__141, -4*__143, -1*__145, -2*__147, 4*__149) LessEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 3, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
-
---
-
-or([__151,__47;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__152
-new variables:
-  findAux __152: bool
-new SAT encoding decisions:
-  define(__152 <-> or([__151,__47;int(1..)])) using tseitin
-
---
-
-true,
-__152,
-true
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true
-new SAT encoding decisions:
-  assert(__152) using tseitin
+  assert(__26) using tseitin
 
 --
 
@@ -1102,24 +705,28 @@ Final model:
 find x: set (representation explicit) of int(1..3)
 find x#explicit_1: matrix indexed by [int(1..3)] of int(1..3)
 find x#explicit_2: int(0..3)
-find x#explicit_2#int_rank_1: bool
-find x#explicit_2#int_rank_2: bool
-find x#explicit_1#components_1: int(1..3)
-find x#explicit_1#components_2: int(1..3)
-find x#explicit_1#components_3: int(1..3)
-find x#explicit_1#components_1#int_rank_1: bool
-find x#explicit_1#components_1#int_rank_2: bool
-find x#explicit_1#components_2#int_rank_1: bool
-find x#explicit_1#components_2#int_rank_2: bool
-find x#explicit_1#components_3#int_rank_1: bool
-find x#explicit_1#components_3#int_rank_2: bool
+find x#explicit_2#int_log_1: bool
+find x#explicit_2#int_log_2: bool
+find x#explicit_2#int_log_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
+find x#explicit_1#components_1: int(1..3)
+find x#explicit_1#components_2: int(1..3)
+find x#explicit_1#components_3: int(1..3)
 findAux __3: bool
 findAux __4: bool
 findAux __5: bool
 findAux __6: bool
+find x#explicit_1#components_1#int_log_1: bool
+find x#explicit_1#components_1#int_log_2: bool
+find x#explicit_1#components_1#int_log_3: bool
+find x#explicit_1#components_2#int_log_1: bool
+find x#explicit_1#components_2#int_log_2: bool
+find x#explicit_1#components_2#int_log_3: bool
+find x#explicit_1#components_3#int_log_1: bool
+find x#explicit_1#components_3#int_log_2: bool
+find x#explicit_1#components_3#int_log_3: bool
 findAux __7: bool
 findAux __8: bool
 findAux __9: bool
@@ -1140,299 +747,47 @@ findAux __23: bool
 findAux __24: bool
 findAux __25: bool
 findAux __26: bool
-findAux __27: bool
-findAux __28: bool
-findAux __29: bool
-findAux __30: bool
-findAux __31: bool
-findAux __32: bool
-findAux __33: bool
-findAux __34: bool
-findAux __35: bool
-findAux __36: bool
-findAux __37: bool
-findAux __38: bool
-findAux __39: bool
-findAux __40: bool
-findAux __41: bool
-findAux __42: bool
-findAux __43: bool
-findAux __44: bool
-findAux __45: bool
-findAux __46: bool
-findAux __47: bool
-findAux __48: bool
-findAux __49: bool
-findAux __50: bool
-findAux __51: bool
-findAux __52: bool
-findAux __53: bool
-findAux __54: bool
-findAux __55: bool
-findAux __56: bool
-findAux __57: bool
-findAux __58: bool
-findAux __59: bool
-findAux __60: bool
-findAux __61: bool
-findAux __62: bool
-findAux __63: bool
-findAux __64: bool
-findAux __65: bool
-findAux __66: bool
-findAux __67: bool
-findAux __68: bool
-findAux __69: bool
-findAux __70: bool
-findAux __71: bool
-findAux __72: bool
-findAux __73: bool
-findAux __74: bool
-findAux __75: bool
-findAux __76: bool
-findAux __77: bool
-findAux __78: bool
-findAux __79: bool
-findAux __80: bool
-findAux __81: bool
-findAux __82: bool
-findAux __83: bool
-findAux __84: bool
-findAux __85: bool
-findAux __86: bool
-findAux __87: bool
-findAux __88: bool
-findAux __89: bool
-findAux __90: bool
-findAux __91: bool
-findAux __92: bool
-findAux __93: bool
-findAux __94: bool
-findAux __95: bool
-findAux __96: bool
-findAux __97: bool
-findAux __98: bool
-findAux __99: bool
-findAux __100: bool
-findAux __101: bool
-findAux __102: bool
-findAux __103: bool
-findAux __104: bool
-findAux __105: bool
-findAux __106: bool
-findAux __107: bool
-findAux __108: bool
-findAux __109: bool
-findAux __110: bool
-findAux __111: bool
-findAux __112: bool
-findAux __113: bool
-findAux __114: bool
-findAux __115: bool
-findAux __116: bool
-findAux __117: bool
-findAux __118: bool
-findAux __119: bool
-findAux __120: bool
-findAux __121: bool
-findAux __122: bool
-findAux __123: bool
-findAux __124: bool
-findAux __125: bool
-findAux __126: bool
-findAux __127: bool
-findAux __128: bool
-findAux __129: bool
-findAux __130: bool
-findAux __131: bool
-findAux __132: bool
-findAux __133: bool
-findAux __134: bool
-findAux __135: bool
-findAux __136: bool
-findAux __137: bool
-findAux __138: bool
-findAux __139: bool
-findAux __140: bool
-findAux __141: bool
-findAux __142: bool
-findAux __143: bool
-findAux __144: bool
-findAux __145: bool
-findAux __146: bool
-findAux __147: bool
-findAux __148: bool
-findAux __149: bool
-findAux __150: bool
-findAux __151: bool
-findAux __152: bool
 
 such that
 
-true,
 true
 
 sat encoding decisions:
 
-define(__0 <-> !(x#explicit_1#components_3#int_rank_2)) using tseitin,
-define(__1 <-> !(x#explicit_1#components_1#int_rank_2)) using tseitin,
-define(__2 <-> !(x#explicit_1#components_2#int_rank_2)) using tseitin,
-define(__3 <-> !(x#explicit_1#components_3#int_rank_1)) using tseitin,
-define(__4 <-> !(x#explicit_1#components_1#int_rank_1)) using tseitin,
-define(__5 <-> !(x#explicit_1#components_2#int_rank_1)) using tseitin,
-define(__6 <-> or([__0,__3;int(1..)])) using tseitin,
-define(__7 <-> or([__1,__4;int(1..)])) using tseitin,
-define(__8 <-> or([__2,__5;int(1..)])) using tseitin,
-assert(__7) using tseitin,
-assert(__8) using tseitin,
-assert(__6) using tseitin,
-define(__9 <-> !((x#explicit_1#components_1#int_rank_1) <-> (false))) using tseitin,
-define(__10 <-> !(__9)) using tseitin,
-define(__11 <-> or([x#explicit_1#components_1#int_rank_1,false;int(1..)])) using tseitin,
-define(__12 <-> !((x#explicit_1#components_1#int_rank_2) <-> (__11))) using tseitin,
-define(__13 <-> and([x#explicit_1#components_1#int_rank_2,__11;int(1..)])) using tseitin,
-define(__14 <-> !((false) <-> (__13))) using tseitin,
-define(__15 <-> and([false,__13;int(1..)])) using tseitin,
-define(__16 <-> !((false) <-> (false))) using tseitin,
-define(__17 <-> !(__16)) using tseitin,
-define(__18 <-> or([false,false;int(1..)])) using tseitin,
-define(__19 <-> !((false) <-> (__18))) using tseitin,
-define(__20 <-> and([false,__18;int(1..)])) using tseitin,
-define(__21 <-> integer-weighted(1*__10, 2*__12, -4*__14, -1*__17, 2*__19) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: -1 } }],
-define(__22 <-> !((x#explicit_1#components_2#int_rank_1) <-> (false))) using tseitin,
-define(__23 <-> !(__22)) using tseitin,
-define(__24 <-> or([x#explicit_1#components_2#int_rank_1,false;int(1..)])) using tseitin,
-define(__25 <-> !((x#explicit_1#components_2#int_rank_2) <-> (__24))) using tseitin,
-define(__26 <-> and([x#explicit_1#components_2#int_rank_2,__24;int(1..)])) using tseitin,
-define(__27 <-> !((false) <-> (__26))) using tseitin,
-define(__28 <-> and([false,__26;int(1..)])) using tseitin,
-define(__29 <-> !((false) <-> (false))) using tseitin,
-define(__30 <-> !(__29)) using tseitin,
-define(__31 <-> or([false,false;int(1..)])) using tseitin,
-define(__32 <-> !((false) <-> (__31))) using tseitin,
-define(__33 <-> and([false,__31;int(1..)])) using tseitin,
-define(__34 <-> integer-weighted(1*__23, 2*__25, -4*__27, -1*__30, 2*__32) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: -1 } }],
-define(__35 <-> !((x#explicit_1#components_3#int_rank_1) <-> (false))) using tseitin,
-define(__36 <-> !(__35)) using tseitin,
-define(__37 <-> or([x#explicit_1#components_3#int_rank_1,false;int(1..)])) using tseitin,
-define(__38 <-> !((x#explicit_1#components_3#int_rank_2) <-> (__37))) using tseitin,
-define(__39 <-> and([x#explicit_1#components_3#int_rank_2,__37;int(1..)])) using tseitin,
-define(__40 <-> !((false) <-> (__39))) using tseitin,
-define(__41 <-> and([false,__39;int(1..)])) using tseitin,
-define(__42 <-> !((false) <-> (false))) using tseitin,
-define(__43 <-> !(__42)) using tseitin,
-define(__44 <-> or([false,false;int(1..)])) using tseitin,
-define(__45 <-> !((false) <-> (__44))) using tseitin,
-define(__46 <-> and([false,__44;int(1..)])) using tseitin,
-define(__47 <-> integer-weighted(1*__36, 2*__38, -4*__40, -1*__43, 2*__45) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: -1 } }],
-define(__48 <-> !((x#explicit_2#int_rank_1) <-> (false))) using tseitin,
-define(__49 <-> and([x#explicit_2#int_rank_1,false;int(1..)])) using tseitin,
-define(__50 <-> !((x#explicit_2#int_rank_2) <-> (__49))) using tseitin,
-define(__51 <-> and([x#explicit_2#int_rank_2,__49;int(1..)])) using tseitin,
-define(__52 <-> !((false) <-> (__51))) using tseitin,
-define(__53 <-> and([false,__51;int(1..)])) using tseitin,
-define(__54 <-> !((false) <-> (false))) using tseitin,
-define(__55 <-> and([false,false;int(1..)])) using tseitin,
-define(__56 <-> !((false) <-> (__55))) using tseitin,
-define(__57 <-> !(__56)) using tseitin,
-define(__58 <-> or([false,__55;int(1..)])) using tseitin,
-define(__59 <-> !((false) <-> (__58))) using tseitin,
-define(__60 <-> and([false,__58;int(1..)])) using tseitin,
-define(__61 <-> integer-weighted(1*__48, 2*__50, -4*__52, -1*__54, -2*__57, 4*__59) Less 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -2 } }],
-define(__62 <-> !((x#explicit_1#components_1#int_rank_1) <-> (false))) using tseitin,
-define(__63 <-> !(__62)) using tseitin,
-define(__64 <-> or([x#explicit_1#components_1#int_rank_1,false;int(1..)])) using tseitin,
-define(__65 <-> !((x#explicit_1#components_1#int_rank_2) <-> (__64))) using tseitin,
-define(__66 <-> and([x#explicit_1#components_1#int_rank_2,__64;int(1..)])) using tseitin,
-define(__67 <-> !((false) <-> (__66))) using tseitin,
-define(__68 <-> and([false,__66;int(1..)])) using tseitin,
-define(__69 <-> !((x#explicit_1#components_2#int_rank_1) <-> (false))) using tseitin,
-define(__70 <-> !(__69)) using tseitin,
-define(__71 <-> or([x#explicit_1#components_2#int_rank_1,false;int(1..)])) using tseitin,
-define(__72 <-> !((x#explicit_1#components_2#int_rank_2) <-> (__71))) using tseitin,
-define(__73 <-> and([x#explicit_1#components_2#int_rank_2,__71;int(1..)])) using tseitin,
-define(__74 <-> !((false) <-> (__73))) using tseitin,
-define(__75 <-> and([false,__73;int(1..)])) using tseitin,
-define(__76 <-> integer-weighted(1*__63, 2*__65, -4*__67, -1*__70, -2*__72, 4*__74) Less 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
-define(__77 <-> or([__61,__76;int(1..)])) using tseitin,
-assert(__77) using tseitin,
-define(__78 <-> !((x#explicit_2#int_rank_1) <-> (false))) using tseitin,
-define(__79 <-> and([x#explicit_2#int_rank_1,false;int(1..)])) using tseitin,
-define(__80 <-> !((x#explicit_2#int_rank_2) <-> (__79))) using tseitin,
-define(__81 <-> and([x#explicit_2#int_rank_2,__79;int(1..)])) using tseitin,
-define(__82 <-> !((false) <-> (__81))) using tseitin,
-define(__83 <-> and([false,__81;int(1..)])) using tseitin,
-define(__84 <-> !((false) <-> (false))) using tseitin,
-define(__85 <-> !(__84)) using tseitin,
-define(__86 <-> or([false,false;int(1..)])) using tseitin,
-define(__87 <-> !((false) <-> (__86))) using tseitin,
-define(__88 <-> !(__87)) using tseitin,
-define(__89 <-> or([false,__86;int(1..)])) using tseitin,
-define(__90 <-> !((false) <-> (__89))) using tseitin,
-define(__91 <-> and([false,__89;int(1..)])) using tseitin,
-define(__92 <-> integer-weighted(1*__78, 2*__80, -4*__82, -1*__85, -2*__88, 4*__90) Less 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -3 } }],
-define(__93 <-> !((x#explicit_1#components_2#int_rank_1) <-> (false))) using tseitin,
-define(__94 <-> !(__93)) using tseitin,
-define(__95 <-> or([x#explicit_1#components_2#int_rank_1,false;int(1..)])) using tseitin,
-define(__96 <-> !((x#explicit_1#components_2#int_rank_2) <-> (__95))) using tseitin,
-define(__97 <-> and([x#explicit_1#components_2#int_rank_2,__95;int(1..)])) using tseitin,
-define(__98 <-> !((false) <-> (__97))) using tseitin,
-define(__99 <-> and([false,__97;int(1..)])) using tseitin,
-define(__100 <-> !((x#explicit_1#components_3#int_rank_1) <-> (false))) using tseitin,
-define(__101 <-> !(__100)) using tseitin,
-define(__102 <-> or([x#explicit_1#components_3#int_rank_1,false;int(1..)])) using tseitin,
-define(__103 <-> !((x#explicit_1#components_3#int_rank_2) <-> (__102))) using tseitin,
-define(__104 <-> and([x#explicit_1#components_3#int_rank_2,__102;int(1..)])) using tseitin,
-define(__105 <-> !((false) <-> (__104))) using tseitin,
-define(__106 <-> and([false,__104;int(1..)])) using tseitin,
-define(__107 <-> integer-weighted(1*__94, 2*__96, -4*__98, -1*__101, -2*__103, 4*__105) Less 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
-define(__108 <-> or([__92,__107;int(1..)])) using tseitin,
-assert(__108) using tseitin,
-define(__109 <-> !((false) <-> (false))) using tseitin,
-define(__110 <-> !(__109)) using tseitin,
-define(__111 <-> or([false,false;int(1..)])) using tseitin,
-define(__112 <-> !((false) <-> (__111))) using tseitin,
-define(__113 <-> and([false,__111;int(1..)])) using tseitin,
-define(__114 <-> !((x#explicit_2#int_rank_1) <-> (false))) using tseitin,
-define(__115 <-> and([x#explicit_2#int_rank_1,false;int(1..)])) using tseitin,
-define(__116 <-> !((x#explicit_2#int_rank_2) <-> (__115))) using tseitin,
-define(__117 <-> and([x#explicit_2#int_rank_2,__115;int(1..)])) using tseitin,
-define(__118 <-> !((false) <-> (__117))) using tseitin,
-define(__119 <-> and([false,__117;int(1..)])) using tseitin,
-define(__120 <-> integer-weighted(1*__110, -2*__112, -1*__114, -2*__116, 4*__118) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__121 <-> or([__120,__21;int(1..)])) using tseitin,
-assert(__121) using tseitin,
-define(__122 <-> !((false) <-> (false))) using tseitin,
-define(__123 <-> and([false,false;int(1..)])) using tseitin,
-define(__124 <-> !((false) <-> (__123))) using tseitin,
-define(__125 <-> !(__124)) using tseitin,
-define(__126 <-> or([false,__123;int(1..)])) using tseitin,
-define(__127 <-> !((false) <-> (__126))) using tseitin,
-define(__128 <-> and([false,__126;int(1..)])) using tseitin,
-define(__129 <-> !((x#explicit_2#int_rank_1) <-> (false))) using tseitin,
-define(__130 <-> and([x#explicit_2#int_rank_1,false;int(1..)])) using tseitin,
-define(__131 <-> !((x#explicit_2#int_rank_2) <-> (__130))) using tseitin,
-define(__132 <-> and([x#explicit_2#int_rank_2,__130;int(1..)])) using tseitin,
-define(__133 <-> !((false) <-> (__132))) using tseitin,
-define(__134 <-> and([false,__132;int(1..)])) using tseitin,
-define(__135 <-> integer-weighted(1*__122, 2*__125, -4*__127, -1*__129, -2*__131, 4*__133) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__136 <-> or([__135,__34;int(1..)])) using tseitin,
-assert(__136) using tseitin,
-define(__137 <-> !((false) <-> (false))) using tseitin,
-define(__138 <-> !(__137)) using tseitin,
-define(__139 <-> or([false,false;int(1..)])) using tseitin,
-define(__140 <-> !((false) <-> (__139))) using tseitin,
-define(__141 <-> !(__140)) using tseitin,
-define(__142 <-> or([false,__139;int(1..)])) using tseitin,
-define(__143 <-> !((false) <-> (__142))) using tseitin,
-define(__144 <-> and([false,__142;int(1..)])) using tseitin,
-define(__145 <-> !((x#explicit_2#int_rank_1) <-> (false))) using tseitin,
-define(__146 <-> and([x#explicit_2#int_rank_1,false;int(1..)])) using tseitin,
-define(__147 <-> !((x#explicit_2#int_rank_2) <-> (__146))) using tseitin,
-define(__148 <-> and([x#explicit_2#int_rank_2,__146;int(1..)])) using tseitin,
-define(__149 <-> !((false) <-> (__148))) using tseitin,
-define(__150 <-> and([false,__148;int(1..)])) using tseitin,
-define(__151 <-> integer-weighted(1*__138, 2*__141, -4*__143, -1*__145, -2*__147, 4*__149) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 3, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__152 <-> or([__151,__47;int(1..)])) using tseitin,
-assert(__152) using tseitin
+define(__0 <-> integer-weighted(-1*x#explicit_2#int_log_1, -2*x#explicit_2#int_log_2, 4*x#explicit_2#int_log_3) LessEqual -2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__1 <-> integer-weighted(1*x#explicit_2#int_log_1, 2*x#explicit_2#int_log_2, -4*x#explicit_2#int_log_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__2 <-> integer-weighted(1*x#explicit_2#int_log_1, 2*x#explicit_2#int_log_2, -4*x#explicit_2#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__3 <-> integer-weighted(1*x#explicit_2#int_log_1, 2*x#explicit_2#int_log_2, -4*x#explicit_2#int_log_3) Less 2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__4 <-> integer-weighted(1*x#explicit_2#int_log_1, 2*x#explicit_2#int_log_2, -4*x#explicit_2#int_log_3) Less 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__5 <-> integer-weighted(-1*x#explicit_2#int_log_1, -2*x#explicit_2#int_log_2, 4*x#explicit_2#int_log_3) LessEqual -1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__6 <-> integer-weighted(-1*x#explicit_2#int_log_1, -2*x#explicit_2#int_log_2, 4*x#explicit_2#int_log_3) LessEqual -3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__7 <-> integer-weighted(1*x#explicit_1#components_1#int_log_1, 2*x#explicit_1#components_1#int_log_2, -4*x#explicit_1#components_1#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__8 <-> integer-weighted(1*x#explicit_1#components_1#int_log_1, 2*x#explicit_1#components_1#int_log_2, -4*x#explicit_1#components_1#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__9 <-> integer-weighted(1*x#explicit_1#components_2#int_log_1, 2*x#explicit_1#components_2#int_log_2, -4*x#explicit_1#components_2#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__10 <-> integer-weighted(1*x#explicit_1#components_2#int_log_1, 2*x#explicit_1#components_2#int_log_2, -4*x#explicit_1#components_2#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__11 <-> integer-weighted(1*x#explicit_1#components_3#int_log_1, 2*x#explicit_1#components_3#int_log_2, -4*x#explicit_1#components_3#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__12 <-> integer-weighted(1*x#explicit_1#components_3#int_log_1, 2*x#explicit_1#components_3#int_log_2, -4*x#explicit_1#components_3#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__13 <-> and([__7,__8;int(1..)])) using tseitin,
+define(__14 <-> and([__9,__10;int(1..)])) using tseitin,
+define(__15 <-> and([__11,__12;int(1..)])) using tseitin,
+define(__16 <-> and([__1,__2;int(1..)])) using tseitin,
+assert(__16) using tseitin,
+assert(__13) using tseitin,
+assert(__14) using tseitin,
+assert(__15) using tseitin,
+define(__17 <-> integer-weighted(1*x#explicit_1#components_1#int_log_1, 2*x#explicit_1#components_1#int_log_2, -4*x#explicit_1#components_1#int_log_3, -1*x#explicit_1#components_2#int_log_1, -2*x#explicit_1#components_2#int_log_2, 4*x#explicit_1#components_2#int_log_3) Less 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__18 <-> or([__3,__17;int(1..)])) using tseitin,
+assert(__18) using tseitin,
+define(__19 <-> integer-weighted(1*x#explicit_1#components_2#int_log_1, 2*x#explicit_1#components_2#int_log_2, -4*x#explicit_1#components_2#int_log_3, -1*x#explicit_1#components_3#int_log_1, -2*x#explicit_1#components_3#int_log_2, 4*x#explicit_1#components_3#int_log_3) Less 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__20 <-> or([__4,__19;int(1..)])) using tseitin,
+assert(__20) using tseitin,
+define(__21 <-> integer-weighted(1*x#explicit_1#components_1#int_log_1, 2*x#explicit_1#components_1#int_log_2, -4*x#explicit_1#components_1#int_log_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__22 <-> or([__5,__21;int(1..)])) using tseitin,
+assert(__22) using tseitin,
+define(__23 <-> integer-weighted(1*x#explicit_1#components_2#int_log_1, 2*x#explicit_1#components_2#int_log_2, -4*x#explicit_1#components_2#int_log_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__24 <-> or([__0,__23;int(1..)])) using tseitin,
+assert(__24) using tseitin,
+define(__25 <-> integer-weighted(1*x#explicit_1#components_3#int_log_1, 2*x#explicit_1#components_3#int_log_2, -4*x#explicit_1#components_3#int_log_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__26 <-> or([__6,__25;int(1..)])) using tseitin,
+assert(__26) using tseitin
 

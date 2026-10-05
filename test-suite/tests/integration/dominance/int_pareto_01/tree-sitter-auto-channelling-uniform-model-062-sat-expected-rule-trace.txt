@@ -1,0 +1,142 @@
+Model before rewriting:
+
+find x: int(0..3)
+find y: int(0..3)
+
+such that
+
+sum([x,y;int(1..)]) >= 2
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#int_rank_1: bool
+  find x#int_rank_2: bool
+new constraints:
+  or([!(x#int_rank_2),or([!(x#int_rank_1),true;int(1..)]);int(1..)])
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#int_rank_1: bool
+  find y#int_rank_2: bool
+new constraints:
+  or([!(y#int_rank_2),or([!(y#int_rank_1),true;int(1..)]);int(1..)])
+
+--
+
+y
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(0, 3)]), [y#int_rank_1,y#int_rank_2;int(1..)] [0, 3])
+
+--
+
+x
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(0, 3)]), [x#int_rank_1,x#int_rank_2;int(1..)] [0, 3])
+
+--
+
+sum([SATInt(Rank([(0, 3)]), [x#int_rank_1,x#int_rank_2;int(1..)] [0, 3]),SATInt(Rank([(0, 3)]), [y#int_rank_1,y#int_rank_2;int(1..)] [0, 3]);int(1..)])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+sum([SATInt(Log, [__0,__2,__4;int(1..)] [0, 3]),SATInt(Log, [__6,__8,__10;int(1..)] [0, 3]);int(1..)])
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+  findAux __2: bool
+  findAux __3: bool
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__0 <-> !((x#int_rank_1) <-> (false))) using tseitin
+  define(__1 <-> and([x#int_rank_1,false;int(1..)])) using tseitin
+  define(__2 <-> !((x#int_rank_2) <-> (__1))) using tseitin
+  define(__3 <-> and([x#int_rank_2,__1;int(1..)])) using tseitin
+  define(__4 <-> !((false) <-> (__3))) using tseitin
+  define(__5 <-> and([false,__3;int(1..)])) using tseitin
+  define(__6 <-> !((y#int_rank_1) <-> (false))) using tseitin
+  define(__7 <-> and([y#int_rank_1,false;int(1..)])) using tseitin
+  define(__8 <-> !((y#int_rank_2) <-> (__7))) using tseitin
+  define(__9 <-> and([y#int_rank_2,__7;int(1..)])) using tseitin
+  define(__10 <-> !((false) <-> (__9))) using tseitin
+  define(__11 <-> and([false,__9;int(1..)])) using tseitin
+
+--
+
+sum([SATInt(Log, [__0,__2,__4;int(1..)] [0, 3]),SATInt(Log, [__6,__8,__10;int(1..)] [0, 3]);int(1..)]) >= 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> integer-weighted(1*__0, 2*__2, -4*__4, 1*__6, 2*__8, -4*__10) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+__12,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true
+new SAT encoding decisions:
+  assert(__12) using tseitin
+
+--
+
+Final model:
+
+find x: int(0..3)
+find y: int(0..3)
+find x#int_rank_1: bool
+find x#int_rank_2: bool
+find y#int_rank_1: bool
+find y#int_rank_2: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+define(__0 <-> !((x#int_rank_1) <-> (false))) using tseitin,
+define(__1 <-> and([x#int_rank_1,false;int(1..)])) using tseitin,
+define(__2 <-> !((x#int_rank_2) <-> (__1))) using tseitin,
+define(__3 <-> and([x#int_rank_2,__1;int(1..)])) using tseitin,
+define(__4 <-> !((false) <-> (__3))) using tseitin,
+define(__5 <-> and([false,__3;int(1..)])) using tseitin,
+define(__6 <-> !((y#int_rank_1) <-> (false))) using tseitin,
+define(__7 <-> and([y#int_rank_1,false;int(1..)])) using tseitin,
+define(__8 <-> !((y#int_rank_2) <-> (__7))) using tseitin,
+define(__9 <-> and([y#int_rank_2,__7;int(1..)])) using tseitin,
+define(__10 <-> !((false) <-> (__9))) using tseitin,
+define(__11 <-> and([false,__9;int(1..)])) using tseitin,
+define(__12 <-> integer-weighted(1*__0, 2*__2, -4*__4, 1*__6, 2*__8, -4*__10) GreaterEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 0, upper: 3 } }],
+assert(__12) using tseitin
+

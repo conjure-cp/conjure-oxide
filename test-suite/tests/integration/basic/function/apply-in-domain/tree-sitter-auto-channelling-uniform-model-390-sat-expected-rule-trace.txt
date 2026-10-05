@@ -1,0 +1,119 @@
+Model before rewriting:
+
+find f: function (total) int(1..2) --> int(1) 
+find y: int(1..2)
+
+such that
+
+image(f,y) = 1
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find f#packed_1: int(0..0)
+  find y#int_direct_1: bool
+  find y#int_direct_2: bool
+new constraints:
+  sum([toInt(y#int_direct_1),toInt(y#int_direct_2);int(1..)]) <= 1
+  or([y#int_direct_1,y#int_direct_2;int(1..)])
+
+--
+
+true,
+sum([toInt(y#int_direct_1),toInt(y#int_direct_2);int(1..)]) <= 1,
+or([y#int_direct_1,y#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+or([y#int_direct_1,y#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(y#int_direct_1, y#int_direct_2) using None
+
+--
+
+true,
+or([y#int_direct_1,y#int_direct_2;int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+or([y#int_direct_1,y#int_direct_2;int(1..)])
+new variables:
+  find f#packed_1#int_direct_1: bool
+new constraints:
+  sum([toInt(f#packed_1#int_direct_1);int(1..)]) <= 1
+  or([f#packed_1#int_direct_1;int(1..)])
+
+--
+
+true,
+or([y#int_direct_1,y#int_direct_2;int(1..)]),
+sum([toInt(f#packed_1#int_direct_1);int(1..)]) <= 1,
+or([f#packed_1#int_direct_1;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+or([y#int_direct_1,y#int_direct_2;int(1..)]),
+or([f#packed_1#int_direct_1;int(1..)])
+new SAT encoding decisions:
+  at-most-one(f#packed_1#int_direct_1) using None
+
+--
+
+or([f#packed_1#int_direct_1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+f#packed_1#int_direct_1
+
+--
+
+or([y#int_direct_1,y#int_direct_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> or([y#int_direct_1,y#int_direct_2;int(1..)])) using tseitin
+
+--
+
+true,
+__0,
+f#packed_1#int_direct_1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+f#packed_1#int_direct_1
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+true,
+f#packed_1#int_direct_1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(f#packed_1#int_direct_1) using tseitin
+
+--
+
+Final model:
+
+find f: function (total) int(1..2) --> int(1) 
+find y: int(1..2)
+find f#packed_1: int(0..0)
+find y#int_direct_1: bool
+find y#int_direct_2: bool
+find f#packed_1#int_direct_1: bool
+findAux __0: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+at-most-one(y#int_direct_1, y#int_direct_2) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
+at-most-one(f#packed_1#int_direct_1) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
+define(__0 <-> or([y#int_direct_1,y#int_direct_2;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(f#packed_1#int_direct_1) using tseitin
+

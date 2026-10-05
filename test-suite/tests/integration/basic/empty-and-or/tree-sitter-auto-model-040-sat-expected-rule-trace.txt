@@ -15,12 +15,11 @@ x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
 new variables:
-  find x#int_order_1: bool
-  find x#int_order_2: bool
+  find x#int_direct_1: bool
+  find x#int_direct_2: bool
 new constraints:
-  x#int_order_1
-  or([!(x#int_order_2),x#int_order_1;int(1..)])
-  or([and([SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) >= 0,SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) <= 1;int(1..)]);int(1..)])
+  sum([toInt(x#int_direct_1),toInt(x#int_direct_2);int(1..)]) <= 1
+  or([x#int_direct_1,x#int_direct_2;int(1..)])
 
 --
 
@@ -30,43 +29,24 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#int_order_2) Equal 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+  define(__0 <-> integer-weighted(0*x#int_direct_1, 1*x#int_direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
-SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) >= 0
-   ~~> select_integer_relation ([("SAT", 18500)])
-__1
-new variables:
-  findAux __1: bool
+true,
+true,
+true,
+or([__0;int(1..)]),
+sum([toInt(x#int_direct_1),toInt(x#int_direct_2);int(1..)]) <= 1,
+or([x#int_direct_1,x#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+true,
+true,
+or([__0;int(1..)]),
+or([x#int_direct_1,x#int_direct_2;int(1..)])
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
-
---
-
-SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) <= 1
-   ~~> select_integer_relation ([("SAT", 18500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*x#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
-
---
-
-!(x#int_order_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> !(x#int_order_2)) using tseitin
-
---
-
-or([and([__1,__2;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__1,__2;int(1..)])
+  at-most-one(x#int_direct_1, x#int_direct_2) using None
 
 --
 
@@ -76,23 +56,13 @@ __0
 
 --
 
-and([__1,__2;int(1..)])
+or([x#int_direct_1,x#int_direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
+__1
 new variables:
-  findAux __4: bool
+  findAux __1: bool
 new SAT encoding decisions:
-  define(__4 <-> and([__1,__2;int(1..)])) using tseitin
-
---
-
-or([__3,x#int_order_1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> or([__3,x#int_order_1;int(1..)])) using tseitin
+  define(__1 <-> or([x#int_direct_1,x#int_direct_2;int(1..)])) using tseitin
 
 --
 
@@ -100,16 +70,12 @@ true,
 true,
 true,
 __0,
-x#int_order_1,
-__5,
-__4
+__1
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 true,
 true,
-x#int_order_1,
-__5,
-__4
+__1
 new SAT encoding decisions:
   assert(__0) using tseitin
 
@@ -118,59 +84,23 @@ new SAT encoding decisions:
 true,
 true,
 true,
-x#int_order_1,
-__5,
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-__5,
-__4
-new SAT encoding decisions:
-  assert(x#int_order_1) using tseitin
-
---
-
-true,
-true,
-true,
-__5,
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-__4
-new SAT encoding decisions:
-  assert(__5) using tseitin
-
---
-
-true,
-true,
-true,
-__4
+__1
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 true,
 true
 new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert(__1) using tseitin
 
 --
 
 Final model:
 
 find x: int(0..1)
-find x#int_order_1: bool
-find x#int_order_2: bool
+find x#int_direct_1: bool
+find x#int_direct_2: bool
 findAux __0: bool
 findAux __1: bool
-findAux __2: bool
-findAux __3: bool
-findAux __4: bool
-findAux __5: bool
 
 such that
 
@@ -180,14 +110,9 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#int_order_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__1 <-> integer-weighted(1*x#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__2 <-> integer-weighted(1*x#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__3 <-> !(x#int_order_2)) using tseitin,
-define(__4 <-> and([__1,__2;int(1..)])) using tseitin,
-define(__5 <-> or([__3,x#int_order_1;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(0*x#int_direct_1, 1*x#int_direct_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+at-most-one(x#int_direct_1, x#int_direct_2) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+define(__1 <-> or([x#int_direct_1,x#int_direct_2;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(x#int_order_1) using tseitin,
-assert(__5) using tseitin,
-assert(__4) using tseitin
+assert(__1) using tseitin
 

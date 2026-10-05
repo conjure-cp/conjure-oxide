@@ -1,0 +1,399 @@
+Model before rewriting:
+
+find f: function (total) int(1..2) --> int(1) 
+find y: int(1..3)
+
+such that
+
+image(f,y) = 1
+
+--
+
+f
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f
+new variables:
+  find f#packed_1: int(0..0)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#int_direct_1: bool
+  find y#int_direct_2: bool
+  find y#int_direct_3: bool
+new constraints:
+  sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3);int(1..)]) <= 1
+  or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])
+
+--
+
+image(f,y) = 1,
+sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3);int(1..)]) <= 1,
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+image(f,y) = 1,
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])
+new SAT encoding decisions:
+  at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3) using None
+
+--
+
+image(f,y) = 1,
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+image(f,y) = 1,
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])
+new variables:
+  find f#packed_1#int_direct_1: bool
+new constraints:
+  sum([toInt(f#packed_1#int_direct_1);int(1..)]) <= 1
+  or([f#packed_1#int_direct_1;int(1..)])
+
+--
+
+image(f,y) = 1,
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)]),
+sum([toInt(f#packed_1#int_direct_1);int(1..)]) <= 1,
+or([f#packed_1#int_direct_1;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+image(f,y) = 1,
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)]),
+or([f#packed_1#int_direct_1;int(1..)])
+new SAT encoding decisions:
+  at-most-one(f#packed_1#int_direct_1) using None
+
+--
+
+image(f,y)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__0 @ __1}
+new variables:
+  findAux __0: int(1)
+  findAux __1: bool
+new constraints:
+  (__1) <-> (or([and([y = 1,true;int(1..)]),and([y = 2,true;int(1..)]);int(1..)]))
+  (__1) -> (or([and([y = 1,__0 = sum([0,1;int(1..)]);int(1..)]),and([y = 2,__0 = sum([0,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+y = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+
+--
+
+y = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+
+--
+
+y = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+
+--
+
+y = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+new variables:
+  findAux __0#int_direct_1: bool
+new constraints:
+  sum([toInt(__0#int_direct_1);int(1..)]) <= 1
+  or([__0#int_direct_1;int(1..)])
+
+--
+
+{__0 @ __1} = 1,
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)]),
+or([f#packed_1#int_direct_1;int(1..)]),
+(__1) <-> (or([and([__2;int(1..)]),and([__3;int(1..)]);int(1..)])),
+(__1) -> (or([and([__4;int(1..)]),and([__5;int(1..)]);int(1..)])),
+sum([toInt(__0#int_direct_1);int(1..)]) <= 1,
+or([__0#int_direct_1;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+{__0 @ __1} = 1,
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)]),
+or([f#packed_1#int_direct_1;int(1..)]),
+(__1) <-> (or([and([__2;int(1..)]),and([__3;int(1..)]);int(1..)])),
+(__1) -> (or([and([__4;int(1..)]),and([__5;int(1..)]);int(1..)])),
+or([__0#int_direct_1;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__0#int_direct_1) using None
+
+--
+
+__0
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [__0#int_direct_1;int(1..)] [1, 1])
+
+--
+
+{SATInt(Direct, [__0#int_direct_1;int(1..)] [1, 1]) @ __1} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{SATInt(Direct, [__0#int_direct_1;int(1..)] [1, 1]) = 1 @ __1}
+
+--
+
+SATInt(Direct, [__0#int_direct_1;int(1..)] [1, 1]) = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*__0#int_direct_1) Equal 1) using None with [PbTermGroup { start: 0, end: 1, structure: Choice }]
+
+--
+
+{__6 @ __1}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__6,__1;int(1..)])
+
+--
+
+or([f#packed_1#int_direct_1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+f#packed_1#int_direct_1
+
+--
+
+or([__0#int_direct_1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__0#int_direct_1
+
+--
+
+and([__2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__2
+
+--
+
+and([__3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__3
+
+--
+
+and([__4;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__4
+
+--
+
+and([__5;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__5
+
+--
+
+and([__6,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> and([__6,__1;int(1..)])) using tseitin
+
+--
+
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])) using tseitin
+
+--
+
+or([__2,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> or([__2,__3;int(1..)])) using tseitin
+
+--
+
+(__1) <-> (__9)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> (__1) <-> (__9)) using tseitin
+
+--
+
+or([__4,__5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> or([__4,__5;int(1..)])) using tseitin
+
+--
+
+(__1) -> (__11)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> (__1) -> (__11)) using tseitin
+
+--
+
+__7,
+__8,
+f#packed_1#int_direct_1,
+__10,
+__12,
+__0#int_direct_1
+   ~~> remove_single_atom ([("SAT", 8400)])
+__8,
+f#packed_1#int_direct_1,
+__10,
+__12,
+__0#int_direct_1
+new SAT encoding decisions:
+  assert(__7) using tseitin
+
+--
+
+__8,
+f#packed_1#int_direct_1,
+__10,
+__12,
+__0#int_direct_1
+   ~~> remove_single_atom ([("SAT", 8400)])
+f#packed_1#int_direct_1,
+__10,
+__12,
+__0#int_direct_1
+new SAT encoding decisions:
+  assert(__8) using tseitin
+
+--
+
+f#packed_1#int_direct_1,
+__10,
+__12,
+__0#int_direct_1
+   ~~> remove_single_atom ([("SAT", 8400)])
+__10,
+__12,
+__0#int_direct_1
+new SAT encoding decisions:
+  assert(f#packed_1#int_direct_1) using tseitin
+
+--
+
+__10,
+__12,
+__0#int_direct_1
+   ~~> remove_single_atom ([("SAT", 8400)])
+__12,
+__0#int_direct_1
+new SAT encoding decisions:
+  assert(__10) using tseitin
+
+--
+
+__12,
+__0#int_direct_1
+   ~~> remove_single_atom ([("SAT", 8400)])
+__0#int_direct_1
+new SAT encoding decisions:
+  assert(__12) using tseitin
+
+--
+
+__0#int_direct_1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__0#int_direct_1) using tseitin
+
+--
+
+Final model:
+
+find f: function (total) int(1..2) --> int(1) 
+find y: int(1..3)
+find f#packed_1: int(0..0)
+find y#int_direct_1: bool
+find y#int_direct_2: bool
+find y#int_direct_3: bool
+find f#packed_1#int_direct_1: bool
+findAux __0: int(1)
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __0#int_direct_1: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
+at-most-one(f#packed_1#int_direct_1) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
+define(__2 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+define(__3 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+define(__4 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+define(__5 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+at-most-one(__0#int_direct_1) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
+define(__6 <-> integer-weighted(1*__0#int_direct_1) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Choice }],
+define(__7 <-> and([__6,__1;int(1..)])) using tseitin,
+define(__8 <-> or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])) using tseitin,
+define(__9 <-> or([__2,__3;int(1..)])) using tseitin,
+define(__10 <-> (__1) <-> (__9)) using tseitin,
+define(__11 <-> or([__4,__5;int(1..)])) using tseitin,
+define(__12 <-> (__1) -> (__11)) using tseitin,
+assert(__7) using tseitin,
+assert(__8) using tseitin,
+assert(f#packed_1#int_direct_1) using tseitin,
+assert(__10) using tseitin,
+assert(__12) using tseitin,
+assert(__0#int_direct_1) using tseitin
+

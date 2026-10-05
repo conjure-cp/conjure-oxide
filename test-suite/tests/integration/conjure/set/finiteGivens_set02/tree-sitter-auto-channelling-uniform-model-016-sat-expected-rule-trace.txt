@@ -9,20 +9,30 @@ true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true
 new variables:
-  find x#int_order_1: bool
+  find x#int_offset_1: bool
 new constraints:
-  x#int_order_1
-  or([SATInt(Order, [x#int_order_1;int(1..)] [3, 3]) = 3;int(1..)])
+  and([!(x#int_offset_1),true;int(1..)])
+  or([SATInt(Offset, [x#int_offset_1;int(1..)] [3, 3]) = 3;int(1..)])
 
 --
 
-SATInt(Order, [x#int_order_1;int(1..)] [3, 3]) = 3
+SATInt(Offset, [x#int_offset_1;int(1..)] [3, 3]) = 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted() Equal 0) using None with []
+  define(__0 <-> integer-weighted(1*x#int_offset_1) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }]
+
+--
+
+!(x#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> !(x#int_offset_1)) using tseitin
 
 --
 
@@ -32,14 +42,20 @@ __0
 
 --
 
+and([__1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__1
+
+--
+
 true,
-x#int_order_1,
+__1,
 __0
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 __0
 new SAT encoding decisions:
-  assert(x#int_order_1) using tseitin
+  assert(__1) using tseitin
 
 --
 
@@ -56,8 +72,9 @@ Final model:
 
 letting a be {4,7,2}
 find x: int((|a|))
-find x#int_order_1: bool
+find x#int_offset_1: bool
 findAux __0: bool
+findAux __1: bool
 
 such that
 
@@ -65,7 +82,8 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [],
-assert(x#int_order_1) using tseitin,
+define(__0 <-> integer-weighted(1*x#int_offset_1) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }],
+define(__1 <-> !(x#int_offset_1)) using tseitin,
+assert(__1) using tseitin,
 assert(__0) using tseitin
 

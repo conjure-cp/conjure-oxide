@@ -15,31 +15,12 @@ a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
 new variables:
-  find a#int_log_1: bool
-  find a#int_log_2: bool
-  find a#int_log_3: bool
+  find a#int_direct_1: bool
+  find a#int_direct_2: bool
+  find a#int_direct_3: bool
 new constraints:
-  or([and([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
-
---
-
-SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]) >= 1
-   ~~> select_integer_relation ([("SAT", 18500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
-
---
-
-SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]) <= 3
-   ~~> select_integer_relation ([("SAT", 18500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  sum([toInt(a#int_direct_1),toInt(a#int_direct_2),toInt(a#int_direct_3);int(1..)]) <= 1
+  or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])
 
 --
 
@@ -47,41 +28,54 @@ a >= b
    ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
 a >= b
 new variables:
-  find b#int_log_1: bool
-  find b#int_log_2: bool
-  find b#int_log_3: bool
+  find b#int_direct_1: bool
+  find b#int_direct_2: bool
+  find b#int_direct_3: bool
 new constraints:
-  or([and([SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3);int(1..)]) <= 1
+  or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])
 
 --
 
 a >= b
    ~~> select_integer_relation ([("SAT", 18500)])
-__2
+__0
 new variables:
-  findAux __2: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3, -1*b#int_log_1, -2*b#int_log_2, 4*b#int_log_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+  define(__0 <-> integer-weighted(1*a#int_direct_1, 2*a#int_direct_2, 3*a#int_direct_3, -1*b#int_direct_1, -2*b#int_direct_2, -3*b#int_direct_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
 
 --
 
-SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]) >= 1
-   ~~> select_integer_relation ([("SAT", 18500)])
-__3
-new variables:
-  findAux __3: bool
+sum([sum([a,b;int(1..)]),c;int(1..)]) = 4,
+__0,
+sum([toInt(a#int_direct_1),toInt(a#int_direct_2),toInt(a#int_direct_3);int(1..)]) <= 1,
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)]),
+sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3);int(1..)]) <= 1,
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+sum([sum([a,b;int(1..)]),c;int(1..)]) = 4,
+__0,
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)]),
+sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3);int(1..)]) <= 1,
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*b#int_log_1, 2*b#int_log_2, -4*b#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3) using None
 
 --
 
-SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]) <= 3
-   ~~> select_integer_relation ([("SAT", 18500)])
-__4
-new variables:
-  findAux __4: bool
+sum([sum([a,b;int(1..)]),c;int(1..)]) = 4,
+__0,
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)]),
+sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3);int(1..)]) <= 1,
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+sum([sum([a,b;int(1..)]),c;int(1..)]) = 4,
+__0,
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)]),
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(1*b#int_log_1, 2*b#int_log_2, -4*b#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3) using None
 
 --
 
@@ -89,31 +83,12 @@ c
    ~~> select_representation ([("ReprGeneral", 10000)])
 c
 new variables:
-  find c#int_log_1: bool
-  find c#int_log_2: bool
-  find c#int_log_3: bool
+  find c#int_direct_1: bool
+  find c#int_direct_2: bool
+  find c#int_direct_3: bool
 new constraints:
-  or([and([SATInt(Log, [c#int_log_1,c#int_log_2,c#int_log_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [c#int_log_1,c#int_log_2,c#int_log_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
-
---
-
-SATInt(Log, [c#int_log_1,c#int_log_2,c#int_log_3;int(1..)] [1, 3]) >= 1
-   ~~> select_integer_relation ([("SAT", 18500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> integer-weighted(1*c#int_log_1, 2*c#int_log_2, -4*c#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
-
---
-
-SATInt(Log, [c#int_log_1,c#int_log_2,c#int_log_3;int(1..)] [1, 3]) <= 3
-   ~~> select_integer_relation ([("SAT", 18500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> integer-weighted(1*c#int_log_1, 2*c#int_log_2, -4*c#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  sum([toInt(c#int_direct_1),toInt(c#int_direct_2),toInt(c#int_direct_3);int(1..)]) <= 1
+  or([c#int_direct_1,c#int_direct_2,c#int_direct_3;int(1..)])
 
 --
 
@@ -130,106 +105,105 @@ b
 --
 
 sum([sum([a,b;int(1..)]),c;int(1..)]) = 4,
-__2,
-or([and([__0,__1;int(1..)]);int(1..)]),
-or([and([__3,__4;int(1..)]);int(1..)]),
-or([and([__5,__6;int(1..)]);int(1..)])
+__0,
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)]),
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)]),
+sum([toInt(c#int_direct_1),toInt(c#int_direct_2),toInt(c#int_direct_3);int(1..)]) <= 1,
+or([c#int_direct_1,c#int_direct_2,c#int_direct_3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+sum([sum([a,b;int(1..)]),c;int(1..)]) = 4,
+__0,
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)]),
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)]),
+or([c#int_direct_1,c#int_direct_2,c#int_direct_3;int(1..)])
+new SAT encoding decisions:
+  at-most-one(c#int_direct_1, c#int_direct_2, c#int_direct_3) using None
+
+--
+
+sum([sum([a,b;int(1..)]),c;int(1..)]) = 4,
+__0,
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)]),
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)]),
+or([c#int_direct_1,c#int_direct_2,c#int_direct_3;int(1..)])
    ~~> select_pseudo_boolean ([("SAT", 19000)])
+__0,
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)]),
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)]),
+or([c#int_direct_1,c#int_direct_2,c#int_direct_3;int(1..)])
+new SAT encoding decisions:
+  weighted(1*a#int_direct_1, 2*a#int_direct_2, 3*a#int_direct_3, 1*b#int_direct_1, 2*b#int_direct_2, 3*b#int_direct_3, 1*c#int_direct_1, 2*c#int_direct_2, 3*c#int_direct_3) Exactly 4 using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }, PbTermGroup { start: 6, end: 9, structure: Choice }]
+
+--
+
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])) using tseitin
+
+--
+
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])) using tseitin
+
+--
+
+or([c#int_direct_1,c#int_direct_2,c#int_direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> or([c#int_direct_1,c#int_direct_2,c#int_direct_3;int(1..)])) using tseitin
+
+--
+
+__0,
+__1,
 __2,
-or([and([__0,__1;int(1..)]);int(1..)]),
-or([and([__3,__4;int(1..)]);int(1..)]),
-or([and([__5,__6;int(1..)]);int(1..)])
-new SAT encoding decisions:
-  weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3, 1*b#int_log_1, 2*b#int_log_2, -4*b#int_log_3, 1*c#int_log_1, 2*c#int_log_2, -4*c#int_log_3) Exactly 4 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 6, end: 9, structure: BoundedBinary { lower: 1, upper: 3 } }]
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-or([and([__3,__4;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__3,__4;int(1..)])
-
---
-
-or([and([__5,__6;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__5,__6;int(1..)])
-
---
-
-and([__3,__4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> and([__3,__4;int(1..)])) using tseitin
-
---
-
-and([__5,__6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> and([__5,__6;int(1..)])) using tseitin
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-__2,
-__9,
-__7,
-__8
+__3
    ~~> remove_single_atom ([("SAT", 8400)])
-__9,
-__7,
-__8
+__1,
+__2,
+__3
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+__1,
+__2,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+__2,
+__3
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+__2,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+__3
 new SAT encoding decisions:
   assert(__2) using tseitin
 
 --
 
-__9,
-__7,
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-__7,
-__8
-new SAT encoding decisions:
-  assert(__9) using tseitin
-
---
-
-__7,
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-__8
-new SAT encoding decisions:
-  assert(__7) using tseitin
-
---
-
-__8
+__3
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__8) using tseitin
+  assert(__3) using tseitin
 
 --
 
@@ -238,25 +212,19 @@ Final model:
 find a: int(1..3)
 find b: int(1..3)
 find c: int(1..3)
-find a#int_log_1: bool
-find a#int_log_2: bool
-find a#int_log_3: bool
+find a#int_direct_1: bool
+find a#int_direct_2: bool
+find a#int_direct_3: bool
+find b#int_direct_1: bool
+find b#int_direct_2: bool
+find b#int_direct_3: bool
 findAux __0: bool
+find c#int_direct_1: bool
+find c#int_direct_2: bool
+find c#int_direct_3: bool
 findAux __1: bool
-find b#int_log_1: bool
-find b#int_log_2: bool
-find b#int_log_3: bool
 findAux __2: bool
 findAux __3: bool
-findAux __4: bool
-find c#int_log_1: bool
-find c#int_log_2: bool
-find c#int_log_3: bool
-findAux __5: bool
-findAux __6: bool
-findAux __7: bool
-findAux __8: bool
-findAux __9: bool
 
 such that
 
@@ -264,19 +232,16 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__1 <-> integer-weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__2 <-> integer-weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3, -1*b#int_log_1, -2*b#int_log_2, 4*b#int_log_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
-define(__3 <-> integer-weighted(1*b#int_log_1, 2*b#int_log_2, -4*b#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__4 <-> integer-weighted(1*b#int_log_1, 2*b#int_log_2, -4*b#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__5 <-> integer-weighted(1*c#int_log_1, 2*c#int_log_2, -4*c#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__6 <-> integer-weighted(1*c#int_log_1, 2*c#int_log_2, -4*c#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3, 1*b#int_log_1, 2*b#int_log_2, -4*b#int_log_3, 1*c#int_log_1, 2*c#int_log_2, -4*c#int_log_3) Exactly 4 using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 6, end: 9, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__7 <-> and([__3,__4;int(1..)])) using tseitin,
-define(__8 <-> and([__5,__6;int(1..)])) using tseitin,
-define(__9 <-> and([__0,__1;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(1*a#int_direct_1, 2*a#int_direct_2, 3*a#int_direct_3, -1*b#int_direct_1, -2*b#int_direct_2, -3*b#int_direct_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
+at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
+at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
+at-most-one(c#int_direct_1, c#int_direct_2, c#int_direct_3) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
+weighted(1*a#int_direct_1, 2*a#int_direct_2, 3*a#int_direct_3, 1*b#int_direct_1, 2*b#int_direct_2, 3*b#int_direct_3, 1*c#int_direct_1, 2*c#int_direct_2, 3*c#int_direct_3) Exactly 4 using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }, PbTermGroup { start: 6, end: 9, structure: Choice }],
+define(__1 <-> or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])) using tseitin,
+define(__2 <-> or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])) using tseitin,
+define(__3 <-> or([c#int_direct_1,c#int_direct_2,c#int_direct_3;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin,
 assert(__2) using tseitin,
-assert(__9) using tseitin,
-assert(__7) using tseitin,
-assert(__8) using tseitin
+assert(__3) using tseitin
 

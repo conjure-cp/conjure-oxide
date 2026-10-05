@@ -1,0 +1,41 @@
+Model before rewriting:
+
+find x: function (total) record {fst: int(7..8), snd: bool} --> int(13, 17) 
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#packed_1: int(0..15)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#packed_1#int_rank_1: bool
+  find x#packed_1#int_rank_2: bool
+  find x#packed_1#int_rank_3: bool
+  find x#packed_1#int_rank_4: bool
+new constraints:
+  or([!(x#packed_1#int_rank_4),or([!(x#packed_1#int_rank_3),or([!(x#packed_1#int_rank_2),or([!(x#packed_1#int_rank_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+Final model:
+
+find x: function (total) record {fst: int(7..8), snd: bool} --> int(13, 17) 
+find x#packed_1: int(0..15)
+find x#packed_1#int_rank_1: bool
+find x#packed_1#int_rank_2: bool
+find x#packed_1#int_rank_3: bool
+find x#packed_1#int_rank_4: bool
+
+such that
+
+true,
+true
+

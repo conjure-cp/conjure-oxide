@@ -248,8 +248,8 @@ true
 
 sat encoding decisions:
 
-at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3, a#int_direct_4, a#int_direct_5) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
-at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
+at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3, a#int_direct_4, a#int_direct_5) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
 define(__0 <-> or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5;int(1..)])) using tseitin,
 define(__1 <-> or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])) using tseitin,
 assert(__0) using tseitin,
@@ -279,6 +279,6 @@ define(__23 <-> or([and([__22,b#int_direct_2;int(1..)]),and([!(__22),__2;int(1..
 define(__24 <-> or([and([__22,__5;int(1..)]),and([!(__22),__3;int(1..)]);int(1..)])) using tseitin,
 define(__25 <-> or([and([__22,b#int_direct_3;int(1..)]),and([!(__22),__4;int(1..)]);int(1..)])) using tseitin,
 define(__26 <-> or([and([__22,false;int(1..)]),and([!(__22),false;int(1..)]);int(1..)])) using tseitin,
-define(__27 <-> integer-weighted(1*__23, 2*__24, 4*__25, -8*__26) LessEqual 2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 2, upper: 5 } }],
+define(__27 <-> integer-weighted(1*__23, 2*__24, 4*__25, -8*__26) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 2, upper: 5 } }],
 assert(__27) using tseitin
 

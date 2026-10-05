@@ -8,81 +8,175 @@ true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true
 new variables:
-  find x#packed_1: int(0..8)
+  find x#explicit_1: matrix indexed by [int(1..2)] of int(1..3)
+new constraints:
+  or([1 <= 2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)])
+  or([2 <= 2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
 
 --
 
+true,
+true,
 true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+true,
 true
 new variables:
-  find x#packed_1#int_direct_1: bool
-  find x#packed_1#int_direct_2: bool
-  find x#packed_1#int_direct_3: bool
-  find x#packed_1#int_direct_4: bool
-  find x#packed_1#int_direct_5: bool
-  find x#packed_1#int_direct_6: bool
-  find x#packed_1#int_direct_7: bool
-  find x#packed_1#int_direct_8: bool
-  find x#packed_1#int_direct_9: bool
+  find x#explicit_1#components_1: int(1..3)
+  find x#explicit_1#components_2: int(1..3)
+
+--
+
+true,
+true,
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+true,
+true
+new variables:
+  find x#explicit_1#components_1#int_rank_1: bool
+  find x#explicit_1#components_1#int_rank_2: bool
+  find x#explicit_1#components_2#int_rank_1: bool
+  find x#explicit_1#components_2#int_rank_2: bool
 new constraints:
-  sum([toInt(x#packed_1#int_direct_1),toInt(x#packed_1#int_direct_2),toInt(x#packed_1#int_direct_3),toInt(x#packed_1#int_direct_4),toInt(x#packed_1#int_direct_5),toInt(x#packed_1#int_direct_6),toInt(x#packed_1#int_direct_7),toInt(x#packed_1#int_direct_8),toInt(x#packed_1#int_direct_9);int(1..)]) <= 1
-  or([x#packed_1#int_direct_1,x#packed_1#int_direct_2,x#packed_1#int_direct_3,x#packed_1#int_direct_4,x#packed_1#int_direct_5,x#packed_1#int_direct_6,x#packed_1#int_direct_7,x#packed_1#int_direct_8,x#packed_1#int_direct_9;int(1..)])
+  or([!(x#explicit_1#components_1#int_rank_2),and([!(x#explicit_1#components_1#int_rank_1),true;int(1..)]);int(1..)])
+  or([!(x#explicit_1#components_2#int_rank_2),and([!(x#explicit_1#components_2#int_rank_1),true;int(1..)]);int(1..)])
 
 --
 
-true,
-sum([toInt(x#packed_1#int_direct_1),toInt(x#packed_1#int_direct_2),toInt(x#packed_1#int_direct_3),toInt(x#packed_1#int_direct_4),toInt(x#packed_1#int_direct_5),toInt(x#packed_1#int_direct_6),toInt(x#packed_1#int_direct_7),toInt(x#packed_1#int_direct_8),toInt(x#packed_1#int_direct_9);int(1..)]) <= 1,
-or([x#packed_1#int_direct_1,x#packed_1#int_direct_2,x#packed_1#int_direct_3,x#packed_1#int_direct_4,x#packed_1#int_direct_5,x#packed_1#int_direct_6,x#packed_1#int_direct_7,x#packed_1#int_direct_8,x#packed_1#int_direct_9;int(1..)])
-   ~~> select_cardinality ([("SAT", 20000)])
-true,
-or([x#packed_1#int_direct_1,x#packed_1#int_direct_2,x#packed_1#int_direct_3,x#packed_1#int_direct_4,x#packed_1#int_direct_5,x#packed_1#int_direct_6,x#packed_1#int_direct_7,x#packed_1#int_direct_8,x#packed_1#int_direct_9;int(1..)])
-new SAT encoding decisions:
-  at-most-one(x#packed_1#int_direct_1, x#packed_1#int_direct_2, x#packed_1#int_direct_3, x#packed_1#int_direct_4, x#packed_1#int_direct_5, x#packed_1#int_direct_6, x#packed_1#int_direct_7, x#packed_1#int_direct_8, x#packed_1#int_direct_9) using None
-
---
-
-or([x#packed_1#int_direct_1,x#packed_1#int_direct_2,x#packed_1#int_direct_3,x#packed_1#int_direct_4,x#packed_1#int_direct_5,x#packed_1#int_direct_6,x#packed_1#int_direct_7,x#packed_1#int_direct_8,x#packed_1#int_direct_9;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+!(x#explicit_1#components_2#int_rank_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> or([x#packed_1#int_direct_1,x#packed_1#int_direct_2,x#packed_1#int_direct_3,x#packed_1#int_direct_4,x#packed_1#int_direct_5,x#packed_1#int_direct_6,x#packed_1#int_direct_7,x#packed_1#int_direct_8,x#packed_1#int_direct_9;int(1..)])) using tseitin
+  define(__0 <-> !(x#explicit_1#components_2#int_rank_2)) using tseitin
+
+--
+
+!(x#explicit_1#components_1#int_rank_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> !(x#explicit_1#components_1#int_rank_2)) using tseitin
+
+--
+
+!(x#explicit_1#components_2#int_rank_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> !(x#explicit_1#components_2#int_rank_1)) using tseitin
+
+--
+
+!(x#explicit_1#components_1#int_rank_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> !(x#explicit_1#components_1#int_rank_1)) using tseitin
+
+--
+
+and([__3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__3
+
+--
+
+and([__2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__2
+
+--
+
+or([__1,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> or([__1,__3;int(1..)])) using tseitin
+
+--
+
+or([__0,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> or([__0,__2;int(1..)])) using tseitin
 
 --
 
 true,
-__0
+true,
+true,
+__4,
+__5
    ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+__5
+new SAT encoding decisions:
+  assert(__4) using tseitin
+
+--
+
+true,
+true,
+true,
+__5
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
 true
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(__5) using tseitin
 
 --
 
 Final model:
 
 find x: sequence (size 2) of int(1..3)
-find x#packed_1: int(0..8)
-find x#packed_1#int_direct_1: bool
-find x#packed_1#int_direct_2: bool
-find x#packed_1#int_direct_3: bool
-find x#packed_1#int_direct_4: bool
-find x#packed_1#int_direct_5: bool
-find x#packed_1#int_direct_6: bool
-find x#packed_1#int_direct_7: bool
-find x#packed_1#int_direct_8: bool
-find x#packed_1#int_direct_9: bool
+find x#explicit_1: matrix indexed by [int(1..2)] of int(1..3)
+find x#explicit_1#components_1: int(1..3)
+find x#explicit_1#components_2: int(1..3)
+find x#explicit_1#components_1#int_rank_1: bool
+find x#explicit_1#components_1#int_rank_2: bool
+find x#explicit_1#components_2#int_rank_1: bool
+find x#explicit_1#components_2#int_rank_2: bool
 findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
 
 such that
 
+true,
+true,
 true
 
 sat encoding decisions:
 
-at-most-one(x#packed_1#int_direct_1, x#packed_1#int_direct_2, x#packed_1#int_direct_3, x#packed_1#int_direct_4, x#packed_1#int_direct_5, x#packed_1#int_direct_6, x#packed_1#int_direct_7, x#packed_1#int_direct_8, x#packed_1#int_direct_9) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
-define(__0 <-> or([x#packed_1#int_direct_1,x#packed_1#int_direct_2,x#packed_1#int_direct_3,x#packed_1#int_direct_4,x#packed_1#int_direct_5,x#packed_1#int_direct_6,x#packed_1#int_direct_7,x#packed_1#int_direct_8,x#packed_1#int_direct_9;int(1..)])) using tseitin,
-assert(__0) using tseitin
+define(__0 <-> !(x#explicit_1#components_2#int_rank_2)) using tseitin,
+define(__1 <-> !(x#explicit_1#components_1#int_rank_2)) using tseitin,
+define(__2 <-> !(x#explicit_1#components_2#int_rank_1)) using tseitin,
+define(__3 <-> !(x#explicit_1#components_1#int_rank_1)) using tseitin,
+define(__4 <-> or([__1,__3;int(1..)])) using tseitin,
+define(__5 <-> or([__0,__2;int(1..)])) using tseitin,
+assert(__4) using tseitin,
+assert(__5) using tseitin
 

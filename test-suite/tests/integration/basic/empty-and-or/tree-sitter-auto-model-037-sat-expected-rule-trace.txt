@@ -15,10 +15,11 @@ x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
 new variables:
-  find x#int_offset_1: bool
+  find x#int_direct_1: bool
+  find x#int_direct_2: bool
 new constraints:
-  or([!(x#int_offset_1),true;int(1..)])
-  or([and([SATInt(Offset, [x#int_offset_1;int(1..)] [0, 1]) >= 0,SATInt(Offset, [x#int_offset_1;int(1..)] [0, 1]) <= 1;int(1..)]);int(1..)])
+  sum([toInt(x#int_direct_1),toInt(x#int_direct_2);int(1..)]) <= 1
+  or([x#int_direct_1,x#int_direct_2;int(1..)])
 
 --
 
@@ -28,33 +29,24 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#int_offset_1) Equal 1) using None with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__0 <-> integer-weighted(0*x#int_direct_1, 1*x#int_direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
-SATInt(Offset, [x#int_offset_1;int(1..)] [0, 1]) >= 0
-   ~~> select_integer_relation ([("SAT", 18500)])
-__1
-new variables:
-  findAux __1: bool
+true,
+true,
+true,
+or([__0;int(1..)]),
+sum([toInt(x#int_direct_1),toInt(x#int_direct_2);int(1..)]) <= 1,
+or([x#int_direct_1,x#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+true,
+true,
+or([__0;int(1..)]),
+or([x#int_direct_1,x#int_direct_2;int(1..)])
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#int_offset_1) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 1 } }]
-
---
-
-SATInt(Offset, [x#int_offset_1;int(1..)] [0, 1]) <= 1
-   ~~> select_integer_relation ([("SAT", 18500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*x#int_offset_1) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 1 } }]
-
---
-
-or([and([__1,__2;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__1,__2;int(1..)])
+  at-most-one(x#int_direct_1, x#int_direct_2) using None
 
 --
 
@@ -64,13 +56,13 @@ __0
 
 --
 
-and([__1,__2;int(1..)])
+or([x#int_direct_1,x#int_direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
+__1
 new variables:
-  findAux __3: bool
+  findAux __1: bool
 new SAT encoding decisions:
-  define(__3 <-> and([__1,__2;int(1..)])) using tseitin
+  define(__1 <-> or([x#int_direct_1,x#int_direct_2;int(1..)])) using tseitin
 
 --
 
@@ -78,14 +70,12 @@ true,
 true,
 true,
 __0,
-true,
-__3
+__1
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 true,
 true,
-true,
-__3
+__1
 new SAT encoding decisions:
   assert(__0) using tseitin
 
@@ -94,40 +84,35 @@ new SAT encoding decisions:
 true,
 true,
 true,
-true,
-__3
+__1
    ~~> remove_single_atom ([("SAT", 8400)])
-true,
 true,
 true,
 true
 new SAT encoding decisions:
-  assert(__3) using tseitin
+  assert(__1) using tseitin
 
 --
 
 Final model:
 
 find x: int(0..1)
-find x#int_offset_1: bool
+find x#int_direct_1: bool
+find x#int_direct_2: bool
 findAux __0: bool
 findAux __1: bool
-findAux __2: bool
-findAux __3: bool
 
 such that
 
-true,
 true,
 true,
 true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#int_offset_1) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__1 <-> integer-weighted(1*x#int_offset_1) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__2 <-> integer-weighted(1*x#int_offset_1) LessEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__3 <-> and([__1,__2;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(0*x#int_direct_1, 1*x#int_direct_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+at-most-one(x#int_direct_1, x#int_direct_2) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__1 <-> or([x#int_direct_1,x#int_direct_2;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__3) using tseitin
+assert(__1) using tseitin
 

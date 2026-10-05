@@ -105,89 +105,67 @@ SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2
 new variables:
-  find x#as_relation_2#components_1#components_2#int_order_1: bool
-  find x#as_relation_2#components_1#components_2#int_order_2: bool
-  find x#as_relation_2#components_2#components_2#int_order_1: bool
-  find x#as_relation_2#components_2#components_2#int_order_2: bool
+  find x#as_relation_2#components_1#components_2#int_direct_1: bool
+  find x#as_relation_2#components_1#components_2#int_direct_2: bool
+  find x#as_relation_2#components_2#components_2#int_direct_1: bool
+  find x#as_relation_2#components_2#components_2#int_direct_2: bool
 new constraints:
-  x#as_relation_2#components_1#components_2#int_order_1
-  or([!(x#as_relation_2#components_1#components_2#int_order_2),x#as_relation_2#components_1#components_2#int_order_1;int(1..)])
-  or([and([SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]) >= 13,SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]) <= 14;int(1..)]);int(1..)])
-  x#as_relation_2#components_2#components_2#int_order_1
-  or([!(x#as_relation_2#components_2#components_2#int_order_2),x#as_relation_2#components_2#components_2#int_order_1;int(1..)])
-  or([and([SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]) >= 13,SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]) <= 14;int(1..)]);int(1..)])
+  sum([toInt(x#as_relation_2#components_1#components_2#int_direct_1),toInt(x#as_relation_2#components_1#components_2#int_direct_2);int(1..)]) <= 1
+  or([x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)])
+  sum([toInt(x#as_relation_2#components_2#components_2#int_direct_1),toInt(x#as_relation_2#components_2#components_2#int_direct_2);int(1..)]) <= 1
+  or([x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)])
 
 --
 
-SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]) >= 13
-   ~~> select_integer_relation ([("SAT", 18500)])
-__0
-new variables:
-  findAux __0: bool
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+SafeIndex(x#as_relation_2,[13]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
+SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
+sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
+sum([toInt(x#as_relation_2#components_1#components_2#int_direct_1),toInt(x#as_relation_2#components_1#components_2#int_direct_2);int(1..)]) <= 1,
+or([x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)]),
+sum([toInt(x#as_relation_2#components_2#components_2#int_direct_1),toInt(x#as_relation_2#components_2#components_2#int_direct_2);int(1..)]) <= 1,
+or([x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+SafeIndex(x#as_relation_2,[13]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
+SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
+sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
+or([x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)]),
+sum([toInt(x#as_relation_2#components_2#components_2#int_direct_1),toInt(x#as_relation_2#components_2#components_2#int_direct_2);int(1..)]) <= 1,
+or([x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)])
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#as_relation_2#components_1#components_2#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+  at-most-one(x#as_relation_2#components_1#components_2#int_direct_1, x#as_relation_2#components_1#components_2#int_direct_2) using None
 
 --
 
-SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]) <= 14
-   ~~> select_integer_relation ([("SAT", 18500)])
-__1
-new variables:
-  findAux __1: bool
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+SafeIndex(x#as_relation_2,[13]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
+SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
+sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
+or([x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)]),
+sum([toInt(x#as_relation_2#components_2#components_2#int_direct_1),toInt(x#as_relation_2#components_2#components_2#int_direct_2);int(1..)]) <= 1,
+or([x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+SafeIndex(x#as_relation_2,[13]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
+SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
+sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
+or([x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)]),
+or([x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)])
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#as_relation_2#components_1#components_2#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
-
---
-
-SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]) >= 13
-   ~~> select_integer_relation ([("SAT", 18500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*x#as_relation_2#components_2#components_2#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
-
---
-
-SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]) <= 14
-   ~~> select_integer_relation ([("SAT", 18500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*x#as_relation_2#components_2#components_2#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
-
---
-
-!(x#as_relation_2#components_1#components_2#int_order_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> !(x#as_relation_2#components_1#components_2#int_order_2)) using tseitin
-
---
-
-!(x#as_relation_2#components_2#components_2#int_order_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> !(x#as_relation_2#components_2#components_2#int_order_2)) using tseitin
-
---
-
-or([and([__2,__3;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__2,__3;int(1..)])
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
+  at-most-one(x#as_relation_2#components_2#components_2#int_direct_1, x#as_relation_2#components_2#components_2#int_direct_2) using None
 
 --
 
@@ -227,43 +205,23 @@ x#as_relation_1#occurrence_1
 
 --
 
-or([__5,x#as_relation_2#components_2#components_2#int_order_1;int(1..)])
+or([x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
+__0
 new variables:
-  findAux __6: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__6 <-> or([__5,x#as_relation_2#components_2#components_2#int_order_1;int(1..)])) using tseitin
+  define(__0 <-> or([x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)])) using tseitin
 
 --
 
-and([__2,__3;int(1..)])
+or([x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
+__1
 new variables:
-  findAux __7: bool
+  findAux __1: bool
 new SAT encoding decisions:
-  define(__7 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-or([__4,x#as_relation_2#components_1#components_2#int_order_1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> or([__4,x#as_relation_2#components_1#components_2#int_order_1;int(1..)])) using tseitin
+  define(__1 <-> or([x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)])) using tseitin
 
 --
 
@@ -274,12 +232,8 @@ SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
 SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-x#as_relation_2#components_1#components_2#int_order_1,
-__9,
-__8,
-x#as_relation_2#components_2#components_2#int_order_1,
-__6,
-__7
+__0,
+__1
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
@@ -288,13 +242,9 @@ SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
 SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__9,
-__8,
-x#as_relation_2#components_2#components_2#int_order_1,
-__6,
-__7
+__1
 new SAT encoding decisions:
-  assert(x#as_relation_2#components_1#components_2#int_order_1) using tseitin
+  assert(__0) using tseitin
 
 --
 
@@ -305,111 +255,7 @@ SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
 SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__9,
-__8,
-x#as_relation_2#components_2#components_2#int_order_1,
-__6,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[13]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[13]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__8,
-x#as_relation_2#components_2#components_2#int_order_1,
-__6,
-__7
-new SAT encoding decisions:
-  assert(__9) using tseitin
-
---
-
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[13]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[13]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__8,
-x#as_relation_2#components_2#components_2#int_order_1,
-__6,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[13]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[13]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-x#as_relation_2#components_2#components_2#int_order_1,
-__6,
-__7
-new SAT encoding decisions:
-  assert(__8) using tseitin
-
---
-
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[13]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[13]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-x#as_relation_2#components_2#components_2#int_order_1,
-__6,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[13]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[13]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__6,
-__7
-new SAT encoding decisions:
-  assert(x#as_relation_2#components_2#components_2#int_order_1) using tseitin
-
---
-
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[13]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[13]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__6,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[13]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[13]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__7
-new SAT encoding decisions:
-  assert(__6) using tseitin
-
---
-
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[13]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[13]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__7
+__1
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
@@ -419,7 +265,7 @@ SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2
 new SAT encoding decisions:
-  assert(__7) using tseitin
+  assert(__1) using tseitin
 
 --
 
@@ -467,18 +313,18 @@ x#as_relation_2#components_1#components_2
 
 x#as_relation_2#components_1#components_2 = 13
    ~~> select_integer_relation ([("SAT", 18500)])
-__10
+__2
 new variables:
-  findAux __10: bool
+  findAux __2: bool
 new SAT encoding decisions:
-  define(__10 <-> integer-weighted(1*x#as_relation_2#components_1#components_2#int_order_2) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+  define(__2 <-> integer-weighted(13*x#as_relation_2#components_1#components_2#int_direct_1, 14*x#as_relation_2#components_1#components_2#int_direct_2) Equal 13) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
 SafeIndex(x#as_relation_1#occurrence_1,[x#as_relation_2#components_1#components_1, SafeIndex(SafeIndex(x#as_relation_2,[13]),[2])]),
-__10,
+__2,
 SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2
@@ -490,7 +336,7 @@ SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2
 new SAT encoding decisions:
-  assert(__10) using tseitin
+  assert(__2) using tseitin
 
 --
 
@@ -519,138 +365,112 @@ x#as_relation_2#components_1#components_2
 --
 
 x#as_relation_2#components_1#components_2
-   ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14])
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14])
 
 --
 
-SafeIndex(x#as_relation_1#occurrence_1,[x#as_relation_2#components_1#components_1, SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14])])
+SafeIndex(x#as_relation_1#occurrence_1,[x#as_relation_2#components_1#components_1, SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14])])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)],[sum([product([2,toInt(x#as_relation_2#components_1#components_1);int(1..)]),product([1,(__11 - 13);int(1..)]),1;int(1..)])])
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)],[sum([product([2,toInt(x#as_relation_2#components_1#components_1);int(1..)]),product([1,(__3 - 13);int(1..)]),1;int(1..)])])
 new variables:
-  findAux __11: int(13..14)
+  findAux __3: int(13..14)
 new constraints:
-  __11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14])
+  __3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14])
 
 --
 
-SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)],[sum([product([2,toInt(x#as_relation_2#components_1#components_1);int(1..)]),product([1,(__11 - 13);int(1..)]),1;int(1..)])])
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)],[sum([product([2,toInt(x#as_relation_2#components_1#components_1);int(1..)]),product([1,(__3 - 13);int(1..)]),1;int(1..)])])
    ~~> introduce_element ([("SAT", 18400)])
-__12
+__4
 new variables:
-  findAux __12: bool
+  findAux __4: bool
 new constraints:
-  satElement([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)], sum([product([2,toInt(x#as_relation_2#components_1#components_1);int(1..)]),product([1,(__11 - 13);int(1..)]),1;int(1..)]), __12)
+  satElement([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)], sum([product([2,toInt(x#as_relation_2#components_1#components_1);int(1..)]),product([1,(__3 - 13);int(1..)]),1;int(1..)]), __4)
 
 --
 
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14])
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14])
    ~~> select_aux_declaration_representation ([("ReprGeneral", 10000)])
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14])
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14])
 new variables:
-  findAux __11#int_order_1: bool
-  findAux __11#int_order_2: bool
+  findAux __3#int_direct_1: bool
+  findAux __3#int_direct_2: bool
 new constraints:
-  __11#int_order_1
-  or([!(__11#int_order_2),__11#int_order_1;int(1..)])
-  or([and([SATInt(Order, [__11#int_order_1,__11#int_order_2;int(1..)] [13, 14]) >= 13,SATInt(Order, [__11#int_order_1,__11#int_order_2;int(1..)] [13, 14]) <= 14;int(1..)]);int(1..)])
+  sum([toInt(__3#int_direct_1),toInt(__3#int_direct_2);int(1..)]) <= 1
+  or([__3#int_direct_1,__3#int_direct_2;int(1..)])
 
 --
 
-SATInt(Order, [__11#int_order_1,__11#int_order_2;int(1..)] [13, 14]) >= 13
-   ~~> select_integer_relation ([("SAT", 18500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> integer-weighted(1*__11#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
-
---
-
-SATInt(Order, [__11#int_order_1,__11#int_order_2;int(1..)] [13, 14]) <= 14
-   ~~> select_integer_relation ([("SAT", 18500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> integer-weighted(1*__11#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
-
---
-
-__11
+__3
    ~~> select_representation ([("ReprGeneral", 10000)])
-__11
+__3
 
 --
 
-satElement([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)], sum([product([2,toInt(x#as_relation_2#components_1#components_1);int(1..)]),product([1,(__11 - 13);int(1..)]),1;int(1..)]), __12)
+true,
+and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
+__4,
+SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
+sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
+satElement([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)], sum([product([2,toInt(x#as_relation_2#components_1#components_1);int(1..)]),product([1,(__3 - 13);int(1..)]),1;int(1..)]), __4),
+sum([toInt(__3#int_direct_1),toInt(__3#int_direct_2);int(1..)]) <= 1,
+or([__3#int_direct_1,__3#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
+__4,
+SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
+sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
+satElement([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)], sum([product([2,toInt(x#as_relation_2#components_1#components_1);int(1..)]),product([1,(__3 - 13);int(1..)]),1;int(1..)]), __4),
+or([__3#int_direct_1,__3#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__3#int_direct_1, __3#int_direct_2) using None
+
+--
+
+satElement([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)], sum([product([2,toInt(x#as_relation_2#components_1#components_1);int(1..)]),product([1,(__3 - 13);int(1..)]),1;int(1..)]), __4)
    ~~> select_element ([("SAT", 18500)])
 true
 new SAT encoding decisions:
-  element(index=1+weighted(2*x#as_relation_2#components_1#components_1, 1*__11#int_order_2) with [PbTermGroup { start: 1, end: 2, structure: Chain }], value=0+weighted(1*__12) with [] choices(0:!(__12), 1:__12), entries=[1: 0+weighted(1*x#as_relation_1#occurrence_1#components_1) with [] choices(0:!(x#as_relation_1#occurrence_1#components_1), 1:x#as_relation_1#occurrence_1#components_1), 2: 0+weighted(1*x#as_relation_1#occurrence_1#components_2) with [] choices(0:!(x#as_relation_1#occurrence_1#components_2), 1:x#as_relation_1#occurrence_1#components_2), 3: 0+weighted(1*x#as_relation_1#occurrence_1#components_3) with [] choices(0:!(x#as_relation_1#occurrence_1#components_3), 1:x#as_relation_1#occurrence_1#components_3), 4: 0+weighted(1*x#as_relation_1#occurrence_1#components_4) with [] choices(0:!(x#as_relation_1#occurrence_1#components_4), 1:x#as_relation_1#occurrence_1#components_4)]) using None, PB None
+  element(index=-12+weighted(2*x#as_relation_2#components_1#components_1, 13*__3#int_direct_1, 14*__3#int_direct_2) with [PbTermGroup { start: 1, end: 3, structure: Choice }], value=0+weighted(1*__4) with [] choices(0:!(__4), 1:__4), entries=[1: 0+weighted(1*x#as_relation_1#occurrence_1#components_1) with [] choices(0:!(x#as_relation_1#occurrence_1#components_1), 1:x#as_relation_1#occurrence_1#components_1), 2: 0+weighted(1*x#as_relation_1#occurrence_1#components_2) with [] choices(0:!(x#as_relation_1#occurrence_1#components_2), 1:x#as_relation_1#occurrence_1#components_2), 3: 0+weighted(1*x#as_relation_1#occurrence_1#components_3) with [] choices(0:!(x#as_relation_1#occurrence_1#components_3), 1:x#as_relation_1#occurrence_1#components_3), 4: 0+weighted(1*x#as_relation_1#occurrence_1#components_4) with [] choices(0:!(x#as_relation_1#occurrence_1#components_4), 1:x#as_relation_1#occurrence_1#components_4)]) using None, PB None
 
 --
 
-!(__11#int_order_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__15
-new variables:
-  findAux __15: bool
-new SAT encoding decisions:
-  define(__15 <-> !(__11#int_order_2)) using tseitin
-
---
-
-or([and([__13,__14;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__13,__14;int(1..)])
-
---
-
-and([__13,__14;int(1..)])
+or([__3#int_direct_1,__3#int_direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__16
+__5
 new variables:
-  findAux __16: bool
+  findAux __5: bool
 new SAT encoding decisions:
-  define(__16 <-> and([__13,__14;int(1..)])) using tseitin
-
---
-
-or([__15,__11#int_order_1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__17
-new variables:
-  findAux __17: bool
-new SAT encoding decisions:
-  define(__17 <-> or([__15,__11#int_order_1;int(1..)])) using tseitin
+  define(__5 <-> or([__3#int_direct_1,__3#int_direct_2;int(1..)])) using tseitin
 
 --
 
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-__12,
+__4,
 SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
 true,
-__11#int_order_1,
-__17,
-__16
+__5
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
 SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
 true,
-__11#int_order_1,
-__17,
-__16
+__5
 new SAT encoding decisions:
-  assert(__12) using tseitin
+  assert(__4) using tseitin
 
 --
 
@@ -659,67 +479,19 @@ and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2
 SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
 true,
-__11#int_order_1,
-__17,
-__16
+__5
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
 SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
-true,
-__17,
-__16
-new SAT encoding decisions:
-  assert(__11#int_order_1) using tseitin
-
---
-
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
-true,
-__17,
-__16
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
-true,
-__16
-new SAT encoding decisions:
-  assert(__17) using tseitin
-
---
-
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
-true,
-__16
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
 true
 new SAT encoding decisions:
-  assert(__16) using tseitin
+  assert(__5) using tseitin
 
 --
 
@@ -767,30 +539,30 @@ x#as_relation_2#components_2#components_2
 
 x#as_relation_2#components_2#components_2 = 14
    ~~> select_integer_relation ([("SAT", 18500)])
-__18
+__6
 new variables:
-  findAux __18: bool
+  findAux __6: bool
 new SAT encoding decisions:
-  define(__18 <-> integer-weighted(1*x#as_relation_2#components_2#components_2#int_order_2) Equal 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+  define(__6 <-> integer-weighted(13*x#as_relation_2#components_2#components_2#int_direct_1, 14*x#as_relation_2#components_2#components_2#int_direct_2) Equal 14) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
 SafeIndex(x#as_relation_1#occurrence_1,[x#as_relation_2#components_2#components_1, SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
-__18,
+__6,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
 true
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
 SafeIndex(x#as_relation_1#occurrence_1,[x#as_relation_2#components_2#components_1, SafeIndex(SafeIndex(x#as_relation_2,[14]),[2])]),
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
 true
 new SAT encoding decisions:
-  assert(__18) using tseitin
+  assert(__6) using tseitin
 
 --
 
@@ -819,258 +591,184 @@ x#as_relation_2#components_2#components_2
 --
 
 x#as_relation_2#components_2#components_2
-   ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14])
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14])
 
 --
 
-SafeIndex(x#as_relation_1#occurrence_1,[x#as_relation_2#components_2#components_1, SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14])])
+SafeIndex(x#as_relation_1#occurrence_1,[x#as_relation_2#components_2#components_1, SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14])])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)],[sum([product([2,toInt(x#as_relation_2#components_2#components_1);int(1..)]),product([1,(__19 - 13);int(1..)]),1;int(1..)])])
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)],[sum([product([2,toInt(x#as_relation_2#components_2#components_1);int(1..)]),product([1,(__7 - 13);int(1..)]),1;int(1..)])])
 new variables:
-  findAux __19: int(13..14)
+  findAux __7: int(13..14)
 new constraints:
-  __19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14])
+  __7 =aux SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14])
 
 --
 
-SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)],[sum([product([2,toInt(x#as_relation_2#components_2#components_1);int(1..)]),product([1,(__19 - 13);int(1..)]),1;int(1..)])])
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)],[sum([product([2,toInt(x#as_relation_2#components_2#components_1);int(1..)]),product([1,(__7 - 13);int(1..)]),1;int(1..)])])
    ~~> introduce_element ([("SAT", 18400)])
-__20
+__8
 new variables:
-  findAux __20: bool
+  findAux __8: bool
 new constraints:
-  satElement([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)], sum([product([2,toInt(x#as_relation_2#components_2#components_1);int(1..)]),product([1,(__19 - 13);int(1..)]),1;int(1..)]), __20)
+  satElement([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)], sum([product([2,toInt(x#as_relation_2#components_2#components_1);int(1..)]),product([1,(__7 - 13);int(1..)]),1;int(1..)]), __8)
 
 --
 
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14])
+__7 =aux SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14])
    ~~> select_aux_declaration_representation ([("ReprGeneral", 10000)])
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14])
+__7 =aux SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14])
 new variables:
-  findAux __19#int_order_1: bool
-  findAux __19#int_order_2: bool
+  findAux __7#int_direct_1: bool
+  findAux __7#int_direct_2: bool
 new constraints:
-  __19#int_order_1
-  or([!(__19#int_order_2),__19#int_order_1;int(1..)])
-  or([and([SATInt(Order, [__19#int_order_1,__19#int_order_2;int(1..)] [13, 14]) >= 13,SATInt(Order, [__19#int_order_1,__19#int_order_2;int(1..)] [13, 14]) <= 14;int(1..)]);int(1..)])
+  sum([toInt(__7#int_direct_1),toInt(__7#int_direct_2);int(1..)]) <= 1
+  or([__7#int_direct_1,__7#int_direct_2;int(1..)])
 
 --
 
-SATInt(Order, [__19#int_order_1,__19#int_order_2;int(1..)] [13, 14]) >= 13
-   ~~> select_integer_relation ([("SAT", 18500)])
-__21
-new variables:
-  findAux __21: bool
-new SAT encoding decisions:
-  define(__21 <-> integer-weighted(1*__19#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
-
---
-
-SATInt(Order, [__19#int_order_1,__19#int_order_2;int(1..)] [13, 14]) <= 14
-   ~~> select_integer_relation ([("SAT", 18500)])
-__22
-new variables:
-  findAux __22: bool
-new SAT encoding decisions:
-  define(__22 <-> integer-weighted(1*__19#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
-
---
-
-__19
+__7
    ~~> select_representation ([("ReprGeneral", 10000)])
-__19
+__7
 
 --
 
-satElement([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)], sum([product([2,toInt(x#as_relation_2#components_2#components_1);int(1..)]),product([1,(__19 - 13);int(1..)]),1;int(1..)]), __20)
+true,
+and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
+__8,
+sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
+true,
+__7 =aux SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14]),
+satElement([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)], sum([product([2,toInt(x#as_relation_2#components_2#components_1);int(1..)]),product([1,(__7 - 13);int(1..)]),1;int(1..)]), __8),
+sum([toInt(__7#int_direct_1),toInt(__7#int_direct_2);int(1..)]) <= 1,
+or([__7#int_direct_1,__7#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
+__8,
+sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
+true,
+__7 =aux SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14]),
+satElement([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)], sum([product([2,toInt(x#as_relation_2#components_2#components_1);int(1..)]),product([1,(__7 - 13);int(1..)]),1;int(1..)]), __8),
+or([__7#int_direct_1,__7#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__7#int_direct_1, __7#int_direct_2) using None
+
+--
+
+satElement([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4;int(1..)], sum([product([2,toInt(x#as_relation_2#components_2#components_1);int(1..)]),product([1,(__7 - 13);int(1..)]),1;int(1..)]), __8)
    ~~> select_element ([("SAT", 18500)])
 true
 new SAT encoding decisions:
-  element(index=1+weighted(2*x#as_relation_2#components_2#components_1, 1*__19#int_order_2) with [PbTermGroup { start: 1, end: 2, structure: Chain }], value=0+weighted(1*__20) with [] choices(0:!(__20), 1:__20), entries=[1: 0+weighted(1*x#as_relation_1#occurrence_1#components_1) with [] choices(0:!(x#as_relation_1#occurrence_1#components_1), 1:x#as_relation_1#occurrence_1#components_1), 2: 0+weighted(1*x#as_relation_1#occurrence_1#components_2) with [] choices(0:!(x#as_relation_1#occurrence_1#components_2), 1:x#as_relation_1#occurrence_1#components_2), 3: 0+weighted(1*x#as_relation_1#occurrence_1#components_3) with [] choices(0:!(x#as_relation_1#occurrence_1#components_3), 1:x#as_relation_1#occurrence_1#components_3), 4: 0+weighted(1*x#as_relation_1#occurrence_1#components_4) with [] choices(0:!(x#as_relation_1#occurrence_1#components_4), 1:x#as_relation_1#occurrence_1#components_4)]) using None, PB None
+  element(index=-12+weighted(2*x#as_relation_2#components_2#components_1, 13*__7#int_direct_1, 14*__7#int_direct_2) with [PbTermGroup { start: 1, end: 3, structure: Choice }], value=0+weighted(1*__8) with [] choices(0:!(__8), 1:__8), entries=[1: 0+weighted(1*x#as_relation_1#occurrence_1#components_1) with [] choices(0:!(x#as_relation_1#occurrence_1#components_1), 1:x#as_relation_1#occurrence_1#components_1), 2: 0+weighted(1*x#as_relation_1#occurrence_1#components_2) with [] choices(0:!(x#as_relation_1#occurrence_1#components_2), 1:x#as_relation_1#occurrence_1#components_2), 3: 0+weighted(1*x#as_relation_1#occurrence_1#components_3) with [] choices(0:!(x#as_relation_1#occurrence_1#components_3), 1:x#as_relation_1#occurrence_1#components_3), 4: 0+weighted(1*x#as_relation_1#occurrence_1#components_4) with [] choices(0:!(x#as_relation_1#occurrence_1#components_4), 1:x#as_relation_1#occurrence_1#components_4)]) using None, PB None
 
 --
 
-!(__19#int_order_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__23
-new variables:
-  findAux __23: bool
-new SAT encoding decisions:
-  define(__23 <-> !(__19#int_order_2)) using tseitin
-
---
-
-or([and([__21,__22;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__21,__22;int(1..)])
-
---
-
-and([__21,__22;int(1..)])
+or([__7#int_direct_1,__7#int_direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__24
+__9
 new variables:
-  findAux __24: bool
+  findAux __9: bool
 new SAT encoding decisions:
-  define(__24 <-> and([__21,__22;int(1..)])) using tseitin
-
---
-
-or([__23,__19#int_order_1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__25
-new variables:
-  findAux __25: bool
-new SAT encoding decisions:
-  define(__25 <-> or([__23,__19#int_order_1;int(1..)])) using tseitin
+  define(__9 <-> or([__7#int_direct_1,__7#int_direct_2;int(1..)])) using tseitin
 
 --
 
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-__20,
+__8,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
 true,
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]),
+__7 =aux SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14]),
 true,
-__19#int_order_1,
-__25,
-__24
+__9
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
 true,
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]),
+__7 =aux SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14]),
 true,
-__19#int_order_1,
-__25,
-__24
+__9
 new SAT encoding decisions:
-  assert(__20) using tseitin
+  assert(__8) using tseitin
 
 --
 
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
 true,
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]),
+__7 =aux SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14]),
 true,
-__19#int_order_1,
-__25,
-__24
+__9
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14]),
 true,
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]),
-true,
-__25,
-__24
-new SAT encoding decisions:
-  assert(__19#int_order_1) using tseitin
-
---
-
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
-true,
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]),
-true,
-__25,
-__24
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
-true,
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]),
-true,
-__24
-new SAT encoding decisions:
-  assert(__25) using tseitin
-
---
-
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
-true,
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]),
-true,
-__24
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14]),
-true,
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]),
+__7 =aux SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14]),
 true
 new SAT encoding decisions:
-  assert(__24) using tseitin
+  assert(__9) using tseitin
 
 --
 
-__11 =aux SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14])
+__3 =aux SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14])
    ~~> aux_declaration_is_equality ([("SAT", 2000)])
-__11 = SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14])
+__3 = SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14])
 
 --
 
-__11 = SATInt(Order, [x#as_relation_2#components_1#components_2#int_order_1,x#as_relation_2#components_1#components_2#int_order_2;int(1..)] [13, 14])
+__3 = SATInt(Direct, [x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)] [13, 14])
    ~~> select_integer_relation ([("SAT", 18500)])
-__26
+__10
 new variables:
-  findAux __26: bool
+  findAux __10: bool
 new SAT encoding decisions:
-  define(__26 <-> integer-weighted(1*__11#int_order_2, -1*x#as_relation_2#components_1#components_2#int_order_2) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }, PbTermGroup { start: 1, end: 2, structure: Chain }]
+  define(__10 <-> integer-weighted(13*__3#int_direct_1, 14*__3#int_direct_2, -13*x#as_relation_2#components_1#components_2#int_direct_1, -14*x#as_relation_2#components_1#components_2#int_direct_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }]
 
 --
 
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
-__26,
+__10,
 true,
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]),
+__7 =aux SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14]),
 true
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
 true,
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14]),
+__7 =aux SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14]),
 true
 new SAT encoding decisions:
-  assert(__26) using tseitin
+  assert(__10) using tseitin
 
 --
 
-__19 =aux SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14])
+__7 =aux SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14])
    ~~> aux_declaration_is_equality ([("SAT", 2000)])
-__19 = SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14])
+__7 = SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14])
 
 --
 
-__19 = SATInt(Order, [x#as_relation_2#components_2#components_2#int_order_1,x#as_relation_2#components_2#components_2#int_order_2;int(1..)] [13, 14])
+__7 = SATInt(Direct, [x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)] [13, 14])
    ~~> select_integer_relation ([("SAT", 18500)])
-__27
+__11
 new variables:
-  findAux __27: bool
+  findAux __11: bool
 new SAT encoding decisions:
-  define(__27 <-> integer-weighted(1*__19#int_order_2, -1*x#as_relation_2#components_2#components_2#int_order_2) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }, PbTermGroup { start: 1, end: 2, structure: Chain }]
+  define(__11 <-> integer-weighted(13*__7#int_direct_1, 14*__7#int_direct_2, -13*x#as_relation_2#components_2#components_2#int_direct_1, -14*x#as_relation_2#components_2#components_2#int_direct_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }]
 
 --
 
@@ -1078,7 +776,7 @@ true,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13..14), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
 true,
-__27,
+__11,
 true
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
@@ -1087,7 +785,7 @@ sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : 
 true,
 true
 new SAT encoding decisions:
-  assert(__27) using tseitin
+  assert(__11) using tseitin
 
 --
 
@@ -1219,96 +917,96 @@ x#as_relation_1#occurrence_1#components_2
 
 !(x#as_relation_1#occurrence_1#components_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__28
+__12
 new variables:
-  findAux __28: bool
+  findAux __12: bool
 new SAT encoding decisions:
-  define(__28 <-> !(x#as_relation_1#occurrence_1#components_2)) using tseitin
+  define(__12 <-> !(x#as_relation_1#occurrence_1#components_2)) using tseitin
 
 --
 
 !(x#as_relation_1#occurrence_1#components_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__29
+__13
 new variables:
-  findAux __29: bool
+  findAux __13: bool
 new SAT encoding decisions:
-  define(__29 <-> !(x#as_relation_1#occurrence_1#components_1)) using tseitin
+  define(__13 <-> !(x#as_relation_1#occurrence_1#components_1)) using tseitin
 
 --
 
 !(x#as_relation_1#occurrence_1#components_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__30
+__14
 new variables:
-  findAux __30: bool
+  findAux __14: bool
 new SAT encoding decisions:
-  define(__30 <-> !(x#as_relation_1#occurrence_1#components_4)) using tseitin
+  define(__14 <-> !(x#as_relation_1#occurrence_1#components_4)) using tseitin
 
 --
 
 !(x#as_relation_1#occurrence_1#components_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__31
+__15
 new variables:
-  findAux __31: bool
+  findAux __15: bool
 new SAT encoding decisions:
-  define(__31 <-> !(x#as_relation_1#occurrence_1#components_3)) using tseitin
+  define(__15 <-> !(x#as_relation_1#occurrence_1#components_3)) using tseitin
 
 --
 
-(x#as_relation_1#occurrence_1#components_1) -> (__28)
+(x#as_relation_1#occurrence_1#components_1) -> (__12)
    ~~> apply_tseytin_imply ([("SAT", 8500)])
-__32
+__16
 new variables:
-  findAux __32: bool
+  findAux __16: bool
 new SAT encoding decisions:
-  define(__32 <-> (x#as_relation_1#occurrence_1#components_1) -> (__28)) using tseitin
+  define(__16 <-> (x#as_relation_1#occurrence_1#components_1) -> (__12)) using tseitin
 
 --
 
-(x#as_relation_1#occurrence_1#components_2) -> (__29)
+(x#as_relation_1#occurrence_1#components_2) -> (__13)
    ~~> apply_tseytin_imply ([("SAT", 8500)])
-__33
+__17
 new variables:
-  findAux __33: bool
+  findAux __17: bool
 new SAT encoding decisions:
-  define(__33 <-> (x#as_relation_1#occurrence_1#components_2) -> (__29)) using tseitin
+  define(__17 <-> (x#as_relation_1#occurrence_1#components_2) -> (__13)) using tseitin
 
 --
 
-(x#as_relation_1#occurrence_1#components_3) -> (__30)
+(x#as_relation_1#occurrence_1#components_3) -> (__14)
    ~~> apply_tseytin_imply ([("SAT", 8500)])
-__34
+__18
 new variables:
-  findAux __34: bool
+  findAux __18: bool
 new SAT encoding decisions:
-  define(__34 <-> (x#as_relation_1#occurrence_1#components_3) -> (__30)) using tseitin
+  define(__18 <-> (x#as_relation_1#occurrence_1#components_3) -> (__14)) using tseitin
 
 --
 
-(x#as_relation_1#occurrence_1#components_4) -> (__31)
+(x#as_relation_1#occurrence_1#components_4) -> (__15)
    ~~> apply_tseytin_imply ([("SAT", 8500)])
-__35
+__19
 new variables:
-  findAux __35: bool
+  findAux __19: bool
 new SAT encoding decisions:
-  define(__35 <-> (x#as_relation_1#occurrence_1#components_4) -> (__31)) using tseitin
+  define(__19 <-> (x#as_relation_1#occurrence_1#components_4) -> (__15)) using tseitin
 
 --
 
-and([__32,__33,__34,__35;int(1..)])
+and([__16,__17,__18,__19;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__36
+__20
 new variables:
-  findAux __36: bool
+  findAux __20: bool
 new SAT encoding decisions:
-  define(__36 <-> and([__32,__33,__34,__35;int(1..)])) using tseitin
+  define(__20 <-> and([__16,__17,__18,__19;int(1..)])) using tseitin
 
 --
 
 true,
-__36,
+__20,
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13..14) ]) = 2,
 true,
 true
@@ -1318,7 +1016,7 @@ sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : 
 true,
 true
 new SAT encoding decisions:
-  assert(__36) using tseitin
+  assert(__20) using tseitin
 
 --
 
@@ -1405,51 +1103,35 @@ find x#as_relation_2#components_1#components_1: bool
 find x#as_relation_2#components_1#components_2: int(13..14)
 find x#as_relation_2#components_2#components_1: bool
 find x#as_relation_2#components_2#components_2: int(13..14)
-find x#as_relation_2#components_1#components_2#int_order_1: bool
-find x#as_relation_2#components_1#components_2#int_order_2: bool
-find x#as_relation_2#components_2#components_2#int_order_1: bool
-find x#as_relation_2#components_2#components_2#int_order_2: bool
+find x#as_relation_2#components_1#components_2#int_direct_1: bool
+find x#as_relation_2#components_1#components_2#int_direct_2: bool
+find x#as_relation_2#components_2#components_2#int_direct_1: bool
+find x#as_relation_2#components_2#components_2#int_direct_2: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
-findAux __3: bool
+findAux __3: int(13..14)
 findAux __4: bool
+findAux __3#int_direct_1: bool
+findAux __3#int_direct_2: bool
 findAux __5: bool
 findAux __6: bool
-findAux __7: bool
+findAux __7: int(13..14)
 findAux __8: bool
+findAux __7#int_direct_1: bool
+findAux __7#int_direct_2: bool
 findAux __9: bool
 findAux __10: bool
-findAux __11: int(13..14)
+findAux __11: bool
 findAux __12: bool
-findAux __11#int_order_1: bool
-findAux __11#int_order_2: bool
 findAux __13: bool
 findAux __14: bool
 findAux __15: bool
 findAux __16: bool
 findAux __17: bool
 findAux __18: bool
-findAux __19: int(13..14)
+findAux __19: bool
 findAux __20: bool
-findAux __19#int_order_1: bool
-findAux __19#int_order_2: bool
-findAux __21: bool
-findAux __22: bool
-findAux __23: bool
-findAux __24: bool
-findAux __25: bool
-findAux __26: bool
-findAux __27: bool
-findAux __28: bool
-findAux __29: bool
-findAux __30: bool
-findAux __31: bool
-findAux __32: bool
-findAux __33: bool
-findAux __34: bool
-findAux __35: bool
-findAux __36: bool
 
 such that
 
@@ -1459,59 +1141,39 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#as_relation_2#components_1#components_2#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__1 <-> integer-weighted(1*x#as_relation_2#components_1#components_2#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__2 <-> integer-weighted(1*x#as_relation_2#components_2#components_2#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__3 <-> integer-weighted(1*x#as_relation_2#components_2#components_2#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__4 <-> !(x#as_relation_2#components_1#components_2#int_order_2)) using tseitin,
-define(__5 <-> !(x#as_relation_2#components_2#components_2#int_order_2)) using tseitin,
-define(__6 <-> or([__5,x#as_relation_2#components_2#components_2#int_order_1;int(1..)])) using tseitin,
-define(__7 <-> and([__2,__3;int(1..)])) using tseitin,
-define(__8 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__9 <-> or([__4,x#as_relation_2#components_1#components_2#int_order_1;int(1..)])) using tseitin,
-assert(x#as_relation_2#components_1#components_2#int_order_1) using tseitin,
-assert(__9) using tseitin,
-assert(__8) using tseitin,
-assert(x#as_relation_2#components_2#components_2#int_order_1) using tseitin,
+at-most-one(x#as_relation_2#components_1#components_2#int_direct_1, x#as_relation_2#components_1#components_2#int_direct_2) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+at-most-one(x#as_relation_2#components_2#components_2#int_direct_1, x#as_relation_2#components_2#components_2#int_direct_2) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+define(__0 <-> or([x#as_relation_2#components_1#components_2#int_direct_1,x#as_relation_2#components_1#components_2#int_direct_2;int(1..)])) using tseitin,
+define(__1 <-> or([x#as_relation_2#components_2#components_2#int_direct_1,x#as_relation_2#components_2#components_2#int_direct_2;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin,
+define(__2 <-> integer-weighted(13*x#as_relation_2#components_1#components_2#int_direct_1, 14*x#as_relation_2#components_1#components_2#int_direct_2) Equal 13) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+assert(__2) using tseitin,
+at-most-one(__3#int_direct_1, __3#int_direct_2) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+element(index=-12+weighted(2*x#as_relation_2#components_1#components_1, 13*__3#int_direct_1, 14*__3#int_direct_2) with [PbTermGroup { start: 1, end: 3, structure: Choice }], value=0+weighted(1*__4) with [] choices(0:!(__4), 1:__4), entries=[1: 0+weighted(1*x#as_relation_1#occurrence_1#components_1) with [] choices(0:!(x#as_relation_1#occurrence_1#components_1), 1:x#as_relation_1#occurrence_1#components_1), 2: 0+weighted(1*x#as_relation_1#occurrence_1#components_2) with [] choices(0:!(x#as_relation_1#occurrence_1#components_2), 1:x#as_relation_1#occurrence_1#components_2), 3: 0+weighted(1*x#as_relation_1#occurrence_1#components_3) with [] choices(0:!(x#as_relation_1#occurrence_1#components_3), 1:x#as_relation_1#occurrence_1#components_3), 4: 0+weighted(1*x#as_relation_1#occurrence_1#components_4) with [] choices(0:!(x#as_relation_1#occurrence_1#components_4), 1:x#as_relation_1#occurrence_1#components_4)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__5 <-> or([__3#int_direct_1,__3#int_direct_2;int(1..)])) using tseitin,
+assert(__4) using tseitin,
+assert(__5) using tseitin,
+define(__6 <-> integer-weighted(13*x#as_relation_2#components_2#components_2#int_direct_1, 14*x#as_relation_2#components_2#components_2#int_direct_2) Equal 14) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 assert(__6) using tseitin,
-assert(__7) using tseitin,
-define(__10 <-> integer-weighted(1*x#as_relation_2#components_1#components_2#int_order_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+at-most-one(__7#int_direct_1, __7#int_direct_2) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+element(index=-12+weighted(2*x#as_relation_2#components_2#components_1, 13*__7#int_direct_1, 14*__7#int_direct_2) with [PbTermGroup { start: 1, end: 3, structure: Choice }], value=0+weighted(1*__8) with [] choices(0:!(__8), 1:__8), entries=[1: 0+weighted(1*x#as_relation_1#occurrence_1#components_1) with [] choices(0:!(x#as_relation_1#occurrence_1#components_1), 1:x#as_relation_1#occurrence_1#components_1), 2: 0+weighted(1*x#as_relation_1#occurrence_1#components_2) with [] choices(0:!(x#as_relation_1#occurrence_1#components_2), 1:x#as_relation_1#occurrence_1#components_2), 3: 0+weighted(1*x#as_relation_1#occurrence_1#components_3) with [] choices(0:!(x#as_relation_1#occurrence_1#components_3), 1:x#as_relation_1#occurrence_1#components_3), 4: 0+weighted(1*x#as_relation_1#occurrence_1#components_4) with [] choices(0:!(x#as_relation_1#occurrence_1#components_4), 1:x#as_relation_1#occurrence_1#components_4)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__9 <-> or([__7#int_direct_1,__7#int_direct_2;int(1..)])) using tseitin,
+assert(__8) using tseitin,
+assert(__9) using tseitin,
+define(__10 <-> integer-weighted(13*__3#int_direct_1, 14*__3#int_direct_2, -13*x#as_relation_2#components_1#components_2#int_direct_1, -14*x#as_relation_2#components_1#components_2#int_direct_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
 assert(__10) using tseitin,
-define(__13 <-> integer-weighted(1*__11#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__14 <-> integer-weighted(1*__11#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-element(index=1+weighted(2*x#as_relation_2#components_1#components_1, 1*__11#int_order_2) with [PbTermGroup { start: 1, end: 2, structure: Chain }], value=0+weighted(1*__12) with [] choices(0:!(__12), 1:__12), entries=[1: 0+weighted(1*x#as_relation_1#occurrence_1#components_1) with [] choices(0:!(x#as_relation_1#occurrence_1#components_1), 1:x#as_relation_1#occurrence_1#components_1), 2: 0+weighted(1*x#as_relation_1#occurrence_1#components_2) with [] choices(0:!(x#as_relation_1#occurrence_1#components_2), 1:x#as_relation_1#occurrence_1#components_2), 3: 0+weighted(1*x#as_relation_1#occurrence_1#components_3) with [] choices(0:!(x#as_relation_1#occurrence_1#components_3), 1:x#as_relation_1#occurrence_1#components_3), 4: 0+weighted(1*x#as_relation_1#occurrence_1#components_4) with [] choices(0:!(x#as_relation_1#occurrence_1#components_4), 1:x#as_relation_1#occurrence_1#components_4)]) using Some(EncodingSelection { algorithm: Support, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__15 <-> !(__11#int_order_2)) using tseitin,
-define(__16 <-> and([__13,__14;int(1..)])) using tseitin,
-define(__17 <-> or([__15,__11#int_order_1;int(1..)])) using tseitin,
-assert(__12) using tseitin,
-assert(__11#int_order_1) using tseitin,
-assert(__17) using tseitin,
-assert(__16) using tseitin,
-define(__18 <-> integer-weighted(1*x#as_relation_2#components_2#components_2#int_order_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-assert(__18) using tseitin,
-define(__21 <-> integer-weighted(1*__19#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__22 <-> integer-weighted(1*__19#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-element(index=1+weighted(2*x#as_relation_2#components_2#components_1, 1*__19#int_order_2) with [PbTermGroup { start: 1, end: 2, structure: Chain }], value=0+weighted(1*__20) with [] choices(0:!(__20), 1:__20), entries=[1: 0+weighted(1*x#as_relation_1#occurrence_1#components_1) with [] choices(0:!(x#as_relation_1#occurrence_1#components_1), 1:x#as_relation_1#occurrence_1#components_1), 2: 0+weighted(1*x#as_relation_1#occurrence_1#components_2) with [] choices(0:!(x#as_relation_1#occurrence_1#components_2), 1:x#as_relation_1#occurrence_1#components_2), 3: 0+weighted(1*x#as_relation_1#occurrence_1#components_3) with [] choices(0:!(x#as_relation_1#occurrence_1#components_3), 1:x#as_relation_1#occurrence_1#components_3), 4: 0+weighted(1*x#as_relation_1#occurrence_1#components_4) with [] choices(0:!(x#as_relation_1#occurrence_1#components_4), 1:x#as_relation_1#occurrence_1#components_4)]) using Some(EncodingSelection { algorithm: Support, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__23 <-> !(__19#int_order_2)) using tseitin,
-define(__24 <-> and([__21,__22;int(1..)])) using tseitin,
-define(__25 <-> or([__23,__19#int_order_1;int(1..)])) using tseitin,
+define(__11 <-> integer-weighted(13*__7#int_direct_1, 14*__7#int_direct_2, -13*x#as_relation_2#components_2#components_2#int_direct_1, -14*x#as_relation_2#components_2#components_2#int_direct_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
+assert(__11) using tseitin,
+define(__12 <-> !(x#as_relation_1#occurrence_1#components_2)) using tseitin,
+define(__13 <-> !(x#as_relation_1#occurrence_1#components_1)) using tseitin,
+define(__14 <-> !(x#as_relation_1#occurrence_1#components_4)) using tseitin,
+define(__15 <-> !(x#as_relation_1#occurrence_1#components_3)) using tseitin,
+define(__16 <-> (x#as_relation_1#occurrence_1#components_1) -> (__12)) using tseitin,
+define(__17 <-> (x#as_relation_1#occurrence_1#components_2) -> (__13)) using tseitin,
+define(__18 <-> (x#as_relation_1#occurrence_1#components_3) -> (__14)) using tseitin,
+define(__19 <-> (x#as_relation_1#occurrence_1#components_4) -> (__15)) using tseitin,
+define(__20 <-> and([__16,__17,__18,__19;int(1..)])) using tseitin,
 assert(__20) using tseitin,
-assert(__19#int_order_1) using tseitin,
-assert(__25) using tseitin,
-assert(__24) using tseitin,
-define(__26 <-> integer-weighted(1*__11#int_order_2, -1*x#as_relation_2#components_1#components_2#int_order_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }, PbTermGroup { start: 1, end: 2, structure: Chain }],
-assert(__26) using tseitin,
-define(__27 <-> integer-weighted(1*__19#int_order_2, -1*x#as_relation_2#components_2#components_2#int_order_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }, PbTermGroup { start: 1, end: 2, structure: Chain }],
-assert(__27) using tseitin,
-define(__28 <-> !(x#as_relation_1#occurrence_1#components_2)) using tseitin,
-define(__29 <-> !(x#as_relation_1#occurrence_1#components_1)) using tseitin,
-define(__30 <-> !(x#as_relation_1#occurrence_1#components_4)) using tseitin,
-define(__31 <-> !(x#as_relation_1#occurrence_1#components_3)) using tseitin,
-define(__32 <-> (x#as_relation_1#occurrence_1#components_1) -> (__28)) using tseitin,
-define(__33 <-> (x#as_relation_1#occurrence_1#components_2) -> (__29)) using tseitin,
-define(__34 <-> (x#as_relation_1#occurrence_1#components_3) -> (__30)) using tseitin,
-define(__35 <-> (x#as_relation_1#occurrence_1#components_4) -> (__31)) using tseitin,
-define(__36 <-> and([__32,__33,__34,__35;int(1..)])) using tseitin,
-assert(__36) using tseitin,
-count(x#as_relation_1#occurrence_1#components_1, x#as_relation_1#occurrence_1#components_2, x#as_relation_1#occurrence_1#components_3, x#as_relation_1#occurrence_1#components_4) Exactly 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic })
+count(x#as_relation_1#occurrence_1#components_1, x#as_relation_1#occurrence_1#components_2, x#as_relation_1#occurrence_1#components_3, x#as_relation_1#occurrence_1#components_4) Exactly 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic })
 

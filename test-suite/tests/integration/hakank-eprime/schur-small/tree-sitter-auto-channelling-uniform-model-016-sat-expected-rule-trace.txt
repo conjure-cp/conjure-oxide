@@ -187,13 +187,13 @@ true
 
 sat encoding decisions:
 
-at-most-one(schur#components_1#int_direct_1, schur#components_1#int_direct_2, schur#components_1#int_direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
-at-most-one(schur#components_2#int_direct_1, schur#components_2#int_direct_2, schur#components_2#int_direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+at-most-one(schur#components_1#int_direct_1, schur#components_1#int_direct_2, schur#components_1#int_direct_3) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
+at-most-one(schur#components_2#int_direct_1, schur#components_2#int_direct_2, schur#components_2#int_direct_3) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
 define(__0 <-> or([schur#components_1#int_direct_1,schur#components_1#int_direct_2,schur#components_1#int_direct_3;int(1..)])) using tseitin,
 define(__1 <-> or([schur#components_2#int_direct_1,schur#components_2#int_direct_2,schur#components_2#int_direct_3;int(1..)])) using tseitin,
 assert(__0) using tseitin,
 assert(__1) using tseitin,
-define(__2 <-> integer-weighted(1*schur#components_1#int_direct_1, 2*schur#components_1#int_direct_2, 3*schur#components_1#int_direct_3, -1*schur#components_2#int_direct_1, -2*schur#components_2#int_direct_2, -3*schur#components_2#int_direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
+define(__2 <-> integer-weighted(1*schur#components_1#int_direct_1, 2*schur#components_1#int_direct_2, 3*schur#components_1#int_direct_3, -1*schur#components_2#int_direct_1, -2*schur#components_2#int_direct_2, -3*schur#components_2#int_direct_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
 define(__3 <-> !(__2)) using tseitin,
 assert(__3) using tseitin
 
