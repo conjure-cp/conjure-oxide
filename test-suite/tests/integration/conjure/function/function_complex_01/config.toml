@@ -3,7 +3,7 @@ parser = "tree-sitter"
 rewriter = "optimised"
 comprehension-expander = "auto"
 heuristic = "x"
-solver = "minion"
+solver = ["minion", "sat"]
 number-of-solutions = "all"
 # Oxide and Conjure find the same six functions here, but print the entries of each one in a
 # different order: Oxide orders set-valued keys by `set_essence_cmp`, a subset-flavoured
@@ -13,3 +13,7 @@ number-of-solutions = "all"
 # enumeration also depend on, so the solutions are compared against this model's own
 # recording rather than against Conjure.
 skip-conjure-validation = "Oxide and Conjure order set-valued function keys differently"
+
+[solver-options.sat]
+heuristic = "x"
+channelling = "uniform"
