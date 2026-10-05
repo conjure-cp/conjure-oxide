@@ -948,10 +948,18 @@ impl GroundDomain {
                         return Ok(false);
                     }
 
-                    for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
-                        if entry.name != lit_entry.name
-                            || !(entry.value.contains(&lit_entry.value)?)
-                        {
+                    let fields = lit_entries
+                        .iter()
+                        .map(|field| (&field.name, &field.value))
+                        .collect::<BTreeMap<_, _>>();
+                    if fields.len() != entries.len() {
+                        return Ok(false);
+                    }
+                    for entry in entries {
+                        let Some(value) = fields.get(&entry.name) else {
+                            return Ok(false);
+                        };
+                        if !entry.value.contains(value)? {
                             return Ok(false);
                         }
                     }
@@ -1890,6 +1898,7 @@ impl Typeable for GroundDomain {
                 for entry in entries {
                     entry_types.push(entry.clone().func_map(|x| x.return_type()));
                 }
+                entry_types.sort();
                 ReturnType::Record(entry_types)
             }
             GroundDomain::Variant(entries) => {
@@ -2200,6 +2209,10 @@ mod tests {
         assert_eq!(values[1], r(0, true));
         assert_eq!(values[2], r(1, false));
         assert_eq!(values[3], r(1, true));
+        for value in &values {
+            assert!(dom.contains(value).unwrap(), "{value}");
+        }
+        assert!(!dom.contains(&r(2, false)).unwrap());
     }
 
     #[test]

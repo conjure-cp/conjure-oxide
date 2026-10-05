@@ -400,8 +400,23 @@ impl AbstractLiteral<Expression> {
                 }
                 Some(Domain::matrix(item_domain, new_index_domain))
             }
-            AbstractLiteral::Tuple(_) => None,
-            AbstractLiteral::Record(_) => None,
+            AbstractLiteral::Tuple(items) => Some(Domain::tuple(
+                items
+                    .iter()
+                    .map(Expression::domain_of)
+                    .collect::<Option<Vec<_>>>()?,
+            )),
+            AbstractLiteral::Record(items) => Some(Domain::record(
+                items
+                    .iter()
+                    .map(|field| {
+                        Some(super::Field {
+                            name: field.name.clone(),
+                            value: field.value.domain_of()?,
+                        })
+                    })
+                    .collect::<Option<Vec<_>>>()?,
+            )),
             AbstractLiteral::Function(_) => None,
             AbstractLiteral::Variant(_) => None,
             AbstractLiteral::Relation(_) => None,
@@ -533,6 +548,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 for item in items {
                     item_types.push(item.clone().func_map(|x| x.return_type()));
                 }
+                item_types.sort();
                 ReturnType::Record(item_types)
             }
             AbstractLiteral::Function(items) => {

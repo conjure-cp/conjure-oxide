@@ -836,6 +836,7 @@ module.exports = grammar ({
       field("element_id", $.element_id),
       field("table", $.table),
       field("negative_table", $.negative_table),
+      field("short_table", $.short_table),
       field("pareto_expression", $.pareto_expression),
       field("apply_expr", $.apply_expr),
       field("image_expr", $.image_expr),
@@ -1138,6 +1139,15 @@ module.exports = grammar ({
 
     table: $ => seq(
       "table",
+      "(",
+      field("variables", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      ",",
+      field("rows", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      ")"
+    ),
+
+    short_table: $ => seq(
+      "shortTable",
       "(",
       field("variables", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ",",

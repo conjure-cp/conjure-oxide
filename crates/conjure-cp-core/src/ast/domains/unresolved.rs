@@ -500,6 +500,7 @@ impl Typeable for UnresolvedDomain {
                 for entry in entries {
                     entry_types.push(entry.clone().func_map(|x| x.return_type()));
                 }
+                entry_types.sort();
                 ReturnType::Record(entry_types)
             }
             UnresolvedDomain::Variant(entries) => {

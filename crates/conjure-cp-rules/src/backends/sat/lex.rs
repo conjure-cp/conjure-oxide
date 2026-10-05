@@ -1,5 +1,5 @@
 //! Scalar lexicographic comparisons reuse numeric relation and Boolean decisions.
-use conjure_cp::ast::{Expression, SymbolTable};
+use conjure_cp::ast::{Expression, Metadata, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
@@ -22,6 +22,31 @@ fn scalar_lex_comparison(expr: &Expression, symbols: &SymbolTable) -> Applicatio
         }
     }
     super::super::smt::lex::expand_lex_lt_leq(expr, symbols)
+}
+
+/// Representation ordering constraints may already be flattened into scalar atoms.
+#[register_rule("SAT", 18500, [FlatLexLt, FlatLexLeq])]
+fn flat_scalar_lex_comparison(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
+    let (left, right, strict) = match expr {
+        Expression::FlatLexLt(_, left, right) => (left, right, true),
+        Expression::FlatLexLeq(_, left, right) => (left, right, false),
+        _ => return Err(RuleNotApplicable),
+    };
+    let matrix = |atoms: &[conjure_cp::ast::Atom]| {
+        Moo::new(conjure_cp::into_matrix_expr!(
+            atoms
+                .iter()
+                .cloned()
+                .map(Expression::from)
+                .collect::<Vec<_>>()
+        ))
+    };
+    let expression = if strict {
+        Expression::LexLt(Metadata::new(), matrix(left), matrix(right))
+    } else {
+        Expression::LexLeq(Metadata::new(), matrix(left), matrix(right))
+    };
+    scalar_lex_comparison(&expression, symbols)
 }
 
 #[cfg(test)]

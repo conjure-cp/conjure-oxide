@@ -223,7 +223,7 @@ pub struct GlobalArgs {
     #[arg(long = "sat-encoding-element", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub element_encoding: Option<conjure_cp::ast::sat_decision::ElementEncoding>,
 
-    /// Pin the SAT table composition: tuple or mdd.
+    /// Pin the SAT table composition: tuple, mdd or binary-support (constant two-column relations).
     #[arg(long = "sat-encoding-table", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub table_encoding: Option<conjure_cp::ast::sat_decision::TableEncoding>,
 

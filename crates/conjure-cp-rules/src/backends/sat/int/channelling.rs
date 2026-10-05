@@ -37,7 +37,22 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     let mut encodings = HashSet::new();
     let mut has_indicator = false;
     let mut operands_ready = true;
-    for operand in operands(expr) {
+    let table = matches!(expr, Expr::Table(..) | Expr::NegativeTable(..));
+    let inputs = if table {
+        expr.children()
+            .into_iter()
+            .flat_map(|child| {
+                super::super::table::materialise(&child)
+                    .universe()
+                    .into_iter()
+                    .filter(|input| matches!(input, Expr::SATInt(..)))
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
+    } else {
+        operands(expr).collect()
+    };
+    for operand in inputs {
         let indicator = ready_indicator(&operand);
         has_indicator |= indicator;
         operands_ready &= indicator
@@ -94,12 +109,18 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     let children: VecDeque<Expr> = expr
         .children()
         .into_iter()
-        .map(|child| match matrix_child(&child) {
-            Some((elements, index_domain)) => {
-                let converted: Vec<Expr> = elements.into_iter().map(&mut convert).collect();
-                rebuild_matrix_child(converted, index_domain)
+        .map(|child| {
+            if table {
+                map_table_cells(super::super::table::materialise(&child), &mut convert)
+            } else {
+                match matrix_child(&child) {
+                    Some((elements, index_domain)) => {
+                        let converted: Vec<Expr> = elements.into_iter().map(&mut convert).collect();
+                        rebuild_matrix_child(converted, index_domain)
+                    }
+                    None => convert(child),
+                }
             }
-            None => convert(child),
         })
         .collect();
 
@@ -108,6 +129,20 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         clauses,
         new_symbols,
     ))
+}
+
+fn map_table_cells(expression: Expr, convert: &mut impl FnMut(Expr) -> Expr) -> Expr {
+    if let Some((entries, domain)) = matrix_child(&expression) {
+        rebuild_matrix_child(
+            entries
+                .into_iter()
+                .map(|entry| map_table_cells(super::super::table::materialise(&entry), convert))
+                .collect(),
+            domain,
+        )
+    } else {
+        convert(expression)
+    }
 }
 
 /// The elements of a matrix-literal child, with the index domain to rebuild it under.

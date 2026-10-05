@@ -22,6 +22,46 @@ use uniplate::{Biplate, Uniplate};
 
 register_rule_set!("ReprMatrixComponents", ("Base"), |_: &SolverFamily| true);
 
+/// Whole matrix lookup values compare their corresponding component variables.
+#[register_rule("ReprMatrixComponents", 9400, [Eq, Neq])]
+fn matrix_components_var_eq_var(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    let (left, right, neq) = as_eq_or_neq(expr)?;
+    let (
+        Expression::Atomic(_, Atom::Reference(left)),
+        Expression::Atomic(_, Atom::Reference(right)),
+    ) = (left, right)
+    else {
+        return Err(RuleNotApplicable);
+    };
+    let left_domain = left.resolved_domain().ok_or(RuleNotApplicable)?;
+    let right_domain = right.resolved_domain().ok_or(RuleNotApplicable)?;
+    let (GroundDomain::Matrix(_, left_indices), GroundDomain::Matrix(_, right_indices)) =
+        (left_domain.as_ref(), right_domain.as_ref())
+    else {
+        return Err(RuleNotApplicable);
+    };
+    if left_indices != right_indices {
+        return Err(RuleNotApplicable);
+    }
+    let left = left
+        .get_repr_as::<MatrixComponents>()
+        .ok_or(RuleNotApplicable)?;
+    let right = right
+        .get_repr_as::<MatrixComponents>()
+        .ok_or(RuleNotApplicable)?;
+    if left.elements.len() != right.elements.len() {
+        return Err(RuleNotApplicable);
+    }
+    Ok(Reduction::pure(collect_eq_or_neq(
+        neq,
+        left.elements
+            .iter()
+            .cloned()
+            .map(Reference::new)
+            .zip(right.elements.iter().cloned().map(Reference::new)),
+    )))
+}
+
 /// Compare a component-represented matrix with a matrix literal element by element.
 #[register_rule("ReprMatrixComponents", 9400, [Eq, Neq])]
 fn matrix_components_var_eq_literal(expr: &Expression, _: &SymbolTable) -> ApplicationResult {

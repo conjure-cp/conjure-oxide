@@ -97,7 +97,7 @@ pub fn parse_atom(
         }
         "flatten" => parse_flatten(ctx, node),
         "element_id" => parse_element_id(ctx, node),
-        "table" | "negative_table" => parse_table(ctx, node),
+        "table" | "negative_table" | "short_table" => parse_table(ctx, node),
         "index_or_slice" => parse_index_or_slice(ctx, node),
         "annotation_expr" => parse_annotation_expression(ctx, node),
         // for now, assume is binary since powerset isn't implemented
@@ -203,6 +203,11 @@ fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
 
     match node.kind() {
         "table" => Ok(Some(Expression::Table(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(rows),
+        ))),
+        "short_table" => Ok(Some(Expression::ShortTable(
             Metadata::new(),
             Moo::new(variables),
             Moo::new(rows),

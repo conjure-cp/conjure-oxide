@@ -153,7 +153,7 @@ pub enum Expression {
     SafeIndex(Metadata, Moo<Expression>, Vec<Expression>),
 
     /// Internal total element definition. Outside the index domain, the value is unconstrained.
-    /// Safe indexing introduces this before numeric representation materialisation finishes.
+    /// Safe indexing introduces this before representation-specific comparisons finish lowering.
     #[polyquine_skip]
     SatElement(Metadata, Moo<Expression>, Moo<Expression>, Moo<Expression>),
 
@@ -394,6 +394,9 @@ pub enum Expression {
     /// forbidden rows.
     #[compatible(JsonInput)]
     NegativeTable(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Table rows specify `(one-based position, value)` pairs; omitted positions are wildcards.
+    ShortTable(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// `atleast(vars, counts, values)`
     ///
@@ -1412,7 +1415,9 @@ impl Expression {
                 Some(Domain::bool())
             }
             Expression::Table(_, _, _) => Some(Domain::bool()),
-            Expression::NegativeTable(_, _, _) => Some(Domain::bool()),
+            Expression::NegativeTable(_, _, _) | Expression::ShortTable(_, _, _) => {
+                Some(Domain::bool())
+            }
             Expression::AtLeast(_, _, _, _) => Some(Domain::bool()),
             Expression::AtMost(_, _, _, _) => Some(Domain::bool()),
             Expression::Gcc(_, _, _, _) | Expression::GccWeak(_, _, _, _) => Some(Domain::bool()),
@@ -2122,6 +2127,7 @@ impl Expression {
             FlatLexLt,
             FlatLexLeq,
             NegativeTable,
+            ShortTable,
             Table,
             AtLeast,
             AtMost,
@@ -2834,6 +2840,9 @@ impl Display for Expression {
             Expression::Table(_, tuple_expr, rows_expr) => {
                 write!(f, "table({tuple_expr}, {rows_expr})")
             }
+            Expression::ShortTable(_, tuple_expr, rows_expr) => {
+                write!(f, "shortTable({tuple_expr}, {rows_expr})")
+            }
             Expression::NegativeTable(_, tuple_expr, rows_expr) => {
                 write!(f, "negativeTable({tuple_expr}, {rows_expr})")
             }
@@ -3153,7 +3162,7 @@ impl Typeable for Expression {
             Expression::Parts(_, subject) => {
                 ReturnType::Set(Box::new(ReturnType::Set(Box::new(subject.return_type()))))
             }
-            Expression::CatchUndef(_, _, _) => ReturnType::Int,
+            Expression::CatchUndef(_, value, _) => value.return_type(),
             Expression::SafeDiv(_, _, _) => ReturnType::Int,
             Expression::UnsafeDiv(_, _, _) => ReturnType::Int,
             Expression::FlatAllDiff(_, _) => ReturnType::Bool,
@@ -3186,7 +3195,9 @@ impl Typeable for Expression {
                 ReturnType::Bool
             }
             Expression::Table(_, _, _) => ReturnType::Bool,
-            Expression::NegativeTable(_, _, _) => ReturnType::Bool,
+            Expression::NegativeTable(_, _, _) | Expression::ShortTable(_, _, _) => {
+                ReturnType::Bool
+            }
             Expression::AtLeast(_, _, _, _) => ReturnType::Bool,
             Expression::AtMost(_, _, _, _) => ReturnType::Bool,
             Expression::Gcc(_, _, _, _) | Expression::GccWeak(_, _, _, _) => ReturnType::Bool,
@@ -3476,6 +3487,7 @@ impl Expression {
             // Moo<Expression> + Moo<Expression>
             Expression::Table(_, m1, m2)
             | Expression::NegativeTable(_, m1, m2)
+            | Expression::ShortTable(_, m1, m2)
             | Expression::Bubble(_, m1, m2)
             | Expression::Imply(_, m1, m2)
             | Expression::Iff(_, m1, m2)
@@ -3800,6 +3812,7 @@ impl Expression {
             // Moo<Expression> + Moo<Expression>
             Expression::Table(_, m1, m2)
             | Expression::NegativeTable(_, m1, m2)
+            | Expression::ShortTable(_, m1, m2)
             | Expression::Bubble(_, m1, m2)
             | Expression::Imply(_, m1, m2)
             | Expression::Iff(_, m1, m2)

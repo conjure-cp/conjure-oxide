@@ -72,11 +72,14 @@ pub enum SatEncodingDecision {
         amo_encoding: Option<EncodingSelection<AmoEncoding>>,
         pb_encoding: Option<EncodingSelection<PbEncoding>>,
     },
-    /// Define membership in a constant integer/Boolean relation.
+    /// Define membership in an integer/Boolean relation.
     Table {
         output: Expression,
         inputs: Vec<SatIntegerView>,
         rows: Vec<Vec<i64>>,
+        /// Non-constant relation cells retain their numeric representation views.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        row_views: Option<Vec<Vec<SatIntegerView>>>,
         negative: bool,
         encoding: Option<EncodingSelection<TableEncoding>>,
         pb_encoding: Option<EncodingSelection<PbEncoding>>,
@@ -218,17 +221,21 @@ impl Display for SatEncodingDecision {
                 output,
                 inputs,
                 rows,
+                row_views,
                 negative,
                 encoding,
                 pb_encoding,
             } => write!(
                 f,
-                "define({output} <-> table({}, {rows:?}, negative={negative})) using {encoding:?}, PB {pb_encoding:?}",
+                "define({output} <-> table({}, {}, negative={negative})) using {encoding:?}, PB {pb_encoding:?}",
                 inputs
                     .iter()
                     .map(ToString::to_string)
                     .collect::<Vec<_>>()
-                    .join(", ")
+                    .join(", "),
+                row_views
+                    .as_ref()
+                    .map_or_else(|| format!("{rows:?}"), |views| format!("{views:?}"))
             ),
             Self::Element {
                 index_view,
@@ -329,14 +336,24 @@ impl SatEncodingDecision {
                         .chain(input.choices.iter().flatten().map(|(_, term)| term))
                 }))
                 .collect(),
-            Self::Table { output, inputs, .. } => std::iter::once(output)
-                .chain(inputs.iter().flat_map(|input| {
-                    input
-                        .terms
+            Self::Table {
+                output,
+                inputs,
+                row_views,
+                ..
+            } => std::iter::once(output)
+                .chain(
+                    inputs
                         .iter()
-                        .map(|(_, term)| term)
-                        .chain(input.choices.iter().flatten().map(|(_, term)| term))
-                }))
+                        .chain(row_views.iter().flatten().flatten())
+                        .flat_map(|input| {
+                            input
+                                .terms
+                                .iter()
+                                .map(|(_, term)| term)
+                                .chain(input.choices.iter().flatten().map(|(_, term)| term))
+                        }),
+                )
                 .collect(),
             Self::Element {
                 index_view,
@@ -442,10 +459,12 @@ pub enum TableEncoding {
     Tuple,
     /// Reduced layered decision diagram, sharing equal suffix relations.
     Mdd,
+    /// Bidirectional value supports for constant binary relations.
+    BinarySupport,
 }
 impl TableEncoding {
-    pub const ALL: [Self; 2] = [Self::Tuple, Self::Mdd];
-    pub const LABELS: [&'static str; 2] = ["tuple", "mdd"];
+    pub const ALL: [Self; 3] = [Self::Tuple, Self::Mdd, Self::BinarySupport];
+    pub const LABELS: [&'static str; 3] = ["tuple", "mdd", "binary-support"];
 }
 impl Display for TableEncoding {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -640,7 +659,14 @@ fn resolve_table_choices(decisions: &mut [SatEncodingDecision]) {
     if rows.is_empty() {
         return;
     }
-    let algorithms = &TableEncoding::ALL;
+    let binary = decisions.iter().all(|decision| match decision {
+        SatEncodingDecision::Table {
+            inputs, row_views, ..
+        } => inputs.len() == 2 && row_views.is_none(),
+        _ => true,
+    });
+    let algorithms = &TableEncoding::ALL[..if binary { 3 } else { 2 }];
+    let labels = &TableEncoding::LABELS[..algorithms.len()];
     let (algorithm, provenance) = if let Some(algorithm) = settings::table_encoding() {
         (algorithm, SelectionProvenance::ExplicitConfiguration)
     } else {
@@ -651,10 +677,8 @@ fn resolve_table_choices(decisions: &mut [SatEncodingDecision]) {
                 Heuristic::First => 0,
                 Heuristic::Compact => usize::from(rows.iter().any(|size| *size > 4)),
                 Heuristic::Random => settings::next_heuristic_random_index(algorithms.len()),
-                Heuristic::Interactive => {
-                    settings::next_heuristic_interactive_index(&TableEncoding::LABELS)
-                }
-                Heuristic::All => settings::next_heuristic_all_index(&TableEncoding::LABELS),
+                Heuristic::Interactive => settings::next_heuristic_interactive_index(labels),
+                Heuristic::All => settings::next_heuristic_all_index(labels),
             }
         };
         (algorithms[index], SelectionProvenance::Heuristic)
@@ -1163,10 +1187,12 @@ fn resolve_pb_choices(decisions: &mut [SatEncodingDecision]) {
                 .map(|input| &input.terms),
             SatEncodingDecision::Table {
                 inputs,
+                row_views,
                 pb_encoding: None,
                 ..
             } => inputs
                 .iter()
+                .chain(row_views.iter().flatten().flatten())
                 .max_by_key(|input| {
                     input
                         .terms
@@ -1451,6 +1477,7 @@ mod table_choice_tests {
             output: true.into(),
             inputs: vec![],
             rows: vec![vec![]; size],
+            row_views: None,
             negative: false,
             encoding: None,
             pb_encoding: None,

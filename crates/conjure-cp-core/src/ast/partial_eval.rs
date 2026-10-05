@@ -455,7 +455,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
         Expr::Table(_, _, _) => Err(RuleNotApplicable),
-        Expr::NegativeTable(_, _, _) => Err(RuleNotApplicable),
+        Expr::NegativeTable(_, _, _) | Expr::ShortTable(_, _, _) => Err(RuleNotApplicable),
         Expr::AtLeast(_, _, _, _) => Err(RuleNotApplicable),
         Expr::AtMost(_, _, _, _) => Err(RuleNotApplicable),
         Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => Err(RuleNotApplicable),

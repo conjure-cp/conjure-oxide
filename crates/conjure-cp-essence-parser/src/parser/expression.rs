@@ -44,6 +44,7 @@ pub fn parse_expression(
         | "element_id"
         | "table"
         | "negative_table"
+        | "short_table"
         | "apply_expr"
         | "image_expr"
         | "image_set_expr"
@@ -257,7 +258,7 @@ fn parse_boolean_expression(
         return Ok(None);
     };
     match inner.kind() {
-        "atom" | "table" | "negative_table" => parse_atom(ctx, &inner),
+        "atom" | "table" | "negative_table" | "short_table" => parse_atom(ctx, &inner),
         "active_expr" => parse_active_expression(ctx, &inner),
         "not_expr" | "sub_bool_expr" => parse_unary_expression(ctx, &inner),
         "and_expr" | "or_expr" | "implication" | "iff_expr" => parse_binary_expression(ctx, &inner),
@@ -1127,7 +1128,8 @@ fn parse_catch_undef_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    ctx.typechecking_context = TypecheckingContext::Arithmetic;
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
 
     let Some(expression_node) = field!(recover, ctx, node, "expression") else {
         return Ok(None);
@@ -1139,11 +1141,12 @@ fn parse_catch_undef_expression(
     let Some(expression) = parse_expression(ctx, expression_node)? else {
         return Ok(None);
     };
-    ctx.typechecking_context = TypecheckingContext::Arithmetic;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
     let Some(default) = parse_expression(ctx, default_node)? else {
         return Ok(None);
     };
 
+    ctx.typechecking_context = saved_context;
     Ok(Some(Expression::CatchUndef(
         Metadata::new(),
         Moo::new(expression),

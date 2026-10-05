@@ -442,6 +442,22 @@ mod test {
     }
 
     #[test]
+    fn parses_short_tables_and_compound_defaults() {
+        use uniplate::Uniplate;
+        let (model, _) =
+            parse_essence("find x, y : int(1..3) such that shortTable([x,y], [[(1,2)], []])")
+                .unwrap();
+        assert!(matches!(model.constraints()[0], Expression::ShortTable(..)));
+        let (model, _) = parse_essence("find m : matrix indexed by [int(1..2)] of (bool,int(1..3)) find i : int(1..3) such that catchUndef(m[i], (false,1)) = (false,1)").unwrap();
+        assert!(
+            model.constraints()[0]
+                .universe()
+                .iter()
+                .any(|expression| matches!(expression, Expression::CatchUndef(..)))
+        );
+    }
+
+    #[test]
     pub fn test_parse_table_in_quantifier() {
         let src = "
         find x, y, z : int(1..3)

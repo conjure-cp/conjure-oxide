@@ -686,7 +686,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
         }
         Expr::Table(_, _, _) => None,
-        Expr::NegativeTable(_, _, _) => None,
+        Expr::NegativeTable(_, _, _) | Expr::ShortTable(_, _, _) => None,
         Expr::AtLeast(_, _, _, _) => None,
         Expr::AtMost(_, _, _, _) => None,
         Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => None,
