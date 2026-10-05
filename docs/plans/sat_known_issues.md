@@ -497,3 +497,10 @@ The two Savile Row `tableshort` fixtures remain globally skipped. They use Essen
 Direct Conjure type-checking accepts the set default, but Conjure `3de9b2ef3` crashes during reference refinement with `Comprehension contains unsupported generators` over that set-valued `catchUndef`. The set fixture records the reference limitation and checks complete independently enumerated assignments. A reproducer/report is kept uncommitted under `bug-reports/conjure-set-catch-undef`; no upstream issue was submitted. This is not a RustSAT/Pindakaas encoder bug.
 
 The general inverse rule still declines an empty compound matrix. The new masked function regression has a non-empty declared domain and covers absent queries/partial entries, not an empty compound domain. Keep empty-domain inverse handling on the feature frontier. Compound lookup types beyond the tuple/record/set/matrix/sequence regressions also require dedicated coverage.
+
+
+## Confirmed Pindakaas 0.5.1 Tseitin constant-branch bug
+
+The next library connection audit reproduces six wrong projected assignments through the public `TseitinEncoder` alone. Its Boolean-constant ITE simplifier reverses the remaining variable branch in three cases: true then/variable else, false then/variable else, and variable then/false else. Exhaustive enumeration of generated CNF agrees with `c or !b`, `!c and !b` and `c and !b`, respectively, rather than the original formulas. No Oxide adaptor or solver participates in the reproducer.
+
+The report and standalone Cargo project are uncommitted under `bug-reports/pindakaas-0.5.1/tseitin-constant-branches`. No report has been submitted and no workaround introduced. This blocks the Pindakaas Tseitin provider; RustSAT Boolean generation remains active. It does not affect the newly connected Pindakaas AMO providers. Continue with other public-library options while preserving this blocker and the deferred mixed-representation/channelling work.
