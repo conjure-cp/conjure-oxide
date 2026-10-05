@@ -1,0 +1,235 @@
+Model before rewriting:
+
+find x: sequence (size 2, injective) of int(1..3)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#explicit_1: matrix indexed by [int(1..2)] of int(1..3)
+new constraints:
+  or([1 <= 2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)])
+  or([2 <= 2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
+  allDifferent(x#explicit_1)
+
+--
+
+x#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1
+new variables:
+  find x#explicit_1#components_1: int(1..3)
+  find x#explicit_1#components_2: int(1..3)
+
+--
+
+true,
+true,
+true,
+allDifferent(x#explicit_1)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+true,
+true,
+allDifferent(x#explicit_1)
+new variables:
+  find x#explicit_1#components_1#int_direct_1: bool
+  find x#explicit_1#components_1#int_direct_2: bool
+  find x#explicit_1#components_1#int_direct_3: bool
+  find x#explicit_1#components_2#int_direct_1: bool
+  find x#explicit_1#components_2#int_direct_2: bool
+  find x#explicit_1#components_2#int_direct_3: bool
+new constraints:
+  sum([toInt(x#explicit_1#components_1#int_direct_1),toInt(x#explicit_1#components_1#int_direct_2),toInt(x#explicit_1#components_1#int_direct_3);int(1..)]) <= 1
+  or([x#explicit_1#components_1#int_direct_1,x#explicit_1#components_1#int_direct_2,x#explicit_1#components_1#int_direct_3;int(1..)])
+  sum([toInt(x#explicit_1#components_2#int_direct_1),toInt(x#explicit_1#components_2#int_direct_2),toInt(x#explicit_1#components_2#int_direct_3);int(1..)]) <= 1
+  or([x#explicit_1#components_2#int_direct_1,x#explicit_1#components_2#int_direct_2,x#explicit_1#components_2#int_direct_3;int(1..)])
+
+--
+
+true,
+true,
+true,
+allDifferent(x#explicit_1),
+sum([toInt(x#explicit_1#components_1#int_direct_1),toInt(x#explicit_1#components_1#int_direct_2),toInt(x#explicit_1#components_1#int_direct_3);int(1..)]) <= 1,
+or([x#explicit_1#components_1#int_direct_1,x#explicit_1#components_1#int_direct_2,x#explicit_1#components_1#int_direct_3;int(1..)]),
+sum([toInt(x#explicit_1#components_2#int_direct_1),toInt(x#explicit_1#components_2#int_direct_2),toInt(x#explicit_1#components_2#int_direct_3);int(1..)]) <= 1,
+or([x#explicit_1#components_2#int_direct_1,x#explicit_1#components_2#int_direct_2,x#explicit_1#components_2#int_direct_3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+true,
+true,
+allDifferent(x#explicit_1),
+or([x#explicit_1#components_1#int_direct_1,x#explicit_1#components_1#int_direct_2,x#explicit_1#components_1#int_direct_3;int(1..)]),
+sum([toInt(x#explicit_1#components_2#int_direct_1),toInt(x#explicit_1#components_2#int_direct_2),toInt(x#explicit_1#components_2#int_direct_3);int(1..)]) <= 1,
+or([x#explicit_1#components_2#int_direct_1,x#explicit_1#components_2#int_direct_2,x#explicit_1#components_2#int_direct_3;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#explicit_1#components_1#int_direct_1, x#explicit_1#components_1#int_direct_2, x#explicit_1#components_1#int_direct_3) using None
+
+--
+
+true,
+true,
+true,
+allDifferent(x#explicit_1),
+or([x#explicit_1#components_1#int_direct_1,x#explicit_1#components_1#int_direct_2,x#explicit_1#components_1#int_direct_3;int(1..)]),
+sum([toInt(x#explicit_1#components_2#int_direct_1),toInt(x#explicit_1#components_2#int_direct_2),toInt(x#explicit_1#components_2#int_direct_3);int(1..)]) <= 1,
+or([x#explicit_1#components_2#int_direct_1,x#explicit_1#components_2#int_direct_2,x#explicit_1#components_2#int_direct_3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+true,
+true,
+allDifferent(x#explicit_1),
+or([x#explicit_1#components_1#int_direct_1,x#explicit_1#components_1#int_direct_2,x#explicit_1#components_1#int_direct_3;int(1..)]),
+or([x#explicit_1#components_2#int_direct_1,x#explicit_1#components_2#int_direct_2,x#explicit_1#components_2#int_direct_3;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#explicit_1#components_2#int_direct_1, x#explicit_1#components_2#int_direct_2, x#explicit_1#components_2#int_direct_3) using None
+
+--
+
+or([x#explicit_1#components_1#int_direct_1,x#explicit_1#components_1#int_direct_2,x#explicit_1#components_1#int_direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> or([x#explicit_1#components_1#int_direct_1,x#explicit_1#components_1#int_direct_2,x#explicit_1#components_1#int_direct_3;int(1..)])) using tseitin
+
+--
+
+or([x#explicit_1#components_2#int_direct_1,x#explicit_1#components_2#int_direct_2,x#explicit_1#components_2#int_direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([x#explicit_1#components_2#int_direct_1,x#explicit_1#components_2#int_direct_2,x#explicit_1#components_2#int_direct_3;int(1..)])) using tseitin
+
+--
+
+true,
+true,
+true,
+allDifferent(x#explicit_1),
+__0,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+allDifferent(x#explicit_1),
+__1
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+true,
+true,
+true,
+allDifferent(x#explicit_1),
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+allDifferent(x#explicit_1)
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+allDifferent(x#explicit_1)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([x#explicit_1#components_1,x#explicit_1#components_2;int(1..2)])
+
+--
+
+x#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_1
+
+--
+
+x#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [x#explicit_1#components_2#int_direct_1,x#explicit_1#components_2#int_direct_2,x#explicit_1#components_2#int_direct_3;int(1..)] [1, 3])
+
+--
+
+x#explicit_1#components_1
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [x#explicit_1#components_1#int_direct_1,x#explicit_1#components_1#int_direct_2,x#explicit_1#components_1#int_direct_3;int(1..)] [1, 3])
+
+--
+
+allDifferent([SATInt(Direct, [x#explicit_1#components_1#int_direct_1,x#explicit_1#components_1#int_direct_2,x#explicit_1#components_1#int_direct_3;int(1..)] [1, 3]),SATInt(Direct, [x#explicit_1#components_2#int_direct_1,x#explicit_1#components_2#int_direct_2,x#explicit_1#components_2#int_direct_3;int(1..)] [1, 3]);int(1..2)])
+   ~~> matrix_to_list ([("Base", 1998)])
+allDifferent([SATInt(Direct, [x#explicit_1#components_1#int_direct_1,x#explicit_1#components_1#int_direct_2,x#explicit_1#components_1#int_direct_3;int(1..)] [1, 3]),SATInt(Direct, [x#explicit_1#components_2#int_direct_1,x#explicit_1#components_2#int_direct_2,x#explicit_1#components_2#int_direct_3;int(1..)] [1, 3]);int(1..)])
+
+--
+
+allDifferent([SATInt(Direct, [x#explicit_1#components_1#int_direct_1,x#explicit_1#components_1#int_direct_2,x#explicit_1#components_1#int_direct_3;int(1..)] [1, 3]),SATInt(Direct, [x#explicit_1#components_2#int_direct_1,x#explicit_1#components_2#int_direct_2,x#explicit_1#components_2#int_direct_3;int(1..)] [1, 3]);int(1..)])
+   ~~> select_alldifferent ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> allDifferent(0+weighted(1*x#explicit_1#components_1#int_direct_1, 2*x#explicit_1#components_1#int_direct_2, 3*x#explicit_1#components_1#int_direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:x#explicit_1#components_1#int_direct_1, 2:x#explicit_1#components_1#int_direct_2, 3:x#explicit_1#components_1#int_direct_3), 0+weighted(1*x#explicit_1#components_2#int_direct_1, 2*x#explicit_1#components_2#int_direct_2, 3*x#explicit_1#components_2#int_direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:x#explicit_1#components_2#int_direct_1, 2:x#explicit_1#components_2#int_direct_2, 3:x#explicit_1#components_2#int_direct_3))) using None, AMO None, PB None
+
+--
+
+true,
+true,
+true,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+Final model:
+
+find x: sequence (size 2, injective) of int(1..3)
+find x#explicit_1: matrix indexed by [int(1..2)] of int(1..3)
+find x#explicit_1#components_1: int(1..3)
+find x#explicit_1#components_2: int(1..3)
+find x#explicit_1#components_1#int_direct_1: bool
+find x#explicit_1#components_1#int_direct_2: bool
+find x#explicit_1#components_1#int_direct_3: bool
+find x#explicit_1#components_2#int_direct_1: bool
+find x#explicit_1#components_2#int_direct_2: bool
+find x#explicit_1#components_2#int_direct_3: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+
+such that
+
+true,
+true,
+true
+
+sat encoding decisions:
+
+at-most-one(x#explicit_1#components_1#int_direct_1, x#explicit_1#components_1#int_direct_2, x#explicit_1#components_1#int_direct_3) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
+at-most-one(x#explicit_1#components_2#int_direct_1, x#explicit_1#components_2#int_direct_2, x#explicit_1#components_2#int_direct_3) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
+define(__0 <-> or([x#explicit_1#components_1#int_direct_1,x#explicit_1#components_1#int_direct_2,x#explicit_1#components_1#int_direct_3;int(1..)])) using tseitin,
+define(__1 <-> or([x#explicit_1#components_2#int_direct_1,x#explicit_1#components_2#int_direct_2,x#explicit_1#components_2#int_direct_3;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin,
+define(__2 <-> allDifferent(0+weighted(1*x#explicit_1#components_1#int_direct_1, 2*x#explicit_1#components_1#int_direct_2, 3*x#explicit_1#components_1#int_direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:x#explicit_1#components_1#int_direct_1, 2:x#explicit_1#components_1#int_direct_2, 3:x#explicit_1#components_1#int_direct_3), 0+weighted(1*x#explicit_1#components_2#int_direct_1, 2*x#explicit_1#components_2#int_direct_2, 3*x#explicit_1#components_2#int_direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:x#explicit_1#components_2#int_direct_1, 2:x#explicit_1#components_2#int_direct_2, 3:x#explicit_1#components_2#int_direct_3))) using Some(EncodingSelection { algorithm: ValueAmo, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+assert(__2) using tseitin
+

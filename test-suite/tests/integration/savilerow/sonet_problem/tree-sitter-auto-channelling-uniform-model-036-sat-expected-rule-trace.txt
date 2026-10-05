@@ -1,0 +1,1092 @@
+Model before rewriting:
+
+letting r be 4
+letting n be 5
+letting demand be [[0,1,0,1,0;int(1..5)],[1,0,1,0,0;int(1..5)],[0,1,0,0,1;int(1..5)],[1,0,0,0,0;int(1..5)],[0,0,1,0,0;int(1..5)];int(1..5)]
+letting capacity_nodes be [3,2,2,1;int(1..4)]
+find rings: matrix indexed by [int(1..r), int(1..n)] of bool
+findAux __0: int(0..20)
+
+such that
+
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ]),
+optimise(minimise=true, value=__0)
+
+--
+
+__0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ])
+   ~~> select_aux_declaration_representation ([("ReprGeneral", 10000)])
+__0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ])
+new variables:
+  findAux __0#int_direct_1: bool
+  findAux __0#int_direct_10: bool
+  findAux __0#int_direct_11: bool
+  findAux __0#int_direct_12: bool
+  findAux __0#int_direct_13: bool
+  findAux __0#int_direct_14: bool
+  findAux __0#int_direct_15: bool
+  findAux __0#int_direct_16: bool
+  findAux __0#int_direct_17: bool
+  findAux __0#int_direct_18: bool
+  findAux __0#int_direct_19: bool
+  findAux __0#int_direct_2: bool
+  findAux __0#int_direct_20: bool
+  findAux __0#int_direct_21: bool
+  findAux __0#int_direct_3: bool
+  findAux __0#int_direct_4: bool
+  findAux __0#int_direct_5: bool
+  findAux __0#int_direct_6: bool
+  findAux __0#int_direct_7: bool
+  findAux __0#int_direct_8: bool
+  findAux __0#int_direct_9: bool
+new constraints:
+  sum([toInt(__0#int_direct_1),toInt(__0#int_direct_2),toInt(__0#int_direct_3),toInt(__0#int_direct_4),toInt(__0#int_direct_5),toInt(__0#int_direct_6),toInt(__0#int_direct_7),toInt(__0#int_direct_8),toInt(__0#int_direct_9),toInt(__0#int_direct_10),toInt(__0#int_direct_11),toInt(__0#int_direct_12),toInt(__0#int_direct_13),toInt(__0#int_direct_14),toInt(__0#int_direct_15),toInt(__0#int_direct_16),toInt(__0#int_direct_17),toInt(__0#int_direct_18),toInt(__0#int_direct_19),toInt(__0#int_direct_20),toInt(__0#int_direct_21);int(1..)]) <= 1
+  or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3,__0#int_direct_4,__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)])
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ]),
+optimise(minimise=true, value=__0),
+sum([toInt(__0#int_direct_1),toInt(__0#int_direct_2),toInt(__0#int_direct_3),toInt(__0#int_direct_4),toInt(__0#int_direct_5),toInt(__0#int_direct_6),toInt(__0#int_direct_7),toInt(__0#int_direct_8),toInt(__0#int_direct_9),toInt(__0#int_direct_10),toInt(__0#int_direct_11),toInt(__0#int_direct_12),toInt(__0#int_direct_13),toInt(__0#int_direct_14),toInt(__0#int_direct_15),toInt(__0#int_direct_16),toInt(__0#int_direct_17),toInt(__0#int_direct_18),toInt(__0#int_direct_19),toInt(__0#int_direct_20),toInt(__0#int_direct_21);int(1..)]) <= 1,
+or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3,__0#int_direct_4,__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ]),
+optimise(minimise=true, value=__0),
+or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3,__0#int_direct_4,__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__0#int_direct_1, __0#int_direct_2, __0#int_direct_3, __0#int_direct_4, __0#int_direct_5, __0#int_direct_6, __0#int_direct_7, __0#int_direct_8, __0#int_direct_9, __0#int_direct_10, __0#int_direct_11, __0#int_direct_12, __0#int_direct_13, __0#int_direct_14, __0#int_direct_15, __0#int_direct_16, __0#int_direct_17, __0#int_direct_18, __0#int_direct_19, __0#int_direct_20, __0#int_direct_21) using None
+
+--
+
+optimise(minimise=true, value=__0)
+   ~~> select_sat_objective ([("SAT", 18400)])
+true
+new SAT encoding decisions:
+  optimise(minimise=true, value=0+weighted(0*__0#int_direct_1, 1*__0#int_direct_2, 2*__0#int_direct_3, 3*__0#int_direct_4, 4*__0#int_direct_5, 5*__0#int_direct_6, 6*__0#int_direct_7, 7*__0#int_direct_8, 8*__0#int_direct_9, 9*__0#int_direct_10, 10*__0#int_direct_11, 11*__0#int_direct_12, 12*__0#int_direct_13, 13*__0#int_direct_14, 14*__0#int_direct_15, 15*__0#int_direct_16, 16*__0#int_direct_17, 17*__0#int_direct_18, 18*__0#int_direct_19, 19*__0#int_direct_20, 20*__0#int_direct_21) with [PbTermGroup { start: 0, end: 21, structure: Choice }] choices(0:__0#int_direct_1, 1:__0#int_direct_2, 2:__0#int_direct_3, 3:__0#int_direct_4, 4:__0#int_direct_5, 5:__0#int_direct_6, 6:__0#int_direct_7, 7:__0#int_direct_8, 8:__0#int_direct_9, 9:__0#int_direct_10, 10:__0#int_direct_11, 11:__0#int_direct_12, 12:__0#int_direct_13, 13:__0#int_direct_14, 14:__0#int_direct_15, 15:__0#int_direct_16, 16:__0#int_direct_17, 17:__0#int_direct_18, 18:__0#int_direct_19, 19:__0#int_direct_20, 20:__0#int_direct_21)) using None
+
+--
+
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ]),
+true,
+or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3,__0#int_direct_4,__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ]),
+true,
+or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3,__0#int_direct_4,__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)])
+new variables:
+  find rings#components_1: bool
+  find rings#components_10: bool
+  find rings#components_11: bool
+  find rings#components_12: bool
+  find rings#components_13: bool
+  find rings#components_14: bool
+  find rings#components_15: bool
+  find rings#components_16: bool
+  find rings#components_17: bool
+  find rings#components_18: bool
+  find rings#components_19: bool
+  find rings#components_2: bool
+  find rings#components_20: bool
+  find rings#components_3: bool
+  find rings#components_4: bool
+  find rings#components_5: bool
+  find rings#components_6: bool
+  find rings#components_7: bool
+  find rings#components_8: bool
+  find rings#components_9: bool
+
+--
+
+sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
+
+--
+
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true,
+or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3,__0#int_direct_4,__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true,
+or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3,__0#int_direct_4,__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)])
+
+--
+
+or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3,__0#int_direct_4,__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3,__0#int_direct_4,__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)])) using tseitin
+
+--
+
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
+   ~~> aux_declaration_is_equality ([("SAT", 2000)])
+__0 = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
+
+--
+
+__0
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [__0#int_direct_1,__0#int_direct_2,__0#int_direct_3,__0#int_direct_4,__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)] [0, 20])
+
+--
+
+SATInt(Direct, [__0#int_direct_1,__0#int_direct_2,__0#int_direct_3,__0#int_direct_4,__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
+new variables:
+  findAux __2: bool
+  findAux __3: bool
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__2 <-> or([__0#int_direct_2,__0#int_direct_4,__0#int_direct_6,__0#int_direct_8,__0#int_direct_10,__0#int_direct_12,__0#int_direct_14,__0#int_direct_16,__0#int_direct_18,__0#int_direct_20;int(1..)])) using tseitin
+  define(__3 <-> or([__0#int_direct_3,__0#int_direct_4,__0#int_direct_7,__0#int_direct_8,__0#int_direct_11,__0#int_direct_12,__0#int_direct_15,__0#int_direct_16,__0#int_direct_19,__0#int_direct_20;int(1..)])) using tseitin
+  define(__4 <-> or([__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_21;int(1..)])) using tseitin
+  define(__5 <-> or([__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16;int(1..)])) using tseitin
+  define(__6 <-> or([__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)])) using tseitin
+
+--
+
+[ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[or([sum([toInt(rings#components_1),toInt(rings#components_2);int(1..)]) >= 2,sum([toInt(rings#components_6),toInt(rings#components_7);int(1..)]) >= 2,sum([toInt(rings#components_11),toInt(rings#components_12);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_17);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_1),toInt(rings#components_4);int(1..)]) >= 2,sum([toInt(rings#components_6),toInt(rings#components_9);int(1..)]) >= 2,sum([toInt(rings#components_11),toInt(rings#components_14);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]
+
+--
+
+sum([toInt(rings#components_1),toInt(rings#components_2);int(1..)])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+sum([SATInt(Log, [rings#components_1,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_2,false;int(1..)] [0, 1]);int(1..)])
+
+--
+
+sum([SATInt(Log, [rings#components_1,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_2,false;int(1..)] [0, 1]);int(1..)])
+   ~~> cnf_int_sum ([("SAT", 4100)])
+SATInt(Log, [__7,__10,__15;int(1..)] [0, 2])
+new variables:
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
+  findAux __11: bool
+  findAux __12: bool
+  findAux __13: bool
+  findAux __14: bool
+  findAux __15: bool
+  findAux __16: bool
+  findAux __17: bool
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__7 <-> !((rings#components_1) <-> (rings#components_2))) using tseitin
+  define(__8 <-> and([rings#components_1,rings#components_2;int(1..)])) using tseitin
+  define(__9 <-> !((false) <-> (false))) using tseitin
+  define(__10 <-> !((__9) <-> (__8))) using tseitin
+  define(__11 <-> and([false,false;int(1..)])) using tseitin
+  define(__12 <-> and([__8,__9;int(1..)])) using tseitin
+  define(__13 <-> or([__11,__12;int(1..)])) using tseitin
+  define(__14 <-> !((false) <-> (false))) using tseitin
+  define(__15 <-> !((__14) <-> (__13))) using tseitin
+  define(__16 <-> and([false,false;int(1..)])) using tseitin
+  define(__17 <-> and([__13,__14;int(1..)])) using tseitin
+  define(__18 <-> or([__16,__17;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__7,__10,__15;int(1..)] [0, 2]) >= 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> integer-weighted(1*__7, 2*__10, -4*__15) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 2 } }]
+
+--
+
+and([or([__19,sum([toInt(rings#components_6),toInt(rings#components_7);int(1..)]) >= 2,sum([toInt(rings#components_11),toInt(rings#components_12);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_17);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_1),toInt(rings#components_4);int(1..)]) >= 2,sum([toInt(rings#components_6),toInt(rings#components_9);int(1..)]) >= 2,sum([toInt(rings#components_11),toInt(rings#components_14);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,sum([toInt(rings#components_11),toInt(rings#components_12);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_17);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_1),toInt(rings#components_4);int(1..)]) >= 2,sum([toInt(rings#components_6),toInt(rings#components_9);int(1..)]) >= 2,sum([toInt(rings#components_11),toInt(rings#components_14);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> count(rings#components_6, rings#components_7) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,sum([toInt(rings#components_11),toInt(rings#components_12);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_17);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_1),toInt(rings#components_4);int(1..)]) >= 2,sum([toInt(rings#components_6),toInt(rings#components_9);int(1..)]) >= 2,sum([toInt(rings#components_11),toInt(rings#components_14);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,sum([toInt(rings#components_16),toInt(rings#components_17);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_1),toInt(rings#components_4);int(1..)]) >= 2,sum([toInt(rings#components_6),toInt(rings#components_9);int(1..)]) >= 2,sum([toInt(rings#components_11),toInt(rings#components_14);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> count(rings#components_11, rings#components_12) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,sum([toInt(rings#components_16),toInt(rings#components_17);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_1),toInt(rings#components_4);int(1..)]) >= 2,sum([toInt(rings#components_6),toInt(rings#components_9);int(1..)]) >= 2,sum([toInt(rings#components_11),toInt(rings#components_14);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([sum([toInt(rings#components_1),toInt(rings#components_4);int(1..)]) >= 2,sum([toInt(rings#components_6),toInt(rings#components_9);int(1..)]) >= 2,sum([toInt(rings#components_11),toInt(rings#components_14);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> count(rings#components_16, rings#components_17) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,__22;int(1..)]),or([sum([toInt(rings#components_1),toInt(rings#components_4);int(1..)]) >= 2,sum([toInt(rings#components_6),toInt(rings#components_9);int(1..)]) >= 2,sum([toInt(rings#components_11),toInt(rings#components_14);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,sum([toInt(rings#components_6),toInt(rings#components_9);int(1..)]) >= 2,sum([toInt(rings#components_11),toInt(rings#components_14);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> count(rings#components_1, rings#components_4) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,sum([toInt(rings#components_6),toInt(rings#components_9);int(1..)]) >= 2,sum([toInt(rings#components_11),toInt(rings#components_14);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,sum([toInt(rings#components_11),toInt(rings#components_14);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __24: bool
+new SAT encoding decisions:
+  define(__24 <-> count(rings#components_6, rings#components_9) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,sum([toInt(rings#components_11),toInt(rings#components_14);int(1..)]) >= 2,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __25: bool
+new SAT encoding decisions:
+  define(__25 <-> count(rings#components_11, rings#components_14) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,sum([toInt(rings#components_16),toInt(rings#components_19);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __26: bool
+new SAT encoding decisions:
+  define(__26 <-> count(rings#components_16, rings#components_19) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([sum([toInt(rings#components_2),toInt(rings#components_3);int(1..)]) >= 2,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __27: bool
+new SAT encoding decisions:
+  define(__27 <-> count(rings#components_2, rings#components_3) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,sum([toInt(rings#components_7),toInt(rings#components_8);int(1..)]) >= 2,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __28: bool
+new SAT encoding decisions:
+  define(__28 <-> count(rings#components_7, rings#components_8) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,sum([toInt(rings#components_12),toInt(rings#components_13);int(1..)]) >= 2,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,__29,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __29: bool
+new SAT encoding decisions:
+  define(__29 <-> count(rings#components_12, rings#components_13) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,__29,sum([toInt(rings#components_17),toInt(rings#components_18);int(1..)]) >= 2;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,__29,__30;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __30: bool
+new SAT encoding decisions:
+  define(__30 <-> count(rings#components_17, rings#components_18) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,__29,__30;int(1..)]),or([sum([toInt(rings#components_3),toInt(rings#components_5);int(1..)]) >= 2,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,__29,__30;int(1..)]),or([__31,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __31: bool
+new SAT encoding decisions:
+  define(__31 <-> count(rings#components_3, rings#components_5) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,__29,__30;int(1..)]),or([__31,sum([toInt(rings#components_8),toInt(rings#components_10);int(1..)]) >= 2,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,__29,__30;int(1..)]),or([__31,__32,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __32: bool
+new SAT encoding decisions:
+  define(__32 <-> count(rings#components_8, rings#components_10) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,__29,__30;int(1..)]),or([__31,__32,sum([toInt(rings#components_13),toInt(rings#components_15);int(1..)]) >= 2,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,__29,__30;int(1..)]),or([__31,__32,__33,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> count(rings#components_13, rings#components_15) GreaterEqual 2) using None, AMO None
+
+--
+
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,__29,__30;int(1..)]),or([__31,__32,__33,sum([toInt(rings#components_18),toInt(rings#components_20);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_guarded_count ([("SAT", 18600)])
+and([or([__19,__20,__21,__22;int(1..)]),or([__23,__24,__25,__26;int(1..)]),or([__27,__28,__29,__30;int(1..)]),or([__31,__32,__33,__34;int(1..)]);int(1..)]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new variables:
+  findAux __34: bool
+new SAT encoding decisions:
+  define(__34 <-> count(rings#components_18, rings#components_20) GreaterEqual 2) using None, AMO None
+
+--
+
+or([__19,__20,__21,__22;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__35
+new variables:
+  findAux __35: bool
+new SAT encoding decisions:
+  define(__35 <-> or([__19,__20,__21,__22;int(1..)])) using tseitin
+
+--
+
+or([__23,__24,__25,__26;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__36
+new variables:
+  findAux __36: bool
+new SAT encoding decisions:
+  define(__36 <-> or([__23,__24,__25,__26;int(1..)])) using tseitin
+
+--
+
+or([__27,__28,__29,__30;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__37
+new variables:
+  findAux __37: bool
+new SAT encoding decisions:
+  define(__37 <-> or([__27,__28,__29,__30;int(1..)])) using tseitin
+
+--
+
+or([__31,__32,__33,__34;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__38
+new variables:
+  findAux __38: bool
+new SAT encoding decisions:
+  define(__38 <-> or([__31,__32,__33,__34;int(1..)])) using tseitin
+
+--
+
+and([__35,__36,__37,__38;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__39
+new variables:
+  findAux __39: bool
+new SAT encoding decisions:
+  define(__39 <-> and([__35,__36,__37,__38;int(1..)])) using tseitin
+
+--
+
+__39,
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new SAT encoding decisions:
+  assert(__39) using tseitin
+
+--
+
+[ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[sum([toInt(rings#components_1),toInt(rings#components_2),toInt(rings#components_3),toInt(rings#components_4),toInt(rings#components_5);int(1..)]) <= 3,sum([toInt(rings#components_6),toInt(rings#components_7),toInt(rings#components_8),toInt(rings#components_9),toInt(rings#components_10);int(1..)]) <= 2,sum([toInt(rings#components_11),toInt(rings#components_12),toInt(rings#components_13),toInt(rings#components_14),toInt(rings#components_15);int(1..)]) <= 2,sum([toInt(rings#components_16),toInt(rings#components_17),toInt(rings#components_18),toInt(rings#components_19),toInt(rings#components_20);int(1..)]) <= 1;int(1..)]
+
+--
+
+sum([toInt(rings#components_1),toInt(rings#components_2),toInt(rings#components_3),toInt(rings#components_4),toInt(rings#components_5);int(1..)])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+sum([SATInt(Log, [rings#components_1,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_2,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_3,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_4,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_5,false;int(1..)] [0, 1]);int(1..)])
+
+--
+
+sum([SATInt(Log, [rings#components_1,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_2,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_3,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_4,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_5,false;int(1..)] [0, 1]);int(1..)])
+   ~~> cnf_int_sum ([("SAT", 4100)])
+SATInt(Log, [__91,__94,__99,__104;int(1..)] [0, 5])
+new variables:
+  findAux __40: bool
+  findAux __41: bool
+  findAux __42: bool
+  findAux __43: bool
+  findAux __44: bool
+  findAux __45: bool
+  findAux __46: bool
+  findAux __47: bool
+  findAux __48: bool
+  findAux __49: bool
+  findAux __50: bool
+  findAux __51: bool
+  findAux __52: bool
+  findAux __53: bool
+  findAux __54: bool
+  findAux __55: bool
+  findAux __56: bool
+  findAux __57: bool
+  findAux __58: bool
+  findAux __59: bool
+  findAux __60: bool
+  findAux __61: bool
+  findAux __62: bool
+  findAux __63: bool
+  findAux __64: bool
+  findAux __65: bool
+  findAux __66: bool
+  findAux __67: bool
+  findAux __68: bool
+  findAux __69: bool
+  findAux __70: bool
+  findAux __71: bool
+  findAux __72: bool
+  findAux __73: bool
+  findAux __74: bool
+  findAux __75: bool
+  findAux __76: bool
+  findAux __77: bool
+  findAux __78: bool
+  findAux __79: bool
+  findAux __80: bool
+  findAux __81: bool
+  findAux __82: bool
+  findAux __83: bool
+  findAux __84: bool
+  findAux __85: bool
+  findAux __86: bool
+  findAux __87: bool
+  findAux __88: bool
+  findAux __89: bool
+  findAux __90: bool
+  findAux __91: bool
+  findAux __92: bool
+  findAux __93: bool
+  findAux __94: bool
+  findAux __95: bool
+  findAux __96: bool
+  findAux __97: bool
+  findAux __98: bool
+  findAux __99: bool
+  findAux __100: bool
+  findAux __101: bool
+  findAux __102: bool
+  findAux __103: bool
+  findAux __104: bool
+  findAux __105: bool
+  findAux __106: bool
+  findAux __107: bool
+new SAT encoding decisions:
+  define(__40 <-> !((rings#components_1) <-> (rings#components_2))) using tseitin
+  define(__41 <-> and([rings#components_1,rings#components_2;int(1..)])) using tseitin
+  define(__42 <-> !((false) <-> (false))) using tseitin
+  define(__43 <-> !((__42) <-> (__41))) using tseitin
+  define(__44 <-> and([false,false;int(1..)])) using tseitin
+  define(__45 <-> and([__41,__42;int(1..)])) using tseitin
+  define(__46 <-> or([__44,__45;int(1..)])) using tseitin
+  define(__47 <-> !((false) <-> (false))) using tseitin
+  define(__48 <-> !((__47) <-> (__46))) using tseitin
+  define(__49 <-> and([false,false;int(1..)])) using tseitin
+  define(__50 <-> and([__46,__47;int(1..)])) using tseitin
+  define(__51 <-> or([__49,__50;int(1..)])) using tseitin
+  define(__52 <-> !((false) <-> (false))) using tseitin
+  define(__53 <-> !((__52) <-> (__51))) using tseitin
+  define(__54 <-> and([false,false;int(1..)])) using tseitin
+  define(__55 <-> and([__51,__52;int(1..)])) using tseitin
+  define(__56 <-> or([__54,__55;int(1..)])) using tseitin
+  define(__57 <-> !((rings#components_3) <-> (rings#components_4))) using tseitin
+  define(__58 <-> and([rings#components_3,rings#components_4;int(1..)])) using tseitin
+  define(__59 <-> !((false) <-> (false))) using tseitin
+  define(__60 <-> !((__59) <-> (__58))) using tseitin
+  define(__61 <-> and([false,false;int(1..)])) using tseitin
+  define(__62 <-> and([__58,__59;int(1..)])) using tseitin
+  define(__63 <-> or([__61,__62;int(1..)])) using tseitin
+  define(__64 <-> !((false) <-> (false))) using tseitin
+  define(__65 <-> !((__64) <-> (__63))) using tseitin
+  define(__66 <-> and([false,false;int(1..)])) using tseitin
+  define(__67 <-> and([__63,__64;int(1..)])) using tseitin
+  define(__68 <-> or([__66,__67;int(1..)])) using tseitin
+  define(__69 <-> !((false) <-> (false))) using tseitin
+  define(__70 <-> !((__69) <-> (__68))) using tseitin
+  define(__71 <-> and([false,false;int(1..)])) using tseitin
+  define(__72 <-> and([__68,__69;int(1..)])) using tseitin
+  define(__73 <-> or([__71,__72;int(1..)])) using tseitin
+  define(__74 <-> !((__40) <-> (__57))) using tseitin
+  define(__75 <-> and([__40,__57;int(1..)])) using tseitin
+  define(__76 <-> !((__43) <-> (__60))) using tseitin
+  define(__77 <-> !((__76) <-> (__75))) using tseitin
+  define(__78 <-> and([__43,__60;int(1..)])) using tseitin
+  define(__79 <-> and([__75,__76;int(1..)])) using tseitin
+  define(__80 <-> or([__78,__79;int(1..)])) using tseitin
+  define(__81 <-> !((__48) <-> (__65))) using tseitin
+  define(__82 <-> !((__81) <-> (__80))) using tseitin
+  define(__83 <-> and([__48,__65;int(1..)])) using tseitin
+  define(__84 <-> and([__80,__81;int(1..)])) using tseitin
+  define(__85 <-> or([__83,__84;int(1..)])) using tseitin
+  define(__86 <-> !((__53) <-> (__70))) using tseitin
+  define(__87 <-> !((__86) <-> (__85))) using tseitin
+  define(__88 <-> and([__53,__70;int(1..)])) using tseitin
+  define(__89 <-> and([__85,__86;int(1..)])) using tseitin
+  define(__90 <-> or([__88,__89;int(1..)])) using tseitin
+  define(__91 <-> !((__74) <-> (rings#components_5))) using tseitin
+  define(__92 <-> and([__74,rings#components_5;int(1..)])) using tseitin
+  define(__93 <-> !((__77) <-> (false))) using tseitin
+  define(__94 <-> !((__93) <-> (__92))) using tseitin
+  define(__95 <-> and([__77,false;int(1..)])) using tseitin
+  define(__96 <-> and([__92,__93;int(1..)])) using tseitin
+  define(__97 <-> or([__95,__96;int(1..)])) using tseitin
+  define(__98 <-> !((__82) <-> (false))) using tseitin
+  define(__99 <-> !((__98) <-> (__97))) using tseitin
+  define(__100 <-> and([__82,false;int(1..)])) using tseitin
+  define(__101 <-> and([__97,__98;int(1..)])) using tseitin
+  define(__102 <-> or([__100,__101;int(1..)])) using tseitin
+  define(__103 <-> !((__87) <-> (false))) using tseitin
+  define(__104 <-> !((__103) <-> (__102))) using tseitin
+  define(__105 <-> and([__87,false;int(1..)])) using tseitin
+  define(__106 <-> and([__102,__103;int(1..)])) using tseitin
+  define(__107 <-> or([__105,__106;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__91,__94,__99,__104;int(1..)] [0, 5]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__108
+new variables:
+  findAux __108: bool
+new SAT encoding decisions:
+  define(__108 <-> integer-weighted(1*__91, 2*__94, 4*__99, -8*__104) LessEqual 3) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 5 } }]
+
+--
+
+and([__108,sum([toInt(rings#components_6),toInt(rings#components_7),toInt(rings#components_8),toInt(rings#components_9),toInt(rings#components_10);int(1..)]) <= 2,sum([toInt(rings#components_11),toInt(rings#components_12),toInt(rings#components_13),toInt(rings#components_14),toInt(rings#components_15);int(1..)]) <= 2,sum([toInt(rings#components_16),toInt(rings#components_17),toInt(rings#components_18),toInt(rings#components_19),toInt(rings#components_20);int(1..)]) <= 1;int(1..)]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__108,true,sum([toInt(rings#components_11),toInt(rings#components_12),toInt(rings#components_13),toInt(rings#components_14),toInt(rings#components_15);int(1..)]) <= 2,sum([toInt(rings#components_16),toInt(rings#components_17),toInt(rings#components_18),toInt(rings#components_19),toInt(rings#components_20);int(1..)]) <= 1;int(1..)]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new SAT encoding decisions:
+  count(rings#components_6, rings#components_7, rings#components_8, rings#components_9, rings#components_10) AtMost 2 using None
+
+--
+
+and([__108,sum([toInt(rings#components_11),toInt(rings#components_12),toInt(rings#components_13),toInt(rings#components_14),toInt(rings#components_15);int(1..)]) <= 2,sum([toInt(rings#components_16),toInt(rings#components_17),toInt(rings#components_18),toInt(rings#components_19),toInt(rings#components_20);int(1..)]) <= 1;int(1..)]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__108,true,sum([toInt(rings#components_16),toInt(rings#components_17),toInt(rings#components_18),toInt(rings#components_19),toInt(rings#components_20);int(1..)]) <= 1;int(1..)]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new SAT encoding decisions:
+  count(rings#components_11, rings#components_12, rings#components_13, rings#components_14, rings#components_15) AtMost 2 using None
+
+--
+
+and([__108,sum([toInt(rings#components_16),toInt(rings#components_17),toInt(rings#components_18),toInt(rings#components_19),toInt(rings#components_20);int(1..)]) <= 1;int(1..)]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__108,true;int(1..)]),
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new SAT encoding decisions:
+  at-most-one(rings#components_16, rings#components_17, rings#components_18, rings#components_19, rings#components_20) using None
+
+--
+
+and([__108;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__108
+
+--
+
+__108,
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
+new SAT encoding decisions:
+  assert(__108) using tseitin
+
+--
+
+[ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(rings#components_1),toInt(rings#components_2),toInt(rings#components_3),toInt(rings#components_4),toInt(rings#components_5),toInt(rings#components_6),toInt(rings#components_7),toInt(rings#components_8),toInt(rings#components_9),toInt(rings#components_10),toInt(rings#components_11),toInt(rings#components_12),toInt(rings#components_13),toInt(rings#components_14),toInt(rings#components_15),toInt(rings#components_16),toInt(rings#components_17),toInt(rings#components_18),toInt(rings#components_19),toInt(rings#components_20);int(1..)]
+
+--
+
+SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([toInt(rings#components_1),toInt(rings#components_2),toInt(rings#components_3),toInt(rings#components_4),toInt(rings#components_5),toInt(rings#components_6),toInt(rings#components_7),toInt(rings#components_8),toInt(rings#components_9),toInt(rings#components_10),toInt(rings#components_11),toInt(rings#components_12),toInt(rings#components_13),toInt(rings#components_14),toInt(rings#components_15),toInt(rings#components_16),toInt(rings#components_17),toInt(rings#components_18),toInt(rings#components_19),toInt(rings#components_20);int(1..)]),
+true
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+true
+new SAT encoding decisions:
+  weighted(1*__2, 2*__3, 4*__4, 8*__5, 16*__6, -32*false, -1*rings#components_1, -1*rings#components_2, -1*rings#components_3, -1*rings#components_4, -1*rings#components_5, -1*rings#components_6, -1*rings#components_7, -1*rings#components_8, -1*rings#components_9, -1*rings#components_10, -1*rings#components_11, -1*rings#components_12, -1*rings#components_13, -1*rings#components_14, -1*rings#components_15, -1*rings#components_16, -1*rings#components_17, -1*rings#components_18, -1*rings#components_19, -1*rings#components_20) Exactly 0 using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]
+
+--
+
+Final model:
+
+letting r be 4
+letting n be 5
+letting demand be [[0,1,0,1,0;int(1..5)],[1,0,1,0,0;int(1..5)],[0,1,0,0,1;int(1..5)],[1,0,0,0,0;int(1..5)],[0,0,1,0,0;int(1..5)];int(1..5)]
+letting capacity_nodes be [3,2,2,1;int(1..4)]
+find rings: matrix indexed by [int(1..r), int(1..n)] of bool
+findAux __0: int(0..20)
+findAux __0#int_direct_1: bool
+findAux __0#int_direct_2: bool
+findAux __0#int_direct_3: bool
+findAux __0#int_direct_4: bool
+findAux __0#int_direct_5: bool
+findAux __0#int_direct_6: bool
+findAux __0#int_direct_7: bool
+findAux __0#int_direct_8: bool
+findAux __0#int_direct_9: bool
+findAux __0#int_direct_10: bool
+findAux __0#int_direct_11: bool
+findAux __0#int_direct_12: bool
+findAux __0#int_direct_13: bool
+findAux __0#int_direct_14: bool
+findAux __0#int_direct_15: bool
+findAux __0#int_direct_16: bool
+findAux __0#int_direct_17: bool
+findAux __0#int_direct_18: bool
+findAux __0#int_direct_19: bool
+findAux __0#int_direct_20: bool
+findAux __0#int_direct_21: bool
+find rings#components_1: bool
+find rings#components_2: bool
+find rings#components_3: bool
+find rings#components_4: bool
+find rings#components_5: bool
+find rings#components_6: bool
+find rings#components_7: bool
+find rings#components_8: bool
+find rings#components_9: bool
+find rings#components_10: bool
+find rings#components_11: bool
+find rings#components_12: bool
+find rings#components_13: bool
+find rings#components_14: bool
+find rings#components_15: bool
+find rings#components_16: bool
+find rings#components_17: bool
+find rings#components_18: bool
+find rings#components_19: bool
+find rings#components_20: bool
+letting demand#components_1 be 0
+letting demand#components_2 be 1
+letting demand#components_3 be 0
+letting demand#components_4 be 1
+letting demand#components_5 be 0
+letting demand#components_6 be 1
+letting demand#components_7 be 0
+letting demand#components_8 be 1
+letting demand#components_9 be 0
+letting demand#components_10 be 0
+letting demand#components_11 be 0
+letting demand#components_12 be 1
+letting demand#components_13 be 0
+letting demand#components_14 be 0
+letting demand#components_15 be 1
+letting demand#components_16 be 1
+letting demand#components_17 be 0
+letting demand#components_18 be 0
+letting demand#components_19 be 0
+letting demand#components_20 be 0
+letting demand#components_21 be 0
+letting demand#components_22 be 0
+letting demand#components_23 be 1
+letting demand#components_24 be 0
+letting demand#components_25 be 0
+letting capacity_nodes#components_1 be 3
+letting capacity_nodes#components_2 be 2
+letting capacity_nodes#components_3 be 2
+letting capacity_nodes#components_4 be 1
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: bool
+findAux __57: bool
+findAux __58: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+findAux __65: bool
+findAux __66: bool
+findAux __67: bool
+findAux __68: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+findAux __83: bool
+findAux __84: bool
+findAux __85: bool
+findAux __86: bool
+findAux __87: bool
+findAux __88: bool
+findAux __89: bool
+findAux __90: bool
+findAux __91: bool
+findAux __92: bool
+findAux __93: bool
+findAux __94: bool
+findAux __95: bool
+findAux __96: bool
+findAux __97: bool
+findAux __98: bool
+findAux __99: bool
+findAux __100: bool
+findAux __101: bool
+findAux __102: bool
+findAux __103: bool
+findAux __104: bool
+findAux __105: bool
+findAux __106: bool
+findAux __107: bool
+findAux __108: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+at-most-one(__0#int_direct_1, __0#int_direct_2, __0#int_direct_3, __0#int_direct_4, __0#int_direct_5, __0#int_direct_6, __0#int_direct_7, __0#int_direct_8, __0#int_direct_9, __0#int_direct_10, __0#int_direct_11, __0#int_direct_12, __0#int_direct_13, __0#int_direct_14, __0#int_direct_15, __0#int_direct_16, __0#int_direct_17, __0#int_direct_18, __0#int_direct_19, __0#int_direct_20, __0#int_direct_21) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+optimise(minimise=true, value=0+weighted(0*__0#int_direct_1, 1*__0#int_direct_2, 2*__0#int_direct_3, 3*__0#int_direct_4, 4*__0#int_direct_5, 5*__0#int_direct_6, 6*__0#int_direct_7, 7*__0#int_direct_8, 8*__0#int_direct_9, 9*__0#int_direct_10, 10*__0#int_direct_11, 11*__0#int_direct_12, 12*__0#int_direct_13, 13*__0#int_direct_14, 14*__0#int_direct_15, 15*__0#int_direct_16, 16*__0#int_direct_17, 17*__0#int_direct_18, 18*__0#int_direct_19, 19*__0#int_direct_20, 20*__0#int_direct_21) with [PbTermGroup { start: 0, end: 21, structure: Choice }] choices(0:__0#int_direct_1, 1:__0#int_direct_2, 2:__0#int_direct_3, 3:__0#int_direct_4, 4:__0#int_direct_5, 5:__0#int_direct_6, 6:__0#int_direct_7, 7:__0#int_direct_8, 8:__0#int_direct_9, 9:__0#int_direct_10, 10:__0#int_direct_11, 11:__0#int_direct_12, 12:__0#int_direct_13, 13:__0#int_direct_14, 14:__0#int_direct_15, 15:__0#int_direct_16, 16:__0#int_direct_17, 17:__0#int_direct_18, 18:__0#int_direct_19, 19:__0#int_direct_20, 20:__0#int_direct_21)) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+define(__1 <-> or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3,__0#int_direct_4,__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)])) using tseitin,
+assert(__1) using tseitin,
+define(__2 <-> or([__0#int_direct_2,__0#int_direct_4,__0#int_direct_6,__0#int_direct_8,__0#int_direct_10,__0#int_direct_12,__0#int_direct_14,__0#int_direct_16,__0#int_direct_18,__0#int_direct_20;int(1..)])) using tseitin,
+define(__3 <-> or([__0#int_direct_3,__0#int_direct_4,__0#int_direct_7,__0#int_direct_8,__0#int_direct_11,__0#int_direct_12,__0#int_direct_15,__0#int_direct_16,__0#int_direct_19,__0#int_direct_20;int(1..)])) using tseitin,
+define(__4 <-> or([__0#int_direct_5,__0#int_direct_6,__0#int_direct_7,__0#int_direct_8,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16,__0#int_direct_21;int(1..)])) using tseitin,
+define(__5 <-> or([__0#int_direct_9,__0#int_direct_10,__0#int_direct_11,__0#int_direct_12,__0#int_direct_13,__0#int_direct_14,__0#int_direct_15,__0#int_direct_16;int(1..)])) using tseitin,
+define(__6 <-> or([__0#int_direct_17,__0#int_direct_18,__0#int_direct_19,__0#int_direct_20,__0#int_direct_21;int(1..)])) using tseitin,
+define(__7 <-> !((rings#components_1) <-> (rings#components_2))) using tseitin,
+define(__8 <-> and([rings#components_1,rings#components_2;int(1..)])) using tseitin,
+define(__9 <-> !((false) <-> (false))) using tseitin,
+define(__10 <-> !((__9) <-> (__8))) using tseitin,
+define(__11 <-> and([false,false;int(1..)])) using tseitin,
+define(__12 <-> and([__8,__9;int(1..)])) using tseitin,
+define(__13 <-> or([__11,__12;int(1..)])) using tseitin,
+define(__14 <-> !((false) <-> (false))) using tseitin,
+define(__15 <-> !((__14) <-> (__13))) using tseitin,
+define(__16 <-> and([false,false;int(1..)])) using tseitin,
+define(__17 <-> and([__13,__14;int(1..)])) using tseitin,
+define(__18 <-> or([__16,__17;int(1..)])) using tseitin,
+define(__19 <-> integer-weighted(1*__7, 2*__10, -4*__15) GreaterEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__20 <-> count(rings#components_6, rings#components_7) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__21 <-> count(rings#components_11, rings#components_12) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__22 <-> count(rings#components_16, rings#components_17) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__23 <-> count(rings#components_1, rings#components_4) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__24 <-> count(rings#components_6, rings#components_9) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__25 <-> count(rings#components_11, rings#components_14) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__26 <-> count(rings#components_16, rings#components_19) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__27 <-> count(rings#components_2, rings#components_3) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__28 <-> count(rings#components_7, rings#components_8) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__29 <-> count(rings#components_12, rings#components_13) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__30 <-> count(rings#components_17, rings#components_18) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__31 <-> count(rings#components_3, rings#components_5) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__32 <-> count(rings#components_8, rings#components_10) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__33 <-> count(rings#components_13, rings#components_15) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__34 <-> count(rings#components_18, rings#components_20) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__35 <-> or([__19,__20,__21,__22;int(1..)])) using tseitin,
+define(__36 <-> or([__23,__24,__25,__26;int(1..)])) using tseitin,
+define(__37 <-> or([__27,__28,__29,__30;int(1..)])) using tseitin,
+define(__38 <-> or([__31,__32,__33,__34;int(1..)])) using tseitin,
+define(__39 <-> and([__35,__36,__37,__38;int(1..)])) using tseitin,
+assert(__39) using tseitin,
+define(__40 <-> !((rings#components_1) <-> (rings#components_2))) using tseitin,
+define(__41 <-> and([rings#components_1,rings#components_2;int(1..)])) using tseitin,
+define(__42 <-> !((false) <-> (false))) using tseitin,
+define(__43 <-> !((__42) <-> (__41))) using tseitin,
+define(__44 <-> and([false,false;int(1..)])) using tseitin,
+define(__45 <-> and([__41,__42;int(1..)])) using tseitin,
+define(__46 <-> or([__44,__45;int(1..)])) using tseitin,
+define(__47 <-> !((false) <-> (false))) using tseitin,
+define(__48 <-> !((__47) <-> (__46))) using tseitin,
+define(__49 <-> and([false,false;int(1..)])) using tseitin,
+define(__50 <-> and([__46,__47;int(1..)])) using tseitin,
+define(__51 <-> or([__49,__50;int(1..)])) using tseitin,
+define(__52 <-> !((false) <-> (false))) using tseitin,
+define(__53 <-> !((__52) <-> (__51))) using tseitin,
+define(__54 <-> and([false,false;int(1..)])) using tseitin,
+define(__55 <-> and([__51,__52;int(1..)])) using tseitin,
+define(__56 <-> or([__54,__55;int(1..)])) using tseitin,
+define(__57 <-> !((rings#components_3) <-> (rings#components_4))) using tseitin,
+define(__58 <-> and([rings#components_3,rings#components_4;int(1..)])) using tseitin,
+define(__59 <-> !((false) <-> (false))) using tseitin,
+define(__60 <-> !((__59) <-> (__58))) using tseitin,
+define(__61 <-> and([false,false;int(1..)])) using tseitin,
+define(__62 <-> and([__58,__59;int(1..)])) using tseitin,
+define(__63 <-> or([__61,__62;int(1..)])) using tseitin,
+define(__64 <-> !((false) <-> (false))) using tseitin,
+define(__65 <-> !((__64) <-> (__63))) using tseitin,
+define(__66 <-> and([false,false;int(1..)])) using tseitin,
+define(__67 <-> and([__63,__64;int(1..)])) using tseitin,
+define(__68 <-> or([__66,__67;int(1..)])) using tseitin,
+define(__69 <-> !((false) <-> (false))) using tseitin,
+define(__70 <-> !((__69) <-> (__68))) using tseitin,
+define(__71 <-> and([false,false;int(1..)])) using tseitin,
+define(__72 <-> and([__68,__69;int(1..)])) using tseitin,
+define(__73 <-> or([__71,__72;int(1..)])) using tseitin,
+define(__74 <-> !((__40) <-> (__57))) using tseitin,
+define(__75 <-> and([__40,__57;int(1..)])) using tseitin,
+define(__76 <-> !((__43) <-> (__60))) using tseitin,
+define(__77 <-> !((__76) <-> (__75))) using tseitin,
+define(__78 <-> and([__43,__60;int(1..)])) using tseitin,
+define(__79 <-> and([__75,__76;int(1..)])) using tseitin,
+define(__80 <-> or([__78,__79;int(1..)])) using tseitin,
+define(__81 <-> !((__48) <-> (__65))) using tseitin,
+define(__82 <-> !((__81) <-> (__80))) using tseitin,
+define(__83 <-> and([__48,__65;int(1..)])) using tseitin,
+define(__84 <-> and([__80,__81;int(1..)])) using tseitin,
+define(__85 <-> or([__83,__84;int(1..)])) using tseitin,
+define(__86 <-> !((__53) <-> (__70))) using tseitin,
+define(__87 <-> !((__86) <-> (__85))) using tseitin,
+define(__88 <-> and([__53,__70;int(1..)])) using tseitin,
+define(__89 <-> and([__85,__86;int(1..)])) using tseitin,
+define(__90 <-> or([__88,__89;int(1..)])) using tseitin,
+define(__91 <-> !((__74) <-> (rings#components_5))) using tseitin,
+define(__92 <-> and([__74,rings#components_5;int(1..)])) using tseitin,
+define(__93 <-> !((__77) <-> (false))) using tseitin,
+define(__94 <-> !((__93) <-> (__92))) using tseitin,
+define(__95 <-> and([__77,false;int(1..)])) using tseitin,
+define(__96 <-> and([__92,__93;int(1..)])) using tseitin,
+define(__97 <-> or([__95,__96;int(1..)])) using tseitin,
+define(__98 <-> !((__82) <-> (false))) using tseitin,
+define(__99 <-> !((__98) <-> (__97))) using tseitin,
+define(__100 <-> and([__82,false;int(1..)])) using tseitin,
+define(__101 <-> and([__97,__98;int(1..)])) using tseitin,
+define(__102 <-> or([__100,__101;int(1..)])) using tseitin,
+define(__103 <-> !((__87) <-> (false))) using tseitin,
+define(__104 <-> !((__103) <-> (__102))) using tseitin,
+define(__105 <-> and([__87,false;int(1..)])) using tseitin,
+define(__106 <-> and([__102,__103;int(1..)])) using tseitin,
+define(__107 <-> or([__105,__106;int(1..)])) using tseitin,
+define(__108 <-> integer-weighted(1*__91, 2*__94, 4*__99, -8*__104) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 5 } }],
+count(rings#components_6, rings#components_7, rings#components_8, rings#components_9, rings#components_10) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(rings#components_11, rings#components_12, rings#components_13, rings#components_14, rings#components_15) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+at-most-one(rings#components_16, rings#components_17, rings#components_18, rings#components_19, rings#components_20) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+assert(__108) using tseitin,
+weighted(1*__2, 2*__3, 4*__4, 8*__5, 16*__6, -32*false, -1*rings#components_1, -1*rings#components_2, -1*rings#components_3, -1*rings#components_4, -1*rings#components_5, -1*rings#components_6, -1*rings#components_7, -1*rings#components_8, -1*rings#components_9, -1*rings#components_10, -1*rings#components_11, -1*rings#components_12, -1*rings#components_13, -1*rings#components_14, -1*rings#components_15, -1*rings#components_16, -1*rings#components_17, -1*rings#components_18, -1*rings#components_19, -1*rings#components_20) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]
+

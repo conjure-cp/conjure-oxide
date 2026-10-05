@@ -2,6 +2,10 @@
 
 Branch: `sat-ir`. Conventional commits; never push.
 
+## Full integration coverage sweep (2026-10-05)
+
+All 664 discovered fixture configurations now include SAT, with `heuristic="x"` and `channelling="uniform"` selected specifically for SAT. The sweep runs in an isolated fixture copy and continues after failures, including the five globally skipped cases. Other backend configurations and their timing baselines are preserved. See [the full coverage report](sat_full_coverage_survey.md) and [per-fixture results](sat_full_coverage_survey.csv) for the current, provisional outcomes. This stocktake changes the test harness/configuration and records coverage; it does not fix model or encoder semantics.
+
 ## Decisions
 
 - Integer kinds: Direct, Order, BinaryValue (actual numeric value), BinaryOffset (value minus minimum), BinaryRank (sorted-domain index).

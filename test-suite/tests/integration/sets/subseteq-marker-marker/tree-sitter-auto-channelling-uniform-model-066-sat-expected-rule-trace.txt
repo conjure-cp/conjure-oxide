@@ -1,0 +1,192 @@
+Model before rewriting:
+
+find a: set (maxSize 2) of int(1..2)
+find b: set (maxSize 2) of int(1..2)
+
+such that
+
+(a subsetEq b)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#occurrence_1: bool
+  find a#occurrence_2: bool
+new constraints:
+  and([sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) >= 0,sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#occurrence_1: bool
+  find b#occurrence_2: bool
+new constraints:
+  and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) >= 0,sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+(a subsetEq b),
+and([sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) >= 0,sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) <= 2;int(1..)]),
+and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) >= 0,sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(a subsetEq b),
+and([true,sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) <= 2;int(1..)]),
+and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) >= 0,sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(a#occurrence_1, a#occurrence_2) AtLeast 0 using None
+
+--
+
+(a subsetEq b),
+and([sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) <= 2;int(1..)]),
+and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) >= 0,sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(a subsetEq b),
+and([true;int(1..)]),
+and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) >= 0,sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(a#occurrence_1, a#occurrence_2) AtMost 2 using None
+
+--
+
+(a subsetEq b),
+true,
+and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) >= 0,sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(a subsetEq b),
+true,
+and([true,sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(b#occurrence_1, b#occurrence_2) AtLeast 0 using None
+
+--
+
+(a subsetEq b),
+true,
+and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(a subsetEq b),
+true,
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(b#occurrence_1, b#occurrence_2) AtMost 2 using None
+
+--
+
+(a subsetEq b)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(a#occurrence_1),1 in b;int(1..)]),or([!(a#occurrence_2),2 in b;int(1..)]);int(1..)])
+
+--
+
+1 in b
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+b#occurrence_1
+
+--
+
+2 in b
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+b#occurrence_2
+
+--
+
+!(a#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> !(a#occurrence_1)) using tseitin
+
+--
+
+!(a#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> !(a#occurrence_2)) using tseitin
+
+--
+
+or([__0,b#occurrence_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> or([__0,b#occurrence_1;int(1..)])) using tseitin
+
+--
+
+or([__1,b#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> or([__1,b#occurrence_2;int(1..)])) using tseitin
+
+--
+
+and([__2,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> and([__2,__3;int(1..)])) using tseitin
+
+--
+
+__4,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true
+new SAT encoding decisions:
+  assert(__4) using tseitin
+
+--
+
+Final model:
+
+find a: set (representation occurrence, maxSize 2) of int(1..2)
+find b: set (representation occurrence, maxSize 2) of int(1..2)
+find a#occurrence_1: bool
+find a#occurrence_2: bool
+find b#occurrence_1: bool
+find b#occurrence_2: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+count(a#occurrence_1, a#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+count(a#occurrence_1, a#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+count(b#occurrence_1, b#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+count(b#occurrence_1, b#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+define(__0 <-> !(a#occurrence_1)) using tseitin,
+define(__1 <-> !(a#occurrence_2)) using tseitin,
+define(__2 <-> or([__0,b#occurrence_1;int(1..)])) using tseitin,
+define(__3 <-> or([__1,b#occurrence_2;int(1..)])) using tseitin,
+define(__4 <-> and([__2,__3;int(1..)])) using tseitin,
+assert(__4) using tseitin
+

@@ -1,0 +1,1411 @@
+Model before rewriting:
+
+letting vertices be 5
+letting colours be 3
+letting VERTICES be domain int(1..vertices)
+letting COLOURS be domain int(1..colours)
+letting edges be [[false,true,false,true,false;int(1..5)],[true,false,true,false,true;int(1..5)],[false,true,false,true,true;int(1..5)],[true,false,true,false,false;int(1..5)],[false,true,true,false,false;int(1..5)];int(1..5)]
+find colouring: matrix indexed by [VERTICES] of COLOURS
+find usedColours: matrix indexed by [COLOURS] of bool
+findAux __0: int(0..3)
+
+such that
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+optimise(minimise=true, value=__0)
+
+--
+
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+   ~~> select_aux_declaration_representation ([("ReprGeneral", 10000)])
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+new variables:
+  findAux __0#int_log_1: bool
+  findAux __0#int_log_2: bool
+  findAux __0#int_log_3: bool
+new constraints:
+  or([and([SATInt(Log, [__0#int_log_1,__0#int_log_2,__0#int_log_3;int(1..)] [0, 3]) >= 0,SATInt(Log, [__0#int_log_1,__0#int_log_2,__0#int_log_3;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+
+--
+
+SATInt(Log, [__0#int_log_1,__0#int_log_2,__0#int_log_3;int(1..)] [0, 3]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*__0#int_log_1, 2*__0#int_log_2, -4*__0#int_log_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Log, [__0#int_log_1,__0#int_log_2,__0#int_log_3;int(1..)] [0, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*__0#int_log_1, 2*__0#int_log_2, -4*__0#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+optimise(minimise=true, value=__0)
+   ~~> select_sat_objective ([("SAT", 18400)])
+true
+new SAT encoding decisions:
+  optimise(minimise=true, value=0+weighted(1*__0#int_log_1, 2*__0#int_log_2, -4*__0#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]) using None
+
+--
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+or([and([__1,__2;int(1..)]);int(1..)])
+new variables:
+  find colouring#components_1: int(1..3)
+  find colouring#components_2: int(1..3)
+  find colouring#components_3: int(1..3)
+  find colouring#components_4: int(1..3)
+  find colouring#components_5: int(1..3)
+  find usedColours#components_1: bool
+  find usedColours#components_2: bool
+  find usedColours#components_3: bool
+
+--
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+or([and([__1,__2;int(1..)]);int(1..)])
+new variables:
+  find colouring#components_1#int_log_1: bool
+  find colouring#components_1#int_log_2: bool
+  find colouring#components_1#int_log_3: bool
+  find colouring#components_2#int_log_1: bool
+  find colouring#components_2#int_log_2: bool
+  find colouring#components_2#int_log_3: bool
+  find colouring#components_3#int_log_1: bool
+  find colouring#components_3#int_log_2: bool
+  find colouring#components_3#int_log_3: bool
+  find colouring#components_4#int_log_1: bool
+  find colouring#components_4#int_log_2: bool
+  find colouring#components_4#int_log_3: bool
+  find colouring#components_5#int_log_1: bool
+  find colouring#components_5#int_log_2: bool
+  find colouring#components_5#int_log_3: bool
+new constraints:
+  or([and([SATInt(Log, [colouring#components_1#int_log_1,colouring#components_1#int_log_2,colouring#components_1#int_log_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [colouring#components_1#int_log_1,colouring#components_1#int_log_2,colouring#components_1#int_log_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [colouring#components_2#int_log_1,colouring#components_2#int_log_2,colouring#components_2#int_log_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [colouring#components_2#int_log_1,colouring#components_2#int_log_2,colouring#components_2#int_log_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [colouring#components_3#int_log_1,colouring#components_3#int_log_2,colouring#components_3#int_log_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [colouring#components_3#int_log_1,colouring#components_3#int_log_2,colouring#components_3#int_log_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [colouring#components_4#int_log_1,colouring#components_4#int_log_2,colouring#components_4#int_log_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [colouring#components_4#int_log_1,colouring#components_4#int_log_2,colouring#components_4#int_log_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [colouring#components_5#int_log_1,colouring#components_5#int_log_2,colouring#components_5#int_log_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [colouring#components_5#int_log_1,colouring#components_5#int_log_2,colouring#components_5#int_log_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+
+--
+
+SATInt(Log, [colouring#components_1#int_log_1,colouring#components_1#int_log_2,colouring#components_1#int_log_3;int(1..)] [1, 3]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [colouring#components_1#int_log_1,colouring#components_1#int_log_2,colouring#components_1#int_log_3;int(1..)] [1, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [colouring#components_2#int_log_1,colouring#components_2#int_log_2,colouring#components_2#int_log_3;int(1..)] [1, 3]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [colouring#components_2#int_log_1,colouring#components_2#int_log_2,colouring#components_2#int_log_3;int(1..)] [1, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [colouring#components_3#int_log_1,colouring#components_3#int_log_2,colouring#components_3#int_log_3;int(1..)] [1, 3]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [colouring#components_3#int_log_1,colouring#components_3#int_log_2,colouring#components_3#int_log_3;int(1..)] [1, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [colouring#components_4#int_log_1,colouring#components_4#int_log_2,colouring#components_4#int_log_3;int(1..)] [1, 3]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [colouring#components_4#int_log_1,colouring#components_4#int_log_2,colouring#components_4#int_log_3;int(1..)] [1, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [colouring#components_5#int_log_1,colouring#components_5#int_log_2,colouring#components_5#int_log_3;int(1..)] [1, 3]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+SATInt(Log, [colouring#components_5#int_log_1,colouring#components_5#int_log_2,colouring#components_5#int_log_3;int(1..)] [1, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ])
+
+--
+
+or([and([__7,__8;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__7,__8;int(1..)])
+
+--
+
+or([and([__9,__10;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__9,__10;int(1..)])
+
+--
+
+or([and([__11,__12;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__11,__12;int(1..)])
+
+--
+
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__3,__4;int(1..)])
+
+--
+
+or([and([__5,__6;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__5,__6;int(1..)])
+
+--
+
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__1,__2;int(1..)])
+
+--
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+and([__1,__2;int(1..)]),
+and([__3,__4;int(1..)]),
+and([__5,__6;int(1..)]),
+and([__7,__8;int(1..)]),
+and([__9,__10;int(1..)]),
+and([__11,__12;int(1..)])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+and([__1,__2;int(1..)]),
+and([__3,__4;int(1..)]),
+and([__5,__6;int(1..)]),
+and([__7,__8;int(1..)]),
+and([__9,__10;int(1..)]),
+and([__11,__12;int(1..)])
+
+--
+
+and([__1,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> and([__1,__2;int(1..)])) using tseitin
+
+--
+
+and([__3,__4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> and([__3,__4;int(1..)])) using tseitin
+
+--
+
+and([__5,__6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> and([__5,__6;int(1..)])) using tseitin
+
+--
+
+and([__7,__8;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> and([__7,__8;int(1..)])) using tseitin
+
+--
+
+and([__9,__10;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> and([__9,__10;int(1..)])) using tseitin
+
+--
+
+and([__11,__12;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> and([__11,__12;int(1..)])) using tseitin
+
+--
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+__13,
+__14,
+__15,
+__16,
+__17,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+__14,
+__15,
+__16,
+__17,
+__18
+new SAT encoding decisions:
+  assert(__13) using tseitin
+
+--
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+__14,
+__15,
+__16,
+__17,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+__15,
+__16,
+__17,
+__18
+new SAT encoding decisions:
+  assert(__14) using tseitin
+
+--
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+__15,
+__16,
+__17,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+__16,
+__17,
+__18
+new SAT encoding decisions:
+  assert(__15) using tseitin
+
+--
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+__16,
+__17,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+__17,
+__18
+new SAT encoding decisions:
+  assert(__16) using tseitin
+
+--
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+__17,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+__18
+new SAT encoding decisions:
+  assert(__17) using tseitin
+
+--
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true
+new SAT encoding decisions:
+  assert(__18) using tseitin
+
+--
+
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+   ~~> aux_declaration_is_equality ([("SAT", 2000)])
+__0 = sum([ toInt(usedColours[c]) | c : COLOURS ])
+
+--
+
+__0
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [__0#int_log_1,__0#int_log_2,__0#int_log_3;int(1..)] [0, 3])
+
+--
+
+[ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[colouring#components_1 != colouring#components_2,colouring#components_1 != colouring#components_4,colouring#components_2 != colouring#components_1,colouring#components_2 != colouring#components_3,colouring#components_2 != colouring#components_5,colouring#components_3 != colouring#components_2,colouring#components_3 != colouring#components_4,colouring#components_3 != colouring#components_5,colouring#components_4 != colouring#components_1,colouring#components_4 != colouring#components_3,colouring#components_5 != colouring#components_2,colouring#components_5 != colouring#components_3;int(1..)]
+
+--
+
+colouring#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_1
+
+--
+
+colouring#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_2
+
+--
+
+colouring#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_1
+
+--
+
+colouring#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_4
+
+--
+
+colouring#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_2
+
+--
+
+colouring#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_1
+
+--
+
+colouring#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_2
+
+--
+
+colouring#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_3
+
+--
+
+colouring#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_2
+
+--
+
+colouring#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_5
+
+--
+
+colouring#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_3
+
+--
+
+colouring#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_2
+
+--
+
+colouring#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_3
+
+--
+
+colouring#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_4
+
+--
+
+colouring#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_3
+
+--
+
+colouring#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_5
+
+--
+
+colouring#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_4
+
+--
+
+colouring#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_1
+
+--
+
+colouring#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_4
+
+--
+
+colouring#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_3
+
+--
+
+colouring#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_5
+
+--
+
+colouring#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_2
+
+--
+
+colouring#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_5
+
+--
+
+colouring#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_3
+
+--
+
+colouring#components_1 != colouring#components_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3, -1*colouring#components_2#int_log_1, -2*colouring#components_2#int_log_2, 4*colouring#components_2#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+colouring#components_1 != colouring#components_4
+   ~~> select_integer_relation ([("SAT", 18500)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3, -1*colouring#components_4#int_log_1, -2*colouring#components_4#int_log_2, 4*colouring#components_4#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+colouring#components_2 != colouring#components_1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3, -1*colouring#components_1#int_log_1, -2*colouring#components_1#int_log_2, 4*colouring#components_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+colouring#components_2 != colouring#components_3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__22
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3, -1*colouring#components_3#int_log_1, -2*colouring#components_3#int_log_2, 4*colouring#components_3#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+colouring#components_2 != colouring#components_5
+   ~~> select_integer_relation ([("SAT", 18500)])
+__23
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3, -1*colouring#components_5#int_log_1, -2*colouring#components_5#int_log_2, 4*colouring#components_5#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+colouring#components_3 != colouring#components_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__24
+new variables:
+  findAux __24: bool
+new SAT encoding decisions:
+  define(__24 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3, -1*colouring#components_2#int_log_1, -2*colouring#components_2#int_log_2, 4*colouring#components_2#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+colouring#components_3 != colouring#components_4
+   ~~> select_integer_relation ([("SAT", 18500)])
+__25
+new variables:
+  findAux __25: bool
+new SAT encoding decisions:
+  define(__25 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3, -1*colouring#components_4#int_log_1, -2*colouring#components_4#int_log_2, 4*colouring#components_4#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+colouring#components_3 != colouring#components_5
+   ~~> select_integer_relation ([("SAT", 18500)])
+__26
+new variables:
+  findAux __26: bool
+new SAT encoding decisions:
+  define(__26 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3, -1*colouring#components_5#int_log_1, -2*colouring#components_5#int_log_2, 4*colouring#components_5#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+colouring#components_4 != colouring#components_1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__27
+new variables:
+  findAux __27: bool
+new SAT encoding decisions:
+  define(__27 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3, -1*colouring#components_1#int_log_1, -2*colouring#components_1#int_log_2, 4*colouring#components_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+colouring#components_4 != colouring#components_3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__28
+new variables:
+  findAux __28: bool
+new SAT encoding decisions:
+  define(__28 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3, -1*colouring#components_3#int_log_1, -2*colouring#components_3#int_log_2, 4*colouring#components_3#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+colouring#components_5 != colouring#components_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__29
+new variables:
+  findAux __29: bool
+new SAT encoding decisions:
+  define(__29 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3, -1*colouring#components_2#int_log_1, -2*colouring#components_2#int_log_2, 4*colouring#components_2#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+colouring#components_5 != colouring#components_3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__30
+new variables:
+  findAux __30: bool
+new SAT encoding decisions:
+  define(__30 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3, -1*colouring#components_3#int_log_1, -2*colouring#components_3#int_log_2, 4*colouring#components_3#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+and([__19,__20,__21,__22,__23,__24,__25,__26,__27,__28,__29,__30;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__31
+new variables:
+  findAux __31: bool
+new SAT encoding decisions:
+  define(__31 <-> and([__19,__20,__21,__22,__23,__24,__25,__26,__27,__28,__29,__30;int(1..)])) using tseitin
+
+--
+
+__31,
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+SATInt(Log, [__0#int_log_1,__0#int_log_2,__0#int_log_3;int(1..)] [0, 3]) = sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+SATInt(Log, [__0#int_log_1,__0#int_log_2,__0#int_log_3;int(1..)] [0, 3]) = sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true
+new SAT encoding decisions:
+  assert(__31) using tseitin
+
+--
+
+[ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(colouring#components_1 = 1) -> (usedColours#components_1),(colouring#components_1 = 2) -> (usedColours#components_2),(colouring#components_1 = 3) -> (usedColours#components_3),(colouring#components_2 = 1) -> (usedColours#components_1),(colouring#components_2 = 2) -> (usedColours#components_2),(colouring#components_2 = 3) -> (usedColours#components_3),(colouring#components_3 = 1) -> (usedColours#components_1),(colouring#components_3 = 2) -> (usedColours#components_2),(colouring#components_3 = 3) -> (usedColours#components_3),(colouring#components_4 = 1) -> (usedColours#components_1),(colouring#components_4 = 2) -> (usedColours#components_2),(colouring#components_4 = 3) -> (usedColours#components_3),(colouring#components_5 = 1) -> (usedColours#components_1),(colouring#components_5 = 2) -> (usedColours#components_2),(colouring#components_5 = 3) -> (usedColours#components_3);int(1..)]
+
+--
+
+colouring#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_1
+
+--
+
+colouring#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_1
+
+--
+
+colouring#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_1
+
+--
+
+colouring#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_2
+
+--
+
+colouring#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_2
+
+--
+
+colouring#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_2
+
+--
+
+colouring#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_3
+
+--
+
+colouring#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_3
+
+--
+
+colouring#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_3
+
+--
+
+colouring#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_4
+
+--
+
+colouring#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_4
+
+--
+
+colouring#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_4
+
+--
+
+colouring#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_5
+
+--
+
+colouring#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_5
+
+--
+
+colouring#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+colouring#components_5
+
+--
+
+colouring#components_1 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__32
+new variables:
+  findAux __32: bool
+new SAT encoding decisions:
+  define(__32 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_1 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__33
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_1 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__34
+new variables:
+  findAux __34: bool
+new SAT encoding decisions:
+  define(__34 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_2 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__35
+new variables:
+  findAux __35: bool
+new SAT encoding decisions:
+  define(__35 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_2 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__36
+new variables:
+  findAux __36: bool
+new SAT encoding decisions:
+  define(__36 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_2 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__37
+new variables:
+  findAux __37: bool
+new SAT encoding decisions:
+  define(__37 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_3 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__38
+new variables:
+  findAux __38: bool
+new SAT encoding decisions:
+  define(__38 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_3 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__39
+new variables:
+  findAux __39: bool
+new SAT encoding decisions:
+  define(__39 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_3 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__40
+new variables:
+  findAux __40: bool
+new SAT encoding decisions:
+  define(__40 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_4 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__41
+new variables:
+  findAux __41: bool
+new SAT encoding decisions:
+  define(__41 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_4 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__42
+new variables:
+  findAux __42: bool
+new SAT encoding decisions:
+  define(__42 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_4 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__43
+new variables:
+  findAux __43: bool
+new SAT encoding decisions:
+  define(__43 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_5 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__44
+new variables:
+  findAux __44: bool
+new SAT encoding decisions:
+  define(__44 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_5 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__45
+new variables:
+  findAux __45: bool
+new SAT encoding decisions:
+  define(__45 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+colouring#components_5 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__46
+new variables:
+  findAux __46: bool
+new SAT encoding decisions:
+  define(__46 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+(__32) -> (usedColours#components_1)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__47
+new variables:
+  findAux __47: bool
+new SAT encoding decisions:
+  define(__47 <-> (__32) -> (usedColours#components_1)) using tseitin
+
+--
+
+(__33) -> (usedColours#components_2)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__48
+new variables:
+  findAux __48: bool
+new SAT encoding decisions:
+  define(__48 <-> (__33) -> (usedColours#components_2)) using tseitin
+
+--
+
+(__34) -> (usedColours#components_3)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__49
+new variables:
+  findAux __49: bool
+new SAT encoding decisions:
+  define(__49 <-> (__34) -> (usedColours#components_3)) using tseitin
+
+--
+
+(__35) -> (usedColours#components_1)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__50
+new variables:
+  findAux __50: bool
+new SAT encoding decisions:
+  define(__50 <-> (__35) -> (usedColours#components_1)) using tseitin
+
+--
+
+(__36) -> (usedColours#components_2)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__51
+new variables:
+  findAux __51: bool
+new SAT encoding decisions:
+  define(__51 <-> (__36) -> (usedColours#components_2)) using tseitin
+
+--
+
+(__37) -> (usedColours#components_3)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__52
+new variables:
+  findAux __52: bool
+new SAT encoding decisions:
+  define(__52 <-> (__37) -> (usedColours#components_3)) using tseitin
+
+--
+
+(__38) -> (usedColours#components_1)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__53
+new variables:
+  findAux __53: bool
+new SAT encoding decisions:
+  define(__53 <-> (__38) -> (usedColours#components_1)) using tseitin
+
+--
+
+(__39) -> (usedColours#components_2)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__54
+new variables:
+  findAux __54: bool
+new SAT encoding decisions:
+  define(__54 <-> (__39) -> (usedColours#components_2)) using tseitin
+
+--
+
+(__40) -> (usedColours#components_3)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__55
+new variables:
+  findAux __55: bool
+new SAT encoding decisions:
+  define(__55 <-> (__40) -> (usedColours#components_3)) using tseitin
+
+--
+
+(__41) -> (usedColours#components_1)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__56
+new variables:
+  findAux __56: bool
+new SAT encoding decisions:
+  define(__56 <-> (__41) -> (usedColours#components_1)) using tseitin
+
+--
+
+(__42) -> (usedColours#components_2)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__57
+new variables:
+  findAux __57: bool
+new SAT encoding decisions:
+  define(__57 <-> (__42) -> (usedColours#components_2)) using tseitin
+
+--
+
+(__43) -> (usedColours#components_3)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__58
+new variables:
+  findAux __58: bool
+new SAT encoding decisions:
+  define(__58 <-> (__43) -> (usedColours#components_3)) using tseitin
+
+--
+
+(__44) -> (usedColours#components_1)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__59
+new variables:
+  findAux __59: bool
+new SAT encoding decisions:
+  define(__59 <-> (__44) -> (usedColours#components_1)) using tseitin
+
+--
+
+(__45) -> (usedColours#components_2)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__60
+new variables:
+  findAux __60: bool
+new SAT encoding decisions:
+  define(__60 <-> (__45) -> (usedColours#components_2)) using tseitin
+
+--
+
+(__46) -> (usedColours#components_3)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__61
+new variables:
+  findAux __61: bool
+new SAT encoding decisions:
+  define(__61 <-> (__46) -> (usedColours#components_3)) using tseitin
+
+--
+
+and([__47,__48,__49,__50,__51,__52,__53,__54,__55,__56,__57,__58,__59,__60,__61;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__62
+new variables:
+  findAux __62: bool
+new SAT encoding decisions:
+  define(__62 <-> and([__47,__48,__49,__50,__51,__52,__53,__54,__55,__56,__57,__58,__59,__60,__61;int(1..)])) using tseitin
+
+--
+
+__62,
+SATInt(Log, [__0#int_log_1,__0#int_log_2,__0#int_log_3;int(1..)] [0, 3]) = sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+SATInt(Log, [__0#int_log_1,__0#int_log_2,__0#int_log_3;int(1..)] [0, 3]) = sum([ toInt(usedColours[c]) | c : COLOURS ]),
+true
+new SAT encoding decisions:
+  assert(__62) using tseitin
+
+--
+
+[ toInt(usedColours[c]) | c : COLOURS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(usedColours#components_1),toInt(usedColours#components_2),toInt(usedColours#components_3);int(1..)]
+
+--
+
+SATInt(Log, [__0#int_log_1,__0#int_log_2,__0#int_log_3;int(1..)] [0, 3]) = sum([toInt(usedColours#components_1),toInt(usedColours#components_2),toInt(usedColours#components_3);int(1..)]),
+true
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+true
+new SAT encoding decisions:
+  weighted(1*__0#int_log_1, 2*__0#int_log_2, -4*__0#int_log_3, -1*usedColours#components_1, -1*usedColours#components_2, -1*usedColours#components_3) Exactly 0 using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+Final model:
+
+letting vertices be 5
+letting colours be 3
+letting VERTICES be domain int(1..vertices)
+letting COLOURS be domain int(1..colours)
+letting edges be [[false,true,false,true,false;int(1..5)],[true,false,true,false,true;int(1..5)],[false,true,false,true,true;int(1..5)],[true,false,true,false,false;int(1..5)],[false,true,true,false,false;int(1..5)];int(1..5)]
+find colouring: matrix indexed by [VERTICES] of COLOURS
+find usedColours: matrix indexed by [COLOURS] of bool
+findAux __0: int(0..3)
+findAux __0#int_log_1: bool
+findAux __0#int_log_2: bool
+findAux __0#int_log_3: bool
+findAux __1: bool
+findAux __2: bool
+find colouring#components_1: int(1..3)
+find colouring#components_2: int(1..3)
+find colouring#components_3: int(1..3)
+find colouring#components_4: int(1..3)
+find colouring#components_5: int(1..3)
+find usedColours#components_1: bool
+find usedColours#components_2: bool
+find usedColours#components_3: bool
+find colouring#components_1#int_log_1: bool
+find colouring#components_1#int_log_2: bool
+find colouring#components_1#int_log_3: bool
+find colouring#components_2#int_log_1: bool
+find colouring#components_2#int_log_2: bool
+find colouring#components_2#int_log_3: bool
+find colouring#components_3#int_log_1: bool
+find colouring#components_3#int_log_2: bool
+find colouring#components_3#int_log_3: bool
+find colouring#components_4#int_log_1: bool
+find colouring#components_4#int_log_2: bool
+find colouring#components_4#int_log_3: bool
+find colouring#components_5#int_log_1: bool
+find colouring#components_5#int_log_2: bool
+find colouring#components_5#int_log_3: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+letting edges#components_1 be false
+letting edges#components_2 be true
+letting edges#components_3 be false
+letting edges#components_4 be true
+letting edges#components_5 be false
+letting edges#components_6 be true
+letting edges#components_7 be false
+letting edges#components_8 be true
+letting edges#components_9 be false
+letting edges#components_10 be true
+letting edges#components_11 be false
+letting edges#components_12 be true
+letting edges#components_13 be false
+letting edges#components_14 be true
+letting edges#components_15 be true
+letting edges#components_16 be true
+letting edges#components_17 be false
+letting edges#components_18 be true
+letting edges#components_19 be false
+letting edges#components_20 be false
+letting edges#components_21 be false
+letting edges#components_22 be true
+letting edges#components_23 be true
+letting edges#components_24 be false
+letting edges#components_25 be false
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: bool
+findAux __57: bool
+findAux __58: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__1 <-> integer-weighted(1*__0#int_log_1, 2*__0#int_log_2, -4*__0#int_log_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__2 <-> integer-weighted(1*__0#int_log_1, 2*__0#int_log_2, -4*__0#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+optimise(minimise=true, value=0+weighted(1*__0#int_log_1, 2*__0#int_log_2, -4*__0#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+define(__3 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__4 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__5 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__6 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__7 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__8 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__9 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__10 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__11 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__12 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__13 <-> and([__1,__2;int(1..)])) using tseitin,
+define(__14 <-> and([__3,__4;int(1..)])) using tseitin,
+define(__15 <-> and([__5,__6;int(1..)])) using tseitin,
+define(__16 <-> and([__7,__8;int(1..)])) using tseitin,
+define(__17 <-> and([__9,__10;int(1..)])) using tseitin,
+define(__18 <-> and([__11,__12;int(1..)])) using tseitin,
+assert(__13) using tseitin,
+assert(__14) using tseitin,
+assert(__15) using tseitin,
+assert(__16) using tseitin,
+assert(__17) using tseitin,
+assert(__18) using tseitin,
+define(__19 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3, -1*colouring#components_2#int_log_1, -2*colouring#components_2#int_log_2, 4*colouring#components_2#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__20 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3, -1*colouring#components_4#int_log_1, -2*colouring#components_4#int_log_2, 4*colouring#components_4#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__21 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3, -1*colouring#components_1#int_log_1, -2*colouring#components_1#int_log_2, 4*colouring#components_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__22 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3, -1*colouring#components_3#int_log_1, -2*colouring#components_3#int_log_2, 4*colouring#components_3#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__23 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3, -1*colouring#components_5#int_log_1, -2*colouring#components_5#int_log_2, 4*colouring#components_5#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__24 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3, -1*colouring#components_2#int_log_1, -2*colouring#components_2#int_log_2, 4*colouring#components_2#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__25 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3, -1*colouring#components_4#int_log_1, -2*colouring#components_4#int_log_2, 4*colouring#components_4#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__26 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3, -1*colouring#components_5#int_log_1, -2*colouring#components_5#int_log_2, 4*colouring#components_5#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__27 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3, -1*colouring#components_1#int_log_1, -2*colouring#components_1#int_log_2, 4*colouring#components_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__28 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3, -1*colouring#components_3#int_log_1, -2*colouring#components_3#int_log_2, 4*colouring#components_3#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__29 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3, -1*colouring#components_2#int_log_1, -2*colouring#components_2#int_log_2, 4*colouring#components_2#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__30 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3, -1*colouring#components_3#int_log_1, -2*colouring#components_3#int_log_2, 4*colouring#components_3#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__31 <-> and([__19,__20,__21,__22,__23,__24,__25,__26,__27,__28,__29,__30;int(1..)])) using tseitin,
+assert(__31) using tseitin,
+define(__32 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__33 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__34 <-> integer-weighted(1*colouring#components_1#int_log_1, 2*colouring#components_1#int_log_2, -4*colouring#components_1#int_log_3) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__35 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__36 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__37 <-> integer-weighted(1*colouring#components_2#int_log_1, 2*colouring#components_2#int_log_2, -4*colouring#components_2#int_log_3) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__38 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__39 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__40 <-> integer-weighted(1*colouring#components_3#int_log_1, 2*colouring#components_3#int_log_2, -4*colouring#components_3#int_log_3) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__41 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__42 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__43 <-> integer-weighted(1*colouring#components_4#int_log_1, 2*colouring#components_4#int_log_2, -4*colouring#components_4#int_log_3) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__44 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__45 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__46 <-> integer-weighted(1*colouring#components_5#int_log_1, 2*colouring#components_5#int_log_2, -4*colouring#components_5#int_log_3) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__47 <-> (__32) -> (usedColours#components_1)) using tseitin,
+define(__48 <-> (__33) -> (usedColours#components_2)) using tseitin,
+define(__49 <-> (__34) -> (usedColours#components_3)) using tseitin,
+define(__50 <-> (__35) -> (usedColours#components_1)) using tseitin,
+define(__51 <-> (__36) -> (usedColours#components_2)) using tseitin,
+define(__52 <-> (__37) -> (usedColours#components_3)) using tseitin,
+define(__53 <-> (__38) -> (usedColours#components_1)) using tseitin,
+define(__54 <-> (__39) -> (usedColours#components_2)) using tseitin,
+define(__55 <-> (__40) -> (usedColours#components_3)) using tseitin,
+define(__56 <-> (__41) -> (usedColours#components_1)) using tseitin,
+define(__57 <-> (__42) -> (usedColours#components_2)) using tseitin,
+define(__58 <-> (__43) -> (usedColours#components_3)) using tseitin,
+define(__59 <-> (__44) -> (usedColours#components_1)) using tseitin,
+define(__60 <-> (__45) -> (usedColours#components_2)) using tseitin,
+define(__61 <-> (__46) -> (usedColours#components_3)) using tseitin,
+define(__62 <-> and([__47,__48,__49,__50,__51,__52,__53,__54,__55,__56,__57,__58,__59,__60,__61;int(1..)])) using tseitin,
+assert(__62) using tseitin,
+weighted(1*__0#int_log_1, 2*__0#int_log_2, -4*__0#int_log_3, -1*usedColours#components_1, -1*usedColours#components_2, -1*usedColours#components_3) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+

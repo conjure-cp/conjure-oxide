@@ -1,0 +1,568 @@
+Model before rewriting:
+
+find x: set of int(1..4)
+
+such that
+
+and([ and([ and([i in x,!(j in x);int(1..)]) | j : int(4..9) ]) | i : int(1..3) ])
+
+--
+
+and([ and([ and([i in x,!(j in x);int(1..)]) | j : int(4..9) ]) | i : int(1..3) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ and([ and([i in x,!(j in x);int(1..)]) | j : int(4..9) ]) | i : int(1..3) ])
+new variables:
+  find x#occurrence_1: bool
+  find x#occurrence_2: bool
+  find x#occurrence_3: bool
+  find x#occurrence_4: bool
+new constraints:
+  and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) >= 0,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) <= 4;int(1..)])
+
+--
+
+and([ and([ and([i in x,!(j in x);int(1..)]) | j : int(4..9) ]) | i : int(1..3) ]),
+and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) >= 0,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) <= 4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([ and([ and([i in x,!(j in x);int(1..)]) | j : int(4..9) ]) | i : int(1..3) ]),
+and([true,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) <= 4;int(1..)])
+new SAT encoding decisions:
+  count(x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4) AtLeast 0 using None
+
+--
+
+and([ and([ and([i in x,!(j in x);int(1..)]) | j : int(4..9) ]) | i : int(1..3) ]),
+and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) <= 4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([ and([ and([i in x,!(j in x);int(1..)]) | j : int(4..9) ]) | i : int(1..3) ]),
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4) AtMost 4 using None
+
+--
+
+and([ and([ and([i in x,!(j in x);int(1..)]) | j : int(4..9) ]) | i : int(1..3) ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ and([i in x,!(j in x);int(1..)]) | i : int(1..3), j : int(4..9) ])
+
+--
+
+[ and([i in x,!(j in x);int(1..)]) | i : int(1..3), j : int(4..9) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[and([1 in x,!(4 in x);int(1..)]),and([1 in x,!(5 in x);int(1..)]),and([1 in x,!(6 in x);int(1..)]),and([1 in x,!(7 in x);int(1..)]),and([1 in x,!(8 in x);int(1..)]),and([1 in x,!(9 in x);int(1..)]),and([2 in x,!(4 in x);int(1..)]),and([2 in x,!(5 in x);int(1..)]),and([2 in x,!(6 in x);int(1..)]),and([2 in x,!(7 in x);int(1..)]),and([2 in x,!(8 in x);int(1..)]),and([2 in x,!(9 in x);int(1..)]),and([3 in x,!(4 in x);int(1..)]),and([3 in x,!(5 in x);int(1..)]),and([3 in x,!(6 in x);int(1..)]),and([3 in x,!(7 in x);int(1..)]),and([3 in x,!(8 in x);int(1..)]),and([3 in x,!(9 in x);int(1..)]);int(1..)]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+1 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_1
+
+--
+
+1 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_1
+
+--
+
+1 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_1
+
+--
+
+1 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_1
+
+--
+
+1 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_1
+
+--
+
+1 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_1
+
+--
+
+2 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_2
+
+--
+
+2 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_2
+
+--
+
+2 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_2
+
+--
+
+2 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_2
+
+--
+
+2 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_2
+
+--
+
+2 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_2
+
+--
+
+3 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_3
+
+--
+
+3 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_3
+
+--
+
+3 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_3
+
+--
+
+3 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_3
+
+--
+
+3 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_3
+
+--
+
+3 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_3
+
+--
+
+4 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_4
+
+--
+
+5 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+6 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+7 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+8 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+9 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+4 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_4
+
+--
+
+5 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+6 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+7 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+8 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+9 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+4 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_4
+
+--
+
+5 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+6 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+7 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+8 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+9 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+false
+
+--
+
+!(x#occurrence_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> !(x#occurrence_4)) using tseitin
+
+--
+
+!(x#occurrence_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> !(x#occurrence_4)) using tseitin
+
+--
+
+!(x#occurrence_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> !(x#occurrence_4)) using tseitin
+
+--
+
+and([and([x#occurrence_1,__0;int(1..)]),and([x#occurrence_1;int(1..)]),and([x#occurrence_1;int(1..)]),and([x#occurrence_1;int(1..)]),and([x#occurrence_1;int(1..)]),and([x#occurrence_1;int(1..)]),and([x#occurrence_2,__1;int(1..)]),and([x#occurrence_2;int(1..)]),and([x#occurrence_2;int(1..)]),and([x#occurrence_2;int(1..)]),and([x#occurrence_2;int(1..)]),and([x#occurrence_2;int(1..)]),and([x#occurrence_3,__2;int(1..)]),and([x#occurrence_3;int(1..)]),and([x#occurrence_3;int(1..)]),and([x#occurrence_3;int(1..)]),and([x#occurrence_3;int(1..)]),and([x#occurrence_3;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([x#occurrence_1,__0,x#occurrence_1,x#occurrence_1,x#occurrence_1,x#occurrence_1,x#occurrence_1,x#occurrence_2,__1,x#occurrence_2,x#occurrence_2,x#occurrence_2,x#occurrence_2,x#occurrence_2,x#occurrence_3,__2,x#occurrence_3,x#occurrence_3,x#occurrence_3,x#occurrence_3,x#occurrence_3;int(1..)])
+
+--
+
+and([x#occurrence_1,__0,x#occurrence_1,x#occurrence_1,x#occurrence_1,x#occurrence_1,x#occurrence_1,x#occurrence_2,__1,x#occurrence_2,x#occurrence_2,x#occurrence_2,x#occurrence_2,x#occurrence_2,x#occurrence_3,__2,x#occurrence_3,x#occurrence_3,x#occurrence_3,x#occurrence_3,x#occurrence_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> and([x#occurrence_1,__0,x#occurrence_1,x#occurrence_1,x#occurrence_1,x#occurrence_1,x#occurrence_1,x#occurrence_2,__1,x#occurrence_2,x#occurrence_2,x#occurrence_2,x#occurrence_2,x#occurrence_2,x#occurrence_3,__2,x#occurrence_3,x#occurrence_3,x#occurrence_3,x#occurrence_3,x#occurrence_3;int(1..)])) using tseitin
+
+--
+
+__3,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__3) using tseitin
+
+--
+
+Final model:
+
+find x: set (representation occurrence) of int(1..4)
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+find x#occurrence_4: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+count(x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4) AtMost 4 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__0 <-> !(x#occurrence_4)) using tseitin,
+define(__1 <-> !(x#occurrence_4)) using tseitin,
+define(__2 <-> !(x#occurrence_4)) using tseitin,
+define(__3 <-> and([x#occurrence_1,__0,x#occurrence_1,x#occurrence_1,x#occurrence_1,x#occurrence_1,x#occurrence_1,x#occurrence_2,__1,x#occurrence_2,x#occurrence_2,x#occurrence_2,x#occurrence_2,x#occurrence_2,x#occurrence_3,__2,x#occurrence_3,x#occurrence_3,x#occurrence_3,x#occurrence_3,x#occurrence_3;int(1..)])) using tseitin,
+assert(__3) using tseitin
+

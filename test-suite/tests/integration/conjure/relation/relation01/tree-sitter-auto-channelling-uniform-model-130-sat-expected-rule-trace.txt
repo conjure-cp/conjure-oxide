@@ -1,0 +1,66 @@
+Model before rewriting:
+
+find r: relation  of (int(2..3) * bool)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find r#as_set_1: set of tuple (int(2..3), bool)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find r#as_set_1#occurrence_1: bool
+  find r#as_set_1#occurrence_2: bool
+  find r#as_set_1#occurrence_3: bool
+  find r#as_set_1#occurrence_4: bool
+new constraints:
+  and([sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4);int(1..)]) >= 0,sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4);int(1..)]) <= 4;int(1..)])
+
+--
+
+true,
+and([sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4);int(1..)]) >= 0,sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4);int(1..)]) <= 4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+and([true,sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4);int(1..)]) <= 4;int(1..)])
+new SAT encoding decisions:
+  count(r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4) AtLeast 0 using None
+
+--
+
+true,
+and([sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4);int(1..)]) <= 4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4) AtMost 4 using None
+
+--
+
+Final model:
+
+find r: relation  of (int(2..3) * bool)
+find r#as_set_1: set (representation occurrence) of tuple (int(2..3), bool)
+find r#as_set_1#occurrence_1: bool
+find r#as_set_1#occurrence_2: bool
+find r#as_set_1#occurrence_3: bool
+find r#as_set_1#occurrence_4: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+count(r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4) AtMost 4 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic })
+

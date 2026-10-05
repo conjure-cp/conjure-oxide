@@ -1,0 +1,253 @@
+Model before rewriting:
+
+find t: tuple (tuple (int(7..8), bool), int(13, 17))
+
+such that
+
+t[1] = (7,false)
+
+--
+
+t
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t
+new variables:
+  find t#components_1: tuple (int(7..8), bool)
+  find t#components_2: int(13, 17)
+
+--
+
+t[1] = (7,false)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+t[1] = (7,false)
+new variables:
+  find t#components_1#components_1: int(7..8)
+  find t#components_1#components_2: bool
+  find t#components_2#int_log_1: bool
+  find t#components_2#int_log_2: bool
+  find t#components_2#int_log_3: bool
+  find t#components_2#int_log_4: bool
+  find t#components_2#int_log_5: bool
+  find t#components_2#int_log_6: bool
+new constraints:
+  or([SATInt(Log, [t#components_2#int_log_1,t#components_2#int_log_2,t#components_2#int_log_3,t#components_2#int_log_4,t#components_2#int_log_5,t#components_2#int_log_6;int(1..)] [13, 17]) = 13,SATInt(Log, [t#components_2#int_log_1,t#components_2#int_log_2,t#components_2#int_log_3,t#components_2#int_log_4,t#components_2#int_log_5,t#components_2#int_log_6;int(1..)] [13, 17]) = 17;int(1..)])
+
+--
+
+SATInt(Log, [t#components_2#int_log_1,t#components_2#int_log_2,t#components_2#int_log_3,t#components_2#int_log_4,t#components_2#int_log_5,t#components_2#int_log_6;int(1..)] [13, 17]) = 13
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*t#components_2#int_log_1, 2*t#components_2#int_log_2, 4*t#components_2#int_log_3, 8*t#components_2#int_log_4, 16*t#components_2#int_log_5, -32*t#components_2#int_log_6) Equal 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+
+--
+
+SATInt(Log, [t#components_2#int_log_1,t#components_2#int_log_2,t#components_2#int_log_3,t#components_2#int_log_4,t#components_2#int_log_5,t#components_2#int_log_6;int(1..)] [13, 17]) = 17
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*t#components_2#int_log_1, 2*t#components_2#int_log_2, 4*t#components_2#int_log_3, 8*t#components_2#int_log_4, 16*t#components_2#int_log_5, -32*t#components_2#int_log_6) Equal 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+
+--
+
+t[1] = (7,false),
+or([__0,__1;int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+t[1] = (7,false),
+or([__0,__1;int(1..)])
+new variables:
+  find t#components_1#components_1#int_log_1: bool
+  find t#components_1#components_1#int_log_2: bool
+  find t#components_1#components_1#int_log_3: bool
+  find t#components_1#components_1#int_log_4: bool
+  find t#components_1#components_1#int_log_5: bool
+new constraints:
+  or([and([SATInt(Log, [t#components_1#components_1#int_log_1,t#components_1#components_1#int_log_2,t#components_1#components_1#int_log_3,t#components_1#components_1#int_log_4,t#components_1#components_1#int_log_5;int(1..)] [7, 8]) >= 7,SATInt(Log, [t#components_1#components_1#int_log_1,t#components_1#components_1#int_log_2,t#components_1#components_1#int_log_3,t#components_1#components_1#int_log_4,t#components_1#components_1#int_log_5;int(1..)] [7, 8]) <= 8;int(1..)]);int(1..)])
+
+--
+
+SATInt(Log, [t#components_1#components_1#int_log_1,t#components_1#components_1#int_log_2,t#components_1#components_1#int_log_3,t#components_1#components_1#int_log_4,t#components_1#components_1#int_log_5;int(1..)] [7, 8]) >= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*t#components_1#components_1#int_log_1, 2*t#components_1#components_1#int_log_2, 4*t#components_1#components_1#int_log_3, 8*t#components_1#components_1#int_log_4, -16*t#components_1#components_1#int_log_5) GreaterEqual 7) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 7, upper: 8 } }]
+
+--
+
+SATInt(Log, [t#components_1#components_1#int_log_1,t#components_1#components_1#int_log_2,t#components_1#components_1#int_log_3,t#components_1#components_1#int_log_4,t#components_1#components_1#int_log_5;int(1..)] [7, 8]) <= 8
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*t#components_1#components_1#int_log_1, 2*t#components_1#components_1#int_log_2, 4*t#components_1#components_1#int_log_3, 8*t#components_1#components_1#int_log_4, -16*t#components_1#components_1#int_log_5) LessEqual 8) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 7, upper: 8 } }]
+
+--
+
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__2,__3;int(1..)])
+
+--
+
+and([__2,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> and([__2,__3;int(1..)])) using tseitin
+
+--
+
+or([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> or([__0,__1;int(1..)])) using tseitin
+
+--
+
+t[1] = (7,false),
+__5,
+__4
+   ~~> remove_single_atom ([("SAT", 8400)])
+t[1] = (7,false),
+__4
+new SAT encoding decisions:
+  assert(__5) using tseitin
+
+--
+
+t[1] = (7,false),
+__4
+   ~~> remove_single_atom ([("SAT", 8400)])
+t[1] = (7,false)
+new SAT encoding decisions:
+  assert(__4) using tseitin
+
+--
+
+t[1]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(t,[1]) @ and([1 >= 1,1 <= 2;int(1..)])}
+
+--
+
+SafeIndex(t,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+t#components_1
+
+--
+
+t#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t#components_1
+
+--
+
+t#components_1 = (7,false)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+and([t#components_1#components_1 = 7,t#components_1#components_2 = false;int(1..)])
+
+--
+
+t#components_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t#components_1#components_1
+
+--
+
+t#components_1#components_1 = 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*t#components_1#components_1#int_log_1, 2*t#components_1#components_1#int_log_2, 4*t#components_1#components_1#int_log_3, 8*t#components_1#components_1#int_log_4, -16*t#components_1#components_1#int_log_5) Equal 7) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 7, upper: 8 } }]
+
+--
+
+t#components_1#components_2 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> (t#components_1#components_2) <-> (false)) using tseitin
+
+--
+
+and([__6,__7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> and([__6,__7;int(1..)])) using tseitin
+
+--
+
+__8
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__8) using tseitin
+
+--
+
+Final model:
+
+find t: tuple (tuple (int(7..8), bool), int(13, 17))
+find t#components_1: tuple (int(7..8), bool)
+find t#components_2: int(13, 17)
+find t#components_1#components_1: int(7..8)
+find t#components_1#components_2: bool
+find t#components_2#int_log_1: bool
+find t#components_2#int_log_2: bool
+find t#components_2#int_log_3: bool
+find t#components_2#int_log_4: bool
+find t#components_2#int_log_5: bool
+find t#components_2#int_log_6: bool
+findAux __0: bool
+findAux __1: bool
+find t#components_1#components_1#int_log_1: bool
+find t#components_1#components_1#int_log_2: bool
+find t#components_1#components_1#int_log_3: bool
+find t#components_1#components_1#int_log_4: bool
+find t#components_1#components_1#int_log_5: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*t#components_2#int_log_1, 2*t#components_2#int_log_2, 4*t#components_2#int_log_3, 8*t#components_2#int_log_4, 16*t#components_2#int_log_5, -32*t#components_2#int_log_6) Equal 13) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__1 <-> integer-weighted(1*t#components_2#int_log_1, 2*t#components_2#int_log_2, 4*t#components_2#int_log_3, 8*t#components_2#int_log_4, 16*t#components_2#int_log_5, -32*t#components_2#int_log_6) Equal 17) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__2 <-> integer-weighted(1*t#components_1#components_1#int_log_1, 2*t#components_1#components_1#int_log_2, 4*t#components_1#components_1#int_log_3, 8*t#components_1#components_1#int_log_4, -16*t#components_1#components_1#int_log_5) GreaterEqual 7) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 7, upper: 8 } }],
+define(__3 <-> integer-weighted(1*t#components_1#components_1#int_log_1, 2*t#components_1#components_1#int_log_2, 4*t#components_1#components_1#int_log_3, 8*t#components_1#components_1#int_log_4, -16*t#components_1#components_1#int_log_5) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 7, upper: 8 } }],
+define(__4 <-> and([__2,__3;int(1..)])) using tseitin,
+define(__5 <-> or([__0,__1;int(1..)])) using tseitin,
+assert(__5) using tseitin,
+assert(__4) using tseitin,
+define(__6 <-> integer-weighted(1*t#components_1#components_1#int_log_1, 2*t#components_1#components_1#int_log_2, 4*t#components_1#components_1#int_log_3, 8*t#components_1#components_1#int_log_4, -16*t#components_1#components_1#int_log_5) Equal 7) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 7, upper: 8 } }],
+define(__7 <-> (t#components_1#components_2) <-> (false)) using tseitin,
+define(__8 <-> and([__6,__7;int(1..)])) using tseitin,
+assert(__8) using tseitin
+

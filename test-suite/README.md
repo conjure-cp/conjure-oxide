@@ -22,8 +22,22 @@ Backend solver randomness is configured independently with `solver-seed = 123` a
 `0`. Both seed fields remain explicit in recorded stats. The `x` strategy
 replays every representation and equally-applicable-rule choice from a fresh parsed model and keeps
 separate `model-000`, `model-001`, … golden artifacts for every parser/rewriter/expander/solver
-configuration. Channelling is configured with `channelling = "no"`; `yes` is reserved but currently
-unsupported.
+configuration. Channelling is configured with `channelling = "no"` or `"uniform"`. Uniform uses one
+representation for every value of the same type throughout the model. `yes` is reserved
+but currently unsupported.
+
+Backend-specific modelling choices override the global settings. For example, this keeps
+the other solvers on their global choices while exploring every uniform SAT portfolio:
+
+```toml
+solver = ["minion", "sat"]
+heuristic = "f"
+channelling = "no"
+
+[solver-options.sat]
+heuristic = "x"
+channelling = "uniform"
+```
 
 Integration tests use the `auto` comprehension expander by default, matching the CLI default.
 Configure it explicitly with `comprehension-expander = "auto"`. Accepted oxide timings, statuses,

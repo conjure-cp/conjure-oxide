@@ -1,0 +1,149 @@
+Model before rewriting:
+
+letting a be {2,3}
+letting b be {1,2}
+find c: set (size 1) of int(1..3)
+
+such that
+
+and([(c subsetEq b),!((c subsetEq a));int(1..)])
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+new variables:
+  find c#occurrence_1: bool
+  find c#occurrence_2: bool
+  find c#occurrence_3: bool
+new constraints:
+  sum([toInt(c#occurrence_1),toInt(c#occurrence_2),toInt(c#occurrence_3);int(1..)]) = 1
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+
+--
+
+and([(c subsetEq {1,2}),!((c subsetEq {2,3}));int(1..)]),
+sum([toInt(c#occurrence_1),toInt(c#occurrence_2),toInt(c#occurrence_3);int(1..)]) = 1
+   ~~> select_cardinality ([("SAT", 20000)])
+and([(c subsetEq {1,2}),!((c subsetEq {2,3}));int(1..)])
+new SAT encoding decisions:
+  count(c#occurrence_1, c#occurrence_2, c#occurrence_3) Exactly 1 using None
+
+--
+
+(c subsetEq {1,2})
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(c#occurrence_1),1 in {1,2};int(1..)]),or([!(c#occurrence_2),2 in {1,2};int(1..)]),or([!(c#occurrence_3),3 in {1,2};int(1..)]);int(1..)])
+
+--
+
+(c subsetEq {2,3})
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(c#occurrence_1),1 in {2,3};int(1..)]),or([!(c#occurrence_2),2 in {2,3};int(1..)]),or([!(c#occurrence_3),3 in {2,3};int(1..)]);int(1..)])
+
+--
+
+!(c#occurrence_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> !(c#occurrence_3)) using tseitin
+
+--
+
+!(c#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> !(c#occurrence_1)) using tseitin
+
+--
+
+and([or([__0;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+or([__0;int(1..)])
+
+--
+
+or([__0;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__0
+
+--
+
+and([or([__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+or([__1;int(1..)])
+
+--
+
+or([__1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__1
+
+--
+
+!(__1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> !(__1)) using tseitin
+
+--
+
+and([__0,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> and([__0,__2;int(1..)])) using tseitin
+
+--
+
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__3) using tseitin
+
+--
+
+Final model:
+
+letting a be {2,3}
+letting b be {1,2}
+find c: set (representation occurrence, size 1) of int(1..3)
+find c#occurrence_1: bool
+find c#occurrence_2: bool
+find c#occurrence_3: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+count(c#occurrence_1, c#occurrence_2, c#occurrence_3) Exactly 1 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__0 <-> !(c#occurrence_3)) using tseitin,
+define(__1 <-> !(c#occurrence_1)) using tseitin,
+define(__2 <-> !(__1)) using tseitin,
+define(__3 <-> and([__0,__2;int(1..)])) using tseitin,
+assert(__3) using tseitin
+

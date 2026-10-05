@@ -1,0 +1,733 @@
+Model before rewriting:
+
+letting n be 4
+letting cost be [3,2,4,6;int(1..4)]
+letting carbon be [1,4,2,5;int(1..4)]
+find selected: matrix indexed by [int(1..n)] of bool
+find total_cost: int(0..20)
+find total_carbon: int(0..20)
+
+such that
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
+
+--
+
+total_cost
+   ~~> select_representation ([("ReprGeneral", 10000)])
+total_cost
+new variables:
+  find total_cost#int_offset_1: bool
+  find total_cost#int_offset_2: bool
+  find total_cost#int_offset_3: bool
+  find total_cost#int_offset_4: bool
+  find total_cost#int_offset_5: bool
+new constraints:
+  or([!(total_cost#int_offset_5),and([!(total_cost#int_offset_4),or([!(total_cost#int_offset_3),and([!(total_cost#int_offset_2),and([!(total_cost#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) >= 0,SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) <= 20;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*total_cost#int_offset_1, 2*total_cost#int_offset_2, 4*total_cost#int_offset_3, 8*total_cost#int_offset_4, 16*total_cost#int_offset_5) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 20 } }]
+
+--
+
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) <= 20
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*total_cost#int_offset_1, 2*total_cost#int_offset_2, 4*total_cost#int_offset_3, 8*total_cost#int_offset_4, 16*total_cost#int_offset_5) LessEqual 20) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 20 } }]
+
+--
+
+total_carbon
+   ~~> select_representation ([("ReprGeneral", 10000)])
+total_carbon
+new variables:
+  find total_carbon#int_offset_1: bool
+  find total_carbon#int_offset_2: bool
+  find total_carbon#int_offset_3: bool
+  find total_carbon#int_offset_4: bool
+  find total_carbon#int_offset_5: bool
+new constraints:
+  or([!(total_carbon#int_offset_5),and([!(total_carbon#int_offset_4),or([!(total_carbon#int_offset_3),and([!(total_carbon#int_offset_2),and([!(total_carbon#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) >= 0,SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) <= 20;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*total_carbon#int_offset_1, 2*total_carbon#int_offset_2, 4*total_carbon#int_offset_3, 8*total_carbon#int_offset_4, 16*total_carbon#int_offset_5) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 20 } }]
+
+--
+
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) <= 20
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*total_carbon#int_offset_1, 2*total_carbon#int_offset_2, 4*total_carbon#int_offset_3, 8*total_carbon#int_offset_4, 16*total_carbon#int_offset_5) LessEqual 20) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 20 } }]
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+or([!(total_cost#int_offset_5),and([!(total_cost#int_offset_4),or([!(total_cost#int_offset_3),and([!(total_cost#int_offset_2),and([!(total_cost#int_offset_1);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)]),
+or([!(total_carbon#int_offset_5),and([!(total_carbon#int_offset_4),or([!(total_carbon#int_offset_3),and([!(total_carbon#int_offset_2),and([!(total_carbon#int_offset_1);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+or([!(total_cost#int_offset_5),and([!(total_cost#int_offset_4),or([!(total_cost#int_offset_3),and([!(total_cost#int_offset_2),and([!(total_cost#int_offset_1);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)]),
+or([!(total_carbon#int_offset_5),and([!(total_carbon#int_offset_4),or([!(total_carbon#int_offset_3),and([!(total_carbon#int_offset_2),and([!(total_carbon#int_offset_1);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)])
+new variables:
+  find selected#components_1: bool
+  find selected#components_2: bool
+  find selected#components_3: bool
+  find selected#components_4: bool
+
+--
+
+total_cost
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20])
+
+--
+
+total_carbon
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20])
+
+--
+
+!(total_cost#int_offset_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> !(total_cost#int_offset_5)) using tseitin
+
+--
+
+!(total_carbon#int_offset_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> !(total_carbon#int_offset_5)) using tseitin
+
+--
+
+!(total_cost#int_offset_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> !(total_cost#int_offset_4)) using tseitin
+
+--
+
+!(total_carbon#int_offset_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> !(total_carbon#int_offset_4)) using tseitin
+
+--
+
+!(total_cost#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> !(total_cost#int_offset_3)) using tseitin
+
+--
+
+!(total_carbon#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> !(total_carbon#int_offset_3)) using tseitin
+
+--
+
+!(total_cost#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> !(total_cost#int_offset_2)) using tseitin
+
+--
+
+!(total_carbon#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> !(total_carbon#int_offset_2)) using tseitin
+
+--
+
+!(total_cost#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> !(total_cost#int_offset_1)) using tseitin
+
+--
+
+!(total_carbon#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> !(total_carbon#int_offset_1)) using tseitin
+
+--
+
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
+
+--
+
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__2,__3;int(1..)])
+
+--
+
+and([__12;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__12
+
+--
+
+and([__13;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__13
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+or([__4,and([__6,or([__8,and([__10,__12;int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+and([__0,__1;int(1..)]),
+or([__5,and([__7,or([__9,and([__11,__13;int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+and([__2,__3;int(1..)])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+or([__4,and([__6,or([__8,and([__10,__12;int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+and([__0,__1;int(1..)]),
+or([__5,and([__7,or([__9,and([__11,__13;int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+and([__2,__3;int(1..)])
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+and([__2,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> and([__2,__3;int(1..)])) using tseitin
+
+--
+
+and([__10,__12;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> and([__10,__12;int(1..)])) using tseitin
+
+--
+
+or([__8,__16;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> or([__8,__16;int(1..)])) using tseitin
+
+--
+
+and([__6,__17;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> and([__6,__17;int(1..)])) using tseitin
+
+--
+
+or([__4,__18;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> or([__4,__18;int(1..)])) using tseitin
+
+--
+
+and([__11,__13;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> and([__11,__13;int(1..)])) using tseitin
+
+--
+
+or([__9,__20;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> or([__9,__20;int(1..)])) using tseitin
+
+--
+
+and([__7,__21;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__22
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> and([__7,__21;int(1..)])) using tseitin
+
+--
+
+or([__5,__22;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__23
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> or([__5,__22;int(1..)])) using tseitin
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+__19,
+__14,
+__23,
+__15
+   ~~> remove_single_atom ([("SAT", 8400)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+__14,
+__23,
+__15
+new SAT encoding decisions:
+  assert(__19) using tseitin
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+__14,
+__23,
+__15
+   ~~> remove_single_atom ([("SAT", 8400)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+__23,
+__15
+new SAT encoding decisions:
+  assert(__14) using tseitin
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+__23,
+__15
+   ~~> remove_single_atom ([("SAT", 8400)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+__15
+new SAT encoding decisions:
+  assert(__23) using tseitin
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+__15
+   ~~> remove_single_atom ([("SAT", 8400)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ])
+new SAT encoding decisions:
+  assert(__15) using tseitin
+
+--
+
+SATInt(Offset, [total_cost#int_offset_1,total_cost#int_offset_2,total_cost#int_offset_3,total_cost#int_offset_4,total_cost#int_offset_5;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__24,__26,__28,__30,__32,__34;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ])
+new variables:
+  findAux __24: bool
+  findAux __25: bool
+  findAux __26: bool
+  findAux __27: bool
+  findAux __28: bool
+  findAux __29: bool
+  findAux __30: bool
+  findAux __31: bool
+  findAux __32: bool
+  findAux __33: bool
+  findAux __34: bool
+  findAux __35: bool
+new SAT encoding decisions:
+  define(__24 <-> !((total_cost#int_offset_1) <-> (false))) using tseitin
+  define(__25 <-> and([total_cost#int_offset_1,false;int(1..)])) using tseitin
+  define(__26 <-> !((total_cost#int_offset_2) <-> (__25))) using tseitin
+  define(__27 <-> and([total_cost#int_offset_2,__25;int(1..)])) using tseitin
+  define(__28 <-> !((total_cost#int_offset_3) <-> (__27))) using tseitin
+  define(__29 <-> and([total_cost#int_offset_3,__27;int(1..)])) using tseitin
+  define(__30 <-> !((total_cost#int_offset_4) <-> (__29))) using tseitin
+  define(__31 <-> and([total_cost#int_offset_4,__29;int(1..)])) using tseitin
+  define(__32 <-> !((total_cost#int_offset_5) <-> (__31))) using tseitin
+  define(__33 <-> and([total_cost#int_offset_5,__31;int(1..)])) using tseitin
+  define(__34 <-> !((false) <-> (__33))) using tseitin
+  define(__35 <-> and([false,__33;int(1..)])) using tseitin
+
+--
+
+SATInt(Offset, [total_carbon#int_offset_1,total_carbon#int_offset_2,total_carbon#int_offset_3,total_carbon#int_offset_4,total_carbon#int_offset_5;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__36,__38,__40,__42,__44,__46;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ])
+new variables:
+  findAux __36: bool
+  findAux __37: bool
+  findAux __38: bool
+  findAux __39: bool
+  findAux __40: bool
+  findAux __41: bool
+  findAux __42: bool
+  findAux __43: bool
+  findAux __44: bool
+  findAux __45: bool
+  findAux __46: bool
+  findAux __47: bool
+new SAT encoding decisions:
+  define(__36 <-> !((total_carbon#int_offset_1) <-> (false))) using tseitin
+  define(__37 <-> and([total_carbon#int_offset_1,false;int(1..)])) using tseitin
+  define(__38 <-> !((total_carbon#int_offset_2) <-> (__37))) using tseitin
+  define(__39 <-> and([total_carbon#int_offset_2,__37;int(1..)])) using tseitin
+  define(__40 <-> !((total_carbon#int_offset_3) <-> (__39))) using tseitin
+  define(__41 <-> and([total_carbon#int_offset_3,__39;int(1..)])) using tseitin
+  define(__42 <-> !((total_carbon#int_offset_4) <-> (__41))) using tseitin
+  define(__43 <-> and([total_carbon#int_offset_4,__41;int(1..)])) using tseitin
+  define(__44 <-> !((total_carbon#int_offset_5) <-> (__43))) using tseitin
+  define(__45 <-> and([total_carbon#int_offset_5,__43;int(1..)])) using tseitin
+  define(__46 <-> !((false) <-> (__45))) using tseitin
+  define(__47 <-> and([false,__45;int(1..)])) using tseitin
+
+--
+
+[ carbon[i] | i : int(1..n), selected[i] ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(selected#components_1),1;int(1..)]),product([toInt(selected#components_2),4;int(1..)]),product([toInt(selected#components_3),2;int(1..)]),product([toInt(selected#components_4),5;int(1..)]);int(1..)]
+
+--
+
+product([toInt(selected#components_1),1;int(1..)])
+   ~~> product_boolean_indicators ([("SAT", 18900)])
+toInt(and([selected#components_1,true;int(1..)]))
+
+--
+
+product([toInt(selected#components_2),4;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([4,toInt(selected#components_2);int(1..)])
+
+--
+
+product([toInt(selected#components_3),2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(selected#components_3);int(1..)])
+
+--
+
+product([toInt(selected#components_4),5;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([5,toInt(selected#components_4);int(1..)])
+
+--
+
+and([selected#components_1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+selected#components_1
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Log, [__24,__26,__28,__30,__32,__34;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Log, [__36,__38,__40,__42,__44,__46;int(1..)] [0, 20]) = sum([toInt(selected#components_1),product([4,toInt(selected#components_2);int(1..)]),product([2,toInt(selected#components_3);int(1..)]),product([5,toInt(selected#components_4);int(1..)]);int(1..)])
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Log, [__24,__26,__28,__30,__32,__34;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ])
+new SAT encoding decisions:
+  weighted(1*__36, 2*__38, 4*__40, 8*__42, 16*__44, -32*__46, -1*selected#components_1, -4*selected#components_2, -2*selected#components_3, -5*selected#components_4) Exactly 0 using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]
+
+--
+
+[ toInt(selected[i]) | i : int(1..n) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4);int(1..)]
+
+--
+
+[ cost[i] | i : int(1..n), selected[i] ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(selected#components_1),3;int(1..)]),product([toInt(selected#components_2),2;int(1..)]),product([toInt(selected#components_3),4;int(1..)]),product([toInt(selected#components_4),6;int(1..)]);int(1..)]
+
+--
+
+product([toInt(selected#components_1),3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,toInt(selected#components_1);int(1..)])
+
+--
+
+product([toInt(selected#components_2),2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(selected#components_2);int(1..)])
+
+--
+
+product([toInt(selected#components_3),4;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([4,toInt(selected#components_3);int(1..)])
+
+--
+
+product([toInt(selected#components_4),6;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([6,toInt(selected#components_4);int(1..)])
+
+--
+
+sum([toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4);int(1..)]) = 1,
+SATInt(Log, [__24,__26,__28,__30,__32,__34;int(1..)] [0, 20]) = sum([product([3,toInt(selected#components_1);int(1..)]),product([2,toInt(selected#components_2);int(1..)]),product([4,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]);int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+SATInt(Log, [__24,__26,__28,__30,__32,__34;int(1..)] [0, 20]) = sum([product([3,toInt(selected#components_1);int(1..)]),product([2,toInt(selected#components_2);int(1..)]),product([4,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]);int(1..)])
+new SAT encoding decisions:
+  count(selected#components_1, selected#components_2, selected#components_3, selected#components_4) Exactly 1 using None
+
+--
+
+SATInt(Log, [__24,__26,__28,__30,__32,__34;int(1..)] [0, 20]) = sum([product([3,toInt(selected#components_1);int(1..)]),product([2,toInt(selected#components_2);int(1..)]),product([4,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]);int(1..)])
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+
+new SAT encoding decisions:
+  weighted(1*__24, 2*__26, 4*__28, 8*__30, 16*__32, -32*__34, -3*selected#components_1, -2*selected#components_2, -4*selected#components_3, -6*selected#components_4) Exactly 0 using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]
+
+--
+
+Final model:
+
+letting n be 4
+letting cost be [3,2,4,6;int(1..4)]
+letting carbon be [1,4,2,5;int(1..4)]
+find selected: matrix indexed by [int(1..n)] of bool
+find total_cost: int(0..20)
+find total_carbon: int(0..20)
+find total_cost#int_offset_1: bool
+find total_cost#int_offset_2: bool
+find total_cost#int_offset_3: bool
+find total_cost#int_offset_4: bool
+find total_cost#int_offset_5: bool
+findAux __0: bool
+findAux __1: bool
+find total_carbon#int_offset_1: bool
+find total_carbon#int_offset_2: bool
+find total_carbon#int_offset_3: bool
+find total_carbon#int_offset_4: bool
+find total_carbon#int_offset_5: bool
+findAux __2: bool
+findAux __3: bool
+find selected#components_1: bool
+find selected#components_2: bool
+find selected#components_3: bool
+find selected#components_4: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+letting cost#components_1 be 3
+letting cost#components_2 be 2
+letting cost#components_3 be 4
+letting cost#components_4 be 6
+letting carbon#components_1 be 1
+letting carbon#components_2 be 4
+letting carbon#components_3 be 2
+letting carbon#components_4 be 5
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*total_cost#int_offset_1, 2*total_cost#int_offset_2, 4*total_cost#int_offset_3, 8*total_cost#int_offset_4, 16*total_cost#int_offset_5) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 20 } }],
+define(__1 <-> integer-weighted(1*total_cost#int_offset_1, 2*total_cost#int_offset_2, 4*total_cost#int_offset_3, 8*total_cost#int_offset_4, 16*total_cost#int_offset_5) LessEqual 20) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 20 } }],
+define(__2 <-> integer-weighted(1*total_carbon#int_offset_1, 2*total_carbon#int_offset_2, 4*total_carbon#int_offset_3, 8*total_carbon#int_offset_4, 16*total_carbon#int_offset_5) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 20 } }],
+define(__3 <-> integer-weighted(1*total_carbon#int_offset_1, 2*total_carbon#int_offset_2, 4*total_carbon#int_offset_3, 8*total_carbon#int_offset_4, 16*total_carbon#int_offset_5) LessEqual 20) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 20 } }],
+define(__4 <-> !(total_cost#int_offset_5)) using tseitin,
+define(__5 <-> !(total_carbon#int_offset_5)) using tseitin,
+define(__6 <-> !(total_cost#int_offset_4)) using tseitin,
+define(__7 <-> !(total_carbon#int_offset_4)) using tseitin,
+define(__8 <-> !(total_cost#int_offset_3)) using tseitin,
+define(__9 <-> !(total_carbon#int_offset_3)) using tseitin,
+define(__10 <-> !(total_cost#int_offset_2)) using tseitin,
+define(__11 <-> !(total_carbon#int_offset_2)) using tseitin,
+define(__12 <-> !(total_cost#int_offset_1)) using tseitin,
+define(__13 <-> !(total_carbon#int_offset_1)) using tseitin,
+define(__14 <-> and([__0,__1;int(1..)])) using tseitin,
+define(__15 <-> and([__2,__3;int(1..)])) using tseitin,
+define(__16 <-> and([__10,__12;int(1..)])) using tseitin,
+define(__17 <-> or([__8,__16;int(1..)])) using tseitin,
+define(__18 <-> and([__6,__17;int(1..)])) using tseitin,
+define(__19 <-> or([__4,__18;int(1..)])) using tseitin,
+define(__20 <-> and([__11,__13;int(1..)])) using tseitin,
+define(__21 <-> or([__9,__20;int(1..)])) using tseitin,
+define(__22 <-> and([__7,__21;int(1..)])) using tseitin,
+define(__23 <-> or([__5,__22;int(1..)])) using tseitin,
+assert(__19) using tseitin,
+assert(__14) using tseitin,
+assert(__23) using tseitin,
+assert(__15) using tseitin,
+define(__24 <-> !((total_cost#int_offset_1) <-> (false))) using tseitin,
+define(__25 <-> and([total_cost#int_offset_1,false;int(1..)])) using tseitin,
+define(__26 <-> !((total_cost#int_offset_2) <-> (__25))) using tseitin,
+define(__27 <-> and([total_cost#int_offset_2,__25;int(1..)])) using tseitin,
+define(__28 <-> !((total_cost#int_offset_3) <-> (__27))) using tseitin,
+define(__29 <-> and([total_cost#int_offset_3,__27;int(1..)])) using tseitin,
+define(__30 <-> !((total_cost#int_offset_4) <-> (__29))) using tseitin,
+define(__31 <-> and([total_cost#int_offset_4,__29;int(1..)])) using tseitin,
+define(__32 <-> !((total_cost#int_offset_5) <-> (__31))) using tseitin,
+define(__33 <-> and([total_cost#int_offset_5,__31;int(1..)])) using tseitin,
+define(__34 <-> !((false) <-> (__33))) using tseitin,
+define(__35 <-> and([false,__33;int(1..)])) using tseitin,
+define(__36 <-> !((total_carbon#int_offset_1) <-> (false))) using tseitin,
+define(__37 <-> and([total_carbon#int_offset_1,false;int(1..)])) using tseitin,
+define(__38 <-> !((total_carbon#int_offset_2) <-> (__37))) using tseitin,
+define(__39 <-> and([total_carbon#int_offset_2,__37;int(1..)])) using tseitin,
+define(__40 <-> !((total_carbon#int_offset_3) <-> (__39))) using tseitin,
+define(__41 <-> and([total_carbon#int_offset_3,__39;int(1..)])) using tseitin,
+define(__42 <-> !((total_carbon#int_offset_4) <-> (__41))) using tseitin,
+define(__43 <-> and([total_carbon#int_offset_4,__41;int(1..)])) using tseitin,
+define(__44 <-> !((total_carbon#int_offset_5) <-> (__43))) using tseitin,
+define(__45 <-> and([total_carbon#int_offset_5,__43;int(1..)])) using tseitin,
+define(__46 <-> !((false) <-> (__45))) using tseitin,
+define(__47 <-> and([false,__45;int(1..)])) using tseitin,
+weighted(1*__36, 2*__38, 4*__40, 8*__42, 16*__44, -32*__46, -1*selected#components_1, -4*selected#components_2, -2*selected#components_3, -5*selected#components_4) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }],
+count(selected#components_1, selected#components_2, selected#components_3, selected#components_4) Exactly 1 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+weighted(1*__24, 2*__26, 4*__28, 8*__30, 16*__32, -32*__34, -3*selected#components_1, -2*selected#components_2, -4*selected#components_3, -6*selected#components_4) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]
+

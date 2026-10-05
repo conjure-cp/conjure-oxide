@@ -1,4 +1,16 @@
-# SAT backend: known issues and disabled tests
+# SAT backend: known issues and coverage failures
+
+## Full integration coverage sweep (2026-10-05)
+
+SAT is now configured for every discovered integration fixture: 659 normally runnable fixtures and five globally skipped fixtures. The full uniform survey explicitly attempts the skipped cases as well. Backend-specific modelling options preserve the other solvers’ configurations.
+
+The current outcomes and exact per-fixture reasons are in [the full coverage report](sat_full_coverage_survey.md) and [its exhaustive CSV](sat_full_coverage_survey.csv). The sweep is still running. SAT enablement is not a claim that a fixture passes; complete passes, successful prefixes, correctness mismatches, lowering/loading gaps, frontend/reference failures and resource limits are recorded separately. Six existing fixtures are rewrite-only and cannot establish SAT solver support.
+
+The occurrence-set case `conjure/set/set_card_00` newly demonstrates a correctness mismatch: `|s| in s` incorrectly admits the empty set. Power expressions remain unlowered, some composite equality operands reach the SAT adaptor as non-Boolean references, and native `atMost`/`atLeast` still need a SAT connection. These are Oxide observations, not confirmed RustSAT/Pindakaas bugs.
+
+The sections below record earlier stages. Their disabled counts and “no remaining mismatch” statements describe those historical screens and are superseded by the full survey.
+
+## Historical screens before the full coverage sweep
 
 Inventory date: 2026-10-04, branch `sat-ir` after variable exceptions and compound allDifferent operands were connected.
 

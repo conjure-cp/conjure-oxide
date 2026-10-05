@@ -1,0 +1,624 @@
+Model before rewriting:
+
+find x: set (minSize 1) of int(2..5)
+find y: set (minSize 1) of int(2..5)
+
+such that
+
+and([ sum([i,2;int(1..)]) = j | i <- x, j <- y ])
+
+--
+
+and([ sum([i,2;int(1..)]) = j | i <- x, j <- y ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ sum([i,2;int(1..)]) = j | i <- x, j <- y ])
+new variables:
+  find x#occurrence_1: bool
+  find x#occurrence_2: bool
+  find x#occurrence_3: bool
+  find x#occurrence_4: bool
+  find y#occurrence_1: bool
+  find y#occurrence_2: bool
+  find y#occurrence_3: bool
+  find y#occurrence_4: bool
+new constraints:
+  and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) >= 1,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) <= 4;int(1..)])
+  and([sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) >= 1,sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) <= 4;int(1..)])
+
+--
+
+and([ sum([i,2;int(1..)]) = j | i <- x, j <- y ]),
+and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) >= 1,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) <= 4;int(1..)]),
+and([sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) >= 1,sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) <= 4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([ sum([i,2;int(1..)]) = j | i <- x, j <- y ]),
+and([true,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) <= 4;int(1..)]),
+and([sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) >= 1,sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) <= 4;int(1..)])
+new SAT encoding decisions:
+  count(x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4) AtLeast 1 using None
+
+--
+
+and([ sum([i,2;int(1..)]) = j | i <- x, j <- y ]),
+and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) <= 4;int(1..)]),
+and([sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) >= 1,sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) <= 4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([ sum([i,2;int(1..)]) = j | i <- x, j <- y ]),
+and([true;int(1..)]),
+and([sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) >= 1,sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) <= 4;int(1..)])
+new SAT encoding decisions:
+  count(x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4) AtMost 4 using None
+
+--
+
+and([ sum([i,2;int(1..)]) = j | i <- x, j <- y ]),
+true,
+and([sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) >= 1,sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) <= 4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([ sum([i,2;int(1..)]) = j | i <- x, j <- y ]),
+true,
+and([true,sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) <= 4;int(1..)])
+new SAT encoding decisions:
+  count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4) AtLeast 1 using None
+
+--
+
+and([ sum([i,2;int(1..)]) = j | i <- x, j <- y ]),
+true,
+and([sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4);int(1..)]) <= 4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([ sum([i,2;int(1..)]) = j | i <- x, j <- y ]),
+true,
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4) AtMost 4 using None
+
+--
+
+[ sum([i,2;int(1..)]) = j | i <- x, j <- y ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ sum([i,2;int(1..)]) = j | i : int(2..5), i in x, j <- y ]
+
+--
+
+[ sum([i,2;int(1..)]) = j | i : int(2..5), i in x, j <- y ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ sum([i,2;int(1..)]) = j | i : int(2..5), i in x, j : int(2..5), j in y ]
+
+--
+
+[ sum([i,2;int(1..)]) = j | i : int(2..5), i in x, j : int(2..5), j in y ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(2 in x) -> (and([!(2 in y),!(3 in y),!(5 in y);int(1..)])),(3 in x) -> (and([!(2 in y),!(3 in y),!(4 in y);int(1..)])),(4 in x) -> (and([!(2 in y),!(3 in y),!(4 in y),!(5 in y);int(1..)])),(5 in x) -> (and([!(2 in y),!(3 in y),!(4 in y),!(5 in y);int(1..)]));int(1..)]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+2 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_1
+
+--
+
+3 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_2
+
+--
+
+4 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_3
+
+--
+
+5 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_4
+
+--
+
+2 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_1
+
+--
+
+3 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_2
+
+--
+
+5 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_4
+
+--
+
+2 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_1
+
+--
+
+3 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_2
+
+--
+
+4 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_3
+
+--
+
+2 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_1
+
+--
+
+3 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_2
+
+--
+
+4 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_3
+
+--
+
+5 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_4
+
+--
+
+2 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_1
+
+--
+
+3 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_2
+
+--
+
+4 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_3
+
+--
+
+5 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_4
+
+--
+
+!(y#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> !(y#occurrence_1)) using tseitin
+
+--
+
+!(y#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> !(y#occurrence_2)) using tseitin
+
+--
+
+!(y#occurrence_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> !(y#occurrence_4)) using tseitin
+
+--
+
+!(y#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> !(y#occurrence_1)) using tseitin
+
+--
+
+!(y#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> !(y#occurrence_2)) using tseitin
+
+--
+
+!(y#occurrence_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> !(y#occurrence_3)) using tseitin
+
+--
+
+!(y#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> !(y#occurrence_1)) using tseitin
+
+--
+
+!(y#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> !(y#occurrence_2)) using tseitin
+
+--
+
+!(y#occurrence_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> !(y#occurrence_3)) using tseitin
+
+--
+
+!(y#occurrence_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> !(y#occurrence_4)) using tseitin
+
+--
+
+!(y#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> !(y#occurrence_1)) using tseitin
+
+--
+
+!(y#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> !(y#occurrence_2)) using tseitin
+
+--
+
+!(y#occurrence_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> !(y#occurrence_3)) using tseitin
+
+--
+
+!(y#occurrence_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> !(y#occurrence_4)) using tseitin
+
+--
+
+and([__0,__1,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> and([__0,__1,__2;int(1..)])) using tseitin
+
+--
+
+(x#occurrence_1) -> (__14)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> (x#occurrence_1) -> (__14)) using tseitin
+
+--
+
+and([__3,__4,__5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> and([__3,__4,__5;int(1..)])) using tseitin
+
+--
+
+(x#occurrence_2) -> (__16)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> (x#occurrence_2) -> (__16)) using tseitin
+
+--
+
+and([__6,__7,__8,__9;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> and([__6,__7,__8,__9;int(1..)])) using tseitin
+
+--
+
+(x#occurrence_3) -> (__18)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> (x#occurrence_3) -> (__18)) using tseitin
+
+--
+
+and([__10,__11,__12,__13;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> and([__10,__11,__12,__13;int(1..)])) using tseitin
+
+--
+
+(x#occurrence_4) -> (__20)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> (x#occurrence_4) -> (__20)) using tseitin
+
+--
+
+and([__15,__17,__19,__21;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__22
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> and([__15,__17,__19,__21;int(1..)])) using tseitin
+
+--
+
+__22,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true
+new SAT encoding decisions:
+  assert(__22) using tseitin
+
+--
+
+Final model:
+
+find x: set (representation occurrence, minSize 1) of int(2..5)
+find y: set (representation occurrence, minSize 1) of int(2..5)
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+find x#occurrence_4: bool
+find y#occurrence_1: bool
+find y#occurrence_2: bool
+find y#occurrence_3: bool
+find y#occurrence_4: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+count(x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4) AtLeast 1 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+count(x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4) AtMost 4 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4) AtLeast 1 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4) AtMost 4 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+define(__0 <-> !(y#occurrence_1)) using tseitin,
+define(__1 <-> !(y#occurrence_2)) using tseitin,
+define(__2 <-> !(y#occurrence_4)) using tseitin,
+define(__3 <-> !(y#occurrence_1)) using tseitin,
+define(__4 <-> !(y#occurrence_2)) using tseitin,
+define(__5 <-> !(y#occurrence_3)) using tseitin,
+define(__6 <-> !(y#occurrence_1)) using tseitin,
+define(__7 <-> !(y#occurrence_2)) using tseitin,
+define(__8 <-> !(y#occurrence_3)) using tseitin,
+define(__9 <-> !(y#occurrence_4)) using tseitin,
+define(__10 <-> !(y#occurrence_1)) using tseitin,
+define(__11 <-> !(y#occurrence_2)) using tseitin,
+define(__12 <-> !(y#occurrence_3)) using tseitin,
+define(__13 <-> !(y#occurrence_4)) using tseitin,
+define(__14 <-> and([__0,__1,__2;int(1..)])) using tseitin,
+define(__15 <-> (x#occurrence_1) -> (__14)) using tseitin,
+define(__16 <-> and([__3,__4,__5;int(1..)])) using tseitin,
+define(__17 <-> (x#occurrence_2) -> (__16)) using tseitin,
+define(__18 <-> and([__6,__7,__8,__9;int(1..)])) using tseitin,
+define(__19 <-> (x#occurrence_3) -> (__18)) using tseitin,
+define(__20 <-> and([__10,__11,__12,__13;int(1..)])) using tseitin,
+define(__21 <-> (x#occurrence_4) -> (__20)) using tseitin,
+define(__22 <-> and([__15,__17,__19,__21;int(1..)])) using tseitin,
+assert(__22) using tseitin
+
