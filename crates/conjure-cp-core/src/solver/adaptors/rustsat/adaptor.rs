@@ -628,11 +628,15 @@ impl SolverAdaptor for Sat {
             let domain = decl
                 .domain()
                 .expect("Decision variable should have a domain");
-            let domain = domain.as_ground().expect("Domain should be ground");
+            let domain = domain.resolve().map_err(|error| {
+                SolverError::ModelInvalid(format!(
+                    "Cannot resolve domain of decision variable '{name}': {error}"
+                ))
+            })?;
 
             // Everything reaching the solver must be Boolean by now. Integers are encoded into
             // Booleans by their representation, and a declaration that has one was skipped above.
-            if domain != &GroundDomain::Bool {
+            if domain.as_ref() != &GroundDomain::Bool {
                 Err(SolverError::ModelInvalid(format!(
                     "Only Boolean Decision Variables supported, but '{name}' has domain {domain}"
                 )))?;
@@ -640,7 +644,7 @@ impl SolverAdaptor for Sat {
             // Only expose non-internal boolean variables in solver solutions. Machine names are
             // auxiliaries introduced during rewriting and can create huge powersets of don't-care
             // assignments without changing the semantic solution.
-            if domain == &GroundDomain::Bool && is_user_visible_solution_var(&name) {
+            if domain.as_ref() == &GroundDomain::Bool && is_user_visible_solution_var(&name) {
                 finds.push(name);
             }
         }
@@ -757,6 +761,38 @@ mod tests {
     use super::*;
     use crate::ast::{DeclarationPtr, Domain, Moo, Reference};
     use crate::range;
+
+    #[test]
+    fn boolean_domain_lettings_are_resolved_when_loading() {
+        let mut model = ConjureModel::default();
+        let alias = DeclarationPtr::new_domain_letting(Name::user("A"), Domain::bool());
+        let nested = DeclarationPtr::new_domain_letting(
+            Name::user("B"),
+            Domain::reference(alias.clone()).unwrap(),
+        );
+        let p =
+            DeclarationPtr::new_find(Name::user("p"), Domain::reference(nested.clone()).unwrap());
+        for declaration in [alias, nested, p.clone()] {
+            model.add_symbol(declaration).unwrap();
+        }
+        model.add_sat_decision(crate::ast::SatEncodingDecision::Assert(
+            Reference::new(p).into(),
+        ));
+        let mut sat = Sat::default();
+        sat.load_model(model, private::Internal).unwrap();
+        let count = std::sync::Arc::new(std::sync::Mutex::new(0));
+        let collected = count.clone();
+        sat.solve(
+            Box::new(move |solution| {
+                assert_eq!(solution[&Name::user("p")], Literal::Int(1));
+                *collected.lock().unwrap() += 1;
+                true
+            }),
+            private::Internal,
+        )
+        .unwrap();
+        assert_eq!(*count.lock().unwrap(), 1);
+    }
 
     #[test]
     fn objective_tightening_improves_free_completions_and_proves_the_optimum() {
