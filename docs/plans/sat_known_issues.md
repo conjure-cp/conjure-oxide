@@ -2,13 +2,19 @@
 
 ## Full integration coverage sweep (2026-10-05)
 
-SAT is now configured for every discovered integration fixture: 659 normally runnable fixtures and five globally skipped fixtures. The full uniform survey explicitly attempts the skipped cases as well. Backend-specific modelling options preserve the other solvers’ configurations.
+The latest complete coverage report passes **602 of 667 fixtures**, compared with 565 of 664 in the first survey. SAT is configured for every discovered fixture: 662 normally runnable and five globally skipped fixtures explicitly attempted. SAT uses `heuristic="x"` with uniform channelling in 622 fixtures and compact's normal representation and SAT encoding choices in 45 fixtures whose other backend profiles do not enumerate choices. No SAT encoding options are pinned; existing Minion/Z3 profiles are preserved.
 
-The current outcomes and exact per-fixture reasons are in [the full coverage report](sat_full_coverage_survey.md) and [its exhaustive CSV](sat_full_coverage_survey.csv). The sweep is still running. SAT enablement is not a claim that a fixture passes; complete passes, successful prefixes, correctness mismatches, lowering/loading gaps, frontend/reference failures and resource limits are recorded separately. Six existing fixtures are rewrite-only and cannot establish SAT solver support.
+See [the full coverage report](sat_full_coverage_survey.md) and [the exhaustive per-fixture CSV](sat_full_coverage_survey.csv). The survey uses four workers, a 600-second fixture timeout and a 4 GiB process-tree RSS ceiling. Fifteen power-containing fixtures and fourteen occurrence-constraint fixtures have targeted follow-up runs after the final fixes, with the same profiles and limits. Their latest outcomes supersede their earlier attempts.
 
-The occurrence-set case `conjure/set/set_card_00` newly demonstrates a correctness mismatch: `|s| in s` incorrectly admits the empty set. Power expressions remain unlowered, some composite equality operands reach the SAT adaptor as non-Boolean references, and native `atMost`/`atLeast` still need a SAT connection. These are Oxide observations, not confirmed RustSAT/Pindakaas bugs.
+Occurrence membership now guards the lookup domain, making out-of-domain membership false under negation and reification. Boolean gate checks preserve compound equality for representation lowering. Power uses exponentiation by squaring through existing circuit decisions, including constant-folded exponent bits. Native `atMost`/`atLeast` and global cardinality accept direct and flattened matrix operands and reuse cardinality/PB decisions. No solution mismatch or SAT loading error remains in this survey.
 
-The sections below record earlier stages. Their disabled counts and “no remaining mismatch” statements describe those historical screens and are superseded by the full survey.
+`make check`, workspace library tests/doctests, all 174 final rule tests, 22 focused SAT golden checks, five passing occurrence follow-up golden checks, and 72 affected Minion/Z3 golden checks pass. The updated flattened-occurrence regression also passes a fresh Minion check. Timing baselines are preserved for existing run identities.
+
+Masked power matches all 30 independently enumerated assignments across 130 SAT portfolios. Conjure/Savile Row drops six fallback assignments because its native power constraint is unconditional; a report is saved locally in `bug-reports/savilerow-masked-power/README.md` and remains uncommitted. The regression explicitly skips that reference. No new RustSAT/Pindakaas defect was established. Machine-overflowing power ranges and an audit of Oxide's native Minion masking path remain open.
+
+Current failures: 12 residual constraints (allDifferent input forms and compound lexicographic comparison), 31 SAT/model memory limits, 16 timeouts, two panics, two globally skipped frontend failures, and two globally skipped reference memory limits. Resource limits do not establish unsupported semantics. Complete passes include three rewrite-only fixtures, which do not establish SAT solving support.
+
+The sections below record historical screens; their disabled counts and outcome claims are superseded by the current report.
 
 ## Historical screens before the full coverage sweep
 

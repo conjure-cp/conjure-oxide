@@ -2,150 +2,122 @@
 
 Survey date: 2026-10-05. Complete.
 
-664 of 664 discovered fixtures have completed. SAT is configured for all 664 fixtures: 659 normally runnable and five globally skipped fixtures explicitly attempted by this survey. Two multi-source directories have no generated integration test and are excluded: `cnf/cnf2` and `bugs/experiment/wrong-json-model`.
+667 of 667 discovered fixtures have completed. SAT is configured for all 667 fixtures: 662 normally runnable and five globally skipped fixtures explicitly attempted by this survey. Two multi-source directories have no generated integration test and are excluded: `cnf/cnf2` and `bugs/experiment/wrong-json-model`.
 
-Every SAT run uses `heuristic="x"` and `channelling="uniform"`; existing Minion/Z3 choices are preserved through `[solver-options.sat]`. Four workers run the release integration harness, with a 600-second fixture timeout and a 4 GiB resident-memory ceiling for each fixture and its descendants. A failed portfolio stops its modelling-choice sequence; the harness may continue with another configured parser/rewriter unless the failure panics. The survey continues with other fixtures. Tests run in an isolated fixture copy with `ACCEPT=true`; original goldens and timing baselines are protected.
+SAT uses `heuristic="x"` for 622 fixtures and `heuristic="c"` for 45 fixtures. Where other backend profiles exist, SAT follows whether they enumerate choices; SAT-only fixtures retain their configured all-choice profile. Every SAT run retains uniform channelling. Compact selects one representation and one option per encoding family using its normal policy; no SAT options are pinned. Existing Minion/Z3 choices are preserved through `[solver-options.sat]`. Four workers run the primary release integration survey. After the constant-bit power fix, all 15 power-containing fixtures are rerun with one worker under the same profiles and limits; their latest outcomes supersede the earlier attempts. A further four-worker follow-up reruns all 14 occurrence-constraint fixtures after accepting flattened matrix operands; its latest outcomes also supersede the earlier attempts. All runs use a 600-second fixture timeout and a 4 GiB resident-memory ceiling for each fixture and its descendants. A failed portfolio stops its modelling-choice sequence; the harness may continue with another configured parser/rewriter unless the failure panics. The survey continues with other fixtures. Tests run in an isolated fixture copy with `ACCEPT=true`; original goldens and timing baselines are protected.
 
 | Outcome | All fixtures | Normally runnable |
 | --- | ---: | ---: |
 | frontend | 2 | 0 |
-| memory_limit | 39 | 38 |
+| memory_limit | 31 | 30 |
 | panic | 2 | 2 |
-| pass | 565 | 565 |
+| pass | 602 | 602 |
 | reference_memory_limit | 2 | 0 |
-| residual_constraints | 28 | 28 |
-| sat_loading_or_encoding | 4 | 4 |
-| solution_mismatch | 3 | 3 |
-| timeout | 19 | 19 |
+| residual_constraints | 12 | 12 |
+| timeout | 16 | 16 |
 
-Successful SAT portfolios in complete passing fixtures: 60628. Successful portfolio prefixes in failed fixtures: 4639.
+Successful SAT portfolios in complete passing fixtures: 61913. Successful portfolio prefixes in failed fixtures: 5363.
 
-Of the completed passes, 530 performed SAT solution validation against Conjure, 34 omit the Conjure reference by existing explicit configuration, and 1 are rewrite-only fixtures. Rewrite-only passes do not establish SAT solver support.
+Of the completed passes, 563 performed SAT solution validation against Conjure, 36 omit the Conjure reference by explicit configuration (including the independently audited masked-power regression), and 3 are rewrite-only fixtures. Rewrite-only passes do not establish SAT solver support.
 
 A timeout or memory limit is a bounded performance observation, not a confirmed unsupported constraint. Reference/frontend failures may prevent the SAT backend from being reached. The CSV records every fixture, its first failure, resource budget, prior SAT enablement and successful portfolio prefix. Acceptance clears old snapshots before executing a fixture, so successful prefix counts are from this survey. A successful prefix does not establish complete coverage of a failed fixture.
 
-## Confirmed correctness counterexample
+## Changes since the first survey
 
-`conjure/set/set_card_00` asks for `s : set of int(1..2)` with `|s| in s`. Conjure returns `{1}` and `{1,2}`. An occurrence-set portfolio also returns the invalid empty set. Its element decision has entries at indices 1 and 2, while the cardinality index may be zero; that out-of-domain index leaves its Boolean result unconstrained. This identifies an Oxide membership/element lowering gap. It does not establish a RustSAT/Pindakaas defect.
+The first survey passed 565 of 664 fixtures. This rerun includes three new regressions. The per-fixture CSV records the previous outcome and current SAT heuristic so profile changes can be distinguished from backend fixes.
 
-The same out-of-domain occurrence-membership pattern appears in `basic/finite-givens/set05` and `conjure/set/finiteGivens_set05_p2`. Both ask for an integer in one of the supplied inner sets. SAT also admits values outside the inner-set domain: the expected values are 2..5 and 3..5 respectively, while the failing portfolios return 0..9. The generated membership decisions have no false-result guard outside their element index domain.
+Occurrence membership now guards its lookup domain, making out-of-domain membership false under negation and reification. Boolean gates accept only Boolean atoms, allowing compound equality to reach representation-specific lowering. Native atMost/atLeast and global cardinality accept direct or flattened matrix operands and lower to equality indicators and shared cardinality/PB decisions. SafePow uses exponentiation by squaring through existing Boolean circuit decisions; negative exponents and zero-to-zero remain governed by bubbling and catchUndef. Machine-overflowing power ranges are explicitly declined rather than silently wrapped.
+
+35 previously failing fixtures and all three new regressions now complete. One previously passing fixture, `conjure/function/function_total_bool_06`, exceeded 600 seconds in this run; this does not establish a semantic regression. All 427 fixtures that had SAT enabled before the first survey still pass. Profile changes and backend fixes both contribute to these results; this is not a controlled performance comparison.
+
+| Outcome | First survey (664) | Latest survey (667) |
+| --- | ---: | ---: |
+| frontend | 2 | 2 |
+| memory_limit | 39 | 31 |
+| panic | 2 | 2 |
+| pass | 565 | 602 |
+| reference_memory_limit | 2 | 2 |
+| residual_constraints | 28 | 12 |
+| sat_loading_or_encoding | 4 | 0 |
+| solution_mismatch | 3 | 0 |
+| timeout | 19 | 16 |
+
+## Validation and reference issue
+
+Workspace library tests and doctests passed after the main fixes (508 library tests). After the flattened-occurrence follow-up, all 174 rule tests and `make check` pass. Normal golden verification passes for 22 focused SAT fixtures, the five passing occurrence follow-up fixtures, and 72 affected Minion/Z3 fixtures; the updated flattened-occurrence regression also passes a fresh Minion golden check. Successful complete fixtures have their accepted snapshots recorded; failed portfolio prefixes are counted only in this report. Original timing fields are retained for existing run identities.
+
+The masked-power regression has 30 expected assignments, checked independently across 130 SAT portfolios. Conjure/Savile Row instead returns 24 because an unconditional native `pow` constraint excludes six negative-exponent assignments whose `catchUndef` fallback should be selected. The local, uncommitted report is `bug-reports/savilerow-masked-power/README.md`. That fixture explicitly skips Conjure validation. This is a reference-solver issue; no new RustSAT/Pindakaas bug was established. Oxide's native Minion power masking path remains to be audited.
+
+The remaining residual constraints are compound lexicographic comparisons and allDifferent input forms. Two earlier atLeast residuals now lower successfully but encounter the resource outcomes recorded below. Machine-overflowing power ranges remain explicitly unsupported.
 
 ## First failures, smallest sources first
 
 | Fixture | Outcome | Reason |
 | --- | --- | --- |
-| `basic/pow/01-simple` | residual_constraints | Un-encoded constraints in the model: [SafePow(SATInt(Log, [__6,__7,__8,false;int(1..)] [2, 5]), SATInt(Log, [__9,__10,__11,false;int(1..)] [2, 5])) = 4, __5, __2]; compact: residual_constraints |
-| `conjure/permutation/perm_repr_0008` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `conjure/set/set_card_00` | solution_mismatch | assertion failed: `(left == right)`: Oxide solutions (<) do not match Conjure solutions (>)!; compact: solution_mismatch |
-| `conjure/function/function_partial_smoke` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: timeout |
-| `conjure/partition/partition_02` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `conjure/partition/partition_03` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `conjure/permutation/perm_repr_0006` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `basic/pow/02-exponent-zero` | residual_constraints | Un-encoded constraints in the model: [SafePow(SATInt(Log, [__6,__7,__8,false;int(1..)] [2, 5]), SATInt(Log, [__9,__10,__11,false;int(1..)] [0, 5])) = 4, __5, __2]; compact: residual_constraints |
-| `conjure/relation/binrel02` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `basic/pow/03-negative-exponent` | residual_constraints | Un-encoded constraints in the model: [SafePow(SATInt(Log, [__6,__7,__8,false;int(1..)] [2, 5]), SATInt(Log, [__9,__10,__11,__12;int(1..)] [-5, 5])) = 2, __5, __2]; compact: residual_constraints |
-| `conjure/permutation/perm_repr_0010` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `conjure/permutation/perm_repr_0011` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `conjure/relation/binrel03` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `conjure/function/function_total_int_03` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `conjure/function/function_total_int_04` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `conjure/function/function_total_int_05` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `conjure/function/function_total_int_06` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `basic/pow/04-flatten` | residual_constraints | Un-encoded constraints in the model: [SafePow(SATInt(Log, [__731,__732,__733,__734,__735,__736,false;int(1..)] [4, 40]), SATInt(Log, [__725,__726,false;int(1..)] [0, 2])) = 4, __730, __727]; compact: residual_constraints |
-| `conjure/partition/partition_01` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `conjure/permutation/perm_eq_0005` | sat_loading_or_encoding | Error: Custom { kind: Other, error: "test_dir=tests/integration/conjure/permutation/perm_eq_0005, model=input.essence, parser=tree-sitter, rewriter=optimised, comprehension_expander=auto, heuristic=x, seed=0, channelling=uniform, solver=sat, solver_seed=0: model invalid: Non-Boolean SAT reference: q" }; compact: sat_loading_or_encoding |
-| `conjure/permutation/perm_card_0003` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `conjure/relation/binrel01` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/absBug` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `conjure/permutation/perm_inverse_0005` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `conjure/permutation/perm_repr_0012` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `conjure/relation/binrel04` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `conjure/function/function_total_int_set_01` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `basic/comprehension/dependent-domains` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `conjure/relation/relation07_connex` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `conjure/permutation/permutation_as_function_smoke` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `conjure/set/set08` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `smt/matrix/overlapping-eq` | sat_loading_or_encoding | Error: Custom { kind: Other, error: "test_dir=tests/integration/smt/matrix/overlapping-eq, model=input.essence, parser=tree-sitter, rewriter=optimised, comprehension_expander=auto, heuristic=x, seed=0, channelling=uniform, solver=sat, solver_seed=0: model invalid: Non-Boolean SAT reference: a" }; compact: sat_loading_or_encoding |
-| `conjure/matrix/matrix_atmost_atleast` | residual_constraints | Un-encoded constraints in the model: [atMost([SATInt(Direct, [m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)] [1, 4]),SATInt(Direct, [m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)] [1, 4]),SATInt(Direct, [m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)] [1, 4]),SATInt(Direct, [; compact: residual_constraints |
-| `basic/finite-givens/set05` | solution_mismatch | assertion failed: `(left == right)`: Oxide solutions (<) do not match Conjure solutions (>)!; compact: solution_mismatch |
-| `conjure/relation/relation04_find` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `basic/lettings/04-domain` | panic | Domain should be ground; compact: panic |
-| `bugs/treemorph-misses-node-01` | residual_constraints | Un-encoded constraints in the model: [SafePow(SATInt(Log, [__3,__4,__5,false;int(1..)] [1, 5]), SATInt(Log, [false,true,false;int(1..)] [2, 2])) = sum([SafePow(SATInt(Log, [__6,__7,__8,__9,__10,__11,__12,false;int(1..)] [1, 75]), SATInt(Log, [false,true,false;int(1..)] [2, 2])),SafePow(SATInt(Log, [__13,__14,__15,__16,__17,__18,__19,false;int(1..)] [1, 75]), SATInt(Log, [false,true,false;int(1..)] [2, 2]));int(1..)])]; compact: residual_constraints |
-| `conjure/function/function_complex_01` | residual_constraints | Un-encoded constraints in the model: [or([__0,__52,and([__53,([x#as_relation_1#as_set_1#explicit_1#components_1#components_1#explicit_1#components_1,x#as_relation_1#as_set_1#explicit_1#components_1#components_1#explicit_1#components_2;int(1..)] <lex [x#as_relation_1#as_set_1#explicit_1#components_2#components_1#explicit_1#components_1,x#as_relation_1#as_set_1#explicit_1#components_2#components_1#explicit_1#components_2;int(1..)]);int(1..)]),__118;int(1..)]), or([__1,__62,and([__63,([x#as_relatio; compact: pass |
-| `conjure/set/finiteGivens_set05_p2` | solution_mismatch | assertion failed: `(left == right)`: Oxide solutions (<) do not match Conjure solutions (>)!; compact: solution_mismatch |
-| `savilerow/magicSequence` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: residual_constraints |
-| `smt/matrix/overlapping-neq` | sat_loading_or_encoding | Error: Custom { kind: Other, error: "test_dir=tests/integration/smt/matrix/overlapping-neq, model=input.essence, parser=tree-sitter, rewriter=optimised, comprehension_expander=auto, heuristic=x, seed=0, channelling=uniform, solver=sat, solver_seed=0: model invalid: Non-Boolean SAT reference: a" }; compact: sat_loading_or_encoding |
-| `smt/matrix/overlapping-neq-wrapped` | sat_loading_or_encoding | Error: Custom { kind: Other, error: "test_dir=tests/integration/smt/matrix/overlapping-neq-wrapped, model=input.essence, parser=tree-sitter, rewriter=optimised, comprehension_expander=auto, heuristic=x, seed=0, channelling=uniform, solver=sat, solver_seed=0: model invalid: Non-Boolean SAT reference: a" }; compact: sat_loading_or_encoding |
-| `conjure/relation/relation04_param` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/semigroup` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/shorttable-smalltest` | frontend | Error: Custom { kind: Other, error: "test_dir=tests/integration/savilerow/shorttable-smalltest, model=input.essence, parser=tree-sitter, rewriter=optimised, comprehension_expander=auto, heuristic=x, seed=0, channelling=uniform, solver=sat, solver_seed=0: tests/integration/savilerow/shorttable-smalltest/input.essence:10:1:\n  \|\n10 \| tableshort([x[1],x[2],x[3],x[4]], mycon)\n  \| ^\nThe identifier 'tableshort' is not defined" }; compact: frontend |
-| `savilerow/const_matrix_test` | panic | error: 0 is not a valid index for dimension 0; compact: panic |
-| `hakank-eprime/xkcd` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/shorttable-assigntest` | frontend | Error: Custom { kind: Other, error: "test_dir=tests/integration/savilerow/shorttable-assigntest, model=input.essence, parser=tree-sitter, rewriter=optimised, comprehension_expander=auto, heuristic=x, seed=0, channelling=uniform, solver=sat, solver_seed=0: tests/integration/savilerow/shorttable-assigntest/input.essence:10:1:\n  \|\n10 \| tableshort([x[1],x[2],x[3],x[4],x[5]], mycon),\n  \| ^\nThe identifier 'tableshort' is not defined" }; compact: frontend |
-| `savilerow/atleast-test` | residual_constraints | Un-encoded constraints in the model: [atLeast([SATInt(Direct, [M#components_1#int_direct_1,M#components_1#int_direct_2,M#components_1#int_direct_3,M#components_1#int_direct_4,M#components_1#int_direct_5,M#components_1#int_direct_6,M#components_1#int_direct_7,M#components_1#int_direct_8,M#components_1#int_direct_9,M#components_1#int_direct_10;int(1..)] [0, 9]),SATInt(Direct, [M#components_2#int_direct_1,M#components_2#int_direct_2,M#components_2#int_direct_3,M#components_2#int_direct_4,M#componen; compact: residual_constraints |
-| `savilerow/gcctest` | residual_constraints | Un-encoded constraints in the model: [globalCardinality([SATInt(Direct, [m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4,m#components_1#int_direct_5,m#components_1#int_direct_6,m#components_1#int_direct_7,m#components_1#int_direct_8,m#components_1#int_direct_9,m#components_1#int_direct_10;int(1..)] [1, 10]),SATInt(Direct, [m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4; compact: residual_constraints |
-| `savilerow/atmost-test` | residual_constraints | Un-encoded constraints in the model: [atMost([SATInt(Direct, [M#components_1#int_direct_1,M#components_1#int_direct_2,M#components_1#int_direct_3,M#components_1#int_direct_4,M#components_1#int_direct_5,M#components_1#int_direct_6,M#components_1#int_direct_7,M#components_1#int_direct_8,M#components_1#int_direct_9,M#components_1#int_direct_10;int(1..)] [0, 9]),SATInt(Direct, [M#components_2#int_direct_1,M#components_2#int_direct_2,M#components_2#int_direct_3,M#components_2#int_direct_4,M#component; compact: residual_constraints |
-| `savilerow/multiDimensionArray` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: timeout |
-| `basic/pow/05-negative-base` | residual_constraints | Un-encoded constraints in the model: [SafePow(SATInt(Log, [x#int_direct_2,__12;int(1..)] [-2, 0]), SATInt(Log, [y#int_direct_2,__13,false;int(1..)] [2, 3])) = SATInt(Log, [__7,__8,__9,__10,__11;int(1..)] [-10, -1]), __6, __3]; compact: residual_constraints |
-| `savilerow/sendMoreMoney` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/test_power_raw` | residual_constraints | Un-encoded constraints in the model: [-(SafePow(SATInt(Log, [false,x#int_direct_1,false;int(1..)] [2, 2]), SATInt(Log, [true,false;int(1..)] [1, 1]))) = -2, -(SafePow(SATInt(Log, [false,x#int_direct_1,false;int(1..)] [2, 2]), SATInt(Log, [false,true,false;int(1..)] [2, 2]))) = -4, -(SafePow(SATInt(Log, [false,x#int_direct_1,false;int(1..)] [2, 2]), SATInt(Log, [true,true,false;int(1..)] [3, 3]))) = -8, -(SafePow(SATInt(Log, [false,x#int_direct_1,false;int(1..)] [2, 2]), SATInt(Log, [false,false,; compact: residual_constraints |
-| `savilerow/test-power` | residual_constraints | Un-encoded constraints in the model: [-(SafePow(SATInt(Log, [false,x#int_direct_1,false;int(1..)] [2, 2]), SATInt(Log, [true,false;int(1..)] [1, 1]))) = -2, -(SafePow(SATInt(Log, [false,x#int_direct_1,false;int(1..)] [2, 2]), SATInt(Log, [false,true,false;int(1..)] [2, 2]))) = -4, -(SafePow(SATInt(Log, [false,x#int_direct_1,false;int(1..)] [2, 2]), SATInt(Log, [true,true,false;int(1..)] [3, 3]))) = -8, -(SafePow(SATInt(Log, [false,x#int_direct_1,false;int(1..)] [2, 2]), SATInt(Log, [false,false,; compact: residual_constraints |
-| `sets/explicit-large-inner-domain` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `basic/function/sparse-partial` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/n_queens_new` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Direct, [q1#components_1#int_direct_1,q1#components_1#int_direct_2,q1#components_1#int_direct_3,q1#components_1#int_direct_4,q1#components_1#int_direct_5,q1#components_1#int_direct_6,q1#components_1#int_direct_7,q1#components_1#int_direct_8;int(1..)] [0, 7]),SATInt(Direct, [q1#components_2#int_direct_1,q1#components_2#int_direct_2,q1#components_2#int_direct_3,q1#components_2#int_direct_4,q1#components_2#int_direct_5,q1#components_2#int_d; compact: residual_constraints |
-| `savilerow/n_queens2` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Direct, [queens#components_1#int_direct_1,queens#components_1#int_direct_2,queens#components_1#int_direct_3,queens#components_1#int_direct_4,queens#components_1#int_direct_5,queens#components_1#int_direct_6,queens#components_1#int_direct_7,queens#components_1#int_direct_8;int(1..)] [0, 7]),SATInt(Direct, [queens#components_2#int_direct_1,queens#components_2#int_direct_2,queens#components_2#int_direct_3,queens#components_2#int_direct_4,qu; compact: residual_constraints |
-| `savilerow/nqueens-8` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Direct, [q1#components_1#int_direct_1,q1#components_1#int_direct_2,q1#components_1#int_direct_3,q1#components_1#int_direct_4,q1#components_1#int_direct_5,q1#components_1#int_direct_6,q1#components_1#int_direct_7,q1#components_1#int_direct_8;int(1..)] [0, 7]),SATInt(Direct, [q1#components_2#int_direct_1,q1#components_2#int_direct_2,q1#components_2#int_direct_3,q1#components_2#int_direct_4,q1#components_2#int_direct_5,q1#components_2#int_d; compact: residual_constraints |
-| `savilerow/golomb` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/golomb2` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `dominance/rfc_example_future` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/knapsack` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/langfordN` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `savilerow/lee-distance` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: timeout |
-| `dominance/rfc_example` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/grocery` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/opd` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `savilerow/quasiGroup6` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/quasiGroup5NonIdempotent` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `savilerow/efpa` | residual_constraints | Un-encoded constraints in the model: [globalCardinality([SATInt(Direct, [c#components_1#int_direct_1,c#components_1#int_direct_2,c#components_1#int_direct_3,c#components_1#int_direct_4,c#components_1#int_direct_5,c#components_1#int_direct_6,c#components_1#int_direct_7;int(1..)] [0, 6]),SATInt(Direct, [c#components_2#int_direct_1,c#components_2#int_direct_2,c#components_2#int_direct_3,c#components_2#int_direct_4,c#components_2#int_direct_5,c#components_2#int_direct_6,c#components_2#int_direct_7;i; compact: residual_constraints |
-| `eprime-minion/nqueens-4` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Direct, [row#components_1#int_direct_1,row#components_1#int_direct_2,row#components_1#int_direct_3,row#components_1#int_direct_4,row#components_1#int_direct_5,row#components_1#int_direct_6,row#components_1#int_direct_7,row#components_1#int_direct_8;int(1..)] [0, 7]),SATInt(Direct, [row#components_2#int_direct_1,row#components_2#int_direct_2,row#components_2#int_direct_3,row#components_2#int_direct_4,row#components_2#int_direct_5,row#comp; compact: residual_constraints |
-| `savilerow/cryptArithmetic` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/quasiGroup5Idempotent` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/carSequencing` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: timeout |
-| `savilerow/magicSquare` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `savilerow/n_queens1` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Direct, [q1#components_1#int_direct_1,q1#components_1#int_direct_2,q1#components_1#int_direct_3,q1#components_1#int_direct_4,q1#components_1#int_direct_5,q1#components_1#int_direct_6,q1#components_1#int_direct_7,q1#components_1#int_direct_8;int(1..)] [0, 7]),SATInt(Direct, [q1#components_2#int_direct_1,q1#components_2#int_direct_2,q1#components_2#int_direct_3,q1#components_2#int_direct_4,q1#components_2#int_direct_5,q1#components_2#int_d; compact: residual_constraints |
-| `savilerow/quasiGroup7` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/diet` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `savilerow/quasiGroup3NonIdempotent` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/quasiGroup4NonIdempotent` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: pass |
-| `savilerow/quasiGroup4Idempotent` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Direct, [qgDiagonal#components_1#int_direct_1,qgDiagonal#components_1#int_direct_2,qgDiagonal#components_1#int_direct_3,qgDiagonal#components_1#int_direct_4,qgDiagonal#components_1#int_direct_5,qgDiagonal#components_1#int_direct_6,qgDiagonal#components_1#int_direct_7;int(1..)] [0, 6]),SATInt(Direct, [qgDiagonal#components_2#int_direct_1,qgDiagonal#components_2#int_direct_2,qgDiagonal#components_2#int_direct_3,qgDiagonal#components_2#int_; compact: residual_constraints |
-| `savilerow/quasiGroup3Idempotent` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/knights` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Direct, [tour#components_1#int_direct_1,tour#components_1#int_direct_2,tour#components_1#int_direct_3,tour#components_1#int_direct_4,tour#components_1#int_direct_5,tour#components_1#int_direct_6,tour#components_1#int_direct_7,tour#components_1#int_direct_8,tour#components_1#int_direct_9,tour#components_1#int_direct_10,tour#components_1#int_direct_11,tour#components_1#int_direct_12,tour#components_1#int_direct_13,tour#components_1#int_dir; compact: residual_constraints |
-| `savilerow/sportsScheduling` | residual_constraints | Un-encoded constraints in the model: [allDifferent(flatten([SATInt(Direct, [schedule#components_1#int_direct_1,schedule#components_1#int_direct_2,schedule#components_1#int_direct_3,schedule#components_1#int_direct_4,schedule#components_1#int_direct_5,schedule#components_1#int_direct_6,schedule#components_1#int_direct_7,schedule#components_1#int_direct_8;int(1..)] [1, 8]),SATInt(Direct, [schedule#components_2#int_direct_1,schedule#components_2#int_direct_2,schedule#components_2#int_direct_3,sched; compact: residual_constraints |
-| `savilerow/sportsScheduling3` | residual_constraints | Un-encoded constraints in the model: [allDifferent(flatten([SATInt(Direct, [schedule#components_1#int_direct_1,schedule#components_1#int_direct_2,schedule#components_1#int_direct_3,schedule#components_1#int_direct_4,schedule#components_1#int_direct_5,schedule#components_1#int_direct_6,schedule#components_1#int_direct_7,schedule#components_1#int_direct_8;int(1..)] [1, 8]),SATInt(Direct, [schedule#components_2#int_direct_1,schedule#components_2#int_direct_2,schedule#components_2#int_direct_3,sched; compact: residual_constraints |
-| `savilerow/sportsScheduling2` | residual_constraints | Un-encoded constraints in the model: [allDifferent(flatten([SATInt(Direct, [schedule#components_1#int_direct_1,schedule#components_1#int_direct_2,schedule#components_1#int_direct_3,schedule#components_1#int_direct_4,schedule#components_1#int_direct_5,schedule#components_1#int_direct_6,schedule#components_1#int_direct_7,schedule#components_1#int_direct_8;int(1..)] [1, 8]),SATInt(Direct, [schedule#components_2#int_direct_1,schedule#components_2#int_direct_2,schedule#components_2#int_direct_3,sched; compact: residual_constraints |
-| `savilerow/molnars` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `savilerow/killer16` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
-| `mildly-interesting/gchq-2016` | timeout | fixture exceeded 600 seconds; unsupported semantics not established; compact: timeout |
-| `savilerow/pegSolitaireAction` | reference_memory_limit | Conjure reference did not complete; fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: timeout |
-| `savilerow/pegSolitaireState` | reference_memory_limit | Conjure reference did not complete; fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: timeout |
-| `savilerow/solitaire_battleship` | residual_constraints | Un-encoded constraints in the model: [globalCardinality([SATInt(Direct, [agrid#components_1#int_direct_1,agrid#components_1#int_direct_2,agrid#components_1#int_direct_3,agrid#components_1#int_direct_4,agrid#components_1#int_direct_5,agrid#components_1#int_direct_6;int(1..)] [0, 5]),SATInt(Direct, [agrid#components_2#int_direct_1,agrid#components_2#int_direct_2,agrid#components_2#int_direct_3,agrid#components_2#int_direct_4,agrid#components_2#int_direct_5,agrid#components_2#int_direct_6;int(1..)]; compact: timeout |
-| `savilerow/blackhole` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Direct, [cardSequence#components_1#int_direct_1,cardSequence#components_1#int_direct_2,cardSequence#components_1#int_direct_3,cardSequence#components_1#int_direct_4,cardSequence#components_1#int_direct_5,cardSequence#components_1#int_direct_6,cardSequence#components_1#int_direct_7,cardSequence#components_1#int_direct_8,cardSequence#components_1#int_direct_9,cardSequence#components_1#int_direct_10,cardSequence#components_1#int_direct_11,c; compact: residual_constraints |
-| `savilerow/plotting` | residual_constraints | Un-encoded constraints in the model: [atLeast(flatten([SATInt(Direct, [grid#components_351#int_direct_1,grid#components_351#int_direct_2,grid#components_351#int_direct_3,grid#components_351#int_direct_4,grid#components_351#int_direct_5;int(1..)] [0, 4]),SATInt(Direct, [grid#components_352#int_direct_1,grid#components_352#int_direct_2,grid#components_352#int_direct_3,grid#components_352#int_direct_4,grid#components_352#int_direct_5;int(1..)] [0, 4]),SATInt(Direct, [grid#components_353#int_direct_; compact: timeout |
-| `savilerow/test-branchingon2` | residual_constraints | Un-encoded constraints in the model: [atLeast(flatten([SATInt(Direct, [grid#components_351#int_direct_1,grid#components_351#int_direct_2,grid#components_351#int_direct_3,grid#components_351#int_direct_4,grid#components_351#int_direct_5;int(1..)] [0, 4]),SATInt(Direct, [grid#components_352#int_direct_1,grid#components_352#int_direct_2,grid#components_352#int_direct_3,grid#components_352#int_direct_4,grid#components_352#int_direct_5;int(1..)] [0, 4]),SATInt(Direct, [grid#components_353#int_direct_; compact: timeout |
-| `savilerow/pegSolitaireTable` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established; compact: pass |
+| `conjure/function/function_partial_smoke` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/partition/partition_02` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/partition/partition_03` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/function/function_total_bool_06` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `conjure/relation/binrel02` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `conjure/permutation/perm_repr_0010` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `conjure/permutation/perm_repr_0011` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/relation/binrel03` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `conjure/function/function_total_int_03` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/function/function_total_int_04` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/function/function_total_int_05` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/function/function_total_int_06` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/partition/partition_01` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/relation/binrel01` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/absBug` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/relation/binrel04` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/function/function_total_int_set_01` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `basic/comprehension/dependent-domains` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/relation/relation07_connex` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `conjure/permutation/permutation_as_function_smoke` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `conjure/set/set08` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/relation/relation04_find` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `basic/lettings/04-domain` | panic | Domain should be ground |
+| `conjure/function/function_complex_01` | residual_constraints | Un-encoded constraints in the model: [or([__0,__52,and([__53,([x#as_relation_1#as_set_1#explicit_1#components_1#components_1#explicit_1#components_1,x#as_relation_1#as_set_1#explicit_1#components_1#components_1#explicit_1#components_2;int(1..)] <lex [x#as_relation_1#as_set_1#explicit_1#components_2#components_1#explicit_1#components_1,x#as_relation_1#as_set_1#explicit_1#components_2#components_1#explicit_1#components_2;int(1..)]);int(1..)]),__118;int(1..)]), or([__1,__62,and([__63,([x#as_relatio |
+| `savilerow/magicSequence` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `conjure/relation/relation04_param` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/semigroup` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/shorttable-smalltest` | frontend | Error: Custom { kind: Other, error: "test_dir=tests/integration/savilerow/shorttable-smalltest, model=input.essence, parser=tree-sitter, rewriter=optimised, comprehension_expander=auto, heuristic=x, seed=0, channelling=uniform, solver=sat, solver_seed=0: tests/integration/savilerow/shorttable-smalltest/input.essence:10:1:\n  \|\n10 \| tableshort([x[1],x[2],x[3],x[4]], mycon)\n  \| ^\nThe identifier 'tableshort' is not defined" } |
+| `savilerow/const_matrix_test` | panic | error: 0 is not a valid index for dimension 0 |
+| `savilerow/shorttable-assigntest` | frontend | Error: Custom { kind: Other, error: "test_dir=tests/integration/savilerow/shorttable-assigntest, model=input.essence, parser=tree-sitter, rewriter=optimised, comprehension_expander=auto, heuristic=x, seed=0, channelling=uniform, solver=sat, solver_seed=0: tests/integration/savilerow/shorttable-assigntest/input.essence:10:1:\n  \|\n10 \| tableshort([x[1],x[2],x[3],x[4],x[5]], mycon),\n  \| ^\nThe identifier 'tableshort' is not defined" } |
+| `savilerow/multiDimensionArray` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `basic/function/sparse-partial` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/n_queens_new` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Offset, [q1#components_1#int_offset_1,q1#components_1#int_offset_2,q1#components_1#int_offset_3;int(1..)] [0, 7]),SATInt(Offset, [q1#components_2#int_offset_1,q1#components_2#int_offset_2,q1#components_2#int_offset_3;int(1..)] [0, 7]),SATInt(Offset, [q1#components_3#int_offset_1,q1#components_3#int_offset_2,q1#components_3#int_offset_3;int(1..)] [0, 7]),SATInt(Offset, [q1#components_4#int_offset_1,q1#components_4#int_offset_2,q1#componen |
+| `savilerow/n_queens2` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Direct, [queens#components_1#int_direct_1,queens#components_1#int_direct_2,queens#components_1#int_direct_3,queens#components_1#int_direct_4,queens#components_1#int_direct_5,queens#components_1#int_direct_6,queens#components_1#int_direct_7,queens#components_1#int_direct_8;int(1..)] [0, 7]),SATInt(Direct, [queens#components_2#int_direct_1,queens#components_2#int_direct_2,queens#components_2#int_direct_3,queens#components_2#int_direct_4,qu |
+| `savilerow/nqueens-8` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Offset, [q1#components_1#int_offset_1,q1#components_1#int_offset_2,q1#components_1#int_offset_3;int(1..)] [0, 7]),SATInt(Offset, [q1#components_2#int_offset_1,q1#components_2#int_offset_2,q1#components_2#int_offset_3;int(1..)] [0, 7]),SATInt(Offset, [q1#components_3#int_offset_1,q1#components_3#int_offset_2,q1#components_3#int_offset_3;int(1..)] [0, 7]),SATInt(Offset, [q1#components_4#int_offset_1,q1#components_4#int_offset_2,q1#componen |
+| `savilerow/golomb` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/golomb2` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `dominance/rfc_example_future` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/knapsack` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/langfordN` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `savilerow/lee-distance` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `dominance/rfc_example` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/grocery` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/opd` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `savilerow/efpa` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `eprime-minion/nqueens-4` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Offset, [row#components_1#int_offset_1,row#components_1#int_offset_2,row#components_1#int_offset_3;int(1..)] [0, 7]),SATInt(Offset, [row#components_2#int_offset_1,row#components_2#int_offset_2,row#components_2#int_offset_3;int(1..)] [0, 7]),SATInt(Offset, [row#components_3#int_offset_1,row#components_3#int_offset_2,row#components_3#int_offset_3;int(1..)] [0, 7]),SATInt(Offset, [row#components_4#int_offset_1,row#components_4#int_offset_2, |
+| `savilerow/carSequencing` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/magicSquare` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `savilerow/n_queens1` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Offset, [q1#components_1#int_offset_1,q1#components_1#int_offset_2,q1#components_1#int_offset_3;int(1..)] [0, 7]),SATInt(Offset, [q1#components_2#int_offset_1,q1#components_2#int_offset_2,q1#components_2#int_offset_3;int(1..)] [0, 7]),SATInt(Offset, [q1#components_3#int_offset_1,q1#components_3#int_offset_2,q1#components_3#int_offset_3;int(1..)] [0, 7]),SATInt(Offset, [q1#components_4#int_offset_1,q1#components_4#int_offset_2,q1#componen |
+| `savilerow/diet` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `savilerow/quasiGroup3NonIdempotent` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/quasiGroup4Idempotent` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Offset, [qgDiagonal#components_1#int_offset_1,qgDiagonal#components_1#int_offset_2,qgDiagonal#components_1#int_offset_3;int(1..)] [0, 6]),SATInt(Offset, [qgDiagonal#components_2#int_offset_1,qgDiagonal#components_2#int_offset_2,qgDiagonal#components_2#int_offset_3;int(1..)] [0, 6]),SATInt(Offset, [qgDiagonal#components_3#int_offset_1,qgDiagonal#components_3#int_offset_2,qgDiagonal#components_3#int_offset_3;int(1..)] [0, 6]),SATInt(Offset |
+| `savilerow/knights` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Direct, [tour#components_1#int_direct_1,tour#components_1#int_direct_2,tour#components_1#int_direct_3,tour#components_1#int_direct_4,tour#components_1#int_direct_5,tour#components_1#int_direct_6,tour#components_1#int_direct_7,tour#components_1#int_direct_8,tour#components_1#int_direct_9,tour#components_1#int_direct_10,tour#components_1#int_direct_11,tour#components_1#int_direct_12,tour#components_1#int_direct_13,tour#components_1#int_dir |
+| `savilerow/sportsScheduling` | residual_constraints | Un-encoded constraints in the model: [allDifferent(flatten([SATInt(Direct, [schedule#components_1#int_direct_1,schedule#components_1#int_direct_2,schedule#components_1#int_direct_3,schedule#components_1#int_direct_4,schedule#components_1#int_direct_5,schedule#components_1#int_direct_6,schedule#components_1#int_direct_7,schedule#components_1#int_direct_8;int(1..)] [1, 8]),SATInt(Direct, [schedule#components_2#int_direct_1,schedule#components_2#int_direct_2,schedule#components_2#int_direct_3,sched |
+| `savilerow/sportsScheduling3` | residual_constraints | Un-encoded constraints in the model: [allDifferent(flatten([SATInt(Direct, [schedule#components_1#int_direct_1,schedule#components_1#int_direct_2,schedule#components_1#int_direct_3,schedule#components_1#int_direct_4,schedule#components_1#int_direct_5,schedule#components_1#int_direct_6,schedule#components_1#int_direct_7,schedule#components_1#int_direct_8;int(1..)] [1, 8]),SATInt(Direct, [schedule#components_2#int_direct_1,schedule#components_2#int_direct_2,schedule#components_2#int_direct_3,sched |
+| `savilerow/sportsScheduling2` | residual_constraints | Un-encoded constraints in the model: [allDifferent(flatten([SATInt(Direct, [schedule#components_1#int_direct_1,schedule#components_1#int_direct_2,schedule#components_1#int_direct_3,schedule#components_1#int_direct_4,schedule#components_1#int_direct_5,schedule#components_1#int_direct_6,schedule#components_1#int_direct_7,schedule#components_1#int_direct_8;int(1..)] [1, 8]),SATInt(Direct, [schedule#components_2#int_direct_1,schedule#components_2#int_direct_2,schedule#components_2#int_direct_3,sched |
+| `savilerow/molnars` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `mildly-interesting/gchq-2016` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `savilerow/pegSolitaireAction` | reference_memory_limit | Conjure reference did not complete; fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/pegSolitaireState` | reference_memory_limit | Conjure reference did not complete; fixture exceeded 4 GiB RSS; unsupported semantics not established |
+| `savilerow/solitaire_battleship` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `savilerow/blackhole` | residual_constraints | Un-encoded constraints in the model: [allDifferent([SATInt(Offset, [cardSequence#components_1#int_offset_1,cardSequence#components_1#int_offset_2,cardSequence#components_1#int_offset_3,cardSequence#components_1#int_offset_4,cardSequence#components_1#int_offset_5,cardSequence#components_1#int_offset_6;int(1..)] [0, 51]),SATInt(Offset, [cardSequence#components_2#int_offset_1,cardSequence#components_2#int_offset_2,cardSequence#components_2#int_offset_3,cardSequence#components_2#int_offset_4,cardSeq |
+| `savilerow/plotting` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `savilerow/test-branchingon2` | timeout | fixture exceeded 600 seconds; unsupported semantics not established |
+| `savilerow/pegSolitaireTable` | memory_limit | fixture exceeded 4 GiB RSS; unsupported semantics not established |
 
-## Compact diagnostic probes
-
-| Outcome | Fixtures |
-| --- | ---: |
-| frontend | 2 |
-| panic | 2 |
-| pass | 53 |
-| residual_constraints | 25 |
-| sat_loading_or_encoding | 4 |
-| solution_mismatch | 3 |
-| timeout | 10 |
-
-Failed fixtures are also retried with `heuristic="c"`, uniform channelling and a 60-second timeout, without trace generation. These probes preserve the original validation configuration and do not replace the all-mode outcome. A compact pass provides evidence that at least one uniform representation works; it does not establish support across all representations. Their per-fixture outcomes appear in the CSV.
-
-The exhaustive per-fixture record is [sat_full_coverage_survey.csv](sat_full_coverage_survey.csv). Raw logs, diagnostics and the last failing trace remain under `target/sat-coverage-survey/`; they are local survey artefacts. Generated files and failed-fixture prefix snapshots are discarded after completion to bound disk usage, retaining their validated counts in the survey records. No encoder/model fixes are included in this stocktake.
+The exhaustive per-fixture record is [sat_full_coverage_survey.csv](sat_full_coverage_survey.csv). Raw logs, diagnostics and the last failing trace remain under `target/sat-coverage-fixes/`; they are local survey artefacts. Generated files and failed-fixture prefix snapshots are discarded after completion to bound disk usage, retaining their validated counts in the survey records. These fixes are in Oxide; no new RustSAT/Pindakaas defect was established.

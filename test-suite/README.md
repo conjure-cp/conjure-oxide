@@ -39,6 +39,10 @@ heuristic = "x"
 channelling = "uniform"
 ```
 
+SAT coverage uses `x` with uniform channelling when the fixture's existing backend profiles
+enumerate all choices. Where those profiles do not use `x`, SAT uses `c`: compact chooses one
+representation and the normal compact option for each SAT encoding family.
+
 Integration tests use the `auto` comprehension expander by default, matching the CLI default.
 Configure it explicitly with `comprehension-expander = "auto"`. Accepted oxide timings, statuses,
 and rule-trace aggregates are recorded in a `[[runs]]` entry in `stats.toml` for each configured

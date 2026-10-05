@@ -4,7 +4,17 @@ Branch: `sat-ir`. Conventional commits; never push.
 
 ## Full integration coverage sweep (2026-10-05)
 
-All 664 discovered fixture configurations now include SAT, with `heuristic="x"` and `channelling="uniform"` selected specifically for SAT. The sweep runs in an isolated fixture copy and continues after failures, including the five globally skipped cases. Other backend configurations and their timing baselines are preserved. See [the full coverage report](sat_full_coverage_survey.md) and [per-fixture results](sat_full_coverage_survey.csv) for the current, provisional outcomes. This stocktake changes the test harness/configuration and records coverage; it does not fix model or encoder semantics.
+The latest complete coverage report passes **602 of 667 fixtures**, compared with 565 of 664 in the first survey. SAT is configured for every discovered fixture: 662 normally runnable and five globally skipped fixtures explicitly attempted. SAT uses `heuristic="x"` with uniform channelling in 622 fixtures and compact's normal representation and SAT encoding choices in 45 fixtures whose other backend profiles do not enumerate choices. No SAT encoding options are pinned; existing Minion/Z3 profiles are preserved.
+
+See [the full coverage report](sat_full_coverage_survey.md) and [the exhaustive per-fixture CSV](sat_full_coverage_survey.csv). The survey uses four workers, a 600-second fixture timeout and a 4 GiB process-tree RSS ceiling. Fifteen power-containing fixtures and fourteen occurrence-constraint fixtures have targeted follow-up runs after the final fixes, with the same profiles and limits. Their latest outcomes supersede their earlier attempts.
+
+Occurrence membership now guards the lookup domain, making out-of-domain membership false under negation and reification. Boolean gate checks preserve compound equality for representation lowering. Power uses exponentiation by squaring through existing circuit decisions, including constant-folded exponent bits. Native `atMost`/`atLeast` and global cardinality accept direct and flattened matrix operands and reuse cardinality/PB decisions. No solution mismatch or SAT loading error remains in this survey.
+
+`make check`, workspace library tests/doctests, all 174 final rule tests, 22 focused SAT golden checks, five passing occurrence follow-up golden checks, and 72 affected Minion/Z3 golden checks pass. The updated flattened-occurrence regression also passes a fresh Minion check. Timing baselines are preserved for existing run identities.
+
+Masked power matches all 30 independently enumerated assignments across 130 SAT portfolios. Conjure/Savile Row drops six fallback assignments because its native power constraint is unconditional; a report is saved locally in `bug-reports/savilerow-masked-power/README.md` and remains uncommitted. The regression explicitly skips that reference. No new RustSAT/Pindakaas defect was established. Machine-overflowing power ranges and an audit of Oxide's native Minion masking path remain open.
+
+Current failures: 12 residual constraints (allDifferent input forms and compound lexicographic comparison), 31 SAT/model memory limits, 16 timeouts, two panics, two globally skipped frontend failures, and two globally skipped reference memory limits. Resource limits do not establish unsupported semantics. Complete passes include three rewrite-only fixtures, which do not establish SAT solving support.
 
 ## Decisions
 
