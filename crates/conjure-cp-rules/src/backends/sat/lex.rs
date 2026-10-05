@@ -1,8 +1,76 @@
 //! Scalar lexicographic comparisons reuse numeric relation and Boolean decisions.
-use conjure_cp::ast::{Expression, Metadata, Moo, SymbolTable};
+use crate::types::record::RecordComponents;
+use crate::types::tuple::{TupleComponents, TuplePacked};
+use conjure_cp::ast::{Atom, Expression, Metadata, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
+    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect,
+    register_rule,
 };
+
+/// The scalars a lex entry contributes: a represented tuple or record contributes its fields in
+/// order, since its own ordering is lexicographic over them, and a packed tuple its single
+/// order-preserving integer. Returns `None` for an entry that is already a single element.
+fn lex_entry_fields(entry: &Expression) -> Option<Vec<Expression>> {
+    let Expression::Atomic(_, Atom::Reference(reference)) = entry else {
+        return None;
+    };
+    let declaration = reference.ptr();
+    let fields = if let Some(repr) = declaration.get_repr::<TupleComponents>() {
+        repr.field_exprs()
+    } else if let Some(repr) = declaration.get_repr::<RecordComponents>() {
+        repr.field_exprs()
+    } else {
+        vec![declaration.get_repr::<TuplePacked>()?.packed_expr()]
+    };
+    Some(
+        fields
+            .into_iter()
+            .flat_map(|field| lex_entry_fields(&field).unwrap_or_else(|| vec![field]))
+            .collect(),
+    )
+}
+
+fn is_scalar(entry: &Expression) -> bool {
+    entry
+        .domain_of()
+        .is_some_and(|domain| domain.is_int() || domain.is_bool())
+}
+
+/// Comparing `[t1, t2]` with `[u1, u2]` lexicographically equals comparing their fields
+/// `[t1.a, t1.b, t2.a, t2.b]` with `[u1.a, u1.b, u2.a, u2.b]`: entries of one type have one width.
+/// Runs after `tuple_var_cmp_var`, which already handles a comparison of single tuples.
+#[register_rule("SAT", 9300, [LexLt, LexLeq])]
+fn splice_compound_lex_entries(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    let (lhs, rhs) = match expr {
+        Expression::LexLt(_, lhs, rhs) | Expression::LexLeq(_, lhs, rhs) => (lhs, rhs),
+        _ => return Err(RuleNotApplicable),
+    };
+    let mut spliced = false;
+    let mut splice = |operand: &Expression| -> Result<Moo<Expression>, ApplicationError> {
+        let mut scalars = Vec::new();
+        for entry in super::counting::matrix_entries(operand).ok_or(RuleNotApplicable)? {
+            match lex_entry_fields(&entry) {
+                Some(fields) => {
+                    spliced = true;
+                    scalars.extend(fields);
+                }
+                // Splicing one side while the other still holds an unexpanded tuple (say, a
+                // pending index) would misalign the fields, so only scalars stay as they are.
+                None if is_scalar(&entry) => scalars.push(entry),
+                None => return Err(RuleNotApplicable),
+            }
+        }
+        Ok(Moo::new(conjure_cp::into_matrix_expr!(scalars)))
+    };
+    let (lhs, rhs) = (splice(lhs)?, splice(rhs)?);
+    if !spliced {
+        return Err(RuleNotApplicable);
+    }
+    Ok(RuleEffect::pure(match expr {
+        Expression::LexLt(..) => Expression::LexLt(Metadata::new(), lhs, rhs),
+        _ => Expression::LexLeq(Metadata::new(), lhs, rhs),
+    }))
+}
 
 #[register_rule("SAT", 18500, [LexLt, LexLeq])]
 fn scalar_lex_comparison(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
@@ -49,6 +117,51 @@ fn flat_scalar_lex_comparison(expr: &Expression, symbols: &SymbolTable) -> Appli
     scalar_lex_comparison(&expression, symbols)
 }
 
+/// A lex comparison whose entries include compound values (a set, say) compares the first
+/// entries, then the rest: `a <lex b` iff `a[1] < b[1]`, or `a[1] = b[1]` and the tails compare
+/// the same way. A strict comparison of single entries is the entries' own order, which their
+/// representation rules provide, so it is left to them.
+#[register_rule("SAT", 9200, [LexLt, LexLeq])]
+fn decompose_compound_lex(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    let (lhs, rhs, strict) = match expr {
+        Expression::LexLt(_, lhs, rhs) => (lhs, rhs, true),
+        Expression::LexLeq(_, lhs, rhs) => (lhs, rhs, false),
+        _ => return Err(RuleNotApplicable),
+    };
+    let lhs = super::counting::matrix_entries(lhs).ok_or(RuleNotApplicable)?;
+    let rhs = super::counting::matrix_entries(rhs).ok_or(RuleNotApplicable)?;
+    // Wait for every entry to be a variable or a scalar, so representation rules see references.
+    let ready = |entry: &Expression| is_scalar(entry) || matches!(entry, Expression::Atomic(..));
+    if lhs.iter().chain(&rhs).all(is_scalar)
+        || !lhs.iter().chain(&rhs).all(ready)
+        || (strict && lhs.len() == 1 && rhs.len() == 1)
+    {
+        return Err(RuleNotApplicable);
+    }
+    Ok(RuleEffect::pure(lex_prefix(&lhs, &rhs, strict)))
+}
+
+fn lex_prefix(lhs: &[Expression], rhs: &[Expression], strict: bool) -> Expression {
+    let (Some((a, lhs_rest)), Some((b, rhs_rest))) = (lhs.split_first(), rhs.split_first()) else {
+        // An empty list is smaller than a non-empty one, and equal to an empty one.
+        return Expression::from(lhs.is_empty() && !(strict && rhs.is_empty()));
+    };
+    let single = |entry: &Expression| Moo::new(conjure_cp::into_matrix_expr!(vec![entry.clone()]));
+    Expression::Or(
+        Metadata::new(),
+        Moo::new(conjure_cp::into_matrix_expr!(vec![
+            Expression::LexLt(Metadata::new(), single(a), single(b)),
+            Expression::And(
+                Metadata::new(),
+                Moo::new(conjure_cp::into_matrix_expr!(vec![
+                    Expression::Eq(Metadata::new(), Moo::new(a.clone()), Moo::new(b.clone())),
+                    lex_prefix(lhs_rest, rhs_rest, strict),
+                ])),
+            ),
+        ])),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -83,6 +196,29 @@ mod tests {
                         .new_expression;
                     assert_eq!(
                         eval_constant(&expanded),
+                        Some((if strict { lhs < rhs } else { lhs <= rhs }).into()),
+                        "{lhs:?} {rhs:?} strict={strict}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn compound_lex_prefix_matches_sequence_order() {
+        let lists: &[&[i32]] = &[&[], &[0], &[1], &[0, 0], &[0, 1], &[1, 0], &[1, 1, 0]];
+        let entries = |list: &[i32]| {
+            list.iter()
+                .copied()
+                .map(Expression::from)
+                .collect::<Vec<_>>()
+        };
+        for lhs in lists {
+            for rhs in lists {
+                for strict in [false, true] {
+                    let decomposed = lex_prefix(&entries(lhs), &entries(rhs), strict);
+                    assert_eq!(
+                        eval_constant(&decomposed),
                         Some((if strict { lhs < rhs } else { lhs <= rhs }).into()),
                         "{lhs:?} {rhs:?} strict={strict}"
                     );

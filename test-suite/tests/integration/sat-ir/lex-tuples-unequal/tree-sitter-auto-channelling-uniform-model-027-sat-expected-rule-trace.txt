@@ -1,0 +1,361 @@
+Model before rewriting:
+
+find p: matrix indexed by [int(1..2)] of tuple (int(1..2), bool)
+find q: matrix indexed by [int(1..1)] of tuple (int(1..2), bool)
+
+such that
+
+(p <=lex q)
+
+--
+
+p
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p
+new variables:
+  find p#components_1: tuple (int(1..2), bool)
+  find p#components_2: tuple (int(1..2), bool)
+
+--
+
+(p <=lex q)
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+(p <=lex q)
+new variables:
+  find q#components_1: tuple (int(1..2), bool)
+
+--
+
+(p <=lex q)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+(p <=lex q)
+new variables:
+  find p#components_1#components_1: int(1..2)
+  find p#components_1#components_2: bool
+  find p#components_2#components_1: int(1..2)
+  find p#components_2#components_2: bool
+  find q#components_1#components_1: int(1..2)
+  find q#components_1#components_2: bool
+
+--
+
+(p <=lex q)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+(p <=lex q)
+new variables:
+  find p#components_1#components_1#int_direct_1: bool
+  find p#components_1#components_1#int_direct_2: bool
+  find p#components_2#components_1#int_direct_1: bool
+  find p#components_2#components_1#int_direct_2: bool
+  find q#components_1#components_1#int_direct_1: bool
+  find q#components_1#components_1#int_direct_2: bool
+new constraints:
+  sum([toInt(p#components_1#components_1#int_direct_1),toInt(p#components_1#components_1#int_direct_2);int(1..)]) <= 1
+  or([p#components_1#components_1#int_direct_1,p#components_1#components_1#int_direct_2;int(1..)])
+  sum([toInt(p#components_2#components_1#int_direct_1),toInt(p#components_2#components_1#int_direct_2);int(1..)]) <= 1
+  or([p#components_2#components_1#int_direct_1,p#components_2#components_1#int_direct_2;int(1..)])
+  sum([toInt(q#components_1#components_1#int_direct_1),toInt(q#components_1#components_1#int_direct_2);int(1..)]) <= 1
+  or([q#components_1#components_1#int_direct_1,q#components_1#components_1#int_direct_2;int(1..)])
+
+--
+
+(p <=lex q),
+sum([toInt(p#components_1#components_1#int_direct_1),toInt(p#components_1#components_1#int_direct_2);int(1..)]) <= 1,
+or([p#components_1#components_1#int_direct_1,p#components_1#components_1#int_direct_2;int(1..)]),
+sum([toInt(p#components_2#components_1#int_direct_1),toInt(p#components_2#components_1#int_direct_2);int(1..)]) <= 1,
+or([p#components_2#components_1#int_direct_1,p#components_2#components_1#int_direct_2;int(1..)]),
+sum([toInt(q#components_1#components_1#int_direct_1),toInt(q#components_1#components_1#int_direct_2);int(1..)]) <= 1,
+or([q#components_1#components_1#int_direct_1,q#components_1#components_1#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(p <=lex q),
+or([p#components_1#components_1#int_direct_1,p#components_1#components_1#int_direct_2;int(1..)]),
+sum([toInt(p#components_2#components_1#int_direct_1),toInt(p#components_2#components_1#int_direct_2);int(1..)]) <= 1,
+or([p#components_2#components_1#int_direct_1,p#components_2#components_1#int_direct_2;int(1..)]),
+sum([toInt(q#components_1#components_1#int_direct_1),toInt(q#components_1#components_1#int_direct_2);int(1..)]) <= 1,
+or([q#components_1#components_1#int_direct_1,q#components_1#components_1#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(p#components_1#components_1#int_direct_1, p#components_1#components_1#int_direct_2) using None
+
+--
+
+(p <=lex q),
+or([p#components_1#components_1#int_direct_1,p#components_1#components_1#int_direct_2;int(1..)]),
+sum([toInt(p#components_2#components_1#int_direct_1),toInt(p#components_2#components_1#int_direct_2);int(1..)]) <= 1,
+or([p#components_2#components_1#int_direct_1,p#components_2#components_1#int_direct_2;int(1..)]),
+sum([toInt(q#components_1#components_1#int_direct_1),toInt(q#components_1#components_1#int_direct_2);int(1..)]) <= 1,
+or([q#components_1#components_1#int_direct_1,q#components_1#components_1#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(p <=lex q),
+or([p#components_1#components_1#int_direct_1,p#components_1#components_1#int_direct_2;int(1..)]),
+or([p#components_2#components_1#int_direct_1,p#components_2#components_1#int_direct_2;int(1..)]),
+sum([toInt(q#components_1#components_1#int_direct_1),toInt(q#components_1#components_1#int_direct_2);int(1..)]) <= 1,
+or([q#components_1#components_1#int_direct_1,q#components_1#components_1#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(p#components_2#components_1#int_direct_1, p#components_2#components_1#int_direct_2) using None
+
+--
+
+(p <=lex q),
+or([p#components_1#components_1#int_direct_1,p#components_1#components_1#int_direct_2;int(1..)]),
+or([p#components_2#components_1#int_direct_1,p#components_2#components_1#int_direct_2;int(1..)]),
+sum([toInt(q#components_1#components_1#int_direct_1),toInt(q#components_1#components_1#int_direct_2);int(1..)]) <= 1,
+or([q#components_1#components_1#int_direct_1,q#components_1#components_1#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(p <=lex q),
+or([p#components_1#components_1#int_direct_1,p#components_1#components_1#int_direct_2;int(1..)]),
+or([p#components_2#components_1#int_direct_1,p#components_2#components_1#int_direct_2;int(1..)]),
+or([q#components_1#components_1#int_direct_1,q#components_1#components_1#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(q#components_1#components_1#int_direct_1, q#components_1#components_1#int_direct_2) using None
+
+--
+
+or([p#components_1#components_1#int_direct_1,p#components_1#components_1#int_direct_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> or([p#components_1#components_1#int_direct_1,p#components_1#components_1#int_direct_2;int(1..)])) using tseitin
+
+--
+
+or([p#components_2#components_1#int_direct_1,p#components_2#components_1#int_direct_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([p#components_2#components_1#int_direct_1,p#components_2#components_1#int_direct_2;int(1..)])) using tseitin
+
+--
+
+or([q#components_1#components_1#int_direct_1,q#components_1#components_1#int_direct_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> or([q#components_1#components_1#int_direct_1,q#components_1#components_1#int_direct_2;int(1..)])) using tseitin
+
+--
+
+(p <=lex q),
+__0,
+__1,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+(p <=lex q),
+__1,
+__2
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+(p <=lex q),
+__1,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+(p <=lex q),
+__2
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+(p <=lex q),
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+(p <=lex q)
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+(p <=lex q)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+([p#components_1,p#components_2;int(1..2)] <=lex [q#components_1;int(1..1)])
+
+--
+
+p#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#components_1
+
+--
+
+p#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#components_2
+
+--
+
+q#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q#components_1
+
+--
+
+([p#components_1,p#components_2;int(1..2)] <=lex [q#components_1;int(1..1)])
+   ~~> splice_compound_lex_entries ([("SAT", 9300)])
+([p#components_1#components_1,p#components_1#components_2,p#components_2#components_1,p#components_2#components_2;int(1..)] <=lex [q#components_1#components_1,q#components_1#components_2;int(1..)])
+
+--
+
+([p#components_1#components_1,p#components_1#components_2,p#components_2#components_1,p#components_2#components_2;int(1..)] <=lex [q#components_1#components_1,q#components_1#components_2;int(1..)])
+   ~~> scalar_lex_comparison ([("SAT", 18500)])
+or([p#components_1#components_1 < q#components_1#components_1,and([p#components_1#components_1 = q#components_1#components_1,or([p#components_1#components_2 < q#components_1#components_2,and([p#components_1#components_2 = q#components_1#components_2,false;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+p#components_1#components_2 < q#components_1#components_2
+   ~~> boolean_order ([("SAT", 18500)])
+and([!(p#components_1#components_2),q#components_1#components_2;int(1..)])
+
+--
+
+p#components_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#components_1#components_1
+
+--
+
+q#components_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q#components_1#components_1
+
+--
+
+p#components_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#components_1#components_1
+
+--
+
+q#components_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q#components_1#components_1
+
+--
+
+p#components_1#components_1 < q#components_1#components_1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*p#components_1#components_1#int_direct_1, 2*p#components_1#components_1#int_direct_2, -1*q#components_1#components_1#int_direct_1, -2*q#components_1#components_1#int_direct_2) Less 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }]
+
+--
+
+p#components_1#components_1 = q#components_1#components_1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*p#components_1#components_1#int_direct_1, 2*p#components_1#components_1#int_direct_2, -1*q#components_1#components_1#int_direct_1, -2*q#components_1#components_1#int_direct_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }]
+
+--
+
+!(p#components_1#components_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> !(p#components_1#components_2)) using tseitin
+
+--
+
+or([and([__5,q#components_1#components_2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__5,q#components_1#components_2;int(1..)])
+
+--
+
+and([__4,and([__5,q#components_1#components_2;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__4,__5,q#components_1#components_2;int(1..)])
+
+--
+
+and([__4,__5,q#components_1#components_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> and([__4,__5,q#components_1#components_2;int(1..)])) using tseitin
+
+--
+
+or([__3,__6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> or([__3,__6;int(1..)])) using tseitin
+
+--
+
+__7
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__7) using tseitin
+
+--
+
+Final model:
+
+find p: matrix indexed by [int(1..2)] of tuple (int(1..2), bool)
+find q: matrix indexed by [int(1..1)] of tuple (int(1..2), bool)
+find p#components_1: tuple (int(1..2), bool)
+find p#components_2: tuple (int(1..2), bool)
+find q#components_1: tuple (int(1..2), bool)
+find p#components_1#components_1: int(1..2)
+find p#components_1#components_2: bool
+find p#components_2#components_1: int(1..2)
+find p#components_2#components_2: bool
+find q#components_1#components_1: int(1..2)
+find q#components_1#components_2: bool
+find p#components_1#components_1#int_direct_1: bool
+find p#components_1#components_1#int_direct_2: bool
+find p#components_2#components_1#int_direct_1: bool
+find p#components_2#components_1#int_direct_2: bool
+find q#components_1#components_1#int_direct_1: bool
+find q#components_1#components_1#int_direct_2: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+at-most-one(p#components_1#components_1#int_direct_1, p#components_1#components_1#int_direct_2) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+at-most-one(p#components_2#components_1#int_direct_1, p#components_2#components_1#int_direct_2) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+at-most-one(q#components_1#components_1#int_direct_1, q#components_1#components_1#int_direct_2) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__0 <-> or([p#components_1#components_1#int_direct_1,p#components_1#components_1#int_direct_2;int(1..)])) using tseitin,
+define(__1 <-> or([p#components_2#components_1#int_direct_1,p#components_2#components_1#int_direct_2;int(1..)])) using tseitin,
+define(__2 <-> or([q#components_1#components_1#int_direct_1,q#components_1#components_1#int_direct_2;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin,
+assert(__2) using tseitin,
+define(__3 <-> integer-weighted(1*p#components_1#components_1#int_direct_1, 2*p#components_1#components_1#int_direct_2, -1*q#components_1#components_1#int_direct_1, -2*q#components_1#components_1#int_direct_2) Less 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
+define(__4 <-> integer-weighted(1*p#components_1#components_1#int_direct_1, 2*p#components_1#components_1#int_direct_2, -1*q#components_1#components_1#int_direct_1, -2*q#components_1#components_1#int_direct_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
+define(__5 <-> !(p#components_1#components_2)) using tseitin,
+define(__6 <-> and([__4,__5,q#components_1#components_2;int(1..)])) using tseitin,
+define(__7 <-> or([__3,__6;int(1..)])) using tseitin,
+assert(__7) using tseitin
+

@@ -1,0 +1,1036 @@
+Model before rewriting:
+
+find x: function (minSize 2, maxSize 3, injective) set (minSize 1, maxSize 2) of tuple (int(7), bool) --> int(13, 17) 
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#as_relation_1: relation (minSize 2, maxSize 3) of (set (minSize 1, maxSize 2) of tuple (int(7), bool) * int(13, 17))
+new constraints:
+  and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ])
+  and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ])
+
+--
+
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ])
+new variables:
+  find x#as_relation_1#as_set_1: set (minSize 2, maxSize 3) of tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17))
+
+--
+
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ])
+new variables:
+  find x#as_relation_1#as_set_1#occurrence_1: bool
+  find x#as_relation_1#as_set_1#occurrence_2: bool
+  find x#as_relation_1#as_set_1#occurrence_3: bool
+  find x#as_relation_1#as_set_1#occurrence_4: bool
+  find x#as_relation_1#as_set_1#occurrence_5: bool
+  find x#as_relation_1#as_set_1#occurrence_6: bool
+new constraints:
+  and([sum([toInt(x#as_relation_1#as_set_1#occurrence_1),toInt(x#as_relation_1#as_set_1#occurrence_2),toInt(x#as_relation_1#as_set_1#occurrence_3),toInt(x#as_relation_1#as_set_1#occurrence_4),toInt(x#as_relation_1#as_set_1#occurrence_5),toInt(x#as_relation_1#as_set_1#occurrence_6);int(1..)]) >= 2,sum([toInt(x#as_relation_1#as_set_1#occurrence_1),toInt(x#as_relation_1#as_set_1#occurrence_2),toInt(x#as_relation_1#as_set_1#occurrence_3),toInt(x#as_relation_1#as_set_1#occurrence_4),toInt(x#as_relation_1#as_set_1#occurrence_5),toInt(x#as_relation_1#as_set_1#occurrence_6);int(1..)]) <= 3;int(1..)])
+
+--
+
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+and([sum([toInt(x#as_relation_1#as_set_1#occurrence_1),toInt(x#as_relation_1#as_set_1#occurrence_2),toInt(x#as_relation_1#as_set_1#occurrence_3),toInt(x#as_relation_1#as_set_1#occurrence_4),toInt(x#as_relation_1#as_set_1#occurrence_5),toInt(x#as_relation_1#as_set_1#occurrence_6);int(1..)]) >= 2,sum([toInt(x#as_relation_1#as_set_1#occurrence_1),toInt(x#as_relation_1#as_set_1#occurrence_2),toInt(x#as_relation_1#as_set_1#occurrence_3),toInt(x#as_relation_1#as_set_1#occurrence_4),toInt(x#as_relation_1#as_set_1#occurrence_5),toInt(x#as_relation_1#as_set_1#occurrence_6);int(1..)]) <= 3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+and([true,sum([toInt(x#as_relation_1#as_set_1#occurrence_1),toInt(x#as_relation_1#as_set_1#occurrence_2),toInt(x#as_relation_1#as_set_1#occurrence_3),toInt(x#as_relation_1#as_set_1#occurrence_4),toInt(x#as_relation_1#as_set_1#occurrence_5),toInt(x#as_relation_1#as_set_1#occurrence_6);int(1..)]) <= 3;int(1..)])
+new SAT encoding decisions:
+  count(x#as_relation_1#as_set_1#occurrence_1, x#as_relation_1#as_set_1#occurrence_2, x#as_relation_1#as_set_1#occurrence_3, x#as_relation_1#as_set_1#occurrence_4, x#as_relation_1#as_set_1#occurrence_5, x#as_relation_1#as_set_1#occurrence_6) AtLeast 2 using None
+
+--
+
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+and([sum([toInt(x#as_relation_1#as_set_1#occurrence_1),toInt(x#as_relation_1#as_set_1#occurrence_2),toInt(x#as_relation_1#as_set_1#occurrence_3),toInt(x#as_relation_1#as_set_1#occurrence_4),toInt(x#as_relation_1#as_set_1#occurrence_5),toInt(x#as_relation_1#as_set_1#occurrence_6);int(1..)]) <= 3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(x#as_relation_1#as_set_1#occurrence_1, x#as_relation_1#as_set_1#occurrence_2, x#as_relation_1#as_set_1#occurrence_3, x#as_relation_1#as_set_1#occurrence_4, x#as_relation_1#as_set_1#occurrence_5, x#as_relation_1#as_set_1#occurrence_6) AtMost 3 using None
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]
+   ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1#as_set_1, j <- x#as_relation_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]
+   ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
+[ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1#as_set_1, j <- x#as_relation_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1#as_set_1, j <- x#as_relation_1 ]
+   ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1#as_set_1, j <- x#as_relation_1#as_set_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1#as_set_1, j <- x#as_relation_1 ]
+   ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
+[ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1#as_set_1, j <- x#as_relation_1#as_set_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1#as_set_1, j <- x#as_relation_1#as_set_1 ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), i in x#as_relation_1#as_set_1, j <- x#as_relation_1#as_set_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1#as_set_1, j <- x#as_relation_1#as_set_1 ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), i in x#as_relation_1#as_set_1, j <- x#as_relation_1#as_set_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), i in x#as_relation_1#as_set_1, j <- x#as_relation_1#as_set_1 ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), j in x#as_relation_1#as_set_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), i in x#as_relation_1#as_set_1, j <- x#as_relation_1#as_set_1 ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), j in x#as_relation_1#as_set_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), j in x#as_relation_1#as_set_1 ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(({(7,false)},13) in x#as_relation_1#as_set_1) -> (and([!(({(7,false)},17) in x#as_relation_1#as_set_1);int(1..)])),(({(7,false)},17) in x#as_relation_1#as_set_1) -> (and([!(({(7,false)},13) in x#as_relation_1#as_set_1);int(1..)])),(({(7,true)},13) in x#as_relation_1#as_set_1) -> (and([!(({(7,true)},17) in x#as_relation_1#as_set_1);int(1..)])),(({(7,true)},17) in x#as_relation_1#as_set_1) -> (and([!(({(7,true)},13) in x#as_relation_1#as_set_1);int(1..)])),(({(7,false),(7,true)},13) in x#as_relation_1#as_set_1) -> (and([!(({(7,false),(7,true)},17) in x#as_relation_1#as_set_1);int(1..)])),(({(7,false),(7,true)},17) in x#as_relation_1#as_set_1) -> (and([!(({(7,false),(7,true)},13) in x#as_relation_1#as_set_1);int(1..)]));int(1..)]
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+({(7,false)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_1
+
+--
+
+({(7,false)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_2
+
+--
+
+({(7,true)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_3
+
+--
+
+({(7,true)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_4
+
+--
+
+({(7,false),(7,true)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_5
+
+--
+
+({(7,false),(7,true)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_6
+
+--
+
+({(7,false)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_2
+
+--
+
+({(7,false)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_1
+
+--
+
+({(7,true)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_4
+
+--
+
+({(7,true)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_3
+
+--
+
+({(7,false),(7,true)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_6
+
+--
+
+({(7,false),(7,true)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_5
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> !(x#as_relation_1#as_set_1#occurrence_2)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> !(x#as_relation_1#as_set_1#occurrence_1)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> !(x#as_relation_1#as_set_1#occurrence_4)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> !(x#as_relation_1#as_set_1#occurrence_3)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_6)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> !(x#as_relation_1#as_set_1#occurrence_6)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> !(x#as_relation_1#as_set_1#occurrence_5)) using tseitin
+
+--
+
+and([__0;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__0
+
+--
+
+and([__1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__1
+
+--
+
+and([__2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__2
+
+--
+
+and([__3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__3
+
+--
+
+and([__4;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__4
+
+--
+
+and([__5;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__5
+
+--
+
+(x#as_relation_1#as_set_1#occurrence_1) -> (__0)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> (x#as_relation_1#as_set_1#occurrence_1) -> (__0)) using tseitin
+
+--
+
+(x#as_relation_1#as_set_1#occurrence_2) -> (__1)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> (x#as_relation_1#as_set_1#occurrence_2) -> (__1)) using tseitin
+
+--
+
+(x#as_relation_1#as_set_1#occurrence_3) -> (__2)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> (x#as_relation_1#as_set_1#occurrence_3) -> (__2)) using tseitin
+
+--
+
+(x#as_relation_1#as_set_1#occurrence_4) -> (__3)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> (x#as_relation_1#as_set_1#occurrence_4) -> (__3)) using tseitin
+
+--
+
+(x#as_relation_1#as_set_1#occurrence_5) -> (__4)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> (x#as_relation_1#as_set_1#occurrence_5) -> (__4)) using tseitin
+
+--
+
+(x#as_relation_1#as_set_1#occurrence_6) -> (__5)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> (x#as_relation_1#as_set_1#occurrence_6) -> (__5)) using tseitin
+
+--
+
+and([__6,__7,__8,__9,__10,__11;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> and([__6,__7,__8,__9,__10,__11;int(1..)])) using tseitin
+
+--
+
+true,
+__12,
+and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), j in x#as_relation_1#as_set_1 ]),
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), j in x#as_relation_1#as_set_1 ]),
+true
+new SAT encoding decisions:
+  assert(__12) using tseitin
+
+--
+
+[ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17)), j in x#as_relation_1#as_set_1 ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(({(7,false)},13) in x#as_relation_1#as_set_1) -> (and([!(({(7,true)},13) in x#as_relation_1#as_set_1),!(({(7,false),(7,true)},13) in x#as_relation_1#as_set_1);int(1..)])),(({(7,false)},17) in x#as_relation_1#as_set_1) -> (and([!(({(7,true)},17) in x#as_relation_1#as_set_1),!(({(7,false),(7,true)},17) in x#as_relation_1#as_set_1);int(1..)])),(({(7,true)},13) in x#as_relation_1#as_set_1) -> (and([!(({(7,false)},13) in x#as_relation_1#as_set_1),!(({(7,false),(7,true)},13) in x#as_relation_1#as_set_1);int(1..)])),(({(7,true)},17) in x#as_relation_1#as_set_1) -> (and([!(({(7,false)},17) in x#as_relation_1#as_set_1),!(({(7,false),(7,true)},17) in x#as_relation_1#as_set_1);int(1..)])),(({(7,false),(7,true)},13) in x#as_relation_1#as_set_1) -> (and([!(({(7,false)},13) in x#as_relation_1#as_set_1),!(({(7,true)},13) in x#as_relation_1#as_set_1);int(1..)])),(({(7,false),(7,true)},17) in x#as_relation_1#as_set_1) -> (and([!(({(7,false)},17) in x#as_relation_1#as_set_1),!(({(7,true)},17) in x#as_relation_1#as_set_1);int(1..)]));int(1..)]
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+({(7,false)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_1
+
+--
+
+({(7,false)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_2
+
+--
+
+({(7,true)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_3
+
+--
+
+({(7,true)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_4
+
+--
+
+({(7,false),(7,true)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_5
+
+--
+
+({(7,false),(7,true)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_6
+
+--
+
+({(7,true)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_3
+
+--
+
+({(7,false),(7,true)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_5
+
+--
+
+({(7,true)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_4
+
+--
+
+({(7,false),(7,true)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_6
+
+--
+
+({(7,false)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_1
+
+--
+
+({(7,false),(7,true)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_5
+
+--
+
+({(7,false)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_2
+
+--
+
+({(7,false),(7,true)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_6
+
+--
+
+({(7,false)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_1
+
+--
+
+({(7,true)},13) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_3
+
+--
+
+({(7,false)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_2
+
+--
+
+({(7,true)},17) in x#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_relation_1#as_set_1#occurrence_4
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> !(x#as_relation_1#as_set_1#occurrence_3)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> !(x#as_relation_1#as_set_1#occurrence_5)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> !(x#as_relation_1#as_set_1#occurrence_4)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_6)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> !(x#as_relation_1#as_set_1#occurrence_6)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> !(x#as_relation_1#as_set_1#occurrence_1)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> !(x#as_relation_1#as_set_1#occurrence_5)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> !(x#as_relation_1#as_set_1#occurrence_2)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_6)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> !(x#as_relation_1#as_set_1#occurrence_6)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> !(x#as_relation_1#as_set_1#occurrence_1)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__22
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> !(x#as_relation_1#as_set_1#occurrence_3)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__23
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> !(x#as_relation_1#as_set_1#occurrence_2)) using tseitin
+
+--
+
+!(x#as_relation_1#as_set_1#occurrence_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__24
+new variables:
+  findAux __24: bool
+new SAT encoding decisions:
+  define(__24 <-> !(x#as_relation_1#as_set_1#occurrence_4)) using tseitin
+
+--
+
+and([__13,__14;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__25
+new variables:
+  findAux __25: bool
+new SAT encoding decisions:
+  define(__25 <-> and([__13,__14;int(1..)])) using tseitin
+
+--
+
+(x#as_relation_1#as_set_1#occurrence_1) -> (__25)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__26
+new variables:
+  findAux __26: bool
+new SAT encoding decisions:
+  define(__26 <-> (x#as_relation_1#as_set_1#occurrence_1) -> (__25)) using tseitin
+
+--
+
+and([__15,__16;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__27
+new variables:
+  findAux __27: bool
+new SAT encoding decisions:
+  define(__27 <-> and([__15,__16;int(1..)])) using tseitin
+
+--
+
+(x#as_relation_1#as_set_1#occurrence_2) -> (__27)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__28
+new variables:
+  findAux __28: bool
+new SAT encoding decisions:
+  define(__28 <-> (x#as_relation_1#as_set_1#occurrence_2) -> (__27)) using tseitin
+
+--
+
+and([__17,__18;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__29
+new variables:
+  findAux __29: bool
+new SAT encoding decisions:
+  define(__29 <-> and([__17,__18;int(1..)])) using tseitin
+
+--
+
+(x#as_relation_1#as_set_1#occurrence_3) -> (__29)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__30
+new variables:
+  findAux __30: bool
+new SAT encoding decisions:
+  define(__30 <-> (x#as_relation_1#as_set_1#occurrence_3) -> (__29)) using tseitin
+
+--
+
+and([__19,__20;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__31
+new variables:
+  findAux __31: bool
+new SAT encoding decisions:
+  define(__31 <-> and([__19,__20;int(1..)])) using tseitin
+
+--
+
+(x#as_relation_1#as_set_1#occurrence_4) -> (__31)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__32
+new variables:
+  findAux __32: bool
+new SAT encoding decisions:
+  define(__32 <-> (x#as_relation_1#as_set_1#occurrence_4) -> (__31)) using tseitin
+
+--
+
+and([__21,__22;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__33
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> and([__21,__22;int(1..)])) using tseitin
+
+--
+
+(x#as_relation_1#as_set_1#occurrence_5) -> (__33)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__34
+new variables:
+  findAux __34: bool
+new SAT encoding decisions:
+  define(__34 <-> (x#as_relation_1#as_set_1#occurrence_5) -> (__33)) using tseitin
+
+--
+
+and([__23,__24;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__35
+new variables:
+  findAux __35: bool
+new SAT encoding decisions:
+  define(__35 <-> and([__23,__24;int(1..)])) using tseitin
+
+--
+
+(x#as_relation_1#as_set_1#occurrence_6) -> (__35)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__36
+new variables:
+  findAux __36: bool
+new SAT encoding decisions:
+  define(__36 <-> (x#as_relation_1#as_set_1#occurrence_6) -> (__35)) using tseitin
+
+--
+
+and([__26,__28,__30,__32,__34,__36;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__37
+new variables:
+  findAux __37: bool
+new SAT encoding decisions:
+  define(__37 <-> and([__26,__28,__30,__32,__34,__36;int(1..)])) using tseitin
+
+--
+
+true,
+__37,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true
+new SAT encoding decisions:
+  assert(__37) using tseitin
+
+--
+
+Final model:
+
+find x: function (minSize 2, maxSize 3, injective) set (minSize 1, maxSize 2) of tuple (int(7), bool) --> int(13, 17) 
+find x#as_relation_1: relation (minSize 2, maxSize 3) of (set (minSize 1, maxSize 2) of tuple (int(7), bool) * int(13, 17))
+find x#as_relation_1#as_set_1: set (representation occurrence, minSize 2, maxSize 3) of tuple (set (minSize 1, maxSize 2) of tuple (int(7), bool), int(13, 17))
+find x#as_relation_1#as_set_1#occurrence_1: bool
+find x#as_relation_1#as_set_1#occurrence_2: bool
+find x#as_relation_1#as_set_1#occurrence_3: bool
+find x#as_relation_1#as_set_1#occurrence_4: bool
+find x#as_relation_1#as_set_1#occurrence_5: bool
+find x#as_relation_1#as_set_1#occurrence_6: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+count(x#as_relation_1#as_set_1#occurrence_1, x#as_relation_1#as_set_1#occurrence_2, x#as_relation_1#as_set_1#occurrence_3, x#as_relation_1#as_set_1#occurrence_4, x#as_relation_1#as_set_1#occurrence_5, x#as_relation_1#as_set_1#occurrence_6) AtLeast 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(x#as_relation_1#as_set_1#occurrence_1, x#as_relation_1#as_set_1#occurrence_2, x#as_relation_1#as_set_1#occurrence_3, x#as_relation_1#as_set_1#occurrence_4, x#as_relation_1#as_set_1#occurrence_5, x#as_relation_1#as_set_1#occurrence_6) AtMost 3 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__0 <-> !(x#as_relation_1#as_set_1#occurrence_2)) using tseitin,
+define(__1 <-> !(x#as_relation_1#as_set_1#occurrence_1)) using tseitin,
+define(__2 <-> !(x#as_relation_1#as_set_1#occurrence_4)) using tseitin,
+define(__3 <-> !(x#as_relation_1#as_set_1#occurrence_3)) using tseitin,
+define(__4 <-> !(x#as_relation_1#as_set_1#occurrence_6)) using tseitin,
+define(__5 <-> !(x#as_relation_1#as_set_1#occurrence_5)) using tseitin,
+define(__6 <-> (x#as_relation_1#as_set_1#occurrence_1) -> (__0)) using tseitin,
+define(__7 <-> (x#as_relation_1#as_set_1#occurrence_2) -> (__1)) using tseitin,
+define(__8 <-> (x#as_relation_1#as_set_1#occurrence_3) -> (__2)) using tseitin,
+define(__9 <-> (x#as_relation_1#as_set_1#occurrence_4) -> (__3)) using tseitin,
+define(__10 <-> (x#as_relation_1#as_set_1#occurrence_5) -> (__4)) using tseitin,
+define(__11 <-> (x#as_relation_1#as_set_1#occurrence_6) -> (__5)) using tseitin,
+define(__12 <-> and([__6,__7,__8,__9,__10,__11;int(1..)])) using tseitin,
+assert(__12) using tseitin,
+define(__13 <-> !(x#as_relation_1#as_set_1#occurrence_3)) using tseitin,
+define(__14 <-> !(x#as_relation_1#as_set_1#occurrence_5)) using tseitin,
+define(__15 <-> !(x#as_relation_1#as_set_1#occurrence_4)) using tseitin,
+define(__16 <-> !(x#as_relation_1#as_set_1#occurrence_6)) using tseitin,
+define(__17 <-> !(x#as_relation_1#as_set_1#occurrence_1)) using tseitin,
+define(__18 <-> !(x#as_relation_1#as_set_1#occurrence_5)) using tseitin,
+define(__19 <-> !(x#as_relation_1#as_set_1#occurrence_2)) using tseitin,
+define(__20 <-> !(x#as_relation_1#as_set_1#occurrence_6)) using tseitin,
+define(__21 <-> !(x#as_relation_1#as_set_1#occurrence_1)) using tseitin,
+define(__22 <-> !(x#as_relation_1#as_set_1#occurrence_3)) using tseitin,
+define(__23 <-> !(x#as_relation_1#as_set_1#occurrence_2)) using tseitin,
+define(__24 <-> !(x#as_relation_1#as_set_1#occurrence_4)) using tseitin,
+define(__25 <-> and([__13,__14;int(1..)])) using tseitin,
+define(__26 <-> (x#as_relation_1#as_set_1#occurrence_1) -> (__25)) using tseitin,
+define(__27 <-> and([__15,__16;int(1..)])) using tseitin,
+define(__28 <-> (x#as_relation_1#as_set_1#occurrence_2) -> (__27)) using tseitin,
+define(__29 <-> and([__17,__18;int(1..)])) using tseitin,
+define(__30 <-> (x#as_relation_1#as_set_1#occurrence_3) -> (__29)) using tseitin,
+define(__31 <-> and([__19,__20;int(1..)])) using tseitin,
+define(__32 <-> (x#as_relation_1#as_set_1#occurrence_4) -> (__31)) using tseitin,
+define(__33 <-> and([__21,__22;int(1..)])) using tseitin,
+define(__34 <-> (x#as_relation_1#as_set_1#occurrence_5) -> (__33)) using tseitin,
+define(__35 <-> and([__23,__24;int(1..)])) using tseitin,
+define(__36 <-> (x#as_relation_1#as_set_1#occurrence_6) -> (__35)) using tseitin,
+define(__37 <-> and([__26,__28,__30,__32,__34,__36;int(1..)])) using tseitin,
+assert(__37) using tseitin
+
