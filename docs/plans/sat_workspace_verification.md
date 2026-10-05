@@ -61,9 +61,13 @@ all 179 rule tests and `make check`.
 
 ## Remaining work
 
-The two confirmed panics remain `basic/lettings/04-domain` (SAT loading expects
+The full run confirmed two panics: `basic/lettings/04-domain` (SAT loading expects
 a ground domain) and `savilerow/const_matrix_test` (undefined index zero is
-accessed during rewriting). These are suitable next correctness fixes.
+accessed during rewriting). The domain-letting panic is subsequently fixed:
+SAT loading resolves domain references, including chained aliases, and reports
+resolution failures as model errors. All 65 SAT portfolios return five
+solutions, and all five `basic/lettings` fixtures pass normal verification.
+The constant-matrix indexing panic remains a suitable next correctness fix.
 
 Memory limits were reached by `basic/comprehension/dependent-domains`,
 `conjure/relation/relation04_param`, `savilerow/carSequencing`,

@@ -12,6 +12,10 @@ representations. The ten outdated snapshots have since been refreshed and pass
 normal verification: 636 fixtures pass and 32 failures remain. The survey below
 is historical, including its residual counts.
 
+Subsequent fix: `basic/lettings/04-domain` now passes all 65 SAT portfolios with
+five solutions. SAT loading resolves domain lettings instead of requiring their
+stored domain to be ground. The constant-matrix indexing panic remains open.
+
 ## Full integration coverage sweep (2026-10-05)
 
 The latest complete coverage report passes **602 of 667 fixtures**, compared with 565 of 664 in the first survey. SAT is configured for every discovered fixture: 662 normally runnable and five globally skipped fixtures explicitly attempted. SAT uses `heuristic="x"` with uniform channelling in 622 fixtures and compact's normal representation and SAT encoding choices in 45 fixtures whose other backend profiles do not enumerate choices. No SAT encoding options are pinned; existing Minion/Z3 profiles are preserved.
