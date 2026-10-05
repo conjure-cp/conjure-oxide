@@ -732,6 +732,10 @@ pub struct TestConfig {
     )]
     pub keep_intermediate_solutions: bool,
 
+    /// How much of the rule trace each run records. See [`RuleTraceMode`].
+    #[serde(default, rename = "rule-trace")]
+    pub rule_trace: RuleTraceMode,
+
     /// Empty `skip` runs the test; a non-empty string ignores it and records why.
     #[serde(default = "default_skip")]
     pub skip: String,
@@ -742,6 +746,19 @@ pub struct TestConfig {
         deserialize_with = "deserialise_expected_time"
     )]
     pub expected_time: Option<u64>,
+}
+
+/// The rule trace recorded by each integration run.
+#[derive(Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum RuleTraceMode {
+    /// Write the human-readable trace of every rule application and compare it with the
+    /// expected snapshot.
+    #[default]
+    Full,
+    /// Count rule applications in memory and record only the totals in `stats.toml`. Much
+    /// cheaper for large fixtures, at the cost of the trace snapshot.
+    Aggregate,
 }
 
 impl Default for TestConfig {
@@ -765,6 +782,7 @@ impl Default for TestConfig {
             skip_conjure_validation: String::new(),
             number_of_solutions: NumberOfSolutions::All,
             keep_intermediate_solutions: false,
+            rule_trace: RuleTraceMode::Full,
             expected_time: None,
         }
     }

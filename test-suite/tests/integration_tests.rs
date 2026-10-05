@@ -24,7 +24,7 @@ use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer:
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
 use std::sync::Arc;
-use std::sync::RwLock;
+use std::sync::{Mutex, RwLock};
 
 use conjure_cp::ast::{Literal, Model, Name};
 use conjure_cp::context::Context;
@@ -57,6 +57,7 @@ use test_suite::diagnostics::{
     oxide_artifacts_dir, write_failure_record, write_oxide_failure_text,
 };
 use test_suite::golden_files::assert_no_redundant_expected_files;
+use test_suite::test_config::RuleTraceMode;
 use test_suite::test_config::{
     NumberOfSolutions, RecordedConjureStats, RecordedRunConfig, RuleTraceAggregateStats,
     read_stats_or_default, reset_stats_for_run, round_expected_time, stats_path,
@@ -436,7 +437,9 @@ fn integration_test_inner_with_status(
         .map(|(solutions, _)| Arc::clone(solutions));
     let conjure_timings = conjure_solutions.and_then(|(_, timings)| timings);
     let mut allowed_expected_files = BTreeSet::new();
-    let rule_trace_snapshots_enabled = !test_tracing_disabled();
+    let rule_trace_mode = (!test_tracing_disabled()).then_some(config.rule_trace);
+    let rule_trace_snapshots_enabled = rule_trace_mode == Some(RuleTraceMode::Full);
+    let rule_trace_aggregates_enabled = rule_trace_mode == Some(RuleTraceMode::Aggregate);
 
     let mut first_config_error = None;
     for comprehension_expander in comprehension_expanders {
@@ -468,6 +471,7 @@ fn integration_test_inner_with_status(
                             };
                             let mut config_timings = RunTimings::default();
                             let mut config_case_names = BTreeSet::new();
+                            let config_rule_counts = RuleCounts::default();
                             let config_result = (|| -> Result<(), Box<dyn Error>> {
                                 let base_case_name = run_case_name(
                                     parser,
@@ -520,6 +524,8 @@ fn integration_test_inner_with_status(
                                         conjure_solution_values.clone(),
                                         accept,
                                         rule_trace_snapshots_enabled,
+                                        rule_trace_aggregates_enabled
+                                            .then_some(&config_rule_counts),
                                     )?;
                                     config_timings.add(run_timings);
 
@@ -553,13 +559,22 @@ fn integration_test_inner_with_status(
                                     solve_time,
                                 )?;
 
-                                if rule_trace_snapshots_enabled {
-                                    let aggregates = collect_rule_trace_aggregates(
-                                        Path::new(path),
-                                        "-generated-rule-trace.txt",
-                                        &config_case_names,
-                                        &run_config,
-                                    )?;
+                                if rule_trace_snapshots_enabled || rule_trace_aggregates_enabled {
+                                    let aggregates = if rule_trace_snapshots_enabled {
+                                        collect_rule_trace_aggregates(
+                                            Path::new(path),
+                                            "-generated-rule-trace.txt",
+                                            &config_case_names,
+                                            &run_config,
+                                        )?
+                                    } else {
+                                        let rules = config_rule_counts.lock().unwrap().clone();
+                                        RuleTraceAggregateStats {
+                                            total_rule_applications: rules.values().sum(),
+                                            rules,
+                                            ..RuleTraceAggregateStats::default()
+                                        }
+                                    };
                                     let aggregates = RuleTraceAggregateStats {
                                         total_rule_attempts: collect_rule_attempts(
                                             Path::new(path),
@@ -685,13 +700,14 @@ fn execute_integration_run(
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
     rule_trace_snapshots_enabled: bool,
+    rule_counts: Option<&RuleCounts>,
 ) -> Result<RunTimings, Box<dyn Error>> {
     let run_label = run_case_label(path, essence_base, extension, run_case);
     let default_rule_trace_enabled = matches!(run_case.rewriter, Rewriter::Rewrite(_));
-    set_rule_trace_enabled(rule_trace_snapshots_enabled);
+    set_rule_trace_enabled(rule_trace_snapshots_enabled || rule_counts.is_some());
     set_default_rule_trace_enabled(rule_trace_snapshots_enabled && default_rule_trace_enabled);
     set_rule_attempt_trace_enabled(false);
-    set_rule_trace_aggregates_enabled(false);
+    set_rule_trace_aggregates_enabled(rule_counts.is_some());
     let run_test = || {
         integration_test_inner(
             path,
@@ -725,6 +741,13 @@ fn execute_integration_run(
                     })),
             ),
         ) as Arc<dyn tracing::Subscriber + Send + Sync>;
+        tracing::subscriber::with_default(subscriber, run_test)
+    } else if let Some(counts) = rule_counts {
+        let subscriber = tracing_subscriber::registry().with(
+            RuleApplicationCounter(Arc::clone(counts)).with_filter(FilterFn::new(|meta| {
+                meta.target() == "rule_engine_rule_trace_aggregates"
+            })),
+        );
         tracing::subscriber::with_default(subscriber, run_test)
     } else {
         run_test()
@@ -1017,6 +1040,31 @@ fn expected_integration_files_for_case(case_name: &str, solver: SolverFamily) ->
         format!("{case_name}-{solver_name}.expected.solutions"),
         format!("{case_name}-{solver_name}-expected-rule-trace.txt"),
     ])
+}
+
+/// Rule applications counted by name across the runs of one configuration.
+type RuleCounts = Arc<Mutex<BTreeMap<String, u64>>>;
+
+/// Counts aggregate rule-trace events in memory, without formatting or file I/O.
+struct RuleApplicationCounter(RuleCounts);
+
+impl<S: tracing::Subscriber> Layer<S> for RuleApplicationCounter {
+    fn on_event(&self, event: &tracing::Event<'_>, _: tracing_subscriber::layer::Context<'_, S>) {
+        struct RuleName(Option<String>);
+        impl tracing::field::Visit for RuleName {
+            fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
+                if field.name() == "rule_name" {
+                    self.0 = Some(value.to_owned());
+                }
+            }
+            fn record_debug(&mut self, _: &tracing::field::Field, _: &dyn std::fmt::Debug) {}
+        }
+        let mut rule = RuleName(None);
+        event.record(&mut rule);
+        if let Some(rule) = rule.0 {
+            *self.0.lock().unwrap().entry(rule).or_insert(0) += 1;
+        }
+    }
 }
 
 fn collect_rule_trace_aggregates(
