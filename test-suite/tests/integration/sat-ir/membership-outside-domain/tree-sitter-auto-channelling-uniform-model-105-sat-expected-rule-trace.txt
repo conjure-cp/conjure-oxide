@@ -1,0 +1,248 @@
+Model before rewriting:
+
+find s: set of int(1..3)
+find x: int(0..4)
+find member: bool
+
+such that
+
+(member) <-> (x in s),
+!(member)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#int_direct_1: bool
+  find x#int_direct_2: bool
+  find x#int_direct_3: bool
+  find x#int_direct_4: bool
+  find x#int_direct_5: bool
+new constraints:
+  sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5);int(1..)]) <= 1
+  or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)])
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+new variables:
+  find s#occurrence_1: bool
+  find s#occurrence_2: bool
+  find s#occurrence_3: bool
+new constraints:
+  and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) >= 0,sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3;int(1..)])
+
+--
+
+(member) <-> (x in s),
+!(member),
+sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5);int(1..)]) <= 1,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)]),
+and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) >= 0,sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(member) <-> (x in s),
+!(member),
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)]),
+and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) >= 0,sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5) using None
+
+--
+
+(member) <-> (x in s),
+!(member),
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)]),
+and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) >= 0,sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(member) <-> (x in s),
+!(member),
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)]),
+and([true,sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3;int(1..)])
+new SAT encoding decisions:
+  count(s#occurrence_1, s#occurrence_2, s#occurrence_3) AtLeast 0 using None
+
+--
+
+(member) <-> (x in s),
+!(member),
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)]),
+and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(member) <-> (x in s),
+!(member),
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)]),
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(s#occurrence_1, s#occurrence_2, s#occurrence_3) AtMost 3 using None
+
+--
+
+x in s
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+and([x >= 1,x <= 3,SafeIndex([s#occurrence_1,s#occurrence_2,s#occurrence_3;int(1..)],[x]);int(1..)])
+
+--
+
+x >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(0*x#int_direct_1, 1*x#int_direct_2, 2*x#int_direct_3, 3*x#int_direct_4, 4*x#int_direct_5) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }]
+
+--
+
+x <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(0*x#int_direct_1, 1*x#int_direct_2, 2*x#int_direct_3, 3*x#int_direct_4, 4*x#int_direct_5) LessEqual 3) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }]
+
+--
+
+SafeIndex([s#occurrence_1,s#occurrence_2,s#occurrence_3;int(1..)],[x])
+   ~~> introduce_element ([("SAT", 18400)])
+__2
+new variables:
+  findAux __2: bool
+new constraints:
+  satElement([s#occurrence_1,s#occurrence_2,s#occurrence_3;int(1..)], x, __2)
+
+--
+
+satElement([s#occurrence_1,s#occurrence_2,s#occurrence_3;int(1..)], x, __2)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=0+weighted(0*x#int_direct_1, 1*x#int_direct_2, 2*x#int_direct_3, 3*x#int_direct_4, 4*x#int_direct_5) with [PbTermGroup { start: 0, end: 5, structure: Choice }] choices(0:x#int_direct_1, 1:x#int_direct_2, 2:x#int_direct_3, 3:x#int_direct_4, 4:x#int_direct_5), value=0+weighted(1*__2) with [] choices(0:!(__2), 1:__2), entries=[1: 0+weighted(1*s#occurrence_1) with [] choices(0:!(s#occurrence_1), 1:s#occurrence_1), 2: 0+weighted(1*s#occurrence_2) with [] choices(0:!(s#occurrence_2), 1:s#occurrence_2), 3: 0+weighted(1*s#occurrence_3) with [] choices(0:!(s#occurrence_3), 1:s#occurrence_3)]) using None, PB None
+
+--
+
+!(member)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> !(member)) using tseitin
+
+--
+
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)])) using tseitin
+
+--
+
+and([__0,__1,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> and([__0,__1,__2;int(1..)])) using tseitin
+
+--
+
+(member) <-> (__5)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> (member) <-> (__5)) using tseitin
+
+--
+
+__6,
+__3,
+__4,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+__3,
+__4,
+true,
+true
+new SAT encoding decisions:
+  assert(__6) using tseitin
+
+--
+
+__3,
+__4,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+__4,
+true,
+true
+new SAT encoding decisions:
+  assert(__3) using tseitin
+
+--
+
+__4,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true
+new SAT encoding decisions:
+  assert(__4) using tseitin
+
+--
+
+Final model:
+
+find s: set (representation occurrence) of int(1..3)
+find x: int(0..4)
+find member: bool
+find x#int_direct_1: bool
+find x#int_direct_2: bool
+find x#int_direct_3: bool
+find x#int_direct_4: bool
+find x#int_direct_5: bool
+find s#occurrence_1: bool
+find s#occurrence_2: bool
+find s#occurrence_3: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
+count(s#occurrence_1, s#occurrence_2, s#occurrence_3) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(s#occurrence_1, s#occurrence_2, s#occurrence_3) AtMost 3 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__0 <-> integer-weighted(0*x#int_direct_1, 1*x#int_direct_2, 2*x#int_direct_3, 3*x#int_direct_4, 4*x#int_direct_5) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }],
+define(__1 <-> integer-weighted(0*x#int_direct_1, 1*x#int_direct_2, 2*x#int_direct_3, 3*x#int_direct_4, 4*x#int_direct_5) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }],
+element(index=0+weighted(0*x#int_direct_1, 1*x#int_direct_2, 2*x#int_direct_3, 3*x#int_direct_4, 4*x#int_direct_5) with [PbTermGroup { start: 0, end: 5, structure: Choice }] choices(0:x#int_direct_1, 1:x#int_direct_2, 2:x#int_direct_3, 3:x#int_direct_4, 4:x#int_direct_5), value=0+weighted(1*__2) with [] choices(0:!(__2), 1:__2), entries=[1: 0+weighted(1*s#occurrence_1) with [] choices(0:!(s#occurrence_1), 1:s#occurrence_1), 2: 0+weighted(1*s#occurrence_2) with [] choices(0:!(s#occurrence_2), 1:s#occurrence_2), 3: 0+weighted(1*s#occurrence_3) with [] choices(0:!(s#occurrence_3), 1:s#occurrence_3)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__3 <-> !(member)) using tseitin,
+define(__4 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)])) using tseitin,
+define(__5 <-> and([__0,__1,__2;int(1..)])) using tseitin,
+define(__6 <-> (member) <-> (__5)) using tseitin,
+assert(__6) using tseitin,
+assert(__3) using tseitin,
+assert(__4) using tseitin
+

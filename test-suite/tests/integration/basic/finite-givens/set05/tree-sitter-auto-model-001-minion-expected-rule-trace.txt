@@ -32,7 +32,7 @@ new constraints:
 
 x in __0
    ~~> membership_occurrence ([("ReprGeneral", 9500)])
-SafeIndex([__0#occurrence_1,__0#occurrence_2,__0#occurrence_3,__0#occurrence_4;int(1..)],[sum([x,-1;int(1..)])])
+and([x >= 2,x <= 5,SafeIndex([__0#occurrence_1,__0#occurrence_2,__0#occurrence_3,__0#occurrence_4;int(1..)],[sum([x,-1;int(1..)])]);int(1..)])
 
 --
 
@@ -70,6 +70,18 @@ __minion_element_one([__0#occurrence_1,__0#occurrence_2,__0#occurrence_3,__0#occ
 
 --
 
+x >= 2
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(2, x, 0)
+
+--
+
+x <= 5
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x, 5, 0)
+
+--
+
 Final model:
 
 letting s be {{2,3,4},{5}}
@@ -83,7 +95,7 @@ findAux __1: int(-1..8)
 
 such that
 
-__minion_element_one([__0#occurrence_1,__0#occurrence_2,__0#occurrence_3,__0#occurrence_4],__1,true),
+and([Ineq(2, x, 0),Ineq(x, 5, 0),__minion_element_one([__0#occurrence_1,__0#occurrence_2,__0#occurrence_3,__0#occurrence_4],__1,true);int(1..)]),
 and([SumGeq([__0#occurrence_1, __0#occurrence_2, __0#occurrence_3, __0#occurrence_4], 0),SumLeq([__0#occurrence_1, __0#occurrence_2, __0#occurrence_3, __0#occurrence_4], 4);int(1..)]),
 and([SumLeq([-1, x], __1),SumGeq([-1, x], __1);int(1..)])
 

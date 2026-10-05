@@ -27,7 +27,19 @@ s
 
 |s| in s
    ~~> membership_occurrence ([("ReprGeneral", 9500)])
-SafeIndex([s#occurrence_1,s#occurrence_2;int(1..)],[|s|])
+and([|s| >= 1,|s| <= 2,SafeIndex([s#occurrence_1,s#occurrence_2;int(1..)],[|s|]);int(1..)])
+
+--
+
+|s|
+   ~~> cardinality_occurrence ([("ReprGeneral", 9500)])
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)])
+
+--
+
+|s|
+   ~~> cardinality_occurrence ([("ReprGeneral", 9500)])
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)])
 
 --
 
@@ -40,6 +52,18 @@ sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)])
 sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) >= 0
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([s#occurrence_1, s#occurrence_2], 0)
+
+--
+
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([s#occurrence_1, s#occurrence_2], 2)
+
+--
+
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) >= 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([s#occurrence_1, s#occurrence_2], 1)
 
 --
 
@@ -80,7 +104,7 @@ findAux __0: int(0..2)
 
 such that
 
-__minion_element_one([s#occurrence_1,s#occurrence_2],__0,true),
+and([SumGeq([s#occurrence_1, s#occurrence_2], 1),SumLeq([s#occurrence_1, s#occurrence_2], 2),__minion_element_one([s#occurrence_1,s#occurrence_2],__0,true);int(1..)]),
 and([SumGeq([s#occurrence_1, s#occurrence_2], 0),SumLeq([s#occurrence_1, s#occurrence_2], 2);int(1..)]),
 and([SumLeq([s#occurrence_1, s#occurrence_2], __0),SumGeq([s#occurrence_1, s#occurrence_2], __0);int(1..)])
 

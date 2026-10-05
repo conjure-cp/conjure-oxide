@@ -1,0 +1,650 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..4)] of int(1..4)
+
+such that
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)])
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#components_1: int(1..4)
+  find m#components_2: int(1..4)
+  find m#components_3: int(1..4)
+  find m#components_4: int(1..4)
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)])
+new variables:
+  find m#components_1#int_direct_1: bool
+  find m#components_1#int_direct_2: bool
+  find m#components_1#int_direct_3: bool
+  find m#components_1#int_direct_4: bool
+  find m#components_2#int_direct_1: bool
+  find m#components_2#int_direct_2: bool
+  find m#components_2#int_direct_3: bool
+  find m#components_2#int_direct_4: bool
+  find m#components_3#int_direct_1: bool
+  find m#components_3#int_direct_2: bool
+  find m#components_3#int_direct_3: bool
+  find m#components_3#int_direct_4: bool
+  find m#components_4#int_direct_1: bool
+  find m#components_4#int_direct_2: bool
+  find m#components_4#int_direct_3: bool
+  find m#components_4#int_direct_4: bool
+new constraints:
+  sum([toInt(m#components_1#int_direct_1),toInt(m#components_1#int_direct_2),toInt(m#components_1#int_direct_3),toInt(m#components_1#int_direct_4);int(1..)]) <= 1
+  or([m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)])
+  sum([toInt(m#components_2#int_direct_1),toInt(m#components_2#int_direct_2),toInt(m#components_2#int_direct_3),toInt(m#components_2#int_direct_4);int(1..)]) <= 1
+  or([m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)])
+  sum([toInt(m#components_3#int_direct_1),toInt(m#components_3#int_direct_2),toInt(m#components_3#int_direct_3),toInt(m#components_3#int_direct_4);int(1..)]) <= 1
+  or([m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)])
+  sum([toInt(m#components_4#int_direct_1),toInt(m#components_4#int_direct_2),toInt(m#components_4#int_direct_3),toInt(m#components_4#int_direct_4);int(1..)]) <= 1
+  or([m#components_4#int_direct_1,m#components_4#int_direct_2,m#components_4#int_direct_3,m#components_4#int_direct_4;int(1..)])
+
+--
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+sum([toInt(m#components_1#int_direct_1),toInt(m#components_1#int_direct_2),toInt(m#components_1#int_direct_3),toInt(m#components_1#int_direct_4);int(1..)]) <= 1,
+or([m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)]),
+sum([toInt(m#components_2#int_direct_1),toInt(m#components_2#int_direct_2),toInt(m#components_2#int_direct_3),toInt(m#components_2#int_direct_4);int(1..)]) <= 1,
+or([m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)]),
+sum([toInt(m#components_3#int_direct_1),toInt(m#components_3#int_direct_2),toInt(m#components_3#int_direct_3),toInt(m#components_3#int_direct_4);int(1..)]) <= 1,
+or([m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)]),
+sum([toInt(m#components_4#int_direct_1),toInt(m#components_4#int_direct_2),toInt(m#components_4#int_direct_3),toInt(m#components_4#int_direct_4);int(1..)]) <= 1,
+or([m#components_4#int_direct_1,m#components_4#int_direct_2,m#components_4#int_direct_3,m#components_4#int_direct_4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+or([m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)]),
+sum([toInt(m#components_2#int_direct_1),toInt(m#components_2#int_direct_2),toInt(m#components_2#int_direct_3),toInt(m#components_2#int_direct_4);int(1..)]) <= 1,
+or([m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)]),
+sum([toInt(m#components_3#int_direct_1),toInt(m#components_3#int_direct_2),toInt(m#components_3#int_direct_3),toInt(m#components_3#int_direct_4);int(1..)]) <= 1,
+or([m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)]),
+sum([toInt(m#components_4#int_direct_1),toInt(m#components_4#int_direct_2),toInt(m#components_4#int_direct_3),toInt(m#components_4#int_direct_4);int(1..)]) <= 1,
+or([m#components_4#int_direct_1,m#components_4#int_direct_2,m#components_4#int_direct_3,m#components_4#int_direct_4;int(1..)])
+new SAT encoding decisions:
+  at-most-one(m#components_1#int_direct_1, m#components_1#int_direct_2, m#components_1#int_direct_3, m#components_1#int_direct_4) using None
+
+--
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+or([m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)]),
+sum([toInt(m#components_2#int_direct_1),toInt(m#components_2#int_direct_2),toInt(m#components_2#int_direct_3),toInt(m#components_2#int_direct_4);int(1..)]) <= 1,
+or([m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)]),
+sum([toInt(m#components_3#int_direct_1),toInt(m#components_3#int_direct_2),toInt(m#components_3#int_direct_3),toInt(m#components_3#int_direct_4);int(1..)]) <= 1,
+or([m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)]),
+sum([toInt(m#components_4#int_direct_1),toInt(m#components_4#int_direct_2),toInt(m#components_4#int_direct_3),toInt(m#components_4#int_direct_4);int(1..)]) <= 1,
+or([m#components_4#int_direct_1,m#components_4#int_direct_2,m#components_4#int_direct_3,m#components_4#int_direct_4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+or([m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)]),
+or([m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)]),
+sum([toInt(m#components_3#int_direct_1),toInt(m#components_3#int_direct_2),toInt(m#components_3#int_direct_3),toInt(m#components_3#int_direct_4);int(1..)]) <= 1,
+or([m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)]),
+sum([toInt(m#components_4#int_direct_1),toInt(m#components_4#int_direct_2),toInt(m#components_4#int_direct_3),toInt(m#components_4#int_direct_4);int(1..)]) <= 1,
+or([m#components_4#int_direct_1,m#components_4#int_direct_2,m#components_4#int_direct_3,m#components_4#int_direct_4;int(1..)])
+new SAT encoding decisions:
+  at-most-one(m#components_2#int_direct_1, m#components_2#int_direct_2, m#components_2#int_direct_3, m#components_2#int_direct_4) using None
+
+--
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+or([m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)]),
+or([m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)]),
+sum([toInt(m#components_3#int_direct_1),toInt(m#components_3#int_direct_2),toInt(m#components_3#int_direct_3),toInt(m#components_3#int_direct_4);int(1..)]) <= 1,
+or([m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)]),
+sum([toInt(m#components_4#int_direct_1),toInt(m#components_4#int_direct_2),toInt(m#components_4#int_direct_3),toInt(m#components_4#int_direct_4);int(1..)]) <= 1,
+or([m#components_4#int_direct_1,m#components_4#int_direct_2,m#components_4#int_direct_3,m#components_4#int_direct_4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+or([m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)]),
+or([m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)]),
+or([m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)]),
+sum([toInt(m#components_4#int_direct_1),toInt(m#components_4#int_direct_2),toInt(m#components_4#int_direct_3),toInt(m#components_4#int_direct_4);int(1..)]) <= 1,
+or([m#components_4#int_direct_1,m#components_4#int_direct_2,m#components_4#int_direct_3,m#components_4#int_direct_4;int(1..)])
+new SAT encoding decisions:
+  at-most-one(m#components_3#int_direct_1, m#components_3#int_direct_2, m#components_3#int_direct_3, m#components_3#int_direct_4) using None
+
+--
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+or([m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)]),
+or([m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)]),
+or([m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)]),
+sum([toInt(m#components_4#int_direct_1),toInt(m#components_4#int_direct_2),toInt(m#components_4#int_direct_3),toInt(m#components_4#int_direct_4);int(1..)]) <= 1,
+or([m#components_4#int_direct_1,m#components_4#int_direct_2,m#components_4#int_direct_3,m#components_4#int_direct_4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+or([m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)]),
+or([m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)]),
+or([m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)]),
+or([m#components_4#int_direct_1,m#components_4#int_direct_2,m#components_4#int_direct_3,m#components_4#int_direct_4;int(1..)])
+new SAT encoding decisions:
+  at-most-one(m#components_4#int_direct_1, m#components_4#int_direct_2, m#components_4#int_direct_3, m#components_4#int_direct_4) using None
+
+--
+
+or([m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> or([m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)])) using tseitin
+
+--
+
+or([m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)])) using tseitin
+
+--
+
+or([m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> or([m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)])) using tseitin
+
+--
+
+or([m#components_4#int_direct_1,m#components_4#int_direct_2,m#components_4#int_direct_3,m#components_4#int_direct_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> or([m#components_4#int_direct_1,m#components_4#int_direct_2,m#components_4#int_direct_3,m#components_4#int_direct_4;int(1..)])) using tseitin
+
+--
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+__0,
+__1,
+__2,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+__1,
+__2,
+__3
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+__1,
+__2,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+__2,
+__3
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+__2,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+__3
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)]),
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)])
+new SAT encoding decisions:
+  assert(__3) using tseitin
+
+--
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)])
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+atMost([m#components_1,m#components_2,m#components_3,m#components_4;int(1..4)], [2,3;int(1..2)], [1,2;int(1..2)])
+
+--
+
+atMost([m#components_1,m#components_2,m#components_3,m#components_4;int(1..4)], [2,3;int(1..2)], [1,2;int(1..2)])
+   ~~> occurrence_counts ([("SAT", 18500)])
+and([sum([toInt(m#components_1 = 1),toInt(m#components_2 = 1),toInt(m#components_3 = 1),toInt(m#components_4 = 1);int(1..)]) <= 2,sum([toInt(m#components_1 = 2),toInt(m#components_2 = 2),toInt(m#components_3 = 2),toInt(m#components_4 = 2);int(1..)]) <= 3;int(1..)])
+
+--
+
+m#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_1
+
+--
+
+m#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_2
+
+--
+
+m#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_3
+
+--
+
+m#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_4
+
+--
+
+m#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_1
+
+--
+
+m#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_2
+
+--
+
+m#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_3
+
+--
+
+m#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_4
+
+--
+
+m#components_1 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*m#components_1#int_direct_1, 2*m#components_1#int_direct_2, 3*m#components_1#int_direct_3, 4*m#components_1#int_direct_4) Equal 1) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_2 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(1*m#components_2#int_direct_1, 2*m#components_2#int_direct_2, 3*m#components_2#int_direct_3, 4*m#components_2#int_direct_4) Equal 1) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_3 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*m#components_3#int_direct_1, 2*m#components_3#int_direct_2, 3*m#components_3#int_direct_3, 4*m#components_3#int_direct_4) Equal 1) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_4 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> integer-weighted(1*m#components_4#int_direct_1, 2*m#components_4#int_direct_2, 3*m#components_4#int_direct_3, 4*m#components_4#int_direct_4) Equal 1) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_1 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> integer-weighted(1*m#components_1#int_direct_1, 2*m#components_1#int_direct_2, 3*m#components_1#int_direct_3, 4*m#components_1#int_direct_4) Equal 2) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_2 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> integer-weighted(1*m#components_2#int_direct_1, 2*m#components_2#int_direct_2, 3*m#components_2#int_direct_3, 4*m#components_2#int_direct_4) Equal 2) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_3 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(1*m#components_3#int_direct_1, 2*m#components_3#int_direct_2, 3*m#components_3#int_direct_3, 4*m#components_3#int_direct_4) Equal 2) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_4 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> integer-weighted(1*m#components_4#int_direct_1, 2*m#components_4#int_direct_2, 3*m#components_4#int_direct_3, 4*m#components_4#int_direct_4) Equal 2) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+and([sum([toInt(__4),toInt(__5),toInt(__6),toInt(__7);int(1..)]) <= 2,sum([toInt(__8),toInt(__9),toInt(__10),toInt(__11);int(1..)]) <= 3;int(1..)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([true,sum([toInt(__8),toInt(__9),toInt(__10),toInt(__11);int(1..)]) <= 3;int(1..)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)])
+new SAT encoding decisions:
+  count(__4, __5, __6, __7) AtMost 2 using None
+
+--
+
+and([sum([toInt(__8),toInt(__9),toInt(__10),toInt(__11);int(1..)]) <= 3;int(1..)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([true;int(1..)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)])
+new SAT encoding decisions:
+  count(__8, __9, __10, __11) AtMost 3 using None
+
+--
+
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)])
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+atLeast([m#components_1,m#components_2,m#components_3,m#components_4;int(1..4)], [2,1;int(1..2)], [2,3;int(1..2)])
+
+--
+
+atLeast([m#components_1,m#components_2,m#components_3,m#components_4;int(1..4)], [2,1;int(1..2)], [2,3;int(1..2)])
+   ~~> occurrence_counts ([("SAT", 18500)])
+and([sum([toInt(m#components_1 = 2),toInt(m#components_2 = 2),toInt(m#components_3 = 2),toInt(m#components_4 = 2);int(1..)]) >= 2,sum([toInt(m#components_1 = 3),toInt(m#components_2 = 3),toInt(m#components_3 = 3),toInt(m#components_4 = 3);int(1..)]) >= 1;int(1..)])
+
+--
+
+m#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_1
+
+--
+
+m#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_2
+
+--
+
+m#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_3
+
+--
+
+m#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_4
+
+--
+
+m#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_1
+
+--
+
+m#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_2
+
+--
+
+m#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_3
+
+--
+
+m#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_4
+
+--
+
+m#components_1 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> integer-weighted(1*m#components_1#int_direct_1, 2*m#components_1#int_direct_2, 3*m#components_1#int_direct_3, 4*m#components_1#int_direct_4) Equal 2) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_2 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> integer-weighted(1*m#components_2#int_direct_1, 2*m#components_2#int_direct_2, 3*m#components_2#int_direct_3, 4*m#components_2#int_direct_4) Equal 2) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_3 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> integer-weighted(1*m#components_3#int_direct_1, 2*m#components_3#int_direct_2, 3*m#components_3#int_direct_3, 4*m#components_3#int_direct_4) Equal 2) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_4 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> integer-weighted(1*m#components_4#int_direct_1, 2*m#components_4#int_direct_2, 3*m#components_4#int_direct_3, 4*m#components_4#int_direct_4) Equal 2) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_1 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> integer-weighted(1*m#components_1#int_direct_1, 2*m#components_1#int_direct_2, 3*m#components_1#int_direct_3, 4*m#components_1#int_direct_4) Equal 3) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_2 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> integer-weighted(1*m#components_2#int_direct_1, 2*m#components_2#int_direct_2, 3*m#components_2#int_direct_3, 4*m#components_2#int_direct_4) Equal 3) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_3 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> integer-weighted(1*m#components_3#int_direct_1, 2*m#components_3#int_direct_2, 3*m#components_3#int_direct_3, 4*m#components_3#int_direct_4) Equal 3) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+m#components_4 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> integer-weighted(1*m#components_4#int_direct_1, 2*m#components_4#int_direct_2, 3*m#components_4#int_direct_3, 4*m#components_4#int_direct_4) Equal 3) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+true,
+and([sum([toInt(__12),toInt(__13),toInt(__14),toInt(__15);int(1..)]) >= 2,sum([toInt(__16),toInt(__17),toInt(__18),toInt(__19);int(1..)]) >= 1;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+and([true,sum([toInt(__16),toInt(__17),toInt(__18),toInt(__19);int(1..)]) >= 1;int(1..)])
+new SAT encoding decisions:
+  count(__12, __13, __14, __15) AtLeast 2 using None
+
+--
+
+true,
+and([sum([toInt(__16),toInt(__17),toInt(__18),toInt(__19);int(1..)]) >= 1;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(__16, __17, __18, __19) AtLeast 1 using None
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..4)] of int(1..4)
+find m#components_1: int(1..4)
+find m#components_2: int(1..4)
+find m#components_3: int(1..4)
+find m#components_4: int(1..4)
+find m#components_1#int_direct_1: bool
+find m#components_1#int_direct_2: bool
+find m#components_1#int_direct_3: bool
+find m#components_1#int_direct_4: bool
+find m#components_2#int_direct_1: bool
+find m#components_2#int_direct_2: bool
+find m#components_2#int_direct_3: bool
+find m#components_2#int_direct_4: bool
+find m#components_3#int_direct_1: bool
+find m#components_3#int_direct_2: bool
+find m#components_3#int_direct_3: bool
+find m#components_3#int_direct_4: bool
+find m#components_4#int_direct_1: bool
+find m#components_4#int_direct_2: bool
+find m#components_4#int_direct_3: bool
+find m#components_4#int_direct_4: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+at-most-one(m#components_1#int_direct_1, m#components_1#int_direct_2, m#components_1#int_direct_3, m#components_1#int_direct_4) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+at-most-one(m#components_2#int_direct_1, m#components_2#int_direct_2, m#components_2#int_direct_3, m#components_2#int_direct_4) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+at-most-one(m#components_3#int_direct_1, m#components_3#int_direct_2, m#components_3#int_direct_3, m#components_3#int_direct_4) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+at-most-one(m#components_4#int_direct_1, m#components_4#int_direct_2, m#components_4#int_direct_3, m#components_4#int_direct_4) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__0 <-> or([m#components_1#int_direct_1,m#components_1#int_direct_2,m#components_1#int_direct_3,m#components_1#int_direct_4;int(1..)])) using tseitin,
+define(__1 <-> or([m#components_2#int_direct_1,m#components_2#int_direct_2,m#components_2#int_direct_3,m#components_2#int_direct_4;int(1..)])) using tseitin,
+define(__2 <-> or([m#components_3#int_direct_1,m#components_3#int_direct_2,m#components_3#int_direct_3,m#components_3#int_direct_4;int(1..)])) using tseitin,
+define(__3 <-> or([m#components_4#int_direct_1,m#components_4#int_direct_2,m#components_4#int_direct_3,m#components_4#int_direct_4;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin,
+assert(__2) using tseitin,
+assert(__3) using tseitin,
+define(__4 <-> integer-weighted(1*m#components_1#int_direct_1, 2*m#components_1#int_direct_2, 3*m#components_1#int_direct_3, 4*m#components_1#int_direct_4) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__5 <-> integer-weighted(1*m#components_2#int_direct_1, 2*m#components_2#int_direct_2, 3*m#components_2#int_direct_3, 4*m#components_2#int_direct_4) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__6 <-> integer-weighted(1*m#components_3#int_direct_1, 2*m#components_3#int_direct_2, 3*m#components_3#int_direct_3, 4*m#components_3#int_direct_4) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__7 <-> integer-weighted(1*m#components_4#int_direct_1, 2*m#components_4#int_direct_2, 3*m#components_4#int_direct_3, 4*m#components_4#int_direct_4) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__8 <-> integer-weighted(1*m#components_1#int_direct_1, 2*m#components_1#int_direct_2, 3*m#components_1#int_direct_3, 4*m#components_1#int_direct_4) Equal 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__9 <-> integer-weighted(1*m#components_2#int_direct_1, 2*m#components_2#int_direct_2, 3*m#components_2#int_direct_3, 4*m#components_2#int_direct_4) Equal 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__10 <-> integer-weighted(1*m#components_3#int_direct_1, 2*m#components_3#int_direct_2, 3*m#components_3#int_direct_3, 4*m#components_3#int_direct_4) Equal 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__11 <-> integer-weighted(1*m#components_4#int_direct_1, 2*m#components_4#int_direct_2, 3*m#components_4#int_direct_3, 4*m#components_4#int_direct_4) Equal 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+count(__4, __5, __6, __7) AtMost 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+count(__8, __9, __10, __11) AtMost 3 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+define(__12 <-> integer-weighted(1*m#components_1#int_direct_1, 2*m#components_1#int_direct_2, 3*m#components_1#int_direct_3, 4*m#components_1#int_direct_4) Equal 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__13 <-> integer-weighted(1*m#components_2#int_direct_1, 2*m#components_2#int_direct_2, 3*m#components_2#int_direct_3, 4*m#components_2#int_direct_4) Equal 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__14 <-> integer-weighted(1*m#components_3#int_direct_1, 2*m#components_3#int_direct_2, 3*m#components_3#int_direct_3, 4*m#components_3#int_direct_4) Equal 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__15 <-> integer-weighted(1*m#components_4#int_direct_1, 2*m#components_4#int_direct_2, 3*m#components_4#int_direct_3, 4*m#components_4#int_direct_4) Equal 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__16 <-> integer-weighted(1*m#components_1#int_direct_1, 2*m#components_1#int_direct_2, 3*m#components_1#int_direct_3, 4*m#components_1#int_direct_4) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__17 <-> integer-weighted(1*m#components_2#int_direct_1, 2*m#components_2#int_direct_2, 3*m#components_2#int_direct_3, 4*m#components_2#int_direct_4) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__18 <-> integer-weighted(1*m#components_3#int_direct_1, 2*m#components_3#int_direct_2, 3*m#components_3#int_direct_3, 4*m#components_3#int_direct_4) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+define(__19 <-> integer-weighted(1*m#components_4#int_direct_1, 2*m#components_4#int_direct_2, 3*m#components_4#int_direct_3, 4*m#components_4#int_direct_4) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+count(__12, __13, __14, __15) AtLeast 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+count(__16, __17, __18, __19) AtLeast 1 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic })
+

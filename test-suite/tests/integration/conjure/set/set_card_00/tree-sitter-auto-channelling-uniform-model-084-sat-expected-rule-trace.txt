@@ -1,0 +1,151 @@
+Model before rewriting:
+
+find s: set of int(1..2)
+
+such that
+
+|s| in s
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+new variables:
+  find s#occurrence_1: bool
+  find s#occurrence_2: bool
+new constraints:
+  and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) >= 0,sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+
+--
+
+|s| in s,
+and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) >= 0,sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+|s| in s,
+and([true,sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(s#occurrence_1, s#occurrence_2) AtLeast 0 using None
+
+--
+
+|s| in s,
+and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+|s| in s,
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(s#occurrence_1, s#occurrence_2) AtMost 2 using None
+
+--
+
+|s| in s
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+and([|s| >= 1,|s| <= 2,SafeIndex([s#occurrence_1,s#occurrence_2;int(1..)],[|s|]);int(1..)])
+
+--
+
+SafeIndex([s#occurrence_1,s#occurrence_2;int(1..)],[|s|])
+   ~~> introduce_element ([("SAT", 18400)])
+__0
+new variables:
+  findAux __0: bool
+new constraints:
+  satElement([s#occurrence_1,s#occurrence_2;int(1..)], |s|, __0)
+
+--
+
+|s|
+   ~~> cardinality_occurrence ([("ReprGeneral", 9500)])
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)])
+
+--
+
+|s|
+   ~~> cardinality_occurrence ([("ReprGeneral", 9500)])
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)])
+
+--
+
+|s|
+   ~~> cardinality_occurrence ([("ReprGeneral", 9500)])
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)])
+
+--
+
+and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) >= 1,sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) <= 2,__0;int(1..)]),
+true,
+satElement([s#occurrence_1,s#occurrence_2;int(1..)], sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]), __0)
+   ~~> select_cardinality ([("SAT", 20000)])
+and([true,sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) <= 2,__0;int(1..)]),
+true,
+satElement([s#occurrence_1,s#occurrence_2;int(1..)], sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]), __0)
+new SAT encoding decisions:
+  count(s#occurrence_1, s#occurrence_2) AtLeast 1 using None
+
+--
+
+and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) <= 2,__0;int(1..)]),
+true,
+satElement([s#occurrence_1,s#occurrence_2;int(1..)], sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]), __0)
+   ~~> select_cardinality ([("SAT", 20000)])
+and([true,__0;int(1..)]),
+true,
+satElement([s#occurrence_1,s#occurrence_2;int(1..)], sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]), __0)
+new SAT encoding decisions:
+  count(s#occurrence_1, s#occurrence_2) AtMost 2 using None
+
+--
+
+satElement([s#occurrence_1,s#occurrence_2;int(1..)], sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]), __0)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=0+weighted(1*s#occurrence_1, 1*s#occurrence_2) with [], value=0+weighted(1*__0) with [] choices(0:!(__0), 1:__0), entries=[1: 0+weighted(1*s#occurrence_1) with [] choices(0:!(s#occurrence_1), 1:s#occurrence_1), 2: 0+weighted(1*s#occurrence_2) with [] choices(0:!(s#occurrence_2), 1:s#occurrence_2)]) using None, PB None
+
+--
+
+and([__0;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__0
+
+--
+
+__0,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+Final model:
+
+find s: set (representation occurrence) of int(1..2)
+find s#occurrence_1: bool
+find s#occurrence_2: bool
+findAux __0: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+count(s#occurrence_1, s#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+count(s#occurrence_1, s#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+count(s#occurrence_1, s#occurrence_2) AtLeast 1 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+count(s#occurrence_1, s#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+element(index=0+weighted(1*s#occurrence_1, 1*s#occurrence_2) with [], value=0+weighted(1*__0) with [] choices(0:!(__0), 1:__0), entries=[1: 0+weighted(1*s#occurrence_1) with [] choices(0:!(s#occurrence_1), 1:s#occurrence_1), 2: 0+weighted(1*s#occurrence_2) with [] choices(0:!(s#occurrence_2), 1:s#occurrence_2)]) using Some(EncodingSelection { algorithm: Support, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+assert(__0) using tseitin
+

@@ -1,0 +1,3192 @@
+Model before rewriting:
+
+letting noLetters be 6
+letting word1Length be 3
+letting word1 be [1,2,3;int(1..(sum([ 1 | i : int(1..3) ])))]
+letting word2Length be 4
+letting word2 be [3,4,2,3;int(1..4)]
+letting word3Length be 5
+letting word3 be [2,5,5,6,1;int(1..(((3)! - 1)))]
+find letters: matrix indexed by [int(1..noLetters)] of int(0..9)
+find word1Sum: int(1..((10 ** word1Length)))
+find word2Sum: int(1..((10 ** word2Length)))
+find word3Sum: int(1..((10 ** word3Length)))
+
+such that
+
+letters[word1[1]] != 0,
+letters[word2[1]] != 0,
+letters[word3[1]] != 0,
+word1Sum = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+word2Sum = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+sum([word1Sum,word2Sum;int(1..)]) = word3Sum,
+allDifferent(letters)
+
+--
+
+word1Sum
+   ~~> select_representation ([("ReprGeneral", 10000)])
+word1Sum
+new variables:
+  find word1Sum#int_offset_1: bool
+  find word1Sum#int_offset_10: bool
+  find word1Sum#int_offset_2: bool
+  find word1Sum#int_offset_3: bool
+  find word1Sum#int_offset_4: bool
+  find word1Sum#int_offset_5: bool
+  find word1Sum#int_offset_6: bool
+  find word1Sum#int_offset_7: bool
+  find word1Sum#int_offset_8: bool
+  find word1Sum#int_offset_9: bool
+new constraints:
+  or([!(word1Sum#int_offset_10),or([!(word1Sum#int_offset_9),or([!(word1Sum#int_offset_8),or([!(word1Sum#int_offset_7),or([!(word1Sum#int_offset_6),and([!(word1Sum#int_offset_5),and([!(word1Sum#int_offset_4),or([!(word1Sum#int_offset_3),or([!(word1Sum#int_offset_2),or([!(word1Sum#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) >= 1,SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) <= 1000;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*word1Sum#int_offset_1, 2*word1Sum#int_offset_2, 4*word1Sum#int_offset_3, 8*word1Sum#int_offset_4, 16*word1Sum#int_offset_5, 32*word1Sum#int_offset_6, 64*word1Sum#int_offset_7, 128*word1Sum#int_offset_8, 256*word1Sum#int_offset_9, 512*word1Sum#int_offset_10) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 10, structure: BoundedBinary { lower: 0, upper: 999 } }]
+
+--
+
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) <= 1000
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*word1Sum#int_offset_1, 2*word1Sum#int_offset_2, 4*word1Sum#int_offset_3, 8*word1Sum#int_offset_4, 16*word1Sum#int_offset_5, 32*word1Sum#int_offset_6, 64*word1Sum#int_offset_7, 128*word1Sum#int_offset_8, 256*word1Sum#int_offset_9, 512*word1Sum#int_offset_10) LessEqual 999) using None with [PbTermGroup { start: 0, end: 10, structure: BoundedBinary { lower: 0, upper: 999 } }]
+
+--
+
+word2Sum
+   ~~> select_representation ([("ReprGeneral", 10000)])
+word2Sum
+new variables:
+  find word2Sum#int_offset_1: bool
+  find word2Sum#int_offset_10: bool
+  find word2Sum#int_offset_11: bool
+  find word2Sum#int_offset_12: bool
+  find word2Sum#int_offset_13: bool
+  find word2Sum#int_offset_14: bool
+  find word2Sum#int_offset_2: bool
+  find word2Sum#int_offset_3: bool
+  find word2Sum#int_offset_4: bool
+  find word2Sum#int_offset_5: bool
+  find word2Sum#int_offset_6: bool
+  find word2Sum#int_offset_7: bool
+  find word2Sum#int_offset_8: bool
+  find word2Sum#int_offset_9: bool
+new constraints:
+  or([!(word2Sum#int_offset_14),and([!(word2Sum#int_offset_13),and([!(word2Sum#int_offset_12),or([!(word2Sum#int_offset_11),or([!(word2Sum#int_offset_10),or([!(word2Sum#int_offset_9),and([!(word2Sum#int_offset_8),and([!(word2Sum#int_offset_7),and([!(word2Sum#int_offset_6),and([!(word2Sum#int_offset_5),or([!(word2Sum#int_offset_4),or([!(word2Sum#int_offset_3),or([!(word2Sum#int_offset_2),or([!(word2Sum#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) >= 1,SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) <= 10000;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*word2Sum#int_offset_1, 2*word2Sum#int_offset_2, 4*word2Sum#int_offset_3, 8*word2Sum#int_offset_4, 16*word2Sum#int_offset_5, 32*word2Sum#int_offset_6, 64*word2Sum#int_offset_7, 128*word2Sum#int_offset_8, 256*word2Sum#int_offset_9, 512*word2Sum#int_offset_10, 1024*word2Sum#int_offset_11, 2048*word2Sum#int_offset_12, 4096*word2Sum#int_offset_13, 8192*word2Sum#int_offset_14) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 14, structure: BoundedBinary { lower: 0, upper: 9999 } }]
+
+--
+
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) <= 10000
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*word2Sum#int_offset_1, 2*word2Sum#int_offset_2, 4*word2Sum#int_offset_3, 8*word2Sum#int_offset_4, 16*word2Sum#int_offset_5, 32*word2Sum#int_offset_6, 64*word2Sum#int_offset_7, 128*word2Sum#int_offset_8, 256*word2Sum#int_offset_9, 512*word2Sum#int_offset_10, 1024*word2Sum#int_offset_11, 2048*word2Sum#int_offset_12, 4096*word2Sum#int_offset_13, 8192*word2Sum#int_offset_14) LessEqual 9999) using None with [PbTermGroup { start: 0, end: 14, structure: BoundedBinary { lower: 0, upper: 9999 } }]
+
+--
+
+word3Sum
+   ~~> select_representation ([("ReprGeneral", 10000)])
+word3Sum
+new variables:
+  find word3Sum#int_offset_1: bool
+  find word3Sum#int_offset_10: bool
+  find word3Sum#int_offset_11: bool
+  find word3Sum#int_offset_12: bool
+  find word3Sum#int_offset_13: bool
+  find word3Sum#int_offset_14: bool
+  find word3Sum#int_offset_15: bool
+  find word3Sum#int_offset_16: bool
+  find word3Sum#int_offset_17: bool
+  find word3Sum#int_offset_2: bool
+  find word3Sum#int_offset_3: bool
+  find word3Sum#int_offset_4: bool
+  find word3Sum#int_offset_5: bool
+  find word3Sum#int_offset_6: bool
+  find word3Sum#int_offset_7: bool
+  find word3Sum#int_offset_8: bool
+  find word3Sum#int_offset_9: bool
+new constraints:
+  or([!(word3Sum#int_offset_17),or([!(word3Sum#int_offset_16),and([!(word3Sum#int_offset_15),and([!(word3Sum#int_offset_14),and([!(word3Sum#int_offset_13),and([!(word3Sum#int_offset_12),or([!(word3Sum#int_offset_11),or([!(word3Sum#int_offset_10),and([!(word3Sum#int_offset_9),or([!(word3Sum#int_offset_8),and([!(word3Sum#int_offset_7),and([!(word3Sum#int_offset_6),or([!(word3Sum#int_offset_5),or([!(word3Sum#int_offset_4),or([!(word3Sum#int_offset_3),or([!(word3Sum#int_offset_2),or([!(word3Sum#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) >= 1,SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) <= 100000;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*word3Sum#int_offset_1, 2*word3Sum#int_offset_2, 4*word3Sum#int_offset_3, 8*word3Sum#int_offset_4, 16*word3Sum#int_offset_5, 32*word3Sum#int_offset_6, 64*word3Sum#int_offset_7, 128*word3Sum#int_offset_8, 256*word3Sum#int_offset_9, 512*word3Sum#int_offset_10, 1024*word3Sum#int_offset_11, 2048*word3Sum#int_offset_12, 4096*word3Sum#int_offset_13, 8192*word3Sum#int_offset_14, 16384*word3Sum#int_offset_15, 32768*word3Sum#int_offset_16, 65536*word3Sum#int_offset_17) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 17, structure: BoundedBinary { lower: 0, upper: 99999 } }]
+
+--
+
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) <= 100000
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(1*word3Sum#int_offset_1, 2*word3Sum#int_offset_2, 4*word3Sum#int_offset_3, 8*word3Sum#int_offset_4, 16*word3Sum#int_offset_5, 32*word3Sum#int_offset_6, 64*word3Sum#int_offset_7, 128*word3Sum#int_offset_8, 256*word3Sum#int_offset_9, 512*word3Sum#int_offset_10, 1024*word3Sum#int_offset_11, 2048*word3Sum#int_offset_12, 4096*word3Sum#int_offset_13, 8192*word3Sum#int_offset_14, 16384*word3Sum#int_offset_15, 32768*word3Sum#int_offset_16, 65536*word3Sum#int_offset_17) LessEqual 99999) using None with [PbTermGroup { start: 0, end: 17, structure: BoundedBinary { lower: 0, upper: 99999 } }]
+
+--
+
+word3Sum
+   ~~> select_representation ([("ReprGeneral", 10000)])
+word3Sum
+
+--
+
+letters
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters
+new variables:
+  find letters#components_1: int(0..9)
+  find letters#components_2: int(0..9)
+  find letters#components_3: int(0..9)
+  find letters#components_4: int(0..9)
+  find letters#components_5: int(0..9)
+  find letters#components_6: int(0..9)
+
+--
+
+letters
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters
+
+--
+
+letters
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters
+
+--
+
+letters
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters
+
+--
+
+word1Sum
+   ~~> select_representation ([("ReprGeneral", 10000)])
+word1Sum
+
+--
+
+word2Sum
+   ~~> select_representation ([("ReprGeneral", 10000)])
+word2Sum
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+word1Sum = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+word2Sum = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+sum([word1Sum,word2Sum;int(1..)]) = word3Sum,
+allDifferent(letters),
+or([!(word1Sum#int_offset_10),or([!(word1Sum#int_offset_9),or([!(word1Sum#int_offset_8),or([!(word1Sum#int_offset_7),or([!(word1Sum#int_offset_6),and([!(word1Sum#int_offset_5),and([!(word1Sum#int_offset_4);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)]),
+or([!(word2Sum#int_offset_14),and([!(word2Sum#int_offset_13),and([!(word2Sum#int_offset_12),or([!(word2Sum#int_offset_11),or([!(word2Sum#int_offset_10),or([!(word2Sum#int_offset_9),and([!(word2Sum#int_offset_8),and([!(word2Sum#int_offset_7),and([!(word2Sum#int_offset_6),and([!(word2Sum#int_offset_5);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)]),
+or([!(word3Sum#int_offset_17),or([!(word3Sum#int_offset_16),and([!(word3Sum#int_offset_15),and([!(word3Sum#int_offset_14),and([!(word3Sum#int_offset_13),and([!(word3Sum#int_offset_12),or([!(word3Sum#int_offset_11),or([!(word3Sum#int_offset_10),and([!(word3Sum#int_offset_9),or([!(word3Sum#int_offset_8),and([!(word3Sum#int_offset_7),and([!(word3Sum#int_offset_6);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+word1Sum = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+word2Sum = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+or([!(word1Sum#int_offset_10),or([!(word1Sum#int_offset_9),or([!(word1Sum#int_offset_8),or([!(word1Sum#int_offset_7),or([!(word1Sum#int_offset_6),and([!(word1Sum#int_offset_5),and([!(word1Sum#int_offset_4);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)]),
+or([!(word2Sum#int_offset_14),and([!(word2Sum#int_offset_13),and([!(word2Sum#int_offset_12),or([!(word2Sum#int_offset_11),or([!(word2Sum#int_offset_10),or([!(word2Sum#int_offset_9),and([!(word2Sum#int_offset_8),and([!(word2Sum#int_offset_7),and([!(word2Sum#int_offset_6),and([!(word2Sum#int_offset_5);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)]),
+or([!(word3Sum#int_offset_17),or([!(word3Sum#int_offset_16),and([!(word3Sum#int_offset_15),and([!(word3Sum#int_offset_14),and([!(word3Sum#int_offset_13),and([!(word3Sum#int_offset_12),or([!(word3Sum#int_offset_11),or([!(word3Sum#int_offset_10),and([!(word3Sum#int_offset_9),or([!(word3Sum#int_offset_8),and([!(word3Sum#int_offset_7),and([!(word3Sum#int_offset_6);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__4,__5;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  weighted(1*word1Sum#int_offset_1, 2*word1Sum#int_offset_2, 4*word1Sum#int_offset_3, 8*word1Sum#int_offset_4, 16*word1Sum#int_offset_5, 32*word1Sum#int_offset_6, 64*word1Sum#int_offset_7, 128*word1Sum#int_offset_8, 256*word1Sum#int_offset_9, 512*word1Sum#int_offset_10, 1*word2Sum#int_offset_1, 2*word2Sum#int_offset_2, 4*word2Sum#int_offset_3, 8*word2Sum#int_offset_4, 16*word2Sum#int_offset_5, 32*word2Sum#int_offset_6, 64*word2Sum#int_offset_7, 128*word2Sum#int_offset_8, 256*word2Sum#int_offset_9, 512*word2Sum#int_offset_10, 1024*word2Sum#int_offset_11, 2048*word2Sum#int_offset_12, 4096*word2Sum#int_offset_13, 8192*word2Sum#int_offset_14, -1*word3Sum#int_offset_1, -2*word3Sum#int_offset_2, -4*word3Sum#int_offset_3, -8*word3Sum#int_offset_4, -16*word3Sum#int_offset_5, -32*word3Sum#int_offset_6, -64*word3Sum#int_offset_7, -128*word3Sum#int_offset_8, -256*word3Sum#int_offset_9, -512*word3Sum#int_offset_10, -1024*word3Sum#int_offset_11, -2048*word3Sum#int_offset_12, -4096*word3Sum#int_offset_13, -8192*word3Sum#int_offset_14, -16384*word3Sum#int_offset_15, -32768*word3Sum#int_offset_16, -65536*word3Sum#int_offset_17) Exactly -1 using None with [PbTermGroup { start: 0, end: 10, structure: BoundedBinary { lower: 0, upper: 999 } }, PbTermGroup { start: 10, end: 24, structure: BoundedBinary { lower: 0, upper: 9999 } }, PbTermGroup { start: 24, end: 41, structure: BoundedBinary { lower: -99999, upper: 0 } }]
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+word1Sum = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+word2Sum = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+or([!(word1Sum#int_offset_10),or([!(word1Sum#int_offset_9),or([!(word1Sum#int_offset_8),or([!(word1Sum#int_offset_7),or([!(word1Sum#int_offset_6),and([!(word1Sum#int_offset_5),and([!(word1Sum#int_offset_4);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)]),
+or([!(word2Sum#int_offset_14),and([!(word2Sum#int_offset_13),and([!(word2Sum#int_offset_12),or([!(word2Sum#int_offset_11),or([!(word2Sum#int_offset_10),or([!(word2Sum#int_offset_9),and([!(word2Sum#int_offset_8),and([!(word2Sum#int_offset_7),and([!(word2Sum#int_offset_6),and([!(word2Sum#int_offset_5);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)]),
+or([!(word3Sum#int_offset_17),or([!(word3Sum#int_offset_16),and([!(word3Sum#int_offset_15),and([!(word3Sum#int_offset_14),and([!(word3Sum#int_offset_13),and([!(word3Sum#int_offset_12),or([!(word3Sum#int_offset_11),or([!(word3Sum#int_offset_10),and([!(word3Sum#int_offset_9),or([!(word3Sum#int_offset_8),and([!(word3Sum#int_offset_7),and([!(word3Sum#int_offset_6);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+word1Sum = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+word2Sum = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+or([!(word1Sum#int_offset_10),or([!(word1Sum#int_offset_9),or([!(word1Sum#int_offset_8),or([!(word1Sum#int_offset_7),or([!(word1Sum#int_offset_6),and([!(word1Sum#int_offset_5),and([!(word1Sum#int_offset_4);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)]),
+or([!(word2Sum#int_offset_14),and([!(word2Sum#int_offset_13),and([!(word2Sum#int_offset_12),or([!(word2Sum#int_offset_11),or([!(word2Sum#int_offset_10),or([!(word2Sum#int_offset_9),and([!(word2Sum#int_offset_8),and([!(word2Sum#int_offset_7),and([!(word2Sum#int_offset_6),and([!(word2Sum#int_offset_5);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)]),
+or([!(word3Sum#int_offset_17),or([!(word3Sum#int_offset_16),and([!(word3Sum#int_offset_15),and([!(word3Sum#int_offset_14),and([!(word3Sum#int_offset_13),and([!(word3Sum#int_offset_12),or([!(word3Sum#int_offset_11),or([!(word3Sum#int_offset_10),and([!(word3Sum#int_offset_9),or([!(word3Sum#int_offset_8),and([!(word3Sum#int_offset_7),and([!(word3Sum#int_offset_6);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([and([__4,__5;int(1..)]);int(1..)])
+new variables:
+  find letters#components_1#int_offset_1: bool
+  find letters#components_1#int_offset_2: bool
+  find letters#components_1#int_offset_3: bool
+  find letters#components_1#int_offset_4: bool
+  find letters#components_2#int_offset_1: bool
+  find letters#components_2#int_offset_2: bool
+  find letters#components_2#int_offset_3: bool
+  find letters#components_2#int_offset_4: bool
+  find letters#components_3#int_offset_1: bool
+  find letters#components_3#int_offset_2: bool
+  find letters#components_3#int_offset_3: bool
+  find letters#components_3#int_offset_4: bool
+  find letters#components_4#int_offset_1: bool
+  find letters#components_4#int_offset_2: bool
+  find letters#components_4#int_offset_3: bool
+  find letters#components_4#int_offset_4: bool
+  find letters#components_5#int_offset_1: bool
+  find letters#components_5#int_offset_2: bool
+  find letters#components_5#int_offset_3: bool
+  find letters#components_5#int_offset_4: bool
+  find letters#components_6#int_offset_1: bool
+  find letters#components_6#int_offset_2: bool
+  find letters#components_6#int_offset_3: bool
+  find letters#components_6#int_offset_4: bool
+new constraints:
+  or([!(letters#components_1#int_offset_4),and([!(letters#components_1#int_offset_3),and([!(letters#components_1#int_offset_2),or([!(letters#components_1#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]) >= 0,SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(letters#components_2#int_offset_4),and([!(letters#components_2#int_offset_3),and([!(letters#components_2#int_offset_2),or([!(letters#components_2#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]) >= 0,SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(letters#components_3#int_offset_4),and([!(letters#components_3#int_offset_3),and([!(letters#components_3#int_offset_2),or([!(letters#components_3#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]) >= 0,SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(letters#components_4#int_offset_4),and([!(letters#components_4#int_offset_3),and([!(letters#components_4#int_offset_2),or([!(letters#components_4#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]) >= 0,SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(letters#components_5#int_offset_4),and([!(letters#components_5#int_offset_3),and([!(letters#components_5#int_offset_2),or([!(letters#components_5#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]) >= 0,SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(letters#components_6#int_offset_4),and([!(letters#components_6#int_offset_3),and([!(letters#components_6#int_offset_2),or([!(letters#components_6#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]) >= 0,SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]) <= 9;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*letters#components_1#int_offset_1, 2*letters#components_1#int_offset_2, 4*letters#components_1#int_offset_3, 8*letters#components_1#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]) <= 9
+   ~~> select_integer_relation ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> integer-weighted(1*letters#components_1#int_offset_1, 2*letters#components_1#int_offset_2, 4*letters#components_1#int_offset_3, 8*letters#components_1#int_offset_4) LessEqual 9) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> integer-weighted(1*letters#components_2#int_offset_1, 2*letters#components_2#int_offset_2, 4*letters#components_2#int_offset_3, 8*letters#components_2#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]) <= 9
+   ~~> select_integer_relation ([("SAT", 18500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> integer-weighted(1*letters#components_2#int_offset_1, 2*letters#components_2#int_offset_2, 4*letters#components_2#int_offset_3, 8*letters#components_2#int_offset_4) LessEqual 9) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(1*letters#components_3#int_offset_1, 2*letters#components_3#int_offset_2, 4*letters#components_3#int_offset_3, 8*letters#components_3#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]) <= 9
+   ~~> select_integer_relation ([("SAT", 18500)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> integer-weighted(1*letters#components_3#int_offset_1, 2*letters#components_3#int_offset_2, 4*letters#components_3#int_offset_3, 8*letters#components_3#int_offset_4) LessEqual 9) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> integer-weighted(1*letters#components_4#int_offset_1, 2*letters#components_4#int_offset_2, 4*letters#components_4#int_offset_3, 8*letters#components_4#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]) <= 9
+   ~~> select_integer_relation ([("SAT", 18500)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> integer-weighted(1*letters#components_4#int_offset_1, 2*letters#components_4#int_offset_2, 4*letters#components_4#int_offset_3, 8*letters#components_4#int_offset_4) LessEqual 9) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> integer-weighted(1*letters#components_5#int_offset_1, 2*letters#components_5#int_offset_2, 4*letters#components_5#int_offset_3, 8*letters#components_5#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]) <= 9
+   ~~> select_integer_relation ([("SAT", 18500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> integer-weighted(1*letters#components_5#int_offset_1, 2*letters#components_5#int_offset_2, 4*letters#components_5#int_offset_3, 8*letters#components_5#int_offset_4) LessEqual 9) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> integer-weighted(1*letters#components_6#int_offset_1, 2*letters#components_6#int_offset_2, 4*letters#components_6#int_offset_3, 8*letters#components_6#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]) <= 9
+   ~~> select_integer_relation ([("SAT", 18500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> integer-weighted(1*letters#components_6#int_offset_1, 2*letters#components_6#int_offset_2, 4*letters#components_6#int_offset_3, 8*letters#components_6#int_offset_4) LessEqual 9) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+word1Sum
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000])
+
+--
+
+word2Sum
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000])
+
+--
+
+word3Sum
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000])
+
+--
+
+!(letters#components_2#int_offset_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> !(letters#components_2#int_offset_4)) using tseitin
+
+--
+
+!(letters#components_3#int_offset_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> !(letters#components_3#int_offset_4)) using tseitin
+
+--
+
+!(letters#components_4#int_offset_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> !(letters#components_4#int_offset_4)) using tseitin
+
+--
+
+!(letters#components_5#int_offset_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> !(letters#components_5#int_offset_4)) using tseitin
+
+--
+
+!(letters#components_6#int_offset_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__22
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> !(letters#components_6#int_offset_4)) using tseitin
+
+--
+
+!(letters#components_1#int_offset_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__23
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> !(letters#components_1#int_offset_4)) using tseitin
+
+--
+
+!(word1Sum#int_offset_10)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__24
+new variables:
+  findAux __24: bool
+new SAT encoding decisions:
+  define(__24 <-> !(word1Sum#int_offset_10)) using tseitin
+
+--
+
+!(word2Sum#int_offset_14)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__25
+new variables:
+  findAux __25: bool
+new SAT encoding decisions:
+  define(__25 <-> !(word2Sum#int_offset_14)) using tseitin
+
+--
+
+!(word3Sum#int_offset_17)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__26
+new variables:
+  findAux __26: bool
+new SAT encoding decisions:
+  define(__26 <-> !(word3Sum#int_offset_17)) using tseitin
+
+--
+
+!(letters#components_2#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__27
+new variables:
+  findAux __27: bool
+new SAT encoding decisions:
+  define(__27 <-> !(letters#components_2#int_offset_3)) using tseitin
+
+--
+
+!(letters#components_3#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__28
+new variables:
+  findAux __28: bool
+new SAT encoding decisions:
+  define(__28 <-> !(letters#components_3#int_offset_3)) using tseitin
+
+--
+
+!(letters#components_4#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__29
+new variables:
+  findAux __29: bool
+new SAT encoding decisions:
+  define(__29 <-> !(letters#components_4#int_offset_3)) using tseitin
+
+--
+
+!(letters#components_5#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__30
+new variables:
+  findAux __30: bool
+new SAT encoding decisions:
+  define(__30 <-> !(letters#components_5#int_offset_3)) using tseitin
+
+--
+
+!(letters#components_6#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__31
+new variables:
+  findAux __31: bool
+new SAT encoding decisions:
+  define(__31 <-> !(letters#components_6#int_offset_3)) using tseitin
+
+--
+
+!(letters#components_1#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__32
+new variables:
+  findAux __32: bool
+new SAT encoding decisions:
+  define(__32 <-> !(letters#components_1#int_offset_3)) using tseitin
+
+--
+
+!(word1Sum#int_offset_9)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__33
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> !(word1Sum#int_offset_9)) using tseitin
+
+--
+
+!(word2Sum#int_offset_13)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__34
+new variables:
+  findAux __34: bool
+new SAT encoding decisions:
+  define(__34 <-> !(word2Sum#int_offset_13)) using tseitin
+
+--
+
+!(word3Sum#int_offset_16)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__35
+new variables:
+  findAux __35: bool
+new SAT encoding decisions:
+  define(__35 <-> !(word3Sum#int_offset_16)) using tseitin
+
+--
+
+!(letters#components_2#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__36
+new variables:
+  findAux __36: bool
+new SAT encoding decisions:
+  define(__36 <-> !(letters#components_2#int_offset_2)) using tseitin
+
+--
+
+!(letters#components_3#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__37
+new variables:
+  findAux __37: bool
+new SAT encoding decisions:
+  define(__37 <-> !(letters#components_3#int_offset_2)) using tseitin
+
+--
+
+!(letters#components_4#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__38
+new variables:
+  findAux __38: bool
+new SAT encoding decisions:
+  define(__38 <-> !(letters#components_4#int_offset_2)) using tseitin
+
+--
+
+!(letters#components_5#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__39
+new variables:
+  findAux __39: bool
+new SAT encoding decisions:
+  define(__39 <-> !(letters#components_5#int_offset_2)) using tseitin
+
+--
+
+!(letters#components_6#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__40
+new variables:
+  findAux __40: bool
+new SAT encoding decisions:
+  define(__40 <-> !(letters#components_6#int_offset_2)) using tseitin
+
+--
+
+!(letters#components_1#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__41
+new variables:
+  findAux __41: bool
+new SAT encoding decisions:
+  define(__41 <-> !(letters#components_1#int_offset_2)) using tseitin
+
+--
+
+!(word1Sum#int_offset_8)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__42
+new variables:
+  findAux __42: bool
+new SAT encoding decisions:
+  define(__42 <-> !(word1Sum#int_offset_8)) using tseitin
+
+--
+
+!(word2Sum#int_offset_12)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__43
+new variables:
+  findAux __43: bool
+new SAT encoding decisions:
+  define(__43 <-> !(word2Sum#int_offset_12)) using tseitin
+
+--
+
+!(word3Sum#int_offset_15)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__44
+new variables:
+  findAux __44: bool
+new SAT encoding decisions:
+  define(__44 <-> !(word3Sum#int_offset_15)) using tseitin
+
+--
+
+!(word1Sum#int_offset_7)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__45
+new variables:
+  findAux __45: bool
+new SAT encoding decisions:
+  define(__45 <-> !(word1Sum#int_offset_7)) using tseitin
+
+--
+
+!(word2Sum#int_offset_11)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__46
+new variables:
+  findAux __46: bool
+new SAT encoding decisions:
+  define(__46 <-> !(word2Sum#int_offset_11)) using tseitin
+
+--
+
+!(word3Sum#int_offset_14)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__47
+new variables:
+  findAux __47: bool
+new SAT encoding decisions:
+  define(__47 <-> !(word3Sum#int_offset_14)) using tseitin
+
+--
+
+!(word1Sum#int_offset_6)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__48
+new variables:
+  findAux __48: bool
+new SAT encoding decisions:
+  define(__48 <-> !(word1Sum#int_offset_6)) using tseitin
+
+--
+
+!(word2Sum#int_offset_10)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__49
+new variables:
+  findAux __49: bool
+new SAT encoding decisions:
+  define(__49 <-> !(word2Sum#int_offset_10)) using tseitin
+
+--
+
+!(word3Sum#int_offset_13)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__50
+new variables:
+  findAux __50: bool
+new SAT encoding decisions:
+  define(__50 <-> !(word3Sum#int_offset_13)) using tseitin
+
+--
+
+!(word1Sum#int_offset_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__51
+new variables:
+  findAux __51: bool
+new SAT encoding decisions:
+  define(__51 <-> !(word1Sum#int_offset_5)) using tseitin
+
+--
+
+!(word2Sum#int_offset_9)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__52
+new variables:
+  findAux __52: bool
+new SAT encoding decisions:
+  define(__52 <-> !(word2Sum#int_offset_9)) using tseitin
+
+--
+
+!(word3Sum#int_offset_12)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__53
+new variables:
+  findAux __53: bool
+new SAT encoding decisions:
+  define(__53 <-> !(word3Sum#int_offset_12)) using tseitin
+
+--
+
+!(word1Sum#int_offset_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__54
+new variables:
+  findAux __54: bool
+new SAT encoding decisions:
+  define(__54 <-> !(word1Sum#int_offset_4)) using tseitin
+
+--
+
+!(word2Sum#int_offset_8)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__55
+new variables:
+  findAux __55: bool
+new SAT encoding decisions:
+  define(__55 <-> !(word2Sum#int_offset_8)) using tseitin
+
+--
+
+!(word3Sum#int_offset_11)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__56
+new variables:
+  findAux __56: bool
+new SAT encoding decisions:
+  define(__56 <-> !(word3Sum#int_offset_11)) using tseitin
+
+--
+
+!(word2Sum#int_offset_7)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__57
+new variables:
+  findAux __57: bool
+new SAT encoding decisions:
+  define(__57 <-> !(word2Sum#int_offset_7)) using tseitin
+
+--
+
+!(word3Sum#int_offset_10)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__58
+new variables:
+  findAux __58: bool
+new SAT encoding decisions:
+  define(__58 <-> !(word3Sum#int_offset_10)) using tseitin
+
+--
+
+!(word2Sum#int_offset_6)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__59
+new variables:
+  findAux __59: bool
+new SAT encoding decisions:
+  define(__59 <-> !(word2Sum#int_offset_6)) using tseitin
+
+--
+
+!(word3Sum#int_offset_9)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__60
+new variables:
+  findAux __60: bool
+new SAT encoding decisions:
+  define(__60 <-> !(word3Sum#int_offset_9)) using tseitin
+
+--
+
+!(word2Sum#int_offset_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__61
+new variables:
+  findAux __61: bool
+new SAT encoding decisions:
+  define(__61 <-> !(word2Sum#int_offset_5)) using tseitin
+
+--
+
+!(word3Sum#int_offset_8)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__62
+new variables:
+  findAux __62: bool
+new SAT encoding decisions:
+  define(__62 <-> !(word3Sum#int_offset_8)) using tseitin
+
+--
+
+!(word3Sum#int_offset_7)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__63
+new variables:
+  findAux __63: bool
+new SAT encoding decisions:
+  define(__63 <-> !(word3Sum#int_offset_7)) using tseitin
+
+--
+
+!(word3Sum#int_offset_6)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__64
+new variables:
+  findAux __64: bool
+new SAT encoding decisions:
+  define(__64 <-> !(word3Sum#int_offset_6)) using tseitin
+
+--
+
+or([__24,or([__33,or([__42,or([__45,or([__48,and([__51,and([__54;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([__24,__33,__42,__45,__48,and([__51,and([__54;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([__26,or([__35,and([__44,and([__47,and([__50,and([__53,or([__56,or([__58,and([__60,or([__62,and([__63,and([__64;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([__26,__35,and([__44,and([__47,and([__50,and([__53,or([__56,or([__58,and([__60,or([__62,and([__63,and([__64;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([__34,and([__43,or([__46,or([__49,or([__52,and([__55,and([__57,and([__59,and([__61;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__34,__43,or([__46,or([__49,or([__52,and([__55,and([__57,and([__59,and([__61;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([__44,and([__47,and([__50,and([__53,or([__56,or([__58,and([__60,or([__62,and([__63,and([__64;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__44,__47,__50,__53,or([__56,or([__58,and([__60,or([__62,and([__63,and([__64;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([__46,or([__49,or([__52,and([__55,and([__57,and([__59,and([__61;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([__46,__49,__52,and([__55,and([__57,and([__59,and([__61;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([__56,or([__58,and([__60,or([__62,and([__63,and([__64;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([__56,__58,and([__60,or([__62,and([__63,and([__64;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([__55,and([__57,and([__59,and([__61;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__55,__57,__59,__61;int(1..)])
+
+--
+
+or([and([__10,__11;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__10,__11;int(1..)])
+
+--
+
+or([and([__12,__13;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__12,__13;int(1..)])
+
+--
+
+or([and([__14,__15;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__14,__15;int(1..)])
+
+--
+
+or([and([__16,__17;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__16,__17;int(1..)])
+
+--
+
+or([and([__6,__7;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__6,__7;int(1..)])
+
+--
+
+or([and([__8,__9;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__8,__9;int(1..)])
+
+--
+
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
+
+--
+
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__2,__3;int(1..)])
+
+--
+
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__4,__5;int(1..)])
+
+--
+
+and([__36;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__36
+
+--
+
+and([__37;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__37
+
+--
+
+and([__38;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__38
+
+--
+
+and([__39;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__39
+
+--
+
+and([__40;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__40
+
+--
+
+and([__41;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__41
+
+--
+
+and([__54;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__54
+
+--
+
+and([__64;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__64
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+or([__24,__33,__42,__45,__48,and([__51,__54;int(1..)]);int(1..)]),
+and([__0,__1;int(1..)]),
+or([__25,and([__34,__43,or([__46,__49,__52,and([__55,__57,__59,__61;int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+and([__2,__3;int(1..)]),
+or([__26,__35,and([__44,__47,__50,__53,or([__56,__58,and([__60,or([__62,and([__63,__64;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+and([__4,__5;int(1..)]),
+or([__23,and([__32,__41;int(1..)]);int(1..)]),
+and([__6,__7;int(1..)]),
+or([__18,and([__27,__36;int(1..)]);int(1..)]),
+and([__8,__9;int(1..)]),
+or([__19,and([__28,__37;int(1..)]);int(1..)]),
+and([__10,__11;int(1..)]),
+or([__20,and([__29,__38;int(1..)]);int(1..)]),
+and([__12,__13;int(1..)]),
+or([__21,and([__30,__39;int(1..)]);int(1..)]),
+and([__14,__15;int(1..)]),
+or([__22,and([__31,__40;int(1..)]);int(1..)]),
+and([__16,__17;int(1..)])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+or([__24,__33,__42,__45,__48,and([__51,__54;int(1..)]);int(1..)]),
+and([__0,__1;int(1..)]),
+or([__25,and([__34,__43,or([__46,__49,__52,and([__55,__57,__59,__61;int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+and([__2,__3;int(1..)]),
+or([__26,__35,and([__44,__47,__50,__53,or([__56,__58,and([__60,or([__62,and([__63,__64;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+and([__4,__5;int(1..)]),
+or([__23,and([__32,__41;int(1..)]);int(1..)]),
+and([__6,__7;int(1..)]),
+or([__18,and([__27,__36;int(1..)]);int(1..)]),
+and([__8,__9;int(1..)]),
+or([__19,and([__28,__37;int(1..)]);int(1..)]),
+and([__10,__11;int(1..)]),
+or([__20,and([__29,__38;int(1..)]);int(1..)]),
+and([__12,__13;int(1..)]),
+or([__21,and([__30,__39;int(1..)]);int(1..)]),
+and([__14,__15;int(1..)]),
+or([__22,and([__31,__40;int(1..)]);int(1..)]),
+and([__16,__17;int(1..)])
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__65
+new variables:
+  findAux __65: bool
+new SAT encoding decisions:
+  define(__65 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+and([__2,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__66
+new variables:
+  findAux __66: bool
+new SAT encoding decisions:
+  define(__66 <-> and([__2,__3;int(1..)])) using tseitin
+
+--
+
+and([__4,__5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__67
+new variables:
+  findAux __67: bool
+new SAT encoding decisions:
+  define(__67 <-> and([__4,__5;int(1..)])) using tseitin
+
+--
+
+and([__6,__7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__68
+new variables:
+  findAux __68: bool
+new SAT encoding decisions:
+  define(__68 <-> and([__6,__7;int(1..)])) using tseitin
+
+--
+
+and([__8,__9;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__69
+new variables:
+  findAux __69: bool
+new SAT encoding decisions:
+  define(__69 <-> and([__8,__9;int(1..)])) using tseitin
+
+--
+
+and([__10,__11;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__70
+new variables:
+  findAux __70: bool
+new SAT encoding decisions:
+  define(__70 <-> and([__10,__11;int(1..)])) using tseitin
+
+--
+
+and([__12,__13;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__71
+new variables:
+  findAux __71: bool
+new SAT encoding decisions:
+  define(__71 <-> and([__12,__13;int(1..)])) using tseitin
+
+--
+
+and([__14,__15;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__72
+new variables:
+  findAux __72: bool
+new SAT encoding decisions:
+  define(__72 <-> and([__14,__15;int(1..)])) using tseitin
+
+--
+
+and([__16,__17;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__73
+new variables:
+  findAux __73: bool
+new SAT encoding decisions:
+  define(__73 <-> and([__16,__17;int(1..)])) using tseitin
+
+--
+
+and([__51,__54;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__74
+new variables:
+  findAux __74: bool
+new SAT encoding decisions:
+  define(__74 <-> and([__51,__54;int(1..)])) using tseitin
+
+--
+
+or([__24,__33,__42,__45,__48,__74;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__75
+new variables:
+  findAux __75: bool
+new SAT encoding decisions:
+  define(__75 <-> or([__24,__33,__42,__45,__48,__74;int(1..)])) using tseitin
+
+--
+
+and([__32,__41;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__76
+new variables:
+  findAux __76: bool
+new SAT encoding decisions:
+  define(__76 <-> and([__32,__41;int(1..)])) using tseitin
+
+--
+
+or([__23,__76;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__77
+new variables:
+  findAux __77: bool
+new SAT encoding decisions:
+  define(__77 <-> or([__23,__76;int(1..)])) using tseitin
+
+--
+
+and([__27,__36;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__78
+new variables:
+  findAux __78: bool
+new SAT encoding decisions:
+  define(__78 <-> and([__27,__36;int(1..)])) using tseitin
+
+--
+
+or([__18,__78;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__79
+new variables:
+  findAux __79: bool
+new SAT encoding decisions:
+  define(__79 <-> or([__18,__78;int(1..)])) using tseitin
+
+--
+
+and([__28,__37;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__80
+new variables:
+  findAux __80: bool
+new SAT encoding decisions:
+  define(__80 <-> and([__28,__37;int(1..)])) using tseitin
+
+--
+
+or([__19,__80;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__81
+new variables:
+  findAux __81: bool
+new SAT encoding decisions:
+  define(__81 <-> or([__19,__80;int(1..)])) using tseitin
+
+--
+
+and([__29,__38;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__82
+new variables:
+  findAux __82: bool
+new SAT encoding decisions:
+  define(__82 <-> and([__29,__38;int(1..)])) using tseitin
+
+--
+
+or([__20,__82;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__83
+new variables:
+  findAux __83: bool
+new SAT encoding decisions:
+  define(__83 <-> or([__20,__82;int(1..)])) using tseitin
+
+--
+
+and([__30,__39;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__84
+new variables:
+  findAux __84: bool
+new SAT encoding decisions:
+  define(__84 <-> and([__30,__39;int(1..)])) using tseitin
+
+--
+
+or([__21,__84;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__85
+new variables:
+  findAux __85: bool
+new SAT encoding decisions:
+  define(__85 <-> or([__21,__84;int(1..)])) using tseitin
+
+--
+
+and([__31,__40;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__86
+new variables:
+  findAux __86: bool
+new SAT encoding decisions:
+  define(__86 <-> and([__31,__40;int(1..)])) using tseitin
+
+--
+
+or([__22,__86;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__87
+new variables:
+  findAux __87: bool
+new SAT encoding decisions:
+  define(__87 <-> or([__22,__86;int(1..)])) using tseitin
+
+--
+
+and([__55,__57,__59,__61;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__88
+new variables:
+  findAux __88: bool
+new SAT encoding decisions:
+  define(__88 <-> and([__55,__57,__59,__61;int(1..)])) using tseitin
+
+--
+
+or([__46,__49,__52,__88;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__89
+new variables:
+  findAux __89: bool
+new SAT encoding decisions:
+  define(__89 <-> or([__46,__49,__52,__88;int(1..)])) using tseitin
+
+--
+
+and([__34,__43,__89;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__90
+new variables:
+  findAux __90: bool
+new SAT encoding decisions:
+  define(__90 <-> and([__34,__43,__89;int(1..)])) using tseitin
+
+--
+
+or([__25,__90;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__91
+new variables:
+  findAux __91: bool
+new SAT encoding decisions:
+  define(__91 <-> or([__25,__90;int(1..)])) using tseitin
+
+--
+
+and([__63,__64;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__92
+new variables:
+  findAux __92: bool
+new SAT encoding decisions:
+  define(__92 <-> and([__63,__64;int(1..)])) using tseitin
+
+--
+
+or([__62,__92;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__93
+new variables:
+  findAux __93: bool
+new SAT encoding decisions:
+  define(__93 <-> or([__62,__92;int(1..)])) using tseitin
+
+--
+
+and([__60,__93;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__94
+new variables:
+  findAux __94: bool
+new SAT encoding decisions:
+  define(__94 <-> and([__60,__93;int(1..)])) using tseitin
+
+--
+
+or([__56,__58,__94;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__95
+new variables:
+  findAux __95: bool
+new SAT encoding decisions:
+  define(__95 <-> or([__56,__58,__94;int(1..)])) using tseitin
+
+--
+
+and([__44,__47,__50,__53,__95;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__96
+new variables:
+  findAux __96: bool
+new SAT encoding decisions:
+  define(__96 <-> and([__44,__47,__50,__53,__95;int(1..)])) using tseitin
+
+--
+
+or([__26,__35,__96;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__97
+new variables:
+  findAux __97: bool
+new SAT encoding decisions:
+  define(__97 <-> or([__26,__35,__96;int(1..)])) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__75,
+__65,
+__91,
+__66,
+__97,
+__67,
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__65,
+__91,
+__66,
+__97,
+__67,
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__75) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__65,
+__91,
+__66,
+__97,
+__67,
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__91,
+__66,
+__97,
+__67,
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__65) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__91,
+__66,
+__97,
+__67,
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__66,
+__97,
+__67,
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__91) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__66,
+__97,
+__67,
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__97,
+__67,
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__66) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__97,
+__67,
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__67,
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__97) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__67,
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__67) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__77,
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__77) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__68,
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__68) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__79,
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__79) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__69,
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__69) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__81,
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__81) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__70,
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__70) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__83,
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__71,
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__83) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__71,
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__85,
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__71) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__85,
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__72,
+__87,
+__73
+new SAT encoding decisions:
+  assert(__85) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__72,
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__87,
+__73
+new SAT encoding decisions:
+  assert(__72) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__87,
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__73
+new SAT encoding decisions:
+  assert(__87) using tseitin
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters),
+__73
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters)
+new SAT encoding decisions:
+  assert(__73) using tseitin
+
+--
+
+letters[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+letters#components_1
+
+--
+
+letters#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_1
+
+--
+
+letters#components_1 != 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__98
+new variables:
+  findAux __98: bool
+new SAT encoding decisions:
+  define(__98 <-> integer-weighted(1*letters#components_1#int_offset_1, 2*letters#components_1#int_offset_2, 4*letters#components_1#int_offset_3, 8*letters#components_1#int_offset_4) NotEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+__98,
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters)
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[3] != 0,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters)
+new SAT encoding decisions:
+  assert(__98) using tseitin
+
+--
+
+letters[3]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+letters#components_3
+
+--
+
+letters#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_3
+
+--
+
+letters#components_3 != 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__99
+new variables:
+  findAux __99: bool
+new SAT encoding decisions:
+  define(__99 <-> integer-weighted(1*letters#components_3#int_offset_1, 2*letters#components_3#int_offset_2, 4*letters#components_3#int_offset_3, 8*letters#components_3#int_offset_4) NotEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+__99,
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters)
+   ~~> remove_single_atom ([("SAT", 8400)])
+letters[2] != 0,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters)
+new SAT encoding decisions:
+  assert(__99) using tseitin
+
+--
+
+letters[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+letters#components_2
+
+--
+
+letters#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_2
+
+--
+
+letters#components_2 != 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__100
+new variables:
+  findAux __100: bool
+new SAT encoding decisions:
+  define(__100 <-> integer-weighted(1*letters#components_2#int_offset_1, 2*letters#components_2#int_offset_2, 4*letters#components_2#int_offset_3, 8*letters#components_2#int_offset_4) NotEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+__100,
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters)
+   ~~> remove_single_atom ([("SAT", 8400)])
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters)
+new SAT encoding decisions:
+  assert(__100) using tseitin
+
+--
+
+SATInt(Offset, [word1Sum#int_offset_1,word1Sum#int_offset_2,word1Sum#int_offset_3,word1Sum#int_offset_4,word1Sum#int_offset_5,word1Sum#int_offset_6,word1Sum#int_offset_7,word1Sum#int_offset_8,word1Sum#int_offset_9,word1Sum#int_offset_10;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__102,__104,__106,__108,__110,__112,__114,__116,__118,__120,__122;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ])
+new variables:
+  findAux __101: bool
+  findAux __102: bool
+  findAux __103: bool
+  findAux __104: bool
+  findAux __105: bool
+  findAux __106: bool
+  findAux __107: bool
+  findAux __108: bool
+  findAux __109: bool
+  findAux __110: bool
+  findAux __111: bool
+  findAux __112: bool
+  findAux __113: bool
+  findAux __114: bool
+  findAux __115: bool
+  findAux __116: bool
+  findAux __117: bool
+  findAux __118: bool
+  findAux __119: bool
+  findAux __120: bool
+  findAux __121: bool
+  findAux __122: bool
+  findAux __123: bool
+new SAT encoding decisions:
+  define(__101 <-> !((word1Sum#int_offset_1) <-> (false))) using tseitin
+  define(__102 <-> !(__101)) using tseitin
+  define(__103 <-> or([word1Sum#int_offset_1,false;int(1..)])) using tseitin
+  define(__104 <-> !((word1Sum#int_offset_2) <-> (__103))) using tseitin
+  define(__105 <-> and([word1Sum#int_offset_2,__103;int(1..)])) using tseitin
+  define(__106 <-> !((word1Sum#int_offset_3) <-> (__105))) using tseitin
+  define(__107 <-> and([word1Sum#int_offset_3,__105;int(1..)])) using tseitin
+  define(__108 <-> !((word1Sum#int_offset_4) <-> (__107))) using tseitin
+  define(__109 <-> and([word1Sum#int_offset_4,__107;int(1..)])) using tseitin
+  define(__110 <-> !((word1Sum#int_offset_5) <-> (__109))) using tseitin
+  define(__111 <-> and([word1Sum#int_offset_5,__109;int(1..)])) using tseitin
+  define(__112 <-> !((word1Sum#int_offset_6) <-> (__111))) using tseitin
+  define(__113 <-> and([word1Sum#int_offset_6,__111;int(1..)])) using tseitin
+  define(__114 <-> !((word1Sum#int_offset_7) <-> (__113))) using tseitin
+  define(__115 <-> and([word1Sum#int_offset_7,__113;int(1..)])) using tseitin
+  define(__116 <-> !((word1Sum#int_offset_8) <-> (__115))) using tseitin
+  define(__117 <-> and([word1Sum#int_offset_8,__115;int(1..)])) using tseitin
+  define(__118 <-> !((word1Sum#int_offset_9) <-> (__117))) using tseitin
+  define(__119 <-> and([word1Sum#int_offset_9,__117;int(1..)])) using tseitin
+  define(__120 <-> !((word1Sum#int_offset_10) <-> (__119))) using tseitin
+  define(__121 <-> and([word1Sum#int_offset_10,__119;int(1..)])) using tseitin
+  define(__122 <-> !((false) <-> (__121))) using tseitin
+  define(__123 <-> and([false,__121;int(1..)])) using tseitin
+
+--
+
+SATInt(Offset, [word2Sum#int_offset_1,word2Sum#int_offset_2,word2Sum#int_offset_3,word2Sum#int_offset_4,word2Sum#int_offset_5,word2Sum#int_offset_6,word2Sum#int_offset_7,word2Sum#int_offset_8,word2Sum#int_offset_9,word2Sum#int_offset_10,word2Sum#int_offset_11,word2Sum#int_offset_12,word2Sum#int_offset_13,word2Sum#int_offset_14;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__125,__127,__129,__131,__133,__135,__137,__139,__141,__143,__145,__147,__149,__151,__153;int(1..)] [1, 10000]) = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ])
+new variables:
+  findAux __124: bool
+  findAux __125: bool
+  findAux __126: bool
+  findAux __127: bool
+  findAux __128: bool
+  findAux __129: bool
+  findAux __130: bool
+  findAux __131: bool
+  findAux __132: bool
+  findAux __133: bool
+  findAux __134: bool
+  findAux __135: bool
+  findAux __136: bool
+  findAux __137: bool
+  findAux __138: bool
+  findAux __139: bool
+  findAux __140: bool
+  findAux __141: bool
+  findAux __142: bool
+  findAux __143: bool
+  findAux __144: bool
+  findAux __145: bool
+  findAux __146: bool
+  findAux __147: bool
+  findAux __148: bool
+  findAux __149: bool
+  findAux __150: bool
+  findAux __151: bool
+  findAux __152: bool
+  findAux __153: bool
+  findAux __154: bool
+new SAT encoding decisions:
+  define(__124 <-> !((word2Sum#int_offset_1) <-> (false))) using tseitin
+  define(__125 <-> !(__124)) using tseitin
+  define(__126 <-> or([word2Sum#int_offset_1,false;int(1..)])) using tseitin
+  define(__127 <-> !((word2Sum#int_offset_2) <-> (__126))) using tseitin
+  define(__128 <-> and([word2Sum#int_offset_2,__126;int(1..)])) using tseitin
+  define(__129 <-> !((word2Sum#int_offset_3) <-> (__128))) using tseitin
+  define(__130 <-> and([word2Sum#int_offset_3,__128;int(1..)])) using tseitin
+  define(__131 <-> !((word2Sum#int_offset_4) <-> (__130))) using tseitin
+  define(__132 <-> and([word2Sum#int_offset_4,__130;int(1..)])) using tseitin
+  define(__133 <-> !((word2Sum#int_offset_5) <-> (__132))) using tseitin
+  define(__134 <-> and([word2Sum#int_offset_5,__132;int(1..)])) using tseitin
+  define(__135 <-> !((word2Sum#int_offset_6) <-> (__134))) using tseitin
+  define(__136 <-> and([word2Sum#int_offset_6,__134;int(1..)])) using tseitin
+  define(__137 <-> !((word2Sum#int_offset_7) <-> (__136))) using tseitin
+  define(__138 <-> and([word2Sum#int_offset_7,__136;int(1..)])) using tseitin
+  define(__139 <-> !((word2Sum#int_offset_8) <-> (__138))) using tseitin
+  define(__140 <-> and([word2Sum#int_offset_8,__138;int(1..)])) using tseitin
+  define(__141 <-> !((word2Sum#int_offset_9) <-> (__140))) using tseitin
+  define(__142 <-> and([word2Sum#int_offset_9,__140;int(1..)])) using tseitin
+  define(__143 <-> !((word2Sum#int_offset_10) <-> (__142))) using tseitin
+  define(__144 <-> and([word2Sum#int_offset_10,__142;int(1..)])) using tseitin
+  define(__145 <-> !((word2Sum#int_offset_11) <-> (__144))) using tseitin
+  define(__146 <-> and([word2Sum#int_offset_11,__144;int(1..)])) using tseitin
+  define(__147 <-> !((word2Sum#int_offset_12) <-> (__146))) using tseitin
+  define(__148 <-> and([word2Sum#int_offset_12,__146;int(1..)])) using tseitin
+  define(__149 <-> !((word2Sum#int_offset_13) <-> (__148))) using tseitin
+  define(__150 <-> and([word2Sum#int_offset_13,__148;int(1..)])) using tseitin
+  define(__151 <-> !((word2Sum#int_offset_14) <-> (__150))) using tseitin
+  define(__152 <-> and([word2Sum#int_offset_14,__150;int(1..)])) using tseitin
+  define(__153 <-> !((false) <-> (__152))) using tseitin
+  define(__154 <-> and([false,__152;int(1..)])) using tseitin
+
+--
+
+SATInt(Offset, [word3Sum#int_offset_1,word3Sum#int_offset_2,word3Sum#int_offset_3,word3Sum#int_offset_4,word3Sum#int_offset_5,word3Sum#int_offset_6,word3Sum#int_offset_7,word3Sum#int_offset_8,word3Sum#int_offset_9,word3Sum#int_offset_10,word3Sum#int_offset_11,word3Sum#int_offset_12,word3Sum#int_offset_13,word3Sum#int_offset_14,word3Sum#int_offset_15,word3Sum#int_offset_16,word3Sum#int_offset_17;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__156,__158,__160,__162,__164,__166,__168,__170,__172,__174,__176,__178,__180,__182,__184,__186,__188,__190;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ])
+new variables:
+  findAux __155: bool
+  findAux __156: bool
+  findAux __157: bool
+  findAux __158: bool
+  findAux __159: bool
+  findAux __160: bool
+  findAux __161: bool
+  findAux __162: bool
+  findAux __163: bool
+  findAux __164: bool
+  findAux __165: bool
+  findAux __166: bool
+  findAux __167: bool
+  findAux __168: bool
+  findAux __169: bool
+  findAux __170: bool
+  findAux __171: bool
+  findAux __172: bool
+  findAux __173: bool
+  findAux __174: bool
+  findAux __175: bool
+  findAux __176: bool
+  findAux __177: bool
+  findAux __178: bool
+  findAux __179: bool
+  findAux __180: bool
+  findAux __181: bool
+  findAux __182: bool
+  findAux __183: bool
+  findAux __184: bool
+  findAux __185: bool
+  findAux __186: bool
+  findAux __187: bool
+  findAux __188: bool
+  findAux __189: bool
+  findAux __190: bool
+  findAux __191: bool
+new SAT encoding decisions:
+  define(__155 <-> !((word3Sum#int_offset_1) <-> (false))) using tseitin
+  define(__156 <-> !(__155)) using tseitin
+  define(__157 <-> or([word3Sum#int_offset_1,false;int(1..)])) using tseitin
+  define(__158 <-> !((word3Sum#int_offset_2) <-> (__157))) using tseitin
+  define(__159 <-> and([word3Sum#int_offset_2,__157;int(1..)])) using tseitin
+  define(__160 <-> !((word3Sum#int_offset_3) <-> (__159))) using tseitin
+  define(__161 <-> and([word3Sum#int_offset_3,__159;int(1..)])) using tseitin
+  define(__162 <-> !((word3Sum#int_offset_4) <-> (__161))) using tseitin
+  define(__163 <-> and([word3Sum#int_offset_4,__161;int(1..)])) using tseitin
+  define(__164 <-> !((word3Sum#int_offset_5) <-> (__163))) using tseitin
+  define(__165 <-> and([word3Sum#int_offset_5,__163;int(1..)])) using tseitin
+  define(__166 <-> !((word3Sum#int_offset_6) <-> (__165))) using tseitin
+  define(__167 <-> and([word3Sum#int_offset_6,__165;int(1..)])) using tseitin
+  define(__168 <-> !((word3Sum#int_offset_7) <-> (__167))) using tseitin
+  define(__169 <-> and([word3Sum#int_offset_7,__167;int(1..)])) using tseitin
+  define(__170 <-> !((word3Sum#int_offset_8) <-> (__169))) using tseitin
+  define(__171 <-> and([word3Sum#int_offset_8,__169;int(1..)])) using tseitin
+  define(__172 <-> !((word3Sum#int_offset_9) <-> (__171))) using tseitin
+  define(__173 <-> and([word3Sum#int_offset_9,__171;int(1..)])) using tseitin
+  define(__174 <-> !((word3Sum#int_offset_10) <-> (__173))) using tseitin
+  define(__175 <-> and([word3Sum#int_offset_10,__173;int(1..)])) using tseitin
+  define(__176 <-> !((word3Sum#int_offset_11) <-> (__175))) using tseitin
+  define(__177 <-> and([word3Sum#int_offset_11,__175;int(1..)])) using tseitin
+  define(__178 <-> !((word3Sum#int_offset_12) <-> (__177))) using tseitin
+  define(__179 <-> and([word3Sum#int_offset_12,__177;int(1..)])) using tseitin
+  define(__180 <-> !((word3Sum#int_offset_13) <-> (__179))) using tseitin
+  define(__181 <-> and([word3Sum#int_offset_13,__179;int(1..)])) using tseitin
+  define(__182 <-> !((word3Sum#int_offset_14) <-> (__181))) using tseitin
+  define(__183 <-> and([word3Sum#int_offset_14,__181;int(1..)])) using tseitin
+  define(__184 <-> !((word3Sum#int_offset_15) <-> (__183))) using tseitin
+  define(__185 <-> and([word3Sum#int_offset_15,__183;int(1..)])) using tseitin
+  define(__186 <-> !((word3Sum#int_offset_16) <-> (__185))) using tseitin
+  define(__187 <-> and([word3Sum#int_offset_16,__185;int(1..)])) using tseitin
+  define(__188 <-> !((word3Sum#int_offset_17) <-> (__187))) using tseitin
+  define(__189 <-> and([word3Sum#int_offset_17,__187;int(1..)])) using tseitin
+  define(__190 <-> !((false) <-> (__189))) using tseitin
+  define(__191 <-> and([false,__189;int(1..)])) using tseitin
+
+--
+
+allDifferent(letters)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([letters#components_1,letters#components_2,letters#components_3,letters#components_4,letters#components_5,letters#components_6;int(1..6)])
+
+--
+
+letters#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_1
+
+--
+
+letters#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_2
+
+--
+
+letters#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_3
+
+--
+
+letters#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_4
+
+--
+
+letters#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_5
+
+--
+
+letters#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_6
+
+--
+
+letters#components_2
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9])
+
+--
+
+letters#components_3
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9])
+
+--
+
+letters#components_4
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9])
+
+--
+
+letters#components_5
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9])
+
+--
+
+letters#components_6
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9])
+
+--
+
+letters#components_1
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9])
+
+--
+
+[ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([letters#components_3,1000;int(1..)]),product([letters#components_4,100;int(1..)]),product([letters#components_2,10;int(1..)]),product([letters#components_3,1;int(1..)]);int(1..)]
+
+--
+
+letters#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_3
+
+--
+
+letters#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_4
+
+--
+
+letters#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_2
+
+--
+
+letters#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_3
+
+--
+
+SATInt(Log, [__102,__104,__106,__108,__110,__112,__114,__116,__118,__120,__122;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Log, [__125,__127,__129,__131,__133,__135,__137,__139,__141,__143,__145,__147,__149,__151,__153;int(1..)] [1, 10000]) = sum([product([letters#components_3,1000;int(1..)]),product([letters#components_4,100;int(1..)]),product([letters#components_2,10;int(1..)]),product([letters#components_3,1;int(1..)]);int(1..)]),
+SATInt(Log, [__156,__158,__160,__162,__164,__166,__168,__170,__172,__174,__176,__178,__180,__182,__184,__186,__188,__190;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent([SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]);int(1..6)])
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+SATInt(Log, [__102,__104,__106,__108,__110,__112,__114,__116,__118,__120,__122;int(1..)] [1, 1000]) = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+SATInt(Log, [__156,__158,__160,__162,__164,__166,__168,__170,__172,__174,__176,__178,__180,__182,__184,__186,__188,__190;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent([SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]);int(1..6)])
+new SAT encoding decisions:
+  weighted(1*__125, 2*__127, 4*__129, 8*__131, 16*__133, 32*__135, 64*__137, 128*__139, 256*__141, 512*__143, 1024*__145, 2048*__147, 4096*__149, 8192*__151, -16384*__153, -1000*letters#components_3#int_offset_1, -2000*letters#components_3#int_offset_2, -4000*letters#components_3#int_offset_3, -8000*letters#components_3#int_offset_4, -100*letters#components_4#int_offset_1, -200*letters#components_4#int_offset_2, -400*letters#components_4#int_offset_3, -800*letters#components_4#int_offset_4, -10*letters#components_2#int_offset_1, -20*letters#components_2#int_offset_2, -40*letters#components_2#int_offset_3, -80*letters#components_2#int_offset_4, -1*letters#components_3#int_offset_1, -2*letters#components_3#int_offset_2, -4*letters#components_3#int_offset_3, -8*letters#components_3#int_offset_4) Exactly 0 using None with [PbTermGroup { start: 0, end: 15, structure: BoundedBinary { lower: 1, upper: 10000 } }, PbTermGroup { start: 15, end: 19, structure: BoundedBinary { lower: -9000, upper: 0 } }, PbTermGroup { start: 19, end: 23, structure: BoundedBinary { lower: -900, upper: 0 } }, PbTermGroup { start: 23, end: 27, structure: BoundedBinary { lower: -90, upper: 0 } }, PbTermGroup { start: 27, end: 31, structure: BoundedBinary { lower: -9, upper: 0 } }]
+
+--
+
+[ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([letters#components_1,100;int(1..)]),product([letters#components_2,10;int(1..)]),product([letters#components_3,1;int(1..)]);int(1..)]
+
+--
+
+letters#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_1
+
+--
+
+letters#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_2
+
+--
+
+letters#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_3
+
+--
+
+SATInt(Log, [__102,__104,__106,__108,__110,__112,__114,__116,__118,__120,__122;int(1..)] [1, 1000]) = sum([product([letters#components_1,100;int(1..)]),product([letters#components_2,10;int(1..)]),product([letters#components_3,1;int(1..)]);int(1..)]),
+SATInt(Log, [__156,__158,__160,__162,__164,__166,__168,__170,__172,__174,__176,__178,__180,__182,__184,__186,__188,__190;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent([SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]);int(1..6)])
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+SATInt(Log, [__156,__158,__160,__162,__164,__166,__168,__170,__172,__174,__176,__178,__180,__182,__184,__186,__188,__190;int(1..)] [1, 100000]) = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent([SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]);int(1..6)])
+new SAT encoding decisions:
+  weighted(1*__102, 2*__104, 4*__106, 8*__108, 16*__110, 32*__112, 64*__114, 128*__116, 256*__118, 512*__120, -1024*__122, -100*letters#components_1#int_offset_1, -200*letters#components_1#int_offset_2, -400*letters#components_1#int_offset_3, -800*letters#components_1#int_offset_4, -10*letters#components_2#int_offset_1, -20*letters#components_2#int_offset_2, -40*letters#components_2#int_offset_3, -80*letters#components_2#int_offset_4, -1*letters#components_3#int_offset_1, -2*letters#components_3#int_offset_2, -4*letters#components_3#int_offset_3, -8*letters#components_3#int_offset_4) Exactly 0 using None with [PbTermGroup { start: 0, end: 11, structure: BoundedBinary { lower: 1, upper: 1000 } }, PbTermGroup { start: 11, end: 15, structure: BoundedBinary { lower: -900, upper: 0 } }, PbTermGroup { start: 15, end: 19, structure: BoundedBinary { lower: -90, upper: 0 } }, PbTermGroup { start: 19, end: 23, structure: BoundedBinary { lower: -9, upper: 0 } }]
+
+--
+
+[ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([letters#components_2,10000;int(1..)]),product([letters#components_5,1000;int(1..)]),product([letters#components_5,100;int(1..)]),product([letters#components_6,10;int(1..)]),product([letters#components_1,1;int(1..)]);int(1..)]
+
+--
+
+letters#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_2
+
+--
+
+letters#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_5
+
+--
+
+letters#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_5
+
+--
+
+letters#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_6
+
+--
+
+letters#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters#components_1
+
+--
+
+SATInt(Log, [__156,__158,__160,__162,__164,__166,__168,__170,__172,__174,__176,__178,__180,__182,__184,__186,__188,__190;int(1..)] [1, 100000]) = sum([product([letters#components_2,10000;int(1..)]),product([letters#components_5,1000;int(1..)]),product([letters#components_5,100;int(1..)]),product([letters#components_6,10;int(1..)]),product([letters#components_1,1;int(1..)]);int(1..)]),
+allDifferent([SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]);int(1..6)])
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+allDifferent([SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]);int(1..6)])
+new SAT encoding decisions:
+  weighted(1*__156, 2*__158, 4*__160, 8*__162, 16*__164, 32*__166, 64*__168, 128*__170, 256*__172, 512*__174, 1024*__176, 2048*__178, 4096*__180, 8192*__182, 16384*__184, 32768*__186, 65536*__188, -131072*__190, -10000*letters#components_2#int_offset_1, -20000*letters#components_2#int_offset_2, -40000*letters#components_2#int_offset_3, -80000*letters#components_2#int_offset_4, -1000*letters#components_5#int_offset_1, -2000*letters#components_5#int_offset_2, -4000*letters#components_5#int_offset_3, -8000*letters#components_5#int_offset_4, -100*letters#components_5#int_offset_1, -200*letters#components_5#int_offset_2, -400*letters#components_5#int_offset_3, -800*letters#components_5#int_offset_4, -10*letters#components_6#int_offset_1, -20*letters#components_6#int_offset_2, -40*letters#components_6#int_offset_3, -80*letters#components_6#int_offset_4, -1*letters#components_1#int_offset_1, -2*letters#components_1#int_offset_2, -4*letters#components_1#int_offset_3, -8*letters#components_1#int_offset_4) Exactly 0 using None with [PbTermGroup { start: 0, end: 18, structure: BoundedBinary { lower: 1, upper: 100000 } }, PbTermGroup { start: 18, end: 22, structure: BoundedBinary { lower: -90000, upper: 0 } }, PbTermGroup { start: 22, end: 26, structure: BoundedBinary { lower: -9000, upper: 0 } }, PbTermGroup { start: 26, end: 30, structure: BoundedBinary { lower: -900, upper: 0 } }, PbTermGroup { start: 30, end: 34, structure: BoundedBinary { lower: -90, upper: 0 } }, PbTermGroup { start: 34, end: 38, structure: BoundedBinary { lower: -9, upper: 0 } }]
+
+--
+
+allDifferent([SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+allDifferent([SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]);int(1..)])
+
+--
+
+allDifferent([SATInt(Offset, [letters#components_1#int_offset_1,letters#components_1#int_offset_2,letters#components_1#int_offset_3,letters#components_1#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_2#int_offset_1,letters#components_2#int_offset_2,letters#components_2#int_offset_3,letters#components_2#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_3#int_offset_1,letters#components_3#int_offset_2,letters#components_3#int_offset_3,letters#components_3#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_4#int_offset_1,letters#components_4#int_offset_2,letters#components_4#int_offset_3,letters#components_4#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_5#int_offset_1,letters#components_5#int_offset_2,letters#components_5#int_offset_3,letters#components_5#int_offset_4;int(1..)] [0, 9]),SATInt(Offset, [letters#components_6#int_offset_1,letters#components_6#int_offset_2,letters#components_6#int_offset_3,letters#components_6#int_offset_4;int(1..)] [0, 9]);int(1..)])
+   ~~> select_alldifferent ([("SAT", 18500)])
+__192
+new variables:
+  findAux __192: bool
+new SAT encoding decisions:
+  define(__192 <-> allDifferent(0+weighted(1*letters#components_1#int_offset_1, 2*letters#components_1#int_offset_2, 4*letters#components_1#int_offset_3, 8*letters#components_1#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }], 0+weighted(1*letters#components_2#int_offset_1, 2*letters#components_2#int_offset_2, 4*letters#components_2#int_offset_3, 8*letters#components_2#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }], 0+weighted(1*letters#components_3#int_offset_1, 2*letters#components_3#int_offset_2, 4*letters#components_3#int_offset_3, 8*letters#components_3#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }], 0+weighted(1*letters#components_4#int_offset_1, 2*letters#components_4#int_offset_2, 4*letters#components_4#int_offset_3, 8*letters#components_4#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }], 0+weighted(1*letters#components_5#int_offset_1, 2*letters#components_5#int_offset_2, 4*letters#components_5#int_offset_3, 8*letters#components_5#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }], 0+weighted(1*letters#components_6#int_offset_1, 2*letters#components_6#int_offset_2, 4*letters#components_6#int_offset_3, 8*letters#components_6#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }])) using None, AMO None, PB None
+
+--
+
+__192
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__192) using tseitin
+
+--
+
+Final model:
+
+letting noLetters be 6
+letting word1Length be 3
+letting word1 be [1,2,3;int(1..3)]
+letting word2Length be 4
+letting word2 be [3,4,2,3;int(1..4)]
+letting word3Length be 5
+letting word3 be [2,5,5,6,1;int(1..5)]
+find letters: matrix indexed by [int(1..noLetters)] of int(0..9)
+find word1Sum: int(1..((10 ** word1Length)))
+find word2Sum: int(1..((10 ** word2Length)))
+find word3Sum: int(1..((10 ** word3Length)))
+find word1Sum#int_offset_1: bool
+find word1Sum#int_offset_2: bool
+find word1Sum#int_offset_3: bool
+find word1Sum#int_offset_4: bool
+find word1Sum#int_offset_5: bool
+find word1Sum#int_offset_6: bool
+find word1Sum#int_offset_7: bool
+find word1Sum#int_offset_8: bool
+find word1Sum#int_offset_9: bool
+find word1Sum#int_offset_10: bool
+findAux __0: bool
+findAux __1: bool
+find word2Sum#int_offset_1: bool
+find word2Sum#int_offset_2: bool
+find word2Sum#int_offset_3: bool
+find word2Sum#int_offset_4: bool
+find word2Sum#int_offset_5: bool
+find word2Sum#int_offset_6: bool
+find word2Sum#int_offset_7: bool
+find word2Sum#int_offset_8: bool
+find word2Sum#int_offset_9: bool
+find word2Sum#int_offset_10: bool
+find word2Sum#int_offset_11: bool
+find word2Sum#int_offset_12: bool
+find word2Sum#int_offset_13: bool
+find word2Sum#int_offset_14: bool
+findAux __2: bool
+findAux __3: bool
+find word3Sum#int_offset_1: bool
+find word3Sum#int_offset_2: bool
+find word3Sum#int_offset_3: bool
+find word3Sum#int_offset_4: bool
+find word3Sum#int_offset_5: bool
+find word3Sum#int_offset_6: bool
+find word3Sum#int_offset_7: bool
+find word3Sum#int_offset_8: bool
+find word3Sum#int_offset_9: bool
+find word3Sum#int_offset_10: bool
+find word3Sum#int_offset_11: bool
+find word3Sum#int_offset_12: bool
+find word3Sum#int_offset_13: bool
+find word3Sum#int_offset_14: bool
+find word3Sum#int_offset_15: bool
+find word3Sum#int_offset_16: bool
+find word3Sum#int_offset_17: bool
+findAux __4: bool
+findAux __5: bool
+find letters#components_1: int(0..9)
+find letters#components_2: int(0..9)
+find letters#components_3: int(0..9)
+find letters#components_4: int(0..9)
+find letters#components_5: int(0..9)
+find letters#components_6: int(0..9)
+find letters#components_1#int_offset_1: bool
+find letters#components_1#int_offset_2: bool
+find letters#components_1#int_offset_3: bool
+find letters#components_1#int_offset_4: bool
+find letters#components_2#int_offset_1: bool
+find letters#components_2#int_offset_2: bool
+find letters#components_2#int_offset_3: bool
+find letters#components_2#int_offset_4: bool
+find letters#components_3#int_offset_1: bool
+find letters#components_3#int_offset_2: bool
+find letters#components_3#int_offset_3: bool
+find letters#components_3#int_offset_4: bool
+find letters#components_4#int_offset_1: bool
+find letters#components_4#int_offset_2: bool
+find letters#components_4#int_offset_3: bool
+find letters#components_4#int_offset_4: bool
+find letters#components_5#int_offset_1: bool
+find letters#components_5#int_offset_2: bool
+find letters#components_5#int_offset_3: bool
+find letters#components_5#int_offset_4: bool
+find letters#components_6#int_offset_1: bool
+find letters#components_6#int_offset_2: bool
+find letters#components_6#int_offset_3: bool
+find letters#components_6#int_offset_4: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: bool
+findAux __57: bool
+findAux __58: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+letting word1#components_1 be 1
+letting word1#components_2 be 2
+letting word1#components_3 be 3
+letting word2#components_1 be 3
+letting word2#components_2 be 4
+letting word2#components_3 be 2
+letting word2#components_4 be 3
+letting word3#components_1 be 2
+letting word3#components_2 be 5
+letting word3#components_3 be 5
+letting word3#components_4 be 6
+letting word3#components_5 be 1
+findAux __65: bool
+findAux __66: bool
+findAux __67: bool
+findAux __68: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+findAux __83: bool
+findAux __84: bool
+findAux __85: bool
+findAux __86: bool
+findAux __87: bool
+findAux __88: bool
+findAux __89: bool
+findAux __90: bool
+findAux __91: bool
+findAux __92: bool
+findAux __93: bool
+findAux __94: bool
+findAux __95: bool
+findAux __96: bool
+findAux __97: bool
+findAux __98: bool
+findAux __99: bool
+findAux __100: bool
+findAux __101: bool
+findAux __102: bool
+findAux __103: bool
+findAux __104: bool
+findAux __105: bool
+findAux __106: bool
+findAux __107: bool
+findAux __108: bool
+findAux __109: bool
+findAux __110: bool
+findAux __111: bool
+findAux __112: bool
+findAux __113: bool
+findAux __114: bool
+findAux __115: bool
+findAux __116: bool
+findAux __117: bool
+findAux __118: bool
+findAux __119: bool
+findAux __120: bool
+findAux __121: bool
+findAux __122: bool
+findAux __123: bool
+findAux __124: bool
+findAux __125: bool
+findAux __126: bool
+findAux __127: bool
+findAux __128: bool
+findAux __129: bool
+findAux __130: bool
+findAux __131: bool
+findAux __132: bool
+findAux __133: bool
+findAux __134: bool
+findAux __135: bool
+findAux __136: bool
+findAux __137: bool
+findAux __138: bool
+findAux __139: bool
+findAux __140: bool
+findAux __141: bool
+findAux __142: bool
+findAux __143: bool
+findAux __144: bool
+findAux __145: bool
+findAux __146: bool
+findAux __147: bool
+findAux __148: bool
+findAux __149: bool
+findAux __150: bool
+findAux __151: bool
+findAux __152: bool
+findAux __153: bool
+findAux __154: bool
+findAux __155: bool
+findAux __156: bool
+findAux __157: bool
+findAux __158: bool
+findAux __159: bool
+findAux __160: bool
+findAux __161: bool
+findAux __162: bool
+findAux __163: bool
+findAux __164: bool
+findAux __165: bool
+findAux __166: bool
+findAux __167: bool
+findAux __168: bool
+findAux __169: bool
+findAux __170: bool
+findAux __171: bool
+findAux __172: bool
+findAux __173: bool
+findAux __174: bool
+findAux __175: bool
+findAux __176: bool
+findAux __177: bool
+findAux __178: bool
+findAux __179: bool
+findAux __180: bool
+findAux __181: bool
+findAux __182: bool
+findAux __183: bool
+findAux __184: bool
+findAux __185: bool
+findAux __186: bool
+findAux __187: bool
+findAux __188: bool
+findAux __189: bool
+findAux __190: bool
+findAux __191: bool
+findAux __192: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*word1Sum#int_offset_1, 2*word1Sum#int_offset_2, 4*word1Sum#int_offset_3, 8*word1Sum#int_offset_4, 16*word1Sum#int_offset_5, 32*word1Sum#int_offset_6, 64*word1Sum#int_offset_7, 128*word1Sum#int_offset_8, 256*word1Sum#int_offset_9, 512*word1Sum#int_offset_10) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 10, structure: BoundedBinary { lower: 0, upper: 999 } }],
+define(__1 <-> integer-weighted(1*word1Sum#int_offset_1, 2*word1Sum#int_offset_2, 4*word1Sum#int_offset_3, 8*word1Sum#int_offset_4, 16*word1Sum#int_offset_5, 32*word1Sum#int_offset_6, 64*word1Sum#int_offset_7, 128*word1Sum#int_offset_8, 256*word1Sum#int_offset_9, 512*word1Sum#int_offset_10) LessEqual 999) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 10, structure: BoundedBinary { lower: 0, upper: 999 } }],
+define(__2 <-> integer-weighted(1*word2Sum#int_offset_1, 2*word2Sum#int_offset_2, 4*word2Sum#int_offset_3, 8*word2Sum#int_offset_4, 16*word2Sum#int_offset_5, 32*word2Sum#int_offset_6, 64*word2Sum#int_offset_7, 128*word2Sum#int_offset_8, 256*word2Sum#int_offset_9, 512*word2Sum#int_offset_10, 1024*word2Sum#int_offset_11, 2048*word2Sum#int_offset_12, 4096*word2Sum#int_offset_13, 8192*word2Sum#int_offset_14) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 14, structure: BoundedBinary { lower: 0, upper: 9999 } }],
+define(__3 <-> integer-weighted(1*word2Sum#int_offset_1, 2*word2Sum#int_offset_2, 4*word2Sum#int_offset_3, 8*word2Sum#int_offset_4, 16*word2Sum#int_offset_5, 32*word2Sum#int_offset_6, 64*word2Sum#int_offset_7, 128*word2Sum#int_offset_8, 256*word2Sum#int_offset_9, 512*word2Sum#int_offset_10, 1024*word2Sum#int_offset_11, 2048*word2Sum#int_offset_12, 4096*word2Sum#int_offset_13, 8192*word2Sum#int_offset_14) LessEqual 9999) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 14, structure: BoundedBinary { lower: 0, upper: 9999 } }],
+define(__4 <-> integer-weighted(1*word3Sum#int_offset_1, 2*word3Sum#int_offset_2, 4*word3Sum#int_offset_3, 8*word3Sum#int_offset_4, 16*word3Sum#int_offset_5, 32*word3Sum#int_offset_6, 64*word3Sum#int_offset_7, 128*word3Sum#int_offset_8, 256*word3Sum#int_offset_9, 512*word3Sum#int_offset_10, 1024*word3Sum#int_offset_11, 2048*word3Sum#int_offset_12, 4096*word3Sum#int_offset_13, 8192*word3Sum#int_offset_14, 16384*word3Sum#int_offset_15, 32768*word3Sum#int_offset_16, 65536*word3Sum#int_offset_17) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 17, structure: BoundedBinary { lower: 0, upper: 99999 } }],
+define(__5 <-> integer-weighted(1*word3Sum#int_offset_1, 2*word3Sum#int_offset_2, 4*word3Sum#int_offset_3, 8*word3Sum#int_offset_4, 16*word3Sum#int_offset_5, 32*word3Sum#int_offset_6, 64*word3Sum#int_offset_7, 128*word3Sum#int_offset_8, 256*word3Sum#int_offset_9, 512*word3Sum#int_offset_10, 1024*word3Sum#int_offset_11, 2048*word3Sum#int_offset_12, 4096*word3Sum#int_offset_13, 8192*word3Sum#int_offset_14, 16384*word3Sum#int_offset_15, 32768*word3Sum#int_offset_16, 65536*word3Sum#int_offset_17) LessEqual 99999) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 17, structure: BoundedBinary { lower: 0, upper: 99999 } }],
+weighted(1*word1Sum#int_offset_1, 2*word1Sum#int_offset_2, 4*word1Sum#int_offset_3, 8*word1Sum#int_offset_4, 16*word1Sum#int_offset_5, 32*word1Sum#int_offset_6, 64*word1Sum#int_offset_7, 128*word1Sum#int_offset_8, 256*word1Sum#int_offset_9, 512*word1Sum#int_offset_10, 1*word2Sum#int_offset_1, 2*word2Sum#int_offset_2, 4*word2Sum#int_offset_3, 8*word2Sum#int_offset_4, 16*word2Sum#int_offset_5, 32*word2Sum#int_offset_6, 64*word2Sum#int_offset_7, 128*word2Sum#int_offset_8, 256*word2Sum#int_offset_9, 512*word2Sum#int_offset_10, 1024*word2Sum#int_offset_11, 2048*word2Sum#int_offset_12, 4096*word2Sum#int_offset_13, 8192*word2Sum#int_offset_14, -1*word3Sum#int_offset_1, -2*word3Sum#int_offset_2, -4*word3Sum#int_offset_3, -8*word3Sum#int_offset_4, -16*word3Sum#int_offset_5, -32*word3Sum#int_offset_6, -64*word3Sum#int_offset_7, -128*word3Sum#int_offset_8, -256*word3Sum#int_offset_9, -512*word3Sum#int_offset_10, -1024*word3Sum#int_offset_11, -2048*word3Sum#int_offset_12, -4096*word3Sum#int_offset_13, -8192*word3Sum#int_offset_14, -16384*word3Sum#int_offset_15, -32768*word3Sum#int_offset_16, -65536*word3Sum#int_offset_17) Exactly -1 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 10, structure: BoundedBinary { lower: 0, upper: 999 } }, PbTermGroup { start: 10, end: 24, structure: BoundedBinary { lower: 0, upper: 9999 } }, PbTermGroup { start: 24, end: 41, structure: BoundedBinary { lower: -99999, upper: 0 } }],
+define(__6 <-> integer-weighted(1*letters#components_1#int_offset_1, 2*letters#components_1#int_offset_2, 4*letters#components_1#int_offset_3, 8*letters#components_1#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__7 <-> integer-weighted(1*letters#components_1#int_offset_1, 2*letters#components_1#int_offset_2, 4*letters#components_1#int_offset_3, 8*letters#components_1#int_offset_4) LessEqual 9) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__8 <-> integer-weighted(1*letters#components_2#int_offset_1, 2*letters#components_2#int_offset_2, 4*letters#components_2#int_offset_3, 8*letters#components_2#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__9 <-> integer-weighted(1*letters#components_2#int_offset_1, 2*letters#components_2#int_offset_2, 4*letters#components_2#int_offset_3, 8*letters#components_2#int_offset_4) LessEqual 9) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__10 <-> integer-weighted(1*letters#components_3#int_offset_1, 2*letters#components_3#int_offset_2, 4*letters#components_3#int_offset_3, 8*letters#components_3#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__11 <-> integer-weighted(1*letters#components_3#int_offset_1, 2*letters#components_3#int_offset_2, 4*letters#components_3#int_offset_3, 8*letters#components_3#int_offset_4) LessEqual 9) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__12 <-> integer-weighted(1*letters#components_4#int_offset_1, 2*letters#components_4#int_offset_2, 4*letters#components_4#int_offset_3, 8*letters#components_4#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__13 <-> integer-weighted(1*letters#components_4#int_offset_1, 2*letters#components_4#int_offset_2, 4*letters#components_4#int_offset_3, 8*letters#components_4#int_offset_4) LessEqual 9) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__14 <-> integer-weighted(1*letters#components_5#int_offset_1, 2*letters#components_5#int_offset_2, 4*letters#components_5#int_offset_3, 8*letters#components_5#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__15 <-> integer-weighted(1*letters#components_5#int_offset_1, 2*letters#components_5#int_offset_2, 4*letters#components_5#int_offset_3, 8*letters#components_5#int_offset_4) LessEqual 9) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__16 <-> integer-weighted(1*letters#components_6#int_offset_1, 2*letters#components_6#int_offset_2, 4*letters#components_6#int_offset_3, 8*letters#components_6#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__17 <-> integer-weighted(1*letters#components_6#int_offset_1, 2*letters#components_6#int_offset_2, 4*letters#components_6#int_offset_3, 8*letters#components_6#int_offset_4) LessEqual 9) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__18 <-> !(letters#components_2#int_offset_4)) using tseitin,
+define(__19 <-> !(letters#components_3#int_offset_4)) using tseitin,
+define(__20 <-> !(letters#components_4#int_offset_4)) using tseitin,
+define(__21 <-> !(letters#components_5#int_offset_4)) using tseitin,
+define(__22 <-> !(letters#components_6#int_offset_4)) using tseitin,
+define(__23 <-> !(letters#components_1#int_offset_4)) using tseitin,
+define(__24 <-> !(word1Sum#int_offset_10)) using tseitin,
+define(__25 <-> !(word2Sum#int_offset_14)) using tseitin,
+define(__26 <-> !(word3Sum#int_offset_17)) using tseitin,
+define(__27 <-> !(letters#components_2#int_offset_3)) using tseitin,
+define(__28 <-> !(letters#components_3#int_offset_3)) using tseitin,
+define(__29 <-> !(letters#components_4#int_offset_3)) using tseitin,
+define(__30 <-> !(letters#components_5#int_offset_3)) using tseitin,
+define(__31 <-> !(letters#components_6#int_offset_3)) using tseitin,
+define(__32 <-> !(letters#components_1#int_offset_3)) using tseitin,
+define(__33 <-> !(word1Sum#int_offset_9)) using tseitin,
+define(__34 <-> !(word2Sum#int_offset_13)) using tseitin,
+define(__35 <-> !(word3Sum#int_offset_16)) using tseitin,
+define(__36 <-> !(letters#components_2#int_offset_2)) using tseitin,
+define(__37 <-> !(letters#components_3#int_offset_2)) using tseitin,
+define(__38 <-> !(letters#components_4#int_offset_2)) using tseitin,
+define(__39 <-> !(letters#components_5#int_offset_2)) using tseitin,
+define(__40 <-> !(letters#components_6#int_offset_2)) using tseitin,
+define(__41 <-> !(letters#components_1#int_offset_2)) using tseitin,
+define(__42 <-> !(word1Sum#int_offset_8)) using tseitin,
+define(__43 <-> !(word2Sum#int_offset_12)) using tseitin,
+define(__44 <-> !(word3Sum#int_offset_15)) using tseitin,
+define(__45 <-> !(word1Sum#int_offset_7)) using tseitin,
+define(__46 <-> !(word2Sum#int_offset_11)) using tseitin,
+define(__47 <-> !(word3Sum#int_offset_14)) using tseitin,
+define(__48 <-> !(word1Sum#int_offset_6)) using tseitin,
+define(__49 <-> !(word2Sum#int_offset_10)) using tseitin,
+define(__50 <-> !(word3Sum#int_offset_13)) using tseitin,
+define(__51 <-> !(word1Sum#int_offset_5)) using tseitin,
+define(__52 <-> !(word2Sum#int_offset_9)) using tseitin,
+define(__53 <-> !(word3Sum#int_offset_12)) using tseitin,
+define(__54 <-> !(word1Sum#int_offset_4)) using tseitin,
+define(__55 <-> !(word2Sum#int_offset_8)) using tseitin,
+define(__56 <-> !(word3Sum#int_offset_11)) using tseitin,
+define(__57 <-> !(word2Sum#int_offset_7)) using tseitin,
+define(__58 <-> !(word3Sum#int_offset_10)) using tseitin,
+define(__59 <-> !(word2Sum#int_offset_6)) using tseitin,
+define(__60 <-> !(word3Sum#int_offset_9)) using tseitin,
+define(__61 <-> !(word2Sum#int_offset_5)) using tseitin,
+define(__62 <-> !(word3Sum#int_offset_8)) using tseitin,
+define(__63 <-> !(word3Sum#int_offset_7)) using tseitin,
+define(__64 <-> !(word3Sum#int_offset_6)) using tseitin,
+define(__65 <-> and([__0,__1;int(1..)])) using tseitin,
+define(__66 <-> and([__2,__3;int(1..)])) using tseitin,
+define(__67 <-> and([__4,__5;int(1..)])) using tseitin,
+define(__68 <-> and([__6,__7;int(1..)])) using tseitin,
+define(__69 <-> and([__8,__9;int(1..)])) using tseitin,
+define(__70 <-> and([__10,__11;int(1..)])) using tseitin,
+define(__71 <-> and([__12,__13;int(1..)])) using tseitin,
+define(__72 <-> and([__14,__15;int(1..)])) using tseitin,
+define(__73 <-> and([__16,__17;int(1..)])) using tseitin,
+define(__74 <-> and([__51,__54;int(1..)])) using tseitin,
+define(__75 <-> or([__24,__33,__42,__45,__48,__74;int(1..)])) using tseitin,
+define(__76 <-> and([__32,__41;int(1..)])) using tseitin,
+define(__77 <-> or([__23,__76;int(1..)])) using tseitin,
+define(__78 <-> and([__27,__36;int(1..)])) using tseitin,
+define(__79 <-> or([__18,__78;int(1..)])) using tseitin,
+define(__80 <-> and([__28,__37;int(1..)])) using tseitin,
+define(__81 <-> or([__19,__80;int(1..)])) using tseitin,
+define(__82 <-> and([__29,__38;int(1..)])) using tseitin,
+define(__83 <-> or([__20,__82;int(1..)])) using tseitin,
+define(__84 <-> and([__30,__39;int(1..)])) using tseitin,
+define(__85 <-> or([__21,__84;int(1..)])) using tseitin,
+define(__86 <-> and([__31,__40;int(1..)])) using tseitin,
+define(__87 <-> or([__22,__86;int(1..)])) using tseitin,
+define(__88 <-> and([__55,__57,__59,__61;int(1..)])) using tseitin,
+define(__89 <-> or([__46,__49,__52,__88;int(1..)])) using tseitin,
+define(__90 <-> and([__34,__43,__89;int(1..)])) using tseitin,
+define(__91 <-> or([__25,__90;int(1..)])) using tseitin,
+define(__92 <-> and([__63,__64;int(1..)])) using tseitin,
+define(__93 <-> or([__62,__92;int(1..)])) using tseitin,
+define(__94 <-> and([__60,__93;int(1..)])) using tseitin,
+define(__95 <-> or([__56,__58,__94;int(1..)])) using tseitin,
+define(__96 <-> and([__44,__47,__50,__53,__95;int(1..)])) using tseitin,
+define(__97 <-> or([__26,__35,__96;int(1..)])) using tseitin,
+assert(__75) using tseitin,
+assert(__65) using tseitin,
+assert(__91) using tseitin,
+assert(__66) using tseitin,
+assert(__97) using tseitin,
+assert(__67) using tseitin,
+assert(__77) using tseitin,
+assert(__68) using tseitin,
+assert(__79) using tseitin,
+assert(__69) using tseitin,
+assert(__81) using tseitin,
+assert(__70) using tseitin,
+assert(__83) using tseitin,
+assert(__71) using tseitin,
+assert(__85) using tseitin,
+assert(__72) using tseitin,
+assert(__87) using tseitin,
+assert(__73) using tseitin,
+define(__98 <-> integer-weighted(1*letters#components_1#int_offset_1, 2*letters#components_1#int_offset_2, 4*letters#components_1#int_offset_3, 8*letters#components_1#int_offset_4) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+assert(__98) using tseitin,
+define(__99 <-> integer-weighted(1*letters#components_3#int_offset_1, 2*letters#components_3#int_offset_2, 4*letters#components_3#int_offset_3, 8*letters#components_3#int_offset_4) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+assert(__99) using tseitin,
+define(__100 <-> integer-weighted(1*letters#components_2#int_offset_1, 2*letters#components_2#int_offset_2, 4*letters#components_2#int_offset_3, 8*letters#components_2#int_offset_4) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+assert(__100) using tseitin,
+define(__101 <-> !((word1Sum#int_offset_1) <-> (false))) using tseitin,
+define(__102 <-> !(__101)) using tseitin,
+define(__103 <-> or([word1Sum#int_offset_1,false;int(1..)])) using tseitin,
+define(__104 <-> !((word1Sum#int_offset_2) <-> (__103))) using tseitin,
+define(__105 <-> and([word1Sum#int_offset_2,__103;int(1..)])) using tseitin,
+define(__106 <-> !((word1Sum#int_offset_3) <-> (__105))) using tseitin,
+define(__107 <-> and([word1Sum#int_offset_3,__105;int(1..)])) using tseitin,
+define(__108 <-> !((word1Sum#int_offset_4) <-> (__107))) using tseitin,
+define(__109 <-> and([word1Sum#int_offset_4,__107;int(1..)])) using tseitin,
+define(__110 <-> !((word1Sum#int_offset_5) <-> (__109))) using tseitin,
+define(__111 <-> and([word1Sum#int_offset_5,__109;int(1..)])) using tseitin,
+define(__112 <-> !((word1Sum#int_offset_6) <-> (__111))) using tseitin,
+define(__113 <-> and([word1Sum#int_offset_6,__111;int(1..)])) using tseitin,
+define(__114 <-> !((word1Sum#int_offset_7) <-> (__113))) using tseitin,
+define(__115 <-> and([word1Sum#int_offset_7,__113;int(1..)])) using tseitin,
+define(__116 <-> !((word1Sum#int_offset_8) <-> (__115))) using tseitin,
+define(__117 <-> and([word1Sum#int_offset_8,__115;int(1..)])) using tseitin,
+define(__118 <-> !((word1Sum#int_offset_9) <-> (__117))) using tseitin,
+define(__119 <-> and([word1Sum#int_offset_9,__117;int(1..)])) using tseitin,
+define(__120 <-> !((word1Sum#int_offset_10) <-> (__119))) using tseitin,
+define(__121 <-> and([word1Sum#int_offset_10,__119;int(1..)])) using tseitin,
+define(__122 <-> !((false) <-> (__121))) using tseitin,
+define(__123 <-> and([false,__121;int(1..)])) using tseitin,
+define(__124 <-> !((word2Sum#int_offset_1) <-> (false))) using tseitin,
+define(__125 <-> !(__124)) using tseitin,
+define(__126 <-> or([word2Sum#int_offset_1,false;int(1..)])) using tseitin,
+define(__127 <-> !((word2Sum#int_offset_2) <-> (__126))) using tseitin,
+define(__128 <-> and([word2Sum#int_offset_2,__126;int(1..)])) using tseitin,
+define(__129 <-> !((word2Sum#int_offset_3) <-> (__128))) using tseitin,
+define(__130 <-> and([word2Sum#int_offset_3,__128;int(1..)])) using tseitin,
+define(__131 <-> !((word2Sum#int_offset_4) <-> (__130))) using tseitin,
+define(__132 <-> and([word2Sum#int_offset_4,__130;int(1..)])) using tseitin,
+define(__133 <-> !((word2Sum#int_offset_5) <-> (__132))) using tseitin,
+define(__134 <-> and([word2Sum#int_offset_5,__132;int(1..)])) using tseitin,
+define(__135 <-> !((word2Sum#int_offset_6) <-> (__134))) using tseitin,
+define(__136 <-> and([word2Sum#int_offset_6,__134;int(1..)])) using tseitin,
+define(__137 <-> !((word2Sum#int_offset_7) <-> (__136))) using tseitin,
+define(__138 <-> and([word2Sum#int_offset_7,__136;int(1..)])) using tseitin,
+define(__139 <-> !((word2Sum#int_offset_8) <-> (__138))) using tseitin,
+define(__140 <-> and([word2Sum#int_offset_8,__138;int(1..)])) using tseitin,
+define(__141 <-> !((word2Sum#int_offset_9) <-> (__140))) using tseitin,
+define(__142 <-> and([word2Sum#int_offset_9,__140;int(1..)])) using tseitin,
+define(__143 <-> !((word2Sum#int_offset_10) <-> (__142))) using tseitin,
+define(__144 <-> and([word2Sum#int_offset_10,__142;int(1..)])) using tseitin,
+define(__145 <-> !((word2Sum#int_offset_11) <-> (__144))) using tseitin,
+define(__146 <-> and([word2Sum#int_offset_11,__144;int(1..)])) using tseitin,
+define(__147 <-> !((word2Sum#int_offset_12) <-> (__146))) using tseitin,
+define(__148 <-> and([word2Sum#int_offset_12,__146;int(1..)])) using tseitin,
+define(__149 <-> !((word2Sum#int_offset_13) <-> (__148))) using tseitin,
+define(__150 <-> and([word2Sum#int_offset_13,__148;int(1..)])) using tseitin,
+define(__151 <-> !((word2Sum#int_offset_14) <-> (__150))) using tseitin,
+define(__152 <-> and([word2Sum#int_offset_14,__150;int(1..)])) using tseitin,
+define(__153 <-> !((false) <-> (__152))) using tseitin,
+define(__154 <-> and([false,__152;int(1..)])) using tseitin,
+define(__155 <-> !((word3Sum#int_offset_1) <-> (false))) using tseitin,
+define(__156 <-> !(__155)) using tseitin,
+define(__157 <-> or([word3Sum#int_offset_1,false;int(1..)])) using tseitin,
+define(__158 <-> !((word3Sum#int_offset_2) <-> (__157))) using tseitin,
+define(__159 <-> and([word3Sum#int_offset_2,__157;int(1..)])) using tseitin,
+define(__160 <-> !((word3Sum#int_offset_3) <-> (__159))) using tseitin,
+define(__161 <-> and([word3Sum#int_offset_3,__159;int(1..)])) using tseitin,
+define(__162 <-> !((word3Sum#int_offset_4) <-> (__161))) using tseitin,
+define(__163 <-> and([word3Sum#int_offset_4,__161;int(1..)])) using tseitin,
+define(__164 <-> !((word3Sum#int_offset_5) <-> (__163))) using tseitin,
+define(__165 <-> and([word3Sum#int_offset_5,__163;int(1..)])) using tseitin,
+define(__166 <-> !((word3Sum#int_offset_6) <-> (__165))) using tseitin,
+define(__167 <-> and([word3Sum#int_offset_6,__165;int(1..)])) using tseitin,
+define(__168 <-> !((word3Sum#int_offset_7) <-> (__167))) using tseitin,
+define(__169 <-> and([word3Sum#int_offset_7,__167;int(1..)])) using tseitin,
+define(__170 <-> !((word3Sum#int_offset_8) <-> (__169))) using tseitin,
+define(__171 <-> and([word3Sum#int_offset_8,__169;int(1..)])) using tseitin,
+define(__172 <-> !((word3Sum#int_offset_9) <-> (__171))) using tseitin,
+define(__173 <-> and([word3Sum#int_offset_9,__171;int(1..)])) using tseitin,
+define(__174 <-> !((word3Sum#int_offset_10) <-> (__173))) using tseitin,
+define(__175 <-> and([word3Sum#int_offset_10,__173;int(1..)])) using tseitin,
+define(__176 <-> !((word3Sum#int_offset_11) <-> (__175))) using tseitin,
+define(__177 <-> and([word3Sum#int_offset_11,__175;int(1..)])) using tseitin,
+define(__178 <-> !((word3Sum#int_offset_12) <-> (__177))) using tseitin,
+define(__179 <-> and([word3Sum#int_offset_12,__177;int(1..)])) using tseitin,
+define(__180 <-> !((word3Sum#int_offset_13) <-> (__179))) using tseitin,
+define(__181 <-> and([word3Sum#int_offset_13,__179;int(1..)])) using tseitin,
+define(__182 <-> !((word3Sum#int_offset_14) <-> (__181))) using tseitin,
+define(__183 <-> and([word3Sum#int_offset_14,__181;int(1..)])) using tseitin,
+define(__184 <-> !((word3Sum#int_offset_15) <-> (__183))) using tseitin,
+define(__185 <-> and([word3Sum#int_offset_15,__183;int(1..)])) using tseitin,
+define(__186 <-> !((word3Sum#int_offset_16) <-> (__185))) using tseitin,
+define(__187 <-> and([word3Sum#int_offset_16,__185;int(1..)])) using tseitin,
+define(__188 <-> !((word3Sum#int_offset_17) <-> (__187))) using tseitin,
+define(__189 <-> and([word3Sum#int_offset_17,__187;int(1..)])) using tseitin,
+define(__190 <-> !((false) <-> (__189))) using tseitin,
+define(__191 <-> and([false,__189;int(1..)])) using tseitin,
+weighted(1*__125, 2*__127, 4*__129, 8*__131, 16*__133, 32*__135, 64*__137, 128*__139, 256*__141, 512*__143, 1024*__145, 2048*__147, 4096*__149, 8192*__151, -16384*__153, -1000*letters#components_3#int_offset_1, -2000*letters#components_3#int_offset_2, -4000*letters#components_3#int_offset_3, -8000*letters#components_3#int_offset_4, -100*letters#components_4#int_offset_1, -200*letters#components_4#int_offset_2, -400*letters#components_4#int_offset_3, -800*letters#components_4#int_offset_4, -10*letters#components_2#int_offset_1, -20*letters#components_2#int_offset_2, -40*letters#components_2#int_offset_3, -80*letters#components_2#int_offset_4, -1*letters#components_3#int_offset_1, -2*letters#components_3#int_offset_2, -4*letters#components_3#int_offset_3, -8*letters#components_3#int_offset_4) Exactly 0 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 15, structure: BoundedBinary { lower: 1, upper: 10000 } }, PbTermGroup { start: 15, end: 19, structure: BoundedBinary { lower: -9000, upper: 0 } }, PbTermGroup { start: 19, end: 23, structure: BoundedBinary { lower: -900, upper: 0 } }, PbTermGroup { start: 23, end: 27, structure: BoundedBinary { lower: -90, upper: 0 } }, PbTermGroup { start: 27, end: 31, structure: BoundedBinary { lower: -9, upper: 0 } }],
+weighted(1*__102, 2*__104, 4*__106, 8*__108, 16*__110, 32*__112, 64*__114, 128*__116, 256*__118, 512*__120, -1024*__122, -100*letters#components_1#int_offset_1, -200*letters#components_1#int_offset_2, -400*letters#components_1#int_offset_3, -800*letters#components_1#int_offset_4, -10*letters#components_2#int_offset_1, -20*letters#components_2#int_offset_2, -40*letters#components_2#int_offset_3, -80*letters#components_2#int_offset_4, -1*letters#components_3#int_offset_1, -2*letters#components_3#int_offset_2, -4*letters#components_3#int_offset_3, -8*letters#components_3#int_offset_4) Exactly 0 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 11, structure: BoundedBinary { lower: 1, upper: 1000 } }, PbTermGroup { start: 11, end: 15, structure: BoundedBinary { lower: -900, upper: 0 } }, PbTermGroup { start: 15, end: 19, structure: BoundedBinary { lower: -90, upper: 0 } }, PbTermGroup { start: 19, end: 23, structure: BoundedBinary { lower: -9, upper: 0 } }],
+weighted(1*__156, 2*__158, 4*__160, 8*__162, 16*__164, 32*__166, 64*__168, 128*__170, 256*__172, 512*__174, 1024*__176, 2048*__178, 4096*__180, 8192*__182, 16384*__184, 32768*__186, 65536*__188, -131072*__190, -10000*letters#components_2#int_offset_1, -20000*letters#components_2#int_offset_2, -40000*letters#components_2#int_offset_3, -80000*letters#components_2#int_offset_4, -1000*letters#components_5#int_offset_1, -2000*letters#components_5#int_offset_2, -4000*letters#components_5#int_offset_3, -8000*letters#components_5#int_offset_4, -100*letters#components_5#int_offset_1, -200*letters#components_5#int_offset_2, -400*letters#components_5#int_offset_3, -800*letters#components_5#int_offset_4, -10*letters#components_6#int_offset_1, -20*letters#components_6#int_offset_2, -40*letters#components_6#int_offset_3, -80*letters#components_6#int_offset_4, -1*letters#components_1#int_offset_1, -2*letters#components_1#int_offset_2, -4*letters#components_1#int_offset_3, -8*letters#components_1#int_offset_4) Exactly 0 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 18, structure: BoundedBinary { lower: 1, upper: 100000 } }, PbTermGroup { start: 18, end: 22, structure: BoundedBinary { lower: -90000, upper: 0 } }, PbTermGroup { start: 22, end: 26, structure: BoundedBinary { lower: -9000, upper: 0 } }, PbTermGroup { start: 26, end: 30, structure: BoundedBinary { lower: -900, upper: 0 } }, PbTermGroup { start: 30, end: 34, structure: BoundedBinary { lower: -90, upper: 0 } }, PbTermGroup { start: 34, end: 38, structure: BoundedBinary { lower: -9, upper: 0 } }],
+define(__192 <-> allDifferent(0+weighted(1*letters#components_1#int_offset_1, 2*letters#components_1#int_offset_2, 4*letters#components_1#int_offset_3, 8*letters#components_1#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }], 0+weighted(1*letters#components_2#int_offset_1, 2*letters#components_2#int_offset_2, 4*letters#components_2#int_offset_3, 8*letters#components_2#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }], 0+weighted(1*letters#components_3#int_offset_1, 2*letters#components_3#int_offset_2, 4*letters#components_3#int_offset_3, 8*letters#components_3#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }], 0+weighted(1*letters#components_4#int_offset_1, 2*letters#components_4#int_offset_2, 4*letters#components_4#int_offset_3, 8*letters#components_4#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }], 0+weighted(1*letters#components_5#int_offset_1, 2*letters#components_5#int_offset_2, 4*letters#components_5#int_offset_3, 8*letters#components_5#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }], 0+weighted(1*letters#components_6#int_offset_1, 2*letters#components_6#int_offset_2, 4*letters#components_6#int_offset_3, 8*letters#components_6#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
+assert(__192) using tseitin
+

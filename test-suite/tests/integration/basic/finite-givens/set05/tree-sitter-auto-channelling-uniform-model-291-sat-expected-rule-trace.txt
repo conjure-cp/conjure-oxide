@@ -1,0 +1,223 @@
+Model before rewriting:
+
+letting s be {{2,3,4},{5}}
+find x: int(0..9)
+
+such that
+
+or([ x in s' | s' <- s ])
+
+--
+
+or([ x in s' | s' <- s ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+or([ x in s' | s' <- s ])
+new variables:
+  find x#int_log_1: bool
+  find x#int_log_2: bool
+  find x#int_log_3: bool
+  find x#int_log_4: bool
+  find x#int_log_5: bool
+new constraints:
+  or([and([SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4,x#int_log_5;int(1..)] [0, 9]) >= 0,SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4,x#int_log_5;int(1..)] [0, 9]) <= 9;int(1..)]);int(1..)])
+
+--
+
+SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4,x#int_log_5;int(1..)] [0, 9]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, -16*x#int_log_5) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4,x#int_log_5;int(1..)] [0, 9]) <= 9
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, -16*x#int_log_5) LessEqual 9) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+or([ x in s' | s' <- s ]),
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+or([ x in s' | s' <- s ])
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+or([ x in s' | s' <- s ])
+   ~~> exists_quantified_to_finds ([("Base", 2003)])
+x in __3
+new variables:
+  findAux __3: set of int(2..5)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+__3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__3
+new variables:
+  findAux __3#occurrence_1: bool
+  findAux __3#occurrence_2: bool
+  findAux __3#occurrence_3: bool
+  findAux __3#occurrence_4: bool
+new constraints:
+  and([sum([toInt(__3#occurrence_1),toInt(__3#occurrence_2),toInt(__3#occurrence_3),toInt(__3#occurrence_4);int(1..)]) >= 0,sum([toInt(__3#occurrence_1),toInt(__3#occurrence_2),toInt(__3#occurrence_3),toInt(__3#occurrence_4);int(1..)]) <= 4;int(1..)])
+
+--
+
+x in __3,
+and([sum([toInt(__3#occurrence_1),toInt(__3#occurrence_2),toInt(__3#occurrence_3),toInt(__3#occurrence_4);int(1..)]) >= 0,sum([toInt(__3#occurrence_1),toInt(__3#occurrence_2),toInt(__3#occurrence_3),toInt(__3#occurrence_4);int(1..)]) <= 4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+x in __3,
+and([true,sum([toInt(__3#occurrence_1),toInt(__3#occurrence_2),toInt(__3#occurrence_3),toInt(__3#occurrence_4);int(1..)]) <= 4;int(1..)])
+new SAT encoding decisions:
+  count(__3#occurrence_1, __3#occurrence_2, __3#occurrence_3, __3#occurrence_4) AtLeast 0 using None
+
+--
+
+x in __3,
+and([sum([toInt(__3#occurrence_1),toInt(__3#occurrence_2),toInt(__3#occurrence_3),toInt(__3#occurrence_4);int(1..)]) <= 4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+x in __3,
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(__3#occurrence_1, __3#occurrence_2, __3#occurrence_3, __3#occurrence_4) AtMost 4 using None
+
+--
+
+x in __3
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+and([x >= 2,x <= 5,SafeIndex([__3#occurrence_1,__3#occurrence_2,__3#occurrence_3,__3#occurrence_4;int(1..)],[sum([x,-1;int(1..)])]);int(1..)])
+
+--
+
+x >= 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, -16*x#int_log_5) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+x <= 5
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, -16*x#int_log_5) LessEqual 5) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 9 } }]
+
+--
+
+SafeIndex([__3#occurrence_1,__3#occurrence_2,__3#occurrence_3,__3#occurrence_4;int(1..)],[sum([x,-1;int(1..)])])
+   ~~> introduce_element ([("SAT", 18400)])
+__6
+new variables:
+  findAux __6: bool
+new constraints:
+  satElement([__3#occurrence_1,__3#occurrence_2,__3#occurrence_3,__3#occurrence_4;int(1..)], sum([x,-1;int(1..)]), __6)
+
+--
+
+satElement([__3#occurrence_1,__3#occurrence_2,__3#occurrence_3,__3#occurrence_4;int(1..)], sum([x,-1;int(1..)]), __6)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=-1+weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, -16*x#int_log_5) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 9 } }], value=0+weighted(1*__6) with [] choices(0:!(__6), 1:__6), entries=[1: 0+weighted(1*__3#occurrence_1) with [] choices(0:!(__3#occurrence_1), 1:__3#occurrence_1), 2: 0+weighted(1*__3#occurrence_2) with [] choices(0:!(__3#occurrence_2), 1:__3#occurrence_2), 3: 0+weighted(1*__3#occurrence_3) with [] choices(0:!(__3#occurrence_3), 1:__3#occurrence_3), 4: 0+weighted(1*__3#occurrence_4) with [] choices(0:!(__3#occurrence_4), 1:__3#occurrence_4)]) using None, PB None
+
+--
+
+and([__4,__5,__6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> and([__4,__5,__6;int(1..)])) using tseitin
+
+--
+
+__7,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true
+new SAT encoding decisions:
+  assert(__7) using tseitin
+
+--
+
+Final model:
+
+letting s be {{2,3,4},{5}}
+find x: int(0..9)
+find x#int_log_1: bool
+find x#int_log_2: bool
+find x#int_log_3: bool
+find x#int_log_4: bool
+find x#int_log_5: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: set (representation occurrence) of int(2..5)
+findAux __3#occurrence_1: bool
+findAux __3#occurrence_2: bool
+findAux __3#occurrence_3: bool
+findAux __3#occurrence_4: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, -16*x#int_log_5) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__1 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, -16*x#int_log_5) LessEqual 9) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
+assert(__2) using tseitin,
+count(__3#occurrence_1, __3#occurrence_2, __3#occurrence_3, __3#occurrence_4) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(__3#occurrence_1, __3#occurrence_2, __3#occurrence_3, __3#occurrence_4) AtMost 4 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__4 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, -16*x#int_log_5) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 9 } }],
+define(__5 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, -16*x#int_log_5) LessEqual 5) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 9 } }],
+element(index=-1+weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, -16*x#int_log_5) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 9 } }], value=0+weighted(1*__6) with [] choices(0:!(__6), 1:__6), entries=[1: 0+weighted(1*__3#occurrence_1) with [] choices(0:!(__3#occurrence_1), 1:__3#occurrence_1), 2: 0+weighted(1*__3#occurrence_2) with [] choices(0:!(__3#occurrence_2), 1:__3#occurrence_2), 3: 0+weighted(1*__3#occurrence_3) with [] choices(0:!(__3#occurrence_3), 1:__3#occurrence_3), 4: 0+weighted(1*__3#occurrence_4) with [] choices(0:!(__3#occurrence_4), 1:__3#occurrence_4)]) using Some(EncodingSelection { algorithm: Support, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__7 <-> and([__4,__5,__6;int(1..)])) using tseitin,
+assert(__7) using tseitin
+
