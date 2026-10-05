@@ -399,7 +399,7 @@ impl SolverAdaptor for Smt {
     }
 
     fn load_model(&mut self, model: Model, _: private::Internal) -> Result<(), SolverError> {
-        if model.sat_encoding().is_some() || !model.sat_decisions().is_empty() {
+        if !model.sat_decisions().is_empty() {
             return Err(SolverError::ModelFeatureNotSupported(
                 "SAT encoding decisions must be loaded by the SAT adaptor".into(),
             ));

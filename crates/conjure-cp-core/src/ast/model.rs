@@ -4,7 +4,6 @@ use std::hash::Hash;
 use std::sync::{Arc, RwLock};
 
 use crate::ast::Domain;
-use crate::ast::encoding_plan::{EncodingDecision, PlanError};
 use crate::context::Context;
 use crate::{bug, into_matrix_expr};
 use derivative::Derivative;
@@ -39,8 +38,6 @@ pub struct Model {
     symbols: SymbolTablePtr,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     sat_decisions: Vec<SatEncodingDecision>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    sat_encoding: Option<EncodingDecision>,
 
     pub search_order: Option<Vec<Name>>,
     pub dominance: Option<Expression>,
@@ -62,7 +59,6 @@ impl Model {
             instantiation_conditions: Vec::new(),
             symbols,
             sat_decisions: Vec::new(),
-            sat_encoding: None,
             search_order: None,
             dominance: None,
             objective: None,
@@ -128,18 +124,6 @@ impl Model {
             bug!("The top level expression in a model should be Expr::Root");
         };
         constraints
-    }
-
-    /// Terminal SAT modelling and encoding decisions, before SAT literal allocation.
-    pub fn sat_encoding(&self) -> Option<&EncodingDecision> {
-        self.sat_encoding.as_ref()
-    }
-
-    /// Attach a validated decision AST. The SAT adaptor rejects mixed terminal inputs.
-    pub fn set_sat_encoding(&mut self, decision: EncodingDecision) -> Result<(), PlanError> {
-        decision.validate()?;
-        self.sat_encoding = Some(decision);
-        Ok(())
     }
 
     /// The SAT encoding decisions in this model.
@@ -258,15 +242,6 @@ impl Model {
             id_list.insert(declaration.id());
         }
 
-        if let Some(decision) = &self.sat_encoding {
-            id_list.extend(
-                decision
-                    .variables()
-                    .iter()
-                    .map(|variable| variable.source.clone()),
-            );
-        }
-
         let mut id_map = HashMap::new();
         for (stable_id, original_id) in id_list.into_iter().enumerate() {
             let type_name = original_id.type_name;
@@ -301,9 +276,6 @@ impl Hash for Model {
         self.instantiation_conditions.hash(state);
         self.symbols.hash(state);
         self.sat_decisions.hash(state);
-        if let Some(decision) = &self.sat_encoding {
-            decision.hash(state);
-        }
         self.search_order.hash(state);
         self.dominance.hash(state);
         self.objective.hash(state);
@@ -538,9 +510,6 @@ impl Display for Model {
             writeln!(f, "\nsat encoding decisions:\n")?;
             writeln!(f, "{}", pretty_sat_decisions(self.sat_decisions()))?;
         }
-        if let Some(decision) = &self.sat_encoding {
-            writeln!(f, "\nsat encoding decisions:\n{decision:#?}")?;
-        }
         Ok(())
     }
 }
@@ -559,8 +528,6 @@ pub struct SerdeModel {
     symbols: SymbolTablePtr,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     sat_decisions: Vec<SatEncodingDecision>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    sat_encoding: Option<EncodingDecision>,
     search_order: Option<Vec<Name>>,
     dominance: Option<Expression>,
     objective: Option<Objective>,
@@ -627,7 +594,6 @@ impl SerdeModel {
             instantiation_conditions: self.instantiation_conditions,
             symbols: self.symbols,
             sat_decisions: self.sat_decisions,
-            sat_encoding: self.sat_encoding,
             search_order: self.search_order,
             dominance: self.dominance,
             objective: self.objective,
@@ -643,7 +609,6 @@ impl From<Model> for SerdeModel {
             instantiation_conditions: val.instantiation_conditions,
             symbols: val.symbols,
             sat_decisions: val.sat_decisions,
-            sat_encoding: val.sat_encoding,
             search_order: val.search_order,
             dominance: val.dominance,
             objective: val.objective,
@@ -658,7 +623,6 @@ impl Display for SerdeModel {
             instantiation_conditions: self.instantiation_conditions.clone(),
             symbols: self.symbols.clone(),
             sat_decisions: self.sat_decisions.clone(),
-            sat_encoding: self.sat_encoding.clone(),
             search_order: self.search_order.clone(),
             dominance: self.dominance.clone(),
             objective: self.objective.clone(),
@@ -676,7 +640,6 @@ impl SerdeModel {
             instantiation_conditions: self.instantiation_conditions.clone(),
             symbols: self.symbols.clone(),
             sat_decisions: self.sat_decisions.clone(),
-            sat_encoding: self.sat_encoding.clone(),
             search_order: self.search_order.clone(),
             dominance: self.dominance.clone(),
             objective: self.objective.clone(),

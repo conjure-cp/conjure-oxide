@@ -596,77 +596,6 @@ impl SolverAdaptor for Sat {
         });
         self.dominance_model_template = self.dominance_expression.as_ref().map(|_| model.clone());
 
-        if let Some(decision) = model.sat_encoding() {
-            // Decision ASTs are terminal inputs. Never silently ignore residual constraints or
-            // mix the two terminal decision payloads.
-            if !model.constraints().is_empty()
-                || !model.sat_decisions().is_empty()
-                || !model.instantiation_conditions().is_empty()
-                || model.dominance.is_some()
-                || model.objective.is_some()
-            {
-                return Err(SolverError::ModelFeatureNotSupported(
-                    "SAT decision AST cannot be mixed with residual constraints, semantic gate decisions, objectives, or dominance".into(),
-                ));
-            }
-            let compiled = super::encoding_plan::CompiledBooleanDecision::compile(decision)
-                .map_err(|error| SolverError::ModelFeatureNotSupported(error.to_string()))?;
-            let (instance, literals) = compiled.into_parts();
-            let symbols = model.symbols();
-            let declarations: HashMap<_, _> = symbols
-                .iter_local()
-                .map(|(_, declaration)| (declaration.id(), declaration.clone()))
-                .collect();
-            let mut var_map = HashMap::new();
-            let mut finds = Vec::new();
-            for variable in decision.variable_ids() {
-                let semantic = decision
-                    .variable(variable)
-                    .map_err(|error| SolverError::ModelFeatureNotSupported(error.to_string()))?;
-                let declaration = declarations.get(&semantic.source).ok_or_else(|| {
-                    SolverError::ModelFeatureNotSupported(format!(
-                        "SAT decision variable `{}` has no declaration in the model",
-                        semantic.name
-                    ))
-                })?;
-                if !matches!(
-                    &declaration.kind() as &crate::ast::DeclarationKind,
-                    crate::ast::DeclarationKind::Find(_)
-                        | crate::ast::DeclarationKind::FindAuxiliary(_)
-                ) || declaration
-                    .domain()
-                    .and_then(|domain| domain.resolve().ok())
-                    .is_none_or(|domain| *domain != GroundDomain::Bool)
-                {
-                    return Err(SolverError::ModelFeatureNotSupported(format!(
-                        "SAT Boolean decision variable `{}` no longer has a Boolean find declaration",
-                        semantic.name
-                    )));
-                }
-                let name = declaration.name().clone();
-                var_map.insert(name.clone(), literals[&variable]);
-                if is_user_visible_solution_var(&name) {
-                    finds.push(name);
-                }
-            }
-            for (name, declaration) in symbols.iter_local() {
-                if matches!(
-                    &declaration.kind() as &crate::ast::DeclarationKind,
-                    crate::ast::DeclarationKind::Find(_)
-                        | crate::ast::DeclarationKind::FindAuxiliary(_)
-                ) && !var_map.contains_key(name)
-                {
-                    return Err(SolverError::ModelFeatureNotSupported(format!(
-                        "find `{name}` is missing from the SAT decision AST"
-                    )));
-                }
-            }
-            self.decision_refs = Some(finds);
-            self.var_map = Some(var_map);
-            self.model_inst = Some(instance);
-            return Ok(());
-        }
-
         // A residual false constraint makes the whole model unsatisfiable, even when previous
         // rewrites already emitted decisions. Preserve it before inspecting unencoded finds.
         if model
@@ -971,29 +900,12 @@ mod tests {
     use rustsat::types::Var as SatVar;
 
     fn boolean_decision_model() -> ConjureModel {
-        use crate::ast::encoding_plan::*;
         let mut model = ConjureModel::default();
         let p = DeclarationPtr::new_find(Name::User("p".into()), Domain::bool());
         model.add_symbol(p.clone()).unwrap();
-        let mut decision = EncodingDecision::default();
-        let variable = decision.intern(&p, VariableOrigin::User).unwrap();
-        let reference = decision
-            .new_reference(variable, ReferenceContext::BooleanOperand)
-            .unwrap();
-        decision
-            .add_plan(EncodingPlan {
-                source_constraint: 0,
-                kind: EncodingPlanKind::BooleanTseitin {
-                    formula: BooleanFormula::Reference(reference),
-                },
-                requests: vec![RepresentationRequest {
-                    reference,
-                    kind: RepresentationKind::Boolean,
-                }],
-                provenance: PlanProvenance::ExplicitConfiguration,
-            })
-            .unwrap();
-        model.set_sat_encoding(decision).unwrap();
+        model.add_sat_decision(crate::ast::SatEncodingDecision::Assert(
+            Reference::new(p).into(),
+        ));
         model
     }
 
@@ -1041,9 +953,8 @@ mod tests {
     }
 
     #[test]
-    fn decision_ast_is_solved_without_model_cnf() {
+    fn serialised_decisions_are_solved_without_model_cnf() {
         let model = boolean_decision_model();
-        assert!(model.sat_decisions().is_empty());
         let serialized = serde_json::to_string(&crate::ast::SerdeModel::from(model)).unwrap();
         let imported: crate::ast::SerdeModel = serde_json::from_str(&serialized).unwrap();
         let mut sat = Sat::default();
@@ -1070,25 +981,6 @@ mod tests {
         let solutions = solutions.lock().unwrap();
         assert_eq!(solutions.len(), 1);
         assert_eq!(solutions[0][&Name::User("p".into())], Literal::Int(1));
-    }
-
-    #[test]
-    fn decision_ast_rejects_mixed_and_missing_semantics() {
-        let mut mixed = boolean_decision_model();
-        mixed.add_constraint(false.into());
-        assert!(Sat::default().load_model(mixed, private::Internal).is_err());
-        let mut missing = boolean_decision_model();
-        missing
-            .add_symbol(DeclarationPtr::new_find(
-                Name::User("q".into()),
-                Domain::bool(),
-            ))
-            .unwrap();
-        assert!(
-            Sat::default()
-                .load_model(missing, private::Internal)
-                .is_err()
-        );
     }
 
     #[test]

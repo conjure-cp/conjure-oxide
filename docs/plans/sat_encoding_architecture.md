@@ -21,7 +21,7 @@ semantic model AST
 
 The target `Model` and `SerdeModel` have no CNF field. Remove `CnfClause`, `RuleEffect::new_clauses`, clause-producing Boolean/integer rules and the legacy converters after migrating their semantic decisions. Encoding auxiliaries created only by a library remain in the adaptor and never become model declarations. Clause statistics and DIMACS are solver artifacts, separate from AST snapshots.
 
-The initial implementation places the typed decision arena in `Model::sat_encoding`; the existing clause field remains temporarily for the production integer path. The SAT adaptor accepts terminal Boolean decision ASTs directly and rejects mixed legacy inputs. This is a migration step, not completion of CNF removal. Non-SAT adaptors reject SAT decision inputs.
+Implementation note: the decisions are `SatEncodingDecision` nodes in `Model::sat_decisions`, and integer representations are `SATIntEncoding` values on the integers themselves. An early prototype of the arena design below (`ast::encoding_plan`, `Model::sat_encoding`) was never connected to the rules and has been removed; the remainder of this document is the original plan.
 
 Reuse the verified encoders in [the library inventory](sat_encoder_inventory.md). Keep RustSAT as solver/allocation infrastructure and evaluate Pindakaas as an additional encoding provider, starting with sorting networks, BDD and SWC. Selection stays visible in Oxide's AST; library defaults or normalization must not silently substitute an unrecorded algorithm or representation.
 

@@ -8,7 +8,7 @@ Sources: [RustSAT 0.7.5 source](https://docs.rs/crate/rustsat/0.7.5/source/src/e
 
 The model AST records mathematical operands, occurrence identities, representation choices, selected algorithms, options, and provenance. A terminal decision AST contains no SAT literals, clauses, or library objects. Compilation allocates and shares representations, then dispatches the already selected algorithms into a library-owned clause collector or solver. Generated CNF is an adaptor artifact and can be exported as DIMACS; it never becomes a model field or expression.
 
-The new `ast::encoding_plan` nodes are the first implementation of this boundary. `Model::sat_encoding` owns the decision arena. The SAT adaptor accepts explicit Boolean decision ASTs and rejects mixed terminal payloads. Production gates, AMO, cardinality and weighted pseudo-Boolean constraints use `Model::sat_decisions`; all generated clauses belong to the adaptor. `CnfClause` and the model CNF fields have been removed.
+`SatEncodingDecision` nodes in `Model::sat_decisions` implement this boundary. Gates, AMO, cardinality and weighted pseudo-Boolean constraints use `Model::sat_decisions`; all generated clauses belong to the adaptor. `CnfClause` and the model CNF fields have been removed.
 
 ## RustSAT: concrete public algorithms
 
