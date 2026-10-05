@@ -4,10 +4,10 @@ use std::time::Duration;
 use std::{
     fs::File,
     path::{Path, PathBuf},
-    process::exit,
     sync::{Arc, RwLock},
 };
 
+use crate::exit;
 use anyhow::anyhow;
 use clap::ValueHint;
 use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};

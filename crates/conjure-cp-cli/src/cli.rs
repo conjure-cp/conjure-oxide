@@ -96,7 +96,7 @@ pub struct GlobalArgs {
 
     /// Output file for aggregated rule-application counts.
     ///
-    /// The file is updated incrementally in the format:
+    /// Counts are kept in memory and written when the program exits, in the format:
     /// `total_rule_applications: N`, followed by one line per rule.
     #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
     pub rule_trace_aggregates: Option<PathBuf>,

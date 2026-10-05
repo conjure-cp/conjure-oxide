@@ -18,8 +18,7 @@ use rule_trace_aggregates::RuleTraceAggregatesHandle;
 use solve::run_solve_command;
 use std::fs::File;
 use std::io;
-use std::process::exit;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use test_solve::run_test_solve_command;
 
 use conjure_cp_rules as _;
@@ -43,6 +42,30 @@ impl LoggingState {
     }
 }
 
+static LOGGING_STATE: OnceLock<LoggingState> = OnceLock::new();
+
+/// Writes buffered log outputs, such as the final rule-trace aggregates.
+fn flush_logging() {
+    if let Some(state) = LOGGING_STATE.get() {
+        state.flush();
+    }
+}
+
+/// Flushes buffered log outputs, then exits. Use instead of [`std::process::exit`].
+pub(crate) fn exit(code: i32) -> ! {
+    flush_logging();
+    std::process::exit(code)
+}
+
+/// Flushes on return and while unwinding from a panic.
+struct FlushLoggingOnDrop;
+
+impl Drop for FlushLoggingOnDrop {
+    fn drop(&mut self) {
+        flush_logging();
+    }
+}
+
 pub fn main() {
     // exit with 2 instead of 1 on failure,like grep
     match run() {
@@ -60,9 +83,9 @@ pub fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     let logging_state = setup_logging(&cli.global_args)?;
-    let result = run_subcommand(cli);
-    logging_state.flush();
-    result
+    let _ = LOGGING_STATE.set(logging_state);
+    let _flush = FlushLoggingOnDrop;
+    run_subcommand(cli)
 }
 
 fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<LoggingState> {

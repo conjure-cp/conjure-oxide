@@ -1,7 +1,8 @@
+//! Counts rule applications in memory and writes the totals once, when the CLI exits.
 use std::collections::BTreeMap;
+use std::fmt::Write as _;
 use std::fs::{self, File};
-use std::io::Write as _;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Context as _;
@@ -21,7 +22,6 @@ pub struct RuleTraceAggregatesLayer {
 
 struct RuleTraceAggregatesState {
     path: PathBuf,
-    tmp_path: PathBuf,
     total_rule_applications: usize,
     counts: BTreeMap<String, usize>,
 }
@@ -32,12 +32,17 @@ struct RuleNameVisitor {
 }
 
 impl RuleTraceAggregatesHandle {
+    /// Creates the output file now, so an unusable path fails before any rewriting.
     pub fn new(path: PathBuf) -> anyhow::Result<Self> {
-        let state = RuleTraceAggregatesState::new(path);
-        state.write_snapshot()?;
+        File::create(&path)
+            .with_context(|| format!("Unable to create aggregate trace file {}", path.display()))?;
 
         Ok(Self {
-            state: Arc::new(Mutex::new(state)),
+            state: Arc::new(Mutex::new(RuleTraceAggregatesState {
+                path,
+                total_rule_applications: 0,
+                counts: BTreeMap::new(),
+            })),
         })
     }
 
@@ -47,11 +52,12 @@ impl RuleTraceAggregatesHandle {
         }
     }
 
+    /// Writes the counts collected so far.
     pub fn flush(&self) {
         self.state
             .lock()
             .expect("rule trace aggregate state lock poisoned")
-            .write_snapshot()
+            .write()
             .expect("failed to write rule trace aggregates")
     }
 }
@@ -68,31 +74,17 @@ where
             return;
         };
 
-        self.state
+        let mut state = self
+            .state
             .lock()
-            .expect("rule trace aggregate state lock poisoned")
-            .record_rule(rule_name)
-            .expect("failed to write rule trace aggregates");
+            .expect("rule trace aggregate state lock poisoned");
+        state.total_rule_applications += 1;
+        *state.counts.entry(rule_name).or_insert(0) += 1;
     }
 }
 
 impl RuleTraceAggregatesState {
-    fn new(path: PathBuf) -> Self {
-        Self {
-            tmp_path: temporary_output_path(&path),
-            path,
-            total_rule_applications: 0,
-            counts: BTreeMap::new(),
-        }
-    }
-
-    fn record_rule(&mut self, rule_name: String) -> anyhow::Result<()> {
-        self.total_rule_applications += 1;
-        *self.counts.entry(rule_name).or_insert(0) += 1;
-        self.write_snapshot()
-    }
-
-    fn write_snapshot(&self) -> anyhow::Result<()> {
+    fn write(&self) -> anyhow::Result<()> {
         let mut rows: Vec<_> = self.counts.iter().collect();
         rows.sort_by(|(rule_name_a, count_a), (rule_name_b, count_b)| {
             count_b
@@ -100,32 +92,20 @@ impl RuleTraceAggregatesState {
                 .then_with(|| rule_name_a.cmp(rule_name_b))
         });
 
-        let mut file = File::create(&self.tmp_path).with_context(|| {
-            format!(
-                "Unable to create temporary aggregate trace file {}",
-                self.tmp_path.display()
-            )
-        })?;
-
-        writeln!(
-            file,
-            "total_rule_applications: {}",
+        let mut contents = format!(
+            "total_rule_applications: {}\n",
             self.total_rule_applications
-        )?;
+        );
         for (rule_name, count) in rows {
-            writeln!(file, "{count:6} {rule_name}")?;
+            writeln!(contents, "{count:6} {rule_name}")?;
         }
-        file.flush()
-            .expect("failed to flush temporary aggregate trace file");
 
-        fs::rename(&self.tmp_path, &self.path).with_context(|| {
+        fs::write(&self.path, contents).with_context(|| {
             format!(
-                "Unable to move aggregate trace file into place at {}",
+                "Unable to write aggregate trace file {}",
                 self.path.display()
             )
-        })?;
-
-        Ok(())
+        })
     }
 }
 
@@ -141,13 +121,4 @@ impl Visit for RuleNameVisitor {
             self.rule_name = Some(format!("{value:?}").trim_matches('"').to_owned());
         }
     }
-}
-
-fn temporary_output_path(path: &Path) -> PathBuf {
-    let filename = path
-        .file_name()
-        .map(|name| name.to_string_lossy().into_owned())
-        .unwrap_or_else(|| "rule-trace-aggregates".to_owned());
-
-    path.with_file_name(format!(".{filename}.tmp"))
 }

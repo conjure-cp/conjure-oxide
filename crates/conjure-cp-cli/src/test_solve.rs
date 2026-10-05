@@ -1,5 +1,5 @@
+use crate::exit;
 use std::path::PathBuf;
-use std::process::exit;
 use std::sync::Arc;
 
 use crate::cli::GlobalArgs;
