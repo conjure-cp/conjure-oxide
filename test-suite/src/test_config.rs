@@ -5,6 +5,7 @@ use conjure_cp::settings::{
 };
 use serde::Deserialize;
 use serde::de::{self, Visitor};
+use std::collections::BTreeMap;
 use std::fmt;
 use std::fs;
 use std::io;
@@ -637,6 +638,18 @@ impl NumberOfSolutions {
     }
 }
 
+/// Per-backend modelling choices for an integration fixture.
+#[derive(Deserialize, Debug, Default)]
+#[serde(default, deny_unknown_fields)]
+pub struct SolverOptions {
+    /// Override the fixture's modelling heuristic for this backend.
+    #[serde(deserialize_with = "deserialize_string_or_vec")]
+    pub heuristic: Vec<String>,
+    /// Override the fixture's representation-sharing policy for this backend.
+    #[serde(deserialize_with = "deserialize_string_or_vec")]
+    pub channelling: Vec<String>,
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
@@ -682,6 +695,10 @@ pub struct TestConfig {
         deserialize_with = "deserialize_string_or_vec"
     )]
     pub solver: Vec<String>,
+
+    /// Backend-specific heuristic and channelling overrides.
+    #[serde(default, rename = "solver-options")]
+    pub solver_options: BTreeMap<String, SolverOptions>,
 
     #[serde(
         default,
@@ -742,6 +759,7 @@ impl Default for TestConfig {
             // integer theory -- is a representation choice, so the `x` heuristic above enumerates
             // those combinations rather than them being separate solvers here.
             solver: vec!["minion".to_string(), "sat".to_string(), "z3".to_string()],
+            solver_options: BTreeMap::new(),
             extra_rule_sets: Vec::new(),
             minion_discrete_threshold: default_minion_discrete_threshold(),
             skip_conjure_validation: String::new(),
@@ -815,7 +833,36 @@ impl TestConfig {
         Ok(configured)
     }
 
+    /// Resolve a backend's heuristic while retaining the fixture default for other backends.
+    pub fn configured_heuristics_for(
+        &self,
+        solver: SolverFamily,
+    ) -> Result<Vec<Heuristic>, String> {
+        match self.solver_options.get(&solver.as_str()) {
+            Some(options) if !options.heuristic.is_empty() => parse_values(&options.heuristic),
+            _ => self.configured_heuristics(),
+        }
+    }
+
+    /// Resolve a backend's channelling policy while retaining the fixture default elsewhere.
+    pub fn configured_channelling_for(
+        &self,
+        solver: SolverFamily,
+    ) -> Result<Vec<Channelling>, String> {
+        let configured = match self.solver_options.get(&solver.as_str()) {
+            Some(options) if !options.channelling.is_empty() => parse_values(&options.channelling)?,
+            _ => self.configured_channelling()?,
+        };
+        if configured.contains(&Channelling::Yes) {
+            return Err("setting 'channelling=yes' is not supported yet".to_string());
+        }
+        Ok(configured)
+    }
+
     pub fn configured_solvers(&self) -> Result<Vec<SolverFamily>, String> {
+        for name in self.solver_options.keys() {
+            name.parse::<SolverFamily>()?;
+        }
         parse_values(&self.solver)
     }
 
@@ -846,6 +893,43 @@ mod tests {
         );
         let config: TestConfig = toml::from_str("channelling = 'yes'").unwrap();
         assert!(config.configured_channelling().is_err());
+    }
+
+    #[test]
+    fn backend_choices_preserve_other_backends_and_validate_overrides() {
+        let config: TestConfig = toml::from_str(
+            "heuristic = 'f'\nchannelling = 'no'\n[solver-options.sat]\nheuristic = 'x'\nchannelling = 'uniform'",
+        ).unwrap();
+        for solver in [SolverFamily::Minion, SolverFamily::Z3] {
+            assert_eq!(
+                config.configured_heuristics_for(solver).unwrap(),
+                vec![Heuristic::First]
+            );
+            assert_eq!(
+                config.configured_channelling_for(solver).unwrap(),
+                vec![Channelling::No]
+            );
+        }
+        assert_eq!(
+            config.configured_heuristics_for(SolverFamily::Sat).unwrap(),
+            vec![Heuristic::All]
+        );
+        assert_eq!(
+            config
+                .configured_channelling_for(SolverFamily::Sat)
+                .unwrap(),
+            vec![Channelling::Uniform]
+        );
+        let invalid: TestConfig =
+            toml::from_str("[solver-options.sat]\nchannelling = 'yes'").unwrap();
+        assert!(
+            invalid
+                .configured_channelling_for(SolverFamily::Sat)
+                .is_err()
+        );
+        let invalid: TestConfig =
+            toml::from_str("[solver-options.unknown]\nheuristic = 'x'").unwrap();
+        assert!(invalid.configured_solvers().is_err());
     }
 
     #[test]

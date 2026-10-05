@@ -378,18 +378,9 @@ fn integration_test_inner_with_status(
     let solvers = config
         .configured_solvers()
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let heuristics = config
-        .configured_heuristics()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let channelling_settings = config
-        .configured_channelling()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
     let seed = config.seed;
     let solver_seed = config.solver_seed;
     let distinguish_rewriter = rewriters.len() > 1;
-    let distinguish_heuristic = heuristics.len() > 1 || heuristics.first() != Some(&Heuristic::All);
-    let distinguish_channelling =
-        channelling_settings.len() > 1 || channelling_settings.first() != Some(&Channelling::No);
 
     // Conjure output depends only on the input model, so cache it once per test case.
     let model_path = format!("{path}/{essence_base}.{extension}");
@@ -449,9 +440,20 @@ fn integration_test_inner_with_status(
     for comprehension_expander in comprehension_expanders {
         for parser in parsers.iter().copied() {
             for rewriter in rewriters.clone() {
-                for heuristic in heuristics.iter().copied() {
-                    for channelling in channelling_settings.iter().copied() {
-                        for solver in solvers.iter().copied() {
+                for solver in solvers.iter().copied() {
+                    let heuristics = config.configured_heuristics_for(solver).map_err(|err| {
+                        std::io::Error::new(std::io::ErrorKind::InvalidInput, err)
+                    })?;
+                    let channelling_settings =
+                        config.configured_channelling_for(solver).map_err(|err| {
+                            std::io::Error::new(std::io::ErrorKind::InvalidInput, err)
+                        })?;
+                    let distinguish_heuristic =
+                        heuristics.len() > 1 || heuristics.first() != Some(&Heuristic::All);
+                    let distinguish_channelling = channelling_settings.len() > 1
+                        || channelling_settings.first() != Some(&Channelling::No);
+                    for heuristic in heuristics.iter().copied() {
+                        for channelling in channelling_settings.iter().copied() {
                             let run_config = RecordedRunConfig {
                                 parser: parser.to_string(),
                                 rewriter: rewriter.to_string(),
