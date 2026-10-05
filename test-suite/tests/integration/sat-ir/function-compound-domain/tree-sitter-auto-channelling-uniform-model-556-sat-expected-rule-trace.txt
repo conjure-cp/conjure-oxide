@@ -58,27 +58,27 @@ new variables:
   findAux __3: bool
 new constraints:
   (__3) <-> (or([and([(a,-1) = (false,-1),true;int(1..)]),and([(a,-1) = (true,-1),true;int(1..)]);int(1..)]))
-  (__3) -> (or([and([(a,-1) = (false,-1),__2 = SafeIndex([false,true;int(1..)],[(sum([(f#packed_1 / 2),1;int(1..)]) - 0)]);int(1..)]),and([(a,-1) = (true,-1),__2 = SafeIndex([false,true;int(1..)],[(sum([f#packed_1 % 2,1;int(1..)]) - 0)]);int(1..)]);int(1..)]))
+  (__3) -> (or([and([(a,-1) = (false,-1),__2 = SafeIndex([false,true;int(1..)],[sum([(f#packed_1 / 2),1;int(1..)])]);int(1..)]),and([(a,-1) = (true,-1),__2 = SafeIndex([false,true;int(1..)],[sum([f#packed_1 % 2,1;int(1..)])]);int(1..)]);int(1..)]))
 
 --
 
-SafeIndex([false,true;int(1..)],[(sum([(f#packed_1 / 2),1;int(1..)]) - 0)])
+SafeIndex([false,true;int(1..)],[sum([(f#packed_1 / 2),1;int(1..)])])
    ~~> introduce_element ([("SAT", 18400)])
 __4
 new variables:
   findAux __4: bool
 new constraints:
-  satElement([false,true;int(1..)], (sum([(f#packed_1 / 2),1;int(1..)]) - 0), __4)
+  satElement([false,true;int(1..)], sum([(f#packed_1 / 2),1;int(1..)]), __4)
 
 --
 
-SafeIndex([false,true;int(1..)],[(sum([f#packed_1 % 2,1;int(1..)]) - 0)])
+SafeIndex([false,true;int(1..)],[sum([f#packed_1 % 2,1;int(1..)])])
    ~~> introduce_element ([("SAT", 18400)])
 __5
 new variables:
   findAux __5: bool
 new constraints:
-  satElement([false,true;int(1..)], (sum([f#packed_1 % 2,1;int(1..)]) - 0), __5)
+  satElement([false,true;int(1..)], sum([f#packed_1 % 2,1;int(1..)]), __5)
 
 --
 
@@ -312,14 +312,14 @@ __8,
 __6,
 __11,
 __18,
-satElement([false,true;int(1..)], (sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]) - 0), __4),
-satElement([false,true;int(1..)], (sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]) - 0), __5)
+satElement([false,true;int(1..)], sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]), __4),
+satElement([false,true;int(1..)], sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]), __5)
    ~~> remove_single_atom ([("SAT", 8400)])
 __6,
 __11,
 __18,
-satElement([false,true;int(1..)], (sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]) - 0), __4),
-satElement([false,true;int(1..)], (sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]) - 0), __5)
+satElement([false,true;int(1..)], sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]), __4),
+satElement([false,true;int(1..)], sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]), __5)
 new SAT encoding decisions:
   assert(__8) using tseitin
 
@@ -328,13 +328,13 @@ new SAT encoding decisions:
 __6,
 __11,
 __18,
-satElement([false,true;int(1..)], (sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]) - 0), __4),
-satElement([false,true;int(1..)], (sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]) - 0), __5)
+satElement([false,true;int(1..)], sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]), __4),
+satElement([false,true;int(1..)], sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]), __5)
    ~~> remove_single_atom ([("SAT", 8400)])
 __11,
 __18,
-satElement([false,true;int(1..)], (sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]) - 0), __4),
-satElement([false,true;int(1..)], (sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]) - 0), __5)
+satElement([false,true;int(1..)], sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]), __4),
+satElement([false,true;int(1..)], sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]), __5)
 new SAT encoding decisions:
   assert(__6) using tseitin
 
@@ -342,49 +342,25 @@ new SAT encoding decisions:
 
 __11,
 __18,
-satElement([false,true;int(1..)], (sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]) - 0), __4),
-satElement([false,true;int(1..)], (sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]) - 0), __5)
+satElement([false,true;int(1..)], sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]), __4),
+satElement([false,true;int(1..)], sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]), __5)
    ~~> remove_single_atom ([("SAT", 8400)])
 __18,
-satElement([false,true;int(1..)], (sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]) - 0), __4),
-satElement([false,true;int(1..)], (sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]) - 0), __5)
+satElement([false,true;int(1..)], sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]), __4),
+satElement([false,true;int(1..)], sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]), __5)
 new SAT encoding decisions:
   assert(__11) using tseitin
 
 --
 
 __18,
-satElement([false,true;int(1..)], (sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]) - 0), __4),
-satElement([false,true;int(1..)], (sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]) - 0), __5)
+satElement([false,true;int(1..)], sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]), __4),
+satElement([false,true;int(1..)], sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]), __5)
    ~~> remove_single_atom ([("SAT", 8400)])
-satElement([false,true;int(1..)], (sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]) - 0), __4),
-satElement([false,true;int(1..)], (sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]) - 0), __5)
+satElement([false,true;int(1..)], sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]), __4),
+satElement([false,true;int(1..)], sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]), __5)
 new SAT encoding decisions:
   assert(__18) using tseitin
-
---
-
-(sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]) - 0)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]),-(0);int(1..)])
-
---
-
-sum([sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1;int(1..)]),0;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([(SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) / 2),1,0;int(1..)])
-
---
-
-(sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]) - 0)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]),-(0);int(1..)])
-
---
-
-sum([sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1;int(1..)]),0;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([SATInt(Log, [f#packed_1#int_log_1,f#packed_1#int_log_2,f#packed_1#int_log_3;int(1..)] [0, 3]) % 2,1,0;int(1..)])
 
 --
 
