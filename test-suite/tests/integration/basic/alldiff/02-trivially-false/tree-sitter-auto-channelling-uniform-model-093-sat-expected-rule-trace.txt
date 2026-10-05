@@ -152,21 +152,19 @@ a
 
 --
 
-a
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3])
+allDifferent([a,b,a;int(1..3)])
+   ~~> select_alldifferent ([("SAT", 18500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> allDifferent(0+weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*b#int_log_1, 2*b#int_log_2, -4*b#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using None, AMO None, PB None
 
 --
 
-b
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3])
-
---
-
-a
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3])
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
 
 --
 
@@ -182,128 +180,106 @@ and([__6,__7;int(1..)])
 
 --
 
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__6,__7;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> and([__6,__7;int(1..)])) using tseitin
-
---
-
-and([__0,__1;int(1..)])
+and([__3,__4;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __9
 new variables:
   findAux __9: bool
 new SAT encoding decisions:
-  define(__9 <-> and([__0,__1;int(1..)])) using tseitin
+  define(__9 <-> and([__3,__4;int(1..)])) using tseitin
 
 --
 
-and([__3,__4;int(1..)])
+and([__6,__7;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __10
 new variables:
   findAux __10: bool
 new SAT encoding decisions:
-  define(__10 <-> and([__3,__4;int(1..)])) using tseitin
+  define(__10 <-> and([__6,__7;int(1..)])) using tseitin
 
 --
 
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..3)]),
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+__8,
 __2,
 __5,
+__11,
 __9,
-__10,
-__8
+__10
    ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..3)]),
+__2,
 __5,
+__11,
 __9,
-__10,
-__8
-new SAT encoding decisions:
-  assert(__2) using tseitin
-
---
-
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..3)]),
-__5,
-__9,
-__10,
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..3)]),
-__9,
-__10,
-__8
-new SAT encoding decisions:
-  assert(__5) using tseitin
-
---
-
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..3)]),
-__9,
-__10,
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..3)]),
-__10,
-__8
-new SAT encoding decisions:
-  assert(__9) using tseitin
-
---
-
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..3)]),
-__10,
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..3)]),
-__8
-new SAT encoding decisions:
-  assert(__10) using tseitin
-
---
-
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..3)]),
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..3)])
+__10
 new SAT encoding decisions:
   assert(__8) using tseitin
 
 --
 
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..3)])
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..)])
-
---
-
-allDifferent([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3;int(1..)] [1, 3]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3;int(1..)] [1, 3]);int(1..)])
-   ~~> select_alldifferent ([("SAT", 18500)])
-__11
-new variables:
-  findAux __11: bool
+__2,
+__5,
+__11,
+__9,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__5,
+__11,
+__9,
+__10
 new SAT encoding decisions:
-  define(__11 <-> allDifferent(0+weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*b#int_log_1, 2*b#int_log_2, -4*b#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using None, AMO None, PB None
+  assert(__2) using tseitin
 
 --
 
-__11
+__5,
+__11,
+__9,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__11,
+__9,
+__10
+new SAT encoding decisions:
+  assert(__5) using tseitin
+
+--
+
+__11,
+__9,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__9,
+__10
+new SAT encoding decisions:
+  assert(__11) using tseitin
+
+--
+
+__9,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__10
+new SAT encoding decisions:
+  assert(__9) using tseitin
+
+--
+
+__10
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__11) using tseitin
+  assert(__10) using tseitin
 
 --
 
@@ -348,14 +324,14 @@ define(__4 <-> integer-weighted(1*b#int_log_1, 2*b#int_log_2, -4*b#int_log_3) Le
 define(__5 <-> integer-weighted(1*b#int_log_1, 2*b#int_log_2, -4*b#int_log_3, -1*c#int_log_1, -2*c#int_log_2, 4*c#int_log_3) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
 define(__6 <-> integer-weighted(1*c#int_log_1, 2*c#int_log_2, -4*c#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
 define(__7 <-> integer-weighted(1*c#int_log_1, 2*c#int_log_2, -4*c#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__8 <-> and([__6,__7;int(1..)])) using tseitin,
-define(__9 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__10 <-> and([__3,__4;int(1..)])) using tseitin,
+define(__8 <-> allDifferent(0+weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*b#int_log_1, 2*b#int_log_2, -4*b#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__9 <-> and([__3,__4;int(1..)])) using tseitin,
+define(__10 <-> and([__6,__7;int(1..)])) using tseitin,
+define(__11 <-> and([__0,__1;int(1..)])) using tseitin,
+assert(__8) using tseitin,
 assert(__2) using tseitin,
 assert(__5) using tseitin,
+assert(__11) using tseitin,
 assert(__9) using tseitin,
-assert(__10) using tseitin,
-assert(__8) using tseitin,
-define(__11 <-> allDifferent(0+weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*b#int_log_1, 2*b#int_log_2, -4*b#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#int_log_1, 2*a#int_log_2, -4*a#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-assert(__11) using tseitin
+assert(__10) using tseitin
 

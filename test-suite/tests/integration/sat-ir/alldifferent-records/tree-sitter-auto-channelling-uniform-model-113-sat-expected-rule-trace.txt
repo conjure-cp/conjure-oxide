@@ -21,11 +21,75 @@ or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)
 
 --
 
-exception
-   ~~> select_representation ([("ReprGeneral", 10000)])
-exception
+allDifferentExcept([x,y,record {value = -2,flag = false};int(1..3)], exception)
+   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
+sat-allDifferent-comparisons([or([x != y,__0;int(1..)]),or([x != record {value = -2,flag = false},__0;int(1..)]),or([y != record {value = -2,flag = false},__1;int(1..)]);int(1..)])
 new variables:
-  find exception#packed_1: int(0..3)
+  findAux __0: bool
+  findAux __1: bool
+new constraints:
+  (__0) <-> (x = exception)
+  (__1) <-> (y = exception)
+
+--
+
+allDifferent([x,y;int(1..2)])
+   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
+sat-allDifferent-comparisons([x != y;int(1..)])
+
+--
+
+allDifferentExcept([x,y;int(1..2)], exception)
+   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
+sat-allDifferent-comparisons([or([x != y,__2;int(1..)]);int(1..)])
+new variables:
+  findAux __2: bool
+new constraints:
+  (__2) <-> (x = exception)
+
+--
+
+allDifferentExcept([x,x,y;int(1..3)], exception)
+   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
+sat-allDifferent-comparisons([or([x != x,__3;int(1..)]),or([x != y,__3;int(1..)]),or([x != y,__4;int(1..)]);int(1..)])
+new variables:
+  findAux __3: bool
+  findAux __4: bool
+new constraints:
+  (__3) <-> (x = exception)
+  (__4) <-> (x = exception)
+
+--
+
+allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})
+   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
+sat-allDifferent-comparisons([or([x != y,__5;int(1..)]);int(1..)])
+new variables:
+  findAux __5: bool
+new constraints:
+  (__5) <-> (x = record {value = -2,flag = false})
+
+--
+
+allDifferent([x,y;int(1..2)])
+   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
+sat-allDifferent-comparisons([x != y;int(1..)])
+
+--
+
+allDifferentExcept([x,y;int(1..2)], exception)
+   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
+sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)])
+new variables:
+  findAux __6: bool
+new constraints:
+  (__6) <-> (x = exception)
+
+--
+
+allDifferent([x,y;int(1..2)])
+   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
+sat-allDifferent-comparisons([x != y;int(1..)])
 
 --
 
@@ -37,6 +101,14 @@ new variables:
 
 --
 
+x = exception
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x = exception
+new variables:
+  find exception#packed_1: int(0..3)
+
+--
+
 y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
@@ -45,12 +117,30 @@ new variables:
 
 --
 
+y = exception
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+y = exception
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
 exception
    ~~> select_representation ([("ReprGeneral", 10000)])
 exception
 
 --
 
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
 exception
    ~~> select_representation ([("ReprGeneral", 10000)])
 exception
@@ -63,21 +153,9 @@ x
 
 --
 
-y
+exception
    ~~> select_representation ([("ReprGeneral", 10000)])
-y
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-y
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y
+exception
 
 --
 
@@ -90,24 +168,6 @@ x
 x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
-
---
-
-y
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-y
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y
 
 --
 
@@ -153,21 +213,119 @@ y
 
 --
 
-allDifferentExcept([x,y,record {value = -2,flag = false};int(1..3)], exception),
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)])
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+sat-allDifferent-comparisons([or([x != y,__0;int(1..)]),or([x != record {value = -2,flag = false},__0;int(1..)]),or([y != record {value = -2,flag = false},__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([x != y;int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([x != y,__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([or([__3;int(1..)]),or([x != y,__3;int(1..)]),or([x != y,__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([x != y;int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([x != y,__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([x != y;int(1..)]));int(1..)]),
+(__0) <-> (x = exception),
+(__1) <-> (y = exception),
+(__2) <-> (x = exception),
+(__3) <-> (x = exception),
+(__4) <-> (x = exception),
+(__5) <-> (x = record {value = -2,flag = false}),
+(__6) <-> (x = exception)
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-allDifferentExcept([x,y,record {value = -2,flag = false};int(1..3)], exception),
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)])
+sat-allDifferent-comparisons([or([x != y,__0;int(1..)]),or([x != record {value = -2,flag = false},__0;int(1..)]),or([y != record {value = -2,flag = false},__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([x != y;int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([x != y,__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([or([__3;int(1..)]),or([x != y,__3;int(1..)]),or([x != y,__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([x != y;int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([x != y,__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([x != y;int(1..)]));int(1..)]),
+(__0) <-> (x = exception),
+(__1) <-> (y = exception),
+(__2) <-> (x = exception),
+(__3) <-> (x = exception),
+(__4) <-> (x = exception),
+(__5) <-> (x = record {value = -2,flag = false}),
+(__6) <-> (x = exception)
 new variables:
   find exception#packed_1#int_log_1: bool
   find exception#packed_1#int_log_2: bool
@@ -179,204 +337,69 @@ new variables:
   find y#packed_1#int_log_2: bool
   find y#packed_1#int_log_3: bool
 new constraints:
-  or([and([SATInt(Log, [exception#packed_1#int_log_1,exception#packed_1#int_log_2,exception#packed_1#int_log_3;int(1..)] [0, 3]) >= 0,SATInt(Log, [exception#packed_1#int_log_1,exception#packed_1#int_log_2,exception#packed_1#int_log_3;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
   or([and([SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= 0,SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [exception#packed_1#int_log_1,exception#packed_1#int_log_2,exception#packed_1#int_log_3;int(1..)] [0, 3]) >= 0,SATInt(Log, [exception#packed_1#int_log_1,exception#packed_1#int_log_2,exception#packed_1#int_log_3;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
   or([and([SATInt(Log, [y#packed_1#int_log_1,y#packed_1#int_log_2,y#packed_1#int_log_3;int(1..)] [0, 3]) >= 0,SATInt(Log, [y#packed_1#int_log_1,y#packed_1#int_log_2,y#packed_1#int_log_3;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
-
---
-
-SATInt(Log, [exception#packed_1#int_log_1,exception#packed_1#int_log_2,exception#packed_1#int_log_3;int(1..)] [0, 3]) >= 0
-   ~~> select_integer_relation ([("SAT", 18500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*exception#packed_1#int_log_1, 2*exception#packed_1#int_log_2, -4*exception#packed_1#int_log_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
-
---
-
-SATInt(Log, [exception#packed_1#int_log_1,exception#packed_1#int_log_2,exception#packed_1#int_log_3;int(1..)] [0, 3]) <= 3
-   ~~> select_integer_relation ([("SAT", 18500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*exception#packed_1#int_log_1, 2*exception#packed_1#int_log_2, -4*exception#packed_1#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
 SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= 0
    ~~> select_integer_relation ([("SAT", 18500)])
-__2
+__7
 new variables:
-  findAux __2: bool
+  findAux __7: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__7 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
 SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) <= 3
    ~~> select_integer_relation ([("SAT", 18500)])
-__3
+__8
 new variables:
-  findAux __3: bool
+  findAux __8: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__8 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Log, [exception#packed_1#int_log_1,exception#packed_1#int_log_2,exception#packed_1#int_log_3;int(1..)] [0, 3]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> integer-weighted(1*exception#packed_1#int_log_1, 2*exception#packed_1#int_log_2, -4*exception#packed_1#int_log_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Log, [exception#packed_1#int_log_1,exception#packed_1#int_log_2,exception#packed_1#int_log_3;int(1..)] [0, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(1*exception#packed_1#int_log_1, 2*exception#packed_1#int_log_2, -4*exception#packed_1#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
 SATInt(Log, [y#packed_1#int_log_1,y#packed_1#int_log_2,y#packed_1#int_log_3;int(1..)] [0, 3]) >= 0
    ~~> select_integer_relation ([("SAT", 18500)])
-__4
+__11
 new variables:
-  findAux __4: bool
+  findAux __11: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__11 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
 SATInt(Log, [y#packed_1#int_log_1,y#packed_1#int_log_2,y#packed_1#int_log_3;int(1..)] [0, 3]) <= 3
    ~~> select_integer_relation ([("SAT", 18500)])
-__5
+__12
 new variables:
-  findAux __5: bool
+  findAux __12: bool
 new SAT encoding decisions:
-  define(__5 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-or([and([__2,__3;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__2,__3;int(1..)])
-
---
-
-or([and([__4,__5;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__4,__5;int(1..)])
-
---
-
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-and([__4,__5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> and([__4,__5;int(1..)])) using tseitin
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-allDifferentExcept([x,y,record {value = -2,flag = false};int(1..3)], exception),
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__8,
-__6,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferentExcept([x,y,record {value = -2,flag = false};int(1..3)], exception),
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__6,
-__7
-new SAT encoding decisions:
-  assert(__8) using tseitin
-
---
-
-allDifferentExcept([x,y,record {value = -2,flag = false};int(1..3)], exception),
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__6,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferentExcept([x,y,record {value = -2,flag = false};int(1..3)], exception),
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__7
-new SAT encoding decisions:
-  assert(__6) using tseitin
-
---
-
-allDifferentExcept([x,y,record {value = -2,flag = false};int(1..3)], exception),
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferentExcept([x,y,record {value = -2,flag = false};int(1..3)], exception),
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)])
-new SAT encoding decisions:
-  assert(__7) using tseitin
-
---
-
-allDifferentExcept([x,y,record {value = -2,flag = false};int(1..3)], exception)
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferentExcept([x,y,record {value = -2,flag = false};int(1..)], exception)
-
---
-
-allDifferentExcept([x,y,record {value = -2,flag = false};int(1..)], exception)
-   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
-sat-allDifferent-comparisons([or([x != y,__9;int(1..)]),or([x != record {value = -2,flag = false},__9;int(1..)]),or([y != record {value = -2,flag = false},__10;int(1..)]);int(1..)])
-new variables:
-  findAux __9: bool
-  findAux __10: bool
-new constraints:
-  (__9) <-> (x = exception)
-  (__10) <-> (y = exception)
+  define(__12 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -400,11 +423,11 @@ exception#packed_1
 
 x#packed_1 = exception#packed_1
    ~~> select_integer_relation ([("SAT", 18500)])
-__11
+__13
 new variables:
-  findAux __11: bool
+  findAux __13: bool
 new SAT encoding decisions:
-  define(__11 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__13 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
 
 --
 
@@ -428,11 +451,145 @@ exception#packed_1
 
 y#packed_1 = exception#packed_1
    ~~> select_integer_relation ([("SAT", 18500)])
-__12
+__14
 new variables:
-  findAux __12: bool
+  findAux __14: bool
 new SAT encoding decisions:
-  define(__12 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__14 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+
+--
+
+x = exception
+   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
+x#packed_1 = exception#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+exception#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+exception#packed_1
+
+--
+
+x#packed_1 = exception#packed_1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+
+--
+
+x = exception
+   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
+x#packed_1 = exception#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+exception#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+exception#packed_1
+
+--
+
+x#packed_1 = exception#packed_1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+
+--
+
+x = exception
+   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
+x#packed_1 = exception#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+exception#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+exception#packed_1
+
+--
+
+x#packed_1 = exception#packed_1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+
+--
+
+x = record {value = -2,flag = false}
+   ~~> record_packed_var_eq_lit ([("ReprRecordPacked", 9700)])
+x#packed_1 = 0
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+x#packed_1 = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+x = exception
+   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
+x#packed_1 = exception#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+exception#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+exception#packed_1
+
+--
+
+x#packed_1 = exception#packed_1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
 
 --
 
@@ -456,190 +613,21 @@ y#packed_1
 
 x#packed_1 != y#packed_1
    ~~> select_integer_relation ([("SAT", 18500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
-
---
-
-x != record {value = -2,flag = false}
-   ~~> record_packed_var_eq_lit ([("ReprRecordPacked", 9700)])
-x#packed_1 != 0
-
---
-
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
-
---
-
-x#packed_1 != 0
-   ~~> select_integer_relation ([("SAT", 18500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
-
---
-
-y != record {value = -2,flag = false}
-   ~~> record_packed_var_eq_lit ([("ReprRecordPacked", 9700)])
-y#packed_1 != 0
-
---
-
-y#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y#packed_1
-
---
-
-y#packed_1 != 0
-   ~~> select_integer_relation ([("SAT", 18500)])
-__15
-new variables:
-  findAux __15: bool
-new SAT encoding decisions:
-  define(__15 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
-
---
-
-(__9) <-> (__11)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__16
-new variables:
-  findAux __16: bool
-new SAT encoding decisions:
-  define(__16 <-> (__9) <-> (__11)) using tseitin
-
---
-
-(__10) <-> (__12)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__17
-new variables:
-  findAux __17: bool
-new SAT encoding decisions:
-  define(__17 <-> (__10) <-> (__12)) using tseitin
-
---
-
-or([__13,__9;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__18
-new variables:
-  findAux __18: bool
-new SAT encoding decisions:
-  define(__18 <-> or([__13,__9;int(1..)])) using tseitin
-
---
-
-or([__14,__9;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__19
-new variables:
-  findAux __19: bool
-new SAT encoding decisions:
-  define(__19 <-> or([__14,__9;int(1..)])) using tseitin
-
---
-
-or([__15,__10;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __20
 new variables:
   findAux __20: bool
 new SAT encoding decisions:
-  define(__20 <-> or([__15,__10;int(1..)])) using tseitin
+  define(__20 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
 
 --
 
-sat-allDifferent-comparisons([__18,__19,__20;int(1..)])
+sat-allDifferent-comparisons([__20;int(1..)])
    ~~> select_compound_alldifferent ([("SAT", 18500)])
 __21
 new variables:
   findAux __21: bool
 new SAT encoding decisions:
-  define(__21 <-> allDifferentComparisons(__18, __19, __20)) using None, AMO None, PB None
-
---
-
-__21,
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__16,
-__17
-   ~~> remove_single_atom ([("SAT", 8400)])
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__16,
-__17
-new SAT encoding decisions:
-  assert(__21) using tseitin
-
---
-
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__16,
-__17
-   ~~> remove_single_atom ([("SAT", 8400)])
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__17
-new SAT encoding decisions:
-  assert(__16) using tseitin
-
---
-
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__17
-   ~~> remove_single_atom ([("SAT", 8400)])
-(ordinary) <-> (allDifferent([x,y;int(1..2)])),
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)])
-new SAT encoding decisions:
-  assert(__17) using tseitin
-
---
-
-allDifferent([x,y;int(1..2)])
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferent([x,y;int(1..)])
-
---
-
-allDifferent([x,y;int(1..)])
-   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
-sat-allDifferent-comparisons([x != y;int(1..)])
+  define(__21 <-> allDifferentComparisons(__20)) using None, AMO None, PB None
 
 --
 
@@ -671,84 +659,85 @@ new SAT encoding decisions:
 
 --
 
-sat-allDifferent-comparisons([__22;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
+x != record {value = -2,flag = false}
+   ~~> record_packed_var_eq_lit ([("ReprRecordPacked", 9700)])
+x#packed_1 != 0
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+x#packed_1 != 0
+   ~~> select_integer_relation ([("SAT", 18500)])
 __23
 new variables:
   findAux __23: bool
 new SAT encoding decisions:
-  define(__23 <-> allDifferentComparisons(__22)) using None, AMO None, PB None
+  define(__23 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
-(ordinary) <-> (__23)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+y != record {value = -2,flag = false}
+   ~~> record_packed_var_eq_lit ([("ReprRecordPacked", 9700)])
+y#packed_1 != 0
+
+--
+
+y#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#packed_1
+
+--
+
+y#packed_1 != 0
+   ~~> select_integer_relation ([("SAT", 18500)])
 __24
 new variables:
   findAux __24: bool
 new SAT encoding decisions:
-  define(__24 <-> (ordinary) <-> (__23)) using tseitin
+  define(__24 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
-__24,
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)])
-   ~~> remove_single_atom ([("SAT", 8400)])
-(allowed) <-> (allDifferentExcept([x,y;int(1..2)], exception)),
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)])
-new SAT encoding decisions:
-  assert(__24) using tseitin
+x != y
+   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
+x#packed_1 != y#packed_1
 
 --
 
-allDifferentExcept([x,y;int(1..2)], exception)
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferentExcept([x,y;int(1..)], exception)
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
 
 --
 
-allDifferentExcept([x,y;int(1..)], exception)
-   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
-sat-allDifferent-comparisons([or([x != y,__25;int(1..)]);int(1..)])
+y#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#packed_1
+
+--
+
+x#packed_1 != y#packed_1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__25
 new variables:
   findAux __25: bool
-new constraints:
-  (__25) <-> (x = exception)
+new SAT encoding decisions:
+  define(__25 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
 
 --
 
-x = exception
-   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
-x#packed_1 = exception#packed_1
-
---
-
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
-
---
-
-exception#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-exception#packed_1
-
---
-
-x#packed_1 = exception#packed_1
-   ~~> select_integer_relation ([("SAT", 18500)])
+sat-allDifferent-comparisons([__25;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __26
 new variables:
   findAux __26: bool
 new SAT encoding decisions:
-  define(__26 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__26 <-> allDifferentComparisons(__25)) using None, AMO None, PB None
 
 --
 
@@ -780,99 +769,131 @@ new SAT encoding decisions:
 
 --
 
-(__25) <-> (__26)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+x != y
+   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
+x#packed_1 != y#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+y#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#packed_1
+
+--
+
+x#packed_1 != y#packed_1
+   ~~> select_integer_relation ([("SAT", 18500)])
 __28
 new variables:
   findAux __28: bool
 new SAT encoding decisions:
-  define(__28 <-> (__25) <-> (__26)) using tseitin
+  define(__28 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
 
 --
 
-or([__27,__25;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+x != y
+   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
+x#packed_1 != y#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+y#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#packed_1
+
+--
+
+x#packed_1 != y#packed_1
+   ~~> select_integer_relation ([("SAT", 18500)])
 __29
 new variables:
   findAux __29: bool
 new SAT encoding decisions:
-  define(__29 <-> or([__27,__25;int(1..)])) using tseitin
+  define(__29 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
 
 --
 
-sat-allDifferent-comparisons([__29;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
+x != y
+   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
+x#packed_1 != y#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+y#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#packed_1
+
+--
+
+x#packed_1 != y#packed_1
+   ~~> select_integer_relation ([("SAT", 18500)])
 __30
 new variables:
   findAux __30: bool
 new SAT encoding decisions:
-  define(__30 <-> allDifferentComparisons(__29)) using None, AMO None, PB None
+  define(__30 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
 
 --
 
-(allowed) <-> (__30)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+x != y
+   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
+x#packed_1 != y#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+y#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#packed_1
+
+--
+
+x#packed_1 != y#packed_1
+   ~~> select_integer_relation ([("SAT", 18500)])
 __31
 new variables:
   findAux __31: bool
 new SAT encoding decisions:
-  define(__31 <-> (allowed) <-> (__30)) using tseitin
+  define(__31 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
 
 --
 
-__31,
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__28
-   ~~> remove_single_atom ([("SAT", 8400)])
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__28
-new SAT encoding decisions:
-  assert(__31) using tseitin
-
---
-
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__28
-   ~~> remove_single_atom ([("SAT", 8400)])
-(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)])
-new SAT encoding decisions:
-  assert(__28) using tseitin
-
---
-
-allDifferentExcept([x,x,y;int(1..3)], exception)
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferentExcept([x,x,y;int(1..)], exception)
-
---
-
-allDifferentExcept([x,x,y;int(1..)], exception)
-   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
-sat-allDifferent-comparisons([or([x != x,__32;int(1..)]),or([x != y,__32;int(1..)]),or([x != y,__33;int(1..)]);int(1..)])
+sat-allDifferent-comparisons([__31;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
+__32
 new variables:
   findAux __32: bool
-  findAux __33: bool
-new constraints:
-  (__32) <-> (x = exception)
-  (__33) <-> (x = exception)
+new SAT encoding decisions:
+  define(__32 <-> allDifferentComparisons(__31)) using None, AMO None, PB None
 
 --
 
-x = exception
+x != y
    ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
-x#packed_1 = exception#packed_1
+x#packed_1 != y#packed_1
 
 --
 
@@ -882,515 +903,303 @@ x#packed_1
 
 --
 
-exception#packed_1
+y#packed_1
    ~~> select_representation ([("ReprGeneral", 10000)])
-exception#packed_1
+y#packed_1
 
 --
 
-x#packed_1 = exception#packed_1
+x#packed_1 != y#packed_1
    ~~> select_integer_relation ([("SAT", 18500)])
+__33
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+
+--
+
+!(__26)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
 __34
 new variables:
   findAux __34: bool
 new SAT encoding decisions:
-  define(__34 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__34 <-> !(__26)) using tseitin
 
 --
 
-x = exception
-   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
-x#packed_1 = exception#packed_1
-
---
-
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
-
---
-
-exception#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-exception#packed_1
-
---
-
-x#packed_1 = exception#packed_1
-   ~~> select_integer_relation ([("SAT", 18500)])
+!(__32)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
 __35
 new variables:
   findAux __35: bool
 new SAT encoding decisions:
-  define(__35 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__35 <-> !(__32)) using tseitin
 
 --
 
-x != y
-   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
-x#packed_1 != y#packed_1
+or([and([__9,__10;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__9,__10;int(1..)])
 
 --
 
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
+or([and([__11,__12;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__11,__12;int(1..)])
 
 --
 
-y#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y#packed_1
+or([and([__7,__8;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__7,__8;int(1..)])
 
 --
 
-x#packed_1 != y#packed_1
-   ~~> select_integer_relation ([("SAT", 18500)])
+or([__3;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__3
+
+--
+
+and([__11,__12;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __36
 new variables:
   findAux __36: bool
 new SAT encoding decisions:
-  define(__36 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__36 <-> and([__11,__12;int(1..)])) using tseitin
 
 --
 
-x != y
-   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
-x#packed_1 != y#packed_1
-
---
-
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
-
---
-
-y#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y#packed_1
-
---
-
-x#packed_1 != y#packed_1
-   ~~> select_integer_relation ([("SAT", 18500)])
+and([__7,__8;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __37
 new variables:
   findAux __37: bool
 new SAT encoding decisions:
-  define(__37 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__37 <-> and([__7,__8;int(1..)])) using tseitin
 
 --
 
-or([__32;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__32
-
---
-
-(__32) <-> (__35)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+and([__9,__10;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __38
 new variables:
   findAux __38: bool
 new SAT encoding decisions:
-  define(__38 <-> (__32) <-> (__35)) using tseitin
+  define(__38 <-> and([__9,__10;int(1..)])) using tseitin
 
 --
 
-(__33) <-> (__34)
+(ordinary) <-> (__21)
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __39
 new variables:
   findAux __39: bool
 new SAT encoding decisions:
-  define(__39 <-> (__33) <-> (__34)) using tseitin
+  define(__39 <-> (ordinary) <-> (__21)) using tseitin
 
 --
 
-or([__36,__32;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+(negative) <-> (__34)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __40
 new variables:
   findAux __40: bool
 new SAT encoding decisions:
-  define(__40 <-> or([__36,__32;int(1..)])) using tseitin
+  define(__40 <-> (negative) <-> (__34)) using tseitin
 
 --
 
-or([__37,__33;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+(__0) <-> (__13)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __41
 new variables:
   findAux __41: bool
 new SAT encoding decisions:
-  define(__41 <-> or([__37,__33;int(1..)])) using tseitin
+  define(__41 <-> (__0) <-> (__13)) using tseitin
 
 --
 
-sat-allDifferent-comparisons([__32,__40,__41;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
+(__1) <-> (__14)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __42
 new variables:
   findAux __42: bool
 new SAT encoding decisions:
-  define(__42 <-> allDifferentComparisons(__32, __40, __41)) using None, AMO None, PB None
+  define(__42 <-> (__1) <-> (__14)) using tseitin
 
 --
 
-(repeated) <-> (__42)
+(__2) <-> (__15)
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __43
 new variables:
   findAux __43: bool
 new SAT encoding decisions:
-  define(__43 <-> (repeated) <-> (__42)) using tseitin
+  define(__43 <-> (__2) <-> (__15)) using tseitin
 
 --
 
-__43,
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__38,
-__39
-   ~~> remove_single_atom ([("SAT", 8400)])
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__38,
-__39
-new SAT encoding decisions:
-  assert(__43) using tseitin
-
---
-
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__38,
-__39
-   ~~> remove_single_atom ([("SAT", 8400)])
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__39
-new SAT encoding decisions:
-  assert(__38) using tseitin
-
---
-
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__39
-   ~~> remove_single_atom ([("SAT", 8400)])
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-(fixed) <-> (allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)])
-new SAT encoding decisions:
-  assert(__39) using tseitin
-
---
-
-allDifferentExcept([x,y;int(1..2)], record {value = -2,flag = false})
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferentExcept([x,y;int(1..)], record {value = -2,flag = false})
-
---
-
-allDifferentExcept([x,y;int(1..)], record {value = -2,flag = false})
-   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
-sat-allDifferent-comparisons([or([x != y,__44;int(1..)]);int(1..)])
+(__3) <-> (__16)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__44
 new variables:
   findAux __44: bool
-new constraints:
-  (__44) <-> (x = record {value = -2,flag = false})
+new SAT encoding decisions:
+  define(__44 <-> (__3) <-> (__16)) using tseitin
 
 --
 
-x = record {value = -2,flag = false}
-   ~~> record_packed_var_eq_lit ([("ReprRecordPacked", 9700)])
-x#packed_1 = 0
-
---
-
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
-
---
-
-x#packed_1 = 0
-   ~~> select_integer_relation ([("SAT", 18500)])
+(__4) <-> (__17)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __45
 new variables:
   findAux __45: bool
 new SAT encoding decisions:
-  define(__45 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__45 <-> (__4) <-> (__17)) using tseitin
 
 --
 
-x != y
-   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
-x#packed_1 != y#packed_1
-
---
-
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
-
---
-
-y#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y#packed_1
-
---
-
-x#packed_1 != y#packed_1
-   ~~> select_integer_relation ([("SAT", 18500)])
+(__5) <-> (__18)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __46
 new variables:
   findAux __46: bool
 new SAT encoding decisions:
-  define(__46 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__46 <-> (__5) <-> (__18)) using tseitin
 
 --
 
-(__44) <-> (__45)
+(__6) <-> (__19)
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __47
 new variables:
   findAux __47: bool
 new SAT encoding decisions:
-  define(__47 <-> (__44) <-> (__45)) using tseitin
+  define(__47 <-> (__6) <-> (__19)) using tseitin
 
 --
 
-or([__46,__44;int(1..)])
+or([__22,__0;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __48
 new variables:
   findAux __48: bool
 new SAT encoding decisions:
-  define(__48 <-> or([__46,__44;int(1..)])) using tseitin
+  define(__48 <-> or([__22,__0;int(1..)])) using tseitin
 
 --
 
-sat-allDifferent-comparisons([__48;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
+or([__23,__0;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __49
 new variables:
   findAux __49: bool
 new SAT encoding decisions:
-  define(__49 <-> allDifferentComparisons(__48)) using None, AMO None, PB None
+  define(__49 <-> or([__23,__0;int(1..)])) using tseitin
 
 --
 
-(fixed) <-> (__49)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+or([__24,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __50
 new variables:
   findAux __50: bool
 new SAT encoding decisions:
-  define(__50 <-> (fixed) <-> (__49)) using tseitin
+  define(__50 <-> or([__24,__1;int(1..)])) using tseitin
 
 --
 
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-__50,
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__47
-   ~~> remove_single_atom ([("SAT", 8400)])
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__47
-new SAT encoding decisions:
-  assert(__50) using tseitin
-
---
-
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__47
-   ~~> remove_single_atom ([("SAT", 8400)])
-(negative) <-> (!(allDifferent([x,y;int(1..2)]))),
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)])
-new SAT encoding decisions:
-  assert(__47) using tseitin
-
---
-
-allDifferent([x,y;int(1..2)])
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferent([x,y;int(1..)])
-
---
-
-allDifferent([x,y;int(1..)])
-   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
-sat-allDifferent-comparisons([x != y;int(1..)])
-
---
-
-x != y
-   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
-x#packed_1 != y#packed_1
-
---
-
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
-
---
-
-y#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y#packed_1
-
---
-
-x#packed_1 != y#packed_1
-   ~~> select_integer_relation ([("SAT", 18500)])
+sat-allDifferent-comparisons([__48,__49,__50;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __51
 new variables:
   findAux __51: bool
 new SAT encoding decisions:
-  define(__51 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__51 <-> allDifferentComparisons(__48, __49, __50)) using None, AMO None, PB None
 
 --
 
-sat-allDifferent-comparisons([__51;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
+or([__27,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __52
 new variables:
   findAux __52: bool
 new SAT encoding decisions:
-  define(__52 <-> allDifferentComparisons(__51)) using None, AMO None, PB None
+  define(__52 <-> or([__27,__2;int(1..)])) using tseitin
 
 --
 
-!(__52)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
+sat-allDifferent-comparisons([__52;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __53
 new variables:
   findAux __53: bool
 new SAT encoding decisions:
-  define(__53 <-> !(__52)) using tseitin
+  define(__53 <-> allDifferentComparisons(__52)) using None, AMO None, PB None
 
 --
 
-(negative) <-> (__53)
+(allowed) <-> (__53)
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __54
 new variables:
   findAux __54: bool
 new SAT encoding decisions:
-  define(__54 <-> (negative) <-> (__53)) using tseitin
+  define(__54 <-> (allowed) <-> (__53)) using tseitin
 
 --
 
-__54,
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)])
-   ~~> remove_single_atom ([("SAT", 8400)])
-or([allDifferentExcept([x,y;int(1..2)], exception),!(allDifferent([x,y;int(1..2)]));int(1..)])
-new SAT encoding decisions:
-  assert(__54) using tseitin
-
---
-
-allDifferentExcept([x,y;int(1..2)], exception)
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferentExcept([x,y;int(1..)], exception)
-
---
-
-allDifferentExcept([x,y;int(1..)], exception)
-   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
-sat-allDifferent-comparisons([or([x != y,__55;int(1..)]);int(1..)])
+or([__28,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__55
 new variables:
   findAux __55: bool
-new constraints:
-  (__55) <-> (x = exception)
+new SAT encoding decisions:
+  define(__55 <-> or([__28,__3;int(1..)])) using tseitin
 
 --
 
-x = exception
-   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
-x#packed_1 = exception#packed_1
-
---
-
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
-
---
-
-exception#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-exception#packed_1
-
---
-
-x#packed_1 = exception#packed_1
-   ~~> select_integer_relation ([("SAT", 18500)])
+or([__29,__4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __56
 new variables:
   findAux __56: bool
 new SAT encoding decisions:
-  define(__56 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__56 <-> or([__29,__4;int(1..)])) using tseitin
 
 --
 
-x != y
-   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
-x#packed_1 != y#packed_1
-
---
-
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
-
---
-
-y#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y#packed_1
-
---
-
-x#packed_1 != y#packed_1
-   ~~> select_integer_relation ([("SAT", 18500)])
+sat-allDifferent-comparisons([__3,__55,__56;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __57
 new variables:
   findAux __57: bool
 new SAT encoding decisions:
-  define(__57 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__57 <-> allDifferentComparisons(__3, __55, __56)) using None, AMO None, PB None
 
 --
 
-(__55) <-> (__56)
+(repeated) <-> (__57)
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __58
 new variables:
   findAux __58: bool
 new SAT encoding decisions:
-  define(__58 <-> (__55) <-> (__56)) using tseitin
+  define(__58 <-> (repeated) <-> (__57)) using tseitin
 
 --
 
-or([__57,__55;int(1..)])
+or([__30,__5;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __59
 new variables:
   findAux __59: bool
 new SAT encoding decisions:
-  define(__59 <-> or([__57,__55;int(1..)])) using tseitin
+  define(__59 <-> or([__30,__5;int(1..)])) using tseitin
 
 --
 
@@ -1404,90 +1213,435 @@ new SAT encoding decisions:
 
 --
 
-or([__60,!(allDifferent([x,y;int(1..2)]));int(1..)]),
-__58
-   ~~> remove_single_atom ([("SAT", 8400)])
-or([__60,!(allDifferent([x,y;int(1..2)]));int(1..)])
-new SAT encoding decisions:
-  assert(__58) using tseitin
-
---
-
-allDifferent([x,y;int(1..2)])
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferent([x,y;int(1..)])
-
---
-
-allDifferent([x,y;int(1..)])
-   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
-sat-allDifferent-comparisons([x != y;int(1..)])
-
---
-
-x != y
-   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
-x#packed_1 != y#packed_1
-
---
-
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
-
---
-
-y#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y#packed_1
-
---
-
-x#packed_1 != y#packed_1
-   ~~> select_integer_relation ([("SAT", 18500)])
+(fixed) <-> (__60)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __61
 new variables:
   findAux __61: bool
 new SAT encoding decisions:
-  define(__61 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__61 <-> (fixed) <-> (__60)) using tseitin
 
 --
 
-sat-allDifferent-comparisons([__61;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
+or([__33,__6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __62
 new variables:
   findAux __62: bool
 new SAT encoding decisions:
-  define(__62 <-> allDifferentComparisons(__61)) using None, AMO None, PB None
+  define(__62 <-> or([__33,__6;int(1..)])) using tseitin
 
 --
 
-!(__62)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
+sat-allDifferent-comparisons([__62;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __63
 new variables:
   findAux __63: bool
 new SAT encoding decisions:
-  define(__63 <-> !(__62)) using tseitin
+  define(__63 <-> allDifferentComparisons(__62)) using None, AMO None, PB None
 
 --
 
-or([__60,__63;int(1..)])
+or([__63,__35;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __64
 new variables:
   findAux __64: bool
 new SAT encoding decisions:
-  define(__64 <-> or([__60,__63;int(1..)])) using tseitin
+  define(__64 <-> or([__63,__35;int(1..)])) using tseitin
 
 --
 
-__64
+__51,
+__39,
+__54,
+__58,
+__40,
+__61,
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__39,
+__54,
+__58,
+__40,
+__61,
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__51) using tseitin
+
+--
+
+__39,
+__54,
+__58,
+__40,
+__61,
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__54,
+__58,
+__40,
+__61,
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__39) using tseitin
+
+--
+
+__54,
+__58,
+__40,
+__61,
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__58,
+__40,
+__61,
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__54) using tseitin
+
+--
+
+__58,
+__40,
+__61,
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__40,
+__61,
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__58) using tseitin
+
+--
+
+__40,
+__61,
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__61,
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__40) using tseitin
+
+--
+
+__61,
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__61) using tseitin
+
+--
+
+__64,
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__64) using tseitin
+
+--
+
+__41,
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__41) using tseitin
+
+--
+
+__42,
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__42) using tseitin
+
+--
+
+__43,
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__43) using tseitin
+
+--
+
+__44,
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__44) using tseitin
+
+--
+
+__45,
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__46,
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__45) using tseitin
+
+--
+
+__46,
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__47,
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__46) using tseitin
+
+--
+
+__47,
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__37,
+__38,
+__36
+new SAT encoding decisions:
+  assert(__47) using tseitin
+
+--
+
+__37,
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__38,
+__36
+new SAT encoding decisions:
+  assert(__37) using tseitin
+
+--
+
+__38,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+__36
+new SAT encoding decisions:
+  assert(__38) using tseitin
+
+--
+
+__36
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__64) using tseitin
+  assert(__36) using tseitin
 
 --
 
@@ -1501,18 +1655,6 @@ find fixed: bool
 find negative: bool
 find ordinary: bool
 find repeated: bool
-find exception#packed_1: int(0..3)
-find x#packed_1: int(0..3)
-find y#packed_1: int(0..3)
-find exception#packed_1#int_log_1: bool
-find exception#packed_1#int_log_2: bool
-find exception#packed_1#int_log_3: bool
-find x#packed_1#int_log_1: bool
-find x#packed_1#int_log_2: bool
-find x#packed_1#int_log_3: bool
-find y#packed_1#int_log_1: bool
-find y#packed_1#int_log_2: bool
-find y#packed_1#int_log_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -1520,6 +1662,18 @@ findAux __3: bool
 findAux __4: bool
 findAux __5: bool
 findAux __6: bool
+find x#packed_1: int(0..3)
+find exception#packed_1: int(0..3)
+find y#packed_1: int(0..3)
+find x#packed_1#int_log_1: bool
+find x#packed_1#int_log_2: bool
+find x#packed_1#int_log_3: bool
+find exception#packed_1#int_log_1: bool
+find exception#packed_1#int_log_2: bool
+find exception#packed_1#int_log_3: bool
+find y#packed_1#int_log_1: bool
+find y#packed_1#int_log_2: bool
+find y#packed_1#int_log_3: bool
 findAux __7: bool
 findAux __8: bool
 findAux __9: bool
@@ -1585,79 +1739,79 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*exception#packed_1#int_log_1, 2*exception#packed_1#int_log_2, -4*exception#packed_1#int_log_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__1 <-> integer-weighted(1*exception#packed_1#int_log_1, 2*exception#packed_1#int_log_2, -4*exception#packed_1#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__2 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__3 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__4 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__5 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__6 <-> and([__2,__3;int(1..)])) using tseitin,
-define(__7 <-> and([__4,__5;int(1..)])) using tseitin,
-define(__8 <-> and([__0,__1;int(1..)])) using tseitin,
-assert(__8) using tseitin,
-assert(__6) using tseitin,
-assert(__7) using tseitin,
-define(__11 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__12 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__13 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__14 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__15 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__16 <-> (__9) <-> (__11)) using tseitin,
-define(__17 <-> (__10) <-> (__12)) using tseitin,
-define(__18 <-> or([__13,__9;int(1..)])) using tseitin,
-define(__19 <-> or([__14,__9;int(1..)])) using tseitin,
-define(__20 <-> or([__15,__10;int(1..)])) using tseitin,
-define(__21 <-> allDifferentComparisons(__18, __19, __20)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-assert(__21) using tseitin,
-assert(__16) using tseitin,
-assert(__17) using tseitin,
+define(__7 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__8 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__9 <-> integer-weighted(1*exception#packed_1#int_log_1, 2*exception#packed_1#int_log_2, -4*exception#packed_1#int_log_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__10 <-> integer-weighted(1*exception#packed_1#int_log_1, 2*exception#packed_1#int_log_2, -4*exception#packed_1#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__11 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__12 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__13 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__14 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__15 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__16 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__17 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__18 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__19 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__20 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__21 <-> allDifferentComparisons(__20)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
 define(__22 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__23 <-> allDifferentComparisons(__22)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__24 <-> (ordinary) <-> (__23)) using tseitin,
-assert(__24) using tseitin,
-define(__26 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__23 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__24 <-> integer-weighted(1*y#packed_1#int_log_1, 2*y#packed_1#int_log_2, -4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__25 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__26 <-> allDifferentComparisons(__25)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
 define(__27 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__28 <-> (__25) <-> (__26)) using tseitin,
-define(__29 <-> or([__27,__25;int(1..)])) using tseitin,
-define(__30 <-> allDifferentComparisons(__29)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__31 <-> (allowed) <-> (__30)) using tseitin,
-assert(__31) using tseitin,
-assert(__28) using tseitin,
-define(__34 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__35 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__36 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__37 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__38 <-> (__32) <-> (__35)) using tseitin,
-define(__39 <-> (__33) <-> (__34)) using tseitin,
-define(__40 <-> or([__36,__32;int(1..)])) using tseitin,
-define(__41 <-> or([__37,__33;int(1..)])) using tseitin,
-define(__42 <-> allDifferentComparisons(__32, __40, __41)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__43 <-> (repeated) <-> (__42)) using tseitin,
-assert(__43) using tseitin,
-assert(__38) using tseitin,
-assert(__39) using tseitin,
-define(__45 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__46 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__47 <-> (__44) <-> (__45)) using tseitin,
-define(__48 <-> or([__46,__44;int(1..)])) using tseitin,
-define(__49 <-> allDifferentComparisons(__48)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__50 <-> (fixed) <-> (__49)) using tseitin,
-assert(__50) using tseitin,
-assert(__47) using tseitin,
-define(__51 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__52 <-> allDifferentComparisons(__51)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__53 <-> !(__52)) using tseitin,
-define(__54 <-> (negative) <-> (__53)) using tseitin,
-assert(__54) using tseitin,
-define(__56 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*exception#packed_1#int_log_1, -2*exception#packed_1#int_log_2, 4*exception#packed_1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__57 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__58 <-> (__55) <-> (__56)) using tseitin,
-define(__59 <-> or([__57,__55;int(1..)])) using tseitin,
+define(__28 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__29 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__30 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__31 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__32 <-> allDifferentComparisons(__31)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__33 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__34 <-> !(__26)) using tseitin,
+define(__35 <-> !(__32)) using tseitin,
+define(__36 <-> and([__11,__12;int(1..)])) using tseitin,
+define(__37 <-> and([__7,__8;int(1..)])) using tseitin,
+define(__38 <-> and([__9,__10;int(1..)])) using tseitin,
+define(__39 <-> (ordinary) <-> (__21)) using tseitin,
+define(__40 <-> (negative) <-> (__34)) using tseitin,
+define(__41 <-> (__0) <-> (__13)) using tseitin,
+define(__42 <-> (__1) <-> (__14)) using tseitin,
+define(__43 <-> (__2) <-> (__15)) using tseitin,
+define(__44 <-> (__3) <-> (__16)) using tseitin,
+define(__45 <-> (__4) <-> (__17)) using tseitin,
+define(__46 <-> (__5) <-> (__18)) using tseitin,
+define(__47 <-> (__6) <-> (__19)) using tseitin,
+define(__48 <-> or([__22,__0;int(1..)])) using tseitin,
+define(__49 <-> or([__23,__0;int(1..)])) using tseitin,
+define(__50 <-> or([__24,__1;int(1..)])) using tseitin,
+define(__51 <-> allDifferentComparisons(__48, __49, __50)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__52 <-> or([__27,__2;int(1..)])) using tseitin,
+define(__53 <-> allDifferentComparisons(__52)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__54 <-> (allowed) <-> (__53)) using tseitin,
+define(__55 <-> or([__28,__3;int(1..)])) using tseitin,
+define(__56 <-> or([__29,__4;int(1..)])) using tseitin,
+define(__57 <-> allDifferentComparisons(__3, __55, __56)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__58 <-> (repeated) <-> (__57)) using tseitin,
+define(__59 <-> or([__30,__5;int(1..)])) using tseitin,
 define(__60 <-> allDifferentComparisons(__59)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__61 <-> (fixed) <-> (__60)) using tseitin,
+define(__62 <-> or([__33,__6;int(1..)])) using tseitin,
+define(__63 <-> allDifferentComparisons(__62)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__64 <-> or([__63,__35;int(1..)])) using tseitin,
+assert(__51) using tseitin,
+assert(__39) using tseitin,
+assert(__54) using tseitin,
 assert(__58) using tseitin,
-define(__61 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, -4*x#packed_1#int_log_3, -1*y#packed_1#int_log_1, -2*y#packed_1#int_log_2, 4*y#packed_1#int_log_3) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 0 } }],
-define(__62 <-> allDifferentComparisons(__61)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__63 <-> !(__62)) using tseitin,
-define(__64 <-> or([__60,__63;int(1..)])) using tseitin,
-assert(__64) using tseitin
+assert(__40) using tseitin,
+assert(__61) using tseitin,
+assert(__64) using tseitin,
+assert(__41) using tseitin,
+assert(__42) using tseitin,
+assert(__43) using tseitin,
+assert(__44) using tseitin,
+assert(__45) using tseitin,
+assert(__46) using tseitin,
+assert(__47) using tseitin,
+assert(__37) using tseitin,
+assert(__38) using tseitin,
+assert(__36) using tseitin
 

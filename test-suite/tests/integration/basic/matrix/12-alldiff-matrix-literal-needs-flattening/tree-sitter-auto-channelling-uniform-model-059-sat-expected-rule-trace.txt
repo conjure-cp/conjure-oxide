@@ -1380,75 +1380,21 @@ new SAT encoding decisions:
 
 --
 
-sum([SATInt(Log, [__512,__515,__518,__521;int(1..)] [2, 6]),-1;int(1..)])
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-sum([SATInt(Log, [__512,__515,__518,__521;int(1..)] [2, 6]),SATInt(Log, [true;int(1..)] [-1, -1]);int(1..)])
-
---
-
-sum([SATInt(Log, [__512,__515,__518,__521;int(1..)] [2, 6]),SATInt(Log, [true;int(1..)] [-1, -1]);int(1..)])
-   ~~> cnf_int_sum ([("SAT", 4100)])
-SATInt(Log, [__528,__531,__536,__541;int(1..)] [1, 5])
+allDifferent([sum([SATInt(Log, [__512,__515,__518,__521;int(1..)] [2, 6]),-1;int(1..)]),2,3,SATInt(Log, [__282,__283,__284,__285;int(1..)] [0, 1]),6;int(1..5)])
+   ~~> select_alldifferent ([("SAT", 18500)])
+__528
 new variables:
   findAux __528: bool
-  findAux __529: bool
-  findAux __530: bool
-  findAux __531: bool
-  findAux __532: bool
-  findAux __533: bool
-  findAux __534: bool
-  findAux __535: bool
-  findAux __536: bool
-  findAux __537: bool
-  findAux __538: bool
-  findAux __539: bool
-  findAux __540: bool
-  findAux __541: bool
-  findAux __542: bool
-  findAux __543: bool
-  findAux __544: bool
 new SAT encoding decisions:
-  define(__528 <-> !((__512) <-> (true))) using tseitin
-  define(__529 <-> and([__512,true;int(1..)])) using tseitin
-  define(__530 <-> !((__515) <-> (true))) using tseitin
-  define(__531 <-> !((__530) <-> (__529))) using tseitin
-  define(__532 <-> and([__515,true;int(1..)])) using tseitin
-  define(__533 <-> and([__529,__530;int(1..)])) using tseitin
-  define(__534 <-> or([__532,__533;int(1..)])) using tseitin
-  define(__535 <-> !((__518) <-> (true))) using tseitin
-  define(__536 <-> !((__535) <-> (__534))) using tseitin
-  define(__537 <-> and([__518,true;int(1..)])) using tseitin
-  define(__538 <-> and([__534,__535;int(1..)])) using tseitin
-  define(__539 <-> or([__537,__538;int(1..)])) using tseitin
-  define(__540 <-> !((__521) <-> (true))) using tseitin
-  define(__541 <-> !((__540) <-> (__539))) using tseitin
-  define(__542 <-> and([__521,true;int(1..)])) using tseitin
-  define(__543 <-> and([__539,__540;int(1..)])) using tseitin
-  define(__544 <-> or([__542,__543;int(1..)])) using tseitin
+  define(__528 <-> allDifferent(-1+weighted(1*__512, 2*__515, 4*__518, -8*__521) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 2, upper: 6 } }], 2+weighted() with [] choices(2:true), 3+weighted() with [] choices(3:true), 0+weighted(1*__282, 2*__283, 4*__284, -8*__285) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }], 6+weighted() with [] choices(6:true))) using None, AMO None, PB None
 
 --
 
-allDifferent([SATInt(Log, [__528,__531,__536,__541;int(1..)] [1, 5]),2,3,SATInt(Log, [__282,__283,__284,__285;int(1..)] [0, 1]),6;int(1..5)])
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferent([SATInt(Log, [__528,__531,__536,__541;int(1..)] [1, 5]),2,3,SATInt(Log, [__282,__283,__284,__285;int(1..)] [0, 1]),6;int(1..)])
-
---
-
-allDifferent([SATInt(Log, [__528,__531,__536,__541;int(1..)] [1, 5]),2,3,SATInt(Log, [__282,__283,__284,__285;int(1..)] [0, 1]),6;int(1..)])
-   ~~> select_alldifferent ([("SAT", 18500)])
-__545
-new variables:
-  findAux __545: bool
-new SAT encoding decisions:
-  define(__545 <-> allDifferent(0+weighted(1*__528, 2*__531, 4*__536, -8*__541) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 5 } }], 2+weighted() with [] choices(2:true), 3+weighted() with [] choices(3:true), 0+weighted(1*__282, 2*__283, 4*__284, -8*__285) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }], 6+weighted() with [] choices(6:true))) using None, AMO None, PB None
-
---
-
-__545
+__528
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__545) using tseitin
+  assert(__528) using tseitin
 
 --
 
@@ -1990,23 +1936,6 @@ findAux __525: bool
 findAux __526: bool
 findAux __527: bool
 findAux __528: bool
-findAux __529: bool
-findAux __530: bool
-findAux __531: bool
-findAux __532: bool
-findAux __533: bool
-findAux __534: bool
-findAux __535: bool
-findAux __536: bool
-findAux __537: bool
-findAux __538: bool
-findAux __539: bool
-findAux __540: bool
-findAux __541: bool
-findAux __542: bool
-findAux __543: bool
-findAux __544: bool
-findAux __545: bool
 
 such that
 
@@ -2549,23 +2478,6 @@ define(__524 <-> or([__522,__523;int(1..)])) using tseitin,
 define(__525 <-> and([false,__505;int(1..)])) using tseitin,
 define(__526 <-> and([__509,__481;int(1..)])) using tseitin,
 define(__527 <-> or([__525,__526;int(1..)])) using tseitin,
-define(__528 <-> !((__512) <-> (true))) using tseitin,
-define(__529 <-> and([__512,true;int(1..)])) using tseitin,
-define(__530 <-> !((__515) <-> (true))) using tseitin,
-define(__531 <-> !((__530) <-> (__529))) using tseitin,
-define(__532 <-> and([__515,true;int(1..)])) using tseitin,
-define(__533 <-> and([__529,__530;int(1..)])) using tseitin,
-define(__534 <-> or([__532,__533;int(1..)])) using tseitin,
-define(__535 <-> !((__518) <-> (true))) using tseitin,
-define(__536 <-> !((__535) <-> (__534))) using tseitin,
-define(__537 <-> and([__518,true;int(1..)])) using tseitin,
-define(__538 <-> and([__534,__535;int(1..)])) using tseitin,
-define(__539 <-> or([__537,__538;int(1..)])) using tseitin,
-define(__540 <-> !((__521) <-> (true))) using tseitin,
-define(__541 <-> !((__540) <-> (__539))) using tseitin,
-define(__542 <-> and([__521,true;int(1..)])) using tseitin,
-define(__543 <-> and([__539,__540;int(1..)])) using tseitin,
-define(__544 <-> or([__542,__543;int(1..)])) using tseitin,
-define(__545 <-> allDifferent(0+weighted(1*__528, 2*__531, 4*__536, -8*__541) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 5 } }], 2+weighted() with [] choices(2:true), 3+weighted() with [] choices(3:true), 0+weighted(1*__282, 2*__283, 4*__284, -8*__285) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }], 6+weighted() with [] choices(6:true))) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
-assert(__545) using tseitin
+define(__528 <-> allDifferent(-1+weighted(1*__512, 2*__515, 4*__518, -8*__521) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 2, upper: 6 } }], 2+weighted() with [] choices(2:true), 3+weighted() with [] choices(3:true), 0+weighted(1*__282, 2*__283, 4*__284, -8*__285) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }], 6+weighted() with [] choices(6:true))) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+assert(__528) using tseitin
 

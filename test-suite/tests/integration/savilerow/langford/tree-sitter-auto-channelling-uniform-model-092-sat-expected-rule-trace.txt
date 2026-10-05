@@ -419,39 +419,22 @@ position#components_6
 
 --
 
-position#components_2
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [position#components_2#int_log_1,position#components_2#int_log_2,position#components_2#int_log_3,position#components_2#int_log_4;int(1..)] [1, 6])
+allDifferent([position#components_1,position#components_2,position#components_3,position#components_4,position#components_5,position#components_6;int(1..6)])
+   ~~> select_alldifferent ([("SAT", 18500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> allDifferent(0+weighted(1*position#components_1#int_log_1, 2*position#components_1#int_log_2, 4*position#components_1#int_log_3, -8*position#components_1#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_2#int_log_1, 2*position#components_2#int_log_2, 4*position#components_2#int_log_3, -8*position#components_2#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_3#int_log_1, 2*position#components_3#int_log_2, 4*position#components_3#int_log_3, -8*position#components_3#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_4#int_log_1, 2*position#components_4#int_log_2, 4*position#components_4#int_log_3, -8*position#components_4#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_5#int_log_1, 2*position#components_5#int_log_2, 4*position#components_5#int_log_3, -8*position#components_5#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_6#int_log_1, 2*position#components_6#int_log_2, 4*position#components_6#int_log_3, -8*position#components_6#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }])) using None, AMO None, PB None
 
 --
 
-position#components_3
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [position#components_3#int_log_1,position#components_3#int_log_2,position#components_3#int_log_3,position#components_3#int_log_4;int(1..)] [1, 6])
-
---
-
-position#components_4
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [position#components_4#int_log_1,position#components_4#int_log_2,position#components_4#int_log_3,position#components_4#int_log_4;int(1..)] [1, 6])
-
---
-
-position#components_5
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [position#components_5#int_log_1,position#components_5#int_log_2,position#components_5#int_log_3,position#components_5#int_log_4;int(1..)] [1, 6])
-
---
-
-position#components_6
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [position#components_6#int_log_1,position#components_6#int_log_2,position#components_6#int_log_3,position#components_6#int_log_4;int(1..)] [1, 6])
-
---
-
-position#components_1
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [position#components_1#int_log_1,position#components_1#int_log_2,position#components_1#int_log_3,position#components_1#int_log_4;int(1..)] [1, 6])
+and([ position[sum([i,k;int(1..)])] = sum([sum([position[i],i;int(1..)]),1;int(1..)]) | i : int(1..k) ]),
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ position[sum([i,k;int(1..)])] = sum([sum([position[i],i;int(1..)]),1;int(1..)]) | i : int(1..k) ])
+new SAT encoding decisions:
+  assert(__18) using tseitin
 
 --
 
@@ -497,58 +480,27 @@ position#components_3
 
 --
 
-and([position#components_4 = sum([sum([position#components_1,1;int(1..)]),1;int(1..)]),position#components_5 = sum([sum([position#components_2,2;int(1..)]),1;int(1..)]),position#components_6 = sum([sum([position#components_3,3;int(1..)]),1;int(1..)]);int(1..)]),
-allDifferent([SATInt(Log, [position#components_1#int_log_1,position#components_1#int_log_2,position#components_1#int_log_3,position#components_1#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_2#int_log_1,position#components_2#int_log_2,position#components_2#int_log_3,position#components_2#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_3#int_log_1,position#components_3#int_log_2,position#components_3#int_log_3,position#components_3#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_4#int_log_1,position#components_4#int_log_2,position#components_4#int_log_3,position#components_4#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_5#int_log_1,position#components_5#int_log_2,position#components_5#int_log_3,position#components_5#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_6#int_log_1,position#components_6#int_log_2,position#components_6#int_log_3,position#components_6#int_log_4;int(1..)] [1, 6]);int(1..6)])
+and([position#components_4 = sum([sum([position#components_1,1;int(1..)]),1;int(1..)]),position#components_5 = sum([sum([position#components_2,2;int(1..)]),1;int(1..)]),position#components_6 = sum([sum([position#components_3,3;int(1..)]),1;int(1..)]);int(1..)])
    ~~> select_pseudo_boolean ([("SAT", 19000)])
-and([true,position#components_5 = sum([sum([position#components_2,2;int(1..)]),1;int(1..)]),position#components_6 = sum([sum([position#components_3,3;int(1..)]),1;int(1..)]);int(1..)]),
-allDifferent([SATInt(Log, [position#components_1#int_log_1,position#components_1#int_log_2,position#components_1#int_log_3,position#components_1#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_2#int_log_1,position#components_2#int_log_2,position#components_2#int_log_3,position#components_2#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_3#int_log_1,position#components_3#int_log_2,position#components_3#int_log_3,position#components_3#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_4#int_log_1,position#components_4#int_log_2,position#components_4#int_log_3,position#components_4#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_5#int_log_1,position#components_5#int_log_2,position#components_5#int_log_3,position#components_5#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_6#int_log_1,position#components_6#int_log_2,position#components_6#int_log_3,position#components_6#int_log_4;int(1..)] [1, 6]);int(1..6)])
+and([true,position#components_5 = sum([sum([position#components_2,2;int(1..)]),1;int(1..)]),position#components_6 = sum([sum([position#components_3,3;int(1..)]),1;int(1..)]);int(1..)])
 new SAT encoding decisions:
   weighted(1*position#components_4#int_log_1, 2*position#components_4#int_log_2, 4*position#components_4#int_log_3, -8*position#components_4#int_log_4, -1*position#components_1#int_log_1, -2*position#components_1#int_log_2, -4*position#components_1#int_log_3, 8*position#components_1#int_log_4) Exactly 2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -6, upper: -1 } }]
 
 --
 
-and([position#components_5 = sum([sum([position#components_2,2;int(1..)]),1;int(1..)]),position#components_6 = sum([sum([position#components_3,3;int(1..)]),1;int(1..)]);int(1..)]),
-allDifferent([SATInt(Log, [position#components_1#int_log_1,position#components_1#int_log_2,position#components_1#int_log_3,position#components_1#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_2#int_log_1,position#components_2#int_log_2,position#components_2#int_log_3,position#components_2#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_3#int_log_1,position#components_3#int_log_2,position#components_3#int_log_3,position#components_3#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_4#int_log_1,position#components_4#int_log_2,position#components_4#int_log_3,position#components_4#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_5#int_log_1,position#components_5#int_log_2,position#components_5#int_log_3,position#components_5#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_6#int_log_1,position#components_6#int_log_2,position#components_6#int_log_3,position#components_6#int_log_4;int(1..)] [1, 6]);int(1..6)])
+and([position#components_5 = sum([sum([position#components_2,2;int(1..)]),1;int(1..)]),position#components_6 = sum([sum([position#components_3,3;int(1..)]),1;int(1..)]);int(1..)])
    ~~> select_pseudo_boolean ([("SAT", 19000)])
-and([true,position#components_6 = sum([sum([position#components_3,3;int(1..)]),1;int(1..)]);int(1..)]),
-allDifferent([SATInt(Log, [position#components_1#int_log_1,position#components_1#int_log_2,position#components_1#int_log_3,position#components_1#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_2#int_log_1,position#components_2#int_log_2,position#components_2#int_log_3,position#components_2#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_3#int_log_1,position#components_3#int_log_2,position#components_3#int_log_3,position#components_3#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_4#int_log_1,position#components_4#int_log_2,position#components_4#int_log_3,position#components_4#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_5#int_log_1,position#components_5#int_log_2,position#components_5#int_log_3,position#components_5#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_6#int_log_1,position#components_6#int_log_2,position#components_6#int_log_3,position#components_6#int_log_4;int(1..)] [1, 6]);int(1..6)])
+and([true,position#components_6 = sum([sum([position#components_3,3;int(1..)]),1;int(1..)]);int(1..)])
 new SAT encoding decisions:
   weighted(1*position#components_5#int_log_1, 2*position#components_5#int_log_2, 4*position#components_5#int_log_3, -8*position#components_5#int_log_4, -1*position#components_2#int_log_1, -2*position#components_2#int_log_2, -4*position#components_2#int_log_3, 8*position#components_2#int_log_4) Exactly 3 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -6, upper: -1 } }]
 
 --
 
-and([position#components_6 = sum([sum([position#components_3,3;int(1..)]),1;int(1..)]);int(1..)]),
-allDifferent([SATInt(Log, [position#components_1#int_log_1,position#components_1#int_log_2,position#components_1#int_log_3,position#components_1#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_2#int_log_1,position#components_2#int_log_2,position#components_2#int_log_3,position#components_2#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_3#int_log_1,position#components_3#int_log_2,position#components_3#int_log_3,position#components_3#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_4#int_log_1,position#components_4#int_log_2,position#components_4#int_log_3,position#components_4#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_5#int_log_1,position#components_5#int_log_2,position#components_5#int_log_3,position#components_5#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_6#int_log_1,position#components_6#int_log_2,position#components_6#int_log_3,position#components_6#int_log_4;int(1..)] [1, 6]);int(1..6)])
+and([position#components_6 = sum([sum([position#components_3,3;int(1..)]),1;int(1..)]);int(1..)])
    ~~> select_pseudo_boolean ([("SAT", 19000)])
-and([true;int(1..)]),
-allDifferent([SATInt(Log, [position#components_1#int_log_1,position#components_1#int_log_2,position#components_1#int_log_3,position#components_1#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_2#int_log_1,position#components_2#int_log_2,position#components_2#int_log_3,position#components_2#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_3#int_log_1,position#components_3#int_log_2,position#components_3#int_log_3,position#components_3#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_4#int_log_1,position#components_4#int_log_2,position#components_4#int_log_3,position#components_4#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_5#int_log_1,position#components_5#int_log_2,position#components_5#int_log_3,position#components_5#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_6#int_log_1,position#components_6#int_log_2,position#components_6#int_log_3,position#components_6#int_log_4;int(1..)] [1, 6]);int(1..6)])
+and([true;int(1..)])
 new SAT encoding decisions:
   weighted(1*position#components_6#int_log_1, 2*position#components_6#int_log_2, 4*position#components_6#int_log_3, -8*position#components_6#int_log_4, -1*position#components_3#int_log_1, -2*position#components_3#int_log_2, -4*position#components_3#int_log_3, 8*position#components_3#int_log_4) Exactly 4 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -6, upper: -1 } }]
-
---
-
-allDifferent([SATInt(Log, [position#components_1#int_log_1,position#components_1#int_log_2,position#components_1#int_log_3,position#components_1#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_2#int_log_1,position#components_2#int_log_2,position#components_2#int_log_3,position#components_2#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_3#int_log_1,position#components_3#int_log_2,position#components_3#int_log_3,position#components_3#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_4#int_log_1,position#components_4#int_log_2,position#components_4#int_log_3,position#components_4#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_5#int_log_1,position#components_5#int_log_2,position#components_5#int_log_3,position#components_5#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_6#int_log_1,position#components_6#int_log_2,position#components_6#int_log_3,position#components_6#int_log_4;int(1..)] [1, 6]);int(1..6)])
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferent([SATInt(Log, [position#components_1#int_log_1,position#components_1#int_log_2,position#components_1#int_log_3,position#components_1#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_2#int_log_1,position#components_2#int_log_2,position#components_2#int_log_3,position#components_2#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_3#int_log_1,position#components_3#int_log_2,position#components_3#int_log_3,position#components_3#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_4#int_log_1,position#components_4#int_log_2,position#components_4#int_log_3,position#components_4#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_5#int_log_1,position#components_5#int_log_2,position#components_5#int_log_3,position#components_5#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_6#int_log_1,position#components_6#int_log_2,position#components_6#int_log_3,position#components_6#int_log_4;int(1..)] [1, 6]);int(1..)])
-
---
-
-allDifferent([SATInt(Log, [position#components_1#int_log_1,position#components_1#int_log_2,position#components_1#int_log_3,position#components_1#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_2#int_log_1,position#components_2#int_log_2,position#components_2#int_log_3,position#components_2#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_3#int_log_1,position#components_3#int_log_2,position#components_3#int_log_3,position#components_3#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_4#int_log_1,position#components_4#int_log_2,position#components_4#int_log_3,position#components_4#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_5#int_log_1,position#components_5#int_log_2,position#components_5#int_log_3,position#components_5#int_log_4;int(1..)] [1, 6]),SATInt(Log, [position#components_6#int_log_1,position#components_6#int_log_2,position#components_6#int_log_3,position#components_6#int_log_4;int(1..)] [1, 6]);int(1..)])
-   ~~> select_alldifferent ([("SAT", 18500)])
-__18
-new variables:
-  findAux __18: bool
-new SAT encoding decisions:
-  define(__18 <-> allDifferent(0+weighted(1*position#components_1#int_log_1, 2*position#components_1#int_log_2, 4*position#components_1#int_log_3, -8*position#components_1#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_2#int_log_1, 2*position#components_2#int_log_2, 4*position#components_2#int_log_3, -8*position#components_2#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_3#int_log_1, 2*position#components_3#int_log_2, 4*position#components_3#int_log_3, -8*position#components_3#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_4#int_log_1, 2*position#components_4#int_log_2, 4*position#components_4#int_log_3, -8*position#components_4#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_5#int_log_1, 2*position#components_5#int_log_2, 4*position#components_5#int_log_3, -8*position#components_5#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_6#int_log_1, 2*position#components_6#int_log_2, 4*position#components_6#int_log_3, -8*position#components_6#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }])) using None, AMO None, PB None
-
---
-
-true,
-__18
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__18) using tseitin
 
 --
 
@@ -638,9 +590,9 @@ assert(__13) using tseitin,
 assert(__14) using tseitin,
 assert(__15) using tseitin,
 assert(__16) using tseitin,
+define(__18 <-> allDifferent(0+weighted(1*position#components_1#int_log_1, 2*position#components_1#int_log_2, 4*position#components_1#int_log_3, -8*position#components_1#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_2#int_log_1, 2*position#components_2#int_log_2, 4*position#components_2#int_log_3, -8*position#components_2#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_3#int_log_1, 2*position#components_3#int_log_2, 4*position#components_3#int_log_3, -8*position#components_3#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_4#int_log_1, 2*position#components_4#int_log_2, 4*position#components_4#int_log_3, -8*position#components_4#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_5#int_log_1, 2*position#components_5#int_log_2, 4*position#components_5#int_log_3, -8*position#components_5#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_6#int_log_1, 2*position#components_6#int_log_2, 4*position#components_6#int_log_3, -8*position#components_6#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+assert(__18) using tseitin,
 weighted(1*position#components_4#int_log_1, 2*position#components_4#int_log_2, 4*position#components_4#int_log_3, -8*position#components_4#int_log_4, -1*position#components_1#int_log_1, -2*position#components_1#int_log_2, -4*position#components_1#int_log_3, 8*position#components_1#int_log_4) Exactly 2 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -6, upper: -1 } }],
 weighted(1*position#components_5#int_log_1, 2*position#components_5#int_log_2, 4*position#components_5#int_log_3, -8*position#components_5#int_log_4, -1*position#components_2#int_log_1, -2*position#components_2#int_log_2, -4*position#components_2#int_log_3, 8*position#components_2#int_log_4) Exactly 3 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -6, upper: -1 } }],
-weighted(1*position#components_6#int_log_1, 2*position#components_6#int_log_2, 4*position#components_6#int_log_3, -8*position#components_6#int_log_4, -1*position#components_3#int_log_1, -2*position#components_3#int_log_2, -4*position#components_3#int_log_3, 8*position#components_3#int_log_4) Exactly 4 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -6, upper: -1 } }],
-define(__18 <-> allDifferent(0+weighted(1*position#components_1#int_log_1, 2*position#components_1#int_log_2, 4*position#components_1#int_log_3, -8*position#components_1#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_2#int_log_1, 2*position#components_2#int_log_2, 4*position#components_2#int_log_3, -8*position#components_2#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_3#int_log_1, 2*position#components_3#int_log_2, 4*position#components_3#int_log_3, -8*position#components_3#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_4#int_log_1, 2*position#components_4#int_log_2, 4*position#components_4#int_log_3, -8*position#components_4#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_5#int_log_1, 2*position#components_5#int_log_2, 4*position#components_5#int_log_3, -8*position#components_5#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }], 0+weighted(1*position#components_6#int_log_1, 2*position#components_6#int_log_2, 4*position#components_6#int_log_3, -8*position#components_6#int_log_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
-assert(__18) using tseitin
+weighted(1*position#components_6#int_log_1, 2*position#components_6#int_log_2, 4*position#components_6#int_log_3, -8*position#components_6#int_log_4, -1*position#components_3#int_log_1, -2*position#components_3#int_log_2, -4*position#components_3#int_log_3, 8*position#components_3#int_log_4) Exactly 4 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 6 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -6, upper: -1 } }]
 

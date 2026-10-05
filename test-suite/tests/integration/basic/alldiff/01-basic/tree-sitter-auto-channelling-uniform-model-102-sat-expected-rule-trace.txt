@@ -161,81 +161,73 @@ c
 
 --
 
-a
-   ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3])
-
---
-
-b
-   ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3])
-
---
-
-c
-   ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3])
-
---
-
-!(a#int_order_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
+allDifferent([a,b,c;int(1..3)])
+   ~~> select_alldifferent ([("SAT", 18500)])
 __8
 new variables:
   findAux __8: bool
 new SAT encoding decisions:
-  define(__8 <-> !(a#int_order_3)) using tseitin
-
---
-
-!(b#int_order_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> !(b#int_order_2)) using tseitin
-
---
-
-!(b#int_order_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> !(b#int_order_3)) using tseitin
-
---
-
-!(c#int_order_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> !(c#int_order_2)) using tseitin
-
---
-
-!(c#int_order_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__12
-new variables:
-  findAux __12: bool
-new SAT encoding decisions:
-  define(__12 <-> !(c#int_order_3)) using tseitin
+  define(__8 <-> allDifferent(1+weighted(1*a#int_order_2, 1*a#int_order_3) with [PbTermGroup { start: 0, end: 2, structure: Chain }], 1+weighted(1*b#int_order_2, 1*b#int_order_3) with [PbTermGroup { start: 0, end: 2, structure: Chain }], 1+weighted(1*c#int_order_2, 1*c#int_order_3) with [PbTermGroup { start: 0, end: 2, structure: Chain }])) using None, AMO None, PB None
 
 --
 
 !(a#int_order_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> !(a#int_order_2)) using tseitin
+
+--
+
+!(a#int_order_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> !(a#int_order_3)) using tseitin
+
+--
+
+!(b#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> !(b#int_order_2)) using tseitin
+
+--
+
+!(b#int_order_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> !(b#int_order_3)) using tseitin
+
+--
+
+!(c#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
 __13
 new variables:
   findAux __13: bool
 new SAT encoding decisions:
-  define(__13 <-> !(a#int_order_2)) using tseitin
+  define(__13 <-> !(c#int_order_2)) using tseitin
+
+--
+
+!(c#int_order_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> !(c#int_order_3)) using tseitin
 
 --
 
@@ -257,425 +249,409 @@ and([__0,__1;int(1..)])
 
 --
 
-or([__9,b#int_order_1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> or([__9,b#int_order_1;int(1..)])) using tseitin
-
---
-
-or([__10,b#int_order_2;int(1..)])
+or([__10,a#int_order_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __15
 new variables:
   findAux __15: bool
 new SAT encoding decisions:
-  define(__15 <-> or([__10,b#int_order_2;int(1..)])) using tseitin
+  define(__15 <-> or([__10,a#int_order_2;int(1..)])) using tseitin
 
 --
 
-or([__11,c#int_order_1;int(1..)])
+or([__11,b#int_order_1;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __16
 new variables:
   findAux __16: bool
 new SAT encoding decisions:
-  define(__16 <-> or([__11,c#int_order_1;int(1..)])) using tseitin
+  define(__16 <-> or([__11,b#int_order_1;int(1..)])) using tseitin
 
 --
 
-or([__12,c#int_order_2;int(1..)])
+or([__12,b#int_order_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __17
 new variables:
   findAux __17: bool
 new SAT encoding decisions:
-  define(__17 <-> or([__12,c#int_order_2;int(1..)])) using tseitin
+  define(__17 <-> or([__12,b#int_order_2;int(1..)])) using tseitin
 
 --
 
-or([__13,a#int_order_1;int(1..)])
+or([__13,c#int_order_1;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __18
 new variables:
   findAux __18: bool
 new SAT encoding decisions:
-  define(__18 <-> or([__13,a#int_order_1;int(1..)])) using tseitin
+  define(__18 <-> or([__13,c#int_order_1;int(1..)])) using tseitin
 
 --
 
-and([__3,__4;int(1..)])
+or([__14,c#int_order_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __19
 new variables:
   findAux __19: bool
 new SAT encoding decisions:
-  define(__19 <-> and([__3,__4;int(1..)])) using tseitin
+  define(__19 <-> or([__14,c#int_order_2;int(1..)])) using tseitin
 
 --
 
-and([__6,__7;int(1..)])
+and([__3,__4;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __20
 new variables:
   findAux __20: bool
 new SAT encoding decisions:
-  define(__20 <-> and([__6,__7;int(1..)])) using tseitin
+  define(__20 <-> and([__3,__4;int(1..)])) using tseitin
 
 --
 
-and([__0,__1;int(1..)])
+and([__6,__7;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __21
 new variables:
   findAux __21: bool
 new SAT encoding decisions:
-  define(__21 <-> and([__0,__1;int(1..)])) using tseitin
+  define(__21 <-> and([__6,__7;int(1..)])) using tseitin
 
 --
 
-or([__8,a#int_order_2;int(1..)])
+and([__0,__1;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __22
 new variables:
   findAux __22: bool
 new SAT encoding decisions:
-  define(__22 <-> or([__8,a#int_order_2;int(1..)])) using tseitin
+  define(__22 <-> and([__0,__1;int(1..)])) using tseitin
 
 --
 
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
+or([__9,a#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__23
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> or([__9,a#int_order_1;int(1..)])) using tseitin
+
+--
+
+__8,
 __2,
 __5,
 a#int_order_1,
-__18,
-__22,
-__21,
-b#int_order_1,
-__14,
+__23,
 __15,
-__19,
-c#int_order_1,
+__22,
+b#int_order_1,
 __16,
 __17,
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
    ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
+__2,
 __5,
 a#int_order_1,
-__18,
-__22,
-__21,
-b#int_order_1,
-__14,
+__23,
 __15,
-__19,
-c#int_order_1,
+__22,
+b#int_order_1,
 __16,
 __17,
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
+new SAT encoding decisions:
+  assert(__8) using tseitin
+
+--
+
+__2,
+__5,
+a#int_order_1,
+__23,
+__15,
+__22,
+b#int_order_1,
+__16,
+__17,
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+__5,
+a#int_order_1,
+__23,
+__15,
+__22,
+b#int_order_1,
+__16,
+__17,
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
 new SAT encoding decisions:
   assert(__2) using tseitin
 
 --
 
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
 __5,
 a#int_order_1,
-__18,
-__22,
-__21,
-b#int_order_1,
-__14,
+__23,
 __15,
-__19,
-c#int_order_1,
+__22,
+b#int_order_1,
 __16,
 __17,
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
    ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
 a#int_order_1,
-__18,
-__22,
-__21,
-b#int_order_1,
-__14,
+__23,
 __15,
-__19,
-c#int_order_1,
+__22,
+b#int_order_1,
 __16,
 __17,
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
 new SAT encoding decisions:
   assert(__5) using tseitin
 
 --
 
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
 a#int_order_1,
-__18,
-__22,
-__21,
-b#int_order_1,
-__14,
+__23,
 __15,
-__19,
-c#int_order_1,
+__22,
+b#int_order_1,
 __16,
 __17,
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
    ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-__18,
-__22,
-__21,
-b#int_order_1,
-__14,
+__23,
 __15,
-__19,
-c#int_order_1,
+__22,
+b#int_order_1,
 __16,
 __17,
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
 new SAT encoding decisions:
   assert(a#int_order_1) using tseitin
 
 --
 
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
+__23,
+__15,
+__22,
+b#int_order_1,
+__16,
+__17,
+__20,
+c#int_order_1,
 __18,
+__19,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+__15,
 __22,
-__21,
 b#int_order_1,
-__14,
-__15,
-__19,
-c#int_order_1,
 __16,
 __17,
-__20
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
+new SAT encoding decisions:
+  assert(__23) using tseitin
+
+--
+
+__15,
 __22,
-__21,
 b#int_order_1,
-__14,
-__15,
-__19,
-c#int_order_1,
 __16,
 __17,
-__20
-new SAT encoding decisions:
-  assert(__18) using tseitin
-
---
-
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
 __22,
-__21,
 b#int_order_1,
-__14,
-__15,
-__19,
-c#int_order_1,
 __16,
 __17,
-__20
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-__21,
-b#int_order_1,
-__14,
-__15,
-__19,
+__20,
 c#int_order_1,
-__16,
-__17,
-__20
-new SAT encoding decisions:
-  assert(__22) using tseitin
-
---
-
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-__21,
-b#int_order_1,
-__14,
-__15,
+__18,
 __19,
-c#int_order_1,
-__16,
-__17,
-__20
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-b#int_order_1,
-__14,
-__15,
-__19,
-c#int_order_1,
-__16,
-__17,
-__20
-new SAT encoding decisions:
-  assert(__21) using tseitin
-
---
-
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-b#int_order_1,
-__14,
-__15,
-__19,
-c#int_order_1,
-__16,
-__17,
-__20
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-__14,
-__15,
-__19,
-c#int_order_1,
-__16,
-__17,
-__20
-new SAT encoding decisions:
-  assert(b#int_order_1) using tseitin
-
---
-
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-__14,
-__15,
-__19,
-c#int_order_1,
-__16,
-__17,
-__20
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-__15,
-__19,
-c#int_order_1,
-__16,
-__17,
-__20
-new SAT encoding decisions:
-  assert(__14) using tseitin
-
---
-
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-__15,
-__19,
-c#int_order_1,
-__16,
-__17,
-__20
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-__19,
-c#int_order_1,
-__16,
-__17,
-__20
+__21
 new SAT encoding decisions:
   assert(__15) using tseitin
 
 --
 
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
+__22,
+b#int_order_1,
+__16,
+__17,
+__20,
+c#int_order_1,
+__18,
 __19,
-c#int_order_1,
-__16,
-__17,
-__20
+__21
    ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-c#int_order_1,
+b#int_order_1,
 __16,
 __17,
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
 new SAT encoding decisions:
-  assert(__19) using tseitin
+  assert(__22) using tseitin
 
 --
 
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
+b#int_order_1,
+__16,
+__17,
+__20,
 c#int_order_1,
-__16,
-__17,
-__20
+__18,
+__19,
+__21
    ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
 __16,
 __17,
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
 new SAT encoding decisions:
-  assert(c#int_order_1) using tseitin
+  assert(b#int_order_1) using tseitin
 
 --
 
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
 __16,
 __17,
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
    ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
 __17,
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
 new SAT encoding decisions:
   assert(__16) using tseitin
 
 --
 
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
 __17,
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
    ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
 new SAT encoding decisions:
   assert(__17) using tseitin
 
 --
 
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)]),
-__20
+__20,
+c#int_order_1,
+__18,
+__19,
+__21
    ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)])
+c#int_order_1,
+__18,
+__19,
+__21
 new SAT encoding decisions:
   assert(__20) using tseitin
 
 --
 
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..3)])
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..)])
-
---
-
-allDifferent([SATInt(Order, [a#int_order_1,a#int_order_2,a#int_order_3;int(1..)] [1, 3]),SATInt(Order, [b#int_order_1,b#int_order_2,b#int_order_3;int(1..)] [1, 3]),SATInt(Order, [c#int_order_1,c#int_order_2,c#int_order_3;int(1..)] [1, 3]);int(1..)])
-   ~~> select_alldifferent ([("SAT", 18500)])
-__23
-new variables:
-  findAux __23: bool
+c#int_order_1,
+__18,
+__19,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+__18,
+__19,
+__21
 new SAT encoding decisions:
-  define(__23 <-> allDifferent(1+weighted(1*a#int_order_2, 1*a#int_order_3) with [PbTermGroup { start: 0, end: 2, structure: Chain }], 1+weighted(1*b#int_order_2, 1*b#int_order_3) with [PbTermGroup { start: 0, end: 2, structure: Chain }], 1+weighted(1*c#int_order_2, 1*c#int_order_3) with [PbTermGroup { start: 0, end: 2, structure: Chain }])) using None, AMO None, PB None
+  assert(c#int_order_1) using tseitin
 
 --
 
-__23
+__18,
+__19,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+__19,
+__21
+new SAT encoding decisions:
+  assert(__18) using tseitin
+
+--
+
+__19,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+__21
+new SAT encoding decisions:
+  assert(__19) using tseitin
+
+--
+
+__21
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__23) using tseitin
+  assert(__21) using tseitin
 
 --
 
@@ -732,35 +708,35 @@ define(__4 <-> integer-weighted(1*b#int_order_2, 1*b#int_order_3) LessEqual 2) u
 define(__5 <-> integer-weighted(1*b#int_order_2, 1*b#int_order_3, -1*c#int_order_2, -1*c#int_order_3) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }, PbTermGroup { start: 2, end: 4, structure: Chain }],
 define(__6 <-> integer-weighted(1*c#int_order_2, 1*c#int_order_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
 define(__7 <-> integer-weighted(1*c#int_order_2, 1*c#int_order_3) LessEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
-define(__8 <-> !(a#int_order_3)) using tseitin,
-define(__9 <-> !(b#int_order_2)) using tseitin,
-define(__10 <-> !(b#int_order_3)) using tseitin,
-define(__11 <-> !(c#int_order_2)) using tseitin,
-define(__12 <-> !(c#int_order_3)) using tseitin,
-define(__13 <-> !(a#int_order_2)) using tseitin,
-define(__14 <-> or([__9,b#int_order_1;int(1..)])) using tseitin,
-define(__15 <-> or([__10,b#int_order_2;int(1..)])) using tseitin,
-define(__16 <-> or([__11,c#int_order_1;int(1..)])) using tseitin,
-define(__17 <-> or([__12,c#int_order_2;int(1..)])) using tseitin,
-define(__18 <-> or([__13,a#int_order_1;int(1..)])) using tseitin,
-define(__19 <-> and([__3,__4;int(1..)])) using tseitin,
-define(__20 <-> and([__6,__7;int(1..)])) using tseitin,
-define(__21 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__22 <-> or([__8,a#int_order_2;int(1..)])) using tseitin,
+define(__8 <-> allDifferent(1+weighted(1*a#int_order_2, 1*a#int_order_3) with [PbTermGroup { start: 0, end: 2, structure: Chain }], 1+weighted(1*b#int_order_2, 1*b#int_order_3) with [PbTermGroup { start: 0, end: 2, structure: Chain }], 1+weighted(1*c#int_order_2, 1*c#int_order_3) with [PbTermGroup { start: 0, end: 2, structure: Chain }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+define(__9 <-> !(a#int_order_2)) using tseitin,
+define(__10 <-> !(a#int_order_3)) using tseitin,
+define(__11 <-> !(b#int_order_2)) using tseitin,
+define(__12 <-> !(b#int_order_3)) using tseitin,
+define(__13 <-> !(c#int_order_2)) using tseitin,
+define(__14 <-> !(c#int_order_3)) using tseitin,
+define(__15 <-> or([__10,a#int_order_2;int(1..)])) using tseitin,
+define(__16 <-> or([__11,b#int_order_1;int(1..)])) using tseitin,
+define(__17 <-> or([__12,b#int_order_2;int(1..)])) using tseitin,
+define(__18 <-> or([__13,c#int_order_1;int(1..)])) using tseitin,
+define(__19 <-> or([__14,c#int_order_2;int(1..)])) using tseitin,
+define(__20 <-> and([__3,__4;int(1..)])) using tseitin,
+define(__21 <-> and([__6,__7;int(1..)])) using tseitin,
+define(__22 <-> and([__0,__1;int(1..)])) using tseitin,
+define(__23 <-> or([__9,a#int_order_1;int(1..)])) using tseitin,
+assert(__8) using tseitin,
 assert(__2) using tseitin,
 assert(__5) using tseitin,
 assert(a#int_order_1) using tseitin,
-assert(__18) using tseitin,
-assert(__22) using tseitin,
-assert(__21) using tseitin,
-assert(b#int_order_1) using tseitin,
-assert(__14) using tseitin,
+assert(__23) using tseitin,
 assert(__15) using tseitin,
-assert(__19) using tseitin,
-assert(c#int_order_1) using tseitin,
+assert(__22) using tseitin,
+assert(b#int_order_1) using tseitin,
 assert(__16) using tseitin,
 assert(__17) using tseitin,
 assert(__20) using tseitin,
-define(__23 <-> allDifferent(1+weighted(1*a#int_order_2, 1*a#int_order_3) with [PbTermGroup { start: 0, end: 2, structure: Chain }], 1+weighted(1*b#int_order_2, 1*b#int_order_3) with [PbTermGroup { start: 0, end: 2, structure: Chain }], 1+weighted(1*c#int_order_2, 1*c#int_order_3) with [PbTermGroup { start: 0, end: 2, structure: Chain }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
-assert(__23) using tseitin
+assert(c#int_order_1) using tseitin,
+assert(__18) using tseitin,
+assert(__19) using tseitin,
+assert(__21) using tseitin
 

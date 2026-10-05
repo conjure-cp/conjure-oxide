@@ -1163,11 +1163,29 @@ new SAT encoding decisions:
 
 --
 
-SATInt(Rank([(0, 100)]), [t#int_rank_1,t#int_rank_2,t#int_rank_3,t#int_rank_4,t#int_rank_5,t#int_rank_6,t#int_rank_7;int(1..)] [0, 100]) = SATInt(Rank([(4, 4)]), [false;int(1..)] [4, 4])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__185,__187,__189,__191,__193,__195,__197,__199;int(1..)] [0, 100]) = SATInt(Log, [__201,__203,__206,__208;int(1..)] [4, 4])
+allDifferent([SATInt(Log, [__121,__123,__125,__127,__129,__131,__133,__135;int(1..)] [0, 100]),SATInt(Log, [__137,__139,__141,__143,__145,__147,__149,__151;int(1..)] [0, 100]),SATInt(Log, [__153,__155,__157,__159,__161,__163,__165,__167;int(1..)] [0, 100]),SATInt(Log, [__169,__171,__173,__175,__177,__179,__181,__183;int(1..)] [0, 100]);int(1..4)])
+   ~~> select_alldifferent ([("SAT", 18500)])
+__185
 new variables:
   findAux __185: bool
+new SAT encoding decisions:
+  define(__185 <-> allDifferent(0+weighted(1*__121, 2*__123, 4*__125, 8*__127, 16*__129, 32*__131, 64*__133, -128*__135) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }], 0+weighted(1*__137, 2*__139, 4*__141, 8*__143, 16*__145, 32*__147, 64*__149, -128*__151) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }], 0+weighted(1*__153, 2*__155, 4*__157, 8*__159, 16*__161, 32*__163, 64*__165, -128*__167) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }], 0+weighted(1*__169, 2*__171, 4*__173, 8*__175, 16*__177, 32*__179, 64*__181, -128*__183) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }])) using None, AMO None, PB None
+
+--
+
+__185,
+or([SATInt(Rank([(0, 100)]), [t#int_rank_1,t#int_rank_2,t#int_rank_3,t#int_rank_4,t#int_rank_5,t#int_rank_6,t#int_rank_7;int(1..)] [0, 100]) = SATInt(Rank([(4, 4)]), [false;int(1..)] [4, 4]),SATInt(Rank([(0, 100)]), [t#int_rank_1,t#int_rank_2,t#int_rank_3,t#int_rank_4,t#int_rank_5,t#int_rank_6,t#int_rank_7;int(1..)] [0, 100]) = SATInt(Rank([(7, 7)]), [false;int(1..)] [7, 7]),SATInt(Rank([(0, 100)]), [t#int_rank_1,t#int_rank_2,t#int_rank_3,t#int_rank_4,t#int_rank_5,t#int_rank_6,t#int_rank_7;int(1..)] [0, 100]) = SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)])
+   ~~> remove_single_atom ([("SAT", 8400)])
+or([SATInt(Rank([(0, 100)]), [t#int_rank_1,t#int_rank_2,t#int_rank_3,t#int_rank_4,t#int_rank_5,t#int_rank_6,t#int_rank_7;int(1..)] [0, 100]) = SATInt(Rank([(4, 4)]), [false;int(1..)] [4, 4]),SATInt(Rank([(0, 100)]), [t#int_rank_1,t#int_rank_2,t#int_rank_3,t#int_rank_4,t#int_rank_5,t#int_rank_6,t#int_rank_7;int(1..)] [0, 100]) = SATInt(Rank([(7, 7)]), [false;int(1..)] [7, 7]),SATInt(Rank([(0, 100)]), [t#int_rank_1,t#int_rank_2,t#int_rank_3,t#int_rank_4,t#int_rank_5,t#int_rank_6,t#int_rank_7;int(1..)] [0, 100]) = SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)])
+new SAT encoding decisions:
+  assert(__185) using tseitin
+
+--
+
+SATInt(Rank([(0, 100)]), [t#int_rank_1,t#int_rank_2,t#int_rank_3,t#int_rank_4,t#int_rank_5,t#int_rank_6,t#int_rank_7;int(1..)] [0, 100]) = SATInt(Rank([(4, 4)]), [false;int(1..)] [4, 4])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__186,__188,__190,__192,__194,__196,__198,__200;int(1..)] [0, 100]) = SATInt(Log, [__202,__204,__207,__209;int(1..)] [4, 4])
+new variables:
   findAux __186: bool
   findAux __187: bool
   findAux __188: bool
@@ -1192,50 +1210,50 @@ new variables:
   findAux __207: bool
   findAux __208: bool
   findAux __209: bool
+  findAux __210: bool
 new SAT encoding decisions:
-  define(__185 <-> !((t#int_rank_1) <-> (false))) using tseitin
-  define(__186 <-> and([t#int_rank_1,false;int(1..)])) using tseitin
-  define(__187 <-> !((t#int_rank_2) <-> (__186))) using tseitin
-  define(__188 <-> and([t#int_rank_2,__186;int(1..)])) using tseitin
-  define(__189 <-> !((t#int_rank_3) <-> (__188))) using tseitin
-  define(__190 <-> and([t#int_rank_3,__188;int(1..)])) using tseitin
-  define(__191 <-> !((t#int_rank_4) <-> (__190))) using tseitin
-  define(__192 <-> and([t#int_rank_4,__190;int(1..)])) using tseitin
-  define(__193 <-> !((t#int_rank_5) <-> (__192))) using tseitin
-  define(__194 <-> and([t#int_rank_5,__192;int(1..)])) using tseitin
-  define(__195 <-> !((t#int_rank_6) <-> (__194))) using tseitin
-  define(__196 <-> and([t#int_rank_6,__194;int(1..)])) using tseitin
-  define(__197 <-> !((t#int_rank_7) <-> (__196))) using tseitin
-  define(__198 <-> and([t#int_rank_7,__196;int(1..)])) using tseitin
-  define(__199 <-> !((false) <-> (__198))) using tseitin
-  define(__200 <-> and([false,__198;int(1..)])) using tseitin
-  define(__201 <-> !((false) <-> (false))) using tseitin
-  define(__202 <-> and([false,false;int(1..)])) using tseitin
-  define(__203 <-> !((false) <-> (__202))) using tseitin
-  define(__204 <-> and([false,__202;int(1..)])) using tseitin
-  define(__205 <-> !((false) <-> (__204))) using tseitin
-  define(__206 <-> !(__205)) using tseitin
-  define(__207 <-> or([false,__204;int(1..)])) using tseitin
-  define(__208 <-> !((false) <-> (__207))) using tseitin
-  define(__209 <-> and([false,__207;int(1..)])) using tseitin
+  define(__186 <-> !((t#int_rank_1) <-> (false))) using tseitin
+  define(__187 <-> and([t#int_rank_1,false;int(1..)])) using tseitin
+  define(__188 <-> !((t#int_rank_2) <-> (__187))) using tseitin
+  define(__189 <-> and([t#int_rank_2,__187;int(1..)])) using tseitin
+  define(__190 <-> !((t#int_rank_3) <-> (__189))) using tseitin
+  define(__191 <-> and([t#int_rank_3,__189;int(1..)])) using tseitin
+  define(__192 <-> !((t#int_rank_4) <-> (__191))) using tseitin
+  define(__193 <-> and([t#int_rank_4,__191;int(1..)])) using tseitin
+  define(__194 <-> !((t#int_rank_5) <-> (__193))) using tseitin
+  define(__195 <-> and([t#int_rank_5,__193;int(1..)])) using tseitin
+  define(__196 <-> !((t#int_rank_6) <-> (__195))) using tseitin
+  define(__197 <-> and([t#int_rank_6,__195;int(1..)])) using tseitin
+  define(__198 <-> !((t#int_rank_7) <-> (__197))) using tseitin
+  define(__199 <-> and([t#int_rank_7,__197;int(1..)])) using tseitin
+  define(__200 <-> !((false) <-> (__199))) using tseitin
+  define(__201 <-> and([false,__199;int(1..)])) using tseitin
+  define(__202 <-> !((false) <-> (false))) using tseitin
+  define(__203 <-> and([false,false;int(1..)])) using tseitin
+  define(__204 <-> !((false) <-> (__203))) using tseitin
+  define(__205 <-> and([false,__203;int(1..)])) using tseitin
+  define(__206 <-> !((false) <-> (__205))) using tseitin
+  define(__207 <-> !(__206)) using tseitin
+  define(__208 <-> or([false,__205;int(1..)])) using tseitin
+  define(__209 <-> !((false) <-> (__208))) using tseitin
+  define(__210 <-> and([false,__208;int(1..)])) using tseitin
 
 --
 
-SATInt(Log, [__185,__187,__189,__191,__193,__195,__197,__199;int(1..)] [0, 100]) = SATInt(Log, [__201,__203,__206,__208;int(1..)] [4, 4])
+SATInt(Log, [__186,__188,__190,__192,__194,__196,__198,__200;int(1..)] [0, 100]) = SATInt(Log, [__202,__204,__207,__209;int(1..)] [4, 4])
    ~~> select_integer_relation ([("SAT", 18500)])
-__210
+__211
 new variables:
-  findAux __210: bool
+  findAux __211: bool
 new SAT encoding decisions:
-  define(__210 <-> integer-weighted(1*__185, 2*__187, 4*__189, 8*__191, 16*__193, 32*__195, 64*__197, -128*__199, -1*__201, -2*__203, -4*__206, 8*__208) Equal 0) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: -4, upper: -4 } }]
+  define(__211 <-> integer-weighted(1*__186, 2*__188, 4*__190, 8*__192, 16*__194, 32*__196, 64*__198, -128*__200, -1*__202, -2*__204, -4*__207, 8*__209) Equal 0) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: -4, upper: -4 } }]
 
 --
 
 SATInt(Rank([(0, 100)]), [t#int_rank_1,t#int_rank_2,t#int_rank_3,t#int_rank_4,t#int_rank_5,t#int_rank_6,t#int_rank_7;int(1..)] [0, 100]) = SATInt(Rank([(7, 7)]), [false;int(1..)] [7, 7])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__211,__213,__215,__217,__219,__221,__223,__225;int(1..)] [0, 100]) = SATInt(Log, [__228,__231,__234,__236;int(1..)] [7, 7])
+SATInt(Log, [__212,__214,__216,__218,__220,__222,__224,__226;int(1..)] [0, 100]) = SATInt(Log, [__229,__232,__235,__237;int(1..)] [7, 7])
 new variables:
-  findAux __211: bool
   findAux __212: bool
   findAux __213: bool
   findAux __214: bool
@@ -1262,52 +1280,52 @@ new variables:
   findAux __235: bool
   findAux __236: bool
   findAux __237: bool
+  findAux __238: bool
 new SAT encoding decisions:
-  define(__211 <-> !((t#int_rank_1) <-> (false))) using tseitin
-  define(__212 <-> and([t#int_rank_1,false;int(1..)])) using tseitin
-  define(__213 <-> !((t#int_rank_2) <-> (__212))) using tseitin
-  define(__214 <-> and([t#int_rank_2,__212;int(1..)])) using tseitin
-  define(__215 <-> !((t#int_rank_3) <-> (__214))) using tseitin
-  define(__216 <-> and([t#int_rank_3,__214;int(1..)])) using tseitin
-  define(__217 <-> !((t#int_rank_4) <-> (__216))) using tseitin
-  define(__218 <-> and([t#int_rank_4,__216;int(1..)])) using tseitin
-  define(__219 <-> !((t#int_rank_5) <-> (__218))) using tseitin
-  define(__220 <-> and([t#int_rank_5,__218;int(1..)])) using tseitin
-  define(__221 <-> !((t#int_rank_6) <-> (__220))) using tseitin
-  define(__222 <-> and([t#int_rank_6,__220;int(1..)])) using tseitin
-  define(__223 <-> !((t#int_rank_7) <-> (__222))) using tseitin
-  define(__224 <-> and([t#int_rank_7,__222;int(1..)])) using tseitin
-  define(__225 <-> !((false) <-> (__224))) using tseitin
-  define(__226 <-> and([false,__224;int(1..)])) using tseitin
-  define(__227 <-> !((false) <-> (false))) using tseitin
-  define(__228 <-> !(__227)) using tseitin
-  define(__229 <-> or([false,false;int(1..)])) using tseitin
-  define(__230 <-> !((false) <-> (__229))) using tseitin
-  define(__231 <-> !(__230)) using tseitin
-  define(__232 <-> or([false,__229;int(1..)])) using tseitin
-  define(__233 <-> !((false) <-> (__232))) using tseitin
-  define(__234 <-> !(__233)) using tseitin
-  define(__235 <-> or([false,__232;int(1..)])) using tseitin
-  define(__236 <-> !((false) <-> (__235))) using tseitin
-  define(__237 <-> and([false,__235;int(1..)])) using tseitin
+  define(__212 <-> !((t#int_rank_1) <-> (false))) using tseitin
+  define(__213 <-> and([t#int_rank_1,false;int(1..)])) using tseitin
+  define(__214 <-> !((t#int_rank_2) <-> (__213))) using tseitin
+  define(__215 <-> and([t#int_rank_2,__213;int(1..)])) using tseitin
+  define(__216 <-> !((t#int_rank_3) <-> (__215))) using tseitin
+  define(__217 <-> and([t#int_rank_3,__215;int(1..)])) using tseitin
+  define(__218 <-> !((t#int_rank_4) <-> (__217))) using tseitin
+  define(__219 <-> and([t#int_rank_4,__217;int(1..)])) using tseitin
+  define(__220 <-> !((t#int_rank_5) <-> (__219))) using tseitin
+  define(__221 <-> and([t#int_rank_5,__219;int(1..)])) using tseitin
+  define(__222 <-> !((t#int_rank_6) <-> (__221))) using tseitin
+  define(__223 <-> and([t#int_rank_6,__221;int(1..)])) using tseitin
+  define(__224 <-> !((t#int_rank_7) <-> (__223))) using tseitin
+  define(__225 <-> and([t#int_rank_7,__223;int(1..)])) using tseitin
+  define(__226 <-> !((false) <-> (__225))) using tseitin
+  define(__227 <-> and([false,__225;int(1..)])) using tseitin
+  define(__228 <-> !((false) <-> (false))) using tseitin
+  define(__229 <-> !(__228)) using tseitin
+  define(__230 <-> or([false,false;int(1..)])) using tseitin
+  define(__231 <-> !((false) <-> (__230))) using tseitin
+  define(__232 <-> !(__231)) using tseitin
+  define(__233 <-> or([false,__230;int(1..)])) using tseitin
+  define(__234 <-> !((false) <-> (__233))) using tseitin
+  define(__235 <-> !(__234)) using tseitin
+  define(__236 <-> or([false,__233;int(1..)])) using tseitin
+  define(__237 <-> !((false) <-> (__236))) using tseitin
+  define(__238 <-> and([false,__236;int(1..)])) using tseitin
 
 --
 
-SATInt(Log, [__211,__213,__215,__217,__219,__221,__223,__225;int(1..)] [0, 100]) = SATInt(Log, [__228,__231,__234,__236;int(1..)] [7, 7])
+SATInt(Log, [__212,__214,__216,__218,__220,__222,__224,__226;int(1..)] [0, 100]) = SATInt(Log, [__229,__232,__235,__237;int(1..)] [7, 7])
    ~~> select_integer_relation ([("SAT", 18500)])
-__238
+__239
 new variables:
-  findAux __238: bool
+  findAux __239: bool
 new SAT encoding decisions:
-  define(__238 <-> integer-weighted(1*__211, 2*__213, 4*__215, 8*__217, 16*__219, 32*__221, 64*__223, -128*__225, -1*__228, -2*__231, -4*__234, 8*__236) Equal 0) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: -7, upper: -7 } }]
+  define(__239 <-> integer-weighted(1*__212, 2*__214, 4*__216, 8*__218, 16*__220, 32*__222, 64*__224, -128*__226, -1*__229, -2*__232, -4*__235, 8*__237) Equal 0) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: -7, upper: -7 } }]
 
 --
 
 SATInt(Rank([(0, 100)]), [t#int_rank_1,t#int_rank_2,t#int_rank_3,t#int_rank_4,t#int_rank_5,t#int_rank_6,t#int_rank_7;int(1..)] [0, 100]) = SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__239,__241,__243,__245,__247,__249,__251,__253;int(1..)] [0, 100]) = SATInt(Log, [__255,__258,__260;int(1..)] [2, 2])
+SATInt(Log, [__240,__242,__244,__246,__248,__250,__252,__254;int(1..)] [0, 100]) = SATInt(Log, [__256,__259,__261;int(1..)] [2, 2])
 new variables:
-  findAux __239: bool
   findAux __240: bool
   findAux __241: bool
   findAux __242: bool
@@ -1330,75 +1348,51 @@ new variables:
   findAux __259: bool
   findAux __260: bool
   findAux __261: bool
-new SAT encoding decisions:
-  define(__239 <-> !((t#int_rank_1) <-> (false))) using tseitin
-  define(__240 <-> and([t#int_rank_1,false;int(1..)])) using tseitin
-  define(__241 <-> !((t#int_rank_2) <-> (__240))) using tseitin
-  define(__242 <-> and([t#int_rank_2,__240;int(1..)])) using tseitin
-  define(__243 <-> !((t#int_rank_3) <-> (__242))) using tseitin
-  define(__244 <-> and([t#int_rank_3,__242;int(1..)])) using tseitin
-  define(__245 <-> !((t#int_rank_4) <-> (__244))) using tseitin
-  define(__246 <-> and([t#int_rank_4,__244;int(1..)])) using tseitin
-  define(__247 <-> !((t#int_rank_5) <-> (__246))) using tseitin
-  define(__248 <-> and([t#int_rank_5,__246;int(1..)])) using tseitin
-  define(__249 <-> !((t#int_rank_6) <-> (__248))) using tseitin
-  define(__250 <-> and([t#int_rank_6,__248;int(1..)])) using tseitin
-  define(__251 <-> !((t#int_rank_7) <-> (__250))) using tseitin
-  define(__252 <-> and([t#int_rank_7,__250;int(1..)])) using tseitin
-  define(__253 <-> !((false) <-> (__252))) using tseitin
-  define(__254 <-> and([false,__252;int(1..)])) using tseitin
-  define(__255 <-> !((false) <-> (false))) using tseitin
-  define(__256 <-> and([false,false;int(1..)])) using tseitin
-  define(__257 <-> !((false) <-> (__256))) using tseitin
-  define(__258 <-> !(__257)) using tseitin
-  define(__259 <-> or([false,__256;int(1..)])) using tseitin
-  define(__260 <-> !((false) <-> (__259))) using tseitin
-  define(__261 <-> and([false,__259;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__239,__241,__243,__245,__247,__249,__251,__253;int(1..)] [0, 100]) = SATInt(Log, [__255,__258,__260;int(1..)] [2, 2])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__262
-new variables:
   findAux __262: bool
 new SAT encoding decisions:
-  define(__262 <-> integer-weighted(1*__239, 2*__241, 4*__243, 8*__245, 16*__247, 32*__249, 64*__251, -128*__253, -1*__255, -2*__258, 4*__260) Equal 0) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }, PbTermGroup { start: 8, end: 11, structure: BoundedBinary { lower: -2, upper: -2 } }]
+  define(__240 <-> !((t#int_rank_1) <-> (false))) using tseitin
+  define(__241 <-> and([t#int_rank_1,false;int(1..)])) using tseitin
+  define(__242 <-> !((t#int_rank_2) <-> (__241))) using tseitin
+  define(__243 <-> and([t#int_rank_2,__241;int(1..)])) using tseitin
+  define(__244 <-> !((t#int_rank_3) <-> (__243))) using tseitin
+  define(__245 <-> and([t#int_rank_3,__243;int(1..)])) using tseitin
+  define(__246 <-> !((t#int_rank_4) <-> (__245))) using tseitin
+  define(__247 <-> and([t#int_rank_4,__245;int(1..)])) using tseitin
+  define(__248 <-> !((t#int_rank_5) <-> (__247))) using tseitin
+  define(__249 <-> and([t#int_rank_5,__247;int(1..)])) using tseitin
+  define(__250 <-> !((t#int_rank_6) <-> (__249))) using tseitin
+  define(__251 <-> and([t#int_rank_6,__249;int(1..)])) using tseitin
+  define(__252 <-> !((t#int_rank_7) <-> (__251))) using tseitin
+  define(__253 <-> and([t#int_rank_7,__251;int(1..)])) using tseitin
+  define(__254 <-> !((false) <-> (__253))) using tseitin
+  define(__255 <-> and([false,__253;int(1..)])) using tseitin
+  define(__256 <-> !((false) <-> (false))) using tseitin
+  define(__257 <-> and([false,false;int(1..)])) using tseitin
+  define(__258 <-> !((false) <-> (__257))) using tseitin
+  define(__259 <-> !(__258)) using tseitin
+  define(__260 <-> or([false,__257;int(1..)])) using tseitin
+  define(__261 <-> !((false) <-> (__260))) using tseitin
+  define(__262 <-> and([false,__260;int(1..)])) using tseitin
 
 --
 
-or([__210,__238,__262;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+SATInt(Log, [__240,__242,__244,__246,__248,__250,__252,__254;int(1..)] [0, 100]) = SATInt(Log, [__256,__259,__261;int(1..)] [2, 2])
+   ~~> select_integer_relation ([("SAT", 18500)])
 __263
 new variables:
   findAux __263: bool
 new SAT encoding decisions:
-  define(__263 <-> or([__210,__238,__262;int(1..)])) using tseitin
+  define(__263 <-> integer-weighted(1*__240, 2*__242, 4*__244, 8*__246, 16*__248, 32*__250, 64*__252, -128*__254, -1*__256, -2*__259, 4*__261) Equal 0) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }, PbTermGroup { start: 8, end: 11, structure: BoundedBinary { lower: -2, upper: -2 } }]
 
 --
 
-allDifferent([SATInt(Log, [__121,__123,__125,__127,__129,__131,__133,__135;int(1..)] [0, 100]),SATInt(Log, [__137,__139,__141,__143,__145,__147,__149,__151;int(1..)] [0, 100]),SATInt(Log, [__153,__155,__157,__159,__161,__163,__165,__167;int(1..)] [0, 100]),SATInt(Log, [__169,__171,__173,__175,__177,__179,__181,__183;int(1..)] [0, 100]);int(1..4)]),
-__263
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent([SATInt(Log, [__121,__123,__125,__127,__129,__131,__133,__135;int(1..)] [0, 100]),SATInt(Log, [__137,__139,__141,__143,__145,__147,__149,__151;int(1..)] [0, 100]),SATInt(Log, [__153,__155,__157,__159,__161,__163,__165,__167;int(1..)] [0, 100]),SATInt(Log, [__169,__171,__173,__175,__177,__179,__181,__183;int(1..)] [0, 100]);int(1..4)])
-new SAT encoding decisions:
-  assert(__263) using tseitin
-
---
-
-allDifferent([SATInt(Log, [__121,__123,__125,__127,__129,__131,__133,__135;int(1..)] [0, 100]),SATInt(Log, [__137,__139,__141,__143,__145,__147,__149,__151;int(1..)] [0, 100]),SATInt(Log, [__153,__155,__157,__159,__161,__163,__165,__167;int(1..)] [0, 100]),SATInt(Log, [__169,__171,__173,__175,__177,__179,__181,__183;int(1..)] [0, 100]);int(1..4)])
-   ~~> matrix_to_list ([("Base", 1998)])
-allDifferent([SATInt(Log, [__121,__123,__125,__127,__129,__131,__133,__135;int(1..)] [0, 100]),SATInt(Log, [__137,__139,__141,__143,__145,__147,__149,__151;int(1..)] [0, 100]),SATInt(Log, [__153,__155,__157,__159,__161,__163,__165,__167;int(1..)] [0, 100]),SATInt(Log, [__169,__171,__173,__175,__177,__179,__181,__183;int(1..)] [0, 100]);int(1..)])
-
---
-
-allDifferent([SATInt(Log, [__121,__123,__125,__127,__129,__131,__133,__135;int(1..)] [0, 100]),SATInt(Log, [__137,__139,__141,__143,__145,__147,__149,__151;int(1..)] [0, 100]),SATInt(Log, [__153,__155,__157,__159,__161,__163,__165,__167;int(1..)] [0, 100]),SATInt(Log, [__169,__171,__173,__175,__177,__179,__181,__183;int(1..)] [0, 100]);int(1..)])
-   ~~> select_alldifferent ([("SAT", 18500)])
+or([__211,__239,__263;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __264
 new variables:
   findAux __264: bool
 new SAT encoding decisions:
-  define(__264 <-> allDifferent(0+weighted(1*__121, 2*__123, 4*__125, 8*__127, 16*__129, 32*__131, 64*__133, -128*__135) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }], 0+weighted(1*__137, 2*__139, 4*__141, 8*__143, 16*__145, 32*__147, 64*__149, -128*__151) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }], 0+weighted(1*__153, 2*__155, 4*__157, 8*__159, 16*__161, 32*__163, 64*__165, -128*__167) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }], 0+weighted(1*__169, 2*__171, 4*__173, 8*__175, 16*__177, 32*__179, 64*__181, -128*__183) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }])) using None, AMO None, PB None
+  define(__264 <-> or([__211,__239,__263;int(1..)])) using tseitin
 
 --
 
@@ -1909,86 +1903,86 @@ define(__181 <-> !((t#int_rank_7) <-> (__180))) using tseitin,
 define(__182 <-> and([t#int_rank_7,__180;int(1..)])) using tseitin,
 define(__183 <-> !((false) <-> (__182))) using tseitin,
 define(__184 <-> and([false,__182;int(1..)])) using tseitin,
-define(__185 <-> !((t#int_rank_1) <-> (false))) using tseitin,
-define(__186 <-> and([t#int_rank_1,false;int(1..)])) using tseitin,
-define(__187 <-> !((t#int_rank_2) <-> (__186))) using tseitin,
-define(__188 <-> and([t#int_rank_2,__186;int(1..)])) using tseitin,
-define(__189 <-> !((t#int_rank_3) <-> (__188))) using tseitin,
-define(__190 <-> and([t#int_rank_3,__188;int(1..)])) using tseitin,
-define(__191 <-> !((t#int_rank_4) <-> (__190))) using tseitin,
-define(__192 <-> and([t#int_rank_4,__190;int(1..)])) using tseitin,
-define(__193 <-> !((t#int_rank_5) <-> (__192))) using tseitin,
-define(__194 <-> and([t#int_rank_5,__192;int(1..)])) using tseitin,
-define(__195 <-> !((t#int_rank_6) <-> (__194))) using tseitin,
-define(__196 <-> and([t#int_rank_6,__194;int(1..)])) using tseitin,
-define(__197 <-> !((t#int_rank_7) <-> (__196))) using tseitin,
-define(__198 <-> and([t#int_rank_7,__196;int(1..)])) using tseitin,
-define(__199 <-> !((false) <-> (__198))) using tseitin,
-define(__200 <-> and([false,__198;int(1..)])) using tseitin,
-define(__201 <-> !((false) <-> (false))) using tseitin,
-define(__202 <-> and([false,false;int(1..)])) using tseitin,
-define(__203 <-> !((false) <-> (__202))) using tseitin,
-define(__204 <-> and([false,__202;int(1..)])) using tseitin,
-define(__205 <-> !((false) <-> (__204))) using tseitin,
-define(__206 <-> !(__205)) using tseitin,
-define(__207 <-> or([false,__204;int(1..)])) using tseitin,
-define(__208 <-> !((false) <-> (__207))) using tseitin,
-define(__209 <-> and([false,__207;int(1..)])) using tseitin,
-define(__210 <-> integer-weighted(1*__185, 2*__187, 4*__189, 8*__191, 16*__193, 32*__195, 64*__197, -128*__199, -1*__201, -2*__203, -4*__206, 8*__208) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: -4, upper: -4 } }],
-define(__211 <-> !((t#int_rank_1) <-> (false))) using tseitin,
-define(__212 <-> and([t#int_rank_1,false;int(1..)])) using tseitin,
-define(__213 <-> !((t#int_rank_2) <-> (__212))) using tseitin,
-define(__214 <-> and([t#int_rank_2,__212;int(1..)])) using tseitin,
-define(__215 <-> !((t#int_rank_3) <-> (__214))) using tseitin,
-define(__216 <-> and([t#int_rank_3,__214;int(1..)])) using tseitin,
-define(__217 <-> !((t#int_rank_4) <-> (__216))) using tseitin,
-define(__218 <-> and([t#int_rank_4,__216;int(1..)])) using tseitin,
-define(__219 <-> !((t#int_rank_5) <-> (__218))) using tseitin,
-define(__220 <-> and([t#int_rank_5,__218;int(1..)])) using tseitin,
-define(__221 <-> !((t#int_rank_6) <-> (__220))) using tseitin,
-define(__222 <-> and([t#int_rank_6,__220;int(1..)])) using tseitin,
-define(__223 <-> !((t#int_rank_7) <-> (__222))) using tseitin,
-define(__224 <-> and([t#int_rank_7,__222;int(1..)])) using tseitin,
-define(__225 <-> !((false) <-> (__224))) using tseitin,
-define(__226 <-> and([false,__224;int(1..)])) using tseitin,
-define(__227 <-> !((false) <-> (false))) using tseitin,
-define(__228 <-> !(__227)) using tseitin,
-define(__229 <-> or([false,false;int(1..)])) using tseitin,
-define(__230 <-> !((false) <-> (__229))) using tseitin,
-define(__231 <-> !(__230)) using tseitin,
-define(__232 <-> or([false,__229;int(1..)])) using tseitin,
-define(__233 <-> !((false) <-> (__232))) using tseitin,
-define(__234 <-> !(__233)) using tseitin,
-define(__235 <-> or([false,__232;int(1..)])) using tseitin,
-define(__236 <-> !((false) <-> (__235))) using tseitin,
-define(__237 <-> and([false,__235;int(1..)])) using tseitin,
-define(__238 <-> integer-weighted(1*__211, 2*__213, 4*__215, 8*__217, 16*__219, 32*__221, 64*__223, -128*__225, -1*__228, -2*__231, -4*__234, 8*__236) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: -7, upper: -7 } }],
-define(__239 <-> !((t#int_rank_1) <-> (false))) using tseitin,
-define(__240 <-> and([t#int_rank_1,false;int(1..)])) using tseitin,
-define(__241 <-> !((t#int_rank_2) <-> (__240))) using tseitin,
-define(__242 <-> and([t#int_rank_2,__240;int(1..)])) using tseitin,
-define(__243 <-> !((t#int_rank_3) <-> (__242))) using tseitin,
-define(__244 <-> and([t#int_rank_3,__242;int(1..)])) using tseitin,
-define(__245 <-> !((t#int_rank_4) <-> (__244))) using tseitin,
-define(__246 <-> and([t#int_rank_4,__244;int(1..)])) using tseitin,
-define(__247 <-> !((t#int_rank_5) <-> (__246))) using tseitin,
-define(__248 <-> and([t#int_rank_5,__246;int(1..)])) using tseitin,
-define(__249 <-> !((t#int_rank_6) <-> (__248))) using tseitin,
-define(__250 <-> and([t#int_rank_6,__248;int(1..)])) using tseitin,
-define(__251 <-> !((t#int_rank_7) <-> (__250))) using tseitin,
-define(__252 <-> and([t#int_rank_7,__250;int(1..)])) using tseitin,
-define(__253 <-> !((false) <-> (__252))) using tseitin,
-define(__254 <-> and([false,__252;int(1..)])) using tseitin,
-define(__255 <-> !((false) <-> (false))) using tseitin,
-define(__256 <-> and([false,false;int(1..)])) using tseitin,
-define(__257 <-> !((false) <-> (__256))) using tseitin,
-define(__258 <-> !(__257)) using tseitin,
-define(__259 <-> or([false,__256;int(1..)])) using tseitin,
-define(__260 <-> !((false) <-> (__259))) using tseitin,
-define(__261 <-> and([false,__259;int(1..)])) using tseitin,
-define(__262 <-> integer-weighted(1*__239, 2*__241, 4*__243, 8*__245, 16*__247, 32*__249, 64*__251, -128*__253, -1*__255, -2*__258, 4*__260) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }, PbTermGroup { start: 8, end: 11, structure: BoundedBinary { lower: -2, upper: -2 } }],
-define(__263 <-> or([__210,__238,__262;int(1..)])) using tseitin,
-assert(__263) using tseitin,
-define(__264 <-> allDifferent(0+weighted(1*__121, 2*__123, 4*__125, 8*__127, 16*__129, 32*__131, 64*__133, -128*__135) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }], 0+weighted(1*__137, 2*__139, 4*__141, 8*__143, 16*__145, 32*__147, 64*__149, -128*__151) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }], 0+weighted(1*__153, 2*__155, 4*__157, 8*__159, 16*__161, 32*__163, 64*__165, -128*__167) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }], 0+weighted(1*__169, 2*__171, 4*__173, 8*__175, 16*__177, 32*__179, 64*__181, -128*__183) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
+define(__185 <-> allDifferent(0+weighted(1*__121, 2*__123, 4*__125, 8*__127, 16*__129, 32*__131, 64*__133, -128*__135) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }], 0+weighted(1*__137, 2*__139, 4*__141, 8*__143, 16*__145, 32*__147, 64*__149, -128*__151) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }], 0+weighted(1*__153, 2*__155, 4*__157, 8*__159, 16*__161, 32*__163, 64*__165, -128*__167) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }], 0+weighted(1*__169, 2*__171, 4*__173, 8*__175, 16*__177, 32*__179, 64*__181, -128*__183) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
+assert(__185) using tseitin,
+define(__186 <-> !((t#int_rank_1) <-> (false))) using tseitin,
+define(__187 <-> and([t#int_rank_1,false;int(1..)])) using tseitin,
+define(__188 <-> !((t#int_rank_2) <-> (__187))) using tseitin,
+define(__189 <-> and([t#int_rank_2,__187;int(1..)])) using tseitin,
+define(__190 <-> !((t#int_rank_3) <-> (__189))) using tseitin,
+define(__191 <-> and([t#int_rank_3,__189;int(1..)])) using tseitin,
+define(__192 <-> !((t#int_rank_4) <-> (__191))) using tseitin,
+define(__193 <-> and([t#int_rank_4,__191;int(1..)])) using tseitin,
+define(__194 <-> !((t#int_rank_5) <-> (__193))) using tseitin,
+define(__195 <-> and([t#int_rank_5,__193;int(1..)])) using tseitin,
+define(__196 <-> !((t#int_rank_6) <-> (__195))) using tseitin,
+define(__197 <-> and([t#int_rank_6,__195;int(1..)])) using tseitin,
+define(__198 <-> !((t#int_rank_7) <-> (__197))) using tseitin,
+define(__199 <-> and([t#int_rank_7,__197;int(1..)])) using tseitin,
+define(__200 <-> !((false) <-> (__199))) using tseitin,
+define(__201 <-> and([false,__199;int(1..)])) using tseitin,
+define(__202 <-> !((false) <-> (false))) using tseitin,
+define(__203 <-> and([false,false;int(1..)])) using tseitin,
+define(__204 <-> !((false) <-> (__203))) using tseitin,
+define(__205 <-> and([false,__203;int(1..)])) using tseitin,
+define(__206 <-> !((false) <-> (__205))) using tseitin,
+define(__207 <-> !(__206)) using tseitin,
+define(__208 <-> or([false,__205;int(1..)])) using tseitin,
+define(__209 <-> !((false) <-> (__208))) using tseitin,
+define(__210 <-> and([false,__208;int(1..)])) using tseitin,
+define(__211 <-> integer-weighted(1*__186, 2*__188, 4*__190, 8*__192, 16*__194, 32*__196, 64*__198, -128*__200, -1*__202, -2*__204, -4*__207, 8*__209) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: -4, upper: -4 } }],
+define(__212 <-> !((t#int_rank_1) <-> (false))) using tseitin,
+define(__213 <-> and([t#int_rank_1,false;int(1..)])) using tseitin,
+define(__214 <-> !((t#int_rank_2) <-> (__213))) using tseitin,
+define(__215 <-> and([t#int_rank_2,__213;int(1..)])) using tseitin,
+define(__216 <-> !((t#int_rank_3) <-> (__215))) using tseitin,
+define(__217 <-> and([t#int_rank_3,__215;int(1..)])) using tseitin,
+define(__218 <-> !((t#int_rank_4) <-> (__217))) using tseitin,
+define(__219 <-> and([t#int_rank_4,__217;int(1..)])) using tseitin,
+define(__220 <-> !((t#int_rank_5) <-> (__219))) using tseitin,
+define(__221 <-> and([t#int_rank_5,__219;int(1..)])) using tseitin,
+define(__222 <-> !((t#int_rank_6) <-> (__221))) using tseitin,
+define(__223 <-> and([t#int_rank_6,__221;int(1..)])) using tseitin,
+define(__224 <-> !((t#int_rank_7) <-> (__223))) using tseitin,
+define(__225 <-> and([t#int_rank_7,__223;int(1..)])) using tseitin,
+define(__226 <-> !((false) <-> (__225))) using tseitin,
+define(__227 <-> and([false,__225;int(1..)])) using tseitin,
+define(__228 <-> !((false) <-> (false))) using tseitin,
+define(__229 <-> !(__228)) using tseitin,
+define(__230 <-> or([false,false;int(1..)])) using tseitin,
+define(__231 <-> !((false) <-> (__230))) using tseitin,
+define(__232 <-> !(__231)) using tseitin,
+define(__233 <-> or([false,__230;int(1..)])) using tseitin,
+define(__234 <-> !((false) <-> (__233))) using tseitin,
+define(__235 <-> !(__234)) using tseitin,
+define(__236 <-> or([false,__233;int(1..)])) using tseitin,
+define(__237 <-> !((false) <-> (__236))) using tseitin,
+define(__238 <-> and([false,__236;int(1..)])) using tseitin,
+define(__239 <-> integer-weighted(1*__212, 2*__214, 4*__216, 8*__218, 16*__220, 32*__222, 64*__224, -128*__226, -1*__229, -2*__232, -4*__235, 8*__237) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: -7, upper: -7 } }],
+define(__240 <-> !((t#int_rank_1) <-> (false))) using tseitin,
+define(__241 <-> and([t#int_rank_1,false;int(1..)])) using tseitin,
+define(__242 <-> !((t#int_rank_2) <-> (__241))) using tseitin,
+define(__243 <-> and([t#int_rank_2,__241;int(1..)])) using tseitin,
+define(__244 <-> !((t#int_rank_3) <-> (__243))) using tseitin,
+define(__245 <-> and([t#int_rank_3,__243;int(1..)])) using tseitin,
+define(__246 <-> !((t#int_rank_4) <-> (__245))) using tseitin,
+define(__247 <-> and([t#int_rank_4,__245;int(1..)])) using tseitin,
+define(__248 <-> !((t#int_rank_5) <-> (__247))) using tseitin,
+define(__249 <-> and([t#int_rank_5,__247;int(1..)])) using tseitin,
+define(__250 <-> !((t#int_rank_6) <-> (__249))) using tseitin,
+define(__251 <-> and([t#int_rank_6,__249;int(1..)])) using tseitin,
+define(__252 <-> !((t#int_rank_7) <-> (__251))) using tseitin,
+define(__253 <-> and([t#int_rank_7,__251;int(1..)])) using tseitin,
+define(__254 <-> !((false) <-> (__253))) using tseitin,
+define(__255 <-> and([false,__253;int(1..)])) using tseitin,
+define(__256 <-> !((false) <-> (false))) using tseitin,
+define(__257 <-> and([false,false;int(1..)])) using tseitin,
+define(__258 <-> !((false) <-> (__257))) using tseitin,
+define(__259 <-> !(__258)) using tseitin,
+define(__260 <-> or([false,__257;int(1..)])) using tseitin,
+define(__261 <-> !((false) <-> (__260))) using tseitin,
+define(__262 <-> and([false,__260;int(1..)])) using tseitin,
+define(__263 <-> integer-weighted(1*__240, 2*__242, 4*__244, 8*__246, 16*__248, 32*__250, 64*__252, -128*__254, -1*__256, -2*__259, 4*__261) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }, PbTermGroup { start: 8, end: 11, structure: BoundedBinary { lower: -2, upper: -2 } }],
+define(__264 <-> or([__211,__239,__263;int(1..)])) using tseitin,
 assert(__264) using tseitin
 
