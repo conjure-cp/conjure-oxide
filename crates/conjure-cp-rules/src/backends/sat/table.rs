@@ -1,4 +1,4 @@
-//! Preserve constant table relations until library clause generation.
+//! Preserve numeric table relations until library clause generation.
 use conjure_cp::ast::{Atom, Expression as Expr, Literal, SatEncodingDecision, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
