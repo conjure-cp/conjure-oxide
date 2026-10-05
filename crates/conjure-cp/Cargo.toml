@@ -4,12 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-conjure-cp-core = { version = "0.0.1", path = "../conjure-cp-core" }
+conjure-cp-core = { version = "0.0.1", path = "../conjure-cp-core", default-features = false }
 conjure-cp-essence-macros = { version = "0.1.0", path = "../conjure-cp-essence-macros" }
-conjure-cp-essence-parser = { version = "0.1.0", path = "../conjure-cp-essence-parser" }
+conjure-cp-essence-parser = { version = "0.1.0", path = "../conjure-cp-essence-parser", default-features = false }
 
 [features]
-default = []
+default = ["sat-cadical", "z3"]
+sat-cadical = ["conjure-cp-core/sat-cadical", "conjure-cp-essence-parser/sat-cadical"]
+sat-batsat = ["conjure-cp-core/sat-batsat", "conjure-cp-essence-parser/sat-batsat"]
+z3 = ["conjure-cp-core/z3"]
 z3-bundled = [
     "conjure-cp-core/z3-bundled",
     "conjure-cp-essence-macros/z3-bundled",
@@ -21,7 +24,7 @@ extra-rule-checks = ["conjure-cp-core/extra-rule-checks"]
 workspace = true
 
 [dev-dependencies]
-conjure-cp-rules = { path = '../conjure-cp-rules' }
+conjure-cp-rules = { path = '../conjure-cp-rules', default-features = false }
 
 defile = { workspace = true }
 itertools = { workspace = true }
