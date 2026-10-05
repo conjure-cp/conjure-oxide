@@ -149,11 +149,11 @@ mod tests {
     use super::*;
     use crate::ast::sat_decision::{AmoEncoding, EncodingSelection, SelectionProvenance};
     use crate::ast::{DeclarationPtr, Domain, Metadata, Moo, Reference};
+    use crate::solver::adaptors::rustsat::adaptor::SatSolver;
     use rustsat::{
         instances::{BasicVarManager, Cnf},
         solvers::{Solve, SolveIncremental, SolverResult},
     };
-    use rustsat_cadical::CaDiCaL;
 
     fn check(
         inputs: Vec<Expression>,
@@ -179,7 +179,7 @@ mod tests {
         )
         .unwrap();
         let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-        let mut solver = CaDiCaL::default();
+        let mut solver = SatSolver::default();
         solver.add_cnf(cnf).unwrap();
         for bits in 0..(1usize << variables.len()) {
             let assumptions: Vec<_> = variables

@@ -73,11 +73,11 @@ mod tests {
         SatIntegerView, SelectionProvenance,
     };
     use crate::ast::{DeclarationPtr, Domain, Reference};
+    use crate::solver::adaptors::rustsat::adaptor::SatSolver;
     use rustsat::{
         instances::{BasicVarManager, Cnf, ManageVars},
         solvers::{Solve, SolveIncremental, SolverResult},
     };
-    use rustsat_cadical::CaDiCaL;
 
     fn constant(value: i64) -> SatIntegerView {
         SatIntegerView {
@@ -176,7 +176,7 @@ mod tests {
                     let used = instance.var_manager_mut().n_used();
                     assert_eq!(instance.new_lit().var().idx32(), used);
                     let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-                    let mut solver = CaDiCaL::default();
+                    let mut solver = SatSolver::default();
                     solver.add_cnf(cnf).unwrap();
                     for assignment in 0usize..32 {
                         let set = |i| assignment & (1usize << i) != 0;

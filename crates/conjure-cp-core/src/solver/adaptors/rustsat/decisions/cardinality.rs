@@ -402,17 +402,17 @@ mod tests {
         CardinalityEncoding, CardinalityRelation, EncodingSelection, SelectionProvenance,
     };
     use crate::ast::{DeclarationPtr, Domain, Metadata, Moo, Reference};
+    use crate::solver::adaptors::rustsat::adaptor::SatSolver;
     use rustsat::{
         instances::{BasicVarManager, ManageVars},
         solvers::{Solve, SolveIncremental, SolverResult},
     };
-    use rustsat_cadical::CaDiCaL;
     #[test]
     fn reusable_cardinality_batches_preserve_guards_and_occurrence_counts() {
         for algorithm in CardinalityEncoding::ALL {
             let mut cache = EncodingCache::default();
             let mut variables = HashMap::new();
-            let mut solver = CaDiCaL::default();
+            let mut solver = SatSolver::default();
             let mut initial: SatInstance = SatInstance::new();
             let inputs: Vec<_> = (0..3).map(|_| initial.new_lit()).collect();
             let (_, mut manager): (Cnf, BasicVarManager) = initial.into_cnf();
@@ -592,7 +592,7 @@ mod tests {
                                     let used = instance.var_manager_mut().n_used();
                                     assert_eq!(instance.new_lit().var().idx32(), used);
                                     let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-                                    let mut solver = CaDiCaL::default();
+                                    let mut solver = SatSolver::default();
                                     solver.add_cnf(cnf).unwrap();
                                     for assignment in 0..(1usize << size) {
                                         let count = assignment.count_ones() as i64
@@ -700,7 +700,7 @@ mod tests {
                             let used = instance.var_manager_mut().n_used();
                             assert_eq!(instance.new_lit().var().idx32(), used);
                             let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-                            let mut solver = CaDiCaL::default();
+                            let mut solver = SatSolver::default();
                             solver.add_cnf(cnf).unwrap();
                             for assignment in 0..(1usize << size) {
                                 let count = assignment.count_ones() as i64

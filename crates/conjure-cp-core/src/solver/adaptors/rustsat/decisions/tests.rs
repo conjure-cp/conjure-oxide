@@ -1,10 +1,10 @@
 use super::*;
 use crate::ast::{DeclarationPtr, Domain, Metadata, Moo, Reference};
+use crate::solver::adaptors::rustsat::adaptor::SatSolver;
 use rustsat::{
     instances::{BasicVarManager, Cnf},
     solvers::{Solve, SolveIncremental, SolverResult},
 };
-use rustsat_cadical::CaDiCaL;
 
 #[test]
 fn rebuilt_boolean_projections_share_literals_across_batches() {
@@ -24,7 +24,7 @@ fn rebuilt_boolean_projections_share_literals_across_batches() {
             .collect();
         let mut cache = EncodingCache::default();
         let mut map = HashMap::new();
-        let mut solver = CaDiCaL::default();
+        let mut solver = SatSolver::default();
         let mut next_free = 0;
         let mut previous_projection = None;
         let mut outputs = Vec::new();
@@ -181,7 +181,7 @@ fn boolean_aliases_retain_existing_uses_and_multiple_definitions() {
     ];
     compile_decisions(&decisions, &mut instance, &mut map).unwrap();
     let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-    let mut solver = CaDiCaL::default();
+    let mut solver = SatSolver::default();
     solver.add_cnf(cnf).unwrap();
     for a in [false, true] {
         let lit = map[&vars[0].name()];
@@ -228,7 +228,7 @@ fn semantic_gates_preserve_all_input_and_output_assignments() {
         )
         .unwrap();
         let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-        let mut solver = CaDiCaL::default();
+        let mut solver = SatSolver::default();
         solver.add_cnf(cnf).unwrap();
         for bits in 0..8 {
             let a = bits & 1 != 0;

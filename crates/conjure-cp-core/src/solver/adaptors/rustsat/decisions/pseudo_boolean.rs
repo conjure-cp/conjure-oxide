@@ -827,11 +827,11 @@ mod tests {
         SelectionProvenance,
     };
     use crate::ast::{DeclarationPtr, Domain, Metadata, Moo, Reference};
+    use crate::solver::adaptors::rustsat::adaptor::SatSolver;
     use rustsat::{
         instances::{BasicVarManager, ManageVars},
         solvers::{Solve, SolveIncremental, SolverResult},
     };
-    use rustsat_cadical::CaDiCaL;
 
     #[test]
     fn weighted_thresholds_reuse_batches_and_coexist_for_every_provider() {
@@ -839,7 +839,7 @@ mod tests {
         for algorithm in PbEncoding::ALL {
             let mut cache = EncodingCache::default();
             let mut variables = HashMap::new();
-            let mut solver = CaDiCaL::default();
+            let mut solver = SatSolver::default();
             let mut initial: SatInstance = SatInstance::new();
             let inputs: Vec<_> = (0..3).map(|_| initial.new_lit()).collect();
             let (_, mut manager): (Cnf, BasicVarManager) = initial.into_cnf();
@@ -1040,7 +1040,7 @@ mod tests {
                 );
                 outputs.push((output, bound));
             }
-            let mut solver = CaDiCaL::default();
+            let mut solver = SatSolver::default();
             solver.add_cnf(instance.cnf().clone()).unwrap();
             for assignment in 0usize..64 {
                 let set = |bit: usize| assignment & (1usize << bit) != 0;
@@ -1125,7 +1125,7 @@ mod tests {
         assert_eq!(compiler.instance.var_manager_mut().n_used(), allocated);
         assert!(cache.weighted.is_empty());
         assert_eq!(cache.weighted_thresholds.len(), 1);
-        let mut solver = CaDiCaL::default();
+        let mut solver = SatSolver::default();
         solver.add_cnf(instance.cnf().clone()).unwrap();
         for count in [0, 47, 48, 49, 96] {
             for truth in [false, true] {
@@ -1171,7 +1171,7 @@ mod tests {
                 )
                 .unwrap();
             assert!(cache.weighted.is_empty());
-            let mut solver = CaDiCaL::default();
+            let mut solver = SatSolver::default();
             solver.add_cnf(instance.cnf().clone()).unwrap();
             for count in [0, 47, 48, 49, 96] {
                 let assumptions: Vec<_> = inputs
@@ -1246,7 +1246,7 @@ mod tests {
                             map.insert(variable.name().clone(), instance.new_lit());
                         }
                         compile_decisions(&[decision], &mut instance, &mut map).unwrap();
-                        let mut solver = CaDiCaL::default();
+                        let mut solver = SatSolver::default();
                         solver.add_cnf(instance.cnf().clone()).unwrap();
                         for assignment in 0..16 {
                             let set = |index| assignment & (1 << index) != 0;
@@ -1469,7 +1469,7 @@ mod tests {
                             let used = instance.var_manager_mut().n_used();
                             assert_eq!(instance.new_lit().var().idx32(), used);
                             let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-                            let mut solver = CaDiCaL::default();
+                            let mut solver = SatSolver::default();
                             solver.add_cnf(cnf).unwrap();
                             for assignment in 0usize..32 {
                                 let set = |i| assignment & (1usize << i) != 0;
@@ -1645,7 +1645,7 @@ mod tests {
                             );
                             compile_decisions(&decisions, &mut instance, &mut map).unwrap();
                             let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-                            let mut solver = CaDiCaL::default();
+                            let mut solver = SatSolver::default();
                             solver.add_cnf(cnf).unwrap();
                             for assignment in 0usize..512 {
                                 let set = |index| assignment & (1usize << index) != 0;
@@ -1781,7 +1781,7 @@ mod tests {
                         let used = instance.var_manager_mut().n_used();
                         assert_eq!(instance.new_lit().var().idx32(), used);
                         let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-                        let mut solver = CaDiCaL::default();
+                        let mut solver = SatSolver::default();
                         solver.add_cnf(cnf).unwrap();
                         for assignment in 0usize..16 {
                             let bit = |index| i64::from(assignment & (1usize << index) != 0);
@@ -1877,7 +1877,7 @@ mod tests {
                         )
                         .unwrap();
                         let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-                        let mut solver = CaDiCaL::default();
+                        let mut solver = SatSolver::default();
                         solver.add_cnf(cnf).unwrap();
                         for assignment in 0usize..32 {
                             if (0..count)
@@ -1975,7 +1975,7 @@ mod tests {
                             };
                             compile_decisions(&decisions, &mut instance, &mut map).unwrap();
                             let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-                            let mut solver = CaDiCaL::default();
+                            let mut solver = SatSolver::default();
                             solver.add_cnf(cnf).unwrap();
                             for assignment in 0usize..4 {
                                 let bit = |index| assignment & (1usize << index) != 0;
@@ -2116,7 +2116,7 @@ mod tests {
                                 let used = instance.var_manager_mut().n_used();
                                 assert_eq!(instance.new_lit().var().idx32(), used);
                                 let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-                                let mut solver = CaDiCaL::default();
+                                let mut solver = SatSolver::default();
                                 solver.add_cnf(cnf).unwrap();
                                 for assignment in 0usize..16 {
                                     let set = |index: usize| assignment & (1usize << index) != 0;
@@ -2295,7 +2295,7 @@ mod tests {
                                         let used = instance.var_manager_mut().n_used();
                                         assert_eq!(instance.new_lit().var().idx32(), used);
                                         let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-                                        let mut solver = CaDiCaL::default();
+                                        let mut solver = SatSolver::default();
                                         solver.add_cnf(cnf).unwrap();
                                         for assignment in 0usize..32 {
                                             let set =
@@ -2398,7 +2398,7 @@ mod tests {
                 "{algorithm}: group information must reach the encoder"
             );
             let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-            let mut solver = CaDiCaL::default();
+            let mut solver = SatSolver::default();
             solver.add_cnf(cnf).unwrap();
             // The choice maximum makes <= 9 true and its opposite impossible.
             assert_eq!(solver.solve_assumps(&[output]).unwrap(), SolverResult::Sat);
@@ -2528,7 +2528,7 @@ mod tests {
                 )
                 .unwrap();
                 let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-                let mut solver = CaDiCaL::default();
+                let mut solver = SatSolver::default();
                 solver.add_cnf(cnf).unwrap();
                 for assignment in 0..4 {
                     let first = assignment & 1 != 0;
@@ -2614,7 +2614,7 @@ mod tests {
                             let used = instance.var_manager_mut().n_used();
                             assert_eq!(instance.new_lit().var().idx32(), used);
                             let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
-                            let mut solver = CaDiCaL::default();
+                            let mut solver = SatSolver::default();
                             solver.add_cnf(cnf).unwrap();
                             for assignment in 0..8 {
                                 let active = |index| i64::from(assignment & (1usize << index) != 0);

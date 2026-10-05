@@ -9,7 +9,9 @@ use std::vec;
 use clap::error;
 use minion_sys::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
-use rustsat::solvers::{ControlSignal, Solve, SolveIncremental, SolverResult, Terminate};
+#[cfg(not(feature = "sat-batsat"))]
+use rustsat::solvers::{ControlSignal, Terminate};
+use rustsat::solvers::{Solve, SolveIncremental, SolverResult};
 use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var as satVar};
 use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
@@ -17,7 +19,12 @@ use std::time::Duration;
 use tracing_subscriber::filter::DynFilterFn;
 use ustr::Ustr;
 
-use rustsat_cadical::CaDiCaL;
+/// SAT solver selected by compilation features.
+#[cfg(feature = "sat-batsat")]
+pub(super) type SatSolver = rustsat_batsat::BasicSolver;
+/// SAT solver selected by compilation features.
+#[cfg(not(feature = "sat-batsat"))]
+pub(super) type SatSolver = rustsat_cadical::CaDiCaL<'static, 'static>;
 
 use crate::ast::pretty::pretty_vec;
 use crate::ast::serde::HasId;
@@ -50,7 +57,7 @@ pub struct Sat {
     timeout: Option<Duration>,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<Name, Lit>>,
-    solver_inst: CaDiCaL<'static, 'static>,
+    solver_inst: SatSolver,
     decision_refs: Option<Vec<Name>>,
     objective: Option<super::objective::CompiledObjective>,
     counters: EncodingCache,
@@ -66,7 +73,7 @@ impl Default for Sat {
             __non_constructable: private::Internal,
             solver_seed: 0,
             timeout: None,
-            solver_inst: CaDiCaL::default(),
+            solver_inst: SatSolver::default(),
             var_map: None,
             model_inst: None,
             decision_refs: None,
@@ -80,6 +87,9 @@ impl Default for Sat {
 
 impl Sat {
     /// Sets the seed used by the SAT solver's random search behaviour.
+    ///
+    /// With BatSat, only zero (the default settings) is supported; other values
+    /// cause solving to return an error.
     pub fn with_solver_seed(mut self, solver_seed: u32) -> Self {
         self.solver_seed = solver_seed;
         self
@@ -297,7 +307,7 @@ impl Sat {
     fn add_dominance_constraints_for_solution(
         dominance_expression: Option<&Expression>,
         dominance_model_template: Option<&ConjureModel>,
-        solver: &mut CaDiCaL<'static, 'static>,
+        solver: &mut SatSolver,
         solution: &HashMap<Name, Literal>,
         var_map: &mut HashMap<Name, Lit>,
         next_free: &mut u32,
@@ -377,16 +387,25 @@ impl SolverAdaptor for Sat {
         let mut objective = self.objective.take();
         let mut objective_assumptions = Vec::new();
         let mut solver = &mut self.solver_inst;
-        let solver_seed = i32::try_from(self.solver_seed).map_err(|_| {
-            SolverError::Runtime(format!(
-                "solver seed {} exceeds CaDiCaL's maximum supported value ({})",
-                self.solver_seed,
-                i32::MAX
-            ))
-        })?;
-        solver.set_option("seed", solver_seed).map_err(|err| {
-            SolverError::Runtime(format!("Failed setting CaDiCaL solver seed: {err}"))
-        })?;
+        #[cfg(feature = "sat-batsat")]
+        if self.solver_seed != 0 {
+            return Err(SolverError::Runtime(
+                "BatSat does not support configuring the solver seed through this adaptor".into(),
+            ));
+        }
+        #[cfg(not(feature = "sat-batsat"))]
+        {
+            let solver_seed = i32::try_from(self.solver_seed).map_err(|_| {
+                SolverError::Runtime(format!(
+                    "solver seed {} exceeds CaDiCaL's maximum supported value ({})",
+                    self.solver_seed,
+                    i32::MAX
+                ))
+            })?;
+            solver.set_option("seed", solver_seed).map_err(|err| {
+                SolverError::Runtime(format!("Failed setting CaDiCaL solver seed: {err}"))
+            })?;
+        }
         let mut var_map = self.var_map.clone().ok_or_else(|| {
             SolverError::Runtime("Variable map is missing when retrieving solution".to_string())
         })?;
@@ -404,6 +423,12 @@ impl SolverAdaptor for Sat {
 
         if timeout_enabled {
             let terminator_budget = budget;
+            #[cfg(feature = "sat-batsat")]
+            solver
+                .batsat_mut()
+                .cb_mut()
+                .set_stop(move || terminator_budget.expired());
+            #[cfg(not(feature = "sat-batsat"))]
             solver.attach_terminator(move || {
                 if terminator_budget.expired() {
                     ControlSignal::Terminate
@@ -1037,6 +1062,16 @@ mod tests {
             )
             .unwrap();
         assert_eq!(result.status, SearchStatus::Complete(NoSolutions));
+    }
+
+    #[cfg(feature = "sat-batsat")]
+    #[test]
+    fn batsat_rejects_unsupported_seed() {
+        let mut sat = Sat::default().with_solver_seed(1);
+        let result = sat.solve(Box::new(|_| true), private::Internal);
+        assert!(
+            matches!(result, Err(SolverError::Runtime(message)) if message.contains("solver seed"))
+        );
     }
 
     #[test]

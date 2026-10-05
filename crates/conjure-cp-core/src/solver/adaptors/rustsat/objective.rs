@@ -159,11 +159,11 @@ mod tests {
         DeclarationPtr, Domain, Expression, Metadata, Moo, Reference,
         sat_decision::SelectionProvenance,
     };
+    use crate::solver::adaptors::rustsat::adaptor::SatSolver;
     use rustsat::{
         instances::{BasicVarManager, ManageVars},
         solvers::{Solve, SolveIncremental, SolverResult},
     };
-    use rustsat_cadical::CaDiCaL;
 
     #[test]
     fn tightening_preserves_signed_objective_projections_and_reuses_native_state() {
@@ -226,7 +226,7 @@ mod tests {
                         }
                     });
                     candidates.dedup_by_key(|assignment| raw(*assignment));
-                    let mut solver = CaDiCaL::default();
+                    let mut solver = SatSolver::default();
                     for assignment in candidates {
                         let mut completed = Assignment::default();
                         for (bit, literal) in lits.iter().enumerate() {

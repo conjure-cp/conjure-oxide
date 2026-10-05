@@ -170,6 +170,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
 
 [[package]]
+name = "batsat"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec82b6bbce8ea42f5003417b699267860a9f4dd869fc9ba8faceac761d5afed1"
+dependencies = [
+ "bit-vec",
+]
+
+[[package]]
 name = "bimap"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -188,8 +197,6 @@ dependencies = [
  "cexpr",
  "clang-sys",
  "itertools 0.13.0",
- "log",
- "prettyplease",
  "proc-macro2",
  "quote",
  "regex",
@@ -197,6 +204,31 @@ dependencies = [
  "shlex 1.3.0",
  "syn 2.0.119",
 ]
+
+[[package]]
+name = "bindgen"
+version = "0.73.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "787ef8ef523575546b106a58213d6e6b06198a05c2f757258c68a74273670cfa"
+dependencies = [
+ "bitflags 2.13.1",
+ "cexpr",
+ "clang-sys",
+ "log",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "rustc-hash",
+ "shlex 2.0.1",
+ "syn 3.0.6",
+]
+
+[[package]]
+name = "bit-vec"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f59bbe95d4e52a6398ec21238d31577f2b28a9d86807f06ca59d191d8440d0bb"
 
 [[package]]
 name = "bitflags"
@@ -447,6 +479,7 @@ dependencies = [
  "quote",
  "regex",
  "rustsat",
+ "rustsat-batsat",
  "rustsat-cadical",
  "schemars 1.2.2",
  "serde",
@@ -1403,12 +1436,12 @@ checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 
 [[package]]
 name = "minion-sys"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef668d92f986bd6bc36175d60bddd84580f604bf751e97a7d27c275f641ef146"
+checksum = "281eb5d2ec37757c7ecdc55dda68666287d2dbc0805bba38451d71262c4f563b"
 dependencies = [
  "anyhow",
- "bindgen",
+ "bindgen 0.73.2",
  "cc",
  "libc",
  "serde_json",
@@ -1675,12 +1708,12 @@ dependencies = [
 
 [[package]]
 name = "prettyplease"
-version = "0.2.37"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "479ca8adacdd7ce8f1fb39ce9ecccbfe93a3f1344b3d0d97f20bc0196208f62b"
+checksum = "2bfe0f4c752e450fc2faf62654f1c134747922825d5b04ca717b8874f41a40c0"
 dependencies = [
  "proc-macro2",
- "syn 2.0.119",
+ "syn 3.0.6",
 ]
 
 [[package]]
@@ -1825,13 +1858,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustsat-batsat"
+version = "0.7.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f9a094a442060c4befd972d697eb7af0c6dc1520168bdeb928cbb37c31398da"
+dependencies = [
+ "anyhow",
+ "batsat",
+ "rustsat",
+]
+
+[[package]]
 name = "rustsat-cadical"
 version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "36c1940036a11c1ff492fdbdad940ba100220f50a0ecabea1f2de08c18aa3a90"
 dependencies = [
  "anyhow",
- "bindgen",
+ "bindgen 0.72.1",
  "cc",
  "chrono",
  "glob",

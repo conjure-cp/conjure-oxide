@@ -4,14 +4,17 @@ version = "0.0.1"
 edition = "2024"
 
 [features]
-default = []
-z3-bundled = ["z3/bundled"]
+default = ["sat-cadical", "z3"]
+sat-cadical = ["dep:rustsat-cadical"]
+sat-batsat = ["dep:rustsat-batsat"]
+z3 = ["dep:z3"]
+z3-bundled = ["z3", "z3/bundled"]
 extra-rule-checks = []
 
 [dependencies]
 conjure-cp-enum-compatibility-macro = { path = "../conjure-cp-enum-compatibility-macro" }
 conjure-cp-rule-macros = { path = "../conjure-cp-rule-macros" }
-minion-sys = "0.1.0"
+minion-sys = "0.1.2"
 
 anyhow = { workspace = true }
 bimap = { workspace = true }
@@ -35,7 +38,7 @@ project-root = { workspace = true }
 quote = { workspace = true }
 regex = { workspace = true }
 rustsat = { workspace = true }
-rustsat-cadical = { workspace = true }
+rustsat-batsat = { workspace = true, optional = true }
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -51,10 +54,13 @@ uniplate = { workspace = true }
 ustr = { workspace = true }
 versions = { workspace = true }
 walkdir = { workspace = true }
-z3 = { version = "0.21.0", default-features = false }
+z3 = { version = "0.21.0", default-features = false, optional = true }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+rustsat-cadical = { workspace = true, optional = true }
 
 [dev-dependencies]
-conjure-cp = { path = "../conjure-cp" }
+conjure-cp = { path = "../conjure-cp", default-features = false }
 
 [lints]
 workspace = true
