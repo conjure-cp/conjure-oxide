@@ -534,7 +534,7 @@ pub struct EncodingSelection<T> {
     pub provenance: SelectionProvenance,
 }
 
-/// RustSAT algorithms available for asserted at-most-one constraints.
+/// Library algorithms available for asserted and reified at-most-one constraints.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum AmoEncoding {
     Pairwise,
@@ -543,23 +543,32 @@ pub enum AmoEncoding {
     Commander,
     Bimander,
     TwoProduct,
+    PindakaasPairwise,
+    PindakaasLadder,
+    PindakaasBitwise,
 }
 impl AmoEncoding {
-    pub const ALL: [Self; 6] = [
+    pub const ALL: [Self; 9] = [
         Self::Pairwise,
         Self::Ladder,
         Self::Bitwise,
         Self::Commander,
         Self::Bimander,
         Self::TwoProduct,
+        Self::PindakaasPairwise,
+        Self::PindakaasLadder,
+        Self::PindakaasBitwise,
     ];
-    pub const LABELS: [&'static str; 6] = [
+    pub const LABELS: [&'static str; 9] = [
         "pairwise",
         "ladder",
         "bitwise",
         "commander",
         "bimander",
         "two-product",
+        "pindakaas-pairwise",
+        "pindakaas-ladder",
+        "pindakaas-bitwise",
     ];
 }
 impl Display for AmoEncoding {

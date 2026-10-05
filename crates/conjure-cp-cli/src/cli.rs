@@ -231,7 +231,8 @@ pub struct GlobalArgs {
     #[arg(long = "sat-encoding-alldifferent", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub alldifferent_encoding: Option<conjure_cp::ast::sat_decision::AllDifferentEncoding>,
 
-    /// Pin the SAT AMO encoder: pairwise, ladder, bitwise, commander, bimander, or two-product.
+    /// Pin the SAT AMO encoder: pairwise, ladder, bitwise, commander, bimander, two-product,
+    /// pindakaas-pairwise, pindakaas-ladder or pindakaas-bitwise.
     /// If omitted, the modelling heuristic chooses one algorithm for the model.
     #[arg(long = "sat-encoding-amo", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub amo_encoding: Option<conjure_cp::ast::sat_decision::AmoEncoding>,

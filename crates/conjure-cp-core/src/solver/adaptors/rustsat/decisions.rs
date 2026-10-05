@@ -2463,6 +2463,77 @@ impl Compiler<'_> {
     ) -> Result<(), SolverError> {
         use crate::ast::sat_decision::AmoEncoding;
         use rustsat::encodings::am1::{self, Encode};
+        if inputs.len() <= 1 {
+            return Ok(());
+        }
+        if matches!(
+            algorithm,
+            AmoEncoding::PindakaasPairwise
+                | AmoEncoding::PindakaasLadder
+                | AmoEncoding::PindakaasBitwise
+        ) {
+            use pindakaas::{
+                Encoder,
+                bool_linear::{BoolLinAggregator, BoolLinExp, BoolLinVariant, BoolLinear},
+                cardinality_one::{BitwiseEncoder, LadderEncoder, PairwiseEncoder},
+            };
+            // The public AMO input requires distinct variables, even for opposite polarities.
+            let mut seen = std::collections::HashSet::new();
+            let terms = inputs
+                .into_iter()
+                .map(|literal| {
+                    let literal = if seen.insert(literal.var()) {
+                        literal
+                    } else {
+                        let alias = self.instance.new_lit();
+                        self.instance
+                            .add_clause(atomics::lit_impl_lit(alias, literal));
+                        self.instance
+                            .add_clause(atomics::lit_impl_lit(literal, alias));
+                        alias
+                    };
+                    (pind_lit(literal), 1)
+                })
+                .collect::<Vec<_>>();
+            let mut sink = PindakaasSink {
+                instance: self.instance,
+                guard,
+            };
+            let variant = BoolLinAggregator::default().aggregate(
+                &mut sink,
+                &BoolLinear::new(
+                    BoolLinExp::from_terms(&terms),
+                    pindakaas::bool_linear::Comparator::LessEq,
+                    1,
+                ),
+            );
+            let result = match variant {
+                Ok(BoolLinVariant::CardinalityOne(cardinality)) => match algorithm {
+                    AmoEncoding::PindakaasPairwise => {
+                        PairwiseEncoder::default().encode(&mut sink, &cardinality)
+                    }
+                    AmoEncoding::PindakaasLadder => {
+                        LadderEncoder::default().encode(&mut sink, &cardinality)
+                    }
+                    AmoEncoding::PindakaasBitwise => {
+                        BitwiseEncoder::default().encode(&mut sink, &cardinality)
+                    }
+                    _ => unreachable!(),
+                },
+                Ok(BoolLinVariant::Trivial) => Ok(()),
+                Ok(_) => {
+                    return Err(SolverError::ModelInvalid(
+                        "AMO normalisation unexpectedly produced a different constraint family"
+                            .into(),
+                    ));
+                }
+                Err(error) => Err(error),
+            };
+            if result.is_err() {
+                self.assert_guarded(Term::Constant(false), guard);
+            }
+            return Ok(());
+        }
         let mut cnf = Cnf::new();
         let manager = self.instance.var_manager_mut();
         let result = match algorithm {
@@ -2474,6 +2545,9 @@ impl Compiler<'_> {
             AmoEncoding::TwoProduct => {
                 am1::TwoProduct::<am1::Pairwise>::from(inputs).encode(&mut cnf, manager)
             }
+            AmoEncoding::PindakaasPairwise
+            | AmoEncoding::PindakaasLadder
+            | AmoEncoding::PindakaasBitwise => unreachable!(),
         };
         result.map_err(|error| SolverError::Runtime(format!("AMO encoder failed: {error}")))?;
         for mut clause in cnf {
@@ -2947,7 +3021,7 @@ mod tests {
 mod amo_tests {
     use super::*;
     use crate::ast::sat_decision::{AmoEncoding, EncodingSelection, SelectionProvenance};
-    use crate::ast::{DeclarationPtr, Domain, Reference};
+    use crate::ast::{DeclarationPtr, Domain, Metadata, Moo, Reference};
     use rustsat::{
         instances::{BasicVarManager, Cnf},
         solvers::{Solve, SolveIncremental, SolverResult},
@@ -3025,6 +3099,19 @@ mod amo_tests {
         let variable = DeclarationPtr::new_find(Name::User("x".into()), Domain::bool());
         let x: Expression = Reference::new(variable.clone()).into();
         for algorithm in AmoEncoding::ALL {
+            let not_x = Expression::Not(Metadata::new(), Moo::new(x.clone()));
+            check(
+                vec![x.clone(), not_x.clone()],
+                std::slice::from_ref(&variable),
+                algorithm,
+                |_| true,
+            );
+            check(
+                vec![x.clone(), not_x, x.clone()],
+                std::slice::from_ref(&variable),
+                algorithm,
+                |bits| bits == 0,
+            );
             check(
                 vec![x.clone(), x.clone()],
                 std::slice::from_ref(&variable),
