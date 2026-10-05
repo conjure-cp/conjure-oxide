@@ -1,0 +1,3793 @@
+Model before rewriting:
+
+find value: set (maxSize 1) of bool
+find i: int(-2, 3..4)
+find masked: bool
+find selected: bool
+
+such that
+
+value = catchUndef([{false},{true};int(-2, 3)][i], {false}),
+(selected) <-> (value = {false}),
+(masked) <-> (or([i = 4,selected;int(1..)]))
+
+--
+
+value
+   ~~> select_representation ([("ReprGeneral", 10000)])
+value
+new variables:
+  find value#occurrence_1: bool
+  find value#occurrence_2: bool
+new constraints:
+  and([sum([toInt(value#occurrence_1),toInt(value#occurrence_2);int(1..)]) >= 0,sum([toInt(value#occurrence_1),toInt(value#occurrence_2);int(1..)]) <= 1;int(1..)])
+
+--
+
+value
+   ~~> select_representation ([("ReprGeneral", 10000)])
+value
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+new variables:
+  find i#int_order_1: bool
+  find i#int_order_2: bool
+  find i#int_order_3: bool
+  find i#int_order_4: bool
+  find i#int_order_5: bool
+  find i#int_order_6: bool
+  find i#int_order_7: bool
+new constraints:
+  i#int_order_1
+  or([!(i#int_order_2),i#int_order_1;int(1..)])
+  or([!(i#int_order_3),i#int_order_2;int(1..)])
+  or([!(i#int_order_4),i#int_order_3;int(1..)])
+  or([!(i#int_order_5),i#int_order_4;int(1..)])
+  or([!(i#int_order_6),i#int_order_5;int(1..)])
+  or([!(i#int_order_7),i#int_order_6;int(1..)])
+  or([SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = -2,and([SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) >= 3,SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) <= 4;int(1..)]);int(1..)])
+
+--
+
+SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 0) using None with [PbTermGroup { start: 0, end: 6, structure: Chain }]
+
+--
+
+SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) >= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) GreaterEqual 5) using None with [PbTermGroup { start: 0, end: 6, structure: Chain }]
+
+--
+
+SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) <= 4
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) LessEqual 6) using None with [PbTermGroup { start: 0, end: 6, structure: Chain }]
+
+--
+
+value = catchUndef([{false},{true};int(-2, 3)][i], {false}),
+(selected) <-> (value = {false}),
+(masked) <-> (or([i = 4,selected;int(1..)])),
+and([sum([toInt(value#occurrence_1),toInt(value#occurrence_2);int(1..)]) >= 0,sum([toInt(value#occurrence_1),toInt(value#occurrence_2);int(1..)]) <= 1;int(1..)]),
+i#int_order_1,
+or([!(i#int_order_2),i#int_order_1;int(1..)]),
+or([!(i#int_order_3),i#int_order_2;int(1..)]),
+or([!(i#int_order_4),i#int_order_3;int(1..)]),
+or([!(i#int_order_5),i#int_order_4;int(1..)]),
+or([!(i#int_order_6),i#int_order_5;int(1..)]),
+or([!(i#int_order_7),i#int_order_6;int(1..)]),
+or([__0,and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+value = catchUndef([{false},{true};int(-2, 3)][i], {false}),
+(selected) <-> (value = {false}),
+(masked) <-> (or([i = 4,selected;int(1..)])),
+and([true,sum([toInt(value#occurrence_1),toInt(value#occurrence_2);int(1..)]) <= 1;int(1..)]),
+i#int_order_1,
+or([!(i#int_order_2),i#int_order_1;int(1..)]),
+or([!(i#int_order_3),i#int_order_2;int(1..)]),
+or([!(i#int_order_4),i#int_order_3;int(1..)]),
+or([!(i#int_order_5),i#int_order_4;int(1..)]),
+or([!(i#int_order_6),i#int_order_5;int(1..)]),
+or([!(i#int_order_7),i#int_order_6;int(1..)]),
+or([__0,and([__1,__2;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  count(value#occurrence_1, value#occurrence_2) AtLeast 0 using None
+
+--
+
+value = catchUndef([{false},{true};int(-2, 3)][i], {false}),
+(selected) <-> (value = {false}),
+(masked) <-> (or([i = 4,selected;int(1..)])),
+and([sum([toInt(value#occurrence_1),toInt(value#occurrence_2);int(1..)]) <= 1;int(1..)]),
+i#int_order_1,
+or([!(i#int_order_2),i#int_order_1;int(1..)]),
+or([!(i#int_order_3),i#int_order_2;int(1..)]),
+or([!(i#int_order_4),i#int_order_3;int(1..)]),
+or([!(i#int_order_5),i#int_order_4;int(1..)]),
+or([!(i#int_order_6),i#int_order_5;int(1..)]),
+or([!(i#int_order_7),i#int_order_6;int(1..)]),
+or([__0,and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+value = catchUndef([{false},{true};int(-2, 3)][i], {false}),
+(selected) <-> (value = {false}),
+(masked) <-> (or([i = 4,selected;int(1..)])),
+and([true;int(1..)]),
+i#int_order_1,
+or([!(i#int_order_2),i#int_order_1;int(1..)]),
+or([!(i#int_order_3),i#int_order_2;int(1..)]),
+or([!(i#int_order_4),i#int_order_3;int(1..)]),
+or([!(i#int_order_5),i#int_order_4;int(1..)]),
+or([!(i#int_order_6),i#int_order_5;int(1..)]),
+or([!(i#int_order_7),i#int_order_6;int(1..)]),
+or([__0,and([__1,__2;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  at-most-one(value#occurrence_1, value#occurrence_2) using None
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+
+--
+
+i = 4
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 6) using None with [PbTermGroup { start: 0, end: 6, structure: Chain }]
+
+--
+
+value = {false}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([value#occurrence_1 = true,value#occurrence_2 = false;int(1..)])
+
+--
+
+i
+   ~~> integer_decision_representation_order ([("SAT", 9500)])
+SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])
+
+--
+
+!(i#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> !(i#int_order_2)) using tseitin
+
+--
+
+!(i#int_order_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> !(i#int_order_3)) using tseitin
+
+--
+
+!(i#int_order_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> !(i#int_order_4)) using tseitin
+
+--
+
+!(i#int_order_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> !(i#int_order_5)) using tseitin
+
+--
+
+!(i#int_order_6)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> !(i#int_order_6)) using tseitin
+
+--
+
+!(i#int_order_7)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> !(i#int_order_7)) using tseitin
+
+--
+
+value = catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})
+   ~~> eq_to_subset_eq ([("Base", 8800)])
+and([(value subsetEq catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})),(catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) subsetEq value);int(1..)])
+
+--
+
+(value subsetEq catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}))
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(value#occurrence_1),false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([!(value#occurrence_2),true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]);int(1..)])
+
+--
+
+!(value#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> !(value#occurrence_1)) using tseitin
+
+--
+
+!(value#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> !(value#occurrence_2)) using tseitin
+
+--
+
+and([and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]);int(1..)]),(catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) subsetEq value);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),(catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) subsetEq value);int(1..)])
+
+--
+
+(catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) subsetEq value)
+   ~~> subseteq_set ([("Base", 8700)])
+and([ __0 in value | __0 <- catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ])
+
+--
+
+[ __0 in value | __0 <- catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]
+
+--
+
+or([__4,i#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> or([__4,i#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__5,i#int_order_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> or([__5,i#int_order_2;int(1..)])) using tseitin
+
+--
+
+or([__6,i#int_order_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> or([__6,i#int_order_3;int(1..)])) using tseitin
+
+--
+
+or([__7,i#int_order_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> or([__7,i#int_order_4;int(1..)])) using tseitin
+
+--
+
+or([__8,i#int_order_5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> or([__8,i#int_order_5;int(1..)])) using tseitin
+
+--
+
+or([__9,i#int_order_6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> or([__9,i#int_order_6;int(1..)])) using tseitin
+
+--
+
+or([__3,selected;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> or([__3,selected;int(1..)])) using tseitin
+
+--
+
+(masked) <-> (__18)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> (masked) <-> (__18)) using tseitin
+
+--
+
+and([__1,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> and([__1,__2;int(1..)])) using tseitin
+
+--
+
+or([__0,__20;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> or([__0,__20;int(1..)])) using tseitin
+
+--
+
+value#occurrence_2 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__22
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> (value#occurrence_2) <-> (false)) using tseitin
+
+--
+
+and([value#occurrence_1,__22;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__23
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> and([value#occurrence_1,__22;int(1..)])) using tseitin
+
+--
+
+(selected) <-> (__23)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__24
+new variables:
+  findAux __24: bool
+new SAT encoding decisions:
+  define(__24 <-> (selected) <-> (__23)) using tseitin
+
+--
+
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+__24,
+__19,
+true,
+i#int_order_1,
+__12,
+__13,
+__14,
+__15,
+__16,
+__17,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+__19,
+true,
+i#int_order_1,
+__12,
+__13,
+__14,
+__15,
+__16,
+__17,
+__21
+new SAT encoding decisions:
+  assert(__24) using tseitin
+
+--
+
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+__19,
+true,
+i#int_order_1,
+__12,
+__13,
+__14,
+__15,
+__16,
+__17,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+i#int_order_1,
+__12,
+__13,
+__14,
+__15,
+__16,
+__17,
+__21
+new SAT encoding decisions:
+  assert(__19) using tseitin
+
+--
+
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+i#int_order_1,
+__12,
+__13,
+__14,
+__15,
+__16,
+__17,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__12,
+__13,
+__14,
+__15,
+__16,
+__17,
+__21
+new SAT encoding decisions:
+  assert(i#int_order_1) using tseitin
+
+--
+
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__12,
+__13,
+__14,
+__15,
+__16,
+__17,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__13,
+__14,
+__15,
+__16,
+__17,
+__21
+new SAT encoding decisions:
+  assert(__12) using tseitin
+
+--
+
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__13,
+__14,
+__15,
+__16,
+__17,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__14,
+__15,
+__16,
+__17,
+__21
+new SAT encoding decisions:
+  assert(__13) using tseitin
+
+--
+
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__14,
+__15,
+__16,
+__17,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__15,
+__16,
+__17,
+__21
+new SAT encoding decisions:
+  assert(__14) using tseitin
+
+--
+
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__15,
+__16,
+__17,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__16,
+__17,
+__21
+new SAT encoding decisions:
+  assert(__15) using tseitin
+
+--
+
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__16,
+__17,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__17,
+__21
+new SAT encoding decisions:
+  assert(__16) using tseitin
+
+--
+
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__17,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__21
+new SAT encoding decisions:
+  assert(__17) using tseitin
+
+--
+
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+__21
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([or([__10,false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true
+new SAT encoding decisions:
+  assert(__21) using tseitin
+
+--
+
+[{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex([{false},{true};int(-2, 3)],[SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])]) @ __inDomain(SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]),int(-2, 3))}
+
+--
+
+__inDomain(SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]),int(-2, 3))
+   ~~> scalar_membership ([("SAT", 18500)])
+or([SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = -2,SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = 3;int(1..)])
+
+--
+
+SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__25
+new variables:
+  findAux __25: bool
+new SAT encoding decisions:
+  define(__25 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 0) using None with [PbTermGroup { start: 0, end: 6, structure: Chain }]
+
+--
+
+SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__26
+new variables:
+  findAux __26: bool
+new SAT encoding decisions:
+  define(__26 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 5) using None with [PbTermGroup { start: 0, end: 6, structure: Chain }]
+
+--
+
+SafeIndex([{false},{true};int(-2, 3)],[SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])])
+   ~~> introduce_element ([("SAT", 18400)])
+__27
+new variables:
+  findAux __27: set of bool
+new constraints:
+  satElement([{false},{true};int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), __27)
+
+--
+
+satElement([{false},{true};int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), __27)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__28,__29;int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), true)
+new variables:
+  findAux __28: bool
+  findAux __29: bool
+new constraints:
+  (__28) <-> (__27 = {false})
+  (__29) <-> (__27 = {true})
+
+--
+
+satElement([__28,__29;int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=-2+weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) with [PbTermGroup { start: 0, end: 6, structure: Chain }], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[-2: 0+weighted(1*__28) with [] choices(0:!(__28), 1:__28), 3: 0+weighted(1*__29) with [] choices(0:!(__29), 1:__29)]) using None, PB None
+
+--
+
+__27
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__27
+new variables:
+  findAux __27#occurrence_1: bool
+  findAux __27#occurrence_2: bool
+new constraints:
+  and([sum([toInt(__27#occurrence_1),toInt(__27#occurrence_2);int(1..)]) >= 0,sum([toInt(__27#occurrence_1),toInt(__27#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+__27
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__27
+
+--
+
+__27
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__27
+
+--
+
+and([or([__10,false in catchUndef({__27 @ or([__25,__26;int(1..)])}, {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+(__28) <-> (__27 = {false}),
+(__29) <-> (__27 = {true}),
+and([sum([toInt(__27#occurrence_1),toInt(__27#occurrence_2);int(1..)]) >= 0,sum([toInt(__27#occurrence_1),toInt(__27#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([or([__10,false in catchUndef({__27 @ or([__25,__26;int(1..)])}, {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+(__28) <-> (__27 = {false}),
+(__29) <-> (__27 = {true}),
+and([true,sum([toInt(__27#occurrence_1),toInt(__27#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(__27#occurrence_1, __27#occurrence_2) AtLeast 0 using None
+
+--
+
+and([or([__10,false in catchUndef({__27 @ or([__25,__26;int(1..)])}, {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+(__28) <-> (__27 = {false}),
+(__29) <-> (__27 = {true}),
+and([sum([toInt(__27#occurrence_1),toInt(__27#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([or([__10,false in catchUndef({__27 @ or([__25,__26;int(1..)])}, {false});int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+(__28) <-> (__27 = {false}),
+(__29) <-> (__27 = {true}),
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(__27#occurrence_1, __27#occurrence_2) AtMost 2 using None
+
+--
+
+__27 = {false}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([__27#occurrence_1 = true,__27#occurrence_2 = false;int(1..)])
+
+--
+
+__27 = {true}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([__27#occurrence_1 = false,__27#occurrence_2 = true;int(1..)])
+
+--
+
+catchUndef({__27 @ or([__25,__26;int(1..)])}, {false})
+   ~~> catch_undef_bubble ([("Base", 8800)])
+[{false},__27;int(0..1)][toInt(or([__25,__26;int(1..)]))]
+
+--
+
+__27#occurrence_2 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__30
+new variables:
+  findAux __30: bool
+new SAT encoding decisions:
+  define(__30 <-> (__27#occurrence_2) <-> (false)) using tseitin
+
+--
+
+and([__27#occurrence_1,__30;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__31
+new variables:
+  findAux __31: bool
+new SAT encoding decisions:
+  define(__31 <-> and([__27#occurrence_1,__30;int(1..)])) using tseitin
+
+--
+
+(__28) <-> (__31)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__32
+new variables:
+  findAux __32: bool
+new SAT encoding decisions:
+  define(__32 <-> (__28) <-> (__31)) using tseitin
+
+--
+
+__27#occurrence_1 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__33
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> (__27#occurrence_1) <-> (false)) using tseitin
+
+--
+
+and([__33,__27#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__34
+new variables:
+  findAux __34: bool
+new SAT encoding decisions:
+  define(__34 <-> and([__33,__27#occurrence_2;int(1..)])) using tseitin
+
+--
+
+(__29) <-> (__34)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__35
+new variables:
+  findAux __35: bool
+new SAT encoding decisions:
+  define(__35 <-> (__29) <-> (__34)) using tseitin
+
+--
+
+or([__25,__26;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__36
+new variables:
+  findAux __36: bool
+new SAT encoding decisions:
+  define(__36 <-> or([__25,__26;int(1..)])) using tseitin
+
+--
+
+and([or([__10,false in [{false},__27;int(0..1)][toInt(__36)];int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+__32,
+__35,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([or([__10,false in [{false},__27;int(0..1)][toInt(__36)];int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+__35,
+true
+new SAT encoding decisions:
+  assert(__32) using tseitin
+
+--
+
+and([or([__10,false in [{false},__27;int(0..1)][toInt(__36)];int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+__35,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([or([__10,false in [{false},__27;int(0..1)][toInt(__36)];int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__35) using tseitin
+
+--
+
+[{false},__27;int(0..1)][toInt(__36)]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([{false},__27;int(0..1)],[toInt(__36)])
+
+--
+
+SafeIndex([{false},__27;int(0..1)],[toInt(__36)])
+   ~~> introduce_element ([("SAT", 18400)])
+__37
+new variables:
+  findAux __37: set of bool
+new constraints:
+  satElement([{false},__27;int(0..1)], toInt(__36), __37)
+
+--
+
+satElement([{false},__27;int(0..1)], toInt(__36), __37)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__38,__39;int(0..1)], toInt(__36), true)
+new variables:
+  findAux __38: bool
+  findAux __39: bool
+new constraints:
+  (__38) <-> (__37 = {false})
+  (__39) <-> (__37 = __27)
+
+--
+
+satElement([__38,__39;int(0..1)], toInt(__36), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=0+weighted(1*__36) with [], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[0: 0+weighted(1*__38) with [] choices(0:!(__38), 1:__38), 1: 0+weighted(1*__39) with [] choices(0:!(__39), 1:__39)]) using None, PB None
+
+--
+
+__37 = __27
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+__37 = __27
+new variables:
+  findAux __37#occurrence_1: bool
+  findAux __37#occurrence_2: bool
+new constraints:
+  and([sum([toInt(__37#occurrence_1),toInt(__37#occurrence_2);int(1..)]) >= 0,sum([toInt(__37#occurrence_1),toInt(__37#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+and([or([__10,false in __37;int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+(__38) <-> (__37 = {false}),
+(__39) <-> (__37 = __27),
+and([sum([toInt(__37#occurrence_1),toInt(__37#occurrence_2);int(1..)]) >= 0,sum([toInt(__37#occurrence_1),toInt(__37#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([or([__10,false in __37;int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+(__38) <-> (__37 = {false}),
+(__39) <-> (__37 = __27),
+and([true,sum([toInt(__37#occurrence_1),toInt(__37#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(__37#occurrence_1, __37#occurrence_2) AtLeast 0 using None
+
+--
+
+and([or([__10,false in __37;int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+(__38) <-> (__37 = {false}),
+(__39) <-> (__37 = __27),
+and([sum([toInt(__37#occurrence_1),toInt(__37#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([or([__10,false in __37;int(1..)]),or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+(__38) <-> (__37 = {false}),
+(__39) <-> (__37 = __27),
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(__37#occurrence_1, __37#occurrence_2) AtMost 2 using None
+
+--
+
+__37
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__37
+
+--
+
+__37
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__37
+
+--
+
+__37 = {false}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([__37#occurrence_1 = true,__37#occurrence_2 = false;int(1..)])
+
+--
+
+false in __37
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__37#occurrence_1
+
+--
+
+__37 = __27
+   ~~> eq_to_subset_eq ([("Base", 8800)])
+and([(__37 subsetEq __27),(__27 subsetEq __37);int(1..)])
+
+--
+
+(__37 subsetEq __27)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(__37#occurrence_1),false in __27;int(1..)]),or([!(__37#occurrence_2),true in __27;int(1..)]);int(1..)])
+
+--
+
+(__27 subsetEq __37)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(__27#occurrence_1),false in __37;int(1..)]),or([!(__27#occurrence_2),true in __37;int(1..)]);int(1..)])
+
+--
+
+false in __27
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__27#occurrence_1
+
+--
+
+true in __27
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__27#occurrence_2
+
+--
+
+false in __37
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__37#occurrence_1
+
+--
+
+true in __37
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__37#occurrence_2
+
+--
+
+!(__37#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__40
+new variables:
+  findAux __40: bool
+new SAT encoding decisions:
+  define(__40 <-> !(__37#occurrence_1)) using tseitin
+
+--
+
+!(__37#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__41
+new variables:
+  findAux __41: bool
+new SAT encoding decisions:
+  define(__41 <-> !(__37#occurrence_2)) using tseitin
+
+--
+
+!(__27#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__42
+new variables:
+  findAux __42: bool
+new SAT encoding decisions:
+  define(__42 <-> !(__27#occurrence_1)) using tseitin
+
+--
+
+!(__27#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__43
+new variables:
+  findAux __43: bool
+new SAT encoding decisions:
+  define(__43 <-> !(__27#occurrence_2)) using tseitin
+
+--
+
+and([and([or([__40,__27#occurrence_1;int(1..)]),or([__41,__27#occurrence_2;int(1..)]);int(1..)]),and([or([__42,__37#occurrence_1;int(1..)]),or([__43,__37#occurrence_2;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([__40,__27#occurrence_1;int(1..)]),or([__41,__27#occurrence_2;int(1..)]),or([__42,__37#occurrence_1;int(1..)]),or([__43,__37#occurrence_2;int(1..)]);int(1..)])
+
+--
+
+or([__10,__37#occurrence_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__44
+new variables:
+  findAux __44: bool
+new SAT encoding decisions:
+  define(__44 <-> or([__10,__37#occurrence_1;int(1..)])) using tseitin
+
+--
+
+or([__40,__27#occurrence_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__45
+new variables:
+  findAux __45: bool
+new SAT encoding decisions:
+  define(__45 <-> or([__40,__27#occurrence_1;int(1..)])) using tseitin
+
+--
+
+or([__41,__27#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__46
+new variables:
+  findAux __46: bool
+new SAT encoding decisions:
+  define(__46 <-> or([__41,__27#occurrence_2;int(1..)])) using tseitin
+
+--
+
+or([__42,__37#occurrence_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__47
+new variables:
+  findAux __47: bool
+new SAT encoding decisions:
+  define(__47 <-> or([__42,__37#occurrence_1;int(1..)])) using tseitin
+
+--
+
+or([__43,__37#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__48
+new variables:
+  findAux __48: bool
+new SAT encoding decisions:
+  define(__48 <-> or([__43,__37#occurrence_2;int(1..)])) using tseitin
+
+--
+
+and([__45,__46,__47,__48;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__49
+new variables:
+  findAux __49: bool
+new SAT encoding decisions:
+  define(__49 <-> and([__45,__46,__47,__48;int(1..)])) using tseitin
+
+--
+
+(__39) <-> (__49)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__50
+new variables:
+  findAux __50: bool
+new SAT encoding decisions:
+  define(__50 <-> (__39) <-> (__49)) using tseitin
+
+--
+
+__37#occurrence_2 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__51
+new variables:
+  findAux __51: bool
+new SAT encoding decisions:
+  define(__51 <-> (__37#occurrence_2) <-> (false)) using tseitin
+
+--
+
+and([__37#occurrence_1,__51;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__52
+new variables:
+  findAux __52: bool
+new SAT encoding decisions:
+  define(__52 <-> and([__37#occurrence_1,__51;int(1..)])) using tseitin
+
+--
+
+(__38) <-> (__52)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__53
+new variables:
+  findAux __53: bool
+new SAT encoding decisions:
+  define(__53 <-> (__38) <-> (__52)) using tseitin
+
+--
+
+and([__44,or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+__53,
+__50,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([__44,or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+__50,
+true
+new SAT encoding decisions:
+  assert(__53) using tseitin
+
+--
+
+and([__44,or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+__50,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([__44,or([__11,true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__50) using tseitin
+
+--
+
+[{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex([{false},{true};int(-2, 3)],[SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])]) @ __inDomain(SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]),int(-2, 3))}
+
+--
+
+__inDomain(SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]),int(-2, 3))
+   ~~> scalar_membership ([("SAT", 18500)])
+or([SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = -2,SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = 3;int(1..)])
+
+--
+
+SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__54
+new variables:
+  findAux __54: bool
+new SAT encoding decisions:
+  define(__54 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 0) using None with [PbTermGroup { start: 0, end: 6, structure: Chain }]
+
+--
+
+SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__55
+new variables:
+  findAux __55: bool
+new SAT encoding decisions:
+  define(__55 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 5) using None with [PbTermGroup { start: 0, end: 6, structure: Chain }]
+
+--
+
+SafeIndex([{false},{true};int(-2, 3)],[SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])])
+   ~~> introduce_element ([("SAT", 18400)])
+__56
+new variables:
+  findAux __56: set of bool
+new constraints:
+  satElement([{false},{true};int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), __56)
+
+--
+
+satElement([{false},{true};int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), __56)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__57,__58;int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), true)
+new variables:
+  findAux __57: bool
+  findAux __58: bool
+new constraints:
+  (__57) <-> (__56 = {false})
+  (__58) <-> (__56 = {true})
+
+--
+
+satElement([__57,__58;int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=-2+weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) with [PbTermGroup { start: 0, end: 6, structure: Chain }], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[-2: 0+weighted(1*__57) with [] choices(0:!(__57), 1:__57), 3: 0+weighted(1*__58) with [] choices(0:!(__58), 1:__58)]) using None, PB None
+
+--
+
+__56
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__56
+new variables:
+  findAux __56#occurrence_1: bool
+  findAux __56#occurrence_2: bool
+new constraints:
+  and([sum([toInt(__56#occurrence_1),toInt(__56#occurrence_2);int(1..)]) >= 0,sum([toInt(__56#occurrence_1),toInt(__56#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+__56
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__56
+
+--
+
+__56
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__56
+
+--
+
+and([__44,or([__11,true in catchUndef({__56 @ or([__54,__55;int(1..)])}, {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+(__57) <-> (__56 = {false}),
+(__58) <-> (__56 = {true}),
+and([sum([toInt(__56#occurrence_1),toInt(__56#occurrence_2);int(1..)]) >= 0,sum([toInt(__56#occurrence_1),toInt(__56#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__44,or([__11,true in catchUndef({__56 @ or([__54,__55;int(1..)])}, {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+(__57) <-> (__56 = {false}),
+(__58) <-> (__56 = {true}),
+and([true,sum([toInt(__56#occurrence_1),toInt(__56#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(__56#occurrence_1, __56#occurrence_2) AtLeast 0 using None
+
+--
+
+and([__44,or([__11,true in catchUndef({__56 @ or([__54,__55;int(1..)])}, {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+(__57) <-> (__56 = {false}),
+(__58) <-> (__56 = {true}),
+and([sum([toInt(__56#occurrence_1),toInt(__56#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__44,or([__11,true in catchUndef({__56 @ or([__54,__55;int(1..)])}, {false});int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+(__57) <-> (__56 = {false}),
+(__58) <-> (__56 = {true}),
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(__56#occurrence_1, __56#occurrence_2) AtMost 2 using None
+
+--
+
+__56 = {false}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([__56#occurrence_1 = true,__56#occurrence_2 = false;int(1..)])
+
+--
+
+__56 = {true}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([__56#occurrence_1 = false,__56#occurrence_2 = true;int(1..)])
+
+--
+
+catchUndef({__56 @ or([__54,__55;int(1..)])}, {false})
+   ~~> catch_undef_bubble ([("Base", 8800)])
+[{false},__56;int(0..1)][toInt(or([__54,__55;int(1..)]))]
+
+--
+
+__56#occurrence_2 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__59
+new variables:
+  findAux __59: bool
+new SAT encoding decisions:
+  define(__59 <-> (__56#occurrence_2) <-> (false)) using tseitin
+
+--
+
+and([__56#occurrence_1,__59;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__60
+new variables:
+  findAux __60: bool
+new SAT encoding decisions:
+  define(__60 <-> and([__56#occurrence_1,__59;int(1..)])) using tseitin
+
+--
+
+(__57) <-> (__60)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__61
+new variables:
+  findAux __61: bool
+new SAT encoding decisions:
+  define(__61 <-> (__57) <-> (__60)) using tseitin
+
+--
+
+__56#occurrence_1 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__62
+new variables:
+  findAux __62: bool
+new SAT encoding decisions:
+  define(__62 <-> (__56#occurrence_1) <-> (false)) using tseitin
+
+--
+
+and([__62,__56#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__63
+new variables:
+  findAux __63: bool
+new SAT encoding decisions:
+  define(__63 <-> and([__62,__56#occurrence_2;int(1..)])) using tseitin
+
+--
+
+(__58) <-> (__63)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__64
+new variables:
+  findAux __64: bool
+new SAT encoding decisions:
+  define(__64 <-> (__58) <-> (__63)) using tseitin
+
+--
+
+or([__54,__55;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__65
+new variables:
+  findAux __65: bool
+new SAT encoding decisions:
+  define(__65 <-> or([__54,__55;int(1..)])) using tseitin
+
+--
+
+and([__44,or([__11,true in [{false},__56;int(0..1)][toInt(__65)];int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+__61,
+__64,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([__44,or([__11,true in [{false},__56;int(0..1)][toInt(__65)];int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+__64,
+true
+new SAT encoding decisions:
+  assert(__61) using tseitin
+
+--
+
+and([__44,or([__11,true in [{false},__56;int(0..1)][toInt(__65)];int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+__64,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([__44,or([__11,true in [{false},__56;int(0..1)][toInt(__65)];int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__64) using tseitin
+
+--
+
+[{false},__56;int(0..1)][toInt(__65)]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([{false},__56;int(0..1)],[toInt(__65)])
+
+--
+
+SafeIndex([{false},__56;int(0..1)],[toInt(__65)])
+   ~~> introduce_element ([("SAT", 18400)])
+__66
+new variables:
+  findAux __66: set of bool
+new constraints:
+  satElement([{false},__56;int(0..1)], toInt(__65), __66)
+
+--
+
+satElement([{false},__56;int(0..1)], toInt(__65), __66)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__67,__68;int(0..1)], toInt(__65), true)
+new variables:
+  findAux __67: bool
+  findAux __68: bool
+new constraints:
+  (__67) <-> (__66 = {false})
+  (__68) <-> (__66 = __56)
+
+--
+
+satElement([__67,__68;int(0..1)], toInt(__65), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=0+weighted(1*__65) with [], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[0: 0+weighted(1*__67) with [] choices(0:!(__67), 1:__67), 1: 0+weighted(1*__68) with [] choices(0:!(__68), 1:__68)]) using None, PB None
+
+--
+
+__66 = __56
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+__66 = __56
+new variables:
+  findAux __66#occurrence_1: bool
+  findAux __66#occurrence_2: bool
+new constraints:
+  and([sum([toInt(__66#occurrence_1),toInt(__66#occurrence_2);int(1..)]) >= 0,sum([toInt(__66#occurrence_1),toInt(__66#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+and([__44,or([__11,true in __66;int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__67) <-> (__66 = {false}),
+(__68) <-> (__66 = __56),
+and([sum([toInt(__66#occurrence_1),toInt(__66#occurrence_2);int(1..)]) >= 0,sum([toInt(__66#occurrence_1),toInt(__66#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__44,or([__11,true in __66;int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__67) <-> (__66 = {false}),
+(__68) <-> (__66 = __56),
+and([true,sum([toInt(__66#occurrence_1),toInt(__66#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(__66#occurrence_1, __66#occurrence_2) AtLeast 0 using None
+
+--
+
+and([__44,or([__11,true in __66;int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__67) <-> (__66 = {false}),
+(__68) <-> (__66 = __56),
+and([sum([toInt(__66#occurrence_1),toInt(__66#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__44,or([__11,true in __66;int(1..)]),and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__67) <-> (__66 = {false}),
+(__68) <-> (__66 = __56),
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(__66#occurrence_1, __66#occurrence_2) AtMost 2 using None
+
+--
+
+__66
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__66
+
+--
+
+__66
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__66
+
+--
+
+__66 = {false}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([__66#occurrence_1 = true,__66#occurrence_2 = false;int(1..)])
+
+--
+
+true in __66
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__66#occurrence_2
+
+--
+
+__66 = __56
+   ~~> eq_to_subset_eq ([("Base", 8800)])
+and([(__66 subsetEq __56),(__56 subsetEq __66);int(1..)])
+
+--
+
+(__66 subsetEq __56)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(__66#occurrence_1),false in __56;int(1..)]),or([!(__66#occurrence_2),true in __56;int(1..)]);int(1..)])
+
+--
+
+(__56 subsetEq __66)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(__56#occurrence_1),false in __66;int(1..)]),or([!(__56#occurrence_2),true in __66;int(1..)]);int(1..)])
+
+--
+
+false in __56
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__56#occurrence_1
+
+--
+
+true in __56
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__56#occurrence_2
+
+--
+
+false in __66
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__66#occurrence_1
+
+--
+
+true in __66
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__66#occurrence_2
+
+--
+
+!(__66#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__69
+new variables:
+  findAux __69: bool
+new SAT encoding decisions:
+  define(__69 <-> !(__66#occurrence_1)) using tseitin
+
+--
+
+!(__66#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__70
+new variables:
+  findAux __70: bool
+new SAT encoding decisions:
+  define(__70 <-> !(__66#occurrence_2)) using tseitin
+
+--
+
+!(__56#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__71
+new variables:
+  findAux __71: bool
+new SAT encoding decisions:
+  define(__71 <-> !(__56#occurrence_1)) using tseitin
+
+--
+
+!(__56#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__72
+new variables:
+  findAux __72: bool
+new SAT encoding decisions:
+  define(__72 <-> !(__56#occurrence_2)) using tseitin
+
+--
+
+and([and([or([__69,__56#occurrence_1;int(1..)]),or([__70,__56#occurrence_2;int(1..)]);int(1..)]),and([or([__71,__66#occurrence_1;int(1..)]),or([__72,__66#occurrence_2;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([__69,__56#occurrence_1;int(1..)]),or([__70,__56#occurrence_2;int(1..)]),or([__71,__66#occurrence_1;int(1..)]),or([__72,__66#occurrence_2;int(1..)]);int(1..)])
+
+--
+
+or([__11,__66#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__73
+new variables:
+  findAux __73: bool
+new SAT encoding decisions:
+  define(__73 <-> or([__11,__66#occurrence_2;int(1..)])) using tseitin
+
+--
+
+or([__69,__56#occurrence_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__74
+new variables:
+  findAux __74: bool
+new SAT encoding decisions:
+  define(__74 <-> or([__69,__56#occurrence_1;int(1..)])) using tseitin
+
+--
+
+or([__70,__56#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__75
+new variables:
+  findAux __75: bool
+new SAT encoding decisions:
+  define(__75 <-> or([__70,__56#occurrence_2;int(1..)])) using tseitin
+
+--
+
+or([__71,__66#occurrence_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__76
+new variables:
+  findAux __76: bool
+new SAT encoding decisions:
+  define(__76 <-> or([__71,__66#occurrence_1;int(1..)])) using tseitin
+
+--
+
+or([__72,__66#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__77
+new variables:
+  findAux __77: bool
+new SAT encoding decisions:
+  define(__77 <-> or([__72,__66#occurrence_2;int(1..)])) using tseitin
+
+--
+
+and([__74,__75,__76,__77;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__78
+new variables:
+  findAux __78: bool
+new SAT encoding decisions:
+  define(__78 <-> and([__74,__75,__76,__77;int(1..)])) using tseitin
+
+--
+
+(__68) <-> (__78)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__79
+new variables:
+  findAux __79: bool
+new SAT encoding decisions:
+  define(__79 <-> (__68) <-> (__78)) using tseitin
+
+--
+
+__66#occurrence_2 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__80
+new variables:
+  findAux __80: bool
+new SAT encoding decisions:
+  define(__80 <-> (__66#occurrence_2) <-> (false)) using tseitin
+
+--
+
+and([__66#occurrence_1,__80;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__81
+new variables:
+  findAux __81: bool
+new SAT encoding decisions:
+  define(__81 <-> and([__66#occurrence_1,__80;int(1..)])) using tseitin
+
+--
+
+(__67) <-> (__81)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__82
+new variables:
+  findAux __82: bool
+new SAT encoding decisions:
+  define(__82 <-> (__67) <-> (__81)) using tseitin
+
+--
+
+and([__44,__73,and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__82,
+__79,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([__44,__73,and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__79,
+true
+new SAT encoding decisions:
+  assert(__82) using tseitin
+
+--
+
+and([__44,__73,and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__79,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([__44,__73,and([ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__79) using tseitin
+
+--
+
+[ __0 in value | __0 : bool, __0 in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false}) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (and([false in value;int(1..)])),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (and([true in value;int(1..)]));int(1..)]
+new variables:
+  findAux __83: bool
+  findAux __84: bool
+
+--
+
+false in value
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+value#occurrence_1
+
+--
+
+true in value
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+value#occurrence_2
+
+--
+
+and([__44,__73,and([(false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (and([value#occurrence_1;int(1..)])),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (and([value#occurrence_2;int(1..)]));int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__44,__73,(false in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (and([value#occurrence_1;int(1..)])),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (and([value#occurrence_2;int(1..)]));int(1..)])
+
+--
+
+and([value#occurrence_1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+value#occurrence_1
+
+--
+
+and([value#occurrence_2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+value#occurrence_2
+
+--
+
+[{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex([{false},{true};int(-2, 3)],[SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])]) @ __inDomain(SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]),int(-2, 3))}
+
+--
+
+__inDomain(SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]),int(-2, 3))
+   ~~> scalar_membership ([("SAT", 18500)])
+or([SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = -2,SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = 3;int(1..)])
+
+--
+
+SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__85
+new variables:
+  findAux __85: bool
+new SAT encoding decisions:
+  define(__85 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 0) using None with [PbTermGroup { start: 0, end: 6, structure: Chain }]
+
+--
+
+SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__86
+new variables:
+  findAux __86: bool
+new SAT encoding decisions:
+  define(__86 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 5) using None with [PbTermGroup { start: 0, end: 6, structure: Chain }]
+
+--
+
+SafeIndex([{false},{true};int(-2, 3)],[SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])])
+   ~~> introduce_element ([("SAT", 18400)])
+__87
+new variables:
+  findAux __87: set of bool
+new constraints:
+  satElement([{false},{true};int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), __87)
+
+--
+
+satElement([{false},{true};int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), __87)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__88,__89;int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), true)
+new variables:
+  findAux __88: bool
+  findAux __89: bool
+new constraints:
+  (__88) <-> (__87 = {false})
+  (__89) <-> (__87 = {true})
+
+--
+
+satElement([__88,__89;int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=-2+weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) with [PbTermGroup { start: 0, end: 6, structure: Chain }], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[-2: 0+weighted(1*__88) with [] choices(0:!(__88), 1:__88), 3: 0+weighted(1*__89) with [] choices(0:!(__89), 1:__89)]) using None, PB None
+
+--
+
+__87
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__87
+new variables:
+  findAux __87#occurrence_1: bool
+  findAux __87#occurrence_2: bool
+new constraints:
+  and([sum([toInt(__87#occurrence_1),toInt(__87#occurrence_2);int(1..)]) >= 0,sum([toInt(__87#occurrence_1),toInt(__87#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+__87
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__87
+
+--
+
+__87
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__87
+
+--
+
+and([__44,__73,(false in catchUndef({__87 @ or([__85,__86;int(1..)])}, {false})) -> (value#occurrence_1),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__88) <-> (__87 = {false}),
+(__89) <-> (__87 = {true}),
+and([sum([toInt(__87#occurrence_1),toInt(__87#occurrence_2);int(1..)]) >= 0,sum([toInt(__87#occurrence_1),toInt(__87#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__44,__73,(false in catchUndef({__87 @ or([__85,__86;int(1..)])}, {false})) -> (value#occurrence_1),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__88) <-> (__87 = {false}),
+(__89) <-> (__87 = {true}),
+and([true,sum([toInt(__87#occurrence_1),toInt(__87#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(__87#occurrence_1, __87#occurrence_2) AtLeast 0 using None
+
+--
+
+and([__44,__73,(false in catchUndef({__87 @ or([__85,__86;int(1..)])}, {false})) -> (value#occurrence_1),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__88) <-> (__87 = {false}),
+(__89) <-> (__87 = {true}),
+and([sum([toInt(__87#occurrence_1),toInt(__87#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__44,__73,(false in catchUndef({__87 @ or([__85,__86;int(1..)])}, {false})) -> (value#occurrence_1),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__88) <-> (__87 = {false}),
+(__89) <-> (__87 = {true}),
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(__87#occurrence_1, __87#occurrence_2) AtMost 2 using None
+
+--
+
+__87 = {false}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([__87#occurrence_1 = true,__87#occurrence_2 = false;int(1..)])
+
+--
+
+__87 = {true}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([__87#occurrence_1 = false,__87#occurrence_2 = true;int(1..)])
+
+--
+
+catchUndef({__87 @ or([__85,__86;int(1..)])}, {false})
+   ~~> catch_undef_bubble ([("Base", 8800)])
+[{false},__87;int(0..1)][toInt(or([__85,__86;int(1..)]))]
+
+--
+
+__87#occurrence_2 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__90
+new variables:
+  findAux __90: bool
+new SAT encoding decisions:
+  define(__90 <-> (__87#occurrence_2) <-> (false)) using tseitin
+
+--
+
+and([__87#occurrence_1,__90;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__91
+new variables:
+  findAux __91: bool
+new SAT encoding decisions:
+  define(__91 <-> and([__87#occurrence_1,__90;int(1..)])) using tseitin
+
+--
+
+(__88) <-> (__91)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__92
+new variables:
+  findAux __92: bool
+new SAT encoding decisions:
+  define(__92 <-> (__88) <-> (__91)) using tseitin
+
+--
+
+__87#occurrence_1 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__93
+new variables:
+  findAux __93: bool
+new SAT encoding decisions:
+  define(__93 <-> (__87#occurrence_1) <-> (false)) using tseitin
+
+--
+
+and([__93,__87#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__94
+new variables:
+  findAux __94: bool
+new SAT encoding decisions:
+  define(__94 <-> and([__93,__87#occurrence_2;int(1..)])) using tseitin
+
+--
+
+(__89) <-> (__94)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__95
+new variables:
+  findAux __95: bool
+new SAT encoding decisions:
+  define(__95 <-> (__89) <-> (__94)) using tseitin
+
+--
+
+or([__85,__86;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__96
+new variables:
+  findAux __96: bool
+new SAT encoding decisions:
+  define(__96 <-> or([__85,__86;int(1..)])) using tseitin
+
+--
+
+and([__44,__73,(false in [{false},__87;int(0..1)][toInt(__96)]) -> (value#occurrence_1),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__92,
+__95,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([__44,__73,(false in [{false},__87;int(0..1)][toInt(__96)]) -> (value#occurrence_1),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__95,
+true
+new SAT encoding decisions:
+  assert(__92) using tseitin
+
+--
+
+and([__44,__73,(false in [{false},__87;int(0..1)][toInt(__96)]) -> (value#occurrence_1),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__95,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([__44,__73,(false in [{false},__87;int(0..1)][toInt(__96)]) -> (value#occurrence_1),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__95) using tseitin
+
+--
+
+[{false},__87;int(0..1)][toInt(__96)]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([{false},__87;int(0..1)],[toInt(__96)])
+
+--
+
+SafeIndex([{false},__87;int(0..1)],[toInt(__96)])
+   ~~> introduce_element ([("SAT", 18400)])
+__97
+new variables:
+  findAux __97: set of bool
+new constraints:
+  satElement([{false},__87;int(0..1)], toInt(__96), __97)
+
+--
+
+satElement([{false},__87;int(0..1)], toInt(__96), __97)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__98,__99;int(0..1)], toInt(__96), true)
+new variables:
+  findAux __98: bool
+  findAux __99: bool
+new constraints:
+  (__98) <-> (__97 = {false})
+  (__99) <-> (__97 = __87)
+
+--
+
+satElement([__98,__99;int(0..1)], toInt(__96), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=0+weighted(1*__96) with [], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[0: 0+weighted(1*__98) with [] choices(0:!(__98), 1:__98), 1: 0+weighted(1*__99) with [] choices(0:!(__99), 1:__99)]) using None, PB None
+
+--
+
+__97 = __87
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+__97 = __87
+new variables:
+  findAux __97#occurrence_1: bool
+  findAux __97#occurrence_2: bool
+new constraints:
+  and([sum([toInt(__97#occurrence_1),toInt(__97#occurrence_2);int(1..)]) >= 0,sum([toInt(__97#occurrence_1),toInt(__97#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+and([__44,__73,(false in __97) -> (value#occurrence_1),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__98) <-> (__97 = {false}),
+(__99) <-> (__97 = __87),
+and([sum([toInt(__97#occurrence_1),toInt(__97#occurrence_2);int(1..)]) >= 0,sum([toInt(__97#occurrence_1),toInt(__97#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__44,__73,(false in __97) -> (value#occurrence_1),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__98) <-> (__97 = {false}),
+(__99) <-> (__97 = __87),
+and([true,sum([toInt(__97#occurrence_1),toInt(__97#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(__97#occurrence_1, __97#occurrence_2) AtLeast 0 using None
+
+--
+
+and([__44,__73,(false in __97) -> (value#occurrence_1),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__98) <-> (__97 = {false}),
+(__99) <-> (__97 = __87),
+and([sum([toInt(__97#occurrence_1),toInt(__97#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__44,__73,(false in __97) -> (value#occurrence_1),(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__98) <-> (__97 = {false}),
+(__99) <-> (__97 = __87),
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(__97#occurrence_1, __97#occurrence_2) AtMost 2 using None
+
+--
+
+__97
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__97
+
+--
+
+__97
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__97
+
+--
+
+__97 = {false}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([__97#occurrence_1 = true,__97#occurrence_2 = false;int(1..)])
+
+--
+
+false in __97
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__97#occurrence_1
+
+--
+
+__97 = __87
+   ~~> eq_to_subset_eq ([("Base", 8800)])
+and([(__97 subsetEq __87),(__87 subsetEq __97);int(1..)])
+
+--
+
+(__97 subsetEq __87)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(__97#occurrence_1),false in __87;int(1..)]),or([!(__97#occurrence_2),true in __87;int(1..)]);int(1..)])
+
+--
+
+(__87 subsetEq __97)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(__87#occurrence_1),false in __97;int(1..)]),or([!(__87#occurrence_2),true in __97;int(1..)]);int(1..)])
+
+--
+
+false in __87
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__87#occurrence_1
+
+--
+
+true in __87
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__87#occurrence_2
+
+--
+
+false in __97
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__97#occurrence_1
+
+--
+
+true in __97
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__97#occurrence_2
+
+--
+
+!(__97#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__100
+new variables:
+  findAux __100: bool
+new SAT encoding decisions:
+  define(__100 <-> !(__97#occurrence_1)) using tseitin
+
+--
+
+!(__97#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__101
+new variables:
+  findAux __101: bool
+new SAT encoding decisions:
+  define(__101 <-> !(__97#occurrence_2)) using tseitin
+
+--
+
+!(__87#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__102
+new variables:
+  findAux __102: bool
+new SAT encoding decisions:
+  define(__102 <-> !(__87#occurrence_1)) using tseitin
+
+--
+
+!(__87#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__103
+new variables:
+  findAux __103: bool
+new SAT encoding decisions:
+  define(__103 <-> !(__87#occurrence_2)) using tseitin
+
+--
+
+and([and([or([__100,__87#occurrence_1;int(1..)]),or([__101,__87#occurrence_2;int(1..)]);int(1..)]),and([or([__102,__97#occurrence_1;int(1..)]),or([__103,__97#occurrence_2;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([__100,__87#occurrence_1;int(1..)]),or([__101,__87#occurrence_2;int(1..)]),or([__102,__97#occurrence_1;int(1..)]),or([__103,__97#occurrence_2;int(1..)]);int(1..)])
+
+--
+
+(__97#occurrence_1) -> (value#occurrence_1)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__104
+new variables:
+  findAux __104: bool
+new SAT encoding decisions:
+  define(__104 <-> (__97#occurrence_1) -> (value#occurrence_1)) using tseitin
+
+--
+
+or([__100,__87#occurrence_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__105
+new variables:
+  findAux __105: bool
+new SAT encoding decisions:
+  define(__105 <-> or([__100,__87#occurrence_1;int(1..)])) using tseitin
+
+--
+
+or([__101,__87#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__106
+new variables:
+  findAux __106: bool
+new SAT encoding decisions:
+  define(__106 <-> or([__101,__87#occurrence_2;int(1..)])) using tseitin
+
+--
+
+or([__102,__97#occurrence_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__107
+new variables:
+  findAux __107: bool
+new SAT encoding decisions:
+  define(__107 <-> or([__102,__97#occurrence_1;int(1..)])) using tseitin
+
+--
+
+or([__103,__97#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__108
+new variables:
+  findAux __108: bool
+new SAT encoding decisions:
+  define(__108 <-> or([__103,__97#occurrence_2;int(1..)])) using tseitin
+
+--
+
+and([__105,__106,__107,__108;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__109
+new variables:
+  findAux __109: bool
+new SAT encoding decisions:
+  define(__109 <-> and([__105,__106,__107,__108;int(1..)])) using tseitin
+
+--
+
+(__99) <-> (__109)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__110
+new variables:
+  findAux __110: bool
+new SAT encoding decisions:
+  define(__110 <-> (__99) <-> (__109)) using tseitin
+
+--
+
+__97#occurrence_2 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__111
+new variables:
+  findAux __111: bool
+new SAT encoding decisions:
+  define(__111 <-> (__97#occurrence_2) <-> (false)) using tseitin
+
+--
+
+and([__97#occurrence_1,__111;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__112
+new variables:
+  findAux __112: bool
+new SAT encoding decisions:
+  define(__112 <-> and([__97#occurrence_1,__111;int(1..)])) using tseitin
+
+--
+
+(__98) <-> (__112)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__113
+new variables:
+  findAux __113: bool
+new SAT encoding decisions:
+  define(__113 <-> (__98) <-> (__112)) using tseitin
+
+--
+
+and([__44,__73,__104,(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__113,
+__110,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([__44,__73,__104,(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__110,
+true
+new SAT encoding decisions:
+  assert(__113) using tseitin
+
+--
+
+and([__44,__73,__104,(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__110,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([__44,__73,__104,(true in catchUndef([{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])], {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__110) using tseitin
+
+--
+
+[{false},{true};int(-2, 3)][SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex([{false},{true};int(-2, 3)],[SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])]) @ __inDomain(SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]),int(-2, 3))}
+
+--
+
+__inDomain(SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]),int(-2, 3))
+   ~~> scalar_membership ([("SAT", 18500)])
+or([SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = -2,SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = 3;int(1..)])
+
+--
+
+SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__114
+new variables:
+  findAux __114: bool
+new SAT encoding decisions:
+  define(__114 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 0) using None with [PbTermGroup { start: 0, end: 6, structure: Chain }]
+
+--
+
+SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]) = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__115
+new variables:
+  findAux __115: bool
+new SAT encoding decisions:
+  define(__115 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 5) using None with [PbTermGroup { start: 0, end: 6, structure: Chain }]
+
+--
+
+SafeIndex([{false},{true};int(-2, 3)],[SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4])])
+   ~~> introduce_element ([("SAT", 18400)])
+__116
+new variables:
+  findAux __116: set of bool
+new constraints:
+  satElement([{false},{true};int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), __116)
+
+--
+
+satElement([{false},{true};int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), __116)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__117,__118;int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), true)
+new variables:
+  findAux __117: bool
+  findAux __118: bool
+new constraints:
+  (__117) <-> (__116 = {false})
+  (__118) <-> (__116 = {true})
+
+--
+
+satElement([__117,__118;int(-2, 3)], SATInt(Order, [i#int_order_1,i#int_order_2,i#int_order_3,i#int_order_4,i#int_order_5,i#int_order_6,i#int_order_7;int(1..)] [-2, 4]), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=-2+weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) with [PbTermGroup { start: 0, end: 6, structure: Chain }], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[-2: 0+weighted(1*__117) with [] choices(0:!(__117), 1:__117), 3: 0+weighted(1*__118) with [] choices(0:!(__118), 1:__118)]) using None, PB None
+
+--
+
+__116
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__116
+new variables:
+  findAux __116#occurrence_1: bool
+  findAux __116#occurrence_2: bool
+new constraints:
+  and([sum([toInt(__116#occurrence_1),toInt(__116#occurrence_2);int(1..)]) >= 0,sum([toInt(__116#occurrence_1),toInt(__116#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+__116
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__116
+
+--
+
+__116
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__116
+
+--
+
+and([__44,__73,__104,(true in catchUndef({__116 @ or([__114,__115;int(1..)])}, {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__117) <-> (__116 = {false}),
+(__118) <-> (__116 = {true}),
+and([sum([toInt(__116#occurrence_1),toInt(__116#occurrence_2);int(1..)]) >= 0,sum([toInt(__116#occurrence_1),toInt(__116#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__44,__73,__104,(true in catchUndef({__116 @ or([__114,__115;int(1..)])}, {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__117) <-> (__116 = {false}),
+(__118) <-> (__116 = {true}),
+and([true,sum([toInt(__116#occurrence_1),toInt(__116#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(__116#occurrence_1, __116#occurrence_2) AtLeast 0 using None
+
+--
+
+and([__44,__73,__104,(true in catchUndef({__116 @ or([__114,__115;int(1..)])}, {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__117) <-> (__116 = {false}),
+(__118) <-> (__116 = {true}),
+and([sum([toInt(__116#occurrence_1),toInt(__116#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__44,__73,__104,(true in catchUndef({__116 @ or([__114,__115;int(1..)])}, {false})) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__117) <-> (__116 = {false}),
+(__118) <-> (__116 = {true}),
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(__116#occurrence_1, __116#occurrence_2) AtMost 2 using None
+
+--
+
+__116 = {false}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([__116#occurrence_1 = true,__116#occurrence_2 = false;int(1..)])
+
+--
+
+__116 = {true}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([__116#occurrence_1 = false,__116#occurrence_2 = true;int(1..)])
+
+--
+
+catchUndef({__116 @ or([__114,__115;int(1..)])}, {false})
+   ~~> catch_undef_bubble ([("Base", 8800)])
+[{false},__116;int(0..1)][toInt(or([__114,__115;int(1..)]))]
+
+--
+
+__116#occurrence_2 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__119
+new variables:
+  findAux __119: bool
+new SAT encoding decisions:
+  define(__119 <-> (__116#occurrence_2) <-> (false)) using tseitin
+
+--
+
+and([__116#occurrence_1,__119;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__120
+new variables:
+  findAux __120: bool
+new SAT encoding decisions:
+  define(__120 <-> and([__116#occurrence_1,__119;int(1..)])) using tseitin
+
+--
+
+(__117) <-> (__120)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__121
+new variables:
+  findAux __121: bool
+new SAT encoding decisions:
+  define(__121 <-> (__117) <-> (__120)) using tseitin
+
+--
+
+__116#occurrence_1 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__122
+new variables:
+  findAux __122: bool
+new SAT encoding decisions:
+  define(__122 <-> (__116#occurrence_1) <-> (false)) using tseitin
+
+--
+
+and([__122,__116#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__123
+new variables:
+  findAux __123: bool
+new SAT encoding decisions:
+  define(__123 <-> and([__122,__116#occurrence_2;int(1..)])) using tseitin
+
+--
+
+(__118) <-> (__123)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__124
+new variables:
+  findAux __124: bool
+new SAT encoding decisions:
+  define(__124 <-> (__118) <-> (__123)) using tseitin
+
+--
+
+or([__114,__115;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__125
+new variables:
+  findAux __125: bool
+new SAT encoding decisions:
+  define(__125 <-> or([__114,__115;int(1..)])) using tseitin
+
+--
+
+and([__44,__73,__104,(true in [{false},__116;int(0..1)][toInt(__125)]) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__121,
+__124,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([__44,__73,__104,(true in [{false},__116;int(0..1)][toInt(__125)]) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__124,
+true
+new SAT encoding decisions:
+  assert(__121) using tseitin
+
+--
+
+and([__44,__73,__104,(true in [{false},__116;int(0..1)][toInt(__125)]) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__124,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([__44,__73,__104,(true in [{false},__116;int(0..1)][toInt(__125)]) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__124) using tseitin
+
+--
+
+[{false},__116;int(0..1)][toInt(__125)]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([{false},__116;int(0..1)],[toInt(__125)])
+
+--
+
+SafeIndex([{false},__116;int(0..1)],[toInt(__125)])
+   ~~> introduce_element ([("SAT", 18400)])
+__126
+new variables:
+  findAux __126: set of bool
+new constraints:
+  satElement([{false},__116;int(0..1)], toInt(__125), __126)
+
+--
+
+satElement([{false},__116;int(0..1)], toInt(__125), __126)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__127,__128;int(0..1)], toInt(__125), true)
+new variables:
+  findAux __127: bool
+  findAux __128: bool
+new constraints:
+  (__127) <-> (__126 = {false})
+  (__128) <-> (__126 = __116)
+
+--
+
+satElement([__127,__128;int(0..1)], toInt(__125), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=0+weighted(1*__125) with [], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[0: 0+weighted(1*__127) with [] choices(0:!(__127), 1:__127), 1: 0+weighted(1*__128) with [] choices(0:!(__128), 1:__128)]) using None, PB None
+
+--
+
+__126 = __116
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+__126 = __116
+new variables:
+  findAux __126#occurrence_1: bool
+  findAux __126#occurrence_2: bool
+new constraints:
+  and([sum([toInt(__126#occurrence_1),toInt(__126#occurrence_2);int(1..)]) >= 0,sum([toInt(__126#occurrence_1),toInt(__126#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+and([__44,__73,__104,(true in __126) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__127) <-> (__126 = {false}),
+(__128) <-> (__126 = __116),
+and([sum([toInt(__126#occurrence_1),toInt(__126#occurrence_2);int(1..)]) >= 0,sum([toInt(__126#occurrence_1),toInt(__126#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__44,__73,__104,(true in __126) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__127) <-> (__126 = {false}),
+(__128) <-> (__126 = __116),
+and([true,sum([toInt(__126#occurrence_1),toInt(__126#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(__126#occurrence_1, __126#occurrence_2) AtLeast 0 using None
+
+--
+
+and([__44,__73,__104,(true in __126) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__127) <-> (__126 = {false}),
+(__128) <-> (__126 = __116),
+and([sum([toInt(__126#occurrence_1),toInt(__126#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([__44,__73,__104,(true in __126) -> (value#occurrence_2);int(1..)]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(__127) <-> (__126 = {false}),
+(__128) <-> (__126 = __116),
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(__126#occurrence_1, __126#occurrence_2) AtMost 2 using None
+
+--
+
+__126
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__126
+
+--
+
+__126
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__126
+
+--
+
+__126 = {false}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([__126#occurrence_1 = true,__126#occurrence_2 = false;int(1..)])
+
+--
+
+true in __126
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__126#occurrence_2
+
+--
+
+__126 = __116
+   ~~> eq_to_subset_eq ([("Base", 8800)])
+and([(__126 subsetEq __116),(__116 subsetEq __126);int(1..)])
+
+--
+
+(__126 subsetEq __116)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(__126#occurrence_1),false in __116;int(1..)]),or([!(__126#occurrence_2),true in __116;int(1..)]);int(1..)])
+
+--
+
+(__116 subsetEq __126)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(__116#occurrence_1),false in __126;int(1..)]),or([!(__116#occurrence_2),true in __126;int(1..)]);int(1..)])
+
+--
+
+false in __116
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__116#occurrence_1
+
+--
+
+true in __116
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__116#occurrence_2
+
+--
+
+false in __126
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__126#occurrence_1
+
+--
+
+true in __126
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+__126#occurrence_2
+
+--
+
+!(__126#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__129
+new variables:
+  findAux __129: bool
+new SAT encoding decisions:
+  define(__129 <-> !(__126#occurrence_1)) using tseitin
+
+--
+
+!(__126#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__130
+new variables:
+  findAux __130: bool
+new SAT encoding decisions:
+  define(__130 <-> !(__126#occurrence_2)) using tseitin
+
+--
+
+!(__116#occurrence_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__131
+new variables:
+  findAux __131: bool
+new SAT encoding decisions:
+  define(__131 <-> !(__116#occurrence_1)) using tseitin
+
+--
+
+!(__116#occurrence_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__132
+new variables:
+  findAux __132: bool
+new SAT encoding decisions:
+  define(__132 <-> !(__116#occurrence_2)) using tseitin
+
+--
+
+and([and([or([__129,__116#occurrence_1;int(1..)]),or([__130,__116#occurrence_2;int(1..)]);int(1..)]),and([or([__131,__126#occurrence_1;int(1..)]),or([__132,__126#occurrence_2;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([__129,__116#occurrence_1;int(1..)]),or([__130,__116#occurrence_2;int(1..)]),or([__131,__126#occurrence_1;int(1..)]),or([__132,__126#occurrence_2;int(1..)]);int(1..)])
+
+--
+
+(__126#occurrence_2) -> (value#occurrence_2)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__133
+new variables:
+  findAux __133: bool
+new SAT encoding decisions:
+  define(__133 <-> (__126#occurrence_2) -> (value#occurrence_2)) using tseitin
+
+--
+
+and([__44,__73,__104,__133;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__134
+new variables:
+  findAux __134: bool
+new SAT encoding decisions:
+  define(__134 <-> and([__44,__73,__104,__133;int(1..)])) using tseitin
+
+--
+
+or([__129,__116#occurrence_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__135
+new variables:
+  findAux __135: bool
+new SAT encoding decisions:
+  define(__135 <-> or([__129,__116#occurrence_1;int(1..)])) using tseitin
+
+--
+
+or([__130,__116#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__136
+new variables:
+  findAux __136: bool
+new SAT encoding decisions:
+  define(__136 <-> or([__130,__116#occurrence_2;int(1..)])) using tseitin
+
+--
+
+or([__131,__126#occurrence_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__137
+new variables:
+  findAux __137: bool
+new SAT encoding decisions:
+  define(__137 <-> or([__131,__126#occurrence_1;int(1..)])) using tseitin
+
+--
+
+or([__132,__126#occurrence_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__138
+new variables:
+  findAux __138: bool
+new SAT encoding decisions:
+  define(__138 <-> or([__132,__126#occurrence_2;int(1..)])) using tseitin
+
+--
+
+and([__135,__136,__137,__138;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__139
+new variables:
+  findAux __139: bool
+new SAT encoding decisions:
+  define(__139 <-> and([__135,__136,__137,__138;int(1..)])) using tseitin
+
+--
+
+(__128) <-> (__139)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__140
+new variables:
+  findAux __140: bool
+new SAT encoding decisions:
+  define(__140 <-> (__128) <-> (__139)) using tseitin
+
+--
+
+__126#occurrence_2 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__141
+new variables:
+  findAux __141: bool
+new SAT encoding decisions:
+  define(__141 <-> (__126#occurrence_2) <-> (false)) using tseitin
+
+--
+
+and([__126#occurrence_1,__141;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__142
+new variables:
+  findAux __142: bool
+new SAT encoding decisions:
+  define(__142 <-> and([__126#occurrence_1,__141;int(1..)])) using tseitin
+
+--
+
+(__127) <-> (__142)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__143
+new variables:
+  findAux __143: bool
+new SAT encoding decisions:
+  define(__143 <-> (__127) <-> (__142)) using tseitin
+
+--
+
+__134,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__143,
+__140,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__143,
+__140,
+true
+new SAT encoding decisions:
+  assert(__134) using tseitin
+
+--
+
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__143,
+__140,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__140,
+true
+new SAT encoding decisions:
+  assert(__143) using tseitin
+
+--
+
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__140,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__140) using tseitin
+
+--
+
+Final model:
+
+find value: set (representation occurrence, maxSize 1) of bool
+find i: int(-2, 3..4)
+find masked: bool
+find selected: bool
+find value#occurrence_1: bool
+find value#occurrence_2: bool
+find i#int_order_1: bool
+find i#int_order_2: bool
+find i#int_order_3: bool
+find i#int_order_4: bool
+find i#int_order_5: bool
+find i#int_order_6: bool
+find i#int_order_7: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: set (representation occurrence) of bool
+findAux __28: bool
+findAux __29: bool
+findAux __27#occurrence_1: bool
+findAux __27#occurrence_2: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: set (representation occurrence) of bool
+findAux __38: bool
+findAux __39: bool
+findAux __37#occurrence_1: bool
+findAux __37#occurrence_2: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: set (representation occurrence) of bool
+findAux __57: bool
+findAux __58: bool
+findAux __56#occurrence_1: bool
+findAux __56#occurrence_2: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+findAux __65: bool
+findAux __66: set (representation occurrence) of bool
+findAux __67: bool
+findAux __68: bool
+findAux __66#occurrence_1: bool
+findAux __66#occurrence_2: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+findAux __83: bool
+findAux __84: bool
+findAux __85: bool
+findAux __86: bool
+findAux __87: set (representation occurrence) of bool
+findAux __88: bool
+findAux __89: bool
+findAux __87#occurrence_1: bool
+findAux __87#occurrence_2: bool
+findAux __90: bool
+findAux __91: bool
+findAux __92: bool
+findAux __93: bool
+findAux __94: bool
+findAux __95: bool
+findAux __96: bool
+findAux __97: set (representation occurrence) of bool
+findAux __98: bool
+findAux __99: bool
+findAux __97#occurrence_1: bool
+findAux __97#occurrence_2: bool
+findAux __100: bool
+findAux __101: bool
+findAux __102: bool
+findAux __103: bool
+findAux __104: bool
+findAux __105: bool
+findAux __106: bool
+findAux __107: bool
+findAux __108: bool
+findAux __109: bool
+findAux __110: bool
+findAux __111: bool
+findAux __112: bool
+findAux __113: bool
+findAux __114: bool
+findAux __115: bool
+findAux __116: set (representation occurrence) of bool
+findAux __117: bool
+findAux __118: bool
+findAux __116#occurrence_1: bool
+findAux __116#occurrence_2: bool
+findAux __119: bool
+findAux __120: bool
+findAux __121: bool
+findAux __122: bool
+findAux __123: bool
+findAux __124: bool
+findAux __125: bool
+findAux __126: set (representation occurrence) of bool
+findAux __127: bool
+findAux __128: bool
+findAux __126#occurrence_1: bool
+findAux __126#occurrence_2: bool
+findAux __129: bool
+findAux __130: bool
+findAux __131: bool
+findAux __132: bool
+findAux __133: bool
+findAux __134: bool
+findAux __135: bool
+findAux __136: bool
+findAux __137: bool
+findAux __138: bool
+findAux __139: bool
+findAux __140: bool
+findAux __141: bool
+findAux __142: bool
+findAux __143: bool
+
+such that
+
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Chain }],
+define(__1 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) GreaterEqual 5) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Chain }],
+define(__2 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) LessEqual 6) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Chain }],
+count(value#occurrence_1, value#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+at-most-one(value#occurrence_1, value#occurrence_2) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+define(__3 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 6) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Chain }],
+define(__4 <-> !(i#int_order_2)) using tseitin,
+define(__5 <-> !(i#int_order_3)) using tseitin,
+define(__6 <-> !(i#int_order_4)) using tseitin,
+define(__7 <-> !(i#int_order_5)) using tseitin,
+define(__8 <-> !(i#int_order_6)) using tseitin,
+define(__9 <-> !(i#int_order_7)) using tseitin,
+define(__10 <-> !(value#occurrence_1)) using tseitin,
+define(__11 <-> !(value#occurrence_2)) using tseitin,
+define(__12 <-> or([__4,i#int_order_1;int(1..)])) using tseitin,
+define(__13 <-> or([__5,i#int_order_2;int(1..)])) using tseitin,
+define(__14 <-> or([__6,i#int_order_3;int(1..)])) using tseitin,
+define(__15 <-> or([__7,i#int_order_4;int(1..)])) using tseitin,
+define(__16 <-> or([__8,i#int_order_5;int(1..)])) using tseitin,
+define(__17 <-> or([__9,i#int_order_6;int(1..)])) using tseitin,
+define(__18 <-> or([__3,selected;int(1..)])) using tseitin,
+define(__19 <-> (masked) <-> (__18)) using tseitin,
+define(__20 <-> and([__1,__2;int(1..)])) using tseitin,
+define(__21 <-> or([__0,__20;int(1..)])) using tseitin,
+define(__22 <-> (value#occurrence_2) <-> (false)) using tseitin,
+define(__23 <-> and([value#occurrence_1,__22;int(1..)])) using tseitin,
+define(__24 <-> (selected) <-> (__23)) using tseitin,
+assert(__24) using tseitin,
+assert(__19) using tseitin,
+assert(i#int_order_1) using tseitin,
+assert(__12) using tseitin,
+assert(__13) using tseitin,
+assert(__14) using tseitin,
+assert(__15) using tseitin,
+assert(__16) using tseitin,
+assert(__17) using tseitin,
+assert(__21) using tseitin,
+define(__25 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Chain }],
+define(__26 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 5) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Chain }],
+element(index=-2+weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) with [PbTermGroup { start: 0, end: 6, structure: Chain }], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[-2: 0+weighted(1*__28) with [] choices(0:!(__28), 1:__28), 3: 0+weighted(1*__29) with [] choices(0:!(__29), 1:__29)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+count(__27#occurrence_1, __27#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(__27#occurrence_1, __27#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__30 <-> (__27#occurrence_2) <-> (false)) using tseitin,
+define(__31 <-> and([__27#occurrence_1,__30;int(1..)])) using tseitin,
+define(__32 <-> (__28) <-> (__31)) using tseitin,
+define(__33 <-> (__27#occurrence_1) <-> (false)) using tseitin,
+define(__34 <-> and([__33,__27#occurrence_2;int(1..)])) using tseitin,
+define(__35 <-> (__29) <-> (__34)) using tseitin,
+define(__36 <-> or([__25,__26;int(1..)])) using tseitin,
+assert(__32) using tseitin,
+assert(__35) using tseitin,
+element(index=0+weighted(1*__36) with [], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[0: 0+weighted(1*__38) with [] choices(0:!(__38), 1:__38), 1: 0+weighted(1*__39) with [] choices(0:!(__39), 1:__39)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+count(__37#occurrence_1, __37#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(__37#occurrence_1, __37#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__40 <-> !(__37#occurrence_1)) using tseitin,
+define(__41 <-> !(__37#occurrence_2)) using tseitin,
+define(__42 <-> !(__27#occurrence_1)) using tseitin,
+define(__43 <-> !(__27#occurrence_2)) using tseitin,
+define(__44 <-> or([__10,__37#occurrence_1;int(1..)])) using tseitin,
+define(__45 <-> or([__40,__27#occurrence_1;int(1..)])) using tseitin,
+define(__46 <-> or([__41,__27#occurrence_2;int(1..)])) using tseitin,
+define(__47 <-> or([__42,__37#occurrence_1;int(1..)])) using tseitin,
+define(__48 <-> or([__43,__37#occurrence_2;int(1..)])) using tseitin,
+define(__49 <-> and([__45,__46,__47,__48;int(1..)])) using tseitin,
+define(__50 <-> (__39) <-> (__49)) using tseitin,
+define(__51 <-> (__37#occurrence_2) <-> (false)) using tseitin,
+define(__52 <-> and([__37#occurrence_1,__51;int(1..)])) using tseitin,
+define(__53 <-> (__38) <-> (__52)) using tseitin,
+assert(__53) using tseitin,
+assert(__50) using tseitin,
+define(__54 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Chain }],
+define(__55 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 5) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Chain }],
+element(index=-2+weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) with [PbTermGroup { start: 0, end: 6, structure: Chain }], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[-2: 0+weighted(1*__57) with [] choices(0:!(__57), 1:__57), 3: 0+weighted(1*__58) with [] choices(0:!(__58), 1:__58)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+count(__56#occurrence_1, __56#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(__56#occurrence_1, __56#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__59 <-> (__56#occurrence_2) <-> (false)) using tseitin,
+define(__60 <-> and([__56#occurrence_1,__59;int(1..)])) using tseitin,
+define(__61 <-> (__57) <-> (__60)) using tseitin,
+define(__62 <-> (__56#occurrence_1) <-> (false)) using tseitin,
+define(__63 <-> and([__62,__56#occurrence_2;int(1..)])) using tseitin,
+define(__64 <-> (__58) <-> (__63)) using tseitin,
+define(__65 <-> or([__54,__55;int(1..)])) using tseitin,
+assert(__61) using tseitin,
+assert(__64) using tseitin,
+element(index=0+weighted(1*__65) with [], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[0: 0+weighted(1*__67) with [] choices(0:!(__67), 1:__67), 1: 0+weighted(1*__68) with [] choices(0:!(__68), 1:__68)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+count(__66#occurrence_1, __66#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(__66#occurrence_1, __66#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__69 <-> !(__66#occurrence_1)) using tseitin,
+define(__70 <-> !(__66#occurrence_2)) using tseitin,
+define(__71 <-> !(__56#occurrence_1)) using tseitin,
+define(__72 <-> !(__56#occurrence_2)) using tseitin,
+define(__73 <-> or([__11,__66#occurrence_2;int(1..)])) using tseitin,
+define(__74 <-> or([__69,__56#occurrence_1;int(1..)])) using tseitin,
+define(__75 <-> or([__70,__56#occurrence_2;int(1..)])) using tseitin,
+define(__76 <-> or([__71,__66#occurrence_1;int(1..)])) using tseitin,
+define(__77 <-> or([__72,__66#occurrence_2;int(1..)])) using tseitin,
+define(__78 <-> and([__74,__75,__76,__77;int(1..)])) using tseitin,
+define(__79 <-> (__68) <-> (__78)) using tseitin,
+define(__80 <-> (__66#occurrence_2) <-> (false)) using tseitin,
+define(__81 <-> and([__66#occurrence_1,__80;int(1..)])) using tseitin,
+define(__82 <-> (__67) <-> (__81)) using tseitin,
+assert(__82) using tseitin,
+assert(__79) using tseitin,
+define(__85 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Chain }],
+define(__86 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 5) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Chain }],
+element(index=-2+weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) with [PbTermGroup { start: 0, end: 6, structure: Chain }], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[-2: 0+weighted(1*__88) with [] choices(0:!(__88), 1:__88), 3: 0+weighted(1*__89) with [] choices(0:!(__89), 1:__89)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+count(__87#occurrence_1, __87#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(__87#occurrence_1, __87#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__90 <-> (__87#occurrence_2) <-> (false)) using tseitin,
+define(__91 <-> and([__87#occurrence_1,__90;int(1..)])) using tseitin,
+define(__92 <-> (__88) <-> (__91)) using tseitin,
+define(__93 <-> (__87#occurrence_1) <-> (false)) using tseitin,
+define(__94 <-> and([__93,__87#occurrence_2;int(1..)])) using tseitin,
+define(__95 <-> (__89) <-> (__94)) using tseitin,
+define(__96 <-> or([__85,__86;int(1..)])) using tseitin,
+assert(__92) using tseitin,
+assert(__95) using tseitin,
+element(index=0+weighted(1*__96) with [], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[0: 0+weighted(1*__98) with [] choices(0:!(__98), 1:__98), 1: 0+weighted(1*__99) with [] choices(0:!(__99), 1:__99)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+count(__97#occurrence_1, __97#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(__97#occurrence_1, __97#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__100 <-> !(__97#occurrence_1)) using tseitin,
+define(__101 <-> !(__97#occurrence_2)) using tseitin,
+define(__102 <-> !(__87#occurrence_1)) using tseitin,
+define(__103 <-> !(__87#occurrence_2)) using tseitin,
+define(__104 <-> (__97#occurrence_1) -> (value#occurrence_1)) using tseitin,
+define(__105 <-> or([__100,__87#occurrence_1;int(1..)])) using tseitin,
+define(__106 <-> or([__101,__87#occurrence_2;int(1..)])) using tseitin,
+define(__107 <-> or([__102,__97#occurrence_1;int(1..)])) using tseitin,
+define(__108 <-> or([__103,__97#occurrence_2;int(1..)])) using tseitin,
+define(__109 <-> and([__105,__106,__107,__108;int(1..)])) using tseitin,
+define(__110 <-> (__99) <-> (__109)) using tseitin,
+define(__111 <-> (__97#occurrence_2) <-> (false)) using tseitin,
+define(__112 <-> and([__97#occurrence_1,__111;int(1..)])) using tseitin,
+define(__113 <-> (__98) <-> (__112)) using tseitin,
+assert(__113) using tseitin,
+assert(__110) using tseitin,
+define(__114 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Chain }],
+define(__115 <-> integer-weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) Equal 5) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Chain }],
+element(index=-2+weighted(1*i#int_order_2, 1*i#int_order_3, 1*i#int_order_4, 1*i#int_order_5, 1*i#int_order_6, 1*i#int_order_7) with [PbTermGroup { start: 0, end: 6, structure: Chain }], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[-2: 0+weighted(1*__117) with [] choices(0:!(__117), 1:__117), 3: 0+weighted(1*__118) with [] choices(0:!(__118), 1:__118)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+count(__116#occurrence_1, __116#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(__116#occurrence_1, __116#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__119 <-> (__116#occurrence_2) <-> (false)) using tseitin,
+define(__120 <-> and([__116#occurrence_1,__119;int(1..)])) using tseitin,
+define(__121 <-> (__117) <-> (__120)) using tseitin,
+define(__122 <-> (__116#occurrence_1) <-> (false)) using tseitin,
+define(__123 <-> and([__122,__116#occurrence_2;int(1..)])) using tseitin,
+define(__124 <-> (__118) <-> (__123)) using tseitin,
+define(__125 <-> or([__114,__115;int(1..)])) using tseitin,
+assert(__121) using tseitin,
+assert(__124) using tseitin,
+element(index=0+weighted(1*__125) with [], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[0: 0+weighted(1*__127) with [] choices(0:!(__127), 1:__127), 1: 0+weighted(1*__128) with [] choices(0:!(__128), 1:__128)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+count(__126#occurrence_1, __126#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(__126#occurrence_1, __126#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__129 <-> !(__126#occurrence_1)) using tseitin,
+define(__130 <-> !(__126#occurrence_2)) using tseitin,
+define(__131 <-> !(__116#occurrence_1)) using tseitin,
+define(__132 <-> !(__116#occurrence_2)) using tseitin,
+define(__133 <-> (__126#occurrence_2) -> (value#occurrence_2)) using tseitin,
+define(__134 <-> and([__44,__73,__104,__133;int(1..)])) using tseitin,
+define(__135 <-> or([__129,__116#occurrence_1;int(1..)])) using tseitin,
+define(__136 <-> or([__130,__116#occurrence_2;int(1..)])) using tseitin,
+define(__137 <-> or([__131,__126#occurrence_1;int(1..)])) using tseitin,
+define(__138 <-> or([__132,__126#occurrence_2;int(1..)])) using tseitin,
+define(__139 <-> and([__135,__136,__137,__138;int(1..)])) using tseitin,
+define(__140 <-> (__128) <-> (__139)) using tseitin,
+define(__141 <-> (__126#occurrence_2) <-> (false)) using tseitin,
+define(__142 <-> and([__126#occurrence_1,__141;int(1..)])) using tseitin,
+define(__143 <-> (__127) <-> (__142)) using tseitin,
+assert(__134) using tseitin,
+assert(__143) using tseitin,
+assert(__140) using tseitin
+

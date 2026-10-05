@@ -1,0 +1,74 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1)] of bool
+find m2: matrix indexed by [int(1)] of bool
+
+such that
+
+m != m2
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#components_1: bool
+
+--
+
+m != m2
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+m != m2
+new variables:
+  find m2#components_1: bool
+
+--
+
+m != m2
+   ~~> matrix_components_var_eq_var ([("ReprMatrixComponents", 9400)])
+or([m#components_1 != m2#components_1;int(1..)])
+
+--
+
+or([m#components_1 != m2#components_1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+m#components_1 != m2#components_1
+
+--
+
+m#components_1 != m2#components_1
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> !((m#components_1) <-> (m2#components_1))) using tseitin
+
+--
+
+__0
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1)] of bool
+find m2: matrix indexed by [int(1)] of bool
+find m#components_1: bool
+find m2#components_1: bool
+findAux __0: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> !((m#components_1) <-> (m2#components_1))) using tseitin,
+assert(__0) using tseitin
+

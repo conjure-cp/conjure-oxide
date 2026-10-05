@@ -1,0 +1,3812 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(-2, 3)] of matrix indexed by [int(-1, 2)] of bool
+find i: int(-2, 3..4)
+find caught: bool
+find exceptional: bool
+find masked: bool
+find selected: bool
+
+such that
+
+(selected) <-> (m[i] = [false,true;int(-1, 2)]),
+(masked) <-> (or([i = 4,m[i] = [false,true;int(-1, 2)];int(1..)])),
+(caught) <-> (catchUndef(m[i], [false,true;int(-1, 2)]) = [false,true;int(-1, 2)]),
+(exceptional) <-> (allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], m[i]))
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#components_1: matrix indexed by [int(-1, 2)] of bool
+  find m#components_2: matrix indexed by [int(-1, 2)] of bool
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+new variables:
+  find i#int_direct_1: bool
+  find i#int_direct_2: bool
+  find i#int_direct_3: bool
+  find i#int_direct_4: bool
+  find i#int_direct_5: bool
+  find i#int_direct_6: bool
+  find i#int_direct_7: bool
+new constraints:
+  sum([toInt(i#int_direct_1),toInt(i#int_direct_2),toInt(i#int_direct_3),toInt(i#int_direct_4),toInt(i#int_direct_5),toInt(i#int_direct_6),toInt(i#int_direct_7);int(1..)]) <= 1
+  or([i#int_direct_1,i#int_direct_6,i#int_direct_7;int(1..)])
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+
+--
+
+(selected) <-> (m[i] = [false,true;int(-1, 2)]),
+(masked) <-> (or([i = 4,m[i] = [false,true;int(-1, 2)];int(1..)])),
+(caught) <-> (catchUndef(m[i], [false,true;int(-1, 2)]) = [false,true;int(-1, 2)]),
+(exceptional) <-> (allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], m[i])),
+sum([toInt(i#int_direct_1),toInt(i#int_direct_2),toInt(i#int_direct_3),toInt(i#int_direct_4),toInt(i#int_direct_5),toInt(i#int_direct_6),toInt(i#int_direct_7);int(1..)]) <= 1,
+or([i#int_direct_1,i#int_direct_6,i#int_direct_7;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(selected) <-> (m[i] = [false,true;int(-1, 2)]),
+(masked) <-> (or([i = 4,m[i] = [false,true;int(-1, 2)];int(1..)])),
+(caught) <-> (catchUndef(m[i], [false,true;int(-1, 2)]) = [false,true;int(-1, 2)]),
+(exceptional) <-> (allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], m[i])),
+or([i#int_direct_1,i#int_direct_6,i#int_direct_7;int(1..)])
+new SAT encoding decisions:
+  at-most-one(i#int_direct_1, i#int_direct_2, i#int_direct_3, i#int_direct_4, i#int_direct_5, i#int_direct_6, i#int_direct_7) using None
+
+--
+
+i = 4
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal 4) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+(selected) <-> (m[i] = [false,true;int(-1, 2)]),
+(masked) <-> (or([__0,m[i] = [false,true;int(-1, 2)];int(1..)])),
+(caught) <-> (catchUndef(m[i], [false,true;int(-1, 2)]) = [false,true;int(-1, 2)]),
+(exceptional) <-> (allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], m[i])),
+or([i#int_direct_1,i#int_direct_6,i#int_direct_7;int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+(selected) <-> (m[i] = [false,true;int(-1, 2)]),
+(masked) <-> (or([__0,m[i] = [false,true;int(-1, 2)];int(1..)])),
+(caught) <-> (catchUndef(m[i], [false,true;int(-1, 2)]) = [false,true;int(-1, 2)]),
+(exceptional) <-> (allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], m[i])),
+or([i#int_direct_1,i#int_direct_6,i#int_direct_7;int(1..)])
+new variables:
+  find m#components_1#components_1: bool
+  find m#components_1#components_2: bool
+  find m#components_2#components_1: bool
+  find m#components_2#components_2: bool
+
+--
+
+i
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+
+--
+
+i
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+
+--
+
+i
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+
+--
+
+i
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+
+--
+
+or([i#int_direct_1,i#int_direct_6,i#int_direct_7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([i#int_direct_1,i#int_direct_6,i#int_direct_7;int(1..)])) using tseitin
+
+--
+
+(selected) <-> (m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])] = [false,true;int(-1, 2)]),
+(masked) <-> (or([__0,m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])] = [false,true;int(-1, 2)];int(1..)])),
+(caught) <-> (catchUndef(m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])], [false,true;int(-1, 2)]) = [false,true;int(-1, 2)]),
+(exceptional) <-> (allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+(selected) <-> (m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])] = [false,true;int(-1, 2)]),
+(masked) <-> (or([__0,m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])] = [false,true;int(-1, 2)];int(1..)])),
+(caught) <-> (catchUndef(m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])], [false,true;int(-1, 2)]) = [false,true;int(-1, 2)]),
+(exceptional) <-> (allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]))
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) @ __inDomain(SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),int(-2, 3))}
+
+--
+
+__inDomain(SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),int(-2, 3))
+   ~~> scalar_membership ([("SAT", 18500)])
+or([SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = -2,SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = 3;int(1..)])
+
+--
+
+SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal 3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+{SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) @ or([__2,__3;int(1..)])} = [false,true;int(-1, 2)]
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)] @ or([__2,__3;int(1..)])}
+
+--
+
+{SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)] @ or([__2,__3;int(1..)])}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],or([__2,__3;int(1..)]);int(1..)])
+
+--
+
+or([__2,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> or([__2,__3;int(1..)])) using tseitin
+
+--
+
+m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) @ __inDomain(SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),int(-2, 3))}
+
+--
+
+__inDomain(SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),int(-2, 3))
+   ~~> scalar_membership ([("SAT", 18500)])
+or([SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = -2,SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = 3;int(1..)])
+
+--
+
+SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal 3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], {SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) @ or([__5,__6;int(1..)])})
+   ~~> bubble_up ([("Bubble", 8800)])
+{allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])) @ or([__5,__6;int(1..)])}
+
+--
+
+{allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])) @ or([__5,__6;int(1..)])}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),or([__5,__6;int(1..)]);int(1..)])
+
+--
+
+or([__5,__6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> or([__5,__6;int(1..)])) using tseitin
+
+--
+
+m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) @ __inDomain(SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),int(-2, 3))}
+
+--
+
+__inDomain(SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),int(-2, 3))
+   ~~> scalar_membership ([("SAT", 18500)])
+or([SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = -2,SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = 3;int(1..)])
+
+--
+
+SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal 3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+catchUndef({SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) @ or([__8,__9;int(1..)])}, [false,true;int(-1, 2)])
+   ~~> catch_undef_bubble ([("Base", 8800)])
+[[false,true;int(-1, 2)],SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]);int(0..1)][toInt(or([__8,__9;int(1..)]))]
+
+--
+
+or([__8,__9;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> or([__8,__9;int(1..)])) using tseitin
+
+--
+
+[[false,true;int(-1, 2)],SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]);int(0..1)][toInt(__10)]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([[false,true;int(-1, 2)],SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]);int(0..1)],[toInt(__10)])
+
+--
+
+SafeIndex([[false,true;int(-1, 2)],SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]);int(0..1)],[toInt(__10)])
+   ~~> introduce_element ([("SAT", 18400)])
+__11
+new variables:
+  findAux __11: matrix indexed by [int(-1, 2)] of bool
+new constraints:
+  satElement([[false,true;int(-1, 2)],SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]);int(0..1)], toInt(__10), __11)
+
+--
+
+satElement([[false,true;int(-1, 2)],SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]);int(0..1)], toInt(__10), __11)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__12,__13;int(0..1)], toInt(__10), true)
+new variables:
+  findAux __12: bool
+  findAux __13: bool
+new constraints:
+  (__12) <-> (__11 = [false,true;int(-1, 2)])
+  (__13) <-> (__11 = SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]))
+
+--
+
+satElement([__12,__13;int(0..1)], toInt(__10), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=0+weighted(1*__10) with [], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[0: 0+weighted(1*__12) with [] choices(0:!(__12), 1:__12), 1: 0+weighted(1*__13) with [] choices(0:!(__13), 1:__13)]) using None, PB None
+
+--
+
+__11
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__11
+new variables:
+  findAux __11#components_1: bool
+  findAux __11#components_2: bool
+
+--
+
+__11
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__11
+
+--
+
+__11
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__11
+
+--
+
+__11 = [false,true;int(-1, 2)]
+   ~~> matrix_components_var_eq_literal ([("ReprMatrixComponents", 9400)])
+and([__11#components_1 = false,__11#components_2 = true;int(1..)])
+
+--
+
+__11 = [false,true;int(-1, 2)]
+   ~~> matrix_components_var_eq_literal ([("ReprMatrixComponents", 9400)])
+and([__11#components_1 = false,__11#components_2 = true;int(1..)])
+
+--
+
+__11#components_1 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> (__11#components_1) <-> (false)) using tseitin
+
+--
+
+and([__14,__11#components_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> and([__14,__11#components_2;int(1..)])) using tseitin
+
+--
+
+(caught) <-> (__15)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> (caught) <-> (__15)) using tseitin
+
+--
+
+__11#components_1 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> (__11#components_1) <-> (false)) using tseitin
+
+--
+
+and([__17,__11#components_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> and([__17,__11#components_2;int(1..)])) using tseitin
+
+--
+
+(__12) <-> (__18)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> (__12) <-> (__18)) using tseitin
+
+--
+
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (or([__0,m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])] = [false,true;int(-1, 2)];int(1..)])),
+__16,
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__19,
+(__13) <-> (__11 = SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]))
+   ~~> remove_single_atom ([("SAT", 8400)])
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (or([__0,m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])] = [false,true;int(-1, 2)];int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__19,
+(__13) <-> (__11 = SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]))
+new SAT encoding decisions:
+  assert(__16) using tseitin
+
+--
+
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (or([__0,m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])] = [false,true;int(-1, 2)];int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__19,
+(__13) <-> (__11 = SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]))
+   ~~> remove_single_atom ([("SAT", 8400)])
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (or([__0,m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])] = [false,true;int(-1, 2)];int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+(__13) <-> (__11 = SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]))
+new SAT encoding decisions:
+  assert(__19) using tseitin
+
+--
+
+m[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) @ __inDomain(SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),int(-2, 3))}
+
+--
+
+__inDomain(SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),int(-2, 3))
+   ~~> scalar_membership ([("SAT", 18500)])
+or([SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = -2,SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = 3;int(1..)])
+
+--
+
+SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]) = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal 3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+{SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) @ or([__20,__21;int(1..)])} = [false,true;int(-1, 2)]
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)] @ or([__20,__21;int(1..)])}
+
+--
+
+{SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)] @ or([__20,__21;int(1..)])}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],or([__20,__21;int(1..)]);int(1..)])
+
+--
+
+or([__20,__21;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__22
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> or([__20,__21;int(1..)])) using tseitin
+
+--
+
+or([__0,and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__22;int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),or([__0,__22;int(1..)]);int(1..)])
+
+--
+
+or([__0,__22;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__23
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> or([__0,__22;int(1..)])) using tseitin
+
+--
+
+SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([m#components_1,m#components_2;int(1..)],[sum([product([1,__25;int(1..)]),1;int(1..)])])
+new variables:
+  findAux __24: int(-2..4)
+  findAux __25: int(0..1)
+new constraints:
+  __24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+  or([and([__24 = -2,__25 = 0;int(1..)]),and([__24 = 3,__25 = 1;int(1..)]),!(__inDomain(__24,int(-2, 3)));int(1..)])
+
+--
+
+__inDomain(__24,int(-2, 3))
+   ~~> scalar_membership ([("SAT", 18500)])
+or([__24 = -2,__24 = 3;int(1..)])
+
+--
+
+SafeIndex([m#components_1,m#components_2;int(1..)],[sum([product([1,__25;int(1..)]),1;int(1..)])])
+   ~~> introduce_element ([("SAT", 18400)])
+__26
+new variables:
+  findAux __26: matrix indexed by [int(-1, 2)] of bool
+new constraints:
+  satElement([m#components_1,m#components_2;int(1..)], sum([product([1,__25;int(1..)]),1;int(1..)]), __26)
+
+--
+
+satElement([m#components_1,m#components_2;int(1..)], sum([product([1,__25;int(1..)]),1;int(1..)]), __26)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__27,__28;int(1..2)], sum([product([1,__25;int(1..)]),1;int(1..)]), true)
+new variables:
+  findAux __27: bool
+  findAux __28: bool
+new constraints:
+  (__27) <-> (__26 = m#components_1)
+  (__28) <-> (__26 = m#components_2)
+
+--
+
+__11 = __26
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+__11 = __26
+new variables:
+  findAux __26#components_1: bool
+  findAux __26#components_2: bool
+
+--
+
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+   ~~> select_aux_declaration_representation ([("ReprGeneral", 10000)])
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+new variables:
+  findAux __24#int_direct_1: bool
+  findAux __24#int_direct_2: bool
+  findAux __24#int_direct_3: bool
+  findAux __24#int_direct_4: bool
+  findAux __24#int_direct_5: bool
+  findAux __24#int_direct_6: bool
+  findAux __24#int_direct_7: bool
+new constraints:
+  sum([toInt(__24#int_direct_1),toInt(__24#int_direct_2),toInt(__24#int_direct_3),toInt(__24#int_direct_4),toInt(__24#int_direct_5),toInt(__24#int_direct_6),toInt(__24#int_direct_7);int(1..)]) <= 1
+  or([__24#int_direct_1,__24#int_direct_2,__24#int_direct_3,__24#int_direct_4,__24#int_direct_5,__24#int_direct_6,__24#int_direct_7;int(1..)])
+
+--
+
+__26
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__26
+
+--
+
+m#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_2
+
+--
+
+__26
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__26
+
+--
+
+m#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_1
+
+--
+
+__25
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__25
+new variables:
+  findAux __25#int_direct_1: bool
+  findAux __25#int_direct_2: bool
+new constraints:
+  sum([toInt(__25#int_direct_1),toInt(__25#int_direct_2);int(1..)]) <= 1
+  or([__25#int_direct_1,__25#int_direct_2;int(1..)])
+
+--
+
+satElement([__27,__28;int(1..2)], sum([product([1,__25;int(1..)]),1;int(1..)]), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=1+weighted(0*__25#int_direct_1, 1*__25#int_direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:__25#int_direct_1, 2:__25#int_direct_2), value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[1: 0+weighted(1*__27) with [] choices(0:!(__27), 1:__27), 2: 0+weighted(1*__28) with [] choices(0:!(__28), 1:__28)]) using None, PB None
+
+--
+
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+(__13) <-> (__11 = __26),
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__24 = -2,__25 = 0;int(1..)]),and([__24 = 3,__25 = 1;int(1..)]),!(or([__24 = -2,__24 = 3;int(1..)]));int(1..)]),
+true,
+(__27) <-> (__26 = m#components_1),
+(__28) <-> (__26 = m#components_2),
+sum([toInt(__24#int_direct_1),toInt(__24#int_direct_2),toInt(__24#int_direct_3),toInt(__24#int_direct_4),toInt(__24#int_direct_5),toInt(__24#int_direct_6),toInt(__24#int_direct_7);int(1..)]) <= 1,
+or([__24#int_direct_1,__24#int_direct_2,__24#int_direct_3,__24#int_direct_4,__24#int_direct_5,__24#int_direct_6,__24#int_direct_7;int(1..)]),
+sum([toInt(__25#int_direct_1),toInt(__25#int_direct_2);int(1..)]) <= 1,
+or([__25#int_direct_1,__25#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+(__13) <-> (__11 = __26),
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__24 = -2,__25 = 0;int(1..)]),and([__24 = 3,__25 = 1;int(1..)]),!(or([__24 = -2,__24 = 3;int(1..)]));int(1..)]),
+true,
+(__27) <-> (__26 = m#components_1),
+(__28) <-> (__26 = m#components_2),
+or([__24#int_direct_1,__24#int_direct_2,__24#int_direct_3,__24#int_direct_4,__24#int_direct_5,__24#int_direct_6,__24#int_direct_7;int(1..)]),
+sum([toInt(__25#int_direct_1),toInt(__25#int_direct_2);int(1..)]) <= 1,
+or([__25#int_direct_1,__25#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__24#int_direct_1, __24#int_direct_2, __24#int_direct_3, __24#int_direct_4, __24#int_direct_5, __24#int_direct_6, __24#int_direct_7) using None
+
+--
+
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+(__13) <-> (__11 = __26),
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__24 = -2,__25 = 0;int(1..)]),and([__24 = 3,__25 = 1;int(1..)]),!(or([__24 = -2,__24 = 3;int(1..)]));int(1..)]),
+true,
+(__27) <-> (__26 = m#components_1),
+(__28) <-> (__26 = m#components_2),
+or([__24#int_direct_1,__24#int_direct_2,__24#int_direct_3,__24#int_direct_4,__24#int_direct_5,__24#int_direct_6,__24#int_direct_7;int(1..)]),
+sum([toInt(__25#int_direct_1),toInt(__25#int_direct_2);int(1..)]) <= 1,
+or([__25#int_direct_1,__25#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+(__13) <-> (__11 = __26),
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__24 = -2,__25 = 0;int(1..)]),and([__24 = 3,__25 = 1;int(1..)]),!(or([__24 = -2,__24 = 3;int(1..)]));int(1..)]),
+true,
+(__27) <-> (__26 = m#components_1),
+(__28) <-> (__26 = m#components_2),
+or([__24#int_direct_1,__24#int_direct_2,__24#int_direct_3,__24#int_direct_4,__24#int_direct_5,__24#int_direct_6,__24#int_direct_7;int(1..)]),
+or([__25#int_direct_1,__25#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__25#int_direct_1, __25#int_direct_2) using None
+
+--
+
+__24
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__24
+
+--
+
+__25
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__25
+
+--
+
+__24
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__24
+
+--
+
+__25
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__25
+
+--
+
+__24
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__24
+
+--
+
+__24
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__24
+
+--
+
+__24 = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__29
+new variables:
+  findAux __29: bool
+new SAT encoding decisions:
+  define(__29 <-> integer-weighted(-2*__24#int_direct_1, -1*__24#int_direct_2, 0*__24#int_direct_3, 1*__24#int_direct_4, 2*__24#int_direct_5, 3*__24#int_direct_6, 4*__24#int_direct_7) Equal -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__25 = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__30
+new variables:
+  findAux __30: bool
+new SAT encoding decisions:
+  define(__30 <-> integer-weighted(0*__25#int_direct_1, 1*__25#int_direct_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+
+--
+
+__24 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__31
+new variables:
+  findAux __31: bool
+new SAT encoding decisions:
+  define(__31 <-> integer-weighted(-2*__24#int_direct_1, -1*__24#int_direct_2, 0*__24#int_direct_3, 1*__24#int_direct_4, 2*__24#int_direct_5, 3*__24#int_direct_6, 4*__24#int_direct_7) Equal 3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__25 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__32
+new variables:
+  findAux __32: bool
+new SAT encoding decisions:
+  define(__32 <-> integer-weighted(0*__25#int_direct_1, 1*__25#int_direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+
+--
+
+__24 = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__33
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> integer-weighted(-2*__24#int_direct_1, -1*__24#int_direct_2, 0*__24#int_direct_3, 1*__24#int_direct_4, 2*__24#int_direct_5, 3*__24#int_direct_6, 4*__24#int_direct_7) Equal -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__24 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__34
+new variables:
+  findAux __34: bool
+new SAT encoding decisions:
+  define(__34 <-> integer-weighted(-2*__24#int_direct_1, -1*__24#int_direct_2, 0*__24#int_direct_3, 1*__24#int_direct_4, 2*__24#int_direct_5, 3*__24#int_direct_6, 4*__24#int_direct_7) Equal 3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__11 = __26
+   ~~> matrix_components_var_eq_var ([("ReprMatrixComponents", 9400)])
+and([__11#components_1 = __26#components_1,__11#components_2 = __26#components_2;int(1..)])
+
+--
+
+__26 = m#components_1
+   ~~> matrix_components_var_eq_var ([("ReprMatrixComponents", 9400)])
+and([__26#components_1 = m#components_1#components_1,__26#components_2 = m#components_1#components_2;int(1..)])
+
+--
+
+__26 = m#components_2
+   ~~> matrix_components_var_eq_var ([("ReprMatrixComponents", 9400)])
+and([__26#components_1 = m#components_2#components_1,__26#components_2 = m#components_2#components_2;int(1..)])
+
+--
+
+or([__24#int_direct_1,__24#int_direct_2,__24#int_direct_3,__24#int_direct_4,__24#int_direct_5,__24#int_direct_6,__24#int_direct_7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__35
+new variables:
+  findAux __35: bool
+new SAT encoding decisions:
+  define(__35 <-> or([__24#int_direct_1,__24#int_direct_2,__24#int_direct_3,__24#int_direct_4,__24#int_direct_5,__24#int_direct_6,__24#int_direct_7;int(1..)])) using tseitin
+
+--
+
+or([__25#int_direct_1,__25#int_direct_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__36
+new variables:
+  findAux __36: bool
+new SAT encoding decisions:
+  define(__36 <-> or([__25#int_direct_1,__25#int_direct_2;int(1..)])) using tseitin
+
+--
+
+and([__29,__30;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__37
+new variables:
+  findAux __37: bool
+new SAT encoding decisions:
+  define(__37 <-> and([__29,__30;int(1..)])) using tseitin
+
+--
+
+and([__31,__32;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__38
+new variables:
+  findAux __38: bool
+new SAT encoding decisions:
+  define(__38 <-> and([__31,__32;int(1..)])) using tseitin
+
+--
+
+__11#components_1 = __26#components_1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__39
+new variables:
+  findAux __39: bool
+new SAT encoding decisions:
+  define(__39 <-> (__11#components_1) <-> (__26#components_1)) using tseitin
+
+--
+
+__11#components_2 = __26#components_2
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__40
+new variables:
+  findAux __40: bool
+new SAT encoding decisions:
+  define(__40 <-> (__11#components_2) <-> (__26#components_2)) using tseitin
+
+--
+
+and([__39,__40;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__41
+new variables:
+  findAux __41: bool
+new SAT encoding decisions:
+  define(__41 <-> and([__39,__40;int(1..)])) using tseitin
+
+--
+
+(__13) <-> (__41)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__42
+new variables:
+  findAux __42: bool
+new SAT encoding decisions:
+  define(__42 <-> (__13) <-> (__41)) using tseitin
+
+--
+
+__26#components_1 = m#components_1#components_1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__43
+new variables:
+  findAux __43: bool
+new SAT encoding decisions:
+  define(__43 <-> (__26#components_1) <-> (m#components_1#components_1)) using tseitin
+
+--
+
+__26#components_2 = m#components_1#components_2
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__44
+new variables:
+  findAux __44: bool
+new SAT encoding decisions:
+  define(__44 <-> (__26#components_2) <-> (m#components_1#components_2)) using tseitin
+
+--
+
+and([__43,__44;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__45
+new variables:
+  findAux __45: bool
+new SAT encoding decisions:
+  define(__45 <-> and([__43,__44;int(1..)])) using tseitin
+
+--
+
+(__27) <-> (__45)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__46
+new variables:
+  findAux __46: bool
+new SAT encoding decisions:
+  define(__46 <-> (__27) <-> (__45)) using tseitin
+
+--
+
+__26#components_1 = m#components_2#components_1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__47
+new variables:
+  findAux __47: bool
+new SAT encoding decisions:
+  define(__47 <-> (__26#components_1) <-> (m#components_2#components_1)) using tseitin
+
+--
+
+__26#components_2 = m#components_2#components_2
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__48
+new variables:
+  findAux __48: bool
+new SAT encoding decisions:
+  define(__48 <-> (__26#components_2) <-> (m#components_2#components_2)) using tseitin
+
+--
+
+and([__47,__48;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__49
+new variables:
+  findAux __49: bool
+new SAT encoding decisions:
+  define(__49 <-> and([__47,__48;int(1..)])) using tseitin
+
+--
+
+(__28) <-> (__49)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__50
+new variables:
+  findAux __50: bool
+new SAT encoding decisions:
+  define(__50 <-> (__28) <-> (__49)) using tseitin
+
+--
+
+or([__33,__34;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__51
+new variables:
+  findAux __51: bool
+new SAT encoding decisions:
+  define(__51 <-> or([__33,__34;int(1..)])) using tseitin
+
+--
+
+!(__51)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__52
+new variables:
+  findAux __52: bool
+new SAT encoding decisions:
+  define(__52 <-> !(__51)) using tseitin
+
+--
+
+or([__37,__38,__52;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__53
+new variables:
+  findAux __53: bool
+new SAT encoding decisions:
+  define(__53 <-> or([__37,__38,__52;int(1..)])) using tseitin
+
+--
+
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__42,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+__53,
+true,
+__46,
+__50,
+__35,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+__53,
+true,
+__46,
+__50,
+__35,
+__36
+new SAT encoding decisions:
+  assert(__42) using tseitin
+
+--
+
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+__53,
+true,
+__46,
+__50,
+__35,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__46,
+__50,
+__35,
+__36
+new SAT encoding decisions:
+  assert(__53) using tseitin
+
+--
+
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__46,
+__50,
+__35,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__50,
+__35,
+__36
+new SAT encoding decisions:
+  assert(__46) using tseitin
+
+--
+
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__50,
+__35,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__35,
+__36
+new SAT encoding decisions:
+  assert(__50) using tseitin
+
+--
+
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__35,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__36
+new SAT encoding decisions:
+  assert(__35) using tseitin
+
+--
+
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__36
+   ~~> remove_single_atom ([("SAT", 8400)])
+(selected) <-> (and([SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true
+new SAT encoding decisions:
+  assert(__36) using tseitin
+
+--
+
+SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([m#components_1,m#components_2;int(1..)],[sum([product([1,__55;int(1..)]),1;int(1..)])])
+new variables:
+  findAux __54: int(-2..4)
+  findAux __55: int(0..1)
+new constraints:
+  __54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+  or([and([__54 = -2,__55 = 0;int(1..)]),and([__54 = 3,__55 = 1;int(1..)]),!(__inDomain(__54,int(-2, 3)));int(1..)])
+
+--
+
+__inDomain(__54,int(-2, 3))
+   ~~> scalar_membership ([("SAT", 18500)])
+or([__54 = -2,__54 = 3;int(1..)])
+
+--
+
+SafeIndex([m#components_1,m#components_2;int(1..)],[sum([product([1,__55;int(1..)]),1;int(1..)])])
+   ~~> introduce_element ([("SAT", 18400)])
+__56
+new variables:
+  findAux __56: matrix indexed by [int(-1, 2)] of bool
+new constraints:
+  satElement([m#components_1,m#components_2;int(1..)], sum([product([1,__55;int(1..)]),1;int(1..)]), __56)
+
+--
+
+satElement([m#components_1,m#components_2;int(1..)], sum([product([1,__55;int(1..)]),1;int(1..)]), __56)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__57,__58;int(1..2)], sum([product([1,__55;int(1..)]),1;int(1..)]), true)
+new variables:
+  findAux __57: bool
+  findAux __58: bool
+new constraints:
+  (__57) <-> (__56 = m#components_1)
+  (__58) <-> (__56 = m#components_2)
+
+--
+
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+   ~~> select_aux_declaration_representation ([("ReprGeneral", 10000)])
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+new variables:
+  findAux __54#int_direct_1: bool
+  findAux __54#int_direct_2: bool
+  findAux __54#int_direct_3: bool
+  findAux __54#int_direct_4: bool
+  findAux __54#int_direct_5: bool
+  findAux __54#int_direct_6: bool
+  findAux __54#int_direct_7: bool
+new constraints:
+  sum([toInt(__54#int_direct_1),toInt(__54#int_direct_2),toInt(__54#int_direct_3),toInt(__54#int_direct_4),toInt(__54#int_direct_5),toInt(__54#int_direct_6),toInt(__54#int_direct_7);int(1..)]) <= 1
+  or([__54#int_direct_1,__54#int_direct_2,__54#int_direct_3,__54#int_direct_4,__54#int_direct_5,__54#int_direct_6,__54#int_direct_7;int(1..)])
+
+--
+
+__56
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__56
+new variables:
+  findAux __56#components_1: bool
+  findAux __56#components_2: bool
+
+--
+
+__56 = m#components_2
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+__56 = m#components_2
+
+--
+
+(selected) <-> (and([__56 = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__54 = -2,__55 = 0;int(1..)]),and([__54 = 3,__55 = 1;int(1..)]),!(or([__54 = -2,__54 = 3;int(1..)]));int(1..)]),
+satElement([__57,__58;int(1..2)], sum([product([1,__55;int(1..)]),1;int(1..)]), true),
+(__57) <-> (__56 = m#components_1),
+(__58) <-> (__56 = m#components_2),
+sum([toInt(__54#int_direct_1),toInt(__54#int_direct_2),toInt(__54#int_direct_3),toInt(__54#int_direct_4),toInt(__54#int_direct_5),toInt(__54#int_direct_6),toInt(__54#int_direct_7);int(1..)]) <= 1,
+or([__54#int_direct_1,__54#int_direct_2,__54#int_direct_3,__54#int_direct_4,__54#int_direct_5,__54#int_direct_6,__54#int_direct_7;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(selected) <-> (and([__56 = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__54 = -2,__55 = 0;int(1..)]),and([__54 = 3,__55 = 1;int(1..)]),!(or([__54 = -2,__54 = 3;int(1..)]));int(1..)]),
+satElement([__57,__58;int(1..2)], sum([product([1,__55;int(1..)]),1;int(1..)]), true),
+(__57) <-> (__56 = m#components_1),
+(__58) <-> (__56 = m#components_2),
+or([__54#int_direct_1,__54#int_direct_2,__54#int_direct_3,__54#int_direct_4,__54#int_direct_5,__54#int_direct_6,__54#int_direct_7;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__54#int_direct_1, __54#int_direct_2, __54#int_direct_3, __54#int_direct_4, __54#int_direct_5, __54#int_direct_6, __54#int_direct_7) using None
+
+--
+
+__56
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__56
+
+--
+
+m#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_1
+
+--
+
+__56
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__56
+
+--
+
+__54
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__54
+
+--
+
+__55
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__55
+new variables:
+  findAux __55#int_direct_1: bool
+  findAux __55#int_direct_2: bool
+new constraints:
+  sum([toInt(__55#int_direct_1),toInt(__55#int_direct_2);int(1..)]) <= 1
+  or([__55#int_direct_1,__55#int_direct_2;int(1..)])
+
+--
+
+__55 = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__59
+new variables:
+  findAux __59: bool
+new SAT encoding decisions:
+  define(__59 <-> integer-weighted(0*__55#int_direct_1, 1*__55#int_direct_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+
+--
+
+(selected) <-> (and([__56 = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__54 = -2,__59;int(1..)]),and([__54 = 3,__55 = 1;int(1..)]),!(or([__54 = -2,__54 = 3;int(1..)]));int(1..)]),
+satElement([__57,__58;int(1..2)], sum([product([1,__55;int(1..)]),1;int(1..)]), true),
+(__57) <-> (__56 = m#components_1),
+(__58) <-> (__56 = m#components_2),
+or([__54#int_direct_1,__54#int_direct_2,__54#int_direct_3,__54#int_direct_4,__54#int_direct_5,__54#int_direct_6,__54#int_direct_7;int(1..)]),
+sum([toInt(__55#int_direct_1),toInt(__55#int_direct_2);int(1..)]) <= 1,
+or([__55#int_direct_1,__55#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(selected) <-> (and([__56 = [false,true;int(-1, 2)],__4;int(1..)])),
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__54 = -2,__59;int(1..)]),and([__54 = 3,__55 = 1;int(1..)]),!(or([__54 = -2,__54 = 3;int(1..)]));int(1..)]),
+satElement([__57,__58;int(1..2)], sum([product([1,__55;int(1..)]),1;int(1..)]), true),
+(__57) <-> (__56 = m#components_1),
+(__58) <-> (__56 = m#components_2),
+or([__54#int_direct_1,__54#int_direct_2,__54#int_direct_3,__54#int_direct_4,__54#int_direct_5,__54#int_direct_6,__54#int_direct_7;int(1..)]),
+or([__55#int_direct_1,__55#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__55#int_direct_1, __55#int_direct_2) using None
+
+--
+
+__54
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__54
+
+--
+
+__54
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__54
+
+--
+
+__55
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__55
+
+--
+
+__55
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__55
+
+--
+
+__54
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__54
+
+--
+
+__54
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__54
+
+--
+
+satElement([__57,__58;int(1..2)], sum([product([1,__55;int(1..)]),1;int(1..)]), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=1+weighted(0*__55#int_direct_1, 1*__55#int_direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:__55#int_direct_1, 2:__55#int_direct_2), value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[1: 0+weighted(1*__57) with [] choices(0:!(__57), 1:__57), 2: 0+weighted(1*__58) with [] choices(0:!(__58), 1:__58)]) using None, PB None
+
+--
+
+__54 = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__60
+new variables:
+  findAux __60: bool
+new SAT encoding decisions:
+  define(__60 <-> integer-weighted(-2*__54#int_direct_1, -1*__54#int_direct_2, 0*__54#int_direct_3, 1*__54#int_direct_4, 2*__54#int_direct_5, 3*__54#int_direct_6, 4*__54#int_direct_7) Equal -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__54 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__61
+new variables:
+  findAux __61: bool
+new SAT encoding decisions:
+  define(__61 <-> integer-weighted(-2*__54#int_direct_1, -1*__54#int_direct_2, 0*__54#int_direct_3, 1*__54#int_direct_4, 2*__54#int_direct_5, 3*__54#int_direct_6, 4*__54#int_direct_7) Equal 3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__55 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__62
+new variables:
+  findAux __62: bool
+new SAT encoding decisions:
+  define(__62 <-> integer-weighted(0*__55#int_direct_1, 1*__55#int_direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+
+--
+
+__54 = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__63
+new variables:
+  findAux __63: bool
+new SAT encoding decisions:
+  define(__63 <-> integer-weighted(-2*__54#int_direct_1, -1*__54#int_direct_2, 0*__54#int_direct_3, 1*__54#int_direct_4, 2*__54#int_direct_5, 3*__54#int_direct_6, 4*__54#int_direct_7) Equal -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__54 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__64
+new variables:
+  findAux __64: bool
+new SAT encoding decisions:
+  define(__64 <-> integer-weighted(-2*__54#int_direct_1, -1*__54#int_direct_2, 0*__54#int_direct_3, 1*__54#int_direct_4, 2*__54#int_direct_5, 3*__54#int_direct_6, 4*__54#int_direct_7) Equal 3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__56 = m#components_1
+   ~~> matrix_components_var_eq_var ([("ReprMatrixComponents", 9400)])
+and([__56#components_1 = m#components_1#components_1,__56#components_2 = m#components_1#components_2;int(1..)])
+
+--
+
+__56 = m#components_2
+   ~~> matrix_components_var_eq_var ([("ReprMatrixComponents", 9400)])
+and([__56#components_1 = m#components_2#components_1,__56#components_2 = m#components_2#components_2;int(1..)])
+
+--
+
+__56 = [false,true;int(-1, 2)]
+   ~~> matrix_components_var_eq_literal ([("ReprMatrixComponents", 9400)])
+and([__56#components_1 = false,__56#components_2 = true;int(1..)])
+
+--
+
+and([and([__56#components_1 = false,__56#components_2;int(1..)]),__4;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__56#components_1 = false,__56#components_2,__4;int(1..)])
+
+--
+
+or([__54#int_direct_1,__54#int_direct_2,__54#int_direct_3,__54#int_direct_4,__54#int_direct_5,__54#int_direct_6,__54#int_direct_7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__65
+new variables:
+  findAux __65: bool
+new SAT encoding decisions:
+  define(__65 <-> or([__54#int_direct_1,__54#int_direct_2,__54#int_direct_3,__54#int_direct_4,__54#int_direct_5,__54#int_direct_6,__54#int_direct_7;int(1..)])) using tseitin
+
+--
+
+or([__55#int_direct_1,__55#int_direct_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__66
+new variables:
+  findAux __66: bool
+new SAT encoding decisions:
+  define(__66 <-> or([__55#int_direct_1,__55#int_direct_2;int(1..)])) using tseitin
+
+--
+
+and([__60,__59;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__67
+new variables:
+  findAux __67: bool
+new SAT encoding decisions:
+  define(__67 <-> and([__60,__59;int(1..)])) using tseitin
+
+--
+
+and([__61,__62;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__68
+new variables:
+  findAux __68: bool
+new SAT encoding decisions:
+  define(__68 <-> and([__61,__62;int(1..)])) using tseitin
+
+--
+
+__56#components_1 = m#components_1#components_1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__69
+new variables:
+  findAux __69: bool
+new SAT encoding decisions:
+  define(__69 <-> (__56#components_1) <-> (m#components_1#components_1)) using tseitin
+
+--
+
+__56#components_2 = m#components_1#components_2
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__70
+new variables:
+  findAux __70: bool
+new SAT encoding decisions:
+  define(__70 <-> (__56#components_2) <-> (m#components_1#components_2)) using tseitin
+
+--
+
+and([__69,__70;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__71
+new variables:
+  findAux __71: bool
+new SAT encoding decisions:
+  define(__71 <-> and([__69,__70;int(1..)])) using tseitin
+
+--
+
+(__57) <-> (__71)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__72
+new variables:
+  findAux __72: bool
+new SAT encoding decisions:
+  define(__72 <-> (__57) <-> (__71)) using tseitin
+
+--
+
+__56#components_1 = m#components_2#components_1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__73
+new variables:
+  findAux __73: bool
+new SAT encoding decisions:
+  define(__73 <-> (__56#components_1) <-> (m#components_2#components_1)) using tseitin
+
+--
+
+__56#components_2 = m#components_2#components_2
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__74
+new variables:
+  findAux __74: bool
+new SAT encoding decisions:
+  define(__74 <-> (__56#components_2) <-> (m#components_2#components_2)) using tseitin
+
+--
+
+and([__73,__74;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__75
+new variables:
+  findAux __75: bool
+new SAT encoding decisions:
+  define(__75 <-> and([__73,__74;int(1..)])) using tseitin
+
+--
+
+(__58) <-> (__75)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__76
+new variables:
+  findAux __76: bool
+new SAT encoding decisions:
+  define(__76 <-> (__58) <-> (__75)) using tseitin
+
+--
+
+__56#components_1 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__77
+new variables:
+  findAux __77: bool
+new SAT encoding decisions:
+  define(__77 <-> (__56#components_1) <-> (false)) using tseitin
+
+--
+
+and([__77,__56#components_2,__4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__78
+new variables:
+  findAux __78: bool
+new SAT encoding decisions:
+  define(__78 <-> and([__77,__56#components_2,__4;int(1..)])) using tseitin
+
+--
+
+(selected) <-> (__78)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__79
+new variables:
+  findAux __79: bool
+new SAT encoding decisions:
+  define(__79 <-> (selected) <-> (__78)) using tseitin
+
+--
+
+or([__63,__64;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__80
+new variables:
+  findAux __80: bool
+new SAT encoding decisions:
+  define(__80 <-> or([__63,__64;int(1..)])) using tseitin
+
+--
+
+!(__80)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__81
+new variables:
+  findAux __81: bool
+new SAT encoding decisions:
+  define(__81 <-> !(__80)) using tseitin
+
+--
+
+or([__67,__68,__81;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__82
+new variables:
+  findAux __82: bool
+new SAT encoding decisions:
+  define(__82 <-> or([__67,__68,__81;int(1..)])) using tseitin
+
+--
+
+__79,
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+__82,
+true,
+__72,
+__76,
+__65,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+__82,
+true,
+__72,
+__76,
+__65,
+__66
+new SAT encoding decisions:
+  assert(__79) using tseitin
+
+--
+
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+__82,
+true,
+__72,
+__76,
+__65,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__72,
+__76,
+__65,
+__66
+new SAT encoding decisions:
+  assert(__82) using tseitin
+
+--
+
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__72,
+__76,
+__65,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__76,
+__65,
+__66
+new SAT encoding decisions:
+  assert(__72) using tseitin
+
+--
+
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__76,
+__65,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__65,
+__66
+new SAT encoding decisions:
+  assert(__76) using tseitin
+
+--
+
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__65,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__66
+new SAT encoding decisions:
+  assert(__65) using tseitin
+
+--
+
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true
+new SAT encoding decisions:
+  assert(__66) using tseitin
+
+--
+
+SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([m#components_1,m#components_2;int(1..)],[sum([product([1,__84;int(1..)]),1;int(1..)])])
+new variables:
+  findAux __83: int(-2..4)
+  findAux __84: int(0..1)
+new constraints:
+  __83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+  or([and([__83 = -2,__84 = 0;int(1..)]),and([__83 = 3,__84 = 1;int(1..)]),!(__inDomain(__83,int(-2, 3)));int(1..)])
+
+--
+
+__inDomain(__83,int(-2, 3))
+   ~~> scalar_membership ([("SAT", 18500)])
+or([__83 = -2,__83 = 3;int(1..)])
+
+--
+
+SafeIndex([m#components_1,m#components_2;int(1..)],[sum([product([1,__84;int(1..)]),1;int(1..)])])
+   ~~> introduce_element ([("SAT", 18400)])
+__85
+new variables:
+  findAux __85: matrix indexed by [int(-1, 2)] of bool
+new constraints:
+  satElement([m#components_1,m#components_2;int(1..)], sum([product([1,__84;int(1..)]),1;int(1..)]), __85)
+
+--
+
+satElement([m#components_1,m#components_2;int(1..)], sum([product([1,__84;int(1..)]),1;int(1..)]), __85)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__86,__87;int(1..2)], sum([product([1,__84;int(1..)]),1;int(1..)]), true)
+new variables:
+  findAux __86: bool
+  findAux __87: bool
+new constraints:
+  (__86) <-> (__85 = m#components_1)
+  (__87) <-> (__85 = m#components_2)
+
+--
+
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+   ~~> select_aux_declaration_representation ([("ReprGeneral", 10000)])
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+new variables:
+  findAux __83#int_direct_1: bool
+  findAux __83#int_direct_2: bool
+  findAux __83#int_direct_3: bool
+  findAux __83#int_direct_4: bool
+  findAux __83#int_direct_5: bool
+  findAux __83#int_direct_6: bool
+  findAux __83#int_direct_7: bool
+new constraints:
+  sum([toInt(__83#int_direct_1),toInt(__83#int_direct_2),toInt(__83#int_direct_3),toInt(__83#int_direct_4),toInt(__83#int_direct_5),toInt(__83#int_direct_6),toInt(__83#int_direct_7);int(1..)]) <= 1
+  or([__83#int_direct_1,__83#int_direct_2,__83#int_direct_3,__83#int_direct_4,__83#int_direct_5,__83#int_direct_6,__83#int_direct_7;int(1..)])
+
+--
+
+__85
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__85
+new variables:
+  findAux __85#components_1: bool
+  findAux __85#components_2: bool
+
+--
+
+__85 = m#components_2
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+__85 = m#components_2
+
+--
+
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__83 = -2,__84 = 0;int(1..)]),and([__83 = 3,__84 = 1;int(1..)]),!(or([__83 = -2,__83 = 3;int(1..)]));int(1..)]),
+satElement([__86,__87;int(1..2)], sum([product([1,__84;int(1..)]),1;int(1..)]), true),
+(__86) <-> (__85 = m#components_1),
+(__87) <-> (__85 = m#components_2),
+sum([toInt(__83#int_direct_1),toInt(__83#int_direct_2),toInt(__83#int_direct_3),toInt(__83#int_direct_4),toInt(__83#int_direct_5),toInt(__83#int_direct_6),toInt(__83#int_direct_7);int(1..)]) <= 1,
+or([__83#int_direct_1,__83#int_direct_2,__83#int_direct_3,__83#int_direct_4,__83#int_direct_5,__83#int_direct_6,__83#int_direct_7;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__83 = -2,__84 = 0;int(1..)]),and([__83 = 3,__84 = 1;int(1..)]),!(or([__83 = -2,__83 = 3;int(1..)]));int(1..)]),
+satElement([__86,__87;int(1..2)], sum([product([1,__84;int(1..)]),1;int(1..)]), true),
+(__86) <-> (__85 = m#components_1),
+(__87) <-> (__85 = m#components_2),
+or([__83#int_direct_1,__83#int_direct_2,__83#int_direct_3,__83#int_direct_4,__83#int_direct_5,__83#int_direct_6,__83#int_direct_7;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__83#int_direct_1, __83#int_direct_2, __83#int_direct_3, __83#int_direct_4, __83#int_direct_5, __83#int_direct_6, __83#int_direct_7) using None
+
+--
+
+__85
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__85
+
+--
+
+m#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_1
+
+--
+
+__85
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__85
+
+--
+
+__83
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__83
+
+--
+
+__84
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__84
+new variables:
+  findAux __84#int_direct_1: bool
+  findAux __84#int_direct_2: bool
+new constraints:
+  sum([toInt(__84#int_direct_1),toInt(__84#int_direct_2);int(1..)]) <= 1
+  or([__84#int_direct_1,__84#int_direct_2;int(1..)])
+
+--
+
+__84 = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__88
+new variables:
+  findAux __88: bool
+new SAT encoding decisions:
+  define(__88 <-> integer-weighted(0*__84#int_direct_1, 1*__84#int_direct_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+
+--
+
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__83 = -2,__88;int(1..)]),and([__83 = 3,__84 = 1;int(1..)]),!(or([__83 = -2,__83 = 3;int(1..)]));int(1..)]),
+satElement([__86,__87;int(1..2)], sum([product([1,__84;int(1..)]),1;int(1..)]), true),
+(__86) <-> (__85 = m#components_1),
+(__87) <-> (__85 = m#components_2),
+or([__83#int_direct_1,__83#int_direct_2,__83#int_direct_3,__83#int_direct_4,__83#int_direct_5,__83#int_direct_6,__83#int_direct_7;int(1..)]),
+sum([toInt(__84#int_direct_1),toInt(__84#int_direct_2);int(1..)]) <= 1,
+or([__84#int_direct_1,__84#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__83 = -2,__88;int(1..)]),and([__83 = 3,__84 = 1;int(1..)]),!(or([__83 = -2,__83 = 3;int(1..)]));int(1..)]),
+satElement([__86,__87;int(1..2)], sum([product([1,__84;int(1..)]),1;int(1..)]), true),
+(__86) <-> (__85 = m#components_1),
+(__87) <-> (__85 = m#components_2),
+or([__83#int_direct_1,__83#int_direct_2,__83#int_direct_3,__83#int_direct_4,__83#int_direct_5,__83#int_direct_6,__83#int_direct_7;int(1..)]),
+or([__84#int_direct_1,__84#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__84#int_direct_1, __84#int_direct_2) using None
+
+--
+
+__83
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__83
+
+--
+
+__83
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__83
+
+--
+
+__84
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__84
+
+--
+
+__84
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__84
+
+--
+
+__83
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__83
+
+--
+
+__83
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__83
+
+--
+
+satElement([__86,__87;int(1..2)], sum([product([1,__84;int(1..)]),1;int(1..)]), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=1+weighted(0*__84#int_direct_1, 1*__84#int_direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:__84#int_direct_1, 2:__84#int_direct_2), value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[1: 0+weighted(1*__86) with [] choices(0:!(__86), 1:__86), 2: 0+weighted(1*__87) with [] choices(0:!(__87), 1:__87)]) using None, PB None
+
+--
+
+__83 = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__89
+new variables:
+  findAux __89: bool
+new SAT encoding decisions:
+  define(__89 <-> integer-weighted(-2*__83#int_direct_1, -1*__83#int_direct_2, 0*__83#int_direct_3, 1*__83#int_direct_4, 2*__83#int_direct_5, 3*__83#int_direct_6, 4*__83#int_direct_7) Equal -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__83 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__90
+new variables:
+  findAux __90: bool
+new SAT encoding decisions:
+  define(__90 <-> integer-weighted(-2*__83#int_direct_1, -1*__83#int_direct_2, 0*__83#int_direct_3, 1*__83#int_direct_4, 2*__83#int_direct_5, 3*__83#int_direct_6, 4*__83#int_direct_7) Equal 3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__84 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__91
+new variables:
+  findAux __91: bool
+new SAT encoding decisions:
+  define(__91 <-> integer-weighted(0*__84#int_direct_1, 1*__84#int_direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+
+--
+
+__83 = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__92
+new variables:
+  findAux __92: bool
+new SAT encoding decisions:
+  define(__92 <-> integer-weighted(-2*__83#int_direct_1, -1*__83#int_direct_2, 0*__83#int_direct_3, 1*__83#int_direct_4, 2*__83#int_direct_5, 3*__83#int_direct_6, 4*__83#int_direct_7) Equal -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__83 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__93
+new variables:
+  findAux __93: bool
+new SAT encoding decisions:
+  define(__93 <-> integer-weighted(-2*__83#int_direct_1, -1*__83#int_direct_2, 0*__83#int_direct_3, 1*__83#int_direct_4, 2*__83#int_direct_5, 3*__83#int_direct_6, 4*__83#int_direct_7) Equal 3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__85 = m#components_1
+   ~~> matrix_components_var_eq_var ([("ReprMatrixComponents", 9400)])
+and([__85#components_1 = m#components_1#components_1,__85#components_2 = m#components_1#components_2;int(1..)])
+
+--
+
+__85 = m#components_2
+   ~~> matrix_components_var_eq_var ([("ReprMatrixComponents", 9400)])
+and([__85#components_1 = m#components_2#components_1,__85#components_2 = m#components_2#components_2;int(1..)])
+
+--
+
+or([__83#int_direct_1,__83#int_direct_2,__83#int_direct_3,__83#int_direct_4,__83#int_direct_5,__83#int_direct_6,__83#int_direct_7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__94
+new variables:
+  findAux __94: bool
+new SAT encoding decisions:
+  define(__94 <-> or([__83#int_direct_1,__83#int_direct_2,__83#int_direct_3,__83#int_direct_4,__83#int_direct_5,__83#int_direct_6,__83#int_direct_7;int(1..)])) using tseitin
+
+--
+
+or([__84#int_direct_1,__84#int_direct_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__95
+new variables:
+  findAux __95: bool
+new SAT encoding decisions:
+  define(__95 <-> or([__84#int_direct_1,__84#int_direct_2;int(1..)])) using tseitin
+
+--
+
+and([__89,__88;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__96
+new variables:
+  findAux __96: bool
+new SAT encoding decisions:
+  define(__96 <-> and([__89,__88;int(1..)])) using tseitin
+
+--
+
+and([__90,__91;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__97
+new variables:
+  findAux __97: bool
+new SAT encoding decisions:
+  define(__97 <-> and([__90,__91;int(1..)])) using tseitin
+
+--
+
+__85#components_1 = m#components_1#components_1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__98
+new variables:
+  findAux __98: bool
+new SAT encoding decisions:
+  define(__98 <-> (__85#components_1) <-> (m#components_1#components_1)) using tseitin
+
+--
+
+__85#components_2 = m#components_1#components_2
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__99
+new variables:
+  findAux __99: bool
+new SAT encoding decisions:
+  define(__99 <-> (__85#components_2) <-> (m#components_1#components_2)) using tseitin
+
+--
+
+and([__98,__99;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__100
+new variables:
+  findAux __100: bool
+new SAT encoding decisions:
+  define(__100 <-> and([__98,__99;int(1..)])) using tseitin
+
+--
+
+(__86) <-> (__100)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__101
+new variables:
+  findAux __101: bool
+new SAT encoding decisions:
+  define(__101 <-> (__86) <-> (__100)) using tseitin
+
+--
+
+__85#components_1 = m#components_2#components_1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__102
+new variables:
+  findAux __102: bool
+new SAT encoding decisions:
+  define(__102 <-> (__85#components_1) <-> (m#components_2#components_1)) using tseitin
+
+--
+
+__85#components_2 = m#components_2#components_2
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__103
+new variables:
+  findAux __103: bool
+new SAT encoding decisions:
+  define(__103 <-> (__85#components_2) <-> (m#components_2#components_2)) using tseitin
+
+--
+
+and([__102,__103;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__104
+new variables:
+  findAux __104: bool
+new SAT encoding decisions:
+  define(__104 <-> and([__102,__103;int(1..)])) using tseitin
+
+--
+
+(__87) <-> (__104)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__105
+new variables:
+  findAux __105: bool
+new SAT encoding decisions:
+  define(__105 <-> (__87) <-> (__104)) using tseitin
+
+--
+
+or([__92,__93;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__106
+new variables:
+  findAux __106: bool
+new SAT encoding decisions:
+  define(__106 <-> or([__92,__93;int(1..)])) using tseitin
+
+--
+
+!(__106)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__107
+new variables:
+  findAux __107: bool
+new SAT encoding decisions:
+  define(__107 <-> !(__106)) using tseitin
+
+--
+
+or([__96,__97,__107;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__108
+new variables:
+  findAux __108: bool
+new SAT encoding decisions:
+  define(__108 <-> or([__96,__97,__107;int(1..)])) using tseitin
+
+--
+
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+__108,
+true,
+__101,
+__105,
+__94,
+__95
+   ~~> remove_single_atom ([("SAT", 8400)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__101,
+__105,
+__94,
+__95
+new SAT encoding decisions:
+  assert(__108) using tseitin
+
+--
+
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__101,
+__105,
+__94,
+__95
+   ~~> remove_single_atom ([("SAT", 8400)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__105,
+__94,
+__95
+new SAT encoding decisions:
+  assert(__101) using tseitin
+
+--
+
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__105,
+__94,
+__95
+   ~~> remove_single_atom ([("SAT", 8400)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__94,
+__95
+new SAT encoding decisions:
+  assert(__105) using tseitin
+
+--
+
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__94,
+__95
+   ~~> remove_single_atom ([("SAT", 8400)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__95
+new SAT encoding decisions:
+  assert(__94) using tseitin
+
+--
+
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__95
+   ~~> remove_single_atom ([("SAT", 8400)])
+(masked) <-> (and([or([__0,SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])]) = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true
+new SAT encoding decisions:
+  assert(__95) using tseitin
+
+--
+
+SafeIndex(m,[SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([m#components_1,m#components_2;int(1..)],[sum([product([1,__110;int(1..)]),1;int(1..)])])
+new variables:
+  findAux __109: int(-2..4)
+  findAux __110: int(0..1)
+new constraints:
+  __109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+  or([and([__109 = -2,__110 = 0;int(1..)]),and([__109 = 3,__110 = 1;int(1..)]),!(__inDomain(__109,int(-2, 3)));int(1..)])
+
+--
+
+__inDomain(__109,int(-2, 3))
+   ~~> scalar_membership ([("SAT", 18500)])
+or([__109 = -2,__109 = 3;int(1..)])
+
+--
+
+SafeIndex([m#components_1,m#components_2;int(1..)],[sum([product([1,__110;int(1..)]),1;int(1..)])])
+   ~~> introduce_element ([("SAT", 18400)])
+__111
+new variables:
+  findAux __111: matrix indexed by [int(-1, 2)] of bool
+new constraints:
+  satElement([m#components_1,m#components_2;int(1..)], sum([product([1,__110;int(1..)]),1;int(1..)]), __111)
+
+--
+
+satElement([m#components_1,m#components_2;int(1..)], sum([product([1,__110;int(1..)]),1;int(1..)]), __111)
+   ~~> introduce_compound_element ([("SAT", 18400)])
+satElement([__112,__113;int(1..2)], sum([product([1,__110;int(1..)]),1;int(1..)]), true)
+new variables:
+  findAux __112: bool
+  findAux __113: bool
+new constraints:
+  (__112) <-> (__111 = m#components_1)
+  (__113) <-> (__111 = m#components_2)
+
+--
+
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+   ~~> select_aux_declaration_representation ([("ReprGeneral", 10000)])
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+new variables:
+  findAux __109#int_direct_1: bool
+  findAux __109#int_direct_2: bool
+  findAux __109#int_direct_3: bool
+  findAux __109#int_direct_4: bool
+  findAux __109#int_direct_5: bool
+  findAux __109#int_direct_6: bool
+  findAux __109#int_direct_7: bool
+new constraints:
+  sum([toInt(__109#int_direct_1),toInt(__109#int_direct_2),toInt(__109#int_direct_3),toInt(__109#int_direct_4),toInt(__109#int_direct_5),toInt(__109#int_direct_6),toInt(__109#int_direct_7);int(1..)]) <= 1
+  or([__109#int_direct_1,__109#int_direct_2,__109#int_direct_3,__109#int_direct_4,__109#int_direct_5,__109#int_direct_6,__109#int_direct_7;int(1..)])
+
+--
+
+__111
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__111
+new variables:
+  findAux __111#components_1: bool
+  findAux __111#components_2: bool
+
+--
+
+__111 = m#components_2
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+__111 = m#components_2
+
+--
+
+(masked) <-> (and([or([__0,__111 = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__109 = -2,__110 = 0;int(1..)]),and([__109 = 3,__110 = 1;int(1..)]),!(or([__109 = -2,__109 = 3;int(1..)]));int(1..)]),
+satElement([__112,__113;int(1..2)], sum([product([1,__110;int(1..)]),1;int(1..)]), true),
+(__112) <-> (__111 = m#components_1),
+(__113) <-> (__111 = m#components_2),
+sum([toInt(__109#int_direct_1),toInt(__109#int_direct_2),toInt(__109#int_direct_3),toInt(__109#int_direct_4),toInt(__109#int_direct_5),toInt(__109#int_direct_6),toInt(__109#int_direct_7);int(1..)]) <= 1,
+or([__109#int_direct_1,__109#int_direct_2,__109#int_direct_3,__109#int_direct_4,__109#int_direct_5,__109#int_direct_6,__109#int_direct_7;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(masked) <-> (and([or([__0,__111 = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__109 = -2,__110 = 0;int(1..)]),and([__109 = 3,__110 = 1;int(1..)]),!(or([__109 = -2,__109 = 3;int(1..)]));int(1..)]),
+satElement([__112,__113;int(1..2)], sum([product([1,__110;int(1..)]),1;int(1..)]), true),
+(__112) <-> (__111 = m#components_1),
+(__113) <-> (__111 = m#components_2),
+or([__109#int_direct_1,__109#int_direct_2,__109#int_direct_3,__109#int_direct_4,__109#int_direct_5,__109#int_direct_6,__109#int_direct_7;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__109#int_direct_1, __109#int_direct_2, __109#int_direct_3, __109#int_direct_4, __109#int_direct_5, __109#int_direct_6, __109#int_direct_7) using None
+
+--
+
+__111
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__111
+
+--
+
+m#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_1
+
+--
+
+__109
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__109
+
+--
+
+__110
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__110
+new variables:
+  findAux __110#int_direct_1: bool
+  findAux __110#int_direct_2: bool
+new constraints:
+  sum([toInt(__110#int_direct_1),toInt(__110#int_direct_2);int(1..)]) <= 1
+  or([__110#int_direct_1,__110#int_direct_2;int(1..)])
+
+--
+
+__110 = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__114
+new variables:
+  findAux __114: bool
+new SAT encoding decisions:
+  define(__114 <-> integer-weighted(0*__110#int_direct_1, 1*__110#int_direct_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+
+--
+
+(masked) <-> (and([or([__0,__111 = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__109 = -2,__114;int(1..)]),and([__109 = 3,__110 = 1;int(1..)]),!(or([__109 = -2,__109 = 3;int(1..)]));int(1..)]),
+satElement([__112,__113;int(1..2)], sum([product([1,__110;int(1..)]),1;int(1..)]), true),
+(__112) <-> (__111 = m#components_1),
+(__113) <-> (__111 = m#components_2),
+or([__109#int_direct_1,__109#int_direct_2,__109#int_direct_3,__109#int_direct_4,__109#int_direct_5,__109#int_direct_6,__109#int_direct_7;int(1..)]),
+sum([toInt(__110#int_direct_1),toInt(__110#int_direct_2);int(1..)]) <= 1,
+or([__110#int_direct_1,__110#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(masked) <-> (and([or([__0,__111 = [false,true;int(-1, 2)];int(1..)]),__23;int(1..)])),
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+or([and([__109 = -2,__114;int(1..)]),and([__109 = 3,__110 = 1;int(1..)]),!(or([__109 = -2,__109 = 3;int(1..)]));int(1..)]),
+satElement([__112,__113;int(1..2)], sum([product([1,__110;int(1..)]),1;int(1..)]), true),
+(__112) <-> (__111 = m#components_1),
+(__113) <-> (__111 = m#components_2),
+or([__109#int_direct_1,__109#int_direct_2,__109#int_direct_3,__109#int_direct_4,__109#int_direct_5,__109#int_direct_6,__109#int_direct_7;int(1..)]),
+or([__110#int_direct_1,__110#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__110#int_direct_1, __110#int_direct_2) using None
+
+--
+
+__109
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__109
+
+--
+
+__109
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__109
+
+--
+
+__110
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__110
+
+--
+
+__110
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__110
+
+--
+
+__111
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__111
+
+--
+
+__109
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__109
+
+--
+
+__109
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__109
+
+--
+
+satElement([__112,__113;int(1..2)], sum([product([1,__110;int(1..)]),1;int(1..)]), true)
+   ~~> select_element ([("SAT", 18500)])
+true
+new SAT encoding decisions:
+  element(index=1+weighted(0*__110#int_direct_1, 1*__110#int_direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:__110#int_direct_1, 2:__110#int_direct_2), value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[1: 0+weighted(1*__112) with [] choices(0:!(__112), 1:__112), 2: 0+weighted(1*__113) with [] choices(0:!(__113), 1:__113)]) using None, PB None
+
+--
+
+__109 = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__115
+new variables:
+  findAux __115: bool
+new SAT encoding decisions:
+  define(__115 <-> integer-weighted(-2*__109#int_direct_1, -1*__109#int_direct_2, 0*__109#int_direct_3, 1*__109#int_direct_4, 2*__109#int_direct_5, 3*__109#int_direct_6, 4*__109#int_direct_7) Equal -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__109 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__116
+new variables:
+  findAux __116: bool
+new SAT encoding decisions:
+  define(__116 <-> integer-weighted(-2*__109#int_direct_1, -1*__109#int_direct_2, 0*__109#int_direct_3, 1*__109#int_direct_4, 2*__109#int_direct_5, 3*__109#int_direct_6, 4*__109#int_direct_7) Equal 3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__110 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__117
+new variables:
+  findAux __117: bool
+new SAT encoding decisions:
+  define(__117 <-> integer-weighted(0*__110#int_direct_1, 1*__110#int_direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+
+--
+
+__109 = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__118
+new variables:
+  findAux __118: bool
+new SAT encoding decisions:
+  define(__118 <-> integer-weighted(-2*__109#int_direct_1, -1*__109#int_direct_2, 0*__109#int_direct_3, 1*__109#int_direct_4, 2*__109#int_direct_5, 3*__109#int_direct_6, 4*__109#int_direct_7) Equal -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__109 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__119
+new variables:
+  findAux __119: bool
+new SAT encoding decisions:
+  define(__119 <-> integer-weighted(-2*__109#int_direct_1, -1*__109#int_direct_2, 0*__109#int_direct_3, 1*__109#int_direct_4, 2*__109#int_direct_5, 3*__109#int_direct_6, 4*__109#int_direct_7) Equal 3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__111 = m#components_1
+   ~~> matrix_components_var_eq_var ([("ReprMatrixComponents", 9400)])
+and([__111#components_1 = m#components_1#components_1,__111#components_2 = m#components_1#components_2;int(1..)])
+
+--
+
+__111 = m#components_2
+   ~~> matrix_components_var_eq_var ([("ReprMatrixComponents", 9400)])
+and([__111#components_1 = m#components_2#components_1,__111#components_2 = m#components_2#components_2;int(1..)])
+
+--
+
+__111 = [false,true;int(-1, 2)]
+   ~~> matrix_components_var_eq_literal ([("ReprMatrixComponents", 9400)])
+and([__111#components_1 = false,__111#components_2 = true;int(1..)])
+
+--
+
+or([__109#int_direct_1,__109#int_direct_2,__109#int_direct_3,__109#int_direct_4,__109#int_direct_5,__109#int_direct_6,__109#int_direct_7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__120
+new variables:
+  findAux __120: bool
+new SAT encoding decisions:
+  define(__120 <-> or([__109#int_direct_1,__109#int_direct_2,__109#int_direct_3,__109#int_direct_4,__109#int_direct_5,__109#int_direct_6,__109#int_direct_7;int(1..)])) using tseitin
+
+--
+
+or([__110#int_direct_1,__110#int_direct_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__121
+new variables:
+  findAux __121: bool
+new SAT encoding decisions:
+  define(__121 <-> or([__110#int_direct_1,__110#int_direct_2;int(1..)])) using tseitin
+
+--
+
+and([__115,__114;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__122
+new variables:
+  findAux __122: bool
+new SAT encoding decisions:
+  define(__122 <-> and([__115,__114;int(1..)])) using tseitin
+
+--
+
+and([__116,__117;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__123
+new variables:
+  findAux __123: bool
+new SAT encoding decisions:
+  define(__123 <-> and([__116,__117;int(1..)])) using tseitin
+
+--
+
+__111#components_1 = m#components_1#components_1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__124
+new variables:
+  findAux __124: bool
+new SAT encoding decisions:
+  define(__124 <-> (__111#components_1) <-> (m#components_1#components_1)) using tseitin
+
+--
+
+__111#components_2 = m#components_1#components_2
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__125
+new variables:
+  findAux __125: bool
+new SAT encoding decisions:
+  define(__125 <-> (__111#components_2) <-> (m#components_1#components_2)) using tseitin
+
+--
+
+and([__124,__125;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__126
+new variables:
+  findAux __126: bool
+new SAT encoding decisions:
+  define(__126 <-> and([__124,__125;int(1..)])) using tseitin
+
+--
+
+(__112) <-> (__126)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__127
+new variables:
+  findAux __127: bool
+new SAT encoding decisions:
+  define(__127 <-> (__112) <-> (__126)) using tseitin
+
+--
+
+__111#components_1 = m#components_2#components_1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__128
+new variables:
+  findAux __128: bool
+new SAT encoding decisions:
+  define(__128 <-> (__111#components_1) <-> (m#components_2#components_1)) using tseitin
+
+--
+
+__111#components_2 = m#components_2#components_2
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__129
+new variables:
+  findAux __129: bool
+new SAT encoding decisions:
+  define(__129 <-> (__111#components_2) <-> (m#components_2#components_2)) using tseitin
+
+--
+
+and([__128,__129;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__130
+new variables:
+  findAux __130: bool
+new SAT encoding decisions:
+  define(__130 <-> and([__128,__129;int(1..)])) using tseitin
+
+--
+
+(__113) <-> (__130)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__131
+new variables:
+  findAux __131: bool
+new SAT encoding decisions:
+  define(__131 <-> (__113) <-> (__130)) using tseitin
+
+--
+
+or([__118,__119;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__132
+new variables:
+  findAux __132: bool
+new SAT encoding decisions:
+  define(__132 <-> or([__118,__119;int(1..)])) using tseitin
+
+--
+
+!(__132)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__133
+new variables:
+  findAux __133: bool
+new SAT encoding decisions:
+  define(__133 <-> !(__132)) using tseitin
+
+--
+
+or([__122,__123,__133;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__134
+new variables:
+  findAux __134: bool
+new SAT encoding decisions:
+  define(__134 <-> or([__122,__123,__133;int(1..)])) using tseitin
+
+--
+
+__111#components_1 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__135
+new variables:
+  findAux __135: bool
+new SAT encoding decisions:
+  define(__135 <-> (__111#components_1) <-> (false)) using tseitin
+
+--
+
+and([__135,__111#components_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__136
+new variables:
+  findAux __136: bool
+new SAT encoding decisions:
+  define(__136 <-> and([__135,__111#components_2;int(1..)])) using tseitin
+
+--
+
+or([__0,__136;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__137
+new variables:
+  findAux __137: bool
+new SAT encoding decisions:
+  define(__137 <-> or([__0,__136;int(1..)])) using tseitin
+
+--
+
+and([__137,__23;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__138
+new variables:
+  findAux __138: bool
+new SAT encoding decisions:
+  define(__138 <-> and([__137,__23;int(1..)])) using tseitin
+
+--
+
+(masked) <-> (__138)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__139
+new variables:
+  findAux __139: bool
+new SAT encoding decisions:
+  define(__139 <-> (masked) <-> (__138)) using tseitin
+
+--
+
+__139,
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+__134,
+true,
+__127,
+__131,
+__120,
+__121
+   ~~> remove_single_atom ([("SAT", 8400)])
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+__134,
+true,
+__127,
+__131,
+__120,
+__121
+new SAT encoding decisions:
+  assert(__139) using tseitin
+
+--
+
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+__134,
+true,
+__127,
+__131,
+__120,
+__121
+   ~~> remove_single_atom ([("SAT", 8400)])
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__127,
+__131,
+__120,
+__121
+new SAT encoding decisions:
+  assert(__134) using tseitin
+
+--
+
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__127,
+__131,
+__120,
+__121
+   ~~> remove_single_atom ([("SAT", 8400)])
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__131,
+__120,
+__121
+new SAT encoding decisions:
+  assert(__127) using tseitin
+
+--
+
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__131,
+__120,
+__121
+   ~~> remove_single_atom ([("SAT", 8400)])
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__120,
+__121
+new SAT encoding decisions:
+  assert(__131) using tseitin
+
+--
+
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__120,
+__121
+   ~~> remove_single_atom ([("SAT", 8400)])
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__121
+new SAT encoding decisions:
+  assert(__120) using tseitin
+
+--
+
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__121
+   ~~> remove_single_atom ([("SAT", 8400)])
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true
+new SAT encoding decisions:
+  assert(__121) using tseitin
+
+--
+
+__24 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+   ~~> aux_declaration_is_equality ([("SAT", 2000)])
+__24 = SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+
+--
+
+__24 = SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__140
+new variables:
+  findAux __140: bool
+new SAT encoding decisions:
+  define(__140 <-> integer-weighted(-2*__24#int_direct_1, -1*__24#int_direct_2, 0*__24#int_direct_3, 1*__24#int_direct_4, 2*__24#int_direct_5, 3*__24#int_direct_6, 4*__24#int_direct_7, 2*i#int_direct_1, 1*i#int_direct_2, 0*i#int_direct_3, -1*i#int_direct_4, -2*i#int_direct_5, -3*i#int_direct_6, -4*i#int_direct_7) Equal 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 14, structure: Choice }]
+
+--
+
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+__140,
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+true,
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true
+new SAT encoding decisions:
+  assert(__140) using tseitin
+
+--
+
+__54 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+   ~~> aux_declaration_is_equality ([("SAT", 2000)])
+__54 = SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+
+--
+
+__54 = SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__141
+new variables:
+  findAux __141: bool
+new SAT encoding decisions:
+  define(__141 <-> integer-weighted(-2*__54#int_direct_1, -1*__54#int_direct_2, 0*__54#int_direct_3, 1*__54#int_direct_4, 2*__54#int_direct_5, 3*__54#int_direct_6, 4*__54#int_direct_7, 2*i#int_direct_1, 1*i#int_direct_2, 0*i#int_direct_3, -1*i#int_direct_4, -2*i#int_direct_5, -3*i#int_direct_6, -4*i#int_direct_7) Equal 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 14, structure: Choice }]
+
+--
+
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+true,
+__141,
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+true,
+true,
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true
+new SAT encoding decisions:
+  assert(__141) using tseitin
+
+--
+
+__83 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+   ~~> aux_declaration_is_equality ([("SAT", 2000)])
+__83 = SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+
+--
+
+__83 = SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__142
+new variables:
+  findAux __142: bool
+new SAT encoding decisions:
+  define(__142 <-> integer-weighted(-2*__83#int_direct_1, -1*__83#int_direct_2, 0*__83#int_direct_3, 1*__83#int_direct_4, 2*__83#int_direct_5, 3*__83#int_direct_6, 4*__83#int_direct_7, 2*i#int_direct_1, 1*i#int_direct_2, 0*i#int_direct_3, -1*i#int_direct_4, -2*i#int_direct_5, -3*i#int_direct_6, -4*i#int_direct_7) Equal 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 14, structure: Choice }]
+
+--
+
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+true,
+true,
+__142,
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+true,
+true,
+true,
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4]),
+true
+new SAT encoding decisions:
+  assert(__142) using tseitin
+
+--
+
+__109 =aux SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+   ~~> aux_declaration_is_equality ([("SAT", 2000)])
+__109 = SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+
+--
+
+__109 = SATInt(Direct, [i#int_direct_1,i#int_direct_2,i#int_direct_3,i#int_direct_4,i#int_direct_5,i#int_direct_6,i#int_direct_7;int(1..)] [-2, 4])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__143
+new variables:
+  findAux __143: bool
+new SAT encoding decisions:
+  define(__143 <-> integer-weighted(-2*__109#int_direct_1, -1*__109#int_direct_2, 0*__109#int_direct_3, 1*__109#int_direct_4, 2*__109#int_direct_5, 3*__109#int_direct_6, 4*__109#int_direct_7, 2*i#int_direct_1, 1*i#int_direct_2, 0*i#int_direct_3, -1*i#int_direct_4, -2*i#int_direct_5, -3*i#int_direct_6, -4*i#int_direct_7) Equal 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 14, structure: Choice }]
+
+--
+
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+true,
+true,
+true,
+__143,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+(exceptional) <-> (and([allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85),__7;int(1..)])),
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__143) using tseitin
+
+--
+
+allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], __85)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], [__85#components_1,__85#components_2;int(-1, 2)])
+
+--
+
+allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..2)], [__85#components_1,__85#components_2;int(-1, 2)])
+   ~~> matrix_to_list ([("Base", 1998)])
+allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..)], [__85#components_1,__85#components_2;int(-1, 2)])
+
+--
+
+allDifferentExcept([[false,true;int(-1, 2)],[false,true;int(-1, 2)];int(1..)], [__85#components_1,__85#components_2;int(-1, 2)])
+   ~~> introduce_compound_alldifferent ([("SAT", 18400)])
+sat-allDifferent-comparisons([or([[false,true;int(-1, 2)] != [false,true;int(-1, 2)],__144;int(1..)]);int(1..)])
+new variables:
+  findAux __144: bool
+new constraints:
+  (__144) <-> ([false,true;int(-1, 2)] = [__85#components_1,__85#components_2;int(-1, 2)])
+
+--
+
+or([__144;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__144
+
+--
+
+sat-allDifferent-comparisons([__144;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
+__145
+new variables:
+  findAux __145: bool
+new SAT encoding decisions:
+  define(__145 <-> allDifferentComparisons(__144)) using None, AMO None, PB None
+
+--
+
+and([__145,__7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__146
+new variables:
+  findAux __146: bool
+new SAT encoding decisions:
+  define(__146 <-> and([__145,__7;int(1..)])) using tseitin
+
+--
+
+(exceptional) <-> (__146)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__147
+new variables:
+  findAux __147: bool
+new SAT encoding decisions:
+  define(__147 <-> (exceptional) <-> (__146)) using tseitin
+
+--
+
+__147,
+true,
+true,
+true,
+true,
+true,
+(__144) <-> ([false,true;int(-1, 2)] = [__85#components_1,__85#components_2;int(-1, 2)])
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true,
+true,
+(__144) <-> ([false,true;int(-1, 2)] = [__85#components_1,__85#components_2;int(-1, 2)])
+new SAT encoding decisions:
+  assert(__147) using tseitin
+
+--
+
+[false,true;int(-1, 2)] = [__85#components_1,__85#components_2;int(-1, 2)]
+   ~~> flatten_matrix_eq_neq ([("Base", 3000)])
+and([[false,true;int(-1, 2)][-1] = [__85#components_1,__85#components_2;int(-1, 2)][-1],[false,true;int(-1, 2)][2] = [__85#components_1,__85#components_2;int(-1, 2)][2];int(1..)])
+
+--
+
+[__85#components_1,__85#components_2;int(-1, 2)][-1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([__85#components_1,__85#components_2;int(-1, 2)],[-1])
+
+--
+
+[__85#components_1,__85#components_2;int(-1, 2)][2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([__85#components_1,__85#components_2;int(-1, 2)],[2])
+
+--
+
+false = __85#components_1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__148
+new variables:
+  findAux __148: bool
+new SAT encoding decisions:
+  define(__148 <-> (false) <-> (__85#components_1)) using tseitin
+
+--
+
+and([__148,__85#components_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__149
+new variables:
+  findAux __149: bool
+new SAT encoding decisions:
+  define(__149 <-> and([__148,__85#components_2;int(1..)])) using tseitin
+
+--
+
+(__144) <-> (__149)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__150
+new variables:
+  findAux __150: bool
+new SAT encoding decisions:
+  define(__150 <-> (__144) <-> (__149)) using tseitin
+
+--
+
+true,
+true,
+true,
+true,
+true,
+__150
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__150) using tseitin
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(-2, 3)] of matrix indexed by [int(-1, 2)] of bool
+find i: int(-2, 3..4)
+find caught: bool
+find exceptional: bool
+find masked: bool
+find selected: bool
+find m#components_1: matrix indexed by [int(-1, 2)] of bool
+find m#components_2: matrix indexed by [int(-1, 2)] of bool
+find i#int_direct_1: bool
+find i#int_direct_2: bool
+find i#int_direct_3: bool
+find i#int_direct_4: bool
+find i#int_direct_5: bool
+find i#int_direct_6: bool
+find i#int_direct_7: bool
+findAux __0: bool
+find m#components_1#components_1: bool
+find m#components_1#components_2: bool
+find m#components_2#components_1: bool
+find m#components_2#components_2: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: matrix indexed by [int(-1, 2)] of bool
+findAux __12: bool
+findAux __13: bool
+findAux __11#components_1: bool
+findAux __11#components_2: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: int(-2..4)
+findAux __25: int(0..1)
+findAux __26: matrix indexed by [int(-1, 2)] of bool
+findAux __27: bool
+findAux __28: bool
+findAux __26#components_1: bool
+findAux __26#components_2: bool
+findAux __24#int_direct_1: bool
+findAux __24#int_direct_2: bool
+findAux __24#int_direct_3: bool
+findAux __24#int_direct_4: bool
+findAux __24#int_direct_5: bool
+findAux __24#int_direct_6: bool
+findAux __24#int_direct_7: bool
+findAux __25#int_direct_1: bool
+findAux __25#int_direct_2: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: int(-2..4)
+findAux __55: int(0..1)
+findAux __56: matrix indexed by [int(-1, 2)] of bool
+findAux __57: bool
+findAux __58: bool
+findAux __54#int_direct_1: bool
+findAux __54#int_direct_2: bool
+findAux __54#int_direct_3: bool
+findAux __54#int_direct_4: bool
+findAux __54#int_direct_5: bool
+findAux __54#int_direct_6: bool
+findAux __54#int_direct_7: bool
+findAux __56#components_1: bool
+findAux __56#components_2: bool
+findAux __55#int_direct_1: bool
+findAux __55#int_direct_2: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+findAux __65: bool
+findAux __66: bool
+findAux __67: bool
+findAux __68: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+findAux __83: int(-2..4)
+findAux __84: int(0..1)
+findAux __85: matrix indexed by [int(-1, 2)] of bool
+findAux __86: bool
+findAux __87: bool
+findAux __83#int_direct_1: bool
+findAux __83#int_direct_2: bool
+findAux __83#int_direct_3: bool
+findAux __83#int_direct_4: bool
+findAux __83#int_direct_5: bool
+findAux __83#int_direct_6: bool
+findAux __83#int_direct_7: bool
+findAux __85#components_1: bool
+findAux __85#components_2: bool
+findAux __84#int_direct_1: bool
+findAux __84#int_direct_2: bool
+findAux __88: bool
+findAux __89: bool
+findAux __90: bool
+findAux __91: bool
+findAux __92: bool
+findAux __93: bool
+findAux __94: bool
+findAux __95: bool
+findAux __96: bool
+findAux __97: bool
+findAux __98: bool
+findAux __99: bool
+findAux __100: bool
+findAux __101: bool
+findAux __102: bool
+findAux __103: bool
+findAux __104: bool
+findAux __105: bool
+findAux __106: bool
+findAux __107: bool
+findAux __108: bool
+findAux __109: int(-2..4)
+findAux __110: int(0..1)
+findAux __111: matrix indexed by [int(-1, 2)] of bool
+findAux __112: bool
+findAux __113: bool
+findAux __109#int_direct_1: bool
+findAux __109#int_direct_2: bool
+findAux __109#int_direct_3: bool
+findAux __109#int_direct_4: bool
+findAux __109#int_direct_5: bool
+findAux __109#int_direct_6: bool
+findAux __109#int_direct_7: bool
+findAux __111#components_1: bool
+findAux __111#components_2: bool
+findAux __110#int_direct_1: bool
+findAux __110#int_direct_2: bool
+findAux __114: bool
+findAux __115: bool
+findAux __116: bool
+findAux __117: bool
+findAux __118: bool
+findAux __119: bool
+findAux __120: bool
+findAux __121: bool
+findAux __122: bool
+findAux __123: bool
+findAux __124: bool
+findAux __125: bool
+findAux __126: bool
+findAux __127: bool
+findAux __128: bool
+findAux __129: bool
+findAux __130: bool
+findAux __131: bool
+findAux __132: bool
+findAux __133: bool
+findAux __134: bool
+findAux __135: bool
+findAux __136: bool
+findAux __137: bool
+findAux __138: bool
+findAux __139: bool
+findAux __140: bool
+findAux __141: bool
+findAux __142: bool
+findAux __143: bool
+findAux __144: bool
+findAux __145: bool
+findAux __146: bool
+findAux __147: bool
+findAux __148: bool
+findAux __149: bool
+findAux __150: bool
+
+such that
+
+true,
+true,
+true,
+true,
+true
+
+sat encoding decisions:
+
+at-most-one(i#int_direct_1, i#int_direct_2, i#int_direct_3, i#int_direct_4, i#int_direct_5, i#int_direct_6, i#int_direct_7) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__0 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal 4) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__1 <-> or([i#int_direct_1,i#int_direct_6,i#int_direct_7;int(1..)])) using tseitin,
+assert(__1) using tseitin,
+define(__2 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__3 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__4 <-> or([__2,__3;int(1..)])) using tseitin,
+define(__5 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__6 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__7 <-> or([__5,__6;int(1..)])) using tseitin,
+define(__8 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__9 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__10 <-> or([__8,__9;int(1..)])) using tseitin,
+element(index=0+weighted(1*__10) with [], value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[0: 0+weighted(1*__12) with [] choices(0:!(__12), 1:__12), 1: 0+weighted(1*__13) with [] choices(0:!(__13), 1:__13)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+define(__14 <-> (__11#components_1) <-> (false)) using tseitin,
+define(__15 <-> and([__14,__11#components_2;int(1..)])) using tseitin,
+define(__16 <-> (caught) <-> (__15)) using tseitin,
+define(__17 <-> (__11#components_1) <-> (false)) using tseitin,
+define(__18 <-> and([__17,__11#components_2;int(1..)])) using tseitin,
+define(__19 <-> (__12) <-> (__18)) using tseitin,
+assert(__16) using tseitin,
+assert(__19) using tseitin,
+define(__20 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__21 <-> integer-weighted(-2*i#int_direct_1, -1*i#int_direct_2, 0*i#int_direct_3, 1*i#int_direct_4, 2*i#int_direct_5, 3*i#int_direct_6, 4*i#int_direct_7) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__22 <-> or([__20,__21;int(1..)])) using tseitin,
+define(__23 <-> or([__0,__22;int(1..)])) using tseitin,
+element(index=1+weighted(0*__25#int_direct_1, 1*__25#int_direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:__25#int_direct_1, 2:__25#int_direct_2), value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[1: 0+weighted(1*__27) with [] choices(0:!(__27), 1:__27), 2: 0+weighted(1*__28) with [] choices(0:!(__28), 1:__28)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+at-most-one(__24#int_direct_1, __24#int_direct_2, __24#int_direct_3, __24#int_direct_4, __24#int_direct_5, __24#int_direct_6, __24#int_direct_7) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+at-most-one(__25#int_direct_1, __25#int_direct_2) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__29 <-> integer-weighted(-2*__24#int_direct_1, -1*__24#int_direct_2, 0*__24#int_direct_3, 1*__24#int_direct_4, 2*__24#int_direct_5, 3*__24#int_direct_6, 4*__24#int_direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__30 <-> integer-weighted(0*__25#int_direct_1, 1*__25#int_direct_2) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__31 <-> integer-weighted(-2*__24#int_direct_1, -1*__24#int_direct_2, 0*__24#int_direct_3, 1*__24#int_direct_4, 2*__24#int_direct_5, 3*__24#int_direct_6, 4*__24#int_direct_7) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__32 <-> integer-weighted(0*__25#int_direct_1, 1*__25#int_direct_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__33 <-> integer-weighted(-2*__24#int_direct_1, -1*__24#int_direct_2, 0*__24#int_direct_3, 1*__24#int_direct_4, 2*__24#int_direct_5, 3*__24#int_direct_6, 4*__24#int_direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__34 <-> integer-weighted(-2*__24#int_direct_1, -1*__24#int_direct_2, 0*__24#int_direct_3, 1*__24#int_direct_4, 2*__24#int_direct_5, 3*__24#int_direct_6, 4*__24#int_direct_7) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__35 <-> or([__24#int_direct_1,__24#int_direct_2,__24#int_direct_3,__24#int_direct_4,__24#int_direct_5,__24#int_direct_6,__24#int_direct_7;int(1..)])) using tseitin,
+define(__36 <-> or([__25#int_direct_1,__25#int_direct_2;int(1..)])) using tseitin,
+define(__37 <-> and([__29,__30;int(1..)])) using tseitin,
+define(__38 <-> and([__31,__32;int(1..)])) using tseitin,
+define(__39 <-> (__11#components_1) <-> (__26#components_1)) using tseitin,
+define(__40 <-> (__11#components_2) <-> (__26#components_2)) using tseitin,
+define(__41 <-> and([__39,__40;int(1..)])) using tseitin,
+define(__42 <-> (__13) <-> (__41)) using tseitin,
+define(__43 <-> (__26#components_1) <-> (m#components_1#components_1)) using tseitin,
+define(__44 <-> (__26#components_2) <-> (m#components_1#components_2)) using tseitin,
+define(__45 <-> and([__43,__44;int(1..)])) using tseitin,
+define(__46 <-> (__27) <-> (__45)) using tseitin,
+define(__47 <-> (__26#components_1) <-> (m#components_2#components_1)) using tseitin,
+define(__48 <-> (__26#components_2) <-> (m#components_2#components_2)) using tseitin,
+define(__49 <-> and([__47,__48;int(1..)])) using tseitin,
+define(__50 <-> (__28) <-> (__49)) using tseitin,
+define(__51 <-> or([__33,__34;int(1..)])) using tseitin,
+define(__52 <-> !(__51)) using tseitin,
+define(__53 <-> or([__37,__38,__52;int(1..)])) using tseitin,
+assert(__42) using tseitin,
+assert(__53) using tseitin,
+assert(__46) using tseitin,
+assert(__50) using tseitin,
+assert(__35) using tseitin,
+assert(__36) using tseitin,
+at-most-one(__54#int_direct_1, __54#int_direct_2, __54#int_direct_3, __54#int_direct_4, __54#int_direct_5, __54#int_direct_6, __54#int_direct_7) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__59 <-> integer-weighted(0*__55#int_direct_1, 1*__55#int_direct_2) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+at-most-one(__55#int_direct_1, __55#int_direct_2) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+element(index=1+weighted(0*__55#int_direct_1, 1*__55#int_direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:__55#int_direct_1, 2:__55#int_direct_2), value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[1: 0+weighted(1*__57) with [] choices(0:!(__57), 1:__57), 2: 0+weighted(1*__58) with [] choices(0:!(__58), 1:__58)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+define(__60 <-> integer-weighted(-2*__54#int_direct_1, -1*__54#int_direct_2, 0*__54#int_direct_3, 1*__54#int_direct_4, 2*__54#int_direct_5, 3*__54#int_direct_6, 4*__54#int_direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__61 <-> integer-weighted(-2*__54#int_direct_1, -1*__54#int_direct_2, 0*__54#int_direct_3, 1*__54#int_direct_4, 2*__54#int_direct_5, 3*__54#int_direct_6, 4*__54#int_direct_7) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__62 <-> integer-weighted(0*__55#int_direct_1, 1*__55#int_direct_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__63 <-> integer-weighted(-2*__54#int_direct_1, -1*__54#int_direct_2, 0*__54#int_direct_3, 1*__54#int_direct_4, 2*__54#int_direct_5, 3*__54#int_direct_6, 4*__54#int_direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__64 <-> integer-weighted(-2*__54#int_direct_1, -1*__54#int_direct_2, 0*__54#int_direct_3, 1*__54#int_direct_4, 2*__54#int_direct_5, 3*__54#int_direct_6, 4*__54#int_direct_7) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__65 <-> or([__54#int_direct_1,__54#int_direct_2,__54#int_direct_3,__54#int_direct_4,__54#int_direct_5,__54#int_direct_6,__54#int_direct_7;int(1..)])) using tseitin,
+define(__66 <-> or([__55#int_direct_1,__55#int_direct_2;int(1..)])) using tseitin,
+define(__67 <-> and([__60,__59;int(1..)])) using tseitin,
+define(__68 <-> and([__61,__62;int(1..)])) using tseitin,
+define(__69 <-> (__56#components_1) <-> (m#components_1#components_1)) using tseitin,
+define(__70 <-> (__56#components_2) <-> (m#components_1#components_2)) using tseitin,
+define(__71 <-> and([__69,__70;int(1..)])) using tseitin,
+define(__72 <-> (__57) <-> (__71)) using tseitin,
+define(__73 <-> (__56#components_1) <-> (m#components_2#components_1)) using tseitin,
+define(__74 <-> (__56#components_2) <-> (m#components_2#components_2)) using tseitin,
+define(__75 <-> and([__73,__74;int(1..)])) using tseitin,
+define(__76 <-> (__58) <-> (__75)) using tseitin,
+define(__77 <-> (__56#components_1) <-> (false)) using tseitin,
+define(__78 <-> and([__77,__56#components_2,__4;int(1..)])) using tseitin,
+define(__79 <-> (selected) <-> (__78)) using tseitin,
+define(__80 <-> or([__63,__64;int(1..)])) using tseitin,
+define(__81 <-> !(__80)) using tseitin,
+define(__82 <-> or([__67,__68,__81;int(1..)])) using tseitin,
+assert(__79) using tseitin,
+assert(__82) using tseitin,
+assert(__72) using tseitin,
+assert(__76) using tseitin,
+assert(__65) using tseitin,
+assert(__66) using tseitin,
+at-most-one(__83#int_direct_1, __83#int_direct_2, __83#int_direct_3, __83#int_direct_4, __83#int_direct_5, __83#int_direct_6, __83#int_direct_7) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__88 <-> integer-weighted(0*__84#int_direct_1, 1*__84#int_direct_2) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+at-most-one(__84#int_direct_1, __84#int_direct_2) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+element(index=1+weighted(0*__84#int_direct_1, 1*__84#int_direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:__84#int_direct_1, 2:__84#int_direct_2), value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[1: 0+weighted(1*__86) with [] choices(0:!(__86), 1:__86), 2: 0+weighted(1*__87) with [] choices(0:!(__87), 1:__87)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+define(__89 <-> integer-weighted(-2*__83#int_direct_1, -1*__83#int_direct_2, 0*__83#int_direct_3, 1*__83#int_direct_4, 2*__83#int_direct_5, 3*__83#int_direct_6, 4*__83#int_direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__90 <-> integer-weighted(-2*__83#int_direct_1, -1*__83#int_direct_2, 0*__83#int_direct_3, 1*__83#int_direct_4, 2*__83#int_direct_5, 3*__83#int_direct_6, 4*__83#int_direct_7) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__91 <-> integer-weighted(0*__84#int_direct_1, 1*__84#int_direct_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__92 <-> integer-weighted(-2*__83#int_direct_1, -1*__83#int_direct_2, 0*__83#int_direct_3, 1*__83#int_direct_4, 2*__83#int_direct_5, 3*__83#int_direct_6, 4*__83#int_direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__93 <-> integer-weighted(-2*__83#int_direct_1, -1*__83#int_direct_2, 0*__83#int_direct_3, 1*__83#int_direct_4, 2*__83#int_direct_5, 3*__83#int_direct_6, 4*__83#int_direct_7) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__94 <-> or([__83#int_direct_1,__83#int_direct_2,__83#int_direct_3,__83#int_direct_4,__83#int_direct_5,__83#int_direct_6,__83#int_direct_7;int(1..)])) using tseitin,
+define(__95 <-> or([__84#int_direct_1,__84#int_direct_2;int(1..)])) using tseitin,
+define(__96 <-> and([__89,__88;int(1..)])) using tseitin,
+define(__97 <-> and([__90,__91;int(1..)])) using tseitin,
+define(__98 <-> (__85#components_1) <-> (m#components_1#components_1)) using tseitin,
+define(__99 <-> (__85#components_2) <-> (m#components_1#components_2)) using tseitin,
+define(__100 <-> and([__98,__99;int(1..)])) using tseitin,
+define(__101 <-> (__86) <-> (__100)) using tseitin,
+define(__102 <-> (__85#components_1) <-> (m#components_2#components_1)) using tseitin,
+define(__103 <-> (__85#components_2) <-> (m#components_2#components_2)) using tseitin,
+define(__104 <-> and([__102,__103;int(1..)])) using tseitin,
+define(__105 <-> (__87) <-> (__104)) using tseitin,
+define(__106 <-> or([__92,__93;int(1..)])) using tseitin,
+define(__107 <-> !(__106)) using tseitin,
+define(__108 <-> or([__96,__97,__107;int(1..)])) using tseitin,
+assert(__108) using tseitin,
+assert(__101) using tseitin,
+assert(__105) using tseitin,
+assert(__94) using tseitin,
+assert(__95) using tseitin,
+at-most-one(__109#int_direct_1, __109#int_direct_2, __109#int_direct_3, __109#int_direct_4, __109#int_direct_5, __109#int_direct_6, __109#int_direct_7) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__114 <-> integer-weighted(0*__110#int_direct_1, 1*__110#int_direct_2) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+at-most-one(__110#int_direct_1, __110#int_direct_2) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+element(index=1+weighted(0*__110#int_direct_1, 1*__110#int_direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:__110#int_direct_1, 2:__110#int_direct_2), value=0+weighted(1*true) with [] choices(0:!(true), 1:true), entries=[1: 0+weighted(1*__112) with [] choices(0:!(__112), 1:__112), 2: 0+weighted(1*__113) with [] choices(0:!(__113), 1:__113)]) using Some(EncodingSelection { algorithm: Implication, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+define(__115 <-> integer-weighted(-2*__109#int_direct_1, -1*__109#int_direct_2, 0*__109#int_direct_3, 1*__109#int_direct_4, 2*__109#int_direct_5, 3*__109#int_direct_6, 4*__109#int_direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__116 <-> integer-weighted(-2*__109#int_direct_1, -1*__109#int_direct_2, 0*__109#int_direct_3, 1*__109#int_direct_4, 2*__109#int_direct_5, 3*__109#int_direct_6, 4*__109#int_direct_7) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__117 <-> integer-weighted(0*__110#int_direct_1, 1*__110#int_direct_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__118 <-> integer-weighted(-2*__109#int_direct_1, -1*__109#int_direct_2, 0*__109#int_direct_3, 1*__109#int_direct_4, 2*__109#int_direct_5, 3*__109#int_direct_6, 4*__109#int_direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__119 <-> integer-weighted(-2*__109#int_direct_1, -1*__109#int_direct_2, 0*__109#int_direct_3, 1*__109#int_direct_4, 2*__109#int_direct_5, 3*__109#int_direct_6, 4*__109#int_direct_7) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__120 <-> or([__109#int_direct_1,__109#int_direct_2,__109#int_direct_3,__109#int_direct_4,__109#int_direct_5,__109#int_direct_6,__109#int_direct_7;int(1..)])) using tseitin,
+define(__121 <-> or([__110#int_direct_1,__110#int_direct_2;int(1..)])) using tseitin,
+define(__122 <-> and([__115,__114;int(1..)])) using tseitin,
+define(__123 <-> and([__116,__117;int(1..)])) using tseitin,
+define(__124 <-> (__111#components_1) <-> (m#components_1#components_1)) using tseitin,
+define(__125 <-> (__111#components_2) <-> (m#components_1#components_2)) using tseitin,
+define(__126 <-> and([__124,__125;int(1..)])) using tseitin,
+define(__127 <-> (__112) <-> (__126)) using tseitin,
+define(__128 <-> (__111#components_1) <-> (m#components_2#components_1)) using tseitin,
+define(__129 <-> (__111#components_2) <-> (m#components_2#components_2)) using tseitin,
+define(__130 <-> and([__128,__129;int(1..)])) using tseitin,
+define(__131 <-> (__113) <-> (__130)) using tseitin,
+define(__132 <-> or([__118,__119;int(1..)])) using tseitin,
+define(__133 <-> !(__132)) using tseitin,
+define(__134 <-> or([__122,__123,__133;int(1..)])) using tseitin,
+define(__135 <-> (__111#components_1) <-> (false)) using tseitin,
+define(__136 <-> and([__135,__111#components_2;int(1..)])) using tseitin,
+define(__137 <-> or([__0,__136;int(1..)])) using tseitin,
+define(__138 <-> and([__137,__23;int(1..)])) using tseitin,
+define(__139 <-> (masked) <-> (__138)) using tseitin,
+assert(__139) using tseitin,
+assert(__134) using tseitin,
+assert(__127) using tseitin,
+assert(__131) using tseitin,
+assert(__120) using tseitin,
+assert(__121) using tseitin,
+define(__140 <-> integer-weighted(-2*__24#int_direct_1, -1*__24#int_direct_2, 0*__24#int_direct_3, 1*__24#int_direct_4, 2*__24#int_direct_5, 3*__24#int_direct_6, 4*__24#int_direct_7, 2*i#int_direct_1, 1*i#int_direct_2, 0*i#int_direct_3, -1*i#int_direct_4, -2*i#int_direct_5, -3*i#int_direct_6, -4*i#int_direct_7) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 14, structure: Choice }],
+assert(__140) using tseitin,
+define(__141 <-> integer-weighted(-2*__54#int_direct_1, -1*__54#int_direct_2, 0*__54#int_direct_3, 1*__54#int_direct_4, 2*__54#int_direct_5, 3*__54#int_direct_6, 4*__54#int_direct_7, 2*i#int_direct_1, 1*i#int_direct_2, 0*i#int_direct_3, -1*i#int_direct_4, -2*i#int_direct_5, -3*i#int_direct_6, -4*i#int_direct_7) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 14, structure: Choice }],
+assert(__141) using tseitin,
+define(__142 <-> integer-weighted(-2*__83#int_direct_1, -1*__83#int_direct_2, 0*__83#int_direct_3, 1*__83#int_direct_4, 2*__83#int_direct_5, 3*__83#int_direct_6, 4*__83#int_direct_7, 2*i#int_direct_1, 1*i#int_direct_2, 0*i#int_direct_3, -1*i#int_direct_4, -2*i#int_direct_5, -3*i#int_direct_6, -4*i#int_direct_7) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 14, structure: Choice }],
+assert(__142) using tseitin,
+define(__143 <-> integer-weighted(-2*__109#int_direct_1, -1*__109#int_direct_2, 0*__109#int_direct_3, 1*__109#int_direct_4, 2*__109#int_direct_5, 3*__109#int_direct_6, 4*__109#int_direct_7, 2*i#int_direct_1, 1*i#int_direct_2, 0*i#int_direct_3, -1*i#int_direct_4, -2*i#int_direct_5, -3*i#int_direct_6, -4*i#int_direct_7) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 14, structure: Choice }],
+assert(__143) using tseitin,
+define(__145 <-> allDifferentComparisons(__144)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+define(__146 <-> and([__145,__7;int(1..)])) using tseitin,
+define(__147 <-> (exceptional) <-> (__146)) using tseitin,
+assert(__147) using tseitin,
+define(__148 <-> (false) <-> (__85#components_1)) using tseitin,
+define(__149 <-> and([__148,__85#components_2;int(1..)])) using tseitin,
+define(__150 <-> (__144) <-> (__149)) using tseitin,
+assert(__150) using tseitin
+

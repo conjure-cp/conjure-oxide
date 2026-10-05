@@ -1,0 +1,9 @@
+language Essence 1.3
+find m : matrix indexed by [int(-2,3)] of (bool,int(-1,2))
+find i : int(-2,3,4)
+find selected, masked, caught, exceptional : bool
+such that
+  selected <-> (m[i] = (false,-1)),
+  masked <-> (i = 4 \/ m[i] = (false,-1)),
+  caught <-> (catchUndef(m[i], (false,-1)) = (false,-1)),
+  exceptional <-> alldifferent_except([(false,-1),(false,-1)], m[i])

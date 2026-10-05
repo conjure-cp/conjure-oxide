@@ -1,0 +1,847 @@
+Model before rewriting:
+
+find x: int(-2, 0, 3)
+find y: int(-2, 0, 3)
+find negative: bool
+find positive: bool
+
+such that
+
+(positive) <-> (table([x,y;int(1..2)], [[-2,0;int(1..2)],[3,-2;int(1..2)],[3,-2;int(1..2)],[7,3;int(1..2)];int(1..4)])),
+(negative) <-> (negativeTable([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)]))
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#int_order_1: bool
+  find x#int_order_2: bool
+  find x#int_order_3: bool
+  find x#int_order_4: bool
+  find x#int_order_5: bool
+  find x#int_order_6: bool
+new constraints:
+  x#int_order_1
+  or([!(x#int_order_2),x#int_order_1;int(1..)])
+  or([!(x#int_order_3),x#int_order_2;int(1..)])
+  or([!(x#int_order_4),x#int_order_3;int(1..)])
+  or([!(x#int_order_5),x#int_order_4;int(1..)])
+  or([!(x#int_order_6),x#int_order_5;int(1..)])
+  or([SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6;int(1..)] [-2, 3]) = -2,SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6;int(1..)] [-2, 3]) = 0,SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6;int(1..)] [-2, 3]) = 3;int(1..)])
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6;int(1..)] [-2, 3]) = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6) Equal 0) using None with [PbTermGroup { start: 0, end: 5, structure: Chain }]
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6;int(1..)] [-2, 3]) = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6) Equal 2) using None with [PbTermGroup { start: 0, end: 5, structure: Chain }]
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6;int(1..)] [-2, 3]) = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6) Equal 5) using None with [PbTermGroup { start: 0, end: 5, structure: Chain }]
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#int_order_1: bool
+  find y#int_order_2: bool
+  find y#int_order_3: bool
+  find y#int_order_4: bool
+  find y#int_order_5: bool
+  find y#int_order_6: bool
+new constraints:
+  y#int_order_1
+  or([!(y#int_order_2),y#int_order_1;int(1..)])
+  or([!(y#int_order_3),y#int_order_2;int(1..)])
+  or([!(y#int_order_4),y#int_order_3;int(1..)])
+  or([!(y#int_order_5),y#int_order_4;int(1..)])
+  or([!(y#int_order_6),y#int_order_5;int(1..)])
+  or([SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6;int(1..)] [-2, 3]) = -2,SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6;int(1..)] [-2, 3]) = 0,SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6;int(1..)] [-2, 3]) = 3;int(1..)])
+
+--
+
+table([x,y;int(1..2)], [[-2,0;int(1..2)],[3,-2;int(1..2)],[3,-2;int(1..2)],[7,3;int(1..2)];int(1..4)])
+   ~~> select_table ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> table(-2+weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6) with [PbTermGroup { start: 0, end: 5, structure: Chain }], -2+weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6) with [PbTermGroup { start: 0, end: 5, structure: Chain }], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using None, PB None
+
+--
+
+SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6;int(1..)] [-2, 3]) = -2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6) Equal 0) using None with [PbTermGroup { start: 0, end: 5, structure: Chain }]
+
+--
+
+SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6;int(1..)] [-2, 3]) = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6) Equal 2) using None with [PbTermGroup { start: 0, end: 5, structure: Chain }]
+
+--
+
+SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6;int(1..)] [-2, 3]) = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6) Equal 5) using None with [PbTermGroup { start: 0, end: 5, structure: Chain }]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+negativeTable([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
+   ~~> select_table ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> table(-2+weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6) with [PbTermGroup { start: 0, end: 5, structure: Chain }], -2+weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6) with [PbTermGroup { start: 0, end: 5, structure: Chain }], [[0, 0], [3, 3]], negative=true)) using None, PB None
+
+--
+
+!(x#int_order_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> !(x#int_order_3)) using tseitin
+
+--
+
+!(x#int_order_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> !(x#int_order_4)) using tseitin
+
+--
+
+!(x#int_order_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> !(x#int_order_5)) using tseitin
+
+--
+
+!(x#int_order_6)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> !(x#int_order_6)) using tseitin
+
+--
+
+!(y#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> !(y#int_order_2)) using tseitin
+
+--
+
+!(y#int_order_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> !(y#int_order_3)) using tseitin
+
+--
+
+!(y#int_order_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> !(y#int_order_4)) using tseitin
+
+--
+
+!(y#int_order_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> !(y#int_order_5)) using tseitin
+
+--
+
+!(y#int_order_6)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> !(y#int_order_6)) using tseitin
+
+--
+
+!(x#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> !(x#int_order_2)) using tseitin
+
+--
+
+or([__4,__5,__6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> or([__4,__5,__6;int(1..)])) using tseitin
+
+--
+
+or([__0,__1,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> or([__0,__1,__2;int(1..)])) using tseitin
+
+--
+
+or([__8,x#int_order_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> or([__8,x#int_order_2;int(1..)])) using tseitin
+
+--
+
+or([__9,x#int_order_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> or([__9,x#int_order_3;int(1..)])) using tseitin
+
+--
+
+or([__10,x#int_order_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__22
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> or([__10,x#int_order_4;int(1..)])) using tseitin
+
+--
+
+or([__11,x#int_order_5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__23
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> or([__11,x#int_order_5;int(1..)])) using tseitin
+
+--
+
+or([__12,y#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__24
+new variables:
+  findAux __24: bool
+new SAT encoding decisions:
+  define(__24 <-> or([__12,y#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__13,y#int_order_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__25
+new variables:
+  findAux __25: bool
+new SAT encoding decisions:
+  define(__25 <-> or([__13,y#int_order_2;int(1..)])) using tseitin
+
+--
+
+or([__14,y#int_order_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__26
+new variables:
+  findAux __26: bool
+new SAT encoding decisions:
+  define(__26 <-> or([__14,y#int_order_3;int(1..)])) using tseitin
+
+--
+
+or([__15,y#int_order_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__27
+new variables:
+  findAux __27: bool
+new SAT encoding decisions:
+  define(__27 <-> or([__15,y#int_order_4;int(1..)])) using tseitin
+
+--
+
+or([__16,y#int_order_5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__28
+new variables:
+  findAux __28: bool
+new SAT encoding decisions:
+  define(__28 <-> or([__16,y#int_order_5;int(1..)])) using tseitin
+
+--
+
+or([__17,x#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__29
+new variables:
+  findAux __29: bool
+new SAT encoding decisions:
+  define(__29 <-> or([__17,x#int_order_1;int(1..)])) using tseitin
+
+--
+
+(positive) <-> (__3)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__30
+new variables:
+  findAux __30: bool
+new SAT encoding decisions:
+  define(__30 <-> (positive) <-> (__3)) using tseitin
+
+--
+
+(negative) <-> (__7)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__31
+new variables:
+  findAux __31: bool
+new SAT encoding decisions:
+  define(__31 <-> (negative) <-> (__7)) using tseitin
+
+--
+
+__30,
+__31,
+x#int_order_1,
+__29,
+__20,
+__21,
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__31,
+x#int_order_1,
+__29,
+__20,
+__21,
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(__30) using tseitin
+
+--
+
+__31,
+x#int_order_1,
+__29,
+__20,
+__21,
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+x#int_order_1,
+__29,
+__20,
+__21,
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(__31) using tseitin
+
+--
+
+x#int_order_1,
+__29,
+__20,
+__21,
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__29,
+__20,
+__21,
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(x#int_order_1) using tseitin
+
+--
+
+__29,
+__20,
+__21,
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__20,
+__21,
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(__29) using tseitin
+
+--
+
+__20,
+__21,
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__21,
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(__20) using tseitin
+
+--
+
+__21,
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(__21) using tseitin
+
+--
+
+__22,
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(__22) using tseitin
+
+--
+
+__23,
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(__23) using tseitin
+
+--
+
+__19,
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(__19) using tseitin
+
+--
+
+y#int_order_1,
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(y#int_order_1) using tseitin
+
+--
+
+__24,
+__25,
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__25,
+__26,
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(__24) using tseitin
+
+--
+
+__25,
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__26,
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(__25) using tseitin
+
+--
+
+__26,
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__27,
+__28,
+__18
+new SAT encoding decisions:
+  assert(__26) using tseitin
+
+--
+
+__27,
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__28,
+__18
+new SAT encoding decisions:
+  assert(__27) using tseitin
+
+--
+
+__28,
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+__18
+new SAT encoding decisions:
+  assert(__28) using tseitin
+
+--
+
+__18
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__18) using tseitin
+
+--
+
+Final model:
+
+find x: int(-2, 0, 3)
+find y: int(-2, 0, 3)
+find negative: bool
+find positive: bool
+find x#int_order_1: bool
+find x#int_order_2: bool
+find x#int_order_3: bool
+find x#int_order_4: bool
+find x#int_order_5: bool
+find x#int_order_6: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+find y#int_order_1: bool
+find y#int_order_2: bool
+find y#int_order_3: bool
+find y#int_order_4: bool
+find y#int_order_5: bool
+find y#int_order_6: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Chain }],
+define(__1 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Chain }],
+define(__2 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6) Equal 5) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Chain }],
+define(__3 <-> table(-2+weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6) with [PbTermGroup { start: 0, end: 5, structure: Chain }], -2+weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6) with [PbTermGroup { start: 0, end: 5, structure: Chain }], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
+define(__4 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Chain }],
+define(__5 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Chain }],
+define(__6 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6) Equal 5) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Chain }],
+define(__7 <-> table(-2+weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6) with [PbTermGroup { start: 0, end: 5, structure: Chain }], -2+weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6) with [PbTermGroup { start: 0, end: 5, structure: Chain }], [[0, 0], [3, 3]], negative=true)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
+define(__8 <-> !(x#int_order_3)) using tseitin,
+define(__9 <-> !(x#int_order_4)) using tseitin,
+define(__10 <-> !(x#int_order_5)) using tseitin,
+define(__11 <-> !(x#int_order_6)) using tseitin,
+define(__12 <-> !(y#int_order_2)) using tseitin,
+define(__13 <-> !(y#int_order_3)) using tseitin,
+define(__14 <-> !(y#int_order_4)) using tseitin,
+define(__15 <-> !(y#int_order_5)) using tseitin,
+define(__16 <-> !(y#int_order_6)) using tseitin,
+define(__17 <-> !(x#int_order_2)) using tseitin,
+define(__18 <-> or([__4,__5,__6;int(1..)])) using tseitin,
+define(__19 <-> or([__0,__1,__2;int(1..)])) using tseitin,
+define(__20 <-> or([__8,x#int_order_2;int(1..)])) using tseitin,
+define(__21 <-> or([__9,x#int_order_3;int(1..)])) using tseitin,
+define(__22 <-> or([__10,x#int_order_4;int(1..)])) using tseitin,
+define(__23 <-> or([__11,x#int_order_5;int(1..)])) using tseitin,
+define(__24 <-> or([__12,y#int_order_1;int(1..)])) using tseitin,
+define(__25 <-> or([__13,y#int_order_2;int(1..)])) using tseitin,
+define(__26 <-> or([__14,y#int_order_3;int(1..)])) using tseitin,
+define(__27 <-> or([__15,y#int_order_4;int(1..)])) using tseitin,
+define(__28 <-> or([__16,y#int_order_5;int(1..)])) using tseitin,
+define(__29 <-> or([__17,x#int_order_1;int(1..)])) using tseitin,
+define(__30 <-> (positive) <-> (__3)) using tseitin,
+define(__31 <-> (negative) <-> (__7)) using tseitin,
+assert(__30) using tseitin,
+assert(__31) using tseitin,
+assert(x#int_order_1) using tseitin,
+assert(__29) using tseitin,
+assert(__20) using tseitin,
+assert(__21) using tseitin,
+assert(__22) using tseitin,
+assert(__23) using tseitin,
+assert(__19) using tseitin,
+assert(y#int_order_1) using tseitin,
+assert(__24) using tseitin,
+assert(__25) using tseitin,
+assert(__26) using tseitin,
+assert(__27) using tseitin,
+assert(__28) using tseitin,
+assert(__18) using tseitin
+
