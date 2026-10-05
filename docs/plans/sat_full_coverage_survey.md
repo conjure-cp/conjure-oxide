@@ -50,6 +50,14 @@ The masked-power regression has 30 expected assignments, checked independently a
 
 The remaining residual constraints are compound lexicographic comparisons and allDifferent input forms. Two earlier atLeast residuals now lower successfully but encounter the resource outcomes recorded below. Machine-overflowing power ranges remain explicitly unsupported.
 
+## Follow-up after the survey (2026-10-05)
+
+These changes postdate the tables below, which are kept as surveyed.
+
+- **allDifferent lowering.** SAT allDifferent now accepts any matrix index domain and `flatten(...)` operands. All 11 allDifferent residuals now lower: `nqueens-4`, `n_queens1`, `n_queens2`, `n_queens_new`, `nqueens-8`, `quasiGroup4Idempotent`, `blackhole`, `knights` and `sportsScheduling`/`2`/`3` pass.
+- **Compact SAT for large savilerow fixtures.** 36 savilerow fixtures that timed out, exceeded memory or took at least 60 seconds with `heuristic = "x"` now use `heuristic = "c"` for SAT, and `rule-trace = "aggregate"`. Under `x`, rewriting dominated: sportsScheduling spent 484 s rewriting and 52 s solving across 420 SAT runs. With compact, 31 pass, including these former resource failures: `absBug`, `diet`, `efpa`, `golomb`, `golomb2`, `knapsack`, `langfordN`, `magicSquare`, `molnars`, `multiDimensionArray`, `opd`, `plotting`, `quasiGroup3NonIdempotent`, `semigroup`, `solitaire_battleship` and `test-branchingon2`. Still failing: `carSequencing`, `pegSolitaireTable`, `magicSequence` (over 4 GiB) and `lee-distance` (600 s timeout); these keep full rule traces. `grocery` is globally skipped.
+- **Rule-trace cost.** Full rule traces cost about a third of integration run time (`nurse`: 20.2 s full, 13.8 s aggregate, 13.5 s untraced). Fixtures can now choose `rule-trace = "aggregate"`, which records the same per-rule counts in `stats.toml` without trace files.
+
 ## First failures, smallest sources first
 
 | Fixture | Outcome | Reason |
