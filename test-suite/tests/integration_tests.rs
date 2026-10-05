@@ -115,6 +115,8 @@ where
     command
         .arg(test_name)
         .arg("--exact")
+        // The outer harness has already selected this test, including explicit ignored runs.
+        .arg("--include-ignored")
         .env("CONJURE_OXIDE_TEST_TIMEOUT_CHILD", "1")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
