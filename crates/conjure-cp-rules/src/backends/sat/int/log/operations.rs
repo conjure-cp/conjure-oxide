@@ -1006,7 +1006,7 @@ fn cnf_int_safepow(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let width = bit_magnitude(bounds.0).max(bit_magnitude(bounds.1)).max(2);
     let mut factor =
         validate_log_int_operands(vec![(**base).clone()], Some(width as u32))?.remove(0);
-    let exponent_bits = exponent_bits.unwrap_list_ref().ok_or(RuleNotApplicable)?;
+    let exponent_bits = exponent_bits.unwrap_list_cow().ok_or(RuleNotApplicable)?;
     let mut result = vec![Expr::from(false); width];
     result[0] = true.into();
     let mut decisions = vec![];
@@ -1112,10 +1112,15 @@ mod modulo_tests {
     #[test]
     fn powers_handle_negative_bases_and_undefined_inputs() {
         for (base, exponent) in (-3_i32..=3).cartesian_product(-2_i32..=5) {
+            let mut exponent_bits = binary(exponent);
+            // Constant propagation stores bit vectors as literal-valued matrices as well.
+            if let Expr::SATInt(_, _, inner, _) = &mut exponent_bits {
+                *inner = Moo::new(Expr::from(conjure_cp::ast::eval_constant(inner).unwrap()));
+            }
             let expr = Expr::SafePow(
                 Metadata::new(),
                 Moo::new(binary(base)),
-                Moo::new(binary(exponent)),
+                Moo::new(exponent_bits),
             );
             let effect = cnf_int_safepow(&expr, &SymbolTable::default()).unwrap();
             let mut values = HashMap::new();
