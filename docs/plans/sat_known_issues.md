@@ -1,5 +1,15 @@
 # SAT backend: known issues and coverage failures
 
+## Latest compact acceptance (5-6 October 2026)
+
+The [full acceptance report](sat_compact_acceptance.md) supersedes the outcome
+counts below: 661 of 668 attempted integration fixtures pass after compact
+follow-ups. Five passes are rewrite-only. Seven failures remain: the constant
+matrix index panic, four memory limits and two SAT rewriting timeouts. All other
+workspace tests and doctests pass. Slow SAT portfolios use compact, with uniform
+channelling retained; all 32 further compact-profile changes pass normal golden
+verification. The [CSV](sat_compact_acceptance.csv) records every fixture.
+
 ## Latest workspace verification (2026-10-05)
 
 See [the workspace verification report](sat_workspace_verification.md) for the

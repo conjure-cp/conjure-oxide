@@ -2,6 +2,16 @@
 
 Branch: `sat-ir`. Conventional commits; never push.
 
+## Latest compact acceptance (5-6 October 2026)
+
+[Full acceptance and compact follow-ups](sat_compact_acceptance.md) pass 661 of
+668 attempted integration fixtures, including five rewrite-only cases. Seven
+failures remain: four memory limits, two rewriting timeouts and the constant
+matrix indexing panic. Existing user profile changes and 32 further compact SAT
+profiles are retained; those 32 pass normal verification. Passing solver cases
+exercise 50,725 SAT portfolios. Packed-set bit extraction through division/modulo
+and repeated symbol-table cloning are concrete remaining lowering costs.
+
 ## Latest workspace verification (2026-10-05)
 
 The [normal workspace verification](sat_workspace_verification.md) follows the
