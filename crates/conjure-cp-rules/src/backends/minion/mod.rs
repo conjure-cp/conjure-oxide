@@ -1274,11 +1274,54 @@ fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .try_into()
         .or(Err(RuleNotApplicable))?;
 
-    Ok(RuleEffect::pure(Expr::MinionPow(
+    // `SafePow` leaves its value unconstrained where `a ** b` is undefined (negative exponents and
+    // `0 ** 0`); definedness is enforced separately. Minion's `pow` instead fails on most negative
+    // exponents and gives `0 ** 0 = 1`, so it only defines the result where the power is defined.
+    let can_be_zero = |atom: &Atom| {
+        atom.domain_of()
+            .resolve()
+            .ok()
+            .is_none_or(|domain| domain.contains(&Lit::Int(0)).unwrap_or(true))
+    };
+    let mut defined = Vec::new();
+    if can_be_zero(&a) && can_be_zero(&b) {
+        defined.push(Expr::Or(
+            Metadata::new(),
+            Moo::new(matrix_expr![
+                Expr::Neq(
+                    Metadata::new(),
+                    Moo::new(Expr::Atomic(Metadata::new(), a.clone())),
+                    Moo::new(0.into()),
+                ),
+                Expr::Neq(
+                    Metadata::new(),
+                    Moo::new(Expr::Atomic(Metadata::new(), b.clone())),
+                    Moo::new(0.into()),
+                ),
+            ]),
+        ));
+    }
+    if minion_atom_as_i32_bounds(&b).is_none_or(|(low, _)| low < 0) {
+        defined.push(Expr::Geq(
+            Metadata::new(),
+            Moo::new(Expr::Atomic(Metadata::new(), b.clone())),
+            Moo::new(0.into()),
+        ));
+    }
+
+    let pow = Expr::MinionPow(Metadata::new(), Moo::new(a), Moo::new(b), Moo::new(total));
+    if defined.is_empty() {
+        return Ok(RuleEffect::pure(pow));
+    }
+    let defined = if defined.len() == 1 {
+        defined.pop().unwrap()
+    } else {
+        Expr::And(Metadata::new(), Moo::new(into_matrix_expr!(defined)))
+    };
+    Ok(RuleEffect::pure(Expr::Imply(
         Metadata::new(),
-        Moo::new(a),
-        Moo::new(b),
-        Moo::new(total),
+        Moo::new(defined),
+        Moo::new(pow),
     )))
 }
 
@@ -3050,6 +3093,53 @@ mod tests {
     use conjure_cp::ast::{DeclarationPtr, Domain};
     use conjure_cp::matrix_expr;
     use conjure_cp::rule_engine::{ApplicationError, get_rule_by_name};
+
+    #[test]
+    fn power_is_only_defined_by_minion_where_it_is_defined() {
+        let input = |name: &str, lower, upper| -> Expr {
+            Reference::new(DeclarationPtr::new_find(
+                Name::user(name),
+                Domain::int(vec![Range::Bounded(lower, upper)]),
+            ))
+            .into()
+        };
+        let power = |a, b| {
+            Expr::Eq(
+                Metadata::new(),
+                Moo::new(input("total", -100, 100)),
+                Moo::new(Expr::SafePow(Metadata::new(), Moo::new(a), Moo::new(b))),
+            )
+        };
+        let guard = |effect: RuleEffect| match effect.new_expression {
+            Expr::Imply(_, guard, pow) => {
+                assert!(matches!(pow.as_ref(), Expr::MinionPow(..)));
+                Some(Moo::unwrap_or_clone(guard))
+            }
+            Expr::MinionPow(..) => None,
+            other => panic!("unexpected power lowering {other}"),
+        };
+
+        let always_defined = power(input("a", -2, 2), input("b", 1, 3));
+        assert_eq!(
+            guard(introduce_poweq(&always_defined, &SymbolTable::new()).unwrap()),
+            None
+        );
+        let negative_exponent = power(input("a", 1, 2), input("b", -2, 3));
+        assert!(matches!(
+            guard(introduce_poweq(&negative_exponent, &SymbolTable::new()).unwrap()),
+            Some(Expr::Geq(..))
+        ));
+        let zero_to_zero = power(input("a", 0, 2), input("b", 0, 3));
+        assert!(matches!(
+            guard(introduce_poweq(&zero_to_zero, &SymbolTable::new()).unwrap()),
+            Some(Expr::Or(..))
+        ));
+        let both = power(input("a", -2, 2), input("b", -2, 3));
+        assert!(matches!(
+            guard(introduce_poweq(&both, &SymbolTable::new()).unwrap()),
+            Some(Expr::And(..))
+        ));
+    }
 
     #[test]
     fn alldifferent_variable_except_defines_counts_outside_its_truth() {
