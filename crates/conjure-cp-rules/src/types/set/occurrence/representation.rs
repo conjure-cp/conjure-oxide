@@ -69,19 +69,28 @@ register_representation!(
 
             // Index a plain one-based list rather than giving the matrix the inner domain as its
             // index domain: the Minion backend only reaches `element` through a list. An
-            // out-of-range index stays out of range after the shift, so membership outside the
-            // inner domain is still false.
+            // SafeIndex has an unspecified value outside its index domain. Guard it explicitly
+            // so membership is false there, including under negation and reification.
             let member = member.clone();
-            let offset = 1 - low;
+            let offset = 1_i32.checked_sub(low)?;
+            let high = low.checked_add(i32::try_from(bits.len()).ok()?.checked_sub(1)?)?;
             let index = if offset == 0 {
-                member
+                member.clone()
             } else {
                 essence_expr!(&member + &offset)
             };
-            Some(Expression::SafeIndex(
+            let lookup = Expression::SafeIndex(
                 Metadata::new(),
                 Moo::new(into_matrix_expr![bits]),
                 vec![index],
+            );
+            Some(Expression::And(
+                Metadata::new(),
+                Moo::new(matrix_expr![
+                    essence_expr!(&member >= &low),
+                    essence_expr!(&member <= &high),
+                    lookup,
+                ]),
             ))
         }
 
@@ -100,7 +109,7 @@ register_representation!(
             let mut previous = first;
             for value in values {
                 let value = int_value(value)?;
-                if value != previous + 1 {
+                if Some(value) != previous.checked_add(1) {
                     return None;
                 }
                 previous = value;

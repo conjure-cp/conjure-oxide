@@ -9,7 +9,12 @@ use conjure_cp::rule_engine::{
 use conjure_cp::ast::AbstractLiteral::Matrix;
 use conjure_cp::ast::{Domain, SymbolTable};
 
-use crate::shared::utils::is_literal;
+// Atomic references can denote integers and compound values too. Those must reach their
+// representation's comparison rules rather than becoming Boolean gate inputs.
+fn is_literal(expr: &Expr) -> bool {
+    crate::shared::utils::is_literal(expr)
+        && expr.domain_of().is_some_and(|domain| domain.is_bool())
+}
 
 pub(super) fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
     let name = symbols.gen_find_auxiliary(&Domain::bool());
@@ -488,5 +493,26 @@ mod amo_lowering_tests {
         let cardinality = Expr::Leq(Metadata::new(), Moo::new(sum), Moo::new(1.into()));
         let root = Expr::Root(Metadata::new(), vec![cardinality]);
         assert!(select_cardinality(&root, &SymbolTable::new()).is_err());
+    }
+
+    #[test]
+    fn gates_wait_for_integer_and_matrix_comparisons() {
+        let symbols = SymbolTable::new();
+        for domain in [
+            Domain::int_ground(vec![conjure_cp::ast::Range::Bounded(1, 3)]),
+            Domain::matrix(
+                Domain::bool(),
+                vec![Domain::int_ground(vec![conjure_cp::ast::Range::Bounded(
+                    1, 3,
+                )])],
+            ),
+        ] {
+            let left: Expr =
+                conjure_cp::ast::Reference::new(symbols.clone().gen_find(&domain)).into();
+            let right: Expr =
+                conjure_cp::ast::Reference::new(symbols.clone().gen_find(&domain)).into();
+            let expr = Expr::Eq(Metadata::new(), Moo::new(left), Moo::new(right));
+            assert!(apply_tseytin_iff_eq(&expr, &symbols).is_err());
+        }
     }
 }

@@ -1,6 +1,7 @@
 mod alldifferent;
 mod asserted;
 mod boolean;
+mod counting;
 mod domain;
 mod element;
 mod index_of;

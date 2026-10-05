@@ -976,18 +976,99 @@ mod division_bounds_tests {
     }
 }
 
-/*
-/// Converts SafePow of SATInts to a single SATInt
-///
-/// ```text
-/// SafePow(SATInt(a), SATInt(b)) ~> SATInt(c)
-///
-/// ```
+/// Lower power using exponentiation by squaring and the existing Boolean circuit decisions.
+/// Undefined inputs retain a harmless value; their definedness is handled by the bubble rules.
 #[register_rule("SAT", 4100, [SafePow])]
-fn cnf_int_safepow(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // use 'Exponentiation by squaring'
+fn cnf_int_safepow(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::SafePow(_, base, exponent) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let (
+        Expr::SATInt(_, SATIntEncoding::Log, _, base_bounds),
+        Expr::SATInt(_, SATIntEncoding::Log, exponent_bits, exponent_bounds),
+    ) = (base.as_ref(), exponent.as_ref())
+    else {
+        return Err(RuleNotApplicable);
+    };
+    // Endpoints bound both parities; include zero and the unspecified values 0/1.
+    // Decline machine-overflowing ranges instead of silently wrapping their mathematical powers.
+    let mut bounds = (0, 1);
+    if exponent_bounds.1 > 31 && (base_bounds.0 < -1 || base_bounds.1 > 1) {
+        return Err(RuleNotApplicable);
+    }
+    for power in 0..=exponent_bounds.1.clamp(0, 31) {
+        for value in [base_bounds.0, base_bounds.1] {
+            let result = value.checked_pow(power as u32).ok_or(RuleNotApplicable)?;
+            bounds.0 = bounds.0.min(result);
+            bounds.1 = bounds.1.max(result);
+        }
+    }
+    let width = bit_magnitude(bounds.0).max(bit_magnitude(bounds.1)).max(2);
+    let mut factor =
+        validate_log_int_operands(vec![(**base).clone()], Some(width as u32))?.remove(0);
+    let exponent_bits = exponent_bits.unwrap_list_ref().ok_or(RuleNotApplicable)?;
+    let mut result = vec![Expr::from(false); width];
+    result[0] = true.into();
+    let mut decisions = vec![];
+    let mut symbols = symbols.clone();
+    let mut result_is_one = true;
+    // Only non-sign bits can participate in a defined, non-negative exponent.
+    for (index, selected) in exponent_bits[..exponent_bits.len() - 1].iter().enumerate() {
+        let selected_constant = conjure_cp::ast::eval_constant(selected);
+        if selected_constant != Some(false.into()) {
+            let mut product = if result_is_one {
+                factor.clone()
+            } else {
+                cnf_shift_add_multiply(&result, &factor, width, &mut decisions, &mut symbols)
+            };
+            product.truncate(width);
+            result = if selected_constant == Some(true.into()) {
+                product
+            } else {
+                result
+                    .iter()
+                    .zip(product)
+                    .map(|(old, new)| {
+                        tseytin_mux(
+                            selected.clone(),
+                            old.clone(),
+                            new,
+                            &mut decisions,
+                            &mut symbols,
+                        )
+                    })
+                    .collect()
+            };
+            result_is_one = false;
+        }
+        if index + 1 < exponent_bits.len() - 1 {
+            factor = cnf_shift_add_multiply(&factor, &factor, width, &mut decisions, &mut symbols);
+            factor.truncate(width);
+        }
+    }
+    let negative = exponent_bits.last().ok_or(RuleNotApplicable)?;
+    if conjure_cp::ast::eval_constant(negative) != Some(false.into()) {
+        for bit in &mut result {
+            *bit = tseytin_mux(
+                negative.clone(),
+                bit.clone(),
+                false.into(),
+                &mut decisions,
+                &mut symbols,
+            );
+        }
+    }
+    Ok(RuleEffect::sat(
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(result)),
+            bounds,
+        ),
+        decisions,
+        symbols,
+    ))
 }
-*/
 
 #[cfg(test)]
 mod modulo_tests {
@@ -1026,6 +1107,48 @@ mod modulo_tests {
             Moo::new(into_matrix_expr!(bits)),
             (value, value),
         )
+    }
+
+    #[test]
+    fn powers_handle_negative_bases_and_undefined_inputs() {
+        for (base, exponent) in (-3_i32..=3).cartesian_product(-2_i32..=5) {
+            let expr = Expr::SafePow(
+                Metadata::new(),
+                Moo::new(binary(base)),
+                Moo::new(binary(exponent)),
+            );
+            let effect = cnf_int_safepow(&expr, &SymbolTable::default()).unwrap();
+            let mut values = HashMap::new();
+            for decision in effect.new_sat_decisions {
+                let SatEncodingDecision::Boolean {
+                    output: Expr::Atomic(_, Atom::Reference(reference)),
+                    expression,
+                } = decision
+                else {
+                    panic!("unexpected power decision")
+                };
+                values.insert(reference.name().clone(), evaluate(&expression, &values));
+            }
+            let Expr::SATInt(_, _, bits, bounds) = effect.new_expression else {
+                panic!("expected binary power")
+            };
+            let bits = bits.unwrap_list_ref().unwrap();
+            let mut result: i64 = bits
+                .iter()
+                .enumerate()
+                .map(|(index, bit)| i64::from(evaluate(bit, &values)) << index)
+                .sum();
+            if evaluate(bits.last().unwrap(), &values) {
+                result -= 1_i64 << bits.len();
+            }
+            let expected = if exponent < 0 {
+                0
+            } else {
+                base.pow(exponent as u32)
+            };
+            assert_eq!(result, i64::from(expected), "{base}^{exponent}");
+            assert!((bounds.0..=bounds.1).contains(&expected));
+        }
     }
 
     #[test]
