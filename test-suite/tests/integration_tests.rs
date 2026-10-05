@@ -96,6 +96,81 @@ impl RunTimings {
     }
 }
 
+/// What one integration run produced, beyond pass/fail.
+struct RunOutcome {
+    timings: RunTimings,
+    /// The run's solutions, normalised for comparison, when they are the model's complete
+    /// solution set: the search ran to exhaustion and kept no intermediate optimisation steps.
+    /// Every such run of one fixture solves the same problem, so they must all agree.
+    comparable_solutions: Option<Vec<BTreeMap<Name, Literal>>>,
+}
+
+/// The first run of a fixture to report a complete solution set, which every later run must match.
+struct ReferenceSolutions {
+    run_label: String,
+    solutions: Vec<BTreeMap<Name, Literal>>,
+}
+
+/// Checks that a run found the same solution set as the fixture's first comparable run.
+///
+/// Each run's expected solutions are only compared against that run's own recording, so a
+/// modelling choice that loses (or invents) solutions would otherwise be accepted silently whenever
+/// Conjure validation is skipped. Different representations print the same value in different
+/// orders, so the comparison is on normalised solutions.
+fn check_solutions_agree(
+    reference: &mut Option<ReferenceSolutions>,
+    run_label: String,
+    solutions: Vec<BTreeMap<Name, Literal>>,
+) -> Result<(), Box<dyn Error>> {
+    let Some(reference) = reference.as_ref() else {
+        *reference = Some(ReferenceSolutions {
+            run_label,
+            solutions,
+        });
+        return Ok(());
+    };
+    if reference.solutions == solutions {
+        return Ok(());
+    }
+
+    const SHOWN: usize = 10;
+    let describe = |missing_from: &[BTreeMap<Name, Literal>], present_in: &[_]| {
+        let missing: Vec<String> = present_in
+            .iter()
+            .filter(|solution| !missing_from.contains(solution))
+            .map(|solution: &BTreeMap<Name, Literal>| {
+                solution
+                    .iter()
+                    .map(|(name, value)| format!("{name} = {value}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            })
+            .collect();
+        let more = missing.len().saturating_sub(SHOWN);
+        let mut lines: Vec<String> = missing
+            .into_iter()
+            .take(SHOWN)
+            .map(|line| format!("    {line}"))
+            .collect();
+        if more > 0 {
+            lines.push(format!("    ... and {more} more"));
+        }
+        lines.join("\n")
+    };
+    Err(std::io::Error::other(format!(
+        "{run_label} found {} solutions but {} found {}; runs of one model must agree.\n  \
+         only in {}:\n{}\n  only in {}:\n{}",
+        solutions.len(),
+        reference.run_label,
+        reference.solutions.len(),
+        reference.run_label,
+        describe(&solutions, &reference.solutions),
+        run_label,
+        describe(&reference.solutions, &solutions),
+    ))
+    .into())
+}
+
 fn run_integration_test_with_timeout<F>(
     test_name: &str,
     test_dir: &str,
@@ -440,6 +515,7 @@ fn integration_test_inner_with_status(
     let rule_trace_mode = (!test_tracing_disabled()).then_some(config.rule_trace);
     let rule_trace_snapshots_enabled = rule_trace_mode == Some(RuleTraceMode::Full);
     let rule_trace_aggregates_enabled = rule_trace_mode == Some(RuleTraceMode::Aggregate);
+    let mut reference_solutions = None;
 
     let mut first_config_error = None;
     for comprehension_expander in comprehension_expanders {
@@ -513,7 +589,7 @@ fn integration_test_inner_with_status(
                                             solver,
                                         ),
                                     );
-                                    let run_timings = execute_integration_run(
+                                    let outcome = execute_integration_run(
                                         path,
                                         essence_base,
                                         extension,
@@ -527,7 +603,14 @@ fn integration_test_inner_with_status(
                                         rule_trace_aggregates_enabled
                                             .then_some(&config_rule_counts),
                                     )?;
-                                    config_timings.add(run_timings);
+                                    config_timings.add(outcome.timings);
+                                    if let Some(solutions) = outcome.comparable_solutions {
+                                        check_solutions_agree(
+                                            &mut reference_solutions,
+                                            format!("{}-{}", run_case.case_name, solver.as_str()),
+                                            solutions,
+                                        )?;
+                                    }
 
                                     if heuristic != Heuristic::All {
                                         break;
@@ -701,7 +784,7 @@ fn execute_integration_run(
     accept: bool,
     rule_trace_snapshots_enabled: bool,
     rule_counts: Option<&RuleCounts>,
-) -> Result<RunTimings, Box<dyn Error>> {
+) -> Result<RunOutcome, Box<dyn Error>> {
     let run_label = run_case_label(path, essence_base, extension, run_case);
     let default_rule_trace_enabled = matches!(run_case.rewriter, Rewriter::Rewrite(_));
     set_rule_trace_enabled(rule_trace_snapshots_enabled || rule_counts.is_some());
@@ -778,7 +861,7 @@ fn integration_test_inner(
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
     rule_trace_snapshots_enabled: bool,
-) -> Result<RunTimings, Box<dyn Error>> {
+) -> Result<RunOutcome, Box<dyn Error>> {
     let parser = run_case.parser;
     let rewriter = run_case.rewriter;
     let comprehension_expander = run_case.comprehension_expander;
@@ -946,9 +1029,24 @@ fn integration_test_inner(
 
     save_stats_json(context, path, case_name, solver_fam)?;
 
-    Ok(RunTimings {
-        translation_time_s,
-        solve_time_s,
+    // Only a complete solution set is comparable across runs: a truncated search keeps an
+    // arbitrary subset, and optimisation (or dominance) runs may legitimately settle on different
+    // optimal solutions or report different intermediate steps.
+    let comparable_solutions = solutions
+        .filter(|solutions| {
+            model.objective.is_none()
+                && model.dominance.is_none()
+                && !keep_intermediate_solutions
+                && !search_was_truncated(number_of_solutions, solutions.len())
+        })
+        .map(|solutions| normalize_solutions_for_comparison(&solutions));
+
+    Ok(RunOutcome {
+        timings: RunTimings {
+            translation_time_s,
+            solve_time_s,
+        },
+        comparable_solutions,
     })
 }
 
