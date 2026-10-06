@@ -85,13 +85,14 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
 
     // The value-letting guard walks every referenced name in the subtree, so keep it behind the
     // cheap direct-child check above. Most `bubble_up` attempts fail before this point. Lettings
-    // this call has just followed are exempt: their bubble is the one being lifted.
+    // this call has just followed are exempt: their bubble is the one being lifted. Defined
+    // constant lettings cannot hide another bubble and must not prevent index guards escaping.
     if expr.universe_bi().iter().any(|x: &Name| {
         !followed_lettings.contains(x)
             && syms.lookup(x).is_some_and(|x| {
                 matches!(
                     &x.kind() as &DeclarationKind,
-                    DeclarationKind::ValueLetting(_, _)
+                    DeclarationKind::ValueLetting(value, _) if eval_constant(value).is_none()
                 )
             })
     }) {
@@ -263,6 +264,33 @@ fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 #[cfg(test)]
 mod catch_boundary_tests {
     use super::*;
+
+    #[test]
+    fn constant_matrix_lettings_do_not_block_undefined_index_bubbles() {
+        let mut symbols = SymbolTable::new();
+        let matrix = conjure_cp::ast::DeclarationPtr::new_value_letting(
+            Name::user("M"),
+            into_matrix_expr!(vec![1.into(), 2.into()]),
+        );
+        symbols.insert(matrix.clone()).unwrap();
+        let indexed = Expression::SafeIndex(
+            Metadata::new(),
+            Moo::new(Reference::new(matrix).into()),
+            vec![0.into()],
+        );
+        let partial =
+            Expression::Bubble(Metadata::new(), Moo::new(indexed), Moo::new(false.into()));
+        let comparison = Expression::Eq(
+            Metadata::new(),
+            Moo::new(partial.clone()),
+            Moo::new(partial),
+        );
+        let effect = bubble_up(&comparison, &symbols).unwrap();
+        assert!(matches!(
+            effect.new_expression,
+            Expression::Bubble(_, inner, _) if inner.return_type() == ReturnType::Bool
+        ));
+    }
 
     #[test]
     fn catch_undef_consumes_partial_value_and_can_discard_partial_default() {

@@ -360,7 +360,11 @@ fn index_matrix_components_impl(expr: &Expression, symbols: &SymbolTable) -> App
         }
     }
 
-    let view = components.slice_lit(&slices).unwrap_or_bug();
+    // A safe index can be visited before its false definedness guard simplifies. Leave invalid
+    // literal indices to bubbling instead of treating them as an internal representation error.
+    let view = components
+        .slice_lit(&slices)
+        .map_err(|_| RuleNotApplicable)?;
 
     // Flat slice of remaining elements to index
     let mut lhs_elems: Vec<Expression> = components.view_as_exprs(&view);
@@ -731,6 +735,50 @@ mod tests {
             .expect("unsafe_const_index_matrix_components registered");
         let err = rule.apply(&expr, &symbols).unwrap_err();
         assert!(matches!(err, ApplicationError::RuleNotApplicable));
+    }
+
+    #[test]
+    fn safe_const_index_matrix_components_defers_outside_sparse_dimensions() {
+        let mut symbols = SymbolTable::new();
+        let domain = Domain::matrix(
+            Domain::int(vec![Range::Bounded(0, 10)]),
+            vec![
+                Domain::int(vec![Range::Bounded(1, 3), Range::Bounded(8, 10)]),
+                Domain::int(vec![Range::Single(1), Range::Single(3), Range::Single(9)]),
+            ],
+        );
+        let mut matrix = DeclarationPtr::new_find(Name::user("m"), domain);
+        let (extra, _) = MatrixComponents::init_for(&mut matrix).unwrap();
+        symbols.insert(matrix.clone()).unwrap();
+        symbols.extend(extra);
+        let subject = Expression::from(Reference::new(matrix.clone()));
+        for indices in [[0, 1], [4, 1], [11, 1], [1, 0], [1, 2], [1, 10]] {
+            let expr = Expression::SafeIndex(
+                Metadata::new(),
+                Moo::new(subject.clone()),
+                indices.into_iter().map(Expression::from).collect(),
+            );
+            assert!(matches!(
+                try_index_matrix_components(&expr, &symbols),
+                Err(ApplicationError::RuleNotApplicable)
+            ));
+        }
+        for indices in [[1, 1], [8, 9]] {
+            let expr = Expression::SafeIndex(
+                Metadata::new(),
+                Moo::new(subject.clone()),
+                indices.into_iter().map(Expression::from).collect(),
+            );
+            let effect = try_index_matrix_components(&expr, &symbols).unwrap();
+            let components = matrix.get_repr::<MatrixComponents>().unwrap();
+            let offset = components
+                .indices_lits_to_flat(&indices.into_iter().map(Literal::Int).collect::<Vec<_>>())
+                .unwrap();
+            assert_eq!(
+                effect.new_expression,
+                Expression::from(Reference::new(components.elements[offset].clone()))
+            );
+        }
     }
 
     #[test]

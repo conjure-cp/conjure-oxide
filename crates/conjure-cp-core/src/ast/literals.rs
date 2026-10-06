@@ -7,9 +7,8 @@ use std::hash::Hash;
 use ustr::Ustr;
 
 use super::{
-    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, PartitionAttr,
-    PermutationAttr, Range, ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int,
-    records::Field,
+    Atom, Domain, DomainPtr, Expression, GroundDomain, Moo, PartitionAttr, PermutationAttr, Range,
+    ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int, records::Field,
 };
 use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
@@ -377,26 +376,42 @@ impl AbstractLiteral<Expression> {
             }
 
             AbstractLiteral::Matrix(items, _) => {
-                // ensure that all items have a domain, or return None
                 let item_domains = items
                     .iter()
                     .map(|x| x.domain_of())
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
-                let item_domain = union_item_domains(item_domains, "matrix")?;
+                let mut item_domain = union_item_domains(item_domains, "matrix")?;
 
                 let mut new_index_domain = vec![];
 
                 // flatten index domains of n-d matrix into list
-                let mut e = Expression::AbstractLiteral(Metadata::new(), self.clone());
-                while let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, idx)) = e {
+                let mut matrix = self;
+                while let AbstractLiteral::Matrix(elems, idx) = matrix {
                     bug_assert!(
                         idx.as_matrix().is_none(),
                         "n-dimensional matrix literals should be represented as a matrix inside a matrix, got {idx}"
                     );
-                    new_index_domain.push(idx);
-                    e = elems[0].clone();
+                    new_index_domain.push(idx.clone());
+                    let Some(Expression::AbstractLiteral(_, inner @ AbstractLiteral::Matrix(..))) =
+                        elems.first()
+                    else {
+                        break;
+                    };
+                    matrix = inner;
+                }
+                // Each flattened literal dimension has already contributed to the row domain.
+                // Peel those dimensions so they are not represented twice. Matrix-valued
+                // expression leaves retain their own domains.
+                let mut remaining = new_index_domain.len() - 1;
+                while remaining > 0 {
+                    let (inner, indices) = item_domain.as_matrix()?;
+                    if indices.is_empty() {
+                        return None;
+                    }
+                    remaining = remaining.checked_sub(indices.len())?;
+                    item_domain = inner;
                 }
                 Some(Domain::matrix(item_domain, new_index_domain))
             }
@@ -1302,7 +1317,7 @@ mod tests {
 
     use super::*;
     use crate::ast::matrix::{flatten, partial_flatten, shape_of};
-    use crate::ast::{DeclarationPtr, Name};
+    use crate::ast::{DeclarationPtr, Metadata, Name};
     use crate::{domain_int_ground, into_matrix, matrix, matrix_lit, range};
     use uniplate::Uniplate;
 
@@ -1457,6 +1472,80 @@ mod tests {
         assert_eq!(idx_doms.len(), 2);
         assert_eq!(&idx_doms[0], &domain_int_ground!(1..2));
         assert_eq!(&idx_doms[1], &domain_int_ground!(1..4));
+    }
+
+    #[test]
+    fn expression_matrix_domain_does_not_count_nested_dimensions_twice() {
+        let columns = Domain::int(vec![Range::Single(1), Range::Single(3)]);
+        let rows = Domain::int(vec![Range::Single(1), Range::Single(8)]);
+        let matrix = Expression::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Matrix(
+                [vec![1.into(), 2.into()], vec![3.into(), 4.into()]]
+                    .into_iter()
+                    .map(|values| {
+                        Expression::AbstractLiteral(
+                            Metadata::new(),
+                            AbstractLiteral::Matrix(values, columns.clone()),
+                        )
+                    })
+                    .collect(),
+                rows.clone(),
+            ),
+        );
+        assert_eq!(
+            matrix.domain_of(),
+            Some(Domain::matrix(
+                Domain::int(vec![Range::Bounded(1, 4)]),
+                vec![rows.clone(), columns.clone()]
+            ))
+        );
+        let planes = Domain::int(vec![Range::Bounded(-1, 0)]);
+        let tensor = Expression::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Matrix(vec![matrix.clone(), matrix.clone()], planes.clone()),
+        );
+        assert_eq!(
+            tensor.domain_of(),
+            Some(Domain::matrix(
+                Domain::int(vec![Range::Bounded(1, 4)]),
+                vec![planes, rows.clone(), columns.clone()]
+            ))
+        );
+        // Matrix-valued references are leaves, rather than extra literal dimensions.
+        let row = Expression::from(crate::ast::Reference::new(DeclarationPtr::new_find(
+            Name::user("row"),
+            Domain::matrix(
+                Domain::int(vec![Range::Bounded(1, 4)]),
+                vec![columns.clone()],
+            ),
+        )));
+        let referenced_rows = Expression::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Matrix(vec![row.clone(), row], rows),
+        );
+        assert_eq!(
+            Expression::SafeIndex(
+                Metadata::new(),
+                Moo::new(referenced_rows),
+                vec![8.into(), 3.into()]
+            )
+            .domain_of(),
+            Some(Domain::int(vec![Range::Bounded(1, 4)]))
+        );
+        // Definedness is handled by bubbling; even an invalid index has scalar result type/domain.
+        for indices in [[1, 1], [8, 3], [0, 1], [4, 1], [1, 2]] {
+            let indexed = Expression::SafeIndex(
+                Metadata::new(),
+                Moo::new(matrix.clone()),
+                indices.into_iter().map(Expression::from).collect(),
+            );
+            assert_eq!(
+                indexed.domain_of(),
+                Some(Domain::int(vec![Range::Bounded(1, 4)]))
+            );
+            assert_eq!(indexed.return_type(), ReturnType::Int);
+        }
     }
 
     #[test]
