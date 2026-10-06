@@ -1,6 +1,7 @@
 mod lex;
 mod normalise;
 mod set;
+mod short_table;
 
 /************************************************************************/
 /*        Rules for translating to Minion-supported constraints         */
