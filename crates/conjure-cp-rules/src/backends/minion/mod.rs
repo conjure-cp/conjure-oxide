@@ -165,28 +165,44 @@ fn materialise_matrix_operand(expr: &Expr) -> Option<Expr> {
     None
 }
 
-/// Expands value-letting references used as the row matrix in table constraints.
+/// Lower modelling collections to Minion's scalar table relation.
 #[register_rule("Minion", 4050, [Table, NegativeTable])]
-fn inline_table_row_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    match expr {
-        Expr::Table(meta, tuple, rows) => {
-            let new_rows = materialise_matrix_operand(rows).ok_or(RuleNotApplicable)?;
-            Ok(RuleEffect::pure(Expr::Table(
-                meta.clone(),
-                tuple.clone(),
-                Moo::new(new_rows),
-            )))
-        }
-        Expr::NegativeTable(meta, tuple, rows) => {
-            let new_rows = materialise_matrix_operand(rows).ok_or(RuleNotApplicable)?;
-            Ok(RuleEffect::pure(Expr::NegativeTable(
-                meta.clone(),
-                tuple.clone(),
-                Moo::new(new_rows),
-            )))
-        }
-        _ => Err(RuleNotApplicable),
-    }
+fn flatten_table(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let (inputs, rows, negative) = match expr {
+        Expr::Table(_, inputs, rows) => (inputs, rows, false),
+        Expr::NegativeTable(_, inputs, rows) => (inputs, rows, true),
+        _ => return Err(RuleNotApplicable),
+    };
+    let inputs = crate::shared::utils::table_ordered_entries(inputs).ok_or(RuleNotApplicable)?;
+    let rows = crate::shared::utils::table_rows(rows).ok_or(RuleNotApplicable)?;
+    let rows = rows
+        .iter()
+        .map(|row| {
+            let row = crate::shared::utils::table_ordered_entries(row)?;
+            if row.len() != inputs.len() {
+                return None;
+            }
+            row.iter()
+                .map(|value| match eval_constant(value)? {
+                    Lit::Int(value) => Some(value),
+                    Lit::Bool(value) => Some(i32::from(value)),
+                    _ => None,
+                })
+                .collect::<Option<Vec<_>>>()
+        })
+        .collect::<Option<Vec<_>>>()
+        .ok_or(RuleNotApplicable)?;
+    let mut symbols = symbols.clone();
+    let mut top = vec![];
+    let inputs = inputs
+        .into_iter()
+        .map(|input| flatten_expression_to_atom(input, &mut symbols, &mut top))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(RuleEffect::new(
+        Expr::FlatTable(Metadata::new(), inputs, rows, negative),
+        top,
+        symbols,
+    ))
 }
 
 #[register_rule("Minion", 4200, [Eq / Product, AuxDeclaration / Product])]

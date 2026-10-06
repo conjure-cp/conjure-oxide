@@ -459,7 +459,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::Metavar(_, _) => Err(RuleNotApplicable),
         Expr::UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
-        Expr::Table(_, _, _) => Err(RuleNotApplicable),
+        Expr::Table(_, _, _) | Expr::FlatTable(..) => Err(RuleNotApplicable),
         Expr::NegativeTable(_, _, _) | Expr::ShortTable(_, _, _) => Err(RuleNotApplicable),
         Expr::AtLeast(_, _, _, _) => Err(RuleNotApplicable),
         Expr::AtMost(_, _, _, _) => Err(RuleNotApplicable),

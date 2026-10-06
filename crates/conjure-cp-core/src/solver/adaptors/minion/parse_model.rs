@@ -193,6 +193,7 @@ fn collect_table_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast:
             | conjure_ast::Expression::NegativeTable(_, tuple_expr, _) => {
                 Some(Moo::unwrap_or_clone(tuple_expr))
             }
+            flat @ conjure_ast::Expression::FlatTable(..) => Some(flat),
             _ => None,
         })
         .flat_map(|tuple_expr| Biplate::<conjure_ast::Reference>::universe_bi(&tuple_expr))
@@ -541,19 +542,27 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atomic_expr(Moo::unwrap_or_clone(a))?,
             parse_atomic_expr(Moo::unwrap_or_clone(b))?,
         )),
-        conjure_ast::Expression::Table(_metadata, tuple_expr, allowed_rows_expr) => {
-            parse_table_constraint(
-                TableConstraintKind::Table,
-                Moo::unwrap_or_clone(tuple_expr),
-                Moo::unwrap_or_clone(allowed_rows_expr),
-            )
-        }
-        conjure_ast::Expression::NegativeTable(_metadata, tuple_expr, forbidden_rows_expr) => {
-            parse_table_constraint(
-                TableConstraintKind::NegativeTable,
-                Moo::unwrap_or_clone(tuple_expr),
-                Moo::unwrap_or_clone(forbidden_rows_expr),
-            )
+        conjure_ast::Expression::FlatTable(_, inputs, rows, negative) => {
+            let kind = if negative {
+                TableConstraintKind::NegativeTable
+            } else {
+                TableConstraintKind::Table
+            };
+            let vars = inputs
+                .into_iter()
+                .map(parse_atom)
+                .collect::<Result<Vec<_>, _>>()?;
+            if rows.iter().any(|row| row.len() != vars.len()) {
+                return Err(ModelInvalid(
+                    "FlatTable row width does not match inputs".into(),
+                ));
+            }
+            Ok(kind.into_constraint(
+                vars,
+                rows.into_iter()
+                    .map(|row| row.into_iter().map(minion_ast::Constant::Integer).collect())
+                    .collect(),
+            ))
         }
         conjure_ast::Expression::AtLeast(_metadata, vars_expr, counts_expr, values_expr) => {
             parse_global_cardinality_constraint(
@@ -746,13 +755,6 @@ enum TableConstraintKind {
 }
 
 impl TableConstraintKind {
-    fn name(self) -> &'static str {
-        match self {
-            Self::Table => "table",
-            Self::NegativeTable => "negativeTable",
-        }
-    }
-
     fn into_constraint(
         self,
         vars: Vec<minion_ast::Var>,
@@ -763,56 +765,6 @@ impl TableConstraintKind {
             Self::NegativeTable => minion_ast::Constraint::NegativeTable(vars, tuples),
         }
     }
-}
-
-fn parse_table_constraint(
-    kind: TableConstraintKind,
-    tuple_expr: conjure_ast::Expression,
-    rows_expr: conjure_ast::Expression,
-) -> Result<minion_ast::Constraint, SolverError> {
-    let (tuple_elems, _) = tuple_expr
-        .unwrap_matrix_unchecked()
-        .ok_or_else(|| ModelInvalid(format!("{} first argument is not a matrix", kind.name())))?;
-    let (rows, _) = rows_expr
-        .unwrap_matrix_unchecked()
-        .ok_or_else(|| ModelInvalid(format!("{} second argument is not a matrix", kind.name())))?;
-
-    let vars = tuple_elems
-        .into_iter()
-        .map(parse_atomic_expr)
-        .collect::<Result<Vec<_>, SolverError>>()?;
-
-    let mut tuples = Vec::with_capacity(rows.len());
-    for row_expr in rows {
-        let (row_elems, _) = row_expr
-            .unwrap_matrix_unchecked()
-            .ok_or_else(|| ModelInvalid(format!("{} row is not a matrix", kind.name())))?;
-
-        if row_elems.len() != vars.len() {
-            return Err(ModelInvalid(format!(
-                "{} row width does not match tuple width",
-                kind.name()
-            )));
-        }
-
-        let tuple = row_elems
-            .into_iter()
-            .map(|row_val_expr| {
-                conjure_ast::eval_constant(&row_val_expr)
-                    .ok_or_else(|| {
-                        ModelInvalid(format!(
-                            "{} row contains a non-constant expression",
-                            kind.name()
-                        ))
-                    })
-                    .and_then(parse_literal)
-            })
-            .collect::<Result<Vec<_>, SolverError>>()?;
-
-        tuples.push(tuple);
-    }
-
-    Ok(kind.into_constraint(vars, tuples))
 }
 
 #[derive(Clone, Copy)]

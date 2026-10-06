@@ -368,7 +368,7 @@ module.exports = grammar ({
 
     set_literal: $ => seq(
       "{",
-      field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom))),
+      optional(field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom)))),
       "}"
     ),
 
@@ -1183,27 +1183,27 @@ module.exports = grammar ({
     table: $ => seq(
       "table",
       "(",
-      field("variables", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      field("variables", choice($.sequence_literal, $.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ",",
-      field("rows", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      field("rows", choice($.set_literal, $.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ")"
     ),
 
     short_table: $ => seq(
       "shortTable",
       "(",
-      field("variables", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      field("variables", choice($.sequence_literal, $.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ",",
-      field("rows", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      field("rows", choice($.set_literal, $.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ")"
     ),
 
     negative_table: $ => seq(
       choice("negativeTable", "negative_table"),
       "(",
-      field("variables", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      field("variables", choice($.sequence_literal, $.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ",",
-      field("rows", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      field("rows", choice($.set_literal, $.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ")"
     ),
 

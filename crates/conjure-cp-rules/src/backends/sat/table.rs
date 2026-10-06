@@ -1,4 +1,5 @@
 //! Preserve numeric table relations until library clause generation.
+use crate::shared::utils::{table_ordered_entries, table_rows};
 use conjure_cp::ast::{Atom, Expression as Expr, Literal, SatEncodingDecision, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
@@ -10,14 +11,8 @@ fn expand_short_table(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::ShortTable(_, tuple, rows) = expr else {
         return Err(RuleNotApplicable);
     };
-    let inputs = materialise(tuple)
-        .unwrap_matrix_unchecked()
-        .ok_or(RuleNotApplicable)?
-        .0;
-    let rows = materialise(rows)
-        .unwrap_matrix_unchecked()
-        .ok_or(RuleNotApplicable)?
-        .0;
+    let inputs = table_ordered_entries(tuple).ok_or(RuleNotApplicable)?;
+    let rows = table_rows(rows).ok_or(RuleNotApplicable)?;
     let rows = rows
         .into_iter()
         .map(|row| {
@@ -80,20 +75,17 @@ fn select_table(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         Expr::NegativeTable(_, tuple, rows) => (tuple, rows, true),
         _ => return Err(RuleNotApplicable),
     };
-    let tuple = materialise(tuple);
-    let (tuple, _) = tuple.unwrap_matrix_unchecked().ok_or(RuleNotApplicable)?;
+    let tuple = table_ordered_entries(tuple).ok_or(RuleNotApplicable)?;
     let inputs = tuple
         .iter()
         .map(super::pseudo_boolean::integer_view)
         .collect::<Option<Vec<_>>>()
         .ok_or(RuleNotApplicable)?;
-    let rows = materialise(rows);
-    let (rows, _) = rows.unwrap_matrix_unchecked().ok_or(RuleNotApplicable)?;
+    let rows = table_rows(rows).ok_or(RuleNotApplicable)?;
     let row_expressions = rows
         .iter()
         .map(|row| {
-            let row = materialise(row);
-            let (row, _) = row.unwrap_matrix_unchecked()?;
+            let row = table_ordered_entries(row)?;
             (row.len() == inputs.len()).then_some(row)
         })
         .collect::<Option<Vec<_>>>()
@@ -139,6 +131,43 @@ mod tests {
     use conjure_cp::ast::{
         AbstractLiteral, DeclarationPtr, Domain, Metadata, Moo, Name, Reference,
     };
+    #[test]
+    fn table_collection_rows_retain_order_and_sign() {
+        let sequence =
+            |values| Expr::AbstractLiteral(Metadata::new(), AbstractLiteral::Sequence(values));
+        let rows = Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Set(vec![
+                sequence(vec![true.into(), (-2).into()]),
+                sequence(vec![false.into(), 3.into()]),
+            ]),
+        );
+        for negative in [false, true] {
+            let inputs = Moo::new(sequence(vec![1.into(), (-2).into()]));
+            let expression = if negative {
+                Expr::NegativeTable(Metadata::new(), inputs, Moo::new(rows.clone()))
+            } else {
+                Expr::Table(Metadata::new(), inputs, Moo::new(rows.clone()))
+            };
+            let effect = select_table(&expression, &SymbolTable::new()).unwrap();
+            assert!(
+                matches!(&effect.new_sat_decisions[0], SatEncodingDecision::Table { rows, negative: sign, .. } if rows == &vec![vec![1,-2], vec![0,3]] && *sign == negative)
+            );
+        }
+        let unordered = Expr::Table(
+            Metadata::new(),
+            Moo::new(sequence(vec![1.into(), 2.into()])),
+            Moo::new(Expr::AbstractLiteral(
+                Metadata::new(),
+                AbstractLiteral::Set(vec![Expr::AbstractLiteral(
+                    Metadata::new(),
+                    AbstractLiteral::Set(vec![1.into(), 2.into()]),
+                )]),
+            )),
+        );
+        assert!(select_table(&unordered, &SymbolTable::new()).is_err());
+    }
+
     #[test]
     fn short_table_omissions_reuse_inputs_and_invalid_positions_are_rejected() {
         let pair = |position| {

@@ -106,19 +106,62 @@ pub fn tuple_expr_entries(expr: &Expr) -> Option<Vec<Expr>> {
     }
 }
 
-/// Read a sparse short-table row; sequences permit different row lengths without ragged matrices.
-pub fn short_table_row_entries(expr: &Expr) -> Option<Vec<Expr>> {
-    match expr {
-        Expr::AbstractLiteral(_, AbstractLiteral::Sequence(entries)) => Some(entries.clone()),
+/// Resolve a value letting used as a table operand.
+pub fn table_operand(expr: &Expr) -> Expr {
+    if let Expr::Atomic(_, Atom::Reference(reference)) = expr {
+        if let Some(value) = reference.resolve_expression() {
+            return value;
+        }
+        if let Some(value) = reference.resolve_constant() {
+            return value.into();
+        }
+    }
+    expr.clone()
+}
+
+/// Read an ordered table input or dense row. Sets deliberately have no positional meaning.
+pub fn table_ordered_entries(expr: &Expr) -> Option<Vec<Expr>> {
+    match table_operand(expr) {
+        Expr::AbstractLiteral(_, AbstractLiteral::Sequence(entries)) => Some(entries),
         Expr::Atomic(
             _,
             Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Sequence(entries))),
-        ) => Some(entries.iter().cloned().map(Expr::from).collect()),
-        _ => expr
-            .clone()
-            .unwrap_matrix_unchecked()
-            .map(|(entries, _)| entries),
+        ) => Some(entries.into_iter().map(Expr::from).collect()),
+        expr => expr.unwrap_matrix_unchecked().map(|(entries, _)| entries),
     }
+}
+
+/// Read an unordered table relation, retaining matrix syntax for existing models.
+pub fn table_rows(expr: &Expr) -> Option<Vec<Expr>> {
+    match table_operand(expr) {
+        Expr::AbstractLiteral(_, AbstractLiteral::Set(entries)) => Some(entries),
+        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Set(entries)))) => {
+            Some(entries.into_iter().map(Expr::from).collect())
+        }
+        expr => expr.unwrap_matrix_unchecked().map(|(entries, _)| entries),
+    }
+}
+
+/// Read a sparse row of tuple pairs; sets permit different row sizes without ragged matrices.
+pub fn short_table_row_entries(expr: &Expr) -> Option<Vec<Expr>> {
+    let (entries, is_set) = match table_operand(expr) {
+        Expr::AbstractLiteral(_, AbstractLiteral::Set(entries)) => (entries, true),
+        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Set(entries)))) => {
+            (entries.into_iter().map(Expr::from).collect(), true)
+        }
+        expr => (table_ordered_entries(&expr)?, false),
+    };
+    if !is_set {
+        return Some(entries);
+    }
+    // Repeated members of a set must not become repeated position assignments.
+    let mut unique = Vec::with_capacity(entries.len());
+    for entry in entries {
+        if !unique.contains(&entry) {
+            unique.push(entry);
+        }
+    }
+    Some(unique)
 }
 
 pub fn as_eq_or_neq(expr: &Expr) -> Result<(&Expr, &Expr, bool), ApplicationError> {

@@ -458,6 +458,24 @@ mod test {
     }
 
     #[test]
+    fn parses_table_collection_literals() {
+        for constraint in [
+            "table(sequence(x,y), {sequence(1,2), sequence(2,1)})",
+            "negativeTable([x,y], {sequence(1,2)})",
+            "shortTable([x,y], {{(1,2)}, {(2,1)}})",
+            "shortTable([x,y], {{}})",
+            "table([x,y], {})",
+        ] {
+            let source = format!("find x, y : int(1..3) such that {constraint}");
+            let (model, _) = parse_essence(&source).unwrap();
+            assert!(matches!(
+                model.constraints()[0],
+                Expression::Table(..) | Expression::NegativeTable(..) | Expression::ShortTable(..)
+            ));
+        }
+    }
+
+    #[test]
     pub fn test_parse_table_in_quantifier() {
         let src = "
         find x, y, z : int(1..3)
