@@ -66,7 +66,7 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     }
 
     // Semantic allDifferent/table/element operands retain their ready value views.
-    // Only rank codes need conversion; the decision rule handles the other encodings.
+    // Nonlinear codes need conversion; the decision rule retains linear value views.
     let retains_views = matches!(
         expr,
         Expr::AllDiff(..)
@@ -76,11 +76,7 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
             | Expr::SatElement(..)
             | Expr::SatObjective(..)
     );
-    if retains_views
-        && !encodings
-            .iter()
-            .any(|encoding| matches!(encoding, SATIntEncoding::Rank(_)))
-    {
+    if retains_views && !encodings.iter().any(needs_actual_value_circuit) {
         return Err(RuleNotApplicable);
     }
     // Ready indicators need an actual-value view only when a circuit is required.
@@ -98,7 +94,8 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     let mut new_symbols = symbols.clone();
 
     let mut convert = |input: Expr| {
-        if (retains_views && !matches!(&input, Expr::SATInt(_, SATIntEncoding::Rank(_), _, _)))
+        if (retains_views
+            && !matches!(&input, Expr::SATInt(_, encoding, _, _) if needs_actual_value_circuit(encoding)))
             || (!has_indicator && ready_indicator(&input))
         {
             input
@@ -129,6 +126,17 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         clauses,
         new_symbols,
     ))
+}
+
+/// Whether semantic numeric decisions need a decoded actual-value circuit.
+fn needs_actual_value_circuit(encoding: &SATIntEncoding) -> bool {
+    !matches!(
+        encoding,
+        SATIntEncoding::Direct
+            | SATIntEncoding::Order
+            | SATIntEncoding::Log
+            | SATIntEncoding::Offset
+    )
 }
 
 fn map_table_cells(expression: Expr, convert: &mut impl FnMut(Expr) -> Expr) -> Expr {
@@ -436,6 +444,56 @@ mod unsigned_tests {
     use crate::types::int::unsigned::{unsigned_capacity, unsigned_width, value_at_rank};
     use conjure_cp::ast::Name;
     use std::collections::HashMap;
+
+    fn assert_nonlinear_semantic_consumers(operand: Expr) {
+        let matrix = || Moo::new(into_matrix_expr!(vec![operand.clone()]));
+        let rows = || {
+            Moo::new(into_matrix_expr!(vec![into_matrix_expr!(vec![
+                operand.clone()
+            ])]))
+        };
+        let expressions = [
+            Expr::AllDiff(Metadata::new(), matrix()),
+            Expr::AllDifferentExcept(Metadata::new(), matrix(), Moo::new(operand.clone())),
+            Expr::Table(Metadata::new(), matrix(), rows()),
+            Expr::NegativeTable(Metadata::new(), matrix(), rows()),
+            Expr::SatElement(
+                Metadata::new(),
+                matrix(),
+                Moo::new(1.into()),
+                Moo::new(operand.clone()),
+            ),
+            Expr::SatObjective(Metadata::new(), true, Moo::new(operand)),
+        ];
+        for expression in expressions {
+            let effect = unify_sat_int_encodings(&expression, &SymbolTable::new()).unwrap();
+            let integers = effect
+                .new_expression
+                .universe()
+                .into_iter()
+                .filter(|expr| matches!(expr, Expr::SATInt(..)))
+                .collect::<Vec<_>>();
+            assert!(!integers.is_empty());
+            for integer in integers {
+                assert!(matches!(
+                    integer,
+                    Expr::SATInt(_, SATIntEncoding::Log, _, _)
+                ));
+                assert!(crate::backends::sat::pseudo_boolean::integer_view(&integer).is_some());
+            }
+        }
+    }
+
+    #[test]
+    fn rank_values_reach_every_semantic_numeric_consumer() {
+        let operand = Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Rank(vec![(-3, -3), (2, 2)]),
+            Moo::new(into_matrix_expr!(vec![true.into()])),
+            (-3, 2),
+        );
+        assert_nonlinear_semantic_consumers(operand);
+    }
 
     #[test]
     fn pending_count_operands_keep_indicators_for_native_cardinality() {
