@@ -80,33 +80,15 @@ SafeIndex([SafeIndex([5,0,0,0;int(1, 3..4, 9)],[1]),SafeIndex([1,1,1,1;int(1, 3.
 
 --
 
-M[0, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-{SafeIndex(M,[0, 1]) @ false}
-
---
-
-SafeIndex(M,[0, 1])
-   ~~> inline_constant_matrix_subject_for_minion ([("Minion", 9000)])
-SafeIndex([[5,0,0,0;int(1, 3..4, 9)],[1,1,1,1;int(1, 3..4, 9)],[2,2,2,2;int(1, 3..4, 9)],[3,3,3,5;int(1, 3..4, 9)],[1,1,1,1;int(1, 3..4, 9)],[1,1,1,1;int(1, 3..4, 9)];int(1..3, 8..10)],[0, 1])
-
---
-
-SafeIndex([[5,0,0,0;int(1, 3..4, 9)],[1,1,1,1;int(1, 3..4, 9)],[2,2,2,2;int(1, 3..4, 9)],[3,3,3,5;int(1, 3..4, 9)],[1,1,1,1;int(1, 3..4, 9)],[1,1,1,1;int(1, 3..4, 9)];int(1..3, 8..10)],[0, 1])
-   ~~> remove_dimension_from_matrix_indexing ([("Base", 8900)])
-SafeIndex([SafeIndex([5,0,0,0;int(1, 3..4, 9)],[1]),SafeIndex([1,1,1,1;int(1, 3..4, 9)],[1]),SafeIndex([2,2,2,2;int(1, 3..4, 9)],[1]),SafeIndex([3,3,3,5;int(1, 3..4, 9)],[1]),SafeIndex([1,1,1,1;int(1, 3..4, 9)],[1]),SafeIndex([1,1,1,1;int(1, 3..4, 9)],[1]);int(1..3, 8..10)],[0])
-
---
-
-{SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[0]) @ false} = {SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[0]) @ false}
+{SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[0]) @ false} = M[0, 1]
    ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[0]) = SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[0]) @ and([false,false;int(1..)])}
+{SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[0]) = M[0, 1] @ false}
 
 --
 
-{SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[0]) = SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[0]) @ false}
+{SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[0]) = M[0, 1] @ false}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[0]) = SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[0]),false;int(1..)])
+and([SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[0]) = M[0, 1],false;int(1..)])
 
 --
 
@@ -128,33 +110,15 @@ SafeIndex([SafeIndex([5,0,0,0;int(1, 3..4, 9)],[1]),SafeIndex([1,1,1,1;int(1, 3.
 
 --
 
-M[4, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-{SafeIndex(M,[4, 1]) @ false}
-
---
-
-SafeIndex(M,[4, 1])
-   ~~> inline_constant_matrix_subject_for_minion ([("Minion", 9000)])
-SafeIndex([[5,0,0,0;int(1, 3..4, 9)],[1,1,1,1;int(1, 3..4, 9)],[2,2,2,2;int(1, 3..4, 9)],[3,3,3,5;int(1, 3..4, 9)],[1,1,1,1;int(1, 3..4, 9)],[1,1,1,1;int(1, 3..4, 9)];int(1..3, 8..10)],[4, 1])
-
---
-
-SafeIndex([[5,0,0,0;int(1, 3..4, 9)],[1,1,1,1;int(1, 3..4, 9)],[2,2,2,2;int(1, 3..4, 9)],[3,3,3,5;int(1, 3..4, 9)],[1,1,1,1;int(1, 3..4, 9)],[1,1,1,1;int(1, 3..4, 9)];int(1..3, 8..10)],[4, 1])
-   ~~> remove_dimension_from_matrix_indexing ([("Base", 8900)])
-SafeIndex([SafeIndex([5,0,0,0;int(1, 3..4, 9)],[1]),SafeIndex([1,1,1,1;int(1, 3..4, 9)],[1]),SafeIndex([2,2,2,2;int(1, 3..4, 9)],[1]),SafeIndex([3,3,3,5;int(1, 3..4, 9)],[1]),SafeIndex([1,1,1,1;int(1, 3..4, 9)],[1]),SafeIndex([1,1,1,1;int(1, 3..4, 9)],[1]);int(1..3, 8..10)],[4])
-
---
-
-{SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[4]) @ false} = {SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[4]) @ false}
+M[4, 1] = {SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[4]) @ false}
    ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[4]) = SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[4]) @ and([false,false;int(1..)])}
+{M[4, 1] = SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[4]) @ false}
 
 --
 
-{SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[4]) = SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[4]) @ false}
+{M[4, 1] = SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[4]) @ false}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[4]) = SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[4]),false;int(1..)])
+and([M[4, 1] = SafeIndex([5,1,2,3,1,1;int(1..3, 8..10)],[4]),false;int(1..)])
 
 --
 
