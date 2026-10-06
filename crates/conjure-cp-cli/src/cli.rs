@@ -234,7 +234,7 @@ pub struct GlobalArgs {
 
     /// Pin the SAT AMO encoder: pairwise, ladder, bitwise, commander, bimander, two-product,
     /// pindakaas-pairwise, pindakaas-ladder or pindakaas-bitwise.
-    /// If omitted, the modelling heuristic chooses one algorithm for the model.
+    /// If omitted, compact chooses per constraint; portfolio heuristics share one family choice.
     #[arg(long = "sat-encoding-amo", global = true, help_heading = MODELLING_HELP_HEADING)]
     pub amo_encoding: Option<conjure_cp::ast::sat_decision::AmoEncoding>,
 

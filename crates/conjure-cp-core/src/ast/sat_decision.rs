@@ -597,7 +597,8 @@ impl std::str::FromStr for AmoEncoding {
     }
 }
 
-/// Resolve unpinned encoding classes once per model through the configured heuristic.
+/// Resolve unpinned encoding classes through the configured heuristic.
+/// Compact chooses AMO and table algorithms per constraint; portfolio heuristics share families.
 pub fn resolve_encoding_choices(decisions: &mut [SatEncodingDecision]) {
     resolve_element_choices(decisions);
     resolve_table_choices(decisions);
@@ -654,6 +655,25 @@ fn resolve_element_choices(decisions: &mut [SatEncodingDecision]) {
 }
 fn resolve_table_choices(decisions: &mut [SatEncodingDecision]) {
     use crate::settings::{self, Heuristic};
+    if settings::table_encoding().is_none() && settings::heuristic() == Heuristic::Compact {
+        for decision in decisions {
+            if let SatEncodingDecision::Table {
+                rows,
+                row_views,
+                encoding,
+                ..
+            } = decision
+                && encoding.is_none()
+            {
+                let algorithm = compact_table_encoding(rows, row_views.as_ref().map(Vec::len));
+                *encoding = Some(EncodingSelection {
+                    algorithm,
+                    provenance: SelectionProvenance::Heuristic,
+                });
+            }
+        }
+        return;
+    }
     let rows = decisions
         .iter()
         .filter_map(|decision| match decision {
@@ -701,6 +721,17 @@ fn resolve_table_choices(decisions: &mut [SatEncodingDecision]) {
                 provenance,
             });
         }
+    }
+}
+
+/// Count real variable rows or distinct constant rows before choosing the composition.
+fn compact_table_encoding(rows: &[Vec<i64>], variable_row_count: Option<usize>) -> TableEncoding {
+    let count = variable_row_count
+        .unwrap_or_else(|| rows.iter().collect::<std::collections::BTreeSet<_>>().len());
+    if count > 4 {
+        TableEncoding::Mdd
+    } else {
+        TableEncoding::Tuple
     }
 }
 fn resolve_alldifferent_choices(decisions: &mut [SatEncodingDecision]) {
@@ -780,6 +811,7 @@ pub(crate) fn count_uses_amo(inputs: &[Expression], relation: IntegerRelation, b
 
 fn resolve_amo_choices(decisions: &mut [SatEncodingDecision]) {
     use crate::settings::{self, Heuristic};
+    let compact = settings::amo_encoding().is_none() && settings::heuristic() == Heuristic::Compact;
     let largest = decisions
         .iter()
         .filter_map(|decision| match decision {
@@ -827,6 +859,17 @@ fn resolve_amo_choices(decisions: &mut [SatEncodingDecision]) {
         (AmoEncoding::ALL[index], SelectionProvenance::Heuristic)
     };
     for decision in decisions {
+        let algorithm = if compact {
+            let size = match &*decision {
+                SatEncodingDecision::AtMostOne { inputs, .. }
+                | SatEncodingDecision::CountRelation { inputs, .. } => inputs.len(),
+                SatEncodingDecision::AllDifferent { inputs, .. } => inputs.len(),
+                _ => 0,
+            };
+            compact_amo_encoding(size)
+        } else {
+            algorithm
+        };
         if let SatEncodingDecision::CountRelation {
             inputs,
             relation,
@@ -862,10 +905,51 @@ fn resolve_amo_choices(decisions: &mut [SatEncodingDecision]) {
     }
 }
 
+fn compact_amo_encoding(size: usize) -> AmoEncoding {
+    if size <= 5 {
+        AmoEncoding::Pairwise
+    } else {
+        AmoEncoding::Ladder
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::settings::{self, Heuristic};
+    #[test]
+    fn compact_amo_choices_are_local_but_pins_cover_the_family() {
+        let build = |size| SatEncodingDecision::AtMostOne {
+            inputs: vec![true.into(); size],
+            encoding: None,
+        };
+        settings::set_heuristic(Heuristic::Compact);
+        settings::set_amo_encoding(None);
+        let mut decisions = vec![build(3), build(20)];
+        resolve_encoding_choices(&mut decisions);
+        for (decision, algorithm) in decisions
+            .iter()
+            .zip([AmoEncoding::Pairwise, AmoEncoding::Ladder])
+        {
+            assert!(
+                matches!(decision, SatEncodingDecision::AtMostOne { encoding: Some(EncodingSelection { algorithm: actual, provenance: SelectionProvenance::Heuristic }), .. } if *actual == algorithm)
+            );
+        }
+        settings::set_amo_encoding(Some(AmoEncoding::Bitwise));
+        let mut decisions = vec![build(3), build(20)];
+        resolve_encoding_choices(&mut decisions);
+        assert!(decisions.iter().all(|decision| matches!(
+            decision,
+            SatEncodingDecision::AtMostOne {
+                encoding: Some(EncodingSelection {
+                    algorithm: AmoEncoding::Bitwise,
+                    provenance: SelectionProvenance::ExplicitConfiguration
+                }),
+                ..
+            }
+        )));
+        settings::set_amo_encoding(None);
+    }
     #[test]
     fn cardinality_choices_are_shared_and_explicit_pins_take_precedence() {
         let decision = || SatEncodingDecision::Cardinality {
@@ -1481,11 +1565,11 @@ mod table_choice_tests {
     use super::*;
     use crate::settings::{self, Heuristic};
     #[test]
-    fn table_choices_are_shared_and_explicit_requests_have_provenance() {
+    fn compact_table_choices_are_local_and_explicit_requests_have_provenance() {
         let build = |size| SatEncodingDecision::Table {
             output: true.into(),
             inputs: vec![],
-            rows: vec![vec![]; size],
+            rows: (0..size).map(|row| vec![row]).collect(),
             row_views: None,
             negative: false,
             encoding: None,
@@ -1495,16 +1579,21 @@ mod table_choice_tests {
         settings::set_heuristic(Heuristic::Compact);
         let mut decisions = vec![build(1), build(5)];
         resolve_encoding_choices(&mut decisions);
-        assert!(decisions.iter().all(|d| matches!(
-            d,
-            SatEncodingDecision::Table {
-                encoding: Some(EncodingSelection {
-                    algorithm: TableEncoding::Mdd,
-                    provenance: SelectionProvenance::Heuristic
-                }),
-                ..
-            }
-        )));
+        for (decision, algorithm) in decisions
+            .iter()
+            .zip([TableEncoding::Tuple, TableEncoding::Mdd])
+        {
+            assert!(matches!(
+                decision,
+                SatEncodingDecision::Table {
+                    encoding: Some(EncodingSelection {
+                        algorithm: actual,
+                        provenance: SelectionProvenance::Heuristic
+                    }),
+                    ..
+                } if *actual == algorithm
+            ));
+        }
         settings::set_table_encoding(Some(TableEncoding::Tuple));
         let mut decisions = vec![build(1), build(5)];
         resolve_encoding_choices(&mut decisions);
@@ -1520,6 +1609,26 @@ mod table_choice_tests {
         )));
         settings::set_table_encoding(None);
         settings::set_heuristic(Heuristic::First);
+    }
+
+    #[test]
+    fn dense_binary_tables_use_mdd_and_duplicate_rows_do_not_inflate_cost() {
+        let dense = (0..8)
+            .flat_map(|x| {
+                (0..8)
+                    .filter(move |y| (x + y) % 4 != 0)
+                    .map(move |y| vec![x, y])
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(compact_table_encoding(&dense, None), TableEncoding::Mdd);
+        assert_eq!(compact_table_encoding(&[], Some(48)), TableEncoding::Mdd);
+        assert_eq!(compact_table_encoding(&[], Some(2)), TableEncoding::Tuple);
+        assert_eq!(
+            compact_table_encoding(&vec![vec![1, 2]; 10], None),
+            TableEncoding::Tuple
+        );
+        let sparse = (0..8).map(|x| vec![x, x]).collect::<Vec<_>>();
+        assert_eq!(compact_table_encoding(&sparse, None), TableEncoding::Mdd);
     }
 }
 #[cfg(test)]

@@ -243,6 +243,10 @@ register_representation!(
         Literal::AbstractLiteral(AbstractLiteral::Set(elems))
     }
     fn compactness(state: &State<DomainPtr>) -> usize {
+        // SAT must encode the entire mask, including cardinality-invalid codes.
+        if conjure_cp::settings::try_current_solver_family() == Some(conjure_cp::settings::SolverFamily::Sat) {
+            return state.total_size as usize;
+        }
         let (min, max) = state.cardinality;
         (min..=max)
             .map(|size| binomial(state.elements.len() as u32, size))

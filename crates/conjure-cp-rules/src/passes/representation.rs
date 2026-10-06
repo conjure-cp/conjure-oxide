@@ -639,6 +639,38 @@ mod tests {
     }
 
     #[test]
+    fn sat_compact_counts_all_packed_masks_and_honours_explicit_pins() {
+        use crate::types::set::{SetOccurrence, SetPacked};
+        use conjure_cp::settings::{SolverFamily, with_solver_family};
+        set_heuristic(Heuristic::Compact);
+        with_solver_family(SolverFamily::Sat, || {
+            let mut symbols = SymbolTable::new();
+            let domain = Domain::set(SetAttr::new_min_max_size(1, 2), domain_int!(1..3));
+            let declaration = symbols.gen_find(&domain);
+            assert_eq!(SetPacked::compactness_score(domain.clone()).unwrap(), 8);
+            assert_eq!(SetOccurrence::compactness_score(domain).unwrap(), 8);
+            assert_eq!(
+                choose_representation_rule(&declaration, &symbols)
+                    .unwrap()
+                    .name(),
+                "SetOccurrence"
+            );
+            let domain = Domain::set(
+                SetAttr::new_min_max_size(1, 2).with_representation("packed"),
+                domain_int!(1..3),
+            );
+            let pinned = symbols.gen_find(&domain);
+            assert_eq!(
+                choose_representation_rule(&pinned, &symbols)
+                    .unwrap()
+                    .name(),
+                "SetPacked"
+            );
+        });
+        set_heuristic(Heuristic::First);
+    }
+
+    #[test]
     fn compact_prefers_lia_when_smt_integer_scores_saturate() {
         let lia = get_repr_rules()
             .find(|rule| rule.id() == SmtLia::id())

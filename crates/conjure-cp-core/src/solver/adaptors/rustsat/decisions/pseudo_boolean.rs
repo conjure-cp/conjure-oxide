@@ -1349,6 +1349,89 @@ mod tests {
     }
 
     #[test]
+    fn dense_binary_tables_preserve_all_assignments_and_measure_provider_costs() {
+        use crate::ast::sat_decision::{SatIntegerView, TableEncoding};
+        let variables = (0..7)
+            .map(|i| DeclarationPtr::new_find(Name::user(&format!("dense_{i}")), Domain::bool()))
+            .collect::<Vec<_>>();
+        let bits = variables
+            .iter()
+            .cloned()
+            .map(Reference::new)
+            .map(Expression::from)
+            .collect::<Vec<_>>();
+        let views = (0..2)
+            .map(|column| SatIntegerView {
+                constant: 0,
+                terms: (0..3)
+                    .map(|bit| (1 << bit, bits[column * 3 + bit].clone()))
+                    .collect(),
+                groups: vec![],
+                choices: None,
+            })
+            .collect::<Vec<_>>();
+        let rows = (0..8)
+            .flat_map(|x| {
+                (0..8)
+                    .filter(move |y| (x + y) % 4 != 0)
+                    .map(move |y| vec![x, y])
+            })
+            .collect::<Vec<_>>();
+        for algorithm in TableEncoding::ALL {
+            let decision = SatEncodingDecision::Table {
+                output: bits[6].clone(),
+                inputs: views.clone(),
+                rows: rows.clone(),
+                row_views: None,
+                negative: false,
+                encoding: Some(EncodingSelection {
+                    algorithm,
+                    provenance: SelectionProvenance::ExplicitConfiguration,
+                }),
+                pb_encoding: Some(EncodingSelection {
+                    algorithm: PbEncoding::RustsatGeneralizedTotalizer,
+                    provenance: SelectionProvenance::ExplicitConfiguration,
+                }),
+            };
+            let mut instance = SatInstance::new();
+            let mut map = HashMap::new();
+            for variable in &variables {
+                map.insert(variable.name().clone(), instance.new_lit());
+            }
+            compile_decisions(&[decision], &mut instance, &mut map).unwrap();
+            let vars = instance.var_manager_mut().n_used();
+            let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
+            eprintln!(
+                "dense binary table {algorithm:?}: {vars} variables, {} clauses",
+                cnf.len()
+            );
+            let mut solver = SatSolver::default();
+            solver.add_cnf(cnf).unwrap();
+            for assignment in 0..128usize {
+                let assumptions = variables
+                    .iter()
+                    .enumerate()
+                    .map(|(i, variable)| {
+                        let literal = map[&*variable.name()];
+                        if assignment & (1 << i) != 0 {
+                            literal
+                        } else {
+                            !literal
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                let valid = (((assignment & 7) + ((assignment >> 3) & 7)) % 4 != 0)
+                    == (assignment & 64 != 0);
+                assert_eq!(
+                    solver.solve_assumps(&assumptions).unwrap() == SolverResult::Sat,
+                    valid,
+                    "{algorithm:?}, assignment {assignment}"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn tables_preserve_numeric_views_and_both_truth_values() {
         use crate::ast::sat_decision::{SatIntegerView, TableEncoding};
         let variables: Vec<_> = (0..5)
