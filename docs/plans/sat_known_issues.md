@@ -13,7 +13,14 @@ verification. The [CSV](sat_compact_acceptance.csv) records every fixture.
 Subsequent constant-matrix follow-up: `const_matrix_test` now passes all 25 SAT
 portfolios with five solutions. Shared matrix-domain and bubbling fixes pass
 437 core/rule tests, `make check` and 87 nearby normal integration checks. The
-six resource outcomes above have not been remeasured after this fix.
+six resource outcomes above had not been remeasured after this fix.
+
+Subsequent compact-policy follow-up: `function_partial_smoke` now passes with all
+201 assignments matching Conjure. Correcting packed set/relation SAT scores to
+count the full stored mask domain selects explicit storage; SAT translation and
+enumeration took 0.063 and 0.044 seconds in the bounded recording run. The five
+other resource failures have not been remeasured. See the
+[compact policy audit](compact_modelling_choices.md) for changes and measurements.
 
 ## Latest workspace verification (2026-10-05)
 

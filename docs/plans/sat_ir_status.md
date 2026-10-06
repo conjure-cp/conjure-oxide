@@ -15,7 +15,14 @@ and repeated symbol-table cloning are concrete remaining lowering costs.
 The constant-matrix indexing panic is subsequently fixed: all 25 SAT portfolios
 match Conjure's five solutions. Shared matrix-domain, safe-index and bubbling
 regressions pass, together with 437 core/rule tests, `make check` and 87 nearby
-normal integration checks. The six resource cases await a fresh survey.
+normal integration checks.
+
+The compact storage-score follow-up subsequently resolves `function_partial_smoke`:
+explicit storage returns all 201 Conjure assignments in approximately 0.11 seconds
+of SAT translation plus enumeration. Compact AMO/table choices are now per constraint;
+explicit pins still cover the family. Constant table rows are deduplicated for costing,
+and variable table rows are counted from their actual views. The five other resource
+cases await a fresh survey. See the [policy audit](compact_modelling_choices.md).
 
 ## Latest workspace verification (2026-10-05)
 

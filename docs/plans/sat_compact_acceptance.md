@@ -104,3 +104,13 @@ The fix passes 437 core/rule tests, `make check` and 87 nearby normal integratio
 checks. A separate undefined-index `catchUndef` probe agrees on SAT and Minion.
 This supersedes the index-panic outcome above. The six resource failures have
 not been remeasured after this shared-domain fix.
+
+## Compact storage-score follow-up (6 October 2026)
+
+`function_partial_smoke` subsequently passes all 201 assignments, matching Conjure.
+Compact now counts the full stored mask domain for SAT packed sets/relations and
+selects explicit slots for this fixture. SAT translation took 0.063 seconds and
+enumeration 0.044 seconds; the trace ends at auxiliary 478 rather than roughly
+484,000 in the earlier memory-limited attempt. This supersedes its failure row
+above. The other five resource failures await remeasurement. These follow-ups are
+not a new full-suite coverage count. See the [policy audit](compact_modelling_choices.md).
