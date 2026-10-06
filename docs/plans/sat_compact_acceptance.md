@@ -93,3 +93,14 @@ include missing `tableshort` parsing, expensive reference/model processing and
 Minion domain bounds. They were not remeasured here. Machine-overflowing power
 ranges remain explicitly unsupported, and non-uniform SAT channelling remains
 deferred.
+
+## Constant-matrix follow-up (6 October 2026)
+
+`const_matrix_test` now passes all 25 SAT portfolios with five solutions, matching
+Conjure. Matrix-component lowering defers invalid constant indices to bubbling;
+expression-valued matrix domains no longer count nested dimensions twice; and
+defined constant lettings no longer block their index guards from propagating.
+The fix passes 437 core/rule tests, `make check` and 87 nearby normal integration
+checks. A separate undefined-index `catchUndef` probe agrees on SAT and Minion.
+This supersedes the index-panic outcome above. The six resource failures have
+not been remeasured after this shared-domain fix.

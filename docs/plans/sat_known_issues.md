@@ -10,6 +10,11 @@ workspace tests and doctests pass. Slow SAT portfolios use compact, with uniform
 channelling retained; all 32 further compact-profile changes pass normal golden
 verification. The [CSV](sat_compact_acceptance.csv) records every fixture.
 
+Subsequent constant-matrix follow-up: `const_matrix_test` now passes all 25 SAT
+portfolios with five solutions. Shared matrix-domain and bubbling fixes pass
+437 core/rule tests, `make check` and 87 nearby normal integration checks. The
+six resource outcomes above have not been remeasured after this fix.
+
 ## Latest workspace verification (2026-10-05)
 
 See [the workspace verification report](sat_workspace_verification.md) for the

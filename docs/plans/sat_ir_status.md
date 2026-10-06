@@ -12,6 +12,11 @@ profiles are retained; those 32 pass normal verification. Passing solver cases
 exercise 50,725 SAT portfolios. Packed-set bit extraction through division/modulo
 and repeated symbol-table cloning are concrete remaining lowering costs.
 
+The constant-matrix indexing panic is subsequently fixed: all 25 SAT portfolios
+match Conjure's five solutions. Shared matrix-domain, safe-index and bubbling
+regressions pass, together with 437 core/rule tests, `make check` and 87 nearby
+normal integration checks. The six resource cases await a fresh survey.
+
 ## Latest workspace verification (2026-10-05)
 
 The [normal workspace verification](sat_workspace_verification.md) follows the
