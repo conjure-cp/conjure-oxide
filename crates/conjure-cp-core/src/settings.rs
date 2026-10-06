@@ -629,8 +629,7 @@ thread_local! {
     ///
     /// If an int domain size is <= this threshold, the Minion adaptor uses `DISCRETE`; otherwise
     /// it uses `BOUND`, unless another constraint requires `DISCRETE`.
-    static MINION_DISCRETE_THRESHOLD: Cell<usize> =
-        const { Cell::new(DEFAULT_MINION_DISCRETE_THRESHOLD) };
+    static MINION_DISCRETE_THRESHOLD: Cell<Option<usize>> = const { Cell::new(None) };
 
     /// Thread-local setting controlling whether rule-trace outputs are active in this phase.
     ///
@@ -705,12 +704,30 @@ pub fn ints_need_representation() -> bool {
     )
 }
 
-pub fn set_minion_discrete_threshold(threshold: usize) {
+/// Pins Minion's domain threshold, or leaves it to the modelling heuristic.
+pub fn set_minion_discrete_threshold(threshold: Option<usize>) {
     MINION_DISCRETE_THRESHOLD.with(|current| current.set(threshold));
 }
 
-pub fn minion_discrete_threshold() -> usize {
-    MINION_DISCRETE_THRESHOLD.with(|current| current.get())
+/// Selects one threshold for a Minion model: the default, all bound, or all discrete.
+/// Constraints requiring discrete variables still override the threshold.
+pub fn select_minion_discrete_threshold() -> usize {
+    if let Some(threshold) = MINION_DISCRETE_THRESHOLD.with(Cell::get) {
+        return threshold;
+    }
+    let thresholds = [DEFAULT_MINION_DISCRETE_THRESHOLD, 0, usize::MAX];
+    let labels = [
+        "minion-discrete-threshold=10",
+        "minion-discrete-threshold=0",
+        "minion-discrete-threshold=unlimited",
+    ];
+    let index = match heuristic() {
+        Heuristic::First | Heuristic::Compact => 0,
+        Heuristic::Random => next_heuristic_random_index(thresholds.len()),
+        Heuristic::Interactive => next_heuristic_interactive_index(&labels),
+        Heuristic::All => next_heuristic_all_index(&labels),
+    };
+    thresholds[index]
 }
 
 pub fn set_rule_trace_enabled(enabled: bool) {

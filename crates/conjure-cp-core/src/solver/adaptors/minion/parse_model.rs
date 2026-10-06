@@ -4,7 +4,7 @@ use crate::Model as ConjureModel;
 use crate::ast::{
     self as conjure_ast, Atom, Expression, HasDomain, Moo, Name, OptimiseDirection, Range,
 };
-use crate::settings::{SolverFamily, minion_discrete_threshold};
+use crate::settings::{SolverFamily, select_minion_discrete_threshold};
 use crate::solver::SolverError::{
     ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
 };
@@ -29,7 +29,28 @@ pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> 
     let mut minion_model = MinionModel::new();
     minion_model.optimise = optimise;
     let discrete_vars = collect_discrete_required_variables(&model);
-    load_symbol_table(&model, &discrete_vars, &mut minion_model)?;
+    let has_optional_integer = {
+        let symbols = model.symbols();
+        symbols.iter_local().any(|(name, decl)| {
+            !discrete_vars.contains(name)
+                && decl.reprs().is_empty()
+                && symbols
+                    .representations_for(name)
+                    .is_none_or(|reprs| reprs.is_empty())
+                && decl.as_find().is_some_and(|var| {
+                    matches!(
+                        var.domain_of().resolve().as_deref(),
+                        Ok(conjure_ast::GroundDomain::Int(_))
+                    )
+                })
+        })
+    };
+    let threshold = if has_optional_integer {
+        select_minion_discrete_threshold()
+    } else {
+        crate::settings::DEFAULT_MINION_DISCRETE_THRESHOLD
+    };
+    load_symbol_table(&model, &discrete_vars, threshold, &mut minion_model)?;
     load_constraints(&model, &mut minion_model)?;
     Ok(minion_model)
 }
@@ -61,6 +82,7 @@ fn resolve_optimisation(model: &ConjureModel) -> Result<Option<Optimise>, Solver
 fn load_symbol_table(
     conjure_model: &ConjureModel,
     discrete_vars: &HashSet<conjure_ast::Name>,
+    threshold: usize,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     if let Some(ref vars) = conjure_model.search_order {
@@ -86,7 +108,14 @@ fn load_symbol_table(
                 if !search_vars.insert(leaf_name.clone()) {
                     continue;
                 }
-                load_var(&leaf_name, &var, true, discrete_vars, minion_model)?;
+                load_var(
+                    &leaf_name,
+                    &var,
+                    true,
+                    discrete_vars,
+                    threshold,
+                    minion_model,
+                )?;
             }
         }
 
@@ -95,7 +124,7 @@ fn load_symbol_table(
             if search_vars.contains(name) {
                 return Ok(());
             }
-            load_var(name, var, false, discrete_vars, minion_model)
+            load_var(name, var, false, discrete_vars, threshold, minion_model)
         })?;
     } else {
         for_each_unrepresented_var(conjure_model, |name, var, decl| {
@@ -103,7 +132,14 @@ fn load_symbol_table(
             // must not be branched on: they would otherwise create many duplicate user solutions.
             let is_search_var =
                 !decl.is_find_auxiliary() && !matches!(name, conjure_ast::Name::Machine(_));
-            load_var(name, var, is_search_var, discrete_vars, minion_model)
+            load_var(
+                name,
+                var,
+                is_search_var,
+                discrete_vars,
+                threshold,
+                minion_model,
+            )
         })?;
     }
     Ok(())
@@ -277,15 +313,21 @@ fn load_var(
     var: &conjure_ast::DecisionVariable,
     search_var: bool,
     table_vars: &HashSet<conjure_ast::Name>,
+    threshold: usize,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let resolved_domain = var.domain_of().resolve();
     let force_discrete = table_vars.contains(name);
     match resolved_domain.as_deref() {
         Ok(conjure_ast::GroundDomain::Bool) => load_booldomain_var(name, search_var, minion_model),
-        Ok(conjure_ast::GroundDomain::Int(ranges)) => {
-            load_intdomain_var(name, ranges, search_var, force_discrete, minion_model)
-        }
+        Ok(conjure_ast::GroundDomain::Int(ranges)) => load_intdomain_var(
+            name,
+            ranges,
+            search_var,
+            force_discrete,
+            threshold,
+            minion_model,
+        ),
         x => Err(ModelFeatureNotSupported(format!(
             "variable {name} has unsupported domain {x:?}"
         ))),
@@ -298,6 +340,7 @@ fn load_intdomain_var(
     ranges: &[conjure_ast::Range<i32>],
     search_var: bool,
     force_discrete: bool,
+    threshold: usize,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let str_name = name_to_string(name.to_owned());
@@ -330,8 +373,7 @@ fn load_intdomain_var(
     }?;
 
     let size = i64::from(high) - i64::from(low) + 1;
-    let threshold = minion_discrete_threshold() as i64;
-    let use_discrete = force_discrete || size <= threshold;
+    let use_discrete = force_discrete || size as u128 <= threshold as u128;
 
     let domain = if use_discrete {
         minion_ast::VarDomain::Discrete(low, high)
@@ -1011,6 +1053,81 @@ fn parse_name(name: conjure_ast::Name) -> Result<minion_ast::Var, SolverError> {
 mod tests {
     use super::*;
     use crate::ast::{DeclarationPtr, Domain, Literal, Metadata};
+
+    #[test]
+    fn heuristic_threshold_is_shared_and_explicit_pins_win() {
+        use crate::settings::{self, Heuristic};
+        let make_model = || {
+            let mut model = ConjureModel::default();
+            for (name, high) in [("small", 3), ("large", 20)] {
+                model.symbols_mut().insert(DeclarationPtr::new_find(
+                    Name::user(name),
+                    Domain::int(vec![Range::Bounded(1, high)]),
+                ));
+            }
+            model
+        };
+        settings::set_heuristic(Heuristic::All);
+        settings::set_minion_discrete_threshold(None);
+        for (branch, discrete_count) in [(0, 1), (1, 0), (2, 2)] {
+            settings::begin_heuristic_all_choices(vec![branch]);
+            let model = model_to_minion(make_model()).unwrap();
+            let count = model
+                .named_variables
+                .get_variable_order()
+                .into_iter()
+                .filter(|name| {
+                    matches!(
+                        model.named_variables.get_vartype(name.clone()),
+                        Some(minion_ast::VarDomain::Discrete(..))
+                    )
+                })
+                .count();
+            assert_eq!(count, discrete_count);
+            assert_eq!(settings::heuristic_all_choices().len(), 1);
+        }
+        settings::set_minion_discrete_threshold(Some(usize::MAX));
+        settings::begin_heuristic_all_choices(vec![]);
+        let model = model_to_minion(make_model()).unwrap();
+        assert!(
+            model
+                .named_variables
+                .get_variable_order()
+                .into_iter()
+                .all(|name| matches!(
+                    model.named_variables.get_vartype(name),
+                    Some(minion_ast::VarDomain::Discrete(..))
+                ))
+        );
+        assert!(settings::heuristic_all_choices().is_empty());
+        settings::set_minion_discrete_threshold(None);
+        settings::set_heuristic(Heuristic::Compact);
+        assert_eq!(settings::select_minion_discrete_threshold(), 10);
+    }
+
+    #[test]
+    fn required_discrete_domains_override_bound_pin() {
+        use crate::settings::{self, Heuristic};
+        let mut model = ConjureModel::default();
+        let var =
+            DeclarationPtr::new_find(Name::user("x"), Domain::int(vec![Range::Bounded(1, 20)]));
+        model.symbols_mut().insert(var.clone());
+        model.add_constraint(Expression::FlatAllDiff(
+            Metadata::new(),
+            vec![Atom::Reference(var.into())],
+        ));
+        settings::set_heuristic(Heuristic::All);
+        settings::set_minion_discrete_threshold(Some(0));
+        settings::begin_heuristic_all_choices(vec![]);
+        let minion = model_to_minion(model).unwrap();
+        assert!(matches!(
+            minion.named_variables.get_vartype("x".to_owned()),
+            Some(minion_ast::VarDomain::Discrete(1, 20))
+        ));
+        assert!(settings::heuristic_all_choices().is_empty());
+        settings::set_minion_discrete_threshold(None);
+        settings::set_heuristic(Heuristic::Compact);
+    }
 
     #[test]
     fn flat_alldiff_uses_gac_propagation() {

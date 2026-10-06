@@ -874,7 +874,7 @@ fn integration_test_inner(
     set_current_rewriter(rewriter);
     set_comprehension_expander(comprehension_expander);
     set_current_solver_family(solver_fam);
-    set_minion_discrete_threshold(minion_discrete_threshold);
+    set_minion_discrete_threshold(Some(minion_discrete_threshold));
     set_heuristic(run_case.heuristic);
     set_heuristic_seed(run_case.seed);
     set_channelling(run_case.channelling);
@@ -1440,7 +1440,7 @@ fn try_capture_oxide_minion(
     set_current_rewriter(run_case.rewriter);
     set_comprehension_expander(run_case.comprehension_expander);
     set_current_solver_family(run_case.solver);
-    set_minion_discrete_threshold(minion_discrete_threshold);
+    set_minion_discrete_threshold(Some(minion_discrete_threshold));
     set_heuristic(run_case.heuristic);
     set_heuristic_seed(run_case.seed);
     set_channelling(run_case.channelling);

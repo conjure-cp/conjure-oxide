@@ -4,8 +4,8 @@ use clap::{ArgAction, Args, Parser, Subcommand, ValueEnum};
 
 use clap_complete::Shell;
 use conjure_cp::settings::{
-    Channelling, DEFAULT_HEURISTIC_SEED, DEFAULT_MINION_DISCRETE_THRESHOLD, Heuristic,
-    Parser as InputParser, QuantifiedExpander, Rewriter, SolverFamily,
+    Channelling, DEFAULT_HEURISTIC_SEED, Heuristic, Parser as InputParser, QuantifiedExpander,
+    Rewriter, SolverFamily,
 };
 use conjure_cp::solver::adaptors::{MinionValueOrder, MinionVariableOrder};
 use git_version::git_version;
@@ -14,6 +14,7 @@ use crate::{pretty, solve, test_solve};
 
 pub(crate) const LOGGING_HELP_HEADING: Option<&str> = Some("Logging & Output");
 pub(crate) const CONFIGURATION_HELP_HEADING: Option<&str> = Some("Configuration");
+pub(crate) const MODELLING_HELP_HEADING: Option<&str> = Some("Modelling choices");
 
 /// All subcommands of conjure-oxide
 #[derive(Clone, Debug, Subcommand)]
@@ -152,7 +153,7 @@ pub struct GlobalArgs {
         default_value_t = QuantifiedExpander::Auto,
         value_parser = parse_comprehension_expander,
         global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
+        help_heading = MODELLING_HELP_HEADING
     )]
     pub comprehension_expander: QuantifiedExpander,
 
@@ -169,7 +170,7 @@ pub struct GlobalArgs {
         default_value_t = Heuristic::Compact,
         value_parser = parse_cli_heuristic,
         global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
+        help_heading = MODELLING_HELP_HEADING
     )]
     pub heuristic: Heuristic,
 
@@ -182,7 +183,7 @@ pub struct GlobalArgs {
         value_name = "INTS",
         value_delimiter = ',',
         global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
+        help_heading = MODELLING_HELP_HEADING
     )]
     pub responses: Vec<usize>,
 
@@ -191,7 +192,7 @@ pub struct GlobalArgs {
         long,
         default_value_t = DEFAULT_HEURISTIC_SEED,
         global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
+        help_heading = MODELLING_HELP_HEADING
     )]
     pub seed: u64,
 
@@ -206,7 +207,7 @@ pub struct GlobalArgs {
 
     /// Whether multiple representations of the same declaration may be channelled together.
     ///
-    /// Possible values: `no`, `yes`, `uniform`. Channelling is disabled by default. Enable `yes` to allow
+    /// Possible values: `no`, `yes`, `uniform`. Channelling is disabled by default.
     /// `uniform` uses one representation kind per type family throughout the model. Enable `yes` for
     /// different representations of the same variable at different call sites, e.g.
     /// `1 in (x :: set (representation packed) of int) /\ 2 in (x :: set (representation occurrence) of int)`.
@@ -215,34 +216,34 @@ pub struct GlobalArgs {
         default_value_t = Channelling::No,
         value_parser = parse_cli_channelling,
         global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
+        help_heading = MODELLING_HELP_HEADING
     )]
     pub channelling: Channelling,
 
     /// Pin the SAT element composition: implication or support.
-    #[arg(long = "sat-encoding-element", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    #[arg(long = "sat-encoding-element", global = true, help_heading = MODELLING_HELP_HEADING)]
     pub element_encoding: Option<conjure_cp::ast::sat_decision::ElementEncoding>,
 
     /// Pin the SAT table composition: tuple, mdd or binary-support (constant two-column relations).
-    #[arg(long = "sat-encoding-table", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    #[arg(long = "sat-encoding-table", global = true, help_heading = MODELLING_HELP_HEADING)]
     pub table_encoding: Option<conjure_cp::ast::sat_decision::TableEncoding>,
 
     /// Pin allDifferent: pairwise, or value-amo (requires Direct or Boolean value indicators).
-    #[arg(long = "sat-encoding-alldifferent", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    #[arg(long = "sat-encoding-alldifferent", global = true, help_heading = MODELLING_HELP_HEADING)]
     pub alldifferent_encoding: Option<conjure_cp::ast::sat_decision::AllDifferentEncoding>,
 
     /// Pin the SAT AMO encoder: pairwise, ladder, bitwise, commander, bimander, two-product,
     /// pindakaas-pairwise, pindakaas-ladder or pindakaas-bitwise.
     /// If omitted, the modelling heuristic chooses one algorithm for the model.
-    #[arg(long = "sat-encoding-amo", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    #[arg(long = "sat-encoding-amo", global = true, help_heading = MODELLING_HELP_HEADING)]
     pub amo_encoding: Option<conjure_cp::ast::sat_decision::AmoEncoding>,
 
     /// Pin the SAT cardinality encoder: rustsat-totalizer or pindakaas-sorting-network.
-    #[arg(long = "sat-encoding-cardinality", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    #[arg(long = "sat-encoding-cardinality", global = true, help_heading = MODELLING_HELP_HEADING)]
     pub cardinality_encoding: Option<conjure_cp::ast::sat_decision::CardinalityEncoding>,
 
     /// Pin the SAT weighted encoder: rustsat-generalized-totalizer, rustsat-binary-adder, pindakaas-bdd, rustsat-dynamic-poly-watchdog, or pindakaas-swc.
-    #[arg(long = "sat-encoding-pb", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    #[arg(long = "sat-encoding-pb", global = true, help_heading = MODELLING_HELP_HEADING)]
     pub pb_encoding: Option<conjure_cp::ast::sat_decision::PbEncoding>,
 
     /// Solver to use.
@@ -264,16 +265,17 @@ pub struct GlobalArgs {
     )]
     pub solver: SolverFamily,
 
-    /// Int-domain size threshold for using Minion `DISCRETE` variables.
+    /// Pin the int-domain span threshold for using Minion `DISCRETE` variables.
     ///
-    /// If an int domain has size <= this value, Conjure Oxide emits `DISCRETE`; otherwise `BOUND`.
+    /// If maximum - minimum + 1 <= this value, emit `DISCRETE`; otherwise `BOUND`.
+    /// Constraints requiring `DISCRETE` override this choice. If omitted, the heuristic chooses
+    /// between 10, zero (all `BOUND`), and unlimited (all `DISCRETE`). Compact chooses 10.
     #[arg(
         long,
-        default_value_t = DEFAULT_MINION_DISCRETE_THRESHOLD,
         global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
+        help_heading = MODELLING_HELP_HEADING
     )]
-    pub minion_discrete_threshold: usize,
+    pub minion_discrete_threshold: Option<usize>,
 
     /// Override Minion variable ordering.
     ///
@@ -436,6 +438,79 @@ mod tests {
     fn compact_is_the_default_cli_heuristic() {
         let cli = Cli::try_parse_from(["conjure-oxide", "solve", "model.essence"]).unwrap();
         assert_eq!(cli.global_args.heuristic, Heuristic::Compact);
+    }
+
+    #[test]
+    fn modelling_choices_are_unpinned_unless_supplied() {
+        let cli = Cli::try_parse_from(["conjure-oxide", "solve", "model.essence"]).unwrap();
+        let args = cli.global_args;
+        assert_eq!(args.minion_discrete_threshold, None);
+        assert_eq!(args.amo_encoding, None);
+        assert_eq!(args.cardinality_encoding, None);
+        assert_eq!(args.pb_encoding, None);
+        assert_eq!(args.element_encoding, None);
+        assert_eq!(args.table_encoding, None);
+        assert_eq!(args.alldifferent_encoding, None);
+
+        let cli = Cli::try_parse_from([
+            "conjure-oxide",
+            "solve",
+            "model.essence",
+            "--heuristic",
+            "r",
+            "--minion-discrete-threshold",
+            "0",
+            "--sat-encoding-amo",
+            "ladder",
+            "--sat-encoding-cardinality",
+            "rustsat-totalizer",
+            "--sat-encoding-pb",
+            "pindakaas-bdd",
+            "--sat-encoding-element",
+            "support",
+            "--sat-encoding-table",
+            "mdd",
+            "--sat-encoding-alldifferent",
+            "pairwise",
+        ])
+        .unwrap();
+        let args = cli.global_args;
+        assert_eq!(args.minion_discrete_threshold, Some(0));
+        assert_eq!(
+            args.amo_encoding,
+            Some(conjure_cp::ast::sat_decision::AmoEncoding::Ladder)
+        );
+        assert!(args.cardinality_encoding.is_some());
+        assert!(args.pb_encoding.is_some());
+        assert!(args.element_encoding.is_some());
+        assert!(args.table_encoding.is_some());
+        assert!(args.alldifferent_encoding.is_some());
+    }
+
+    #[test]
+    fn modelling_choices_have_their_own_help_group() {
+        use clap::CommandFactory;
+        let command = Cli::command();
+        for name in [
+            "amo_encoding",
+            "cardinality_encoding",
+            "pb_encoding",
+            "element_encoding",
+            "table_encoding",
+            "alldifferent_encoding",
+            "minion_discrete_threshold",
+            "channelling",
+            "comprehension_expander",
+            "heuristic",
+            "responses",
+            "seed",
+        ] {
+            let arg = command
+                .get_arguments()
+                .find(|arg| arg.get_id().as_str() == name)
+                .unwrap();
+            assert_eq!(arg.get_help_heading(), MODELLING_HELP_HEADING);
+        }
     }
 
     #[test]
