@@ -140,6 +140,35 @@ fn needs_actual_value_circuit(encoding: &SATIntEncoding) -> bool {
 }
 
 fn map_table_cells(expression: Expr, convert: &mut impl FnMut(Expr) -> Expr) -> Expr {
+    let expression = match expression {
+        Expr::AbstractLiteral(meta, AbstractLiteral::Set(entries)) => {
+            return Expr::AbstractLiteral(
+                meta,
+                AbstractLiteral::Set(
+                    entries
+                        .into_iter()
+                        .map(|entry| {
+                            map_table_cells(super::super::table::materialise(&entry), convert)
+                        })
+                        .collect(),
+                ),
+            );
+        }
+        Expr::AbstractLiteral(meta, AbstractLiteral::Sequence(entries)) => {
+            return Expr::AbstractLiteral(
+                meta,
+                AbstractLiteral::Sequence(
+                    entries
+                        .into_iter()
+                        .map(|entry| {
+                            map_table_cells(super::super::table::materialise(&entry), convert)
+                        })
+                        .collect(),
+                ),
+            );
+        }
+        expression => expression,
+    };
     if let Some((entries, domain)) = matrix_child(&expression) {
         rebuild_matrix_child(
             entries
@@ -508,7 +537,21 @@ mod unsigned_tests {
                 operand.clone()
             ])]))
         };
+        let sequence = || {
+            Moo::new(Expr::AbstractLiteral(
+                Metadata::new(),
+                AbstractLiteral::Sequence(vec![operand.clone()]),
+            ))
+        };
+        let collection_rows = || {
+            Moo::new(Expr::AbstractLiteral(
+                Metadata::new(),
+                AbstractLiteral::Set(vec![Moo::unwrap_or_clone(sequence())]),
+            ))
+        };
         let expressions = [
+            Expr::Table(Metadata::new(), sequence(), collection_rows()),
+            Expr::NegativeTable(Metadata::new(), sequence(), collection_rows()),
             Expr::AllDiff(Metadata::new(), matrix()),
             Expr::AllDifferentExcept(Metadata::new(), matrix(), Moo::new(operand.clone())),
             Expr::Table(Metadata::new(), matrix(), rows()),

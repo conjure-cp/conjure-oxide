@@ -113,6 +113,7 @@ mod tests {
             (vec![], false),
             (vec![set(vec![])], true),
             (vec![set(vec![pair(2, 9)])], true),
+            (vec![set(vec![pair(2, 9), pair(2, 9)])], true),
             (vec![set(vec![pair(1, 8)])], false),
         ] {
             let expression = Expr::ShortTable(
