@@ -35,7 +35,7 @@ fn matrix_components_var_eq_var(expr: &Expression, _: &SymbolTable) -> Applicati
     };
     let left_domain = left.resolved_domain().ok_or(RuleNotApplicable)?;
     let right_domain = right.resolved_domain().ok_or(RuleNotApplicable)?;
-    let (GroundDomain::Matrix(_, left_indices), GroundDomain::Matrix(_, right_indices)) =
+    let (GroundDomain::Matrix(_, left_indices, _), GroundDomain::Matrix(_, right_indices, _)) =
         (left_domain.as_ref(), right_domain.as_ref())
     else {
         return Err(RuleNotApplicable);
@@ -408,7 +408,7 @@ fn index_matrix_components_impl(expr: &Expression, symbols: &SymbolTable) -> App
             GroundDomain::Bool => {
                 idx_expr = essence_expr!(&off * toInt(&idx_expr));
             }
-            GroundDomain::Int(rngs) if Range::is_contiguous(rngs) => {
+            GroundDomain::Int(rngs, _) if Range::is_contiguous(rngs) => {
                 let lo = Range::low_of(rngs).expect("unbounded index");
                 idx_expr = essence_expr!(&off * (&idx_expr - &lo));
             }
@@ -808,7 +808,7 @@ mod tests {
         let _ = reference.select_repr::<MatrixComponents>().unwrap();
         let literal = Literal::AbstractLiteral(AbstractLiteral::Matrix(
             vec![Literal::Int(1), Literal::Int(2), Literal::Int(3)],
-            Moo::new(GroundDomain::Int(vec![Range::Bounded(1, 3)])),
+            Moo::new(GroundDomain::Int(vec![Range::Bounded(1, 3)], None)),
         ));
         let equality = Expression::Eq(
             Metadata::new(),

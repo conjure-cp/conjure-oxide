@@ -15,7 +15,7 @@ fn scalar_membership(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         GroundDomain::Bool if value.domain_of().is_some_and(|domain| domain.is_bool()) => {
             return Ok(RuleEffect::pure(true.into()));
         }
-        GroundDomain::Int(ranges) if value.domain_of().is_some_and(|domain| domain.is_int()) => {
+        GroundDomain::Int(ranges, _) if value.domain_of().is_some_and(|domain| domain.is_int()) => {
             ranges
         }
         _ => return Err(RuleNotApplicable),

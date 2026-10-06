@@ -180,7 +180,7 @@ fn matrix_to_simplified_json(
     elems: &[Literal],
     index_domain: &GroundDomain,
 ) -> anyhow::Result<JsonValue> {
-    let GroundDomain::Int(_) = index_domain else {
+    let GroundDomain::Int(_, _) = index_domain else {
         return elems_as_json_array(elems);
     };
 
@@ -278,8 +278,8 @@ fn literal_from_simplified_json_with_ground(
             },
             _ => bail!("expected a boolean"),
         },
-        GroundDomain::Int(_) => Ok(Literal::Int(json_to_i32(value)?)),
-        GroundDomain::Tuple(inners) => {
+        GroundDomain::Int(_, _) => Ok(Literal::Int(json_to_i32(value)?)),
+        GroundDomain::Tuple(inners, _) => {
             let JsonValue::Array(items) = value else {
                 bail!("expected a JSON array for a tuple");
             };
@@ -296,7 +296,7 @@ fn literal_from_simplified_json_with_ground(
             }
             Ok(Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)))
         }
-        GroundDomain::Record(fields) => {
+        GroundDomain::Record(fields, _) => {
             let JsonValue::Object(object) = value else {
                 bail!("expected a JSON object for a record");
             };
@@ -313,7 +313,7 @@ fn literal_from_simplified_json_with_ground(
             }
             Ok(Literal::AbstractLiteral(AbstractLiteral::Record(entries)))
         }
-        GroundDomain::Variant(fields) => {
+        GroundDomain::Variant(fields, _) => {
             let JsonValue::Object(object) = value else {
                 bail!("expected a JSON object for a variant");
             };
@@ -335,7 +335,7 @@ fn literal_from_simplified_json_with_ground(
                 }),
             )))
         }
-        GroundDomain::Matrix(inner, index_domains) => {
+        GroundDomain::Matrix(inner, index_domains, _) => {
             matrix_from_simplified_json(value, inner.as_ref(), index_domains)
         }
         GroundDomain::Sequence(_, inner) => match value {
@@ -462,7 +462,7 @@ fn matrix_from_simplified_json(
     let elem_domain: GroundDomain = if rest.is_empty() {
         inner.clone()
     } else {
-        GroundDomain::Matrix(Moo::new(inner.clone()), rest.to_vec())
+        GroundDomain::Matrix(Moo::new(inner.clone()), rest.to_vec(), None)
     };
 
     match value {
@@ -504,7 +504,7 @@ fn matrix_from_simplified_json(
                 )?);
             }
             let n = i32::try_from(elems.len()).context("matrix too large")?;
-            let index_domain = GroundDomain::Int(vec![Range::Bounded(1, n)]);
+            let index_domain = GroundDomain::Int(vec![Range::Bounded(1, n)], None);
             Ok(Literal::AbstractLiteral(AbstractLiteral::Matrix(
                 elems,
                 index_domain.into(),
@@ -516,16 +516,16 @@ fn matrix_from_simplified_json(
 
 fn infer_int_index_domain(keys: &[i32]) -> GroundDomain {
     if keys.is_empty() {
-        return GroundDomain::Int(vec![]);
+        return GroundDomain::Int(vec![], None);
     }
     let mut ints = keys.to_vec();
     ints.sort_unstable();
     let min = ints[0];
     let max = *ints.last().expect("non-empty");
     if max - min + 1 == ints.len() as i32 {
-        GroundDomain::Int(vec![Range::Bounded(min, max)])
+        GroundDomain::Int(vec![Range::Bounded(min, max)], None)
     } else {
-        GroundDomain::Int(ints.into_iter().map(Range::Single).collect())
+        GroundDomain::Int(ints.into_iter().map(Range::Single).collect(), None)
     }
 }
 

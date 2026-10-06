@@ -77,14 +77,14 @@ register_representation!(
         let domain_err = |message: &str| ReprInitError::UnsupportedDomain(
             dom.clone(), MatrixPacked::NAME, message.to_owned());
         let resolved = dom.resolve().ok().ok_or_else(|| domain_err("expected a ground matrix domain"))?;
-        let GroundDomain::Matrix(element_domain, _) = resolved.as_ref() else {
+        let GroundDomain::Matrix(element_domain, _, _) = resolved.as_ref() else {
             return Err(domain_err("expected a matrix domain"));
         };
         let mut values = match element_domain.as_ref() {
             // false < true, matching `Literal::essence_cmp` -- see the note on
             // `types::product::symmetry_values`.
             GroundDomain::Bool => vec![Literal::Bool(false), Literal::Bool(true)],
-            GroundDomain::Int(_) => element_domain.values()
+            GroundDomain::Int(_, _) => element_domain.values()
                 .map_err(|error| domain_err(&format!("could not enumerate element domain: {error}")))?
                 .collect::<Vec<_>>(),
             _ => return Err(domain_err("packed matrices currently require primitive bool or int elements")),

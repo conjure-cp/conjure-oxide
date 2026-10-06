@@ -383,7 +383,7 @@ impl DeclarationPtr {
     /// // find a: int(1..5)
     /// let declaration = DeclarationPtr::new_find(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
     ///
-    /// assert!(declaration.domain().is_some_and(|x| x.as_ground().unwrap() == &GroundDomain::Int(vec![Range::Bounded(1,5)])))
+    /// assert!(declaration.domain().is_some_and(|x| x.as_ground().unwrap() == &GroundDomain::Int(vec![Range::Bounded(1,5)], None)))
     ///
     /// ```
     pub fn domain(&self) -> Option<DomainPtr> {

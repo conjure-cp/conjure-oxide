@@ -191,7 +191,7 @@ register_representation!(
 );
 
 fn can_index_matrix(dom: &GroundDomain) -> bool {
-    matches!(dom, GroundDomain::Bool | GroundDomain::Int(_))
+    matches!(dom, GroundDomain::Bool | GroundDomain::Int(_, _))
 }
 
 /// Builds the dense (nested) matrix literal for a relation's tuple list: cell `[v1,...,vN]` is

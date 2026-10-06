@@ -40,7 +40,7 @@ pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> 
                 && decl.as_find().is_some_and(|var| {
                     matches!(
                         var.domain_of().resolve().as_deref(),
-                        Ok(conjure_ast::GroundDomain::Int(_))
+                        Ok(conjure_ast::GroundDomain::Int(_, _))
                     )
                 })
         })
@@ -320,7 +320,7 @@ fn load_var(
     let force_discrete = table_vars.contains(name);
     match resolved_domain.as_deref() {
         Ok(conjure_ast::GroundDomain::Bool) => load_booldomain_var(name, search_var, minion_model),
-        Ok(conjure_ast::GroundDomain::Int(ranges)) => load_intdomain_var(
+        Ok(conjure_ast::GroundDomain::Int(ranges, _)) => load_intdomain_var(
             name,
             ranges,
             search_var,

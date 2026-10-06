@@ -78,7 +78,7 @@ fn inline_constant_matrix_subject_for_minion(expr: &Expr, _: &SymbolTable) -> Ap
 }
 
 fn literal_matrix_offset(domain: &GroundDomain, index: i32) -> Option<usize> {
-    let GroundDomain::Int(ranges) = domain else {
+    let GroundDomain::Int(ranges, _) = domain else {
         return None;
     };
     let [range] = ranges.as_slice() else {
@@ -652,7 +652,7 @@ fn minion_atom_as_i32_bounds(atom: &Atom) -> Option<(i32, i32)> {
     let resolved = atom.domain_of().resolve().ok()?;
     match resolved.as_ref() {
         GroundDomain::Bool => Some((0, 1)),
-        GroundDomain::Int(ranges) => {
+        GroundDomain::Int(ranges, _) => {
             let mut lo = i32::MAX;
             let mut hi = i32::MIN;
             for range in ranges {
@@ -1437,7 +1437,7 @@ fn alldifferent_except_to_gccweak(expr: &Expr, symbols: &SymbolTable) -> Applica
         .ok_or(RuleNotApplicable)?
         .resolve()
         .map_err(|_| RuleNotApplicable)?;
-    let GroundDomain::Int(_) = domain.as_ref() else {
+    let GroundDomain::Int(_, _) = domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
     let values: Vec<i32> = domain
@@ -1500,7 +1500,7 @@ fn alldifferent_variable_except(expr: &Expr, symbols: &SymbolTable) -> Applicati
             .ok_or(RuleNotApplicable)?
             .resolve()
             .map_err(|_| RuleNotApplicable)?;
-        if !matches!(domain.as_ref(), GroundDomain::Int(_)) {
+        if !matches!(domain.as_ref(), GroundDomain::Int(_, _)) {
             return Err(RuleNotApplicable);
         }
         for value in domain.values().map_err(|_| RuleNotApplicable)? {
@@ -1617,7 +1617,7 @@ fn total_identity_element(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .map_err(|_| RuleNotApplicable)?;
     let (minimum, maximum, index) = match domain.as_ref() {
         GroundDomain::Bool => (0, 1, Expr::ToInt(Metadata::new(), index.clone())),
-        GroundDomain::Int(ranges) => {
+        GroundDomain::Int(ranges, _) => {
             let bounds = ranges
                 .iter()
                 .map(|range| match range {
@@ -1816,7 +1816,7 @@ fn indexed_index_of_inverse_lookup(
 ) -> Result<Vec<Atom>, ApplicationError> {
     let (elems, index_domain) =
         indexed_index_of_literal_parts(matrix_expr).ok_or(RuleNotApplicable)?;
-    let GroundDomain::Int(index_ranges) = index_domain.as_ref() else {
+    let GroundDomain::Int(index_ranges, _) = index_domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
     let index_values = Range::values(index_ranges)
@@ -1829,7 +1829,7 @@ fn indexed_index_of_inverse_lookup(
 
     let value_domain = value_expr.domain_of().ok_or(RuleNotApplicable)?;
     let value_domain = value_domain.resolve().map_err(|_| RuleNotApplicable)?;
-    let GroundDomain::Int(value_ranges) = value_domain.as_ref() else {
+    let GroundDomain::Int(value_ranges, _) = value_domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
     let value_values = Range::values(value_ranges)
@@ -1874,7 +1874,7 @@ fn pad_indexed_index_of_list(
         ) => index_domain.clone(),
         _ => return None,
     };
-    let GroundDomain::Int(index_ranges) = index_domain.as_ref() else {
+    let GroundDomain::Int(index_ranges, _) = index_domain.as_ref() else {
         return None;
     };
     let index_values = Range::values(index_ranges)?.collect_vec();
@@ -1883,7 +1883,7 @@ fn pad_indexed_index_of_list(
     }
 
     let result_domain = result.domain()?.resolve().ok()?;
-    let GroundDomain::Int(result_ranges) = result_domain.as_ref() else {
+    let GroundDomain::Int(result_ranges, _) = result_domain.as_ref() else {
         return None;
     };
     let max_result = Range::values(result_ranges)?.max()?;
@@ -1903,7 +1903,7 @@ fn pad_indexed_index_of_list(
 
 fn pad_represented_index_of_list(atom_list: Vec<Atom>, result: &Reference) -> Option<Vec<Atom>> {
     let result_domain = result.domain()?.resolve().ok()?;
-    let GroundDomain::Int(result_ranges) = result_domain.as_ref() else {
+    let GroundDomain::Int(result_ranges, _) = result_domain.as_ref() else {
         return None;
     };
     let result_values = Range::values(result_ranges)?.collect_vec();
@@ -2050,7 +2050,7 @@ fn fold_constant_index_of_to_index(index_of: &Expr) -> Option<Expr> {
     };
     let search_value = eval_constant(value.as_ref())?;
     let (elems, index_domain) = indexed_index_of_parts(matrix.as_ref())?;
-    let GroundDomain::Int(index_ranges) = index_domain.as_ref() else {
+    let GroundDomain::Int(index_ranges, _) = index_domain.as_ref() else {
         return None;
     };
     let index_values = Range::values(index_ranges)?.collect_vec();
@@ -2245,10 +2245,10 @@ fn constant_fold_indomain_index_of(expr: &Expr, _: &SymbolTable) -> ApplicationR
         .intersect(&domain)
         .map_err(|_| RuleNotApplicable)?;
 
-    let GroundDomain::Int(_) = expr_domain.as_ref() else {
+    let GroundDomain::Int(_, _) = expr_domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
-    let GroundDomain::Int(_) = &intersection else {
+    let GroundDomain::Int(_, _) = &intersection else {
         return Err(RuleNotApplicable);
     };
 
@@ -2267,12 +2267,15 @@ fn constant_fold_indomain_index_of(expr: &Expr, _: &SymbolTable) -> ApplicationR
 
 fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
     match domain {
-        GroundDomain::Int(ranges) => GroundDomain::Int(Range::squeeze(
-            &ranges
-                .iter()
-                .map(|range| Range::new(range.low().copied(), range.high().copied()))
-                .collect_vec(),
-        )),
+        GroundDomain::Int(ranges, representation) => GroundDomain::Int(
+            Range::squeeze(
+                &ranges
+                    .iter()
+                    .map(|range| Range::new(range.low().copied(), range.high().copied()))
+                    .collect_vec(),
+            ),
+            representation.clone(),
+        ),
         _ => domain.clone(),
     }
 }
@@ -2498,7 +2501,7 @@ fn introduce_element_from_index(expr: &Expr, symtab: &SymbolTable) -> Applicatio
 /// in which case the caller has no straightforward shift to apply.
 fn offset_to_one_based(index_domain: &DomainPtr, elements: usize) -> Option<i32> {
     let resolved = index_domain.resolve().ok()?;
-    let GroundDomain::Int(ranges) = resolved.as_ref() else {
+    let GroundDomain::Int(ranges, _) = resolved.as_ref() else {
         return None;
     };
     if !Range::is_contiguous(ranges) {

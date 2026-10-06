@@ -38,7 +38,7 @@ fn unwrap_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     let dom = m.domain_of().ok_or(RuleNotApplicable)?;
-    let Ok(GroundDomain::Matrix(val_domain, index_domains)) =
+    let Ok(GroundDomain::Matrix(val_domain, index_domains, _)) =
         dom.resolve().map(Moo::unwrap_or_clone)
     else {
         return Err(RuleNotApplicable);
@@ -53,7 +53,7 @@ fn unwrap_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // whatever the chosen layout left each entry as. `distinct` handles those natively.
     if !matches!(
         val_domain.as_ref(),
-        GroundDomain::Bool | GroundDomain::Int(_)
+        GroundDomain::Bool | GroundDomain::Int(_, _)
     ) {
         return Err(RuleNotApplicable);
     }

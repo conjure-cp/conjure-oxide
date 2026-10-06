@@ -264,6 +264,7 @@ mod tests {
 
     fn partition_ref(name: &str) -> Expr {
         let attr = PartitionAttr {
+            representation: None,
             num_parts: Range::Single(2),
             part_len: Range::Single(3),
             is_regular: true,

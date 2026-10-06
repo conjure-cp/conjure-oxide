@@ -708,7 +708,7 @@ fn rewrite_int_ranges_in_unresolved_domain(
     replacements_by_name: &HashMap<Name, DeclarationPtr>,
 ) {
     match unresolved {
-        UnresolvedDomain::Int(ranges) => {
+        UnresolvedDomain::Int(ranges, _) => {
             for range in ranges {
                 rewrite_int_range(range, replacements_by_id, replacements_by_name);
             }
@@ -716,7 +716,7 @@ fn rewrite_int_ranges_in_unresolved_domain(
         // The collection is an ordinary expression, so quantified references inside it are
         // rewritten by the same walk that handles the rest of the comprehension body.
         UnresolvedDomain::IntFromValues(_) => {}
-        UnresolvedDomain::Tuple(inner_domains) => {
+        UnresolvedDomain::Tuple(inner_domains, _) => {
             for inner_domain in inner_domains {
                 rewrite_int_ranges_in_domain_ptr(
                     inner_domain,
@@ -725,7 +725,7 @@ fn rewrite_int_ranges_in_unresolved_domain(
                 );
             }
         }
-        UnresolvedDomain::Record(entries) => {
+        UnresolvedDomain::Record(entries, _) => {
             for entry in entries {
                 rewrite_int_ranges_in_domain_ptr(
                     &mut entry.value,
@@ -734,7 +734,7 @@ fn rewrite_int_ranges_in_unresolved_domain(
                 );
             }
         }
-        UnresolvedDomain::Variant(entries) => {
+        UnresolvedDomain::Variant(entries, _) => {
             for entry in entries {
                 rewrite_int_ranges_in_domain_ptr(
                     &mut entry.value,
@@ -743,7 +743,7 @@ fn rewrite_int_ranges_in_unresolved_domain(
                 );
             }
         }
-        UnresolvedDomain::Matrix(inner, index_domains) => {
+        UnresolvedDomain::Matrix(inner, index_domains, _) => {
             rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
             for index_domain in index_domains {
                 rewrite_int_ranges_in_domain_ptr(

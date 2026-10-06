@@ -213,7 +213,7 @@ register_representation!(
             }
             let index_dom = match witness_matrix.as_ref() {
                 conjure_cp::ast::Domain::Ground(gd) => match gd.as_ref() {
-                    GroundDomain::Matrix(_, idx) => idx[0].clone(),
+                    GroundDomain::Matrix(_, idx, _) => idx[0].clone(),
                     _ => bug!("expected the witness matrix to be a ground matrix domain"),
                 },
                 _ => bug!("expected the witness matrix domain to be ground"),

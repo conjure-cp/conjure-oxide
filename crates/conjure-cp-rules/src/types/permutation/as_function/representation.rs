@@ -70,7 +70,7 @@ register_representation!(
             .map_err(|e| domain_err(&format!("could not enumerate permutation domain: {e}")))?
             .collect();
 
-        let func_attr = FuncAttr::<i32> {
+        let func_attr = FuncAttr::<i32> { representation: None,
             size: Range::Unbounded,
             partiality: PartialityAttr::Total,
             jectivity: JectivityAttr::Bijective,

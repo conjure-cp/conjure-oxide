@@ -425,8 +425,13 @@ fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationRes
         return Err(RuleNotApplicable);
     }
 
+    // A representation written on the declaration's domain is the user's choice; matching the
+    // other side must not override it.
+    let has_preference =
+        |re: &conjure_cp::ast::Reference| re.domain_of().representation_preference().is_some();
+
     match (lhs_re.get_repr(), rhs_re.get_repr()) {
-        (Some((lhs_rule, _)), None) => {
+        (Some((lhs_rule, _)), None) if !has_preference(rhs_re) => {
             let mut new_rhs = rhs_re.clone();
             let (_, symbols, constraints) = new_rhs
                 .select_or_init_repr_via(lhs_rule)
@@ -435,7 +440,7 @@ fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationRes
                 expr.with_children(VecDeque::from([lhs.as_ref().clone(), new_rhs.into()]));
             Ok(Reduction::new(new_expr, constraints, symbols))
         }
-        (None, Some((rhs_rule, _))) => {
+        (None, Some((rhs_rule, _))) if !has_preference(lhs_re) => {
             let mut new_lhs = lhs_re.clone();
             let (_, symbols, constraints) = new_lhs
                 .select_or_init_repr_via(rhs_rule)
@@ -503,11 +508,11 @@ pub(crate) fn is_abstract_domain(domain: &DomainPtr) -> bool {
     match domain.as_ref() {
         Domain::Ground(gd) => match gd.as_ref() {
             // These domains are concrete for all solvers
-            GroundDomain::Empty(..) | GroundDomain::Bool | GroundDomain::Int(_) => false,
+            GroundDomain::Empty(..) | GroundDomain::Bool | GroundDomain::Int(_, _) => false,
             // Represent matrices if they have abstract types inside them;
             // Matrices of concrete types are handled separately by the
             // `ReprMatrixComponents`rule set
-            GroundDomain::Matrix(inner_dom, idx_doms) => {
+            GroundDomain::Matrix(inner_dom, idx_doms, _) => {
                 is_abstract_domain(&inner_dom.into())
                     || any(idx_doms, |d| is_abstract_domain(&d.into()))
             }
@@ -519,7 +524,7 @@ pub(crate) fn is_abstract_domain(domain: &DomainPtr) -> bool {
             // Represent matrices if they have abstract types inside them;
             // Matrices of concrete types are handled separately by the
             // `ReprMatrixComponents`rule set
-            UnresolvedDomain::Matrix(inner_dom, idx_doms) => {
+            UnresolvedDomain::Matrix(inner_dom, idx_doms, _) => {
                 is_abstract_domain(inner_dom) || any(idx_doms, is_abstract_domain)
             }
             // Recurse into domain letting
@@ -533,7 +538,7 @@ pub(crate) fn is_abstract_domain(domain: &DomainPtr) -> bool {
 /// True if this domain is an integer one, following domain lettings.
 fn is_int_domain(domain: &DomainPtr) -> bool {
     match domain.as_ref() {
-        Domain::Ground(gd) => matches!(gd.as_ref(), GroundDomain::Int(_)),
+        Domain::Ground(gd) => matches!(gd.as_ref(), GroundDomain::Int(_, _)),
         Domain::Unresolved(ud) => match ud.as_ref() {
             UnresolvedDomain::Int(..) => true,
             UnresolvedDomain::Reference(re) => is_int_domain(&re.domain_of()),

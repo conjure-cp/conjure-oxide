@@ -110,6 +110,7 @@ mod tests {
     fn image_lowers_to_an_index_of_lookup_into_the_values_matrix() {
         let domain = Domain::function(
             FuncAttr::<i32> {
+                representation: None,
                 size: Range::Unbounded,
                 partiality: PartialityAttr::Total,
                 jectivity: JectivityAttr::None,
@@ -143,6 +144,7 @@ mod tests {
     fn image_outside_original_domain_is_undefined_even_at_valid_internal_positions() {
         let domain = Domain::function(
             FuncAttr::<i32> {
+                representation: None,
                 size: Range::Unbounded,
                 partiality: PartialityAttr::Total,
                 jectivity: JectivityAttr::None,

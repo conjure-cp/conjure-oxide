@@ -60,6 +60,7 @@ mod tests {
         let inner_domain = Domain::tuple(vec![domain_int!(7..8), Domain::bool()]);
         let domain = Domain::relation(
             RelAttr {
+                representation: None,
                 size: range!(2),
                 binary: vec![],
             },

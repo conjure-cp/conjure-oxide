@@ -10,7 +10,7 @@ use conjure_cp::settings::SolverFamily;
 use std::collections::VecDeque;
 
 register_representation!(
-    IntOffset("int_offset")
+    IntOffset("offset")
     struct State<T> {
         /// Minimum and maximum semantic values.
         pub bounds: (i32, i32),

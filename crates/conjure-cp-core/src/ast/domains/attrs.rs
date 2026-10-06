@@ -166,6 +166,19 @@ pub struct FuncAttr<A = Int> {
     pub size: Range<A>,
     pub partiality: PartialityAttr,
     pub jectivity: JectivityAttr,
+    /// Optional user-facing representation preference (short name), e.g. `"packed"`.
+    ///
+    /// Written in Essence as `function (representation packed, …)`. When present, representation
+    /// selection heuristics default to this representation if it is applicable.
+    pub representation: Option<String>,
+}
+
+impl<A> FuncAttr<A> {
+    /// Set the representation preference (Essence short name), returning the updated attributes.
+    pub fn with_representation(mut self, name: impl Into<String>) -> Self {
+        self.representation = Some(name.into());
+        self
+    }
 }
 
 impl<A> Default for FuncAttr<A> {
@@ -176,6 +189,7 @@ impl<A> Default for FuncAttr<A> {
             // `total` attribute is partial.
             partiality: PartialityAttr::Partial,
             jectivity: JectivityAttr::None,
+            representation: None,
         }
     }
 }
@@ -184,6 +198,7 @@ impl<A: Display> Display for FuncAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let size_str = fmt_size("size", &self.size);
         let mut strs = [
+            fmt_representation(&self.representation),
             size_str,
             self.partiality.to_string(),
             self.jectivity.to_string(),
@@ -231,10 +246,14 @@ impl<A> Default for SequenceAttr<A> {
 impl<A: Display> Display for SequenceAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let size_str = fmt_size("size", &self.size);
-        let mut strs = [size_str, self.jectivity.to_string()]
-            .iter()
-            .filter(|s| !s.is_empty())
-            .join(", ");
+        let mut strs = [
+            fmt_representation(&self.representation),
+            size_str,
+            self.jectivity.to_string(),
+        ]
+        .iter()
+        .filter(|s| !s.is_empty())
+        .join(", ");
         if !strs.is_empty() {
             strs = format!("({})", strs);
         }
@@ -248,6 +267,19 @@ pub struct PartitionAttr<A = Int> {
     pub num_parts: Range<A>, // i.e. how many parts there are in the partition
     pub part_len: Range<A>,  // i.e. the size of each constitutent part
     pub is_regular: bool,
+    /// Optional user-facing representation preference (short name), e.g. `"packed"`.
+    ///
+    /// Written in Essence as `partition (representation packed, …)`. When present, representation
+    /// selection heuristics default to this representation if it is applicable.
+    pub representation: Option<String>,
+}
+
+impl<A> PartitionAttr<A> {
+    /// Set the representation preference (Essence short name), returning the updated attributes.
+    pub fn with_representation(mut self, name: impl Into<String>) -> Self {
+        self.representation = Some(name.into());
+        self
+    }
 }
 
 impl<A: Display> Display for PartitionAttr<A> {
@@ -260,10 +292,15 @@ impl<A: Display> Display for PartitionAttr<A> {
             false => String::new(),
         };
 
-        let mut strs = [num_parts_str, part_len_str, regular_str]
-            .iter()
-            .filter(|s| !s.is_empty())
-            .join(", ");
+        let mut strs = [
+            fmt_representation(&self.representation),
+            num_parts_str,
+            part_len_str,
+            regular_str,
+        ]
+        .iter()
+        .filter(|s| !s.is_empty())
+        .join(", ");
         if !strs.is_empty() {
             strs = format!("({})", strs);
         }
@@ -277,6 +314,7 @@ impl<A> Default for PartitionAttr<A> {
             num_parts: Range::Unbounded,
             part_len: Range::Unbounded,
             is_regular: false,
+            representation: None,
         }
     }
 }
@@ -290,12 +328,32 @@ impl<A> Default for PartitionAttr<A> {
 #[path_prefix(conjure_cp::ast)]
 pub struct PermutationAttr<A = Int> {
     pub num_moved: Range<A>,
+    /// Optional user-facing representation preference (short name), e.g. `"packed"`.
+    ///
+    /// Written in Essence as `permutation (representation packed, …)`. When present, representation
+    /// selection heuristics default to this representation if it is applicable.
+    pub representation: Option<String>,
+}
+
+impl<A> PermutationAttr<A> {
+    /// Set the representation preference (Essence short name), returning the updated attributes.
+    pub fn with_representation(mut self, name: impl Into<String>) -> Self {
+        self.representation = Some(name.into());
+        self
+    }
 }
 
 impl<A: Display> Display for PermutationAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let size_str = fmt_size("numMoved", &self.num_moved);
-        write!(f, "{size_str}")
+        match &self.representation {
+            // Without a preference the size is printed bare, as it always has been.
+            None => write!(f, "{size_str}"),
+            Some(representation) if size_str.is_empty() => {
+                write!(f, "(representation {representation})")
+            }
+            Some(representation) => write!(f, "(representation {representation}, {size_str})"),
+        }
     }
 }
 
@@ -303,6 +361,7 @@ impl<A> Default for PermutationAttr<A> {
     fn default() -> Self {
         PermutationAttr {
             num_moved: Range::Unbounded,
+            representation: None,
         }
     }
 }
@@ -346,6 +405,19 @@ impl Display for JectivityAttr {
 pub struct RelAttr<A = Int> {
     pub size: Range<A>,
     pub binary: Vec<BinaryAttr>,
+    /// Optional user-facing representation preference (short name), e.g. `"packed"`.
+    ///
+    /// Written in Essence as `relation (representation packed, …)`. When present, representation
+    /// selection heuristics default to this representation if it is applicable.
+    pub representation: Option<String>,
+}
+
+impl<A> RelAttr<A> {
+    /// Set the representation preference (Essence short name), returning the updated attributes.
+    pub fn with_representation(mut self, name: impl Into<String>) -> Self {
+        self.representation = Some(name.into());
+        self
+    }
 }
 
 impl<A> Default for RelAttr<A> {
@@ -353,6 +425,7 @@ impl<A> Default for RelAttr<A> {
         RelAttr {
             size: Range::Unbounded,
             binary: Vec::new(),
+            representation: None,
         }
     }
 }
@@ -360,10 +433,14 @@ impl<A> Default for RelAttr<A> {
 impl<A: Display> Display for RelAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let size_str = fmt_size("size", &self.size);
-        let mut strs = [size_str, self.binary.iter().join(", ")]
-            .iter()
-            .filter(|s| !s.is_empty())
-            .join(", ");
+        let mut strs = [
+            fmt_representation(&self.representation),
+            size_str,
+            self.binary.iter().join(", "),
+        ]
+        .iter()
+        .filter(|s| !s.is_empty())
+        .join(", ");
         if !strs.is_empty() {
             strs = format!("({})", strs);
         }
@@ -447,6 +524,14 @@ impl BinaryAttr {
             "strictPartialOrder" => BinaryAttr::StrictPartialOrder,
             _ => return None,
         })
+    }
+}
+
+/// Format a representation preference as an Essence attribute, or nothing without one.
+fn fmt_representation(representation: &Option<String>) -> String {
+    match representation {
+        Some(representation) => format!("representation {representation}"),
+        None => String::new(),
     }
 }
 

@@ -44,12 +44,15 @@ fn expression_membership_proof(
 /// Normalises integer domains so equivalent range partitions compare equal.
 fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
     match domain {
-        GroundDomain::Int(ranges) => GroundDomain::Int(Range::squeeze(
-            &ranges
-                .iter()
-                .map(|range| Range::new(range.low().copied(), range.high().copied()))
-                .collect_vec(),
-        )),
+        GroundDomain::Int(ranges, representation) => GroundDomain::Int(
+            Range::squeeze(
+                &ranges
+                    .iter()
+                    .map(|range| Range::new(range.low().copied(), range.high().copied()))
+                    .collect_vec(),
+            ),
+            representation.clone(),
+        ),
         _ => domain.clone(),
     }
 }
@@ -113,13 +116,13 @@ fn index_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 
     // TODO: tuple, this is a hack right now just to avoid the rule being applied to tuples, but could we safely modify the rule to
     // handle tuples as well?
-    if matches!(domain.as_ref(), GroundDomain::Tuple(_))
-        || matches!(domain.as_ref(), GroundDomain::Record(_))
+    if matches!(domain.as_ref(), GroundDomain::Tuple(_, _))
+        || matches!(domain.as_ref(), GroundDomain::Record(_, _))
     {
         return Err(RuleNotApplicable);
     }
 
-    let GroundDomain::Matrix(_, index_domains) = domain.as_ref() else {
+    let GroundDomain::Matrix(_, index_domains, _) = domain.as_ref() else {
         bug!(
             "subject of an index expression should have a matrix domain. subject: {:?}, with domain: {:?}",
             subject,
@@ -162,7 +165,7 @@ fn slice_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         .resolve()
         .map_err(|_| RuleNotApplicable)?;
 
-    let GroundDomain::Matrix(_, index_domains) = domain.as_ref() else {
+    let GroundDomain::Matrix(_, index_domains, _) = domain.as_ref() else {
         bug!(
             "subject of a slice expression should have a matrix domain. subject: {:?}, with domain: {:?}",
             subject,

@@ -11,7 +11,7 @@ use conjure_cp::settings::SolverFamily;
 use std::collections::VecDeque;
 
 register_representation!(
-    IntRank("int_rank")
+    IntRank("rank")
     struct State<T> {
         /// Minimum and maximum semantic values.
         pub bounds: (i32, i32),

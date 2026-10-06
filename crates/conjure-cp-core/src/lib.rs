@@ -62,7 +62,7 @@ macro_rules! domain_int_ground {
     // when parsing expressions, rust groups 1..2 into a single token tree, (1..2)
     // however, we want it to be three seperate token trees [1,..,2] for parsing.
     // use defile to turn it back into 3 token trees
-    ($($e:expr),+ $(,)?) => {::defile::defile! { $crate::ast::GroundDomain::Int(vec![$($crate::range!(@$e)),+]).into() } };
+    ($($e:expr),+ $(,)?) => {::defile::defile! { $crate::ast::GroundDomain::Int(vec![$($crate::range!(@$e)),+], None).into() } };
 }
 
 /// Creates a [`Range`](ast::Range).

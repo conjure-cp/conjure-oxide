@@ -38,12 +38,15 @@ impl ConstantBoundOp {
 /// Normalises integer ranges so equivalent domains compare structurally equal.
 fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
     match domain {
-        GroundDomain::Int(ranges) => GroundDomain::Int(Range::squeeze(
-            &ranges
-                .iter()
-                .map(|range| Range::new(range.low().copied(), range.high().copied()))
-                .collect::<Vec<_>>(),
-        )),
+        GroundDomain::Int(ranges, representation) => GroundDomain::Int(
+            Range::squeeze(
+                &ranges
+                    .iter()
+                    .map(|range| Range::new(range.low().copied(), range.high().copied()))
+                    .collect::<Vec<_>>(),
+            ),
+            representation.clone(),
+        ),
         _ => domain.clone(),
     }
 }
@@ -125,7 +128,7 @@ fn singleton_int_value(expr: &Expr) -> Option<i32> {
     }
 
     let domain = resolved_ground_domain_of_for_partial_eval(expr)?;
-    let GroundDomain::Int(ranges) = domain.as_ref() else {
+    let GroundDomain::Int(ranges, _) = domain.as_ref() else {
         return None;
     };
     let [range] = ranges.as_slice() else {
@@ -149,7 +152,7 @@ fn cheap_singleton_int_value(expr: &Expr) -> Option<i32> {
         Expr::Atomic(_, Atom::Literal(Lit::Int(value))) => Some(*value),
         Expr::Atomic(_, Atom::Reference(reference)) => {
             let domain = reference.domain()?.resolve().ok()?;
-            let GroundDomain::Int(ranges) = domain.as_ref() else {
+            let GroundDomain::Int(ranges, _) = domain.as_ref() else {
                 return None;
             };
             let [range] = ranges.as_slice() else {
@@ -169,7 +172,7 @@ fn matrix_index_offset(index_domain: &DomainPtr, index: i32) -> Option<usize> {
 }
 
 fn ground_matrix_index_offset(index_domain: &GroundDomain, index: i32) -> Option<usize> {
-    let GroundDomain::Int(ranges) = index_domain else {
+    let GroundDomain::Int(ranges, _) = index_domain else {
         return None;
     };
     integer_index_offset(ranges, index)
@@ -235,7 +238,7 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
     match expr {
         Expr::SafeIndex(_, subject, _) => {
             let subject_domain = resolved_ground_domain_of_for_partial_eval(subject)?;
-            let GroundDomain::Matrix(elem_domain, _) = subject_domain.as_ref() else {
+            let GroundDomain::Matrix(elem_domain, _, _) = subject_domain.as_ref() else {
                 return None;
             };
 
@@ -243,7 +246,8 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
         }
         Expr::SafeSlice(_, subject, indices) => {
             let subject_domain = resolved_ground_domain_of_for_partial_eval(subject)?;
-            let GroundDomain::Matrix(elem_domain, index_domains) = subject_domain.as_ref() else {
+            let GroundDomain::Matrix(elem_domain, index_domains, _) = subject_domain.as_ref()
+            else {
                 return None;
             };
             let sliced_dimension = indices.iter().position(Option::is_none);
@@ -252,6 +256,7 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
                 Some(dimension) => Some(Moo::new(GroundDomain::Matrix(
                     elem_domain.clone(),
                     vec![index_domains[dimension].clone()],
+                    None,
                 ))),
                 None => Some(elem_domain.clone()),
             }
@@ -325,7 +330,7 @@ fn simplify_comparison_with_literal(
 
     match (expr_domain.as_ref(), lit) {
         (GroundDomain::Bool, Lit::Bool(_)) => None,
-        (GroundDomain::Int(ranges), Lit::Int(value)) => {
+        (GroundDomain::Int(ranges, _), Lit::Int(value)) => {
             let [range] = ranges.as_slice() else {
                 return None;
             };

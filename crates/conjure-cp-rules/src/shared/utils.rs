@@ -372,7 +372,7 @@ fn is_element_lowerable_subject(expr: &Expr) -> bool {
         _ => return false,
     };
 
-    let GroundDomain::Int(ranges) = index_domain.as_ref() else {
+    let GroundDomain::Int(ranges, _) = index_domain.as_ref() else {
         return false;
     };
     Range::is_contiguous(ranges)

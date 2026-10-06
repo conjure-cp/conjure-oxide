@@ -1743,7 +1743,7 @@ fn domain_needs_abstract_repr_at(domain: &crate::ast::DomainPtr, is_value: bool)
     match domain.as_ref() {
         Domain::Ground(gd) => match gd.as_ref() {
             GroundDomain::Empty(..) | GroundDomain::Bool => false,
-            GroundDomain::Int(_) => int_is_abstract,
+            GroundDomain::Int(_, _) => int_is_abstract,
             // Every matrix has a layout to choose between, so representation selection has work
             // to do whatever the elements are.
             GroundDomain::Matrix(..) => true,

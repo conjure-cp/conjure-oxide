@@ -70,6 +70,7 @@ mod tests {
     fn permutation_decl() -> conjure_cp::ast::DeclarationPtr {
         let domain = Domain::permutation(
             PermutationAttr::<i32> {
+                representation: None,
                 num_moved: Range::Unbounded,
             },
             domain_int!(1..3),

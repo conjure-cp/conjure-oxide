@@ -268,8 +268,14 @@ fn format_domain_with_selected_representation(
         .map(|(_, state)| state.rule().short_name())
         .next();
 
+    // Only sets and multisets show their selected representation in a declaration; rule traces
+    // and snapshots have always printed every other domain as written.
+    let shows_selection = domain.as_set().is_some() || domain.as_mset().is_some();
+
     match selected {
-        Some(short_name) if domain.representation_preference() != Some(short_name) => {
+        Some(short_name)
+            if shows_selection && domain.representation_preference() != Some(short_name) =>
+        {
             format_domain_with_representation(domain, short_name)
         }
         _ => domain.to_string(),
@@ -295,36 +301,7 @@ pub fn pretty_find_with_representation(
 
 /// Print `domain` as usual, but with `repr` as its top-level representation preference.
 pub fn format_domain_with_representation(domain: &crate::ast::DomainPtr, repr: &str) -> String {
-    use crate::ast::{Domain, GroundDomain, UnresolvedDomain};
-
-    match domain.as_ref() {
-        Domain::Ground(gd) => match gd.as_ref() {
-            GroundDomain::Set(attrs, inner) => {
-                let mut attrs = attrs.clone();
-                attrs.representation = Some(repr.to_owned());
-                format!("set {attrs} of {inner}")
-            }
-            GroundDomain::MSet(attrs, inner) => {
-                let mut attrs = attrs.clone();
-                attrs.representation = Some(repr.to_owned());
-                format!("mset {attrs} of {inner}")
-            }
-            _ => domain.to_string(),
-        },
-        Domain::Unresolved(ud) => match ud.as_ref() {
-            UnresolvedDomain::Set(attrs, inner) => {
-                let mut attrs = attrs.clone();
-                attrs.representation = Some(repr.to_owned());
-                format!("set {attrs} of {inner}")
-            }
-            UnresolvedDomain::MSet(attrs, inner) => {
-                let mut attrs = attrs.clone();
-                attrs.representation = Some(repr.to_owned());
-                format!("mset {attrs} of {inner}")
-            }
-            _ => domain.to_string(),
-        },
-    }
+    domain.with_representation_preference(repr).to_string()
 }
 
 /// Pretty prints, in essence syntax, the declaration for the given value letting.

@@ -13,7 +13,7 @@ use conjure_cp::settings::SolverFamily;
 use std::collections::VecDeque;
 
 register_representation!(
-    IntLog("int_log")
+    IntLog("twos_complement")
     struct State<T> {
         /// Overall lower and upper bound of the represented domain.
         pub bounds: (i32, i32),

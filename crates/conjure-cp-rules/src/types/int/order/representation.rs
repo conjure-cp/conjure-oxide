@@ -12,7 +12,7 @@ use conjure_cp::settings::SolverFamily;
 use std::collections::VecDeque;
 
 register_representation!(
-    IntOrder("int_order")
+    IntOrder("order")
     struct State<T> {
         /// Overall lower and upper bound of the represented domain.
         pub bounds: (i32, i32),

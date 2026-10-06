@@ -569,7 +569,7 @@ fn list_elements(expr: &Expression) -> SolverResult<Vec<Expression>> {
             ))
         })?;
 
-    let GroundDomain::Matrix(_, index_domains) = subject_domain.as_ref() else {
+    let GroundDomain::Matrix(_, index_domains, _) = subject_domain.as_ref() else {
         return Err(SolverError::ModelFeatureNotImplemented(format!(
             "slice subject must have matrix domain: {expr}"
         )));

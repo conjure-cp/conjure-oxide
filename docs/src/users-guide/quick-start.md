@@ -26,6 +26,27 @@ representation choices made per declaration, exactly like choosing `occurrence` 
 set, and both are steered with `--heuristic` (see the modelling-choices guide). Variables in
 different encodings are channelled together automatically where a constraint needs them to agree.
 
+### Choosing a representation in the model
+
+Any domain can carry a representation preference, written as an attribute straight after the
+domain's first word, so the choice sits next to the declaration it applies to. A declaration with a
+preference is given that representation instead of asking the heuristic.
+
+```essence
+find a : int(representation order, 1..4)
+find s : set (representation occurrence) of int(1..9)
+find m : matrix (representation packed) indexed by [int(1..3)] of bool
+find t : tuple (representation components, int(1..3), bool)
+find r : record (representation packed) {x: int(1..3), y: bool}
+find f : function (representation explicit, total) int(1..3) --> int(1..3)
+```
+
+`int` and `tuple` put the preference first inside their parentheses, because those already hold the
+ranges or the member domains; `int(representation order)` leaves the ranges unbounded. Every other
+domain keeps it in the attribute list that follows the keyword (`matrix`, `record` and `variant`
+take it as their only attribute). The interactive heuristic (`-hi`) prints each option in this
+syntax, so a choice you make at the prompt can be pasted into the model to make it permanent.
+
 ### Uniform representation choices
 
 Use `--channelling uniform` to choose one representation kind for each type family throughout

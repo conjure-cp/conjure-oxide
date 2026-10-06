@@ -119,7 +119,7 @@ fn lex_represented_matrix_to_atoms(
         .ok_or(RuleNotApplicable)?[0]
         .clone();
     let domain = declaration.resolved_domain().ok_or(RuleNotApplicable)?;
-    let GroundDomain::Matrix(_, index_domains) = domain.as_ref() else {
+    let GroundDomain::Matrix(_, index_domains, _) = domain.as_ref() else {
         return Ok(None);
     };
     if index_domains.len() != 1 {

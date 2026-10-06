@@ -219,14 +219,14 @@ impl AbstractLiteralValue for Expression {
         let Domain::Ground(domain) = domain.as_ref() else {
             return false;
         };
-        matches!(domain.as_ref(), GroundDomain::Int(ranges) if ranges.as_slice() == [Range::UnboundedR(1)])
+        matches!(domain.as_ref(), GroundDomain::Int(ranges, _) if ranges.as_slice() == [Range::UnboundedR(1)])
     }
 }
 impl AbstractLiteralValue for Literal {
     type Dom = Moo<GroundDomain>;
 
     fn has_implied_list_domain(domain: &Self::Dom) -> bool {
-        matches!(domain.as_ref(), GroundDomain::Int(ranges) if ranges.as_slice() == [Range::UnboundedR(1)])
+        matches!(domain.as_ref(), GroundDomain::Int(ranges, _) if ranges.as_slice() == [Range::UnboundedR(1)])
     }
 }
 
@@ -631,7 +631,10 @@ where
     ///
     /// This acts as a variable sized list.
     pub fn matrix_implied_indices(elems: Vec<T>) -> Self {
-        AbstractLiteral::Matrix(elems, GroundDomain::Int(vec![Range::UnboundedR(1)]).into())
+        AbstractLiteral::Matrix(
+            elems,
+            GroundDomain::Int(vec![Range::UnboundedR(1)], None).into(),
+        )
     }
 
     /// If the AbstractLiteral is a list, returns its elements.
@@ -1360,10 +1363,10 @@ mod tests {
         let matrix = |values: &[i32]| {
             Literal::AbstractLiteral(AbstractLiteral::Matrix(
                 values.iter().copied().map(Literal::Int).collect(),
-                Moo::new(GroundDomain::Int(vec![Range::Bounded(
-                    1,
-                    values.len() as i32,
-                )])),
+                Moo::new(GroundDomain::Int(
+                    vec![Range::Bounded(1, values.len() as i32)],
+                    None,
+                )),
             ))
         };
         assert_eq!(
@@ -1395,7 +1398,10 @@ mod tests {
 
         assert_eq!(
             item_domain.resolve(),
-            Ok(Moo::new(GroundDomain::Int(vec![Range::Bounded(1, 999)])))
+            Ok(Moo::new(GroundDomain::Int(
+                vec![Range::Bounded(1, 999)],
+                None
+            )))
         );
     }
 

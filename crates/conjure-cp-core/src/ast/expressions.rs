@@ -788,7 +788,7 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     let expr = exprs.pop()?;
     let dom = expr.domain_of()?;
     let resolved = dom.resolve().ok()?;
-    let GroundDomain::Int(ranges) = resolved.as_ref() else {
+    let GroundDomain::Int(ranges, _) = resolved.as_ref() else {
         return None;
     };
 
@@ -797,7 +797,7 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     for expr in exprs {
         let dom = expr.domain_of()?;
         let resolved = dom.resolve().ok()?;
-        let GroundDomain::Int(ranges) = resolved.as_ref() else {
+        let GroundDomain::Int(ranges, _) = resolved.as_ref() else {
             return None;
         };
 
@@ -909,7 +909,7 @@ fn sum_domain_for_comprehension(expr: &Expression) -> Option<DomainPtr> {
     };
     let comp = comp.as_ref();
     let resolved = comp.return_expression.domain_of()?.resolve().ok()?;
-    let GroundDomain::Int(return_ranges) = resolved.as_ref() else {
+    let GroundDomain::Int(return_ranges, _) = resolved.as_ref() else {
         return None;
     };
     let (term_min, term_max) = range_vec_bounds_i32(return_ranges)?;
@@ -1240,7 +1240,7 @@ impl Expression {
                     .apply_i32(super::floor_div, b.domain_of()?.resolve().ok()?.as_ref())
                     .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
 
-                if let GroundDomain::Int(ranges) = domain {
+                if let GroundDomain::Int(ranges, _) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
                     Some(Domain::int(ranges))
@@ -1265,7 +1265,7 @@ impl Expression {
                     .apply_i32(super::floor_mod, b.domain_of()?.resolve().ok()?.as_ref())
                     .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
 
-                if let GroundDomain::Int(ranges) = domain {
+                if let GroundDomain::Int(ranges, _) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
                     Some(Domain::int(ranges))
@@ -1307,7 +1307,7 @@ impl Expression {
             Expression::Lt(_, _, _) => Some(Domain::bool()),
             Expression::Factorial(_, a) => {
                 let dom = a.domain_of()?.resolve().ok()?;
-                let GroundDomain::Int(_) = dom.as_ref() else {
+                let GroundDomain::Int(_, _) = dom.as_ref() else {
                     return None;
                 };
                 let values = dom.values_i32().ok()?;
@@ -1335,7 +1335,7 @@ impl Expression {
                     // TODO: currently only works for matrices
                     let dom = m.domain_of()?.resolve().ok()?;
                     let (val_dom, idx_doms) = match dom.as_ref() {
-                        GroundDomain::Matrix(val, idx) => (val, idx),
+                        GroundDomain::Matrix(val, idx, _) => (val, idx),
                         _ => return None,
                     };
                     let num_elems = matrix::num_elements(idx_doms).ok()? as i32;
@@ -1380,7 +1380,7 @@ impl Expression {
             Expression::IndexOf(_, matrix, value) => {
                 let dom = matrix.domain_of()?.resolve().ok()?;
                 let idx_doms = match dom.as_ref() {
-                    GroundDomain::Matrix(_, idx) => idx,
+                    GroundDomain::Matrix(_, idx, _) => idx,
                     _ => return None,
                 };
                 if let [idx_dom] = idx_doms.as_slice() {
@@ -1448,8 +1448,8 @@ impl Expression {
                 let a_resolved = a.domain_of()?.resolve().ok()?;
                 let b_resolved = b.domain_of()?.resolve().ok()?;
 
-                if matches!(a_resolved.as_ref(), GroundDomain::Int(_))
-                    && matches!(b_resolved.as_ref(), GroundDomain::Int(_))
+                if matches!(a_resolved.as_ref(), GroundDomain::Int(_, _))
+                    && matches!(b_resolved.as_ref(), GroundDomain::Int(_, _))
                 {
                     a_resolved
                         .apply_i32(|x, y| Some(x - y), b_resolved.as_ref())
@@ -1713,6 +1713,7 @@ impl Expression {
                     size: new_size,
                     jectivity,
                     partiality,
+                    representation: attrs.representation.clone(),
                 };
                 Some(Domain::function(new_attrs, new_dom, codom.clone()))
             }
@@ -1795,6 +1796,8 @@ impl Expression {
                 let rel_attrs = RelAttr {
                     size: attrs.size,
                     binary: vec![],
+                    // The function's layout does not say how its relation view is laid out.
+                    representation: None,
                 };
                 Some(Domain::relation(rel_attrs, vec![domain, codomain]))
             }
@@ -2483,7 +2486,7 @@ pub fn image_can_be_undefined(subject: &Expression, argument: &Expression) -> bo
             min_length <= 0
                 || !argument_always_in(
                     argument,
-                    &GroundDomain::Int(vec![Range::Bounded(1, min_length)]),
+                    &GroundDomain::Int(vec![Range::Bounded(1, min_length)], None),
                 )
         }
         _ => true,
@@ -4138,7 +4141,7 @@ mod tests {
         assert_eq!(attrs.representation.as_deref(), Some("counts"));
         assert_eq!(
             inner.as_ref(),
-            &GroundDomain::Int(vec![Range::Bounded(1, 999)])
+            &GroundDomain::Int(vec![Range::Bounded(1, 999)], None)
         );
     }
 
