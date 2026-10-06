@@ -81,44 +81,32 @@ WatchedLiteral(__1,false)
 --
 
 table([0;int(1..1)], [[0;int(1..1)],[0;int(1..1)];int(1..2)])
-   ~~> matrix_to_list ([("Base", 1998)])
-table([0;int(1..)], [[0;int(1..1)],[0;int(1..1)];int(1..)])
+   ~~> flatten_table ([("Minion", 4050)])
+FlatTable([0], [[0], [0]], false)
 
 --
 
 table([toInt(b),toInt(c);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..2)])
-   ~~> matrix_to_list ([("Base", 1998)])
-table([toInt(b),toInt(c);int(1..)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..)])
+   ~~> flatten_table ([("Minion", 4050)])
+FlatTable([b, c], [[0, 1], [1, 0]], false)
 
 --
 
 table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)])
-   ~~> matrix_to_list ([("Base", 1998)])
-table([x,x;int(1..)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..)])
+   ~~> flatten_table ([("Minion", 4050)])
+FlatTable([x, x], [[-2, 0], [0, 3]], false)
 
 --
 
 table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
-   ~~> matrix_to_list ([("Base", 1998)])
-table([x,y;int(1..)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..)])
+   ~~> flatten_table ([("Minion", 4050)])
+FlatTable([x, y], [[0, 0], [3, 3]], false)
 
 --
 
 table([x,y,x,0;int(1..4)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..4)])
-   ~~> matrix_to_list ([("Base", 1998)])
-table([x,y,x,0;int(1..)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..)])
-
---
-
-table([toInt(b),toInt(c);int(1..)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..)])
-   ~~> flatten_matrix_literal ([("Minion", 1000)])
-table([__2,__3;int(1..)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..)])
-new variables:
-  findAux __2: int(0..1)
-  findAux __3: int(0..1)
-new constraints:
-  __2 =aux toInt(b)
-  __3 =aux toInt(c)
+   ~~> flatten_table ([("Minion", 4050)])
+FlatTable([x, y, x, 0], [[-2, 0, -2, 0], [3, -2, 3, 0], [3, -2, 3, 0], [7, 0, 7, 0]], false)
 
 --
 
@@ -133,18 +121,14 @@ find inside: bool
 find notInside: bool
 findAux __0: bool
 findAux __1: bool
-findAux __2: int(0..1)
-findAux __3: int(0..1)
 
 such that
 
-Reify(table([x,y,x,0;int(1..)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..)]), inside),
+Reify(FlatTable([x, y, x, 0], [[-2, 0, -2, 0], [3, -2, 3, 0], [3, -2, 3, 0], [7, 0, 7, 0]], false), inside),
 Reify(WatchedLiteral(__1,false), notInside),
-Reify(table([__2,__3;int(1..)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..)]), booleanInside),
+Reify(FlatTable([b, c], [[0, 1], [1, 0]], false), booleanInside),
 WatchedLiteral(__0,false),
-table([0;int(1..)], [[0;int(1..1)],[0;int(1..1)];int(1..)]),
-Reify(table([x,x;int(1..)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..)]), __0),
-Reify(table([x,y;int(1..)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..)]), __1),
-__2 =aux toInt(b),
-__3 =aux toInt(c)
+FlatTable([0], [[0], [0]], false),
+Reify(FlatTable([x, x], [[-2, 0], [0, 3]], false), __0),
+Reify(FlatTable([x, y], [[0, 0], [3, 3]], false), __1)
 
