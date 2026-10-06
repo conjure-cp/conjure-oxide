@@ -106,6 +106,21 @@ pub fn tuple_expr_entries(expr: &Expr) -> Option<Vec<Expr>> {
     }
 }
 
+/// Read a sparse short-table row; sequences permit different row lengths without ragged matrices.
+pub fn short_table_row_entries(expr: &Expr) -> Option<Vec<Expr>> {
+    match expr {
+        Expr::AbstractLiteral(_, AbstractLiteral::Sequence(entries)) => Some(entries.clone()),
+        Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Sequence(entries))),
+        ) => Some(entries.iter().cloned().map(Expr::from).collect()),
+        _ => expr
+            .clone()
+            .unwrap_matrix_unchecked()
+            .map(|(entries, _)| entries),
+    }
+}
+
 pub fn as_eq_or_neq(expr: &Expr) -> Result<(&Expr, &Expr, bool), ApplicationError> {
     match expr {
         Expr::Eq(_, left, right) => Ok((left.as_ref(), right.as_ref(), false)),

@@ -23,7 +23,8 @@ fn expand_short_table(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let rows = matrix_entries(rows).ok_or(RuleNotApplicable)?;
     let mut alternatives = Vec::with_capacity(rows.len());
     for row in rows {
-        let pairs = matrix_entries(&row).ok_or(RuleNotApplicable)?;
+        let row = super::materialise_matrix_operand(&row).unwrap_or(row);
+        let pairs = crate::shared::utils::short_table_row_entries(&row).ok_or(RuleNotApplicable)?;
         let mut positions = std::collections::HashSet::new();
         let mut equalities = Vec::with_capacity(pairs.len());
         for pair in pairs {
@@ -100,5 +101,14 @@ mod tests {
         ] {
             assert!(expand_short_table(&table(rows), &SymbolTable::new()).is_err());
         }
+        let sequence =
+            Expr::AbstractLiteral(Metadata::new(), AbstractLiteral::Sequence(vec![pair(1, 7)]));
+        let expression = Expr::ShortTable(
+            Metadata::new(),
+            Moo::new(conjure_cp::matrix_expr![7.into(), 9.into()]),
+            Moo::new(conjure_cp::into_matrix_expr!(vec![sequence])),
+        );
+        let effect = expand_short_table(&expression, &SymbolTable::new()).unwrap();
+        assert_eq!(eval_constant(&effect.new_expression), Some(true.into()));
     }
 }

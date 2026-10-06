@@ -21,7 +21,7 @@ fn expand_short_table(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let rows = rows
         .into_iter()
         .map(|row| {
-            let pairs = materialise(&row).unwrap_matrix_unchecked()?.0;
+            let pairs = crate::shared::utils::short_table_row_entries(&materialise(&row))?;
             let mut values = inputs.clone();
             let mut positions = std::collections::HashSet::new();
             for pair in pairs {
@@ -162,6 +162,20 @@ mod tests {
         assert!(
             matches!(&selected.new_sat_decisions[0], SatEncodingDecision::Table { rows, .. } if *rows == vec![vec![1,7]])
         );
+        let sequence =
+            Expr::AbstractLiteral(Metadata::new(), AbstractLiteral::Sequence(vec![pair(2)]));
+        for row in [
+            sequence.clone(),
+            Expr::from(conjure_cp::ast::eval_constant(&sequence).unwrap()),
+        ] {
+            let table = Expr::ShortTable(
+                Metadata::new(),
+                Moo::new(tuple.clone()),
+                Moo::new(conjure_cp::into_matrix_expr!(vec![row])),
+            );
+            let expanded = expand_short_table(&table, &SymbolTable::new()).unwrap();
+            assert_eq!(expanded.new_expression, effect.new_expression);
+        }
         for pairs in [vec![pair(0)], vec![pair(3)], vec![pair(1), pair(1)]] {
             assert!(expand_short_table(&build(pairs), &SymbolTable::new()).is_err());
         }
