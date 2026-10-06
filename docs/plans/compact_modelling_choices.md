@@ -80,6 +80,37 @@ were restored; incidental changes to truncated solution subsets were discarded. 
 and sampled memory peaks include reference and other backend work; a zero peak means the short
 run was not sampled, not zero memory use. The five other known resource failures were not retried.
 
+## Recorded before/after timings
+
+The [comparison CSV](compact_modelling_before_after.csv) uses the raw saved measurements from
+the earlier full acceptance and the compact refresh, matching heuristic, channelling and seeds.
+Times are SAT translation plus solving, excluding reference and other backend work. Across the
+123 previously passing compact fixtures, summed translation fell from 612.860 to 473.700 seconds,
+summed solving from 623.547 to 565.448 seconds, and their total from 1236.407 to 1039.148 seconds
+(16.0% less recorded time). Five of these fixtures are rewrite-only.
+
+| Fixture | Before SAT seconds | After SAT seconds |
+| --- | ---: | ---: |
+| function_partial_smoke | Failed, over 4 GiB | 0.107570 |
+| function_total_int_set_01 | 0.060497 | 0.004408 |
+| binrel04 | 17.181014 | 0.007649 |
+| set08 | 9.264405 | 0.002234 |
+| element-compound-sets | 0.849040 | 0.127200 |
+| sparse-partial-small | 1.996082 | 0.009425 |
+| blackhole | 445.665928 | 380.208208 |
+| plotting | 178.685064 | 144.955670 |
+| test-branchingon2 | 149.312085 | 110.213260 |
+| opd | 11.640579 | 44.832179 |
+| bibd-implied | 15.683916 | 18.280900 |
+
+The storage changes explain a substantial reduction in the first six fixtures' rewritten models.
+The overall timing difference is not an isolated measurement of this policy change: the earlier
+run predates the shared constant-matrix fix and scheduled a different mix of tests. Model traces
+are unchanged for the other examples above, including `opd`'s slower first-solution search.
+Controlled repeated runs are needed before attributing those differences to compact. No elapsed
+before time is available for the memory-limited partial-function attempt; its new full fixture
+time was 34.16 seconds including the Minion portfolios and Conjure reference.
+
 ## User pins and CLI grouping
 
 All six `--sat-encoding-*` flags already accept optional pins. Without a flag, first, random,
