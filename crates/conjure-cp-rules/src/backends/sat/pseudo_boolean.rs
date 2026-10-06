@@ -124,6 +124,9 @@ impl Linear {
                     }
                     // Sparse rank is not a linear numeric view of its code bits.
                     SATIntEncoding::Rank(_) => return None,
+                    // Negating the magnitude under the sign is a product of two bits, not a
+                    // weighted sum of them.
+                    SATIntEncoding::SignMagnitude => return None,
                     SATIntEncoding::Log => {
                         if bits.is_empty() || bits.len() > 32 {
                             return None;
@@ -724,7 +727,7 @@ mod tests {
                         lower: -10,
                         upper: 0
                     },
-                    SATIntEncoding::Rank(_) => unreachable!(),
+                    SATIntEncoding::Rank(_) | SATIntEncoding::SignMagnitude => unreachable!(),
                 }
             );
             for value in [low, -1, high] {
@@ -734,7 +737,7 @@ mod tests {
                         SATIntEncoding::Order => value >= low + index as i32,
                         SATIntEncoding::Log => (value >> index) & 1 != 0,
                         SATIntEncoding::Offset => ((value - low) >> index) & 1 != 0,
-                        SATIntEncoding::Rank(_) => unreachable!(),
+                        SATIntEncoding::Rank(_) | SATIntEncoding::SignMagnitude => unreachable!(),
                     })
                     .collect();
                 let actual = linear.constant

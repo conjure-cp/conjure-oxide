@@ -9,6 +9,8 @@ pub enum SATIntEncoding {
     Offset,
     /// Unsigned index into the canonical inclusive domain intervals.
     Rank(Vec<(i32, i32)>),
+    /// Magnitude bits, least significant first, then a sign bit.
+    SignMagnitude,
     Order,
     Direct,
 }

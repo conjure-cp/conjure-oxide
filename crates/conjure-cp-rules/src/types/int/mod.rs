@@ -6,6 +6,7 @@ mod offset;
 mod order;
 mod rank;
 mod shared;
+mod sign_magnitude;
 pub(crate) mod unsigned;
 
 pub use bv::SmtBv;
@@ -16,3 +17,4 @@ pub use offset::IntOffset;
 pub use order::IntOrder;
 pub use rank::IntRank;
 pub(crate) use shared::{finite_int_bounds, int_domain_to_expr, int_ranges};
+pub use sign_magnitude::IntSignMagnitude;

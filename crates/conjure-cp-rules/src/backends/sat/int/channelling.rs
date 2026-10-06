@@ -247,12 +247,26 @@ fn to_log(expr: Expr, clauses: &mut Vec<SatEncodingDecision>, symbols: &mut Symb
         );
     }
 
+    if matches!(encoding, SATIntEncoding::SignMagnitude) {
+        return Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(sign_magnitude_to_twos_complement(
+                &bits, width, clauses, symbols
+            ))),
+            (low, high),
+        );
+    }
+
     // Both remaining encodings lay out one bit per value; order does so cumulatively, so take the
     // difference between neighbouring thresholds to recover "x is exactly this value".
     let value_bits = match encoding {
         SATIntEncoding::Direct => bits,
         SATIntEncoding::Order => order_to_value_bits(&bits, clauses, symbols),
-        SATIntEncoding::Log | SATIntEncoding::Offset | SATIntEncoding::Rank(_) => return expr,
+        SATIntEncoding::Log
+        | SATIntEncoding::Offset
+        | SATIntEncoding::Rank(_)
+        | SATIntEncoding::SignMagnitude => return expr,
     };
 
     let log_bits: Vec<Expr> = (0..width)
@@ -317,6 +331,7 @@ pub(super) fn sat_int_literal(encoding: &SATIntEncoding, value: i32) -> Expr {
     let bits = match encoding {
         SATIntEncoding::Log => log_literal_bits(value),
         SATIntEncoding::Offset | SATIntEncoding::Rank(_) => vec![false.into()],
+        SATIntEncoding::SignMagnitude => sign_magnitude_literal_bits(value),
         SATIntEncoding::Direct | SATIntEncoding::Order => {
             vec![Expr::Atomic(
                 Metadata::new(),
@@ -334,6 +349,47 @@ pub(super) fn sat_int_literal(encoding: &SATIntEncoding, value: i32) -> Expr {
         Moo::new(into_matrix_expr!(bits)),
         (value, value),
     )
+}
+
+/// The sign-and-magnitude bits of a constant: its magnitude, least significant first, then the sign.
+fn sign_magnitude_literal_bits(value: i32) -> Vec<Expr> {
+    let magnitude = i64::from(value).unsigned_abs();
+    let width = (64 - magnitude.leading_zeros()).max(1);
+    let bit = |set: bool| Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(set)));
+    (0..width)
+        .map(|index| bit((magnitude >> index) & 1 == 1))
+        .chain(std::iter::once(bit(value < 0)))
+        .collect()
+}
+
+/// Two's complement of a sign-and-magnitude code, in `width` bits.
+///
+/// The magnitude is inverted and incremented when the sign is set: with the sign as the carry in,
+/// bit `i` is `(m_i xor s) xor carry_i` and the carry on is `(m_i xor s) and carry_i`. Bits past
+/// the magnitude's are zero, so they are just the sign.
+fn sign_magnitude_to_twos_complement(
+    bits: &[Expr],
+    width: usize,
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Vec<Expr> {
+    let (sign, magnitude) = bits.split_last().expect("a sign bit");
+    let mut carry = sign.clone();
+    let mut out = Vec::with_capacity(width);
+    for index in 0..width {
+        let flipped = match magnitude.get(index) {
+            Some(bit) => tseytin_xor(bit.clone(), sign.clone(), decisions, symbols),
+            None => sign.clone(),
+        };
+        out.push(tseytin_xor(
+            flipped.clone(),
+            carry.clone(),
+            decisions,
+            symbols,
+        ));
+        carry = tseytin_and(&[flipped, carry], decisions, symbols);
+    }
+    out
 }
 
 /// The two's-complement bits of a constant, least significant first.
@@ -493,6 +549,19 @@ mod unsigned_tests {
             (-3, 2),
         );
         assert_nonlinear_semantic_consumers(operand);
+    }
+
+    #[test]
+    fn sign_magnitude_values_reach_every_semantic_numeric_consumer() {
+        for value in [-3, 0, 3, i32::MIN, i32::MAX] {
+            let operand = Expr::SATInt(
+                Metadata::new(),
+                SATIntEncoding::SignMagnitude,
+                Moo::new(into_matrix_expr!(sign_magnitude_literal_bits(value))),
+                (value, value),
+            );
+            assert_nonlinear_semantic_consumers(operand);
+        }
     }
 
     #[test]
@@ -697,6 +766,57 @@ mod unsigned_tests {
                     }
                     assert_eq!(value, expected, "rank={rank} ranges={ranges:?} code={code}");
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn sign_magnitude_codes_decode_to_actual_values_including_extremes() {
+        let cases: [((i32, i32), Vec<i32>); 5] = [
+            ((-4, 3), (-4..=3).collect()),
+            ((-8, 8), (-8..=8).collect()),
+            ((5, 9), (5..=9).collect()),
+            ((-9, -5), (-9..=-5).collect()),
+            (
+                (i32::MIN, i32::MAX),
+                vec![i32::MIN, i32::MIN + 1, -1, 0, 1, i32::MAX - 1, i32::MAX],
+            ),
+        ];
+        for ((low, high), values_to_check) in cases {
+            for expected in values_to_check {
+                let bits: Vec<Expr> = sign_magnitude_literal_bits(expected);
+                let operand = Expr::SATInt(
+                    Metadata::new(),
+                    SATIntEncoding::SignMagnitude,
+                    Moo::new(into_matrix_expr!(bits)),
+                    (low, high),
+                );
+                let mut decisions = Vec::new();
+                let decoded = to_log(operand, &mut decisions, &mut SymbolTable::new());
+                let mut values = HashMap::new();
+                for decision in decisions {
+                    let SatEncodingDecision::Boolean { output, expression } = decision else {
+                        panic!("unexpected decision")
+                    };
+                    let Expr::Atomic(_, Atom::Reference(reference)) = output else {
+                        panic!("unexpected output")
+                    };
+                    values.insert(reference.name().clone(), evaluate(&expression, &values));
+                }
+                let Expr::SATInt(_, SATIntEncoding::Log, inner, _) = decoded else {
+                    panic!("expected actual-value binary")
+                };
+                let bits = inner.unwrap_list_ref().unwrap();
+                let width = bits.len();
+                let mut value: i64 = bits
+                    .iter()
+                    .enumerate()
+                    .map(|(i, bit)| i64::from(evaluate(bit, &values)) << i)
+                    .sum();
+                if value & (1i64 << (width - 1)) != 0 {
+                    value -= 1i64 << width;
+                }
+                assert_eq!(value, i64::from(expected), "domain {low}..{high}");
             }
         }
     }

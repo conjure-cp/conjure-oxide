@@ -83,12 +83,124 @@ pub(crate) fn unsigned_bound(bits: &[DeclarationPtr], maximum: u64) -> Expressio
     leq
 }
 
+/// Bound the magnitude separately for each sign before decoding into a narrower signed word.
+pub(crate) fn signed_magnitude_bounds(
+    bits: &[DeclarationPtr],
+    sign: Expression,
+    bounds: (i32, i32),
+) -> Vec<Expression> {
+    let not_sign = Expression::Not(Metadata::new(), Moo::new(sign.clone()));
+    let negative = if bounds.0 >= 0 {
+        not_sign.clone()
+    } else {
+        Expression::Imply(
+            Metadata::new(),
+            Moo::new(sign.clone()),
+            Moo::new(unsigned_bound(bits, i64::from(bounds.0).unsigned_abs())),
+        )
+    };
+    let positive = if bounds.1 < 0 {
+        sign
+    } else {
+        Expression::Imply(
+            Metadata::new(),
+            Moo::new(not_sign),
+            Moo::new(unsigned_bound(bits, bounds.1 as u64)),
+        )
+    };
+    vec![negative, positive]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::types::int::{IntOffset, IntRank};
     use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
     use conjure_cp::{domain_int, range};
+
+    #[test]
+    fn sign_bounds_exclude_wrapping_codes_and_keep_valid_values() {
+        use conjure_cp::ast::{Atom, Domain, Name, eval_constant};
+        use uniplate::Uniplate;
+        for (low, high) in [
+            (-2, 0),
+            (-2, 1),
+            (-4, 0),
+            (-8, -8),
+            (-9, -5),
+            (0, 2),
+            (i32::MIN, i32::MIN),
+            (i32::MIN, i32::MAX),
+        ] {
+            let magnitude_width = unsigned_width(
+                i64::from(low)
+                    .unsigned_abs()
+                    .max(i64::from(high).unsigned_abs()),
+            );
+            let bits = (0..magnitude_width)
+                .map(|index| {
+                    DeclarationPtr::new_find(Name::user(&format!("m{index}")), Domain::bool())
+                })
+                .collect::<Vec<_>>();
+            let sign = DeclarationPtr::new_find(Name::user("sign"), Domain::bool());
+            let constraints =
+                signed_magnitude_bounds(&bits, Reference::new(sign.clone()).into(), (low, high));
+            let width = (1..=32)
+                .find(|width| {
+                    i64::from(low) >= -(1i64 << (width - 1))
+                        && i64::from(high) < (1i64 << (width - 1))
+                })
+                .unwrap();
+            let samples = if magnitude_width <= 8 {
+                (0..1u64 << magnitude_width).collect::<Vec<_>>()
+            } else {
+                vec![0, 1, (1u64 << 31) - 1, 1u64 << 31, u32::MAX as u64]
+            };
+            for magnitude in samples {
+                for negative in [false, true] {
+                    let mut values = bits
+                        .iter()
+                        .enumerate()
+                        .map(|(index, bit)| (bit.name().clone(), magnitude & (1 << index) != 0))
+                        .collect::<std::collections::HashMap<_, _>>();
+                    values.insert(sign.name().clone(), negative);
+                    let allowed = constraints.iter().all(|constraint| {
+                        let concrete = constraint.transform(&|expression| {
+                            let replacement =
+                                if let Expression::Atomic(_, Atom::Reference(reference)) =
+                                    &expression
+                                {
+                                    values
+                                        .get(&*reference.name())
+                                        .copied()
+                                        .map(Expression::from)
+                                } else {
+                                    None
+                                };
+                            replacement.unwrap_or(expression)
+                        });
+                        eval_constant(&concrete) == Some(Literal::Bool(true))
+                    });
+                    let value = if negative {
+                        -(magnitude as i64)
+                    } else {
+                        magnitude as i64
+                    };
+                    if allowed {
+                        assert!(
+                            (-(1i64 << (width - 1))..(1i64 << (width - 1))).contains(&value),
+                            "code {value} wraps in {width} bits for {low}..{high}"
+                        );
+                    }
+                    if (i64::from(low)..=i64::from(high)).contains(&value)
+                        && !(negative && magnitude == 0)
+                    {
+                        assert!(allowed, "valid code {value} rejected for {low}..{high}");
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
     fn unsigned_representations_round_trip_and_reject_gaps() {

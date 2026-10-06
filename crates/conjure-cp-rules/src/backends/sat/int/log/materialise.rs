@@ -4,7 +4,7 @@ use conjure_cp::rule_engine::{
     register_rule,
 };
 
-use crate::types::int::{IntLog, IntOffset, IntRank};
+use crate::types::int::{IntLog, IntOffset, IntRank, IntSignMagnitude};
 
 /// Normalise logarithmic SAT integer operands to a common bit width.
 pub(super) fn validate_log_int_operands(
@@ -74,6 +74,8 @@ fn integer_decision_representation_unsigned(expr: &Expr, _: &SymbolTable) -> App
     let represented = if let Some(state) = reference.get_repr_as::<IntOffset>() {
         state.sat_int_expr()
     } else if let Some(state) = reference.get_repr_as::<IntRank>() {
+        state.sat_int_expr()
+    } else if let Some(state) = reference.get_repr_as::<IntSignMagnitude>() {
         state.sat_int_expr()
     } else {
         return Err(RuleNotApplicable);
