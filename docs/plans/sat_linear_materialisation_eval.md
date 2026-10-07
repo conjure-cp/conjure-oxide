@@ -71,6 +71,8 @@ The broad acceptance run was slower on several unchanged backends too. For examp
 
 Knights is directly affected: 92 old sum materialisations and 92 old negations are replaced by 92 new linear-operand materialisations. Its SAT total increased from 82.44 to 118.64 seconds (+43.9%); Minion increased 14.5% and reference-tool wall time increased 27.2%. This remains a performance follow-up, not evidence of a universal improvement.
 
+The preserved weighted relations also remove intermediate count encodings and their portfolio branches. Sonet's SAT portfolio drops from 540 to 70 models, with recorded translation plus collection time falling from 9.629 to 1.492 seconds. DiscreteTomography drops from 10 to 5 models (0.192 to 0.228 seconds). These are changed-work comparisons: the smaller portfolios retain the applicable encoding choices and pass the integration solution comparisons, but their timings are not per-model speedup measurements.
+
 ## Remaining work
 
 Keep the existing PB fast path for linear comparisons. The remaining implementation cost is materialising a result as a full ordinary declaration, including structural domain constraints and conversion of nonlinear integer representations. Some constraints may be redundant for a derived result, but removing them requires a separate correctness argument covering sparse codes and canonical decoding. Native helpers used inside genuinely nonlinear circuits are still needed; this change does not remove all in-house arithmetic.
