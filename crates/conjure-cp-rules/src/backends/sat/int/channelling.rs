@@ -66,7 +66,7 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     }
 
     // Semantic allDifferent/table/element operands retain their ready value views.
-    // Nonlinear codes need conversion; the decision rule retains linear value views.
+    // Sparse rank still needs interval decoding; other numeric views are native.
     let retains_views = matches!(
         expr,
         Expr::AllDiff(..)
@@ -130,13 +130,7 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
 
 /// Whether semantic numeric decisions need a decoded actual-value circuit.
 fn needs_actual_value_circuit(encoding: &SATIntEncoding) -> bool {
-    !matches!(
-        encoding,
-        SATIntEncoding::Direct
-            | SATIntEncoding::Order
-            | SATIntEncoding::Log
-            | SATIntEncoding::Offset
-    )
+    matches!(encoding, SATIntEncoding::Rank(ranges) if ranges.len() != 1)
 }
 
 fn map_table_cells(expression: Expr, convert: &mut impl FnMut(Expr) -> Expr) -> Expr {
@@ -574,7 +568,7 @@ mod unsigned_tests {
     }
 
     #[test]
-    fn sign_magnitude_values_reach_every_semantic_numeric_consumer() {
+    fn sign_magnitude_values_retain_native_numeric_views() {
         for value in [-3, 0, 3, i32::MIN, i32::MAX] {
             let operand = Expr::SATInt(
                 Metadata::new(),
@@ -582,7 +576,12 @@ mod unsigned_tests {
                 Moo::new(into_matrix_expr!(sign_magnitude_literal_bits(value))),
                 (value, value),
             );
-            assert_nonlinear_semantic_consumers(operand);
+            let view = crate::backends::sat::pseudo_boolean::integer_view(&operand).unwrap();
+            assert_eq!(view.constant, i64::from(value));
+            assert!(view.terms.is_empty());
+            let expression =
+                Expr::AllDiff(Metadata::new(), Moo::new(into_matrix_expr!(vec![operand])));
+            assert!(unify_sat_int_encodings(&expression, &SymbolTable::new()).is_err());
         }
     }
 

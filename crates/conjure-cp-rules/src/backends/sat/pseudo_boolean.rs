@@ -23,12 +23,18 @@ impl Linear {
                     .checked_add(scale.checked_mul(i128::from(*value))?)?
             }
             Expr::Atomic(_, Atom::Reference(reference)) => {
-                use crate::types::int::{IntDirect, IntLog, IntOffset, IntOrder};
+                use crate::types::int::{
+                    IntDirect, IntLog, IntOffset, IntOrder, IntRank, IntSignMagnitude,
+                };
                 let represented = if let Some(state) = reference.get_repr_as::<IntDirect>() {
                     state.sat_int_expr()
                 } else if let Some(state) = reference.get_repr_as::<IntOrder>() {
                     state.sat_int_expr()
                 } else if let Some(state) = reference.get_repr_as::<IntOffset>() {
+                    state.sat_int_expr()
+                } else if let Some(state) = reference.get_repr_as::<IntRank>() {
+                    state.sat_int_expr()
+                } else if let Some(state) = reference.get_repr_as::<IntSignMagnitude>() {
                     state.sat_int_expr()
                 } else {
                     reference.get_repr_as::<IntLog>()?.sat_int_expr()
@@ -103,7 +109,12 @@ impl Linear {
                         }
                         Some(PbTermStructure::Chain)
                     }
-                    SATIntEncoding::Offset => {
+                    SATIntEncoding::Offset | SATIntEncoding::Rank(_) => {
+                        if let SATIntEncoding::Rank(ranges) = encoding
+                            && ranges.as_slice() != [(*low, *high)]
+                        {
+                            return None;
+                        }
                         if bits.is_empty() || bits.len() > 32 {
                             return None;
                         }
@@ -116,11 +127,41 @@ impl Linear {
                         }
                         binary_structure(scale, 0, i128::from(*high) - i128::from(*low))
                     }
-                    // Sparse rank is not a linear numeric view of its code bits.
-                    SATIntEncoding::Rank(_) => return None,
-                    // Negating the magnitude under the sign is a product of two bits, not a
-                    // weighted sum of them.
-                    SATIntEncoding::SignMagnitude => return None,
+                    SATIntEncoding::SignMagnitude => {
+                        if bits.len() < 2 || bits.len() > 33 {
+                            return None;
+                        }
+                        let sign = bits.last()?;
+                        for (index, magnitude) in bits[..bits.len() - 1].iter().enumerate() {
+                            let weight = scale.checked_mul(1i128 << index)?;
+                            self.terms.push((weight, magnitude.clone()));
+                            // x = magnitude - 2*(sign AND magnitude). The compiler
+                            // reuses RustSAT gates and the selected library PB encoder.
+                            let negative = match (sign, magnitude) {
+                                (Expr::Atomic(_, Atom::Literal(Literal::Bool(false))), _)
+                                | (_, Expr::Atomic(_, Atom::Literal(Literal::Bool(false)))) => {
+                                    false.into()
+                                }
+                                (Expr::Atomic(_, Atom::Literal(Literal::Bool(true))), _) => {
+                                    magnitude.clone()
+                                }
+                                (_, Expr::Atomic(_, Atom::Literal(Literal::Bool(true)))) => {
+                                    sign.clone()
+                                }
+                                _ => Expr::And(
+                                    Metadata::new(),
+                                    conjure_cp::ast::Moo::new(conjure_cp::into_matrix_expr!(vec![
+                                        sign.clone(),
+                                        magnitude.clone()
+                                    ])),
+                                ),
+                            };
+                            self.terms.push((weight.checked_mul(-2)?, negative));
+                        }
+                        // The conjunctions depend on the magnitude bits: this is
+                        // not an independent bounded-binary input group.
+                        None
+                    }
                     SATIntEncoding::Log => {
                         if bits.is_empty() || bits.len() > 32 {
                             return None;
@@ -689,8 +730,12 @@ mod tests {
             SATIntEncoding::Order,
             SATIntEncoding::Log,
             SATIntEncoding::Offset,
+            SATIntEncoding::Rank(vec![(low, high)]),
         ] {
-            let width = if matches!(encoding, SATIntEncoding::Log | SATIntEncoding::Offset) {
+            let width = if matches!(
+                encoding,
+                SATIntEncoding::Log | SATIntEncoding::Offset | SATIntEncoding::Rank(_)
+            ) {
                 3
             } else {
                 6
@@ -725,11 +770,12 @@ mod tests {
                         lower: -4,
                         upper: 6
                     },
-                    SATIntEncoding::Offset => PbTermStructure::BoundedBinary {
-                        lower: -10,
-                        upper: 0
-                    },
-                    SATIntEncoding::Rank(_) | SATIntEncoding::SignMagnitude => unreachable!(),
+                    SATIntEncoding::Offset | SATIntEncoding::Rank(_) =>
+                        PbTermStructure::BoundedBinary {
+                            lower: -10,
+                            upper: 0
+                        },
+                    SATIntEncoding::SignMagnitude => unreachable!(),
                 }
             );
             for value in [low, -1, high] {
@@ -738,8 +784,10 @@ mod tests {
                         SATIntEncoding::Direct => value == low + index as i32,
                         SATIntEncoding::Order => value >= low + index as i32,
                         SATIntEncoding::Log => (value >> index) & 1 != 0,
-                        SATIntEncoding::Offset => ((value - low) >> index) & 1 != 0,
-                        SATIntEncoding::Rank(_) | SATIntEncoding::SignMagnitude => unreachable!(),
+                        SATIntEncoding::Offset | SATIntEncoding::Rank(_) => {
+                            ((value - low) >> index) & 1 != 0
+                        }
+                        SATIntEncoding::SignMagnitude => unreachable!(),
                     })
                     .collect();
                 let actual = linear.constant
@@ -762,6 +810,66 @@ mod tests {
             }
         }
     }
+    #[test]
+    fn sign_magnitude_views_preserve_every_small_code_and_signed_weight() {
+        let variables: Vec<Expr> = (0..4)
+            .map(|index| {
+                Reference::new(DeclarationPtr::new_find(
+                    Name::user(&format!("m{index}")),
+                    Domain::bool(),
+                ))
+                .into()
+            })
+            .collect();
+        let represented = Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::SignMagnitude,
+            Moo::new(into_matrix_expr!(variables.clone())),
+            (-7, 7),
+        );
+        for scale in [-3, 1, 2] {
+            let mut linear = Linear::default();
+            linear.add(&represented, scale).unwrap();
+            assert!(linear.groups.is_empty());
+            for code in 0..16 {
+                let evaluate_bit = |input: &Expr| {
+                    let index = variables
+                        .iter()
+                        .position(|variable| variable == input)
+                        .unwrap();
+                    code & (1 << index) != 0
+                };
+                let actual = linear.constant
+                    + linear
+                        .terms
+                        .iter()
+                        .map(|(weight, input)| {
+                            let value = if let Expr::And(_, inputs) = input {
+                                inputs.unwrap_list_cow().unwrap().iter().all(&evaluate_bit)
+                            } else {
+                                evaluate_bit(input)
+                            };
+                            weight * i128::from(value)
+                        })
+                        .sum::<i128>();
+                let magnitude = code & 7;
+                let expected = if code & 8 != 0 { -magnitude } else { magnitude };
+                assert_eq!(actual, scale * i128::from(expected));
+            }
+        }
+    }
+
+    #[test]
+    fn sparse_rank_is_not_mistaken_for_an_offset() {
+        let represented = Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Rank(vec![(-3, -3), (2, 2)]),
+            Moo::new(into_matrix_expr!(vec![true.into()])),
+            (-3, 2),
+        );
+        assert!(integer_view(&represented).is_none());
+    }
+
     #[test]
     fn arithmetic_keeps_each_integer_group_and_free_boolean_occurrence() {
         let variables: Vec<Expr> = (0..4)
