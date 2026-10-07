@@ -26,7 +26,7 @@ use std::os::unix::process::CommandExt;
 use std::sync::Arc;
 use std::sync::{Mutex, RwLock};
 
-use conjure_cp::ast::{Literal, Model, Name};
+use conjure_cp::ast::{Literal, Model, Name, SatEncodingDecision};
 use conjure_cp::context::Context;
 use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
 use conjure_cp::parse::tree_sitter::parse_essence_file;
@@ -40,7 +40,7 @@ use conjure_cp::settings::{
     set_rule_trace_aggregates_enabled, set_rule_trace_enabled,
 };
 use conjure_cp_cli::utils::conjure::{
-    ConjureSolveCaptureOptions, get_solutions, get_solutions_from_conjure_with_stats,
+    ConjureSolveCaptureOptions, get_solutions_from_conjure_with_stats, get_solutions_with_timings,
 };
 use conjure_cp_cli::utils::simplified_json::{
     domains_from_model, param_model_from_assignments, params_from_simplified_json_str,
@@ -59,11 +59,12 @@ use test_suite::diagnostics::{
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::RuleTraceMode;
 use test_suite::test_config::{
-    NumberOfSolutions, RecordedConjureStats, RecordedRunConfig, RuleTraceAggregateStats,
-    read_stats_or_default, reset_stats_for_run, round_expected_time, stats_path,
-    upsert_config_oxide_timing_stats, upsert_config_rule_trace_aggregate_stats,
-    upsert_config_status_stats, upsert_conjure_timing_stats, upsert_expected_time_stats,
-    upsert_status_stats, upsert_tool_status_stats,
+    NumberOfSolutions, RecordedConjureStats, RecordedModelRunStats, RecordedRunConfig,
+    RuleTraceAggregateStats, read_stats_or_default, replace_config_model_stats,
+    reset_stats_for_run, round_expected_time, stats_path, upsert_config_oxide_timing_stats,
+    upsert_config_rule_trace_aggregate_stats, upsert_config_status_stats,
+    upsert_conjure_timing_stats, upsert_expected_time_stats, upsert_status_stats,
+    upsert_tool_status_stats,
 };
 
 const DISABLE_TRACING_ENV: &str = "CONJURE_OXIDE_TEST_DISABLE_TRACING";
@@ -548,6 +549,7 @@ fn integration_test_inner_with_status(
                             let mut config_timings = RunTimings::default();
                             let mut config_case_names = BTreeSet::new();
                             let config_rule_counts = RuleCounts::default();
+                            let mut model_rows = Vec::new();
                             let config_result = (|| -> Result<(), Box<dyn Error>> {
                                 let base_case_name = run_case_name(
                                     parser,
@@ -589,7 +591,13 @@ fn integration_test_inner_with_status(
                                             solver,
                                         ),
                                     );
-                                    let outcome = execute_integration_run(
+                                    let mut row = model_run_identity(
+                                        run_case,
+                                        minion_discrete_threshold,
+                                        number_of_solutions,
+                                    );
+                                    row.model_index = model_index;
+                                    let result = execute_integration_run(
                                         path,
                                         essence_base,
                                         extension,
@@ -602,14 +610,37 @@ fn integration_test_inner_with_status(
                                         rule_trace_snapshots_enabled,
                                         rule_trace_aggregates_enabled
                                             .then_some(&config_rule_counts),
-                                    )?;
+                                        &mut row,
+                                    );
+                                    let outcome = match result {
+                                        Ok(outcome) => outcome,
+                                        Err(err) => {
+                                            config_timings.add(RunTimings {
+                                                translation_time_s: row
+                                                    .translation_time
+                                                    .unwrap_or_default(),
+                                                solve_time_s: row.solve_time.unwrap_or_default(),
+                                            });
+                                            row.status = "fail".to_owned();
+                                            model_rows.push(row);
+                                            return Err(err);
+                                        }
+                                    };
                                     config_timings.add(outcome.timings);
+                                    model_rows.push(row);
                                     if let Some(solutions) = outcome.comparable_solutions {
-                                        check_solutions_agree(
+                                        let agreement = check_solutions_agree(
                                             &mut reference_solutions,
                                             format!("{}-{}", run_case.case_name, solver.as_str()),
                                             solutions,
-                                        )?;
+                                        );
+                                        if agreement.is_err() {
+                                            model_rows
+                                                .last_mut()
+                                                .expect("model row was just recorded")
+                                                .status = "fail".to_owned();
+                                        }
+                                        agreement?;
                                     }
 
                                     if heuristic != Heuristic::All {
@@ -626,6 +657,7 @@ fn integration_test_inner_with_status(
                             })();
 
                             if accept {
+                                replace_config_model_stats(&stats_path, &run_config, model_rows)?;
                                 let config_status =
                                     if config_result.is_ok() { "ok" } else { "fail" };
                                 upsert_config_status_stats(
@@ -784,6 +816,7 @@ fn execute_integration_run(
     accept: bool,
     rule_trace_snapshots_enabled: bool,
     rule_counts: Option<&RuleCounts>,
+    model_stats: &mut RecordedModelRunStats,
 ) -> Result<RunOutcome, Box<dyn Error>> {
     let run_label = run_case_label(path, essence_base, extension, run_case);
     let default_rule_trace_enabled = matches!(run_case.rewriter, Rewriter::Rewrite(_));
@@ -803,6 +836,7 @@ fn execute_integration_run(
             conjure_solutions,
             accept,
             rule_trace_snapshots_enabled,
+            model_stats,
         )
     };
     let result = if rule_trace_snapshots_enabled {
@@ -836,6 +870,9 @@ fn execute_integration_run(
         run_test()
     };
 
+    if result.is_err() {
+        record_choice_path(run_case, model_stats);
+    }
     result.map_err(|err| {
         let message = format!("{run_label}: {err}");
         copy_oxide_run_artifacts(path, run_case, &message);
@@ -861,6 +898,7 @@ fn integration_test_inner(
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
     rule_trace_snapshots_enabled: bool,
+    model_stats: &mut RecordedModelRunStats,
 ) -> Result<RunOutcome, Box<dyn Error>> {
     let parser = run_case.parser;
     let rewriter = run_case.rewriter;
@@ -915,6 +953,9 @@ fn integration_test_inner(
         set_heuristic(Heuristic::First);
     }
     let translation_time_s = translation_started_at.elapsed().as_secs_f64();
+    record_choice_path(run_case, model_stats);
+    record_model_choices(&rewritten_model, model_stats);
+    model_stats.translation_time = Some(translation_time_s);
 
     let solver_started_at = Instant::now();
     let solutions = if let Some(number_of_solutions) = number_of_solutions.as_solver_limit() {
@@ -926,7 +967,7 @@ fn integration_test_inner(
             SolverFamily::Sat => Solver::new(Sat::default().with_solver_seed(run_case.solver_seed)),
             SolverFamily::Z3 => Solver::new(Smt::default().with_solver_seed(run_case.solver_seed)),
         };
-        let solved = get_solutions(
+        let (solved, measured) = get_solutions_with_timings(
             solver,
             rewritten_model,
             number_of_solutions,
@@ -934,12 +975,18 @@ fn integration_test_inner(
             &solver_input_file,
             false,
         )?;
+        let output_started_at = Instant::now();
         save_solutions_essence(&solved, path, case_name, solver_fam)?;
+        model_stats.backend_time = Some(measured.backend_time_s);
+        model_stats.search_time = Some(measured.search_time_s);
+        model_stats.solution_processing_time =
+            Some(measured.solution_processing_time_s + output_started_at.elapsed().as_secs_f64());
         Some(solved)
     } else {
         None
     };
     let solve_time_s = solver_started_at.elapsed().as_secs_f64();
+    model_stats.solve_time = number_of_solutions.as_solver_limit().map(|_| solve_time_s);
 
     // Stage 3b: Check solutions against Conjure when accept mode is enabled and validation is enabled.
     if accept && conjure_solutions.is_some() && solutions.is_some() {
@@ -1048,6 +1095,140 @@ fn integration_test_inner(
         },
         comparable_solutions,
     })
+}
+
+/// Record the full realised portfolio path before solver-time rewrites can change it.
+fn model_run_identity(
+    run: RunCase<'_>,
+    threshold: usize,
+    limit: NumberOfSolutions,
+) -> RecordedModelRunStats {
+    RecordedModelRunStats {
+        parser: run.parser.to_string(),
+        rewriter: run.rewriter.to_string(),
+        comprehension_expander: run.comprehension_expander.to_string(),
+        heuristic: run.heuristic.to_string(),
+        channelling: run.channelling.to_string(),
+        seed: run.seed,
+        solver_seed: run.solver_seed,
+        solver: run.solver.as_str().to_owned(),
+        case_name: run.case_name.to_owned(),
+        minion_discrete_threshold: (run.solver == SolverFamily::Minion).then_some(threshold),
+        solution_limit: limit.as_solver_limit(),
+        status: "ok".to_owned(),
+        ..Default::default()
+    }
+}
+
+fn record_choice_path(run: RunCase<'_>, row: &mut RecordedModelRunStats) {
+    if run.heuristic == Heuristic::All {
+        let choices = heuristic_all_choices();
+        row.choice_path = choices.iter().map(|choice| choice.selected).collect();
+        row.choices = choices
+            .iter()
+            .map(|choice| choice.options[choice.selected].clone())
+            .collect();
+    }
+}
+
+fn record_model_choices(model: &Model, row: &mut RecordedModelRunStats) {
+    row.representations = model
+        .symbols()
+        .iter_local()
+        .flat_map(|(_, decl)| {
+            decl.reprs()
+                .iter()
+                .map(|(name, _)| name.to_owned())
+                .collect::<Vec<_>>()
+        })
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    let mut families: BTreeMap<&str, BTreeSet<String>> = BTreeMap::new();
+    macro_rules! record {
+        ($family:literal, $selection:expr) => {
+            if let Some(selection) = $selection {
+                families
+                    .entry($family)
+                    .or_default()
+                    .insert(selection.algorithm.to_string());
+            }
+        };
+    }
+    for decision in model.sat_decisions() {
+        match decision {
+            SatEncodingDecision::AtMostOne { encoding, .. } => record!("amo", encoding),
+            SatEncodingDecision::Cardinality { encoding, .. } => record!("cardinality", encoding),
+            SatEncodingDecision::CountRelation {
+                encoding,
+                amo_encoding,
+                ..
+            } => {
+                record!("cardinality", encoding);
+                record!("amo", amo_encoding);
+            }
+            SatEncodingDecision::PseudoBoolean { encoding, .. }
+            | SatEncodingDecision::IntegerRelation { encoding, .. }
+            | SatEncodingDecision::Objective { encoding, .. } => record!("pb", encoding),
+            SatEncodingDecision::AllDifferent {
+                encoding,
+                amo_encoding,
+                pb_encoding,
+                ..
+            } => {
+                record!("alldifferent", encoding);
+                record!("amo", amo_encoding);
+                record!("pb", pb_encoding);
+            }
+            SatEncodingDecision::Table {
+                encoding,
+                pb_encoding,
+                ..
+            } => {
+                record!("table", encoding);
+                record!("pb", pb_encoding);
+            }
+            SatEncodingDecision::Element {
+                encoding,
+                pb_encoding,
+                ..
+            } => {
+                record!("element", encoding);
+                record!("pb", pb_encoding);
+            }
+            _ => {}
+        }
+    }
+    row.sat_encoding_amo = families
+        .remove("amo")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_cardinality = families
+        .remove("cardinality")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_pb = families
+        .remove("pb")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_table = families
+        .remove("table")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_element = families
+        .remove("element")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_alldifferent = families
+        .remove("alldifferent")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
 }
 
 /// Reports whether the search stopped early because it hit a numeric `number-of-solutions` limit.
@@ -1477,6 +1658,29 @@ fn try_capture_oxide_minion(
     let mut file: Box<dyn std::io::Write> = Box::new(File::create(&minion_path)?);
     solver.write_solver_input_file(&mut file)?;
     Ok(())
+}
+
+#[test]
+fn model_choices_record_distinct_resolved_encoders() {
+    use conjure_cp::ast::sat_decision::{AmoEncoding, EncodingSelection, SelectionProvenance};
+    let mut model = Model::new(Default::default());
+    for algorithm in [
+        AmoEncoding::Ladder,
+        AmoEncoding::Pairwise,
+        AmoEncoding::Ladder,
+    ] {
+        model.add_sat_decisions(vec![SatEncodingDecision::AtMostOne {
+            inputs: Vec::new(),
+            encoding: Some(EncodingSelection {
+                algorithm,
+                provenance: SelectionProvenance::Heuristic,
+            }),
+        }]);
+    }
+    let mut row = RecordedModelRunStats::default();
+    record_model_choices(&model, &mut row);
+    assert_eq!(row.sat_encoding_amo, vec!["ladder", "pairwise"]);
+    assert!(row.sat_encoding_pb.is_empty());
 }
 
 #[test]

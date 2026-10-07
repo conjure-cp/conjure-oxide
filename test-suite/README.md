@@ -101,3 +101,25 @@ snapshots.
 For timing-only runs where rule trace generation overhead is unwanted, set
 `CONJURE_OXIDE_TEST_DISABLE_TRACING=1`. This skips integration-test rule trace file
 generation and rule trace snapshot validation; solution checks and timing recording still run.
+
+Accepted integration runs also store a flat `[[model-runs]]` list. Each row identifies
+its parent configuration and model index, with the full realised choice path and
+selected labels for `heuristic = "x"`. Compact and other heuristics produce one row
+per model. `representations` lists the representation rules used; the
+`sat-encoding-*` arrays list the resolved algorithms present in SAT decisions.
+A compact model may use several algorithms in one family: the timing measures
+that combination, rather than assigning an invented time to each algorithm.
+
+`translation-time` covers parsing, instantiation and rewriting; `solve-time`
+covers backend loading, solving, reconstruction and writing the solution file.
+Their sums match the existing parent `[[runs]]` totals. The additional
+`backend-time`, `search-time` and `solution-processing-time` fields separate
+backend loading, the solver call (including callbacks and solver-time rewrites),
+and reconstruction plus solution output. These are wall-clock seconds, not
+internal solver CPU measurements. Validation, snapshots and reference-tool time
+are excluded. `solution-limit = 0` means all solutions; absent solver timings
+mean translation only or a failed run. A failed model has `status = "fail"`;
+completed translation and solution-collection phases are retained when a later
+validation or snapshot check fails.
+Accepting a configuration replaces its model rows so smaller portfolios do not
+leave stale entries behind.

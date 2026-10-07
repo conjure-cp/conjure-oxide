@@ -3,8 +3,8 @@
 use conjure_cp::settings::{
     Channelling, Heuristic, Parser, QuantifiedExpander, Rewriter, SolverFamily,
 };
-use serde::Deserialize;
 use serde::de::{self, Visitor};
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fmt;
 use std::fs;
@@ -386,6 +386,49 @@ pub struct TestRunStats {
 
     /// Canonical per-configuration run records.
     pub runs: Vec<RecordedConfigRunStats>,
+
+    /// One measured row per compiled model, including each expanded `x` choice.
+    #[serde(rename = "model-runs")]
+    pub model_runs: Vec<RecordedModelRunStats>,
+}
+
+/// Flat timing and resolved modelling choices for one actual integration model.
+#[derive(Deserialize, Serialize, Debug, Default)]
+#[serde(default, deny_unknown_fields, rename_all = "kebab-case")]
+pub struct RecordedModelRunStats {
+    pub parser: String,
+    pub rewriter: String,
+    pub comprehension_expander: String,
+    pub heuristic: String,
+    pub channelling: String,
+    pub seed: u64,
+    pub solver_seed: u32,
+    pub solver: String,
+    pub case_name: String,
+    pub model_index: usize,
+    /// Full realised choice indices and labels, rather than the replay prefix.
+    pub choice_path: Vec<usize>,
+    pub choices: Vec<String>,
+    /// Distinct representation rules present in the compiled model.
+    pub representations: Vec<String>,
+    pub minion_discrete_threshold: Option<usize>,
+    pub sat_encoding_amo: Vec<String>,
+    pub sat_encoding_cardinality: Vec<String>,
+    pub sat_encoding_pb: Vec<String>,
+    pub sat_encoding_table: Vec<String>,
+    pub sat_encoding_element: Vec<String>,
+    pub sat_encoding_alldifferent: Vec<String>,
+    pub status: String,
+    /// Zero means all solutions; absent means translation only.
+    pub solution_limit: Option<i32>,
+    /// Parse, instantiate and rewrite, matching the aggregate translation time.
+    pub translation_time: Option<f64>,
+    /// Complete solution collection and output, matching the aggregate solve time.
+    pub solve_time: Option<f64>,
+    pub backend_time: Option<f64>,
+    /// Solver-call wall time, including callbacks and solver-time rewrites.
+    pub search_time: Option<f64>,
+    pub solution_processing_time: Option<f64>,
 }
 
 /// Canonical metadata for one integration-test configuration.
@@ -460,6 +503,51 @@ pub struct RecordedToolStats {
     /// Savile Row translation time in seconds, when available.
     #[serde(rename = "savilerow-translation-time")]
     pub savilerow_translation_time: Option<f64>,
+}
+
+/// Replace this configuration's model rows, removing stale portfolio entries.
+pub fn replace_config_model_stats(
+    path: &Path,
+    config: &RecordedRunConfig,
+    rows: Vec<RecordedModelRunStats>,
+) -> io::Result<()> {
+    update_canonical_stats(path, |stats| {
+        stats.model_runs.retain(|row| {
+            !(row.parser == config.parser
+                && row.rewriter == config.rewriter
+                && row.comprehension_expander == config.comprehension_expander
+                && row.heuristic == config.heuristic
+                && row.channelling == config.channelling
+                && row.seed == config.seed
+                && row.solver_seed == config.solver_seed
+                && row.solver == config.solver)
+        });
+        stats.model_runs.extend(rows);
+        stats.model_runs.sort_by(|a, b| {
+            (
+                &a.parser,
+                &a.rewriter,
+                &a.comprehension_expander,
+                &a.heuristic,
+                &a.channelling,
+                a.seed,
+                a.solver_seed,
+                &a.solver,
+                a.model_index,
+            )
+                .cmp(&(
+                    &b.parser,
+                    &b.rewriter,
+                    &b.comprehension_expander,
+                    &b.heuristic,
+                    &b.channelling,
+                    b.seed,
+                    b.solver_seed,
+                    &b.solver,
+                    b.model_index,
+                ))
+        });
+    })
 }
 
 fn config_run_mut<'a>(
@@ -613,6 +701,13 @@ fn write_canonical_stats(path: &Path, stats: &TestRunStats) -> io::Result<()> {
         }
     }
 
+    for row in &stats.model_runs {
+        contents.push_str("\n[[model-runs]]\n");
+        // Serialise independently so this remains a flat table, after all aggregate rows.
+        contents.push_str(
+            &toml::to_string(row).map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?,
+        );
+    }
     fs::write(path, contents)
 }
 
@@ -948,6 +1043,72 @@ mod tests {
         let invalid: TestConfig =
             toml::from_str("[solver-options.unknown]\nheuristic = 'x'").unwrap();
         assert!(invalid.configured_solvers().is_err());
+    }
+
+    #[test]
+    fn model_rows_round_trip_and_replace_only_their_configuration() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(STATS_FILE_NAME);
+        let config = RecordedRunConfig {
+            parser: "tree-sitter".into(),
+            rewriter: "optimised".into(),
+            comprehension_expander: "auto".into(),
+            heuristic: "x".into(),
+            channelling: "uniform".into(),
+            seed: 4,
+            solver_seed: 7,
+            solver: "sat".into(),
+        };
+        let row = |solver: &str, index| RecordedModelRunStats {
+            parser: config.parser.clone(),
+            rewriter: config.rewriter.clone(),
+            comprehension_expander: config.comprehension_expander.clone(),
+            heuristic: config.heuristic.clone(),
+            channelling: config.channelling.clone(),
+            seed: config.seed,
+            solver_seed: config.solver_seed,
+            solver: solver.into(),
+            model_index: index,
+            case_name: format!("case-model-{index:03}"),
+            choice_path: vec![1, 0],
+            choices: vec!["binary-value".into(), "rustsat-ladder".into()],
+            representations: vec!["integer-binary-value".into()],
+            sat_encoding_amo: vec!["rustsat-ladder".into()],
+            translation_time: Some(1.25),
+            solve_time: Some(2.5),
+            search_time: Some(2.0),
+            solution_limit: Some(0),
+            status: "ok".into(),
+            ..Default::default()
+        };
+        upsert_config_status_stats(&path, &config, "ok").unwrap();
+        replace_config_model_stats(&path, &config, vec![row("sat", 2), row("sat", 0)]).unwrap();
+        let mut other = config.clone();
+        other.solver = "minion".into();
+        replace_config_model_stats(&path, &other, vec![row("minion", 0)]).unwrap();
+        replace_config_model_stats(&path, &config, vec![row("sat", 0)]).unwrap();
+        let stats = read_stats_or_default(&path).unwrap();
+        assert_eq!(stats.runs.len(), 1);
+        assert_eq!(stats.model_runs.len(), 2);
+        let sat = stats
+            .model_runs
+            .iter()
+            .find(|row| row.solver == "sat")
+            .unwrap();
+        assert_eq!(sat.choice_path, vec![1, 0]);
+        assert_eq!(sat.sat_encoding_amo, vec!["rustsat-ladder"]);
+        assert_eq!(sat.translation_time, Some(1.25));
+        assert_eq!(sat.search_time, Some(2.0));
+        assert_eq!(sat.solution_limit, Some(0));
+        let before = fs::read_to_string(&path).unwrap();
+        assert_eq!(before.matches("[[model-runs]]").count(), 2);
+        write_canonical_stats(&path, &stats).unwrap();
+        assert_eq!(before, fs::read_to_string(&path).unwrap());
+        replace_config_model_stats(&path, &config, Vec::new()).unwrap();
+        assert_eq!(
+            read_stats_or_default(&path).unwrap().model_runs[0].solver,
+            "minion"
+        );
     }
 
     #[test]
