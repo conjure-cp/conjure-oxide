@@ -5,7 +5,7 @@ find b: int(1..3)
 
 such that
 
-negativeTable([a,b;int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..2)])
+negativeTable(sequence(a,b), {sequence(0,1),sequence(1,0)})
 
 --
 
@@ -13,31 +13,31 @@ a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
 new variables:
-  find a#int_offset_1: bool
-  find a#int_offset_2: bool
+  find a#offset_1: bool
+  find a#offset_2: bool
 new constraints:
-  or([!(a#int_offset_2),and([!(a#int_offset_1),true;int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [1, 3]) >= 1,SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  or([!(a#offset_2),and([!(a#offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [1, 3]) >= 1,SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
 
 --
 
-SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [1, 3]) >= 1
+SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [1, 3]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__0 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
-SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [1, 3]) <= 3
+SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [1, 3]) <= 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__1 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
@@ -45,81 +45,81 @@ b
    ~~> select_representation ([("ReprGeneral", 10000)])
 b
 new variables:
-  find b#int_offset_1: bool
-  find b#int_offset_2: bool
+  find b#offset_1: bool
+  find b#offset_2: bool
 new constraints:
-  or([!(b#int_offset_2),and([!(b#int_offset_1),true;int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [b#int_offset_1,b#int_offset_2;int(1..)] [1, 3]) >= 1,SATInt(Offset, [b#int_offset_1,b#int_offset_2;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  or([!(b#offset_2),and([!(b#offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [b#offset_1,b#offset_2;int(1..)] [1, 3]) >= 1,SATInt(Offset, [b#offset_1,b#offset_2;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
 
 --
 
-negativeTable([a,b;int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..2)])
+negativeTable(sequence(a,b), {sequence(0,1),sequence(1,0)})
    ~~> select_table ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> table(1+weighted(1*a#int_offset_1, 2*a#int_offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], 1+weighted(1*b#int_offset_1, 2*b#int_offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], [[0, 1], [1, 0]], negative=true)) using None, PB None
+  define(__2 <-> table(1+weighted(1*a#offset_1, 2*a#offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], 1+weighted(1*b#offset_1, 2*b#offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], [[0, 1], [1, 0]], negative=true)) using None, PB None
 
 --
 
-SATInt(Offset, [b#int_offset_1,b#int_offset_2;int(1..)] [1, 3]) >= 1
+SATInt(Offset, [b#offset_1,b#offset_2;int(1..)] [1, 3]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*b#int_offset_1, 2*b#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__3 <-> integer-weighted(1*b#offset_1, 2*b#offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
-SATInt(Offset, [b#int_offset_1,b#int_offset_2;int(1..)] [1, 3]) <= 3
+SATInt(Offset, [b#offset_1,b#offset_2;int(1..)] [1, 3]) <= 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(1*b#int_offset_1, 2*b#int_offset_2) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__4 <-> integer-weighted(1*b#offset_1, 2*b#offset_2) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
-!(a#int_offset_2)
+!(a#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> !(a#int_offset_2)) using tseitin
+  define(__5 <-> !(a#offset_2)) using tseitin
 
 --
 
-!(b#int_offset_2)
+!(b#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __6
 new variables:
   findAux __6: bool
 new SAT encoding decisions:
-  define(__6 <-> !(b#int_offset_2)) using tseitin
+  define(__6 <-> !(b#offset_2)) using tseitin
 
 --
 
-!(a#int_offset_1)
+!(a#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __7
 new variables:
   findAux __7: bool
 new SAT encoding decisions:
-  define(__7 <-> !(a#int_offset_1)) using tseitin
+  define(__7 <-> !(a#offset_1)) using tseitin
 
 --
 
-!(b#int_offset_1)
+!(b#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __8
 new variables:
   findAux __8: bool
 new SAT encoding decisions:
-  define(__8 <-> !(b#int_offset_1)) using tseitin
+  define(__8 <-> !(b#offset_1)) using tseitin
 
 --
 
@@ -247,12 +247,12 @@ Final model:
 
 find a: int(1..3)
 find b: int(1..3)
-find a#int_offset_1: bool
-find a#int_offset_2: bool
+find a#offset_1: bool
+find a#offset_2: bool
 findAux __0: bool
 findAux __1: bool
-find b#int_offset_1: bool
-find b#int_offset_2: bool
+find b#offset_1: bool
+find b#offset_2: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
@@ -271,15 +271,15 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__1 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__2 <-> table(1+weighted(1*a#int_offset_1, 2*a#int_offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], 1+weighted(1*b#int_offset_1, 2*b#int_offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], [[0, 1], [1, 0]], negative=true)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
-define(__3 <-> integer-weighted(1*b#int_offset_1, 2*b#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__4 <-> integer-weighted(1*b#int_offset_1, 2*b#int_offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__5 <-> !(a#int_offset_2)) using tseitin,
-define(__6 <-> !(b#int_offset_2)) using tseitin,
-define(__7 <-> !(a#int_offset_1)) using tseitin,
-define(__8 <-> !(b#int_offset_1)) using tseitin,
+define(__0 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__1 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__2 <-> table(1+weighted(1*a#offset_1, 2*a#offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], 1+weighted(1*b#offset_1, 2*b#offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], [[0, 1], [1, 0]], negative=true)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
+define(__3 <-> integer-weighted(1*b#offset_1, 2*b#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__4 <-> integer-weighted(1*b#offset_1, 2*b#offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__5 <-> !(a#offset_2)) using tseitin,
+define(__6 <-> !(b#offset_2)) using tseitin,
+define(__7 <-> !(a#offset_1)) using tseitin,
+define(__8 <-> !(b#offset_1)) using tseitin,
 define(__9 <-> and([__0,__1;int(1..)])) using tseitin,
 define(__10 <-> and([__3,__4;int(1..)])) using tseitin,
 define(__11 <-> or([__5,__7;int(1..)])) using tseitin,

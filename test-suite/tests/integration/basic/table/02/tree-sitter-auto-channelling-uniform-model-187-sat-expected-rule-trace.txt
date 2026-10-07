@@ -9,14 +9,20 @@ table([a,b;int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)],[2,2;int(1..2)];int(1..3
 
 --
 
+table([a,b;int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)],[2,2;int(1..2)];int(1..3)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(a,b), {sequence(0,1),sequence(1,0),sequence(2,2)})
+
+--
+
 a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
 new variables:
-  find a#int_rank_1: bool
-  find a#int_rank_2: bool
+  find a#rank_1: bool
+  find a#rank_2: bool
 new constraints:
-  or([!(a#int_rank_2),and([!(a#int_rank_1),true;int(1..)]);int(1..)])
+  or([!(a#rank_2),and([!(a#rank_1),true;int(1..)]);int(1..)])
 
 --
 
@@ -24,62 +30,62 @@ b
    ~~> select_representation ([("ReprGeneral", 10000)])
 b
 new variables:
-  find b#int_rank_1: bool
-  find b#int_rank_2: bool
+  find b#rank_1: bool
+  find b#rank_2: bool
 new constraints:
-  or([!(b#int_rank_2),and([!(b#int_rank_1),true;int(1..)]);int(1..)])
+  or([!(b#rank_2),and([!(b#rank_1),true;int(1..)]);int(1..)])
 
 --
 
 a
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 2)]), [a#int_rank_1,a#int_rank_2;int(1..)] [0, 2])
+SATInt(Rank([(0, 2)]), [a#rank_1,a#rank_2;int(1..)] [0, 2])
 
 --
 
 b
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 2)]), [b#int_rank_1,b#int_rank_2;int(1..)] [0, 2])
+SATInt(Rank([(0, 2)]), [b#rank_1,b#rank_2;int(1..)] [0, 2])
 
 --
 
-!(a#int_rank_2)
+!(a#rank_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> !(a#int_rank_2)) using tseitin
+  define(__0 <-> !(a#rank_2)) using tseitin
 
 --
 
-!(b#int_rank_2)
+!(b#rank_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> !(b#int_rank_2)) using tseitin
+  define(__1 <-> !(b#rank_2)) using tseitin
 
 --
 
-!(a#int_rank_1)
+!(a#rank_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> !(a#int_rank_1)) using tseitin
+  define(__2 <-> !(a#rank_1)) using tseitin
 
 --
 
-!(b#int_rank_1)
+!(b#rank_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> !(b#int_rank_1)) using tseitin
+  define(__3 <-> !(b#rank_1)) using tseitin
 
 --
 
@@ -115,29 +121,29 @@ new SAT encoding decisions:
 
 --
 
-table([SATInt(Rank([(0, 2)]), [a#int_rank_1,a#int_rank_2;int(1..)] [0, 2]),SATInt(Rank([(0, 2)]), [b#int_rank_1,b#int_rank_2;int(1..)] [0, 2]);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)],[2,2;int(1..2)];int(1..3)]),
+table(sequence(SATInt(Rank([(0, 2)]), [a#rank_1,a#rank_2;int(1..)] [0, 2]),SATInt(Rank([(0, 2)]), [b#rank_1,b#rank_2;int(1..)] [0, 2])), {sequence(0,1),sequence(1,0),sequence(2,2)}),
 __5,
 __4
    ~~> remove_single_atom ([("SAT", 8400)])
-table([SATInt(Rank([(0, 2)]), [a#int_rank_1,a#int_rank_2;int(1..)] [0, 2]),SATInt(Rank([(0, 2)]), [b#int_rank_1,b#int_rank_2;int(1..)] [0, 2]);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)],[2,2;int(1..2)];int(1..3)]),
+table(sequence(SATInt(Rank([(0, 2)]), [a#rank_1,a#rank_2;int(1..)] [0, 2]),SATInt(Rank([(0, 2)]), [b#rank_1,b#rank_2;int(1..)] [0, 2])), {sequence(0,1),sequence(1,0),sequence(2,2)}),
 __4
 new SAT encoding decisions:
   assert(__5) using tseitin
 
 --
 
-table([SATInt(Rank([(0, 2)]), [a#int_rank_1,a#int_rank_2;int(1..)] [0, 2]),SATInt(Rank([(0, 2)]), [b#int_rank_1,b#int_rank_2;int(1..)] [0, 2]);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)],[2,2;int(1..2)];int(1..3)]),
+table(sequence(SATInt(Rank([(0, 2)]), [a#rank_1,a#rank_2;int(1..)] [0, 2]),SATInt(Rank([(0, 2)]), [b#rank_1,b#rank_2;int(1..)] [0, 2])), {sequence(0,1),sequence(1,0),sequence(2,2)}),
 __4
    ~~> remove_single_atom ([("SAT", 8400)])
-table([SATInt(Rank([(0, 2)]), [a#int_rank_1,a#int_rank_2;int(1..)] [0, 2]),SATInt(Rank([(0, 2)]), [b#int_rank_1,b#int_rank_2;int(1..)] [0, 2]);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)],[2,2;int(1..2)];int(1..3)])
+table(sequence(SATInt(Rank([(0, 2)]), [a#rank_1,a#rank_2;int(1..)] [0, 2]),SATInt(Rank([(0, 2)]), [b#rank_1,b#rank_2;int(1..)] [0, 2])), {sequence(0,1),sequence(1,0),sequence(2,2)})
 new SAT encoding decisions:
   assert(__4) using tseitin
 
 --
 
-table([SATInt(Rank([(0, 2)]), [a#int_rank_1,a#int_rank_2;int(1..)] [0, 2]),SATInt(Rank([(0, 2)]), [b#int_rank_1,b#int_rank_2;int(1..)] [0, 2]);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)],[2,2;int(1..2)];int(1..3)])
+table(sequence(SATInt(Rank([(0, 2)]), [a#rank_1,a#rank_2;int(1..)] [0, 2]),SATInt(Rank([(0, 2)]), [b#rank_1,b#rank_2;int(1..)] [0, 2])), {sequence(0,1),sequence(1,0),sequence(2,2)})
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-table([SATInt(Log, [__6,__8,__10;int(1..)] [0, 2]),SATInt(Log, [__12,__14,__16;int(1..)] [0, 2]);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)],[2,2;int(1..2)];int(1..3)])
+table(sequence(SATInt(Log, [__6,__8,__10;int(1..)] [0, 2]),SATInt(Log, [__12,__14,__16;int(1..)] [0, 2])), {sequence(0,1),sequence(1,0),sequence(2,2)})
 new variables:
   findAux __6: bool
   findAux __7: bool
@@ -152,22 +158,22 @@ new variables:
   findAux __16: bool
   findAux __17: bool
 new SAT encoding decisions:
-  define(__6 <-> !((a#int_rank_1) <-> (false))) using tseitin
-  define(__7 <-> and([a#int_rank_1,false;int(1..)])) using tseitin
-  define(__8 <-> !((a#int_rank_2) <-> (__7))) using tseitin
-  define(__9 <-> and([a#int_rank_2,__7;int(1..)])) using tseitin
+  define(__6 <-> !((a#rank_1) <-> (false))) using tseitin
+  define(__7 <-> and([a#rank_1,false;int(1..)])) using tseitin
+  define(__8 <-> !((a#rank_2) <-> (__7))) using tseitin
+  define(__9 <-> and([a#rank_2,__7;int(1..)])) using tseitin
   define(__10 <-> !((false) <-> (__9))) using tseitin
   define(__11 <-> and([false,__9;int(1..)])) using tseitin
-  define(__12 <-> !((b#int_rank_1) <-> (false))) using tseitin
-  define(__13 <-> and([b#int_rank_1,false;int(1..)])) using tseitin
-  define(__14 <-> !((b#int_rank_2) <-> (__13))) using tseitin
-  define(__15 <-> and([b#int_rank_2,__13;int(1..)])) using tseitin
+  define(__12 <-> !((b#rank_1) <-> (false))) using tseitin
+  define(__13 <-> and([b#rank_1,false;int(1..)])) using tseitin
+  define(__14 <-> !((b#rank_2) <-> (__13))) using tseitin
+  define(__15 <-> and([b#rank_2,__13;int(1..)])) using tseitin
   define(__16 <-> !((false) <-> (__15))) using tseitin
   define(__17 <-> and([false,__15;int(1..)])) using tseitin
 
 --
 
-table([SATInt(Log, [__6,__8,__10;int(1..)] [0, 2]),SATInt(Log, [__12,__14,__16;int(1..)] [0, 2]);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)],[2,2;int(1..2)];int(1..3)])
+table(sequence(SATInt(Log, [__6,__8,__10;int(1..)] [0, 2]),SATInt(Log, [__12,__14,__16;int(1..)] [0, 2])), {sequence(0,1),sequence(1,0),sequence(2,2)})
    ~~> select_table ([("SAT", 18500)])
 __18
 new variables:
@@ -189,10 +195,10 @@ Final model:
 
 find a: int(0..2)
 find b: int(0..2)
-find a#int_rank_1: bool
-find a#int_rank_2: bool
-find b#int_rank_1: bool
-find b#int_rank_2: bool
+find a#rank_1: bool
+find a#rank_2: bool
+find b#rank_1: bool
+find b#rank_2: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -219,24 +225,24 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !(a#int_rank_2)) using tseitin,
-define(__1 <-> !(b#int_rank_2)) using tseitin,
-define(__2 <-> !(a#int_rank_1)) using tseitin,
-define(__3 <-> !(b#int_rank_1)) using tseitin,
+define(__0 <-> !(a#rank_2)) using tseitin,
+define(__1 <-> !(b#rank_2)) using tseitin,
+define(__2 <-> !(a#rank_1)) using tseitin,
+define(__3 <-> !(b#rank_1)) using tseitin,
 define(__4 <-> or([__1,__3;int(1..)])) using tseitin,
 define(__5 <-> or([__0,__2;int(1..)])) using tseitin,
 assert(__5) using tseitin,
 assert(__4) using tseitin,
-define(__6 <-> !((a#int_rank_1) <-> (false))) using tseitin,
-define(__7 <-> and([a#int_rank_1,false;int(1..)])) using tseitin,
-define(__8 <-> !((a#int_rank_2) <-> (__7))) using tseitin,
-define(__9 <-> and([a#int_rank_2,__7;int(1..)])) using tseitin,
+define(__6 <-> !((a#rank_1) <-> (false))) using tseitin,
+define(__7 <-> and([a#rank_1,false;int(1..)])) using tseitin,
+define(__8 <-> !((a#rank_2) <-> (__7))) using tseitin,
+define(__9 <-> and([a#rank_2,__7;int(1..)])) using tseitin,
 define(__10 <-> !((false) <-> (__9))) using tseitin,
 define(__11 <-> and([false,__9;int(1..)])) using tseitin,
-define(__12 <-> !((b#int_rank_1) <-> (false))) using tseitin,
-define(__13 <-> and([b#int_rank_1,false;int(1..)])) using tseitin,
-define(__14 <-> !((b#int_rank_2) <-> (__13))) using tseitin,
-define(__15 <-> and([b#int_rank_2,__13;int(1..)])) using tseitin,
+define(__12 <-> !((b#rank_1) <-> (false))) using tseitin,
+define(__13 <-> and([b#rank_1,false;int(1..)])) using tseitin,
+define(__14 <-> !((b#rank_2) <-> (__13))) using tseitin,
+define(__15 <-> and([b#rank_2,__13;int(1..)])) using tseitin,
 define(__16 <-> !((false) <-> (__15))) using tseitin,
 define(__17 <-> and([false,__15;int(1..)])) using tseitin,
 define(__18 <-> table(0+weighted(1*__6, 2*__8, -4*__10) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 2 } }], 0+weighted(1*__12, 2*__14, -4*__16) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 2 } }], [[0, 1], [1, 0], [2, 2]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),

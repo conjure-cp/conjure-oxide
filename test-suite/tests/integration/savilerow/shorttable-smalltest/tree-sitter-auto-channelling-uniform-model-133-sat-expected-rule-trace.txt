@@ -6,13 +6,19 @@ find x: matrix indexed by [int(1..4)] of int(0..5)
 
 such that
 
-shortTable([x[1],x[2],x[3],x[4];int(1..4)], mycon)
+shortTable(sequence(x[1],x[2],x[3],x[4]), mycon)
 
 --
 
-shortTable([x[1],x[2],x[3],x[4];int(1..4)], {{(1,0),(4,0)},{(2,0),(4,0)},{(3,0),(4,0)},{(1,1),(2,1),(3,1),(4,1)}})
+shortTable(sequence(x[1],x[2],x[3],x[4]), {{(1,0),(4,0)},{(2,0),(4,0)},{(3,0),(4,0)},{(1,1),(2,1),(3,1),(4,1)}})
    ~~> expand_short_table ([("SAT", 18500)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(x[1],x[2],x[3],x[4]), [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+
+--
+
+table(sequence(x[1],x[2],x[3],x[4]), [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)})
 
 --
 
@@ -81,9 +87,9 @@ x
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)})
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)})
 new variables:
   find x#components_1#sign_magnitude_1: bool
   find x#components_1#sign_magnitude_2: bool
@@ -685,7 +691,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __27,
 __0,
 __37,
@@ -707,7 +713,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __0,
 __37,
 __33,
@@ -732,7 +738,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __0,
 __37,
 __33,
@@ -753,7 +759,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __37,
 __33,
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
@@ -777,7 +783,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __37,
 __33,
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
@@ -797,7 +803,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __33,
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __24,
@@ -820,7 +826,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __33,
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __24,
@@ -839,7 +845,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __24,
 __1,
@@ -861,7 +867,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __24,
 __1,
@@ -879,7 +885,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __1,
 __39,
@@ -900,7 +906,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __1,
 __39,
@@ -917,7 +923,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __39,
 __35,
@@ -937,7 +943,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __39,
 __35,
@@ -953,7 +959,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __35,
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
@@ -972,7 +978,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __35,
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
@@ -987,7 +993,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __25,
@@ -1005,7 +1011,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __25,
@@ -1019,7 +1025,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __2,
@@ -1036,7 +1042,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __2,
@@ -1049,7 +1055,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __41,
@@ -1065,7 +1071,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __41,
@@ -1077,7 +1083,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __29,
@@ -1092,7 +1098,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __29,
@@ -1103,7 +1109,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
@@ -1117,7 +1123,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
@@ -1127,7 +1133,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
@@ -1140,7 +1146,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
@@ -1149,7 +1155,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
@@ -1161,7 +1167,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
@@ -1169,7 +1175,7 @@ __43,
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
@@ -1180,14 +1186,14 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 __31,
 and([SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)])
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 and([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
 and([SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) >= SATInt(SignMagnitude, [false,false;int(1..)] [0, 0]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]) <= SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]);int(1..)]),
@@ -1377,9 +1383,9 @@ SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magni
 
 --
 
-table([SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5]);int(1..4)], [[0,SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]),0;int(1..)],[SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]),0,SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]),0;int(1..)],[SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]),0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]),SATInt(SignMagnitude, [x#components_4#sign_magnitude_1,x#components_4#sign_magnitude_2,x#components_4#sign_magnitude_3,x#components_4#sign_magnitude_4;int(1..)] [0, 5])), {sequence(0,SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]),SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]),0),sequence(SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]),0,SATInt(SignMagnitude, [x#components_3#sign_magnitude_1,x#components_3#sign_magnitude_2,x#components_3#sign_magnitude_3,x#components_3#sign_magnitude_4;int(1..)] [0, 5]),0),sequence(SATInt(SignMagnitude, [x#components_1#sign_magnitude_1,x#components_1#sign_magnitude_2,x#components_1#sign_magnitude_3,x#components_1#sign_magnitude_4;int(1..)] [0, 5]),SATInt(SignMagnitude, [x#components_2#sign_magnitude_1,x#components_2#sign_magnitude_2,x#components_2#sign_magnitude_3,x#components_2#sign_magnitude_4;int(1..)] [0, 5]),0,0),sequence(1,1,1,1)})
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-table([SATInt(Log, [__45,__48,__51,__53;int(1..)] [0, 5]),SATInt(Log, [__56,__59,__62,__64;int(1..)] [0, 5]),SATInt(Log, [__67,__70,__73,__75;int(1..)] [0, 5]),SATInt(Log, [__78,__81,__84,__86;int(1..)] [0, 5]);int(1..4)], [[0,SATInt(Log, [__89,__92,__95,__97;int(1..)] [0, 5]),SATInt(Log, [__100,__103,__106,__108;int(1..)] [0, 5]),0;int(1..)],[SATInt(Log, [__111,__114,__117,__119;int(1..)] [0, 5]),0,SATInt(Log, [__122,__125,__128,__130;int(1..)] [0, 5]),0;int(1..)],[SATInt(Log, [__133,__136,__139,__141;int(1..)] [0, 5]),SATInt(Log, [__144,__147,__150,__152;int(1..)] [0, 5]),0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(SATInt(Log, [__45,__48,__51,__53;int(1..)] [0, 5]),SATInt(Log, [__56,__59,__62,__64;int(1..)] [0, 5]),SATInt(Log, [__67,__70,__73,__75;int(1..)] [0, 5]),SATInt(Log, [__78,__81,__84,__86;int(1..)] [0, 5])), {sequence(0,SATInt(Log, [__89,__92,__95,__97;int(1..)] [0, 5]),SATInt(Log, [__100,__103,__106,__108;int(1..)] [0, 5]),0),sequence(SATInt(Log, [__111,__114,__117,__119;int(1..)] [0, 5]),0,SATInt(Log, [__122,__125,__128,__130;int(1..)] [0, 5]),0),sequence(SATInt(Log, [__133,__136,__139,__141;int(1..)] [0, 5]),SATInt(Log, [__144,__147,__150,__152;int(1..)] [0, 5]),0,0),sequence(1,1,1,1)})
 new variables:
   findAux __44: bool
   findAux __45: bool
@@ -1605,7 +1611,7 @@ new SAT encoding decisions:
 
 --
 
-table([SATInt(Log, [__45,__48,__51,__53;int(1..)] [0, 5]),SATInt(Log, [__56,__59,__62,__64;int(1..)] [0, 5]),SATInt(Log, [__67,__70,__73,__75;int(1..)] [0, 5]),SATInt(Log, [__78,__81,__84,__86;int(1..)] [0, 5]);int(1..4)], [[0,SATInt(Log, [__89,__92,__95,__97;int(1..)] [0, 5]),SATInt(Log, [__100,__103,__106,__108;int(1..)] [0, 5]),0;int(1..)],[SATInt(Log, [__111,__114,__117,__119;int(1..)] [0, 5]),0,SATInt(Log, [__122,__125,__128,__130;int(1..)] [0, 5]),0;int(1..)],[SATInt(Log, [__133,__136,__139,__141;int(1..)] [0, 5]),SATInt(Log, [__144,__147,__150,__152;int(1..)] [0, 5]),0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(SATInt(Log, [__45,__48,__51,__53;int(1..)] [0, 5]),SATInt(Log, [__56,__59,__62,__64;int(1..)] [0, 5]),SATInt(Log, [__67,__70,__73,__75;int(1..)] [0, 5]),SATInt(Log, [__78,__81,__84,__86;int(1..)] [0, 5])), {sequence(0,SATInt(Log, [__89,__92,__95,__97;int(1..)] [0, 5]),SATInt(Log, [__100,__103,__106,__108;int(1..)] [0, 5]),0),sequence(SATInt(Log, [__111,__114,__117,__119;int(1..)] [0, 5]),0,SATInt(Log, [__122,__125,__128,__130;int(1..)] [0, 5]),0),sequence(SATInt(Log, [__133,__136,__139,__141;int(1..)] [0, 5]),SATInt(Log, [__144,__147,__150,__152;int(1..)] [0, 5]),0,0),sequence(1,1,1,1)})
    ~~> select_table ([("SAT", 18500)])
 __154
 new variables:

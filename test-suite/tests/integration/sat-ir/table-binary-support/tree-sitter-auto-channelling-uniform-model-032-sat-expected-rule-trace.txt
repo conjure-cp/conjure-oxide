@@ -12,77 +12,89 @@ such that
 
 --
 
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-new variables:
-  find x#int_direct_1: bool
-  find x#int_direct_2: bool
-  find x#int_direct_3: bool
-  find x#int_direct_4: bool
-  find x#int_direct_5: bool
-  find x#int_direct_6: bool
-new constraints:
-  sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6);int(1..)]) <= 1
-  or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)])
-
---
-
-y
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y
-new variables:
-  find y#int_direct_1: bool
-  find y#int_direct_2: bool
-  find y#int_direct_3: bool
-  find y#int_direct_4: bool
-  find y#int_direct_5: bool
-  find y#int_direct_6: bool
-new constraints:
-  sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4),toInt(y#int_direct_5),toInt(y#int_direct_6);int(1..)]) <= 1
-  or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)])
-
---
-
 table([x,y;int(1..2)], [[-2,0;int(1..2)],[3,-2;int(1..2)],[3,-2;int(1..2)],[7,3;int(1..2)];int(1..4)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})
+
+--
+
+negativeTable([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#direct_1: bool
+  find x#direct_2: bool
+  find x#direct_3: bool
+  find x#direct_4: bool
+  find x#direct_5: bool
+  find x#direct_6: bool
+new constraints:
+  sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5),toInt(x#direct_6);int(1..)]) <= 1
+  or([x#direct_1,x#direct_3,x#direct_6;int(1..)])
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#direct_1: bool
+  find y#direct_2: bool
+  find y#direct_3: bool
+  find y#direct_4: bool
+  find y#direct_5: bool
+  find y#direct_6: bool
+new constraints:
+  sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3),toInt(y#direct_4),toInt(y#direct_5),toInt(y#direct_6);int(1..)]) <= 1
+  or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+
+--
+
+negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})
    ~~> select_table ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> table(0+weighted(-2*x#int_direct_1, -1*x#int_direct_2, 0*x#int_direct_3, 1*x#int_direct_4, 2*x#int_direct_5, 3*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#int_direct_1, -1:x#int_direct_2, 0:x#int_direct_3, 1:x#int_direct_4, 2:x#int_direct_5, 3:x#int_direct_6), 0+weighted(-2*y#int_direct_1, -1*y#int_direct_2, 0*y#int_direct_3, 1*y#int_direct_4, 2*y#int_direct_5, 3*y#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#int_direct_1, -1:y#int_direct_2, 0:y#int_direct_3, 1:y#int_direct_4, 2:y#int_direct_5, 3:y#int_direct_6), [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using None, PB None
+  define(__0 <-> table(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), [[0, 0], [3, 3]], negative=true)) using None, PB None
 
 --
 
-(positive) <-> (__0),
-(negative) <-> (negativeTable([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])),
-sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6);int(1..)]) <= 1,
-or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)]),
-sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4),toInt(y#int_direct_5),toInt(y#int_direct_6);int(1..)]) <= 1,
-or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)])
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (__0),
+sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5),toInt(x#direct_6);int(1..)]) <= 1,
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
+sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3),toInt(y#direct_4),toInt(y#direct_5),toInt(y#direct_6);int(1..)]) <= 1,
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-(positive) <-> (__0),
-(negative) <-> (negativeTable([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])),
-or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)]),
-sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4),toInt(y#int_direct_5),toInt(y#int_direct_6);int(1..)]) <= 1,
-or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)])
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (__0),
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
+sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3),toInt(y#direct_4),toInt(y#direct_5),toInt(y#direct_6);int(1..)]) <= 1,
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
 new SAT encoding decisions:
-  at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6) using None
+  at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6) using None
 
 --
 
-(positive) <-> (__0),
-(negative) <-> (negativeTable([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])),
-or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)]),
-sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4),toInt(y#int_direct_5),toInt(y#int_direct_6);int(1..)]) <= 1,
-or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)])
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (__0),
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
+sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3),toInt(y#direct_4),toInt(y#direct_5),toInt(y#direct_6);int(1..)]) <= 1,
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-(positive) <-> (__0),
-(negative) <-> (negativeTable([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])),
-or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)]),
-or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)])
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (__0),
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
 new SAT encoding decisions:
-  at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3, y#int_direct_4, y#int_direct_5, y#int_direct_6) using None
+  at-most-one(y#direct_1, y#direct_2, y#direct_3, y#direct_4, y#direct_5, y#direct_6) using None
 
 --
 
@@ -98,53 +110,53 @@ y
 
 --
 
-negativeTable([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
+table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})
    ~~> select_table ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> table(0+weighted(-2*x#int_direct_1, -1*x#int_direct_2, 0*x#int_direct_3, 1*x#int_direct_4, 2*x#int_direct_5, 3*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#int_direct_1, -1:x#int_direct_2, 0:x#int_direct_3, 1:x#int_direct_4, 2:x#int_direct_5, 3:x#int_direct_6), 0+weighted(-2*y#int_direct_1, -1*y#int_direct_2, 0*y#int_direct_3, 1*y#int_direct_4, 2*y#int_direct_5, 3*y#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#int_direct_1, -1:y#int_direct_2, 0:y#int_direct_3, 1:y#int_direct_4, 2:y#int_direct_5, 3:y#int_direct_6), [[0, 0], [3, 3]], negative=true)) using None, PB None
+  define(__1 <-> table(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using None, PB None
 
 --
 
-(positive) <-> (__0)
+(positive) <-> (__1)
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> (positive) <-> (__0)) using tseitin
+  define(__2 <-> (positive) <-> (__1)) using tseitin
 
 --
 
-(negative) <-> (__1)
+(negative) <-> (__0)
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> (negative) <-> (__1)) using tseitin
+  define(__3 <-> (negative) <-> (__0)) using tseitin
 
 --
 
-or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)])
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)])) using tseitin
+  define(__4 <-> or([x#direct_1,x#direct_3,x#direct_6;int(1..)])) using tseitin
 
 --
 
-or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)])
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)])) using tseitin
+  define(__5 <-> or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin
 
 --
 
@@ -195,18 +207,18 @@ find x: int(-2, 0, 3)
 find y: int(-2, 0, 3)
 find negative: bool
 find positive: bool
-find x#int_direct_1: bool
-find x#int_direct_2: bool
-find x#int_direct_3: bool
-find x#int_direct_4: bool
-find x#int_direct_5: bool
-find x#int_direct_6: bool
-find y#int_direct_1: bool
-find y#int_direct_2: bool
-find y#int_direct_3: bool
-find y#int_direct_4: bool
-find y#int_direct_5: bool
-find y#int_direct_6: bool
+find x#direct_1: bool
+find x#direct_2: bool
+find x#direct_3: bool
+find x#direct_4: bool
+find x#direct_5: bool
+find x#direct_6: bool
+find y#direct_1: bool
+find y#direct_2: bool
+find y#direct_3: bool
+find y#direct_4: bool
+find y#direct_5: bool
+find y#direct_6: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -220,14 +232,14 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> table(0+weighted(-2*x#int_direct_1, -1*x#int_direct_2, 0*x#int_direct_3, 1*x#int_direct_4, 2*x#int_direct_5, 3*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#int_direct_1, -1:x#int_direct_2, 0:x#int_direct_3, 1:x#int_direct_4, 2:x#int_direct_5, 3:x#int_direct_6), 0+weighted(-2*y#int_direct_1, -1*y#int_direct_2, 0*y#int_direct_3, 1*y#int_direct_4, 2*y#int_direct_5, 3*y#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#int_direct_1, -1:y#int_direct_2, 0:y#int_direct_3, 1:y#int_direct_4, 2:y#int_direct_5, 3:y#int_direct_6), [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
-at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3, y#int_direct_4, y#int_direct_5, y#int_direct_6) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
-define(__1 <-> table(0+weighted(-2*x#int_direct_1, -1*x#int_direct_2, 0*x#int_direct_3, 1*x#int_direct_4, 2*x#int_direct_5, 3*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#int_direct_1, -1:x#int_direct_2, 0:x#int_direct_3, 1:x#int_direct_4, 2:x#int_direct_5, 3:x#int_direct_6), 0+weighted(-2*y#int_direct_1, -1*y#int_direct_2, 0*y#int_direct_3, 1*y#int_direct_4, 2*y#int_direct_5, 3*y#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#int_direct_1, -1:y#int_direct_2, 0:y#int_direct_3, 1:y#int_direct_4, 2:y#int_direct_5, 3:y#int_direct_6), [[0, 0], [3, 3]], negative=true)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__2 <-> (positive) <-> (__0)) using tseitin,
-define(__3 <-> (negative) <-> (__1)) using tseitin,
-define(__4 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)])) using tseitin,
-define(__5 <-> or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)])) using tseitin,
+define(__0 <-> table(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), [[0, 0], [3, 3]], negative=true)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
+at-most-one(y#direct_1, y#direct_2, y#direct_3, y#direct_4, y#direct_5, y#direct_6) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
+define(__1 <-> table(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__2 <-> (positive) <-> (__1)) using tseitin,
+define(__3 <-> (negative) <-> (__0)) using tseitin,
+define(__4 <-> or([x#direct_1,x#direct_3,x#direct_6;int(1..)])) using tseitin,
+define(__5 <-> or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin,
 assert(__2) using tseitin,
 assert(__3) using tseitin,
 assert(__4) using tseitin,

@@ -1,0 +1,154 @@
+Model before rewriting:
+
+letting forbidden be {sequence(0,0),sequence(1,1),sequence(2,2)}
+find x: int(0..2)
+find y: int(0..2)
+
+such that
+
+negativeTable(sequence(x,y), forbidden)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#direct_1: bool
+  find x#direct_2: bool
+  find x#direct_3: bool
+new constraints:
+  sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3);int(1..)]) <= 1
+  or([x#direct_1,x#direct_2,x#direct_3;int(1..)])
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#direct_1: bool
+  find y#direct_2: bool
+  find y#direct_3: bool
+new constraints:
+  sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3);int(1..)]) <= 1
+  or([y#direct_1,y#direct_2,y#direct_3;int(1..)])
+
+--
+
+negativeTable(sequence(x,y), {sequence(0,0),sequence(1,1),sequence(2,2)})
+   ~~> select_table ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> table(0+weighted(0*x#direct_1, 1*x#direct_2, 2*x#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(0:x#direct_1, 1:x#direct_2, 2:x#direct_3), 0+weighted(0*y#direct_1, 1*y#direct_2, 2*y#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(0:y#direct_1, 1:y#direct_2, 2:y#direct_3), [[0, 0], [1, 1], [2, 2]], negative=true)) using None, PB None
+
+--
+
+__0,
+sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3);int(1..)]) <= 1,
+or([x#direct_1,x#direct_2,x#direct_3;int(1..)]),
+sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3);int(1..)]) <= 1,
+or([y#direct_1,y#direct_2,y#direct_3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+__0,
+or([x#direct_1,x#direct_2,x#direct_3;int(1..)]),
+sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3);int(1..)]) <= 1,
+or([y#direct_1,y#direct_2,y#direct_3;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#direct_1, x#direct_2, x#direct_3) using None
+
+--
+
+__0,
+or([x#direct_1,x#direct_2,x#direct_3;int(1..)]),
+sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3);int(1..)]) <= 1,
+or([y#direct_1,y#direct_2,y#direct_3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+__0,
+or([x#direct_1,x#direct_2,x#direct_3;int(1..)]),
+or([y#direct_1,y#direct_2,y#direct_3;int(1..)])
+new SAT encoding decisions:
+  at-most-one(y#direct_1, y#direct_2, y#direct_3) using None
+
+--
+
+or([x#direct_1,x#direct_2,x#direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin
+
+--
+
+or([y#direct_1,y#direct_2,y#direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> or([y#direct_1,y#direct_2,y#direct_3;int(1..)])) using tseitin
+
+--
+
+__0,
+__1,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+__1,
+__2
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+__1,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+__2
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+Final model:
+
+letting forbidden be {sequence(0,0),sequence(1,1),sequence(2,2)}
+find x: int(0..2)
+find y: int(0..2)
+find x#direct_1: bool
+find x#direct_2: bool
+find x#direct_3: bool
+find y#direct_1: bool
+find y#direct_2: bool
+find y#direct_3: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> table(0+weighted(0*x#direct_1, 1*x#direct_2, 2*x#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(0:x#direct_1, 1:x#direct_2, 2:x#direct_3), 0+weighted(0*y#direct_1, 1*y#direct_2, 2*y#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(0:y#direct_1, 1:y#direct_2, 2:y#direct_3), [[0, 0], [1, 1], [2, 2]], negative=true)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+at-most-one(x#direct_1, x#direct_2, x#direct_3) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
+at-most-one(y#direct_1, y#direct_2, y#direct_3) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
+define(__1 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin,
+define(__2 <-> or([y#direct_1,y#direct_2,y#direct_3;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin,
+assert(__2) using tseitin
+

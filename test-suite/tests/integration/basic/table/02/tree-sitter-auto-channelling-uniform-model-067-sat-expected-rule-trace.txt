@@ -9,87 +9,93 @@ table([a,b;int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)],[2,2;int(1..2)];int(1..3
 
 --
 
-a
-   ~~> select_representation ([("ReprGeneral", 10000)])
-a
-new variables:
-  find a#int_direct_1: bool
-  find a#int_direct_2: bool
-  find a#int_direct_3: bool
-new constraints:
-  sum([toInt(a#int_direct_1),toInt(a#int_direct_2),toInt(a#int_direct_3);int(1..)]) <= 1
-  or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])
-
---
-
-b
-   ~~> select_representation ([("ReprGeneral", 10000)])
-b
-new variables:
-  find b#int_direct_1: bool
-  find b#int_direct_2: bool
-  find b#int_direct_3: bool
-new constraints:
-  sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3);int(1..)]) <= 1
-  or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])
-
---
-
 table([a,b;int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)],[2,2;int(1..2)];int(1..3)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(a,b), {sequence(0,1),sequence(1,0),sequence(2,2)})
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#direct_1: bool
+  find a#direct_2: bool
+  find a#direct_3: bool
+new constraints:
+  sum([toInt(a#direct_1),toInt(a#direct_2),toInt(a#direct_3);int(1..)]) <= 1
+  or([a#direct_1,a#direct_2,a#direct_3;int(1..)])
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#direct_1: bool
+  find b#direct_2: bool
+  find b#direct_3: bool
+new constraints:
+  sum([toInt(b#direct_1),toInt(b#direct_2),toInt(b#direct_3);int(1..)]) <= 1
+  or([b#direct_1,b#direct_2,b#direct_3;int(1..)])
+
+--
+
+table(sequence(a,b), {sequence(0,1),sequence(1,0),sequence(2,2)})
    ~~> select_table ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> table(0+weighted(0*a#int_direct_1, 1*a#int_direct_2, 2*a#int_direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(0:a#int_direct_1, 1:a#int_direct_2, 2:a#int_direct_3), 0+weighted(0*b#int_direct_1, 1*b#int_direct_2, 2*b#int_direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(0:b#int_direct_1, 1:b#int_direct_2, 2:b#int_direct_3), [[0, 1], [1, 0], [2, 2]], negative=false)) using None, PB None
+  define(__0 <-> table(0+weighted(0*a#direct_1, 1*a#direct_2, 2*a#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(0:a#direct_1, 1:a#direct_2, 2:a#direct_3), 0+weighted(0*b#direct_1, 1*b#direct_2, 2*b#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(0:b#direct_1, 1:b#direct_2, 2:b#direct_3), [[0, 1], [1, 0], [2, 2]], negative=false)) using None, PB None
 
 --
 
 __0,
-sum([toInt(a#int_direct_1),toInt(a#int_direct_2),toInt(a#int_direct_3);int(1..)]) <= 1,
-or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)]),
-sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3);int(1..)]) <= 1,
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])
+sum([toInt(a#direct_1),toInt(a#direct_2),toInt(a#direct_3);int(1..)]) <= 1,
+or([a#direct_1,a#direct_2,a#direct_3;int(1..)]),
+sum([toInt(b#direct_1),toInt(b#direct_2),toInt(b#direct_3);int(1..)]) <= 1,
+or([b#direct_1,b#direct_2,b#direct_3;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 __0,
-or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)]),
-sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3);int(1..)]) <= 1,
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])
+or([a#direct_1,a#direct_2,a#direct_3;int(1..)]),
+sum([toInt(b#direct_1),toInt(b#direct_2),toInt(b#direct_3);int(1..)]) <= 1,
+or([b#direct_1,b#direct_2,b#direct_3;int(1..)])
 new SAT encoding decisions:
-  at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3) using None
+  at-most-one(a#direct_1, a#direct_2, a#direct_3) using None
 
 --
 
 __0,
-or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)]),
-sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3);int(1..)]) <= 1,
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])
+or([a#direct_1,a#direct_2,a#direct_3;int(1..)]),
+sum([toInt(b#direct_1),toInt(b#direct_2),toInt(b#direct_3);int(1..)]) <= 1,
+or([b#direct_1,b#direct_2,b#direct_3;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 __0,
-or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)]),
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])
+or([a#direct_1,a#direct_2,a#direct_3;int(1..)]),
+or([b#direct_1,b#direct_2,b#direct_3;int(1..)])
 new SAT encoding decisions:
-  at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3) using None
+  at-most-one(b#direct_1, b#direct_2, b#direct_3) using None
 
 --
 
-or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])
+or([a#direct_1,a#direct_2,a#direct_3;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])) using tseitin
+  define(__1 <-> or([a#direct_1,a#direct_2,a#direct_3;int(1..)])) using tseitin
 
 --
 
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])
+or([b#direct_1,b#direct_2,b#direct_3;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])) using tseitin
+  define(__2 <-> or([b#direct_1,b#direct_2,b#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -125,12 +131,12 @@ Final model:
 
 find a: int(0..2)
 find b: int(0..2)
-find a#int_direct_1: bool
-find a#int_direct_2: bool
-find a#int_direct_3: bool
-find b#int_direct_1: bool
-find b#int_direct_2: bool
-find b#int_direct_3: bool
+find a#direct_1: bool
+find a#direct_2: bool
+find a#direct_3: bool
+find b#direct_1: bool
+find b#direct_2: bool
+find b#direct_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -141,11 +147,11 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> table(0+weighted(0*a#int_direct_1, 1*a#int_direct_2, 2*a#int_direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(0:a#int_direct_1, 1:a#int_direct_2, 2:a#int_direct_3), 0+weighted(0*b#int_direct_1, 1*b#int_direct_2, 2*b#int_direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(0:b#int_direct_1, 1:b#int_direct_2, 2:b#int_direct_3), [[0, 1], [1, 0], [2, 2]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
-at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
-at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
-define(__1 <-> or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])) using tseitin,
-define(__2 <-> or([b#int_direct_1,b#int_direct_2,b#int_direct_3;int(1..)])) using tseitin,
+define(__0 <-> table(0+weighted(0*a#direct_1, 1*a#direct_2, 2*a#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(0:a#direct_1, 1:a#direct_2, 2:a#direct_3), 0+weighted(0*b#direct_1, 1*b#direct_2, 2*b#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(0:b#direct_1, 1:b#direct_2, 2:b#direct_3), [[0, 1], [1, 0], [2, 2]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+at-most-one(a#direct_1, a#direct_2, a#direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+at-most-one(b#direct_1, b#direct_2, b#direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+define(__1 <-> or([a#direct_1,a#direct_2,a#direct_3;int(1..)])) using tseitin,
+define(__2 <-> or([b#direct_1,b#direct_2,b#direct_3;int(1..)])) using tseitin,
 assert(__0) using tseitin,
 assert(__1) using tseitin,
 assert(__2) using tseitin

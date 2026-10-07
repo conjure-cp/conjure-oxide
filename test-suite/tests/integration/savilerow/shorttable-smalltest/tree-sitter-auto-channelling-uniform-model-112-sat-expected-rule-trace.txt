@@ -6,13 +6,19 @@ find x: matrix indexed by [int(1..4)] of int(0..5)
 
 such that
 
-shortTable([x[1],x[2],x[3],x[4];int(1..4)], mycon)
+shortTable(sequence(x[1],x[2],x[3],x[4]), mycon)
 
 --
 
-shortTable([x[1],x[2],x[3],x[4];int(1..4)], {{(1,0),(4,0)},{(2,0),(4,0)},{(3,0),(4,0)},{(1,1),(2,1),(3,1),(4,1)}})
+shortTable(sequence(x[1],x[2],x[3],x[4]), {{(1,0),(4,0)},{(2,0),(4,0)},{(3,0),(4,0)},{(1,1),(2,1),(3,1),(4,1)}})
    ~~> expand_short_table ([("SAT", 18500)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(x[1],x[2],x[3],x[4]), [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+
+--
+
+table(sequence(x[1],x[2],x[3],x[4]), [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)})
 
 --
 
@@ -81,9 +87,9 @@ x
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)})
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)})
 new variables:
   find x#components_1#order_1: bool
   find x#components_1#order_2: bool
@@ -685,7 +691,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 x#components_1#order_1,
 __51,
 __28,
@@ -715,7 +721,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __51,
 __28,
 __29,
@@ -748,7 +754,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __51,
 __28,
 __29,
@@ -777,7 +783,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __28,
 __29,
 __30,
@@ -809,7 +815,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __28,
 __29,
 __30,
@@ -837,7 +843,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __29,
 __30,
 __31,
@@ -868,7 +874,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __29,
 __30,
 __31,
@@ -895,7 +901,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __30,
 __31,
 __50,
@@ -925,7 +931,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __30,
 __31,
 __50,
@@ -951,7 +957,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __31,
 __50,
 x#components_2#order_1,
@@ -980,7 +986,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __31,
 __50,
 x#components_2#order_1,
@@ -1005,7 +1011,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __50,
 x#components_2#order_1,
 __32,
@@ -1033,7 +1039,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __50,
 x#components_2#order_1,
 __32,
@@ -1057,7 +1063,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 x#components_2#order_1,
 __32,
 __33,
@@ -1084,7 +1090,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 x#components_2#order_1,
 __32,
 __33,
@@ -1107,7 +1113,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __32,
 __33,
 __34,
@@ -1133,7 +1139,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __32,
 __33,
 __34,
@@ -1155,7 +1161,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __33,
 __34,
 __35,
@@ -1180,7 +1186,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __33,
 __34,
 __35,
@@ -1201,7 +1207,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __34,
 __35,
 __36,
@@ -1225,7 +1231,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __34,
 __35,
 __36,
@@ -1245,7 +1251,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __35,
 __36,
 __47,
@@ -1268,7 +1274,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __35,
 __36,
 __47,
@@ -1287,7 +1293,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __36,
 __47,
 x#components_3#order_1,
@@ -1309,7 +1315,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __36,
 __47,
 x#components_3#order_1,
@@ -1327,7 +1333,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __47,
 x#components_3#order_1,
 __37,
@@ -1348,7 +1354,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __47,
 x#components_3#order_1,
 __37,
@@ -1365,7 +1371,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 x#components_3#order_1,
 __37,
 __38,
@@ -1385,7 +1391,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 x#components_3#order_1,
 __37,
 __38,
@@ -1401,7 +1407,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __37,
 __38,
 __39,
@@ -1420,7 +1426,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __37,
 __38,
 __39,
@@ -1435,7 +1441,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __38,
 __39,
 __40,
@@ -1453,7 +1459,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __38,
 __39,
 __40,
@@ -1467,7 +1473,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __39,
 __40,
 __41,
@@ -1484,7 +1490,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __39,
 __40,
 __41,
@@ -1497,7 +1503,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __40,
 __41,
 __48,
@@ -1513,7 +1519,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __40,
 __41,
 __48,
@@ -1525,7 +1531,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __41,
 __48,
 x#components_4#order_1,
@@ -1540,7 +1546,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __41,
 __48,
 x#components_4#order_1,
@@ -1551,7 +1557,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __48,
 x#components_4#order_1,
 __42,
@@ -1565,7 +1571,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __48,
 x#components_4#order_1,
 __42,
@@ -1575,7 +1581,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 x#components_4#order_1,
 __42,
 __43,
@@ -1588,7 +1594,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 x#components_4#order_1,
 __42,
 __43,
@@ -1597,7 +1603,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __42,
 __43,
 __44,
@@ -1609,7 +1615,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __42,
 __43,
 __44,
@@ -1617,7 +1623,7 @@ __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __43,
 __44,
 __45,
@@ -1628,14 +1634,14 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __43,
 __44,
 __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __44,
 __45,
 __46,
@@ -1645,13 +1651,13 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __44,
 __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __45,
 __46,
 __49
@@ -1660,12 +1666,12 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __45,
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __46,
 __49
 new SAT encoding decisions:
@@ -1673,21 +1679,21 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __46,
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __49
 new SAT encoding decisions:
   assert(__46) using tseitin
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __49
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)})
 new SAT encoding decisions:
   assert(__49) using tseitin
 
@@ -1867,7 +1873,7 @@ x#components_2
 
 --
 
-table([SATInt(Order, [x#components_1#order_1,x#components_1#order_2,x#components_1#order_3,x#components_1#order_4,x#components_1#order_5,x#components_1#order_6;int(1..)] [0, 5]),SATInt(Order, [x#components_2#order_1,x#components_2#order_2,x#components_2#order_3,x#components_2#order_4,x#components_2#order_5,x#components_2#order_6;int(1..)] [0, 5]),SATInt(Order, [x#components_3#order_1,x#components_3#order_2,x#components_3#order_3,x#components_3#order_4,x#components_3#order_5,x#components_3#order_6;int(1..)] [0, 5]),SATInt(Order, [x#components_4#order_1,x#components_4#order_2,x#components_4#order_3,x#components_4#order_4,x#components_4#order_5,x#components_4#order_6;int(1..)] [0, 5]);int(1..4)], [[0,SATInt(Order, [x#components_2#order_1,x#components_2#order_2,x#components_2#order_3,x#components_2#order_4,x#components_2#order_5,x#components_2#order_6;int(1..)] [0, 5]),SATInt(Order, [x#components_3#order_1,x#components_3#order_2,x#components_3#order_3,x#components_3#order_4,x#components_3#order_5,x#components_3#order_6;int(1..)] [0, 5]),0;int(1..)],[SATInt(Order, [x#components_1#order_1,x#components_1#order_2,x#components_1#order_3,x#components_1#order_4,x#components_1#order_5,x#components_1#order_6;int(1..)] [0, 5]),0,SATInt(Order, [x#components_3#order_1,x#components_3#order_2,x#components_3#order_3,x#components_3#order_4,x#components_3#order_5,x#components_3#order_6;int(1..)] [0, 5]),0;int(1..)],[SATInt(Order, [x#components_1#order_1,x#components_1#order_2,x#components_1#order_3,x#components_1#order_4,x#components_1#order_5,x#components_1#order_6;int(1..)] [0, 5]),x#components_2,0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(SATInt(Order, [x#components_1#order_1,x#components_1#order_2,x#components_1#order_3,x#components_1#order_4,x#components_1#order_5,x#components_1#order_6;int(1..)] [0, 5]),SATInt(Order, [x#components_2#order_1,x#components_2#order_2,x#components_2#order_3,x#components_2#order_4,x#components_2#order_5,x#components_2#order_6;int(1..)] [0, 5]),SATInt(Order, [x#components_3#order_1,x#components_3#order_2,x#components_3#order_3,x#components_3#order_4,x#components_3#order_5,x#components_3#order_6;int(1..)] [0, 5]),SATInt(Order, [x#components_4#order_1,x#components_4#order_2,x#components_4#order_3,x#components_4#order_4,x#components_4#order_5,x#components_4#order_6;int(1..)] [0, 5])), {sequence(0,SATInt(Order, [x#components_2#order_1,x#components_2#order_2,x#components_2#order_3,x#components_2#order_4,x#components_2#order_5,x#components_2#order_6;int(1..)] [0, 5]),SATInt(Order, [x#components_3#order_1,x#components_3#order_2,x#components_3#order_3,x#components_3#order_4,x#components_3#order_5,x#components_3#order_6;int(1..)] [0, 5]),0),sequence(SATInt(Order, [x#components_1#order_1,x#components_1#order_2,x#components_1#order_3,x#components_1#order_4,x#components_1#order_5,x#components_1#order_6;int(1..)] [0, 5]),0,SATInt(Order, [x#components_3#order_1,x#components_3#order_2,x#components_3#order_3,x#components_3#order_4,x#components_3#order_5,x#components_3#order_6;int(1..)] [0, 5]),0),sequence(SATInt(Order, [x#components_1#order_1,x#components_1#order_2,x#components_1#order_3,x#components_1#order_4,x#components_1#order_5,x#components_1#order_6;int(1..)] [0, 5]),x#components_2,0,0),sequence(1,1,1,1)})
    ~~> select_table ([("SAT", 18500)])
 __52
 new variables:

@@ -6,13 +6,19 @@ find x: matrix indexed by [int(1..4)] of int(0..5)
 
 such that
 
-shortTable([x[1],x[2],x[3],x[4];int(1..4)], mycon)
+shortTable(sequence(x[1],x[2],x[3],x[4]), mycon)
 
 --
 
-shortTable([x[1],x[2],x[3],x[4];int(1..4)], {{(1,0),(4,0)},{(2,0),(4,0)},{(3,0),(4,0)},{(1,1),(2,1),(3,1),(4,1)}})
+shortTable(sequence(x[1],x[2],x[3],x[4]), {{(1,0),(4,0)},{(2,0),(4,0)},{(3,0),(4,0)},{(1,1),(2,1),(3,1),(4,1)}})
    ~~> expand_short_table ([("SAT", 18500)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(x[1],x[2],x[3],x[4]), [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+
+--
+
+table(sequence(x[1],x[2],x[3],x[4]), [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)})
 
 --
 
@@ -81,9 +87,9 @@ x
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)})
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)})
 new variables:
   find x#components_1#direct_1: bool
   find x#components_1#direct_2: bool
@@ -121,7 +127,7 @@ new constraints:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 sum([toInt(x#components_1#direct_1),toInt(x#components_1#direct_2),toInt(x#components_1#direct_3),toInt(x#components_1#direct_4),toInt(x#components_1#direct_5),toInt(x#components_1#direct_6);int(1..)]) <= 1,
 or([x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)]),
 sum([toInt(x#components_2#direct_1),toInt(x#components_2#direct_2),toInt(x#components_2#direct_3),toInt(x#components_2#direct_4),toInt(x#components_2#direct_5),toInt(x#components_2#direct_6);int(1..)]) <= 1,
@@ -131,7 +137,7 @@ or([x#components_3#direct_1,x#components_3#direct_2,x#components_3#direct_3,x#co
 sum([toInt(x#components_4#direct_1),toInt(x#components_4#direct_2),toInt(x#components_4#direct_3),toInt(x#components_4#direct_4),toInt(x#components_4#direct_5),toInt(x#components_4#direct_6);int(1..)]) <= 1,
 or([x#components_4#direct_1,x#components_4#direct_2,x#components_4#direct_3,x#components_4#direct_4,x#components_4#direct_5,x#components_4#direct_6;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 or([x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)]),
 sum([toInt(x#components_2#direct_1),toInt(x#components_2#direct_2),toInt(x#components_2#direct_3),toInt(x#components_2#direct_4),toInt(x#components_2#direct_5),toInt(x#components_2#direct_6);int(1..)]) <= 1,
 or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4,x#components_2#direct_5,x#components_2#direct_6;int(1..)]),
@@ -144,7 +150,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 or([x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)]),
 sum([toInt(x#components_2#direct_1),toInt(x#components_2#direct_2),toInt(x#components_2#direct_3),toInt(x#components_2#direct_4),toInt(x#components_2#direct_5),toInt(x#components_2#direct_6);int(1..)]) <= 1,
 or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4,x#components_2#direct_5,x#components_2#direct_6;int(1..)]),
@@ -153,7 +159,7 @@ or([x#components_3#direct_1,x#components_3#direct_2,x#components_3#direct_3,x#co
 sum([toInt(x#components_4#direct_1),toInt(x#components_4#direct_2),toInt(x#components_4#direct_3),toInt(x#components_4#direct_4),toInt(x#components_4#direct_5),toInt(x#components_4#direct_6);int(1..)]) <= 1,
 or([x#components_4#direct_1,x#components_4#direct_2,x#components_4#direct_3,x#components_4#direct_4,x#components_4#direct_5,x#components_4#direct_6;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 or([x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)]),
 or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4,x#components_2#direct_5,x#components_2#direct_6;int(1..)]),
 sum([toInt(x#components_3#direct_1),toInt(x#components_3#direct_2),toInt(x#components_3#direct_3),toInt(x#components_3#direct_4),toInt(x#components_3#direct_5),toInt(x#components_3#direct_6);int(1..)]) <= 1,
@@ -165,7 +171,7 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 or([x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)]),
 or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4,x#components_2#direct_5,x#components_2#direct_6;int(1..)]),
 sum([toInt(x#components_3#direct_1),toInt(x#components_3#direct_2),toInt(x#components_3#direct_3),toInt(x#components_3#direct_4),toInt(x#components_3#direct_5),toInt(x#components_3#direct_6);int(1..)]) <= 1,
@@ -173,7 +179,7 @@ or([x#components_3#direct_1,x#components_3#direct_2,x#components_3#direct_3,x#co
 sum([toInt(x#components_4#direct_1),toInt(x#components_4#direct_2),toInt(x#components_4#direct_3),toInt(x#components_4#direct_4),toInt(x#components_4#direct_5),toInt(x#components_4#direct_6);int(1..)]) <= 1,
 or([x#components_4#direct_1,x#components_4#direct_2,x#components_4#direct_3,x#components_4#direct_4,x#components_4#direct_5,x#components_4#direct_6;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 or([x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)]),
 or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4,x#components_2#direct_5,x#components_2#direct_6;int(1..)]),
 or([x#components_3#direct_1,x#components_3#direct_2,x#components_3#direct_3,x#components_3#direct_4,x#components_3#direct_5,x#components_3#direct_6;int(1..)]),
@@ -184,14 +190,14 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 or([x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)]),
 or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4,x#components_2#direct_5,x#components_2#direct_6;int(1..)]),
 or([x#components_3#direct_1,x#components_3#direct_2,x#components_3#direct_3,x#components_3#direct_4,x#components_3#direct_5,x#components_3#direct_6;int(1..)]),
 sum([toInt(x#components_4#direct_1),toInt(x#components_4#direct_2),toInt(x#components_4#direct_3),toInt(x#components_4#direct_4),toInt(x#components_4#direct_5),toInt(x#components_4#direct_6);int(1..)]) <= 1,
 or([x#components_4#direct_1,x#components_4#direct_2,x#components_4#direct_3,x#components_4#direct_4,x#components_4#direct_5,x#components_4#direct_6;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 or([x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)]),
 or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4,x#components_2#direct_5,x#components_2#direct_6;int(1..)]),
 or([x#components_3#direct_1,x#components_3#direct_2,x#components_3#direct_3,x#components_3#direct_4,x#components_3#direct_5,x#components_3#direct_6;int(1..)]),
@@ -241,13 +247,13 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __0,
 __1,
 __2,
 __3
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __1,
 __2,
 __3
@@ -256,12 +262,12 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __1,
 __2,
 __3
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __2,
 __3
 new SAT encoding decisions:
@@ -269,21 +275,21 @@ new SAT encoding decisions:
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __2,
 __3
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __3
 new SAT encoding decisions:
   assert(__2) using tseitin
 
 --
 
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)]),
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)}),
 __3
    ~~> remove_single_atom ([("SAT", 8400)])
-table([x[1],x[2],x[3],x[4];int(1..4)], [[0,x[2],x[3],0;int(1..)],[x[1],0,x[3],0;int(1..)],[x[1],x[2],0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(x[1],x[2],x[3],x[4]), {sequence(0,x[2],x[3],0),sequence(x[1],0,x[3],0),sequence(x[1],x[2],0,0),sequence(1,1,1,1)})
 new SAT encoding decisions:
   assert(__3) using tseitin
 
@@ -463,7 +469,7 @@ x#components_2
 
 --
 
-table([SATInt(Direct, [x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)] [0, 5]),SATInt(Direct, [x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4,x#components_2#direct_5,x#components_2#direct_6;int(1..)] [0, 5]),SATInt(Direct, [x#components_3#direct_1,x#components_3#direct_2,x#components_3#direct_3,x#components_3#direct_4,x#components_3#direct_5,x#components_3#direct_6;int(1..)] [0, 5]),SATInt(Direct, [x#components_4#direct_1,x#components_4#direct_2,x#components_4#direct_3,x#components_4#direct_4,x#components_4#direct_5,x#components_4#direct_6;int(1..)] [0, 5]);int(1..4)], [[0,SATInt(Direct, [x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4,x#components_2#direct_5,x#components_2#direct_6;int(1..)] [0, 5]),SATInt(Direct, [x#components_3#direct_1,x#components_3#direct_2,x#components_3#direct_3,x#components_3#direct_4,x#components_3#direct_5,x#components_3#direct_6;int(1..)] [0, 5]),0;int(1..)],[SATInt(Direct, [x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)] [0, 5]),0,SATInt(Direct, [x#components_3#direct_1,x#components_3#direct_2,x#components_3#direct_3,x#components_3#direct_4,x#components_3#direct_5,x#components_3#direct_6;int(1..)] [0, 5]),0;int(1..)],[SATInt(Direct, [x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)] [0, 5]),x#components_2,0,0;int(1..)],[1,1,1,1;int(1..)];int(1..)])
+table(sequence(SATInt(Direct, [x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)] [0, 5]),SATInt(Direct, [x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4,x#components_2#direct_5,x#components_2#direct_6;int(1..)] [0, 5]),SATInt(Direct, [x#components_3#direct_1,x#components_3#direct_2,x#components_3#direct_3,x#components_3#direct_4,x#components_3#direct_5,x#components_3#direct_6;int(1..)] [0, 5]),SATInt(Direct, [x#components_4#direct_1,x#components_4#direct_2,x#components_4#direct_3,x#components_4#direct_4,x#components_4#direct_5,x#components_4#direct_6;int(1..)] [0, 5])), {sequence(0,SATInt(Direct, [x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4,x#components_2#direct_5,x#components_2#direct_6;int(1..)] [0, 5]),SATInt(Direct, [x#components_3#direct_1,x#components_3#direct_2,x#components_3#direct_3,x#components_3#direct_4,x#components_3#direct_5,x#components_3#direct_6;int(1..)] [0, 5]),0),sequence(SATInt(Direct, [x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)] [0, 5]),0,SATInt(Direct, [x#components_3#direct_1,x#components_3#direct_2,x#components_3#direct_3,x#components_3#direct_4,x#components_3#direct_5,x#components_3#direct_6;int(1..)] [0, 5]),0),sequence(SATInt(Direct, [x#components_1#direct_1,x#components_1#direct_2,x#components_1#direct_3,x#components_1#direct_4,x#components_1#direct_5,x#components_1#direct_6;int(1..)] [0, 5]),x#components_2,0,0),sequence(1,1,1,1)})
    ~~> select_table ([("SAT", 18500)])
 __4
 new variables:

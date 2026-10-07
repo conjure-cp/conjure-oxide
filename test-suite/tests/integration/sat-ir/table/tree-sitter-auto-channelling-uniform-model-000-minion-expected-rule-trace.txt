@@ -18,53 +18,83 @@ table([0;int(1..1)], [[0;int(1..1)],[0;int(1..1)];int(1..2)])
 
 --
 
-(inside) <-> (table([x,y,x,0;int(1..4)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..4)]))
-   ~~> iff_to_eq ([("Minion", 4400)])
-Reify(table([x,y,x,0;int(1..4)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..4)]), inside)
+table([0;int(1..1)], [[0;int(1..1)],[0;int(1..1)];int(1..2)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(0), {sequence(0),sequence(0)})
 
 --
 
-(notInside) <-> (!(table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])))
-   ~~> iff_to_eq ([("Minion", 4400)])
-Reify(!(table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])), notInside)
+table([x,y,x,0;int(1..4)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..4)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)})
 
 --
 
-(booleanInside) <-> (table([toInt(b),toInt(c);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..2)]))
-   ~~> iff_to_eq ([("Minion", 4400)])
-Reify(table([toInt(b),toInt(c);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..2)]), booleanInside)
+table([toInt(b),toInt(c);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..2)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(toInt(b),toInt(c)), {sequence(0,1),sequence(1,0)})
 
 --
 
-!(table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)]))
+table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(x,x), {sequence(-2,0),sequence(0,3)})
+
+--
+
+table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(x,y), {sequence(0,0),sequence(3,3)})
+
+--
+
+(inside) <-> (table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)}))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)}), inside)
+
+--
+
+(notInside) <-> (!(table(sequence(x,y), {sequence(0,0),sequence(3,3)})))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(!(table(sequence(x,y), {sequence(0,0),sequence(3,3)})), notInside)
+
+--
+
+(booleanInside) <-> (table(sequence(toInt(b),toInt(c)), {sequence(0,1),sequence(1,0)}))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(table(sequence(toInt(b),toInt(c)), {sequence(0,1),sequence(1,0)}), booleanInside)
+
+--
+
+!(table(sequence(x,x), {sequence(-2,0),sequence(0,3)}))
    ~~> flatten_generic ([("Minion", 4200)])
 !(__0)
 new variables:
   findAux __0: bool
 new constraints:
-  __0 =aux table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)])
+  __0 =aux table(sequence(x,x), {sequence(-2,0),sequence(0,3)})
 
 --
 
-__0 =aux table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)])
+__0 =aux table(sequence(x,x), {sequence(-2,0),sequence(0,3)})
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)]), __0)
+Reify(table(sequence(x,x), {sequence(-2,0),sequence(0,3)}), __0)
 
 --
 
-!(table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)]))
+!(table(sequence(x,y), {sequence(0,0),sequence(3,3)}))
    ~~> flatten_generic ([("Minion", 4200)])
 !(__1)
 new variables:
   findAux __1: bool
 new constraints:
-  __1 =aux table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
+  __1 =aux table(sequence(x,y), {sequence(0,0),sequence(3,3)})
 
 --
 
-__1 =aux table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
+__1 =aux table(sequence(x,y), {sequence(0,0),sequence(3,3)})
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)]), __1)
+Reify(table(sequence(x,y), {sequence(0,0),sequence(3,3)}), __1)
 
 --
 
@@ -80,33 +110,33 @@ WatchedLiteral(__1,false)
 
 --
 
-table([0;int(1..1)], [[0;int(1..1)],[0;int(1..1)];int(1..2)])
+table(sequence(0), {sequence(0),sequence(0)})
    ~~> flatten_table ([("Minion", 4050)])
 FlatTable([0], [[0], [0]], false)
 
 --
 
-table([toInt(b),toInt(c);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..2)])
+table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)})
+   ~~> flatten_table ([("Minion", 4050)])
+FlatTable([x, y, x, 0], [[-2, 0, -2, 0], [3, -2, 3, 0], [3, -2, 3, 0], [7, 0, 7, 0]], false)
+
+--
+
+table(sequence(toInt(b),toInt(c)), {sequence(0,1),sequence(1,0)})
    ~~> flatten_table ([("Minion", 4050)])
 FlatTable([b, c], [[0, 1], [1, 0]], false)
 
 --
 
-table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)])
+table(sequence(x,x), {sequence(-2,0),sequence(0,3)})
    ~~> flatten_table ([("Minion", 4050)])
 FlatTable([x, x], [[-2, 0], [0, 3]], false)
 
 --
 
-table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
+table(sequence(x,y), {sequence(0,0),sequence(3,3)})
    ~~> flatten_table ([("Minion", 4050)])
 FlatTable([x, y], [[0, 0], [3, 3]], false)
-
---
-
-table([x,y,x,0;int(1..4)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..4)])
-   ~~> flatten_table ([("Minion", 4050)])
-FlatTable([x, y, x, 0], [[-2, 0, -2, 0], [3, -2, 3, 0], [3, -2, 3, 0], [7, 0, 7, 0]], false)
 
 --
 

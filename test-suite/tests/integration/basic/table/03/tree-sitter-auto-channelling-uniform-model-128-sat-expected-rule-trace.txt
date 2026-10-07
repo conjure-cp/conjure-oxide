@@ -10,13 +10,19 @@ table([p,q,r;int(1..3)], [[0,1,0;int(1..3)],[1,0,1;int(1..3)];int(1..2)])
 
 --
 
+table([p,q,r;int(1..3)], [[0,1,0;int(1..3)],[1,0,1;int(1..3)];int(1..2)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(p,q,r), {sequence(0,1,0),sequence(1,0,1)})
+
+--
+
 p
    ~~> select_representation ([("ReprGeneral", 10000)])
 p
 new variables:
-  find p#int_rank_1: bool
+  find p#rank_1: bool
 new constraints:
-  or([!(p#int_rank_1),true;int(1..)])
+  or([!(p#rank_1),true;int(1..)])
 
 --
 
@@ -24,9 +30,9 @@ q
    ~~> select_representation ([("ReprGeneral", 10000)])
 q
 new variables:
-  find q#int_rank_1: bool
+  find q#rank_1: bool
 new constraints:
-  or([!(q#int_rank_1),true;int(1..)])
+  or([!(q#rank_1),true;int(1..)])
 
 --
 
@@ -34,33 +40,33 @@ r
    ~~> select_representation ([("ReprGeneral", 10000)])
 r
 new variables:
-  find r#int_rank_1: bool
+  find r#rank_1: bool
 new constraints:
-  or([!(r#int_rank_1),true;int(1..)])
-
---
-
-q
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 1)]), [q#int_rank_1;int(1..)] [0, 1])
-
---
-
-r
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 1)]), [r#int_rank_1;int(1..)] [0, 1])
+  or([!(r#rank_1),true;int(1..)])
 
 --
 
 p
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 1)]), [p#int_rank_1;int(1..)] [0, 1])
+SATInt(Rank([(0, 1)]), [p#rank_1;int(1..)] [0, 1])
 
 --
 
-table([SATInt(Rank([(0, 1)]), [p#int_rank_1;int(1..)] [0, 1]),SATInt(Rank([(0, 1)]), [q#int_rank_1;int(1..)] [0, 1]),SATInt(Rank([(0, 1)]), [r#int_rank_1;int(1..)] [0, 1]);int(1..3)], [[0,1,0;int(1..3)],[1,0,1;int(1..3)];int(1..2)])
+q
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(0, 1)]), [q#rank_1;int(1..)] [0, 1])
+
+--
+
+r
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(0, 1)]), [r#rank_1;int(1..)] [0, 1])
+
+--
+
+table(sequence(SATInt(Rank([(0, 1)]), [p#rank_1;int(1..)] [0, 1]),SATInt(Rank([(0, 1)]), [q#rank_1;int(1..)] [0, 1]),SATInt(Rank([(0, 1)]), [r#rank_1;int(1..)] [0, 1])), {sequence(0,1,0),sequence(1,0,1)})
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-table([SATInt(Log, [__0,__2;int(1..)] [0, 1]),SATInt(Log, [__4,__6;int(1..)] [0, 1]),SATInt(Log, [__8,__10;int(1..)] [0, 1]);int(1..3)], [[0,1,0;int(1..3)],[1,0,1;int(1..3)];int(1..2)])
+table(sequence(SATInt(Log, [__0,__2;int(1..)] [0, 1]),SATInt(Log, [__4,__6;int(1..)] [0, 1]),SATInt(Log, [__8,__10;int(1..)] [0, 1])), {sequence(0,1,0),sequence(1,0,1)})
 new variables:
   findAux __0: bool
   findAux __1: bool
@@ -75,22 +81,22 @@ new variables:
   findAux __10: bool
   findAux __11: bool
 new SAT encoding decisions:
-  define(__0 <-> !((p#int_rank_1) <-> (false))) using tseitin
-  define(__1 <-> and([p#int_rank_1,false;int(1..)])) using tseitin
+  define(__0 <-> !((p#rank_1) <-> (false))) using tseitin
+  define(__1 <-> and([p#rank_1,false;int(1..)])) using tseitin
   define(__2 <-> !((false) <-> (__1))) using tseitin
   define(__3 <-> and([false,__1;int(1..)])) using tseitin
-  define(__4 <-> !((q#int_rank_1) <-> (false))) using tseitin
-  define(__5 <-> and([q#int_rank_1,false;int(1..)])) using tseitin
+  define(__4 <-> !((q#rank_1) <-> (false))) using tseitin
+  define(__5 <-> and([q#rank_1,false;int(1..)])) using tseitin
   define(__6 <-> !((false) <-> (__5))) using tseitin
   define(__7 <-> and([false,__5;int(1..)])) using tseitin
-  define(__8 <-> !((r#int_rank_1) <-> (false))) using tseitin
-  define(__9 <-> and([r#int_rank_1,false;int(1..)])) using tseitin
+  define(__8 <-> !((r#rank_1) <-> (false))) using tseitin
+  define(__9 <-> and([r#rank_1,false;int(1..)])) using tseitin
   define(__10 <-> !((false) <-> (__9))) using tseitin
   define(__11 <-> and([false,__9;int(1..)])) using tseitin
 
 --
 
-table([SATInt(Log, [__0,__2;int(1..)] [0, 1]),SATInt(Log, [__4,__6;int(1..)] [0, 1]),SATInt(Log, [__8,__10;int(1..)] [0, 1]);int(1..3)], [[0,1,0;int(1..3)],[1,0,1;int(1..3)];int(1..2)])
+table(sequence(SATInt(Log, [__0,__2;int(1..)] [0, 1]),SATInt(Log, [__4,__6;int(1..)] [0, 1]),SATInt(Log, [__8,__10;int(1..)] [0, 1])), {sequence(0,1,0),sequence(1,0,1)})
    ~~> select_table ([("SAT", 18500)])
 __12
 new variables:
@@ -118,9 +124,9 @@ Final model:
 find p: int(0..1)
 find q: int(0..1)
 find r: int(0..1)
-find p#int_rank_1: bool
-find q#int_rank_1: bool
-find r#int_rank_1: bool
+find p#rank_1: bool
+find q#rank_1: bool
+find r#rank_1: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -143,16 +149,16 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !((p#int_rank_1) <-> (false))) using tseitin,
-define(__1 <-> and([p#int_rank_1,false;int(1..)])) using tseitin,
+define(__0 <-> !((p#rank_1) <-> (false))) using tseitin,
+define(__1 <-> and([p#rank_1,false;int(1..)])) using tseitin,
 define(__2 <-> !((false) <-> (__1))) using tseitin,
 define(__3 <-> and([false,__1;int(1..)])) using tseitin,
-define(__4 <-> !((q#int_rank_1) <-> (false))) using tseitin,
-define(__5 <-> and([q#int_rank_1,false;int(1..)])) using tseitin,
+define(__4 <-> !((q#rank_1) <-> (false))) using tseitin,
+define(__5 <-> and([q#rank_1,false;int(1..)])) using tseitin,
 define(__6 <-> !((false) <-> (__5))) using tseitin,
 define(__7 <-> and([false,__5;int(1..)])) using tseitin,
-define(__8 <-> !((r#int_rank_1) <-> (false))) using tseitin,
-define(__9 <-> and([r#int_rank_1,false;int(1..)])) using tseitin,
+define(__8 <-> !((r#rank_1) <-> (false))) using tseitin,
+define(__9 <-> and([r#rank_1,false;int(1..)])) using tseitin,
 define(__10 <-> !((false) <-> (__9))) using tseitin,
 define(__11 <-> and([false,__9;int(1..)])) using tseitin,
 define(__12 <-> table(0+weighted(1*__0, -2*__2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }], 0+weighted(1*__4, -2*__6) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }], 0+weighted(1*__8, -2*__10) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }], [[0, 1, 0], [1, 0, 1]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),

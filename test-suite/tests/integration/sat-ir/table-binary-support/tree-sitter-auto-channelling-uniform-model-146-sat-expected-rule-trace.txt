@@ -12,45 +12,57 @@ such that
 
 --
 
+table([x,y;int(1..2)], [[-2,0;int(1..2)],[3,-2;int(1..2)],[3,-2;int(1..2)],[7,3;int(1..2)];int(1..4)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})
+
+--
+
+negativeTable([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})
+
+--
+
 x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
 new variables:
-  find x#int_log_1: bool
-  find x#int_log_2: bool
-  find x#int_log_3: bool
+  find x#twos_complement_1: bool
+  find x#twos_complement_2: bool
+  find x#twos_complement_3: bool
 new constraints:
-  or([SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [-2, 3]) = -2,SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [-2, 3]) = 0,SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [-2, 3]) = 3;int(1..)])
+  or([SATInt(Log, [x#twos_complement_1,x#twos_complement_2,x#twos_complement_3;int(1..)] [-2, 3]) = -2,SATInt(Log, [x#twos_complement_1,x#twos_complement_2,x#twos_complement_3;int(1..)] [-2, 3]) = 0,SATInt(Log, [x#twos_complement_1,x#twos_complement_2,x#twos_complement_3;int(1..)] [-2, 3]) = 3;int(1..)])
 
 --
 
-SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [-2, 3]) = -2
+SATInt(Log, [x#twos_complement_1,x#twos_complement_2,x#twos_complement_3;int(1..)] [-2, 3]) = -2
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) Equal -2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
+  define(__0 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) Equal -2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
 
 --
 
-SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [-2, 3]) = 0
+SATInt(Log, [x#twos_complement_1,x#twos_complement_2,x#twos_complement_3;int(1..)] [-2, 3]) = 0
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
+  define(__1 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
 
 --
 
-SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3;int(1..)] [-2, 3]) = 3
+SATInt(Log, [x#twos_complement_1,x#twos_complement_2,x#twos_complement_3;int(1..)] [-2, 3]) = 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
+  define(__2 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
 
 --
 
@@ -58,51 +70,51 @@ y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
 new variables:
-  find y#int_log_1: bool
-  find y#int_log_2: bool
-  find y#int_log_3: bool
+  find y#twos_complement_1: bool
+  find y#twos_complement_2: bool
+  find y#twos_complement_3: bool
 new constraints:
-  or([SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [-2, 3]) = -2,SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [-2, 3]) = 0,SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [-2, 3]) = 3;int(1..)])
+  or([SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [-2, 3]) = -2,SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [-2, 3]) = 0,SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [-2, 3]) = 3;int(1..)])
 
 --
 
-table([x,y;int(1..2)], [[-2,0;int(1..2)],[3,-2;int(1..2)],[3,-2;int(1..2)],[7,3;int(1..2)];int(1..4)])
+negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})
    ~~> select_table ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> table(0+weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using None, PB None
+  define(__3 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], [[0, 0], [3, 3]], negative=true)) using None, PB None
 
 --
 
-SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [-2, 3]) = -2
+SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [-2, 3]) = -2
    ~~> select_integer_relation ([("SAT", 18500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) Equal -2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
+  define(__4 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) Equal -2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
 
 --
 
-SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [-2, 3]) = 0
+SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [-2, 3]) = 0
    ~~> select_integer_relation ([("SAT", 18500)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
+  define(__5 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
 
 --
 
-SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [-2, 3]) = 3
+SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [-2, 3]) = 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __6
 new variables:
   findAux __6: bool
 new SAT encoding decisions:
-  define(__6 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
+  define(__6 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
 
 --
 
@@ -118,13 +130,13 @@ y
 
 --
 
-negativeTable([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
+table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})
    ~~> select_table ([("SAT", 18500)])
 __7
 new variables:
   findAux __7: bool
 new SAT encoding decisions:
-  define(__7 <-> table(0+weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], [[0, 0], [3, 3]], negative=true)) using None, PB None
+  define(__7 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using None, PB None
 
 --
 
@@ -148,23 +160,23 @@ new SAT encoding decisions:
 
 --
 
-(positive) <-> (__3)
+(positive) <-> (__7)
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __10
 new variables:
   findAux __10: bool
 new SAT encoding decisions:
-  define(__10 <-> (positive) <-> (__3)) using tseitin
+  define(__10 <-> (positive) <-> (__7)) using tseitin
 
 --
 
-(negative) <-> (__7)
+(negative) <-> (__3)
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
 __11
 new variables:
   findAux __11: bool
 new SAT encoding decisions:
-  define(__11 <-> (negative) <-> (__7)) using tseitin
+  define(__11 <-> (negative) <-> (__3)) using tseitin
 
 --
 
@@ -215,15 +227,15 @@ find x: int(-2, 0, 3)
 find y: int(-2, 0, 3)
 find negative: bool
 find positive: bool
-find x#int_log_1: bool
-find x#int_log_2: bool
-find x#int_log_3: bool
+find x#twos_complement_1: bool
+find x#twos_complement_2: bool
+find x#twos_complement_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
-find y#int_log_1: bool
-find y#int_log_2: bool
-find y#int_log_3: bool
+find y#twos_complement_1: bool
+find y#twos_complement_2: bool
+find y#twos_complement_3: bool
 findAux __3: bool
 findAux __4: bool
 findAux __5: bool
@@ -240,18 +252,18 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) Equal -2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
-define(__1 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
-define(__2 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
-define(__3 <-> table(0+weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using Some(EncodingSelection { algorithm: BinarySupport, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
-define(__4 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) Equal -2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
-define(__5 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
-define(__6 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
-define(__7 <-> table(0+weighted(1*x#int_log_1, 2*x#int_log_2, -4*x#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], [[0, 0], [3, 3]], negative=true)) using Some(EncodingSelection { algorithm: BinarySupport, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
+define(__0 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) Equal -2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
+define(__1 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
+define(__2 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
+define(__3 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], [[0, 0], [3, 3]], negative=true)) using Some(EncodingSelection { algorithm: BinarySupport, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
+define(__4 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) Equal -2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
+define(__5 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
+define(__6 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
+define(__7 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using Some(EncodingSelection { algorithm: BinarySupport, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
 define(__8 <-> or([__4,__5,__6;int(1..)])) using tseitin,
 define(__9 <-> or([__0,__1,__2;int(1..)])) using tseitin,
-define(__10 <-> (positive) <-> (__3)) using tseitin,
-define(__11 <-> (negative) <-> (__7)) using tseitin,
+define(__10 <-> (positive) <-> (__7)) using tseitin,
+define(__11 <-> (negative) <-> (__3)) using tseitin,
 assert(__10) using tseitin,
 assert(__11) using tseitin,
 assert(__9) using tseitin,

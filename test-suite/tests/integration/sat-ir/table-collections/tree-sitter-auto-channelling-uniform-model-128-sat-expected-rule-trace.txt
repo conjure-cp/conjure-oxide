@@ -6,30 +6,48 @@ find y: int(1..3)
 such that
 
 table(sequence(x,y), {sequence(1,2),sequence(2,1),sequence(3,3)}),
-negativeTable([x,y;int(1..2)], {sequence(3,3)}),
-shortTable([x,y;int(1..2)], {{(1,1)},{(2,1)}}),
-!(table([x;int(1..1)], {})),
-negativeTable([x;int(1..1)], {}),
-shortTable([x;int(1..1)], {{}}),
-!(shortTable([x;int(1..1)], {}))
+negativeTable(sequence(x,y), {sequence(3,3)}),
+shortTable(sequence(x,y), {{(1,1)},{(2,1)}}),
+!(table(sequence(x), {})),
+negativeTable(sequence(x), {}),
+shortTable(sequence(x), {{}}),
+!(shortTable(sequence(x), {}))
 
 --
 
-shortTable([x,y;int(1..2)], {{(1,1)},{(2,1)}})
+shortTable(sequence(x,y), {{(1,1)},{(2,1)}})
    ~~> expand_short_table ([("SAT", 18500)])
-table([x,y;int(1..2)], [[1,y;int(1..)],[x,1;int(1..)];int(1..)])
+table(sequence(x,y), [[1,y;int(1..)],[x,1;int(1..)];int(1..)])
 
 --
 
-shortTable([x;int(1..1)], {{}})
-   ~~> expand_short_table ([("SAT", 18500)])
-table([x;int(1..1)], [[x;int(1..)];int(1..)])
+table(sequence(x,y), [[1,y;int(1..)],[x,1;int(1..)];int(1..)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(x,y), {sequence(1,y),sequence(x,1)})
 
 --
 
-shortTable([x;int(1..1)], {})
+shortTable(sequence(x), {{}})
    ~~> expand_short_table ([("SAT", 18500)])
-table([x;int(1..1)], [;int(1..)])
+table(sequence(x), [[x;int(1..)];int(1..)])
+
+--
+
+table(sequence(x), [[x;int(1..)];int(1..)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(x), {sequence(x)})
+
+--
+
+shortTable(sequence(x), {})
+   ~~> expand_short_table ([("SAT", 18500)])
+table(sequence(x), [;int(1..)])
+
+--
+
+table(sequence(x), [;int(1..)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(x), {})
 
 --
 
@@ -41,12 +59,6 @@ new variables:
   find x#rank_2: bool
 new constraints:
   or([!(x#rank_2),and([!(x#rank_1),true;int(1..)]);int(1..)])
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
 
 --
 
@@ -67,12 +79,6 @@ x
 
 --
 
-y
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y
-
---
-
 x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
@@ -82,18 +88,6 @@ x
 y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
 
 --
 
@@ -118,6 +112,42 @@ x
 x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])
+
+--
+
+y
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])
 
 --
 
@@ -157,24 +187,6 @@ SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])
 
 --
 
-y
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])
-
---
-
-x
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])
-
---
-
-x
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])
-
---
-
 x
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
 SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])
@@ -184,6 +196,12 @@ SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])
 y
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
 SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])
+
+--
+
+x
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])
 
 --
 
@@ -272,22 +290,22 @@ new SAT encoding decisions:
 --
 
 table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,2),sequence(2,1),sequence(3,3)}),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], {sequence(3,3)}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], [[1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..)],[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1;int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)])),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(3,3)}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])),sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1)}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
 __5,
 __4
    ~~> remove_single_atom ([("SAT", 8400)])
 table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,2),sequence(2,1),sequence(3,3)}),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], {sequence(3,3)}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], [[1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..)],[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1;int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)])),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(3,3)}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])),sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1)}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
 __4
 new SAT encoding decisions:
   assert(__5) using tseitin
@@ -295,21 +313,21 @@ new SAT encoding decisions:
 --
 
 table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,2),sequence(2,1),sequence(3,3)}),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], {sequence(3,3)}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], [[1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..)],[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1;int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)])),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(3,3)}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])),sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1)}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
 __4
    ~~> remove_single_atom ([("SAT", 8400)])
 table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,2),sequence(2,1),sequence(3,3)}),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], {sequence(3,3)}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], [[1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..)],[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1;int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(3,3)}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])),sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1)}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
 new SAT encoding decisions:
   assert(__4) using tseitin
 
@@ -362,27 +380,27 @@ new SAT encoding decisions:
 --
 
 __20,
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], {sequence(3,3)}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], [[1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..)],[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1;int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(3,3)}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])),sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1)}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
    ~~> remove_single_atom ([("SAT", 8400)])
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], {sequence(3,3)}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], [[1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..)],[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1;int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(3,3)}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])),sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1)}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
 new SAT encoding decisions:
   assert(__20) using tseitin
 
 --
 
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], {sequence(3,3)})
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(3,3)})
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-negativeTable([SATInt(Log, [__22,__24,__26;int(1..)] [1, 3]),SATInt(Log, [__29,__31,__33;int(1..)] [1, 3]);int(1..2)], {sequence(3,3)})
+negativeTable(sequence(SATInt(Log, [__22,__24,__26;int(1..)] [1, 3]),SATInt(Log, [__29,__31,__33;int(1..)] [1, 3])), {sequence(3,3)})
 new variables:
   findAux __21: bool
   findAux __22: bool
@@ -416,7 +434,7 @@ new SAT encoding decisions:
 
 --
 
-negativeTable([SATInt(Log, [__22,__24,__26;int(1..)] [1, 3]),SATInt(Log, [__29,__31,__33;int(1..)] [1, 3]);int(1..2)], {sequence(3,3)})
+negativeTable(sequence(SATInt(Log, [__22,__24,__26;int(1..)] [1, 3]),SATInt(Log, [__29,__31,__33;int(1..)] [1, 3])), {sequence(3,3)})
    ~~> select_table ([("SAT", 18500)])
 __35
 new variables:
@@ -427,25 +445,25 @@ new SAT encoding decisions:
 --
 
 __35,
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], [[1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..)],[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1;int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])),sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1)}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
    ~~> remove_single_atom ([("SAT", 8400)])
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], [[1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..)],[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1;int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])),sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1)}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
 new SAT encoding decisions:
   assert(__35) using tseitin
 
 --
 
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..2)], [[1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3]);int(1..)],[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1;int(1..)];int(1..)])
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])), {sequence(1,SATInt(Rank([(1, 3)]), [y#rank_1,y#rank_2;int(1..)] [1, 3])),sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]),1)})
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-table([SATInt(Log, [__37,__39,__41;int(1..)] [1, 3]),SATInt(Log, [__44,__46,__48;int(1..)] [1, 3]);int(1..2)], [[1,SATInt(Log, [__51,__53,__55;int(1..)] [1, 3]);int(1..)],[SATInt(Log, [__58,__60,__62;int(1..)] [1, 3]),1;int(1..)];int(1..)])
+table(sequence(SATInt(Log, [__37,__39,__41;int(1..)] [1, 3]),SATInt(Log, [__44,__46,__48;int(1..)] [1, 3])), {sequence(1,SATInt(Log, [__51,__53,__55;int(1..)] [1, 3])),sequence(SATInt(Log, [__58,__60,__62;int(1..)] [1, 3]),1)})
 new variables:
   findAux __36: bool
   findAux __37: bool
@@ -507,7 +525,7 @@ new SAT encoding decisions:
 
 --
 
-table([SATInt(Log, [__37,__39,__41;int(1..)] [1, 3]),SATInt(Log, [__44,__46,__48;int(1..)] [1, 3]);int(1..2)], [[1,SATInt(Log, [__51,__53,__55;int(1..)] [1, 3]);int(1..)],[SATInt(Log, [__58,__60,__62;int(1..)] [1, 3]),1;int(1..)];int(1..)])
+table(sequence(SATInt(Log, [__37,__39,__41;int(1..)] [1, 3]),SATInt(Log, [__44,__46,__48;int(1..)] [1, 3])), {sequence(1,SATInt(Log, [__51,__53,__55;int(1..)] [1, 3])),sequence(SATInt(Log, [__58,__60,__62;int(1..)] [1, 3]),1)})
    ~~> select_table ([("SAT", 18500)])
 __64
 new variables:
@@ -518,23 +536,23 @@ new SAT encoding decisions:
 --
 
 __64,
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
    ~~> remove_single_atom ([("SAT", 8400)])
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {}),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
 new SAT encoding decisions:
   assert(__64) using tseitin
 
 --
 
-negativeTable([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})
+negativeTable(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-negativeTable([SATInt(Log, [__66,__68,__70;int(1..)] [1, 3]);int(1..1)], {})
+negativeTable(sequence(SATInt(Log, [__66,__68,__70;int(1..)] [1, 3])), {})
 new variables:
   findAux __65: bool
   findAux __66: bool
@@ -554,7 +572,7 @@ new SAT encoding decisions:
 
 --
 
-negativeTable([SATInt(Log, [__66,__68,__70;int(1..)] [1, 3]);int(1..1)], {})
+negativeTable(sequence(SATInt(Log, [__66,__68,__70;int(1..)] [1, 3])), {})
    ~~> select_table ([("SAT", 18500)])
 __72
 new variables:
@@ -564,22 +582,22 @@ new SAT encoding decisions:
 
 --
 
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
 __72,
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
    ~~> remove_single_atom ([("SAT", 8400)])
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)]),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))}),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
 new SAT encoding decisions:
   assert(__72) using tseitin
 
 --
 
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [[SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..)];int(1..)])
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]))})
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-table([SATInt(Log, [__74,__76,__78;int(1..)] [1, 3]);int(1..1)], [[SATInt(Log, [__81,__83,__85;int(1..)] [1, 3]);int(1..)];int(1..)])
+table(sequence(SATInt(Log, [__74,__76,__78;int(1..)] [1, 3])), {sequence(SATInt(Log, [__81,__83,__85;int(1..)] [1, 3]))})
 new variables:
   findAux __73: bool
   findAux __74: bool
@@ -613,7 +631,7 @@ new SAT encoding decisions:
 
 --
 
-table([SATInt(Log, [__74,__76,__78;int(1..)] [1, 3]);int(1..1)], [[SATInt(Log, [__81,__83,__85;int(1..)] [1, 3]);int(1..)];int(1..)])
+table(sequence(SATInt(Log, [__74,__76,__78;int(1..)] [1, 3])), {sequence(SATInt(Log, [__81,__83,__85;int(1..)] [1, 3]))})
    ~~> select_table ([("SAT", 18500)])
 __87
 new variables:
@@ -623,20 +641,20 @@ new SAT encoding decisions:
 
 --
 
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
 __87,
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
    ~~> remove_single_atom ([("SAT", 8400)])
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})),
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})),
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
 new SAT encoding decisions:
   assert(__87) using tseitin
 
 --
 
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], {})
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-table([SATInt(Log, [__89,__91,__93;int(1..)] [1, 3]);int(1..1)], {})
+table(sequence(SATInt(Log, [__89,__91,__93;int(1..)] [1, 3])), {})
 new variables:
   findAux __88: bool
   findAux __89: bool
@@ -656,7 +674,7 @@ new SAT encoding decisions:
 
 --
 
-table([SATInt(Log, [__89,__91,__93;int(1..)] [1, 3]);int(1..1)], {})
+table(sequence(SATInt(Log, [__89,__91,__93;int(1..)] [1, 3])), {})
    ~~> select_table ([("SAT", 18500)])
 __95
 new variables:
@@ -677,17 +695,17 @@ new SAT encoding decisions:
 --
 
 __96,
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
    ~~> remove_single_atom ([("SAT", 8400)])
-!(table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)]))
+!(table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {}))
 new SAT encoding decisions:
   assert(__96) using tseitin
 
 --
 
-table([SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3]);int(1..1)], [;int(1..)])
+table(sequence(SATInt(Rank([(1, 3)]), [x#rank_1,x#rank_2;int(1..)] [1, 3])), {})
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-table([SATInt(Log, [__98,__100,__102;int(1..)] [1, 3]);int(1..1)], [;int(1..)])
+table(sequence(SATInt(Log, [__98,__100,__102;int(1..)] [1, 3])), {})
 new variables:
   findAux __97: bool
   findAux __98: bool
@@ -707,7 +725,7 @@ new SAT encoding decisions:
 
 --
 
-table([SATInt(Log, [__98,__100,__102;int(1..)] [1, 3]);int(1..1)], [;int(1..)])
+table(sequence(SATInt(Log, [__98,__100,__102;int(1..)] [1, 3])), {})
    ~~> select_table ([("SAT", 18500)])
 __104
 new variables:

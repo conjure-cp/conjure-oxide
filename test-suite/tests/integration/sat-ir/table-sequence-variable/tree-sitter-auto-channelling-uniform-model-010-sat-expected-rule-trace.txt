@@ -1,0 +1,471 @@
+Model before rewriting:
+
+find s: sequence (size 2) of int(0..1)
+
+such that
+
+table(s, {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(s, {sequence(1,1)}),
+shortTable(s, {{(1,0)},{(2,0)}})
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+new variables:
+  find s#explicit_1: matrix indexed by [int(1..2)] of int(0..1)
+new constraints:
+  or([1 <= 2,SafeIndex(s#explicit_1,[1]) = 0;int(1..)])
+  or([2 <= 2,SafeIndex(s#explicit_1,[2]) = 0;int(1..)])
+
+--
+
+table(s, {sequence(0,1),sequence(1,0),sequence(1,1)})
+   ~~> fixed_sequence_table_inputs ([("Base", 25100)])
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,1),sequence(1,0),sequence(1,1)})
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+new variables:
+  find s#explicit_1#components_1: int(0..1)
+  find s#explicit_1#components_2: int(0..1)
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+negativeTable(s, {sequence(1,1)})
+   ~~> fixed_sequence_table_inputs ([("Base", 25100)])
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)})
+
+--
+
+shortTable(s, {{(1,0)},{(2,0)}})
+   ~~> fixed_sequence_table_inputs ([("Base", 25100)])
+shortTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {{(1,0)},{(2,0)}})
+
+--
+
+shortTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {{(1,0)},{(2,0)}})
+   ~~> expand_short_table ([("SAT", 18500)])
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), [[0,SafeIndex(s#explicit_1,[2]);int(1..)],[SafeIndex(s#explicit_1,[1]),0;int(1..)];int(1..)])
+
+--
+
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), [[0,SafeIndex(s#explicit_1,[2]);int(1..)],[SafeIndex(s#explicit_1,[1]),0;int(1..)];int(1..)])
+   ~~> normalise_table_collections ([("Base", 25000)])
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)})
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)}),
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)}),
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true
+new variables:
+  find s#explicit_1#components_1#direct_1: bool
+  find s#explicit_1#components_1#direct_2: bool
+  find s#explicit_1#components_2#direct_1: bool
+  find s#explicit_1#components_2#direct_2: bool
+new constraints:
+  sum([toInt(s#explicit_1#components_1#direct_1),toInt(s#explicit_1#components_1#direct_2);int(1..)]) <= 1
+  or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)])
+  sum([toInt(s#explicit_1#components_2#direct_1),toInt(s#explicit_1#components_2#direct_2);int(1..)]) <= 1
+  or([s#explicit_1#components_2#direct_1,s#explicit_1#components_2#direct_2;int(1..)])
+
+--
+
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)}),
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true,
+sum([toInt(s#explicit_1#components_1#direct_1),toInt(s#explicit_1#components_1#direct_2);int(1..)]) <= 1,
+or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)]),
+sum([toInt(s#explicit_1#components_2#direct_1),toInt(s#explicit_1#components_2#direct_2);int(1..)]) <= 1,
+or([s#explicit_1#components_2#direct_1,s#explicit_1#components_2#direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)}),
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true,
+or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)]),
+sum([toInt(s#explicit_1#components_2#direct_1),toInt(s#explicit_1#components_2#direct_2);int(1..)]) <= 1,
+or([s#explicit_1#components_2#direct_1,s#explicit_1#components_2#direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(s#explicit_1#components_1#direct_1, s#explicit_1#components_1#direct_2) using None
+
+--
+
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)}),
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true,
+or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)]),
+sum([toInt(s#explicit_1#components_2#direct_1),toInt(s#explicit_1#components_2#direct_2);int(1..)]) <= 1,
+or([s#explicit_1#components_2#direct_1,s#explicit_1#components_2#direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)}),
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true,
+or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)]),
+or([s#explicit_1#components_2#direct_1,s#explicit_1#components_2#direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(s#explicit_1#components_2#direct_1, s#explicit_1#components_2#direct_2) using None
+
+--
+
+or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)])) using tseitin
+
+--
+
+or([s#explicit_1#components_2#direct_1,s#explicit_1#components_2#direct_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([s#explicit_1#components_2#direct_1,s#explicit_1#components_2#direct_2;int(1..)])) using tseitin
+
+--
+
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)}),
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true,
+__0,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)}),
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true,
+__1
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)}),
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)}),
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+SafeIndex(s#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_1
+
+--
+
+s#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1#components_1
+
+--
+
+s#explicit_1#components_1
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)] [0, 1])
+
+--
+
+SafeIndex(s#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_2
+
+--
+
+s#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1#components_2
+
+--
+
+table(sequence(SATInt(Direct, [s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)] [0, 1]),s#explicit_1#components_2), {sequence(0,1),sequence(1,0),sequence(1,1)})
+   ~~> select_table ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> table(0+weighted(0*s#explicit_1#components_1#direct_1, 1*s#explicit_1#components_1#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(0:s#explicit_1#components_1#direct_1, 1:s#explicit_1#components_1#direct_2), 0+weighted(0*s#explicit_1#components_2#direct_1, 1*s#explicit_1#components_2#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(0:s#explicit_1#components_2#direct_1, 1:s#explicit_1#components_2#direct_2), [[0, 1], [1, 0], [1, 1]], negative=false)) using None, PB None
+
+--
+
+__2,
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)}),
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)}),
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+SafeIndex(s#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_1
+
+--
+
+s#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1#components_1
+
+--
+
+s#explicit_1#components_1
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)] [0, 1])
+
+--
+
+SafeIndex(s#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_2
+
+--
+
+s#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1#components_2
+
+--
+
+negativeTable(sequence(SATInt(Direct, [s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)] [0, 1]),s#explicit_1#components_2), {sequence(1,1)})
+   ~~> select_table ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> table(0+weighted(0*s#explicit_1#components_1#direct_1, 1*s#explicit_1#components_1#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(0:s#explicit_1#components_1#direct_1, 1:s#explicit_1#components_1#direct_2), 0+weighted(0*s#explicit_1#components_2#direct_1, 1*s#explicit_1#components_2#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(0:s#explicit_1#components_2#direct_1, 1:s#explicit_1#components_2#direct_2), [[1, 1]], negative=true)) using None, PB None
+
+--
+
+__3,
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,SafeIndex(s#explicit_1,[2])),sequence(SafeIndex(s#explicit_1,[1]),0)}),
+true,
+true
+new SAT encoding decisions:
+  assert(__3) using tseitin
+
+--
+
+SafeIndex(s#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_1
+
+--
+
+s#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1#components_1
+
+--
+
+s#explicit_1#components_1
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)] [0, 1])
+
+--
+
+SafeIndex(s#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_2
+
+--
+
+s#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1#components_2
+
+--
+
+s#explicit_1#components_2
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [s#explicit_1#components_2#direct_1,s#explicit_1#components_2#direct_2;int(1..)] [0, 1])
+
+--
+
+SafeIndex(s#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_2
+
+--
+
+s#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1#components_2
+
+--
+
+s#explicit_1#components_2
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [s#explicit_1#components_2#direct_1,s#explicit_1#components_2#direct_2;int(1..)] [0, 1])
+
+--
+
+SafeIndex(s#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_1
+
+--
+
+s#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1#components_1
+
+--
+
+table(sequence(SATInt(Direct, [s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)] [0, 1]),SATInt(Direct, [s#explicit_1#components_2#direct_1,s#explicit_1#components_2#direct_2;int(1..)] [0, 1])), {sequence(0,SATInt(Direct, [s#explicit_1#components_2#direct_1,s#explicit_1#components_2#direct_2;int(1..)] [0, 1])),sequence(s#explicit_1#components_1,0)})
+   ~~> select_table ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> table(0+weighted(0*s#explicit_1#components_1#direct_1, 1*s#explicit_1#components_1#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(0:s#explicit_1#components_1#direct_1, 1:s#explicit_1#components_1#direct_2), 0+weighted(0*s#explicit_1#components_2#direct_1, 1*s#explicit_1#components_2#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(0:s#explicit_1#components_2#direct_1, 1:s#explicit_1#components_2#direct_2), [[SatIntegerView { constant: 0, terms: [], groups: [], choices: Some([(0, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Literal(Bool(true))))]) }, SatIntegerView { constant: 0, terms: [(0, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 2022 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1935 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None }))), (1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 2023 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1935 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 2, structure: Choice }], choices: Some([(0, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 2022 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1935 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None }))), (1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 2023 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1935 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None })))]) }], [SatIntegerView { constant: 0, terms: [(0, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1982 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1934 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None }))), (1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1983 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1934 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 2, structure: Choice }], choices: Some([(0, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1982 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1934 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None }))), (1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1983 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1934 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None })))]) }, SatIntegerView { constant: 0, terms: [], groups: [], choices: Some([(0, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Literal(Bool(true))))]) }]], negative=false)) using None, PB None
+
+--
+
+__4,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true
+new SAT encoding decisions:
+  assert(__4) using tseitin
+
+--
+
+Final model:
+
+find s: sequence (size 2) of int(0..1)
+find s#explicit_1: matrix indexed by [int(1..2)] of int(0..1)
+find s#explicit_1#components_1: int(0..1)
+find s#explicit_1#components_2: int(0..1)
+find s#explicit_1#components_1#direct_1: bool
+find s#explicit_1#components_1#direct_2: bool
+find s#explicit_1#components_2#direct_1: bool
+find s#explicit_1#components_2#direct_2: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+at-most-one(s#explicit_1#components_1#direct_1, s#explicit_1#components_1#direct_2) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+at-most-one(s#explicit_1#components_2#direct_1, s#explicit_1#components_2#direct_2) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__0 <-> or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)])) using tseitin,
+define(__1 <-> or([s#explicit_1#components_2#direct_1,s#explicit_1#components_2#direct_2;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin,
+define(__2 <-> table(0+weighted(0*s#explicit_1#components_1#direct_1, 1*s#explicit_1#components_1#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(0:s#explicit_1#components_1#direct_1, 1:s#explicit_1#components_1#direct_2), 0+weighted(0*s#explicit_1#components_2#direct_1, 1*s#explicit_1#components_2#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(0:s#explicit_1#components_2#direct_1, 1:s#explicit_1#components_2#direct_2), [[0, 1], [1, 0], [1, 1]], negative=false)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
+assert(__2) using tseitin,
+define(__3 <-> table(0+weighted(0*s#explicit_1#components_1#direct_1, 1*s#explicit_1#components_1#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(0:s#explicit_1#components_1#direct_1, 1:s#explicit_1#components_1#direct_2), 0+weighted(0*s#explicit_1#components_2#direct_1, 1*s#explicit_1#components_2#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(0:s#explicit_1#components_2#direct_1, 1:s#explicit_1#components_2#direct_2), [[1, 1]], negative=true)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
+assert(__3) using tseitin,
+define(__4 <-> table(0+weighted(0*s#explicit_1#components_1#direct_1, 1*s#explicit_1#components_1#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(0:s#explicit_1#components_1#direct_1, 1:s#explicit_1#components_1#direct_2), 0+weighted(0*s#explicit_1#components_2#direct_1, 1*s#explicit_1#components_2#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(0:s#explicit_1#components_2#direct_1, 1:s#explicit_1#components_2#direct_2), [[SatIntegerView { constant: 0, terms: [], groups: [], choices: Some([(0, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Literal(Bool(true))))]) }, SatIntegerView { constant: 0, terms: [(0, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 2022 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1935 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None }))), (1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 2023 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1935 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 2, structure: Choice }], choices: Some([(0, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 2022 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1935 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None }))), (1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 2023 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1935 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None })))]) }], [SatIntegerView { constant: 0, terms: [(0, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1982 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1934 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None }))), (1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1983 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1934 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 2, structure: Choice }], choices: Some([(0, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1982 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1934 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None }))), (1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1983 }, value: RwLock { data: Declaration { name: Represented((Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), ReprId { name: "IntDirect", short_name: "direct" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1934 }, value: RwLock { data: Declaration { name: Represented((Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), ReprId { name: "MatrixComponents", short_name: "components" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(0, 1)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1895 }, value: RwLock { data: Declaration { name: Represented((User(u!("s")), ReprId { name: "SequenceExplicit", short_name: "explicit" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Matrix(Moo { inner: Int([Bounded(0, 1)], None) }, [Moo { inner: Int([Bounded(1, 2)], None) }], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 1856 }, value: RwLock { data: Declaration { name: User(u!("s")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Sequence(SequenceAttr { size: Single(2), jectivity: None, representation: None }, Moo { inner: Int([Bounded(0, 1)], None) }) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }) } } }) } } }, repr: None })))]) }, SatIntegerView { constant: 0, terms: [], groups: [], choices: Some([(0, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Literal(Bool(true))))]) }]], negative=false)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
+assert(__4) using tseitin
+
