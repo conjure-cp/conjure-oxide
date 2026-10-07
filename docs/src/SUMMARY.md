@@ -113,7 +113,6 @@
   - [Writing Custom Tests](developers-guide/testing/writing-custom-tests.md)
   - [Code Coverage](developers-guide/testing/code-coverage.md)
   - [Black-Box Testing](developers-guide/testing/bb-test.md)
-  - [Conjure-Oxide-Tester](developers-guide/testing/conjure-oxide-tester.md)
 
 # Nuggets
 

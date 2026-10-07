@@ -13,7 +13,7 @@ So far, testing of the compiled conjure oxide tool (also sometimes called Black-
 
 For the purposes of this chapter, it is important to know that GNU Parallel is a useful command line tool which, true to its name, is used to run commands in parallel. In addition to this, the tool can put together the commands which are to be run, using what is essentially a cartesian product of lists which are passed to it as arguments. It can also manage per-process runtime, memory allocation, process usage and so on, using command line flags. 
 
-The Conjure Oxide testing setup (in the conjure-cp/conjure-oxide-tester repository) uses GNU parallel with a layer of abstraction built in python which records the time comparisons into a database. The Repository also includes tools that allow some rudimentary examination and visualisation of the runtime data that has been collected and placed in the output database. 
+The Conjure Oxide testing setup (in the [conjure-oxide-tester](https://github.com/conjure-cp/conjure-oxide-tester) repository) uses GNU parallel with a layer of abstraction built in python which records the time comparisons into a database. The Repository also includes tools that allow some rudimentary examination and visualisation of the runtime data that has been collected and placed in the output database. 
 
 ## Using the Tester and Associated Tools
 

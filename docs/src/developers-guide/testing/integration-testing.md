@@ -1,5 +1,5 @@
 [//]: # (Author: Shikhar Srivastava)
-[//]: # (Last Updated: 25/05/2026)
+[//]: # (Last Updated: 7/10/2026)
 
 # Integration Testing
 
@@ -31,50 +31,14 @@ The environment variable `ACCEPT` is particularly important: when `ACCEPT` is se
 
 ## Configuring Integration Tests
 
-By convention, the `config.toml` file for a test looks something like this:
+The config file for an integration test has the following fields, each of which contains a list of the 'active' or 'enabled' configuration options. All possible options supported by conjure-oxide are written in the file:
 
-```toml
-parser = [
-    "tree-sitter",
-    "via-conjure",
-]
-
-rewriter = [
-    "naive",
-    "morph",
-]
-
-comprehension-expander = [
-    # "native",
-    # "via-solver",
-    "via-solver-ac",
-]
-
-solver = [
-    "minion",
-    "sat-log",
-    "sat-direct",
-    "sat-order",
-    # "smt-bv-arrays-nodiscrete",
-    # "smt-bv-arrays",
-    # "smt-bv-atomic-nodiscrete",
-    # "smt-bv-atomic",
-    # "smt-lia-arrays-nodiscrete",
-    # "smt-lia-arrays",
-    # "smt-lia-atomic-nodiscrete",
-    # "smt-lia-atomic",
-]
-expected-time = 10
-```
-
-The config file has the following fields, each of which contains a list of the 'active' or 'enabled' configuration options. All possible options supported by conjure-oxide are written in the file:
-
-- `parser`: defines which parsers
-- `rewriter`: defines which rewriters to use 
-- `comprehension-expander`: defines how to expand comprehensions
-- `solver`: defines which solvers to use
-- `expected-time`: defines in seconds how long a solution is expected to take.  
-
+- `parser`: defines which parser
+- `rewriter`: defines which rewriter
+- `comprehension-expander`: defines which system is used to expand comprehensions
+- `solver`: a list of which solvers to use
+- `number-of-solutions`: the number of solutions to generate. This could be a number, or it could be `all`.
+``
 The integration tester tries all possible combinations of the options enabled in the `config.toml` file.
 
 Also by convention, we comment out configurations which are supported by conjure-oxide but do not work for the current solver. For instance, SAT solver does not support Matrices of Integers, so any tests that have matrices of integers will have all sat-solver options as comments. 
