@@ -121,11 +121,11 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         })
         .collect();
 
-    Ok(RuleEffect::sat(
-        expr.with_children(children),
-        clauses,
-        new_symbols,
-    ))
+    let new_expression = expr.with_children(children);
+    if new_expression == *expr && clauses.is_empty() {
+        return Err(RuleNotApplicable);
+    }
+    Ok(RuleEffect::sat(new_expression, clauses, new_symbols))
 }
 
 /// Whether semantic numeric decisions need a decoded actual-value circuit.
@@ -140,46 +140,16 @@ fn needs_actual_value_circuit(encoding: &SATIntEncoding) -> bool {
 }
 
 fn map_table_cells(expression: Expr, convert: &mut impl FnMut(Expr) -> Expr) -> Expr {
-    let expression = match expression {
-        Expr::AbstractLiteral(meta, AbstractLiteral::Set(entries)) => {
-            return Expr::AbstractLiteral(
-                meta,
-                AbstractLiteral::Set(
-                    entries
-                        .into_iter()
-                        .map(|entry| {
-                            map_table_cells(super::super::table::materialise(&entry), convert)
-                        })
-                        .collect(),
-                ),
-            );
-        }
-        Expr::AbstractLiteral(meta, AbstractLiteral::Sequence(entries)) => {
-            return Expr::AbstractLiteral(
-                meta,
-                AbstractLiteral::Sequence(
-                    entries
-                        .into_iter()
-                        .map(|entry| {
-                            map_table_cells(super::super::table::materialise(&entry), convert)
-                        })
-                        .collect(),
-                ),
-            );
-        }
-        expression => expression,
-    };
-    if let Some((entries, domain)) = matrix_child(&expression) {
-        rebuild_matrix_child(
-            entries
-                .into_iter()
-                .map(|entry| map_table_cells(super::super::table::materialise(&entry), convert))
-                .collect(),
-            domain,
-        )
-    } else {
-        convert(expression)
+    if matches!(expression, Expr::SATInt(..)) {
+        return convert(expression);
     }
+    // Cells can contain packed-sequence arithmetic as well as collection wrappers.
+    let children = expression
+        .children()
+        .into_iter()
+        .map(|child| map_table_cells(super::super::table::materialise(&child), convert))
+        .collect();
+    expression.with_children(children)
 }
 
 /// The elements of a matrix-literal child, with the index domain to rebuild it under.
@@ -549,7 +519,16 @@ mod unsigned_tests {
                 AbstractLiteral::Set(vec![Moo::unwrap_or_clone(sequence())]),
             ))
         };
+        let nested = Moo::new(Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Sequence(vec![Expr::SafeDiv(
+                Metadata::new(),
+                Moo::new(operand.clone()),
+                Moo::new(2.into()),
+            )]),
+        ));
         let expressions = [
+            Expr::Table(Metadata::new(), nested, collection_rows()),
             Expr::Table(Metadata::new(), sequence(), collection_rows()),
             Expr::NegativeTable(Metadata::new(), sequence(), collection_rows()),
             Expr::AllDiff(Metadata::new(), matrix()),
