@@ -7,6 +7,7 @@ mod element;
 mod index_of;
 mod int;
 mod lex;
+mod linear;
 mod pseudo_boolean;
 mod rules;
 mod table;

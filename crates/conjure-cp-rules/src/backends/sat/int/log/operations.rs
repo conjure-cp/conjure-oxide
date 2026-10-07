@@ -71,81 +71,6 @@ fn inequality_boolean(
     output
 }
 
-/// Converts sum of SATInts to a single SATInt
-///
-/// ```text
-/// Sum(SATInt(a), SATInt(b), ...) ~> SATInt(c)
-///
-/// ```
-#[register_rule("SAT", 4100, [Sum])]
-fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Sum(_, exprs) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Expr::AbstractLiteral(_, Matrix(exprs_list, _)) = exprs.as_ref() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let ranges: Result<Vec<_>, _> = exprs_list
-        .iter()
-        .map(|e| match e {
-            Expr::SATInt(_, _, _, x) => Ok(x),
-            _ => Err(RuleNotApplicable),
-        })
-        .collect();
-
-    let ranges = ranges?;
-
-    let min = ranges.iter().map(|(a, _)| *a).sum();
-    let max = ranges.iter().map(|(_, a)| *a).sum();
-
-    let output_size = cmp::max(bit_magnitude(min), bit_magnitude(max));
-
-    // Check operands are valid log ints
-    let mut exprs_bits =
-        validate_log_int_operands(exprs_list.clone(), Some(output_size.try_into().unwrap()))?;
-
-    let mut new_symbols = symbols.clone();
-    let mut values;
-    let mut new_sat_decisions = vec![];
-
-    while exprs_bits.len() > 1 {
-        let mut next = Vec::with_capacity(exprs_bits.len().div_ceil(2));
-        let mut iter = exprs_bits.into_iter();
-
-        while let Some(a) = iter.next() {
-            if let Some(b) = iter.next() {
-                values = tseytin_int_adder(
-                    &a,
-                    &b,
-                    output_size,
-                    &mut new_sat_decisions,
-                    &mut new_symbols,
-                );
-                next.push(values);
-            } else {
-                next.push(a);
-            }
-        }
-
-        exprs_bits = next;
-    }
-
-    let result = exprs_bits.pop().unwrap();
-
-    Ok(RuleEffect::sat(
-        Expr::SATInt(
-            Metadata::new(),
-            SATIntEncoding::Log,
-            Moo::new(into_matrix_expr!(result)),
-            (min, max),
-        ),
-        new_sat_decisions,
-        new_symbols,
-    ))
-}
-
 /// Returns result, new symbol table, new clauses
 /// This function expects bits to match the lengths of x and y
 fn tseytin_int_adder(
@@ -304,6 +229,10 @@ fn product_of_ranges(ranges: Vec<&(i32, i32)>) -> (i32, i32) {
 /// ```
 #[register_rule("SAT", 9000, [Product])]
 fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // Constant scaling belongs to the selected linear encoder, not multiplication circuits.
+    if crate::backends::sat::pseudo_boolean::integer_view(expr).is_some() {
+        return Err(RuleNotApplicable);
+    }
     let Expr::Product(_, exprs) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -370,44 +299,6 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             SATIntEncoding::Log,
             Moo::new(into_matrix_expr!(result)),
             (min, max),
-        ),
-        new_sat_decisions,
-        new_symbols,
-    ))
-}
-
-/// Converts negation of a SATInt to a SATInt
-///
-/// ```text
-/// -SATInt(a) ~> SATInt(b)
-///
-/// ```
-#[register_rule("SAT", 4100, [Neg])]
-fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Neg(_, expr) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Expr::SATInt(_, _, _, (min, max)) = expr.as_ref() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let binding = validate_log_int_operands(vec![expr.as_ref().clone()], None)?;
-    let [bits] = binding.as_slice() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let mut new_sat_decisions = vec![];
-    let mut new_symbols = symbols.clone();
-
-    let result = tseytin_negate(bits, bits.len(), &mut new_sat_decisions, &mut new_symbols);
-
-    Ok(RuleEffect::sat(
-        Expr::SATInt(
-            Metadata::new(),
-            SATIntEncoding::Log,
-            Moo::new(into_matrix_expr!(result)),
-            (-max, -min),
         ),
         new_sat_decisions,
         new_symbols,

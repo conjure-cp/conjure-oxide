@@ -16,12 +16,6 @@ struct Linear {
 }
 impl Linear {
     fn add(&mut self, expression: &Expr, scale: i128) -> Option<()> {
-        if let Some(value) = constant_int(expression) {
-            self.constant = self
-                .constant
-                .checked_add(scale.checked_mul(i128::from(value))?)?;
-            return Some(());
-        }
         match expression {
             Expr::Atomic(_, Atom::Literal(Literal::Int(value))) => {
                 self.constant = self
@@ -248,6 +242,14 @@ fn binary_structure(scale: i128, low: i128, high: i128) -> Option<PbTermStructur
 fn constant_int(expression: &Expr) -> Option<i32> {
     match expression {
         Expr::Atomic(_, Atom::Literal(Literal::Int(value))) => Some(*value),
+        Expr::SATInt(..) => {
+            // Inspect literal code bits: singleton bounds alone do not make a value constant.
+            let view = integer_view(expression)?;
+            view.terms
+                .is_empty()
+                .then(|| i32::try_from(view.constant).ok())
+                .flatten()
+        }
         _ => None,
     }
 }
