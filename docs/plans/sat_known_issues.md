@@ -570,3 +570,5 @@ The two legacy Savile Row short-table fixtures now use one set-valued `mycon` pa
 ## Native Minion short tables and canonical inputs
 
 All modelling table constraints normalise to sequence inputs. Ordinary and negative relations use sets of sequence rows; short relations use sets of sets of tuple pairs. Rectangular matrix syntax is normalised before backend lowering. Minion's `FlatShortTable` uses zero-based positions and numeric values and maps to native `ShortStr2`. Variable-valued sparse cells become equality indicators appended to the native input list; constant sparse rows need no Boolean decomposition. Table inputs require discrete Minion variables. SAT retains the existing table encoding choices across every integer representation.
+
+Fixed-length sequence decision variables can also be table inputs through either explicit or packed sequence representation. Variable-length decision-sequence inputs remain deferred: the scalar input width is fixed during compilation.
