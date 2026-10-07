@@ -616,70 +616,28 @@ new SAT encoding decisions:
 
 --
 
-sum([SATInt(Log, [a#twos_complement_1,a#twos_complement_2,a#twos_complement_3;int(1..)] [-1, 2]),SATInt(Log, [b#twos_complement_1,b#twos_complement_2,b#twos_complement_3;int(1..)] [-1, 2]);int(1..)])
-   ~~> cnf_int_sum ([("SAT", 4100)])
-SATInt(Log, [__28,__31,__36,__41;int(1..)] [-2, 4])
+__17 =aux sum([SATInt(Log, [a#twos_complement_1,a#twos_complement_2,a#twos_complement_3;int(1..)] [-1, 2]),SATInt(Log, [b#twos_complement_1,b#twos_complement_2,b#twos_complement_3;int(1..)] [-1, 2]);int(1..)])
+   ~~> aux_declaration_is_equality ([("SAT", 2000)])
+__17 = sum([SATInt(Log, [a#twos_complement_1,a#twos_complement_2,a#twos_complement_3;int(1..)] [-1, 2]),SATInt(Log, [b#twos_complement_1,b#twos_complement_2,b#twos_complement_3;int(1..)] [-1, 2]);int(1..)])
+
+--
+
+__17 = sum([SATInt(Log, [a#twos_complement_1,a#twos_complement_2,a#twos_complement_3;int(1..)] [-1, 2]),SATInt(Log, [b#twos_complement_1,b#twos_complement_2,b#twos_complement_3;int(1..)] [-1, 2]);int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__28
 new variables:
   findAux __28: bool
-  findAux __29: bool
-  findAux __30: bool
-  findAux __31: bool
-  findAux __32: bool
-  findAux __33: bool
-  findAux __34: bool
-  findAux __35: bool
-  findAux __36: bool
-  findAux __37: bool
-  findAux __38: bool
-  findAux __39: bool
-  findAux __40: bool
-  findAux __41: bool
-  findAux __42: bool
-  findAux __43: bool
-  findAux __44: bool
 new SAT encoding decisions:
-  define(__28 <-> !((a#twos_complement_1) <-> (b#twos_complement_1))) using tseitin
-  define(__29 <-> and([a#twos_complement_1,b#twos_complement_1;int(1..)])) using tseitin
-  define(__30 <-> !((a#twos_complement_2) <-> (b#twos_complement_2))) using tseitin
-  define(__31 <-> !((__30) <-> (__29))) using tseitin
-  define(__32 <-> and([a#twos_complement_2,b#twos_complement_2;int(1..)])) using tseitin
-  define(__33 <-> and([__29,__30;int(1..)])) using tseitin
-  define(__34 <-> or([__32,__33;int(1..)])) using tseitin
-  define(__35 <-> !((a#twos_complement_3) <-> (b#twos_complement_3))) using tseitin
-  define(__36 <-> !((__35) <-> (__34))) using tseitin
-  define(__37 <-> and([a#twos_complement_3,b#twos_complement_3;int(1..)])) using tseitin
-  define(__38 <-> and([__34,__35;int(1..)])) using tseitin
-  define(__39 <-> or([__37,__38;int(1..)])) using tseitin
-  define(__40 <-> !((a#twos_complement_3) <-> (b#twos_complement_3))) using tseitin
-  define(__41 <-> !((__40) <-> (__39))) using tseitin
-  define(__42 <-> and([a#twos_complement_3,b#twos_complement_3;int(1..)])) using tseitin
-  define(__43 <-> and([__39,__40;int(1..)])) using tseitin
-  define(__44 <-> or([__42,__43;int(1..)])) using tseitin
+  define(__28 <-> integer-weighted(1*__17#twos_complement_1, 2*__17#twos_complement_2, 4*__17#twos_complement_3, -8*__17#twos_complement_4, -1*a#twos_complement_1, -2*a#twos_complement_2, 4*a#twos_complement_3, -1*b#twos_complement_1, -2*b#twos_complement_2, 4*b#twos_complement_3) Equal 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -2, upper: 4 } }, PbTermGroup { start: 4, end: 7, structure: BoundedBinary { lower: -2, upper: 1 } }, PbTermGroup { start: 7, end: 10, structure: BoundedBinary { lower: -2, upper: 1 } }]
 
 --
 
-__17 =aux SATInt(Log, [__28,__31,__36,__41;int(1..)] [-2, 4])
-   ~~> aux_declaration_is_equality ([("SAT", 2000)])
-__17 = SATInt(Log, [__28,__31,__36,__41;int(1..)] [-2, 4])
-
---
-
-__17 = SATInt(Log, [__28,__31,__36,__41;int(1..)] [-2, 4])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__45
-new variables:
-  findAux __45: bool
-new SAT encoding decisions:
-  define(__45 <-> integer-weighted(1*__17#twos_complement_1, 2*__17#twos_complement_2, 4*__17#twos_complement_3, -8*__17#twos_complement_4, -1*__28, -2*__31, -4*__36, 8*__41) Equal 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -2, upper: 4 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -4, upper: 2 } }]
-
---
-
-__45,
+__28,
 true
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__45) using tseitin
+  assert(__28) using tseitin
 
 --
 
@@ -743,23 +701,6 @@ findAux __25: bool
 findAux __26: bool
 findAux __27: bool
 findAux __28: bool
-findAux __29: bool
-findAux __30: bool
-findAux __31: bool
-findAux __32: bool
-findAux __33: bool
-findAux __34: bool
-findAux __35: bool
-findAux __36: bool
-findAux __37: bool
-findAux __38: bool
-findAux __39: bool
-findAux __40: bool
-findAux __41: bool
-findAux __42: bool
-findAux __43: bool
-findAux __44: bool
-findAux __45: bool
 
 such that
 
@@ -802,23 +743,6 @@ define(__27 <-> (z) <-> (__26)) using tseitin,
 assert(__27) using tseitin,
 assert(__24) using tseitin,
 assert(__25) using tseitin,
-define(__28 <-> !((a#twos_complement_1) <-> (b#twos_complement_1))) using tseitin,
-define(__29 <-> and([a#twos_complement_1,b#twos_complement_1;int(1..)])) using tseitin,
-define(__30 <-> !((a#twos_complement_2) <-> (b#twos_complement_2))) using tseitin,
-define(__31 <-> !((__30) <-> (__29))) using tseitin,
-define(__32 <-> and([a#twos_complement_2,b#twos_complement_2;int(1..)])) using tseitin,
-define(__33 <-> and([__29,__30;int(1..)])) using tseitin,
-define(__34 <-> or([__32,__33;int(1..)])) using tseitin,
-define(__35 <-> !((a#twos_complement_3) <-> (b#twos_complement_3))) using tseitin,
-define(__36 <-> !((__35) <-> (__34))) using tseitin,
-define(__37 <-> and([a#twos_complement_3,b#twos_complement_3;int(1..)])) using tseitin,
-define(__38 <-> and([__34,__35;int(1..)])) using tseitin,
-define(__39 <-> or([__37,__38;int(1..)])) using tseitin,
-define(__40 <-> !((a#twos_complement_3) <-> (b#twos_complement_3))) using tseitin,
-define(__41 <-> !((__40) <-> (__39))) using tseitin,
-define(__42 <-> and([a#twos_complement_3,b#twos_complement_3;int(1..)])) using tseitin,
-define(__43 <-> and([__39,__40;int(1..)])) using tseitin,
-define(__44 <-> or([__42,__43;int(1..)])) using tseitin,
-define(__45 <-> integer-weighted(1*__17#twos_complement_1, 2*__17#twos_complement_2, 4*__17#twos_complement_3, -8*__17#twos_complement_4, -1*__28, -2*__31, -4*__36, 8*__41) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -2, upper: 4 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -4, upper: 2 } }],
-assert(__45) using tseitin
+define(__28 <-> integer-weighted(1*__17#twos_complement_1, 2*__17#twos_complement_2, 4*__17#twos_complement_3, -8*__17#twos_complement_4, -1*a#twos_complement_1, -2*a#twos_complement_2, 4*a#twos_complement_3, -1*b#twos_complement_1, -2*b#twos_complement_2, 4*b#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -2, upper: 4 } }, PbTermGroup { start: 4, end: 7, structure: BoundedBinary { lower: -2, upper: 1 } }, PbTermGroup { start: 7, end: 10, structure: BoundedBinary { lower: -2, upper: 1 } }],
+assert(__28) using tseitin
 

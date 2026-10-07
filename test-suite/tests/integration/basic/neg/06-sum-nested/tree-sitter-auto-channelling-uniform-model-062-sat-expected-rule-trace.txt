@@ -458,95 +458,59 @@ new SAT encoding decisions:
 
 --
 
--(SATInt(Log, [__35,__38;int(1..)] [-1, 1]))
-   ~~> cnf_int_neg ([("SAT", 4100)])
-SATInt(Log, [__42,__43;int(1..)] [-1, 1])
+-(SATInt(Rank([(-1, 1)]), [z#rank_1,z#rank_2;int(1..)] [-1, 1]))
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+-(SATInt(Log, [__41,__44;int(1..)] [-1, 1]))
 new variables:
   findAux __40: bool
   findAux __41: bool
   findAux __42: bool
   findAux __43: bool
   findAux __44: bool
+  findAux __45: bool
 new SAT encoding decisions:
-  define(__40 <-> !(__35)) using tseitin
-  define(__41 <-> !(__38)) using tseitin
-  define(__42 <-> !(__40)) using tseitin
-  define(__43 <-> !((__40) <-> (__41))) using tseitin
-  define(__44 <-> and([__40,__41;int(1..)])) using tseitin
+  define(__40 <-> !((z#rank_1) <-> (false))) using tseitin
+  define(__41 <-> !(__40)) using tseitin
+  define(__42 <-> or([z#rank_1,false;int(1..)])) using tseitin
+  define(__43 <-> !((z#rank_2) <-> (__42))) using tseitin
+  define(__44 <-> !(__43)) using tseitin
+  define(__45 <-> or([z#rank_2,__42;int(1..)])) using tseitin
 
 --
 
--(SATInt(Rank([(-1, 1)]), [z#rank_1,z#rank_2;int(1..)] [-1, 1]))
+-(SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
--(SATInt(Log, [__46,__49;int(1..)] [-1, 1]))
+-(SATInt(Log, [__47,__49;int(1..)] [1, 1]))
 new variables:
-  findAux __45: bool
   findAux __46: bool
   findAux __47: bool
   findAux __48: bool
   findAux __49: bool
   findAux __50: bool
 new SAT encoding decisions:
-  define(__45 <-> !((z#rank_1) <-> (false))) using tseitin
-  define(__46 <-> !(__45)) using tseitin
-  define(__47 <-> or([z#rank_1,false;int(1..)])) using tseitin
-  define(__48 <-> !((z#rank_2) <-> (__47))) using tseitin
-  define(__49 <-> !(__48)) using tseitin
-  define(__50 <-> or([z#rank_2,__47;int(1..)])) using tseitin
+  define(__46 <-> !((false) <-> (false))) using tseitin
+  define(__47 <-> !(__46)) using tseitin
+  define(__48 <-> or([false,false;int(1..)])) using tseitin
+  define(__49 <-> !((false) <-> (__48))) using tseitin
+  define(__50 <-> and([false,__48;int(1..)])) using tseitin
 
 --
 
--(SATInt(Log, [__46,__49;int(1..)] [-1, 1]))
-   ~~> cnf_int_neg ([("SAT", 4100)])
-SATInt(Log, [__53,__54;int(1..)] [-1, 1])
+SATInt(Log, [__16,__18,__20;int(1..)] [1, 3]) = sum([-(SATInt(Log, [__35,__38;int(1..)] [-1, 1])),-(SATInt(Log, [__41,__44;int(1..)] [-1, 1])),-(SATInt(Log, [__47,__49;int(1..)] [1, 1])),SATInt(Log, [__23,__26;int(1..)] [-1, 1]),SATInt(Log, [__29,__32;int(1..)] [-1, 1]);int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__51
 new variables:
   findAux __51: bool
-  findAux __52: bool
-  findAux __53: bool
-  findAux __54: bool
-  findAux __55: bool
 new SAT encoding decisions:
-  define(__51 <-> !(__46)) using tseitin
-  define(__52 <-> !(__49)) using tseitin
-  define(__53 <-> !(__51)) using tseitin
-  define(__54 <-> !((__51) <-> (__52))) using tseitin
-  define(__55 <-> and([__51,__52;int(1..)])) using tseitin
+  define(__51 <-> integer-weighted(1*__16, 2*__18, -4*__20, 1*__35, -2*__38, 1*__41, -2*__44, 1*__47, -2*__49, -1*__23, 2*__26, -1*__29, 2*__32) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 5, end: 7, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 7, end: 9, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 9, end: 11, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 11, end: 13, structure: BoundedBinary { lower: -1, upper: 1 } }]
 
 --
 
--(SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]))
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
--(SATInt(Log, [__57,__59;int(1..)] [1, 1]))
-new variables:
-  findAux __56: bool
-  findAux __57: bool
-  findAux __58: bool
-  findAux __59: bool
-  findAux __60: bool
-new SAT encoding decisions:
-  define(__56 <-> !((false) <-> (false))) using tseitin
-  define(__57 <-> !(__56)) using tseitin
-  define(__58 <-> or([false,false;int(1..)])) using tseitin
-  define(__59 <-> !((false) <-> (__58))) using tseitin
-  define(__60 <-> and([false,__58;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__16,__18,__20;int(1..)] [1, 3]) = sum([SATInt(Log, [__42,__43;int(1..)] [-1, 1]),SATInt(Log, [__53,__54;int(1..)] [-1, 1]),-(SATInt(Log, [__57,__59;int(1..)] [1, 1])),SATInt(Log, [__23,__26;int(1..)] [-1, 1]),SATInt(Log, [__29,__32;int(1..)] [-1, 1]);int(1..)])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__61
-new variables:
-  findAux __61: bool
-new SAT encoding decisions:
-  define(__61 <-> integer-weighted(1*__16, 2*__18, -4*__20, -1*__42, 2*__43, -1*__53, 2*__54, 1*__57, -2*__59, -1*__23, 2*__26, -1*__29, 2*__32) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 5, end: 7, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 7, end: 9, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 9, end: 11, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 11, end: 13, structure: BoundedBinary { lower: -1, upper: 1 } }]
-
---
-
-__61
+__51
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__61) using tseitin
+  assert(__51) using tseitin
 
 --
 
@@ -619,16 +583,6 @@ findAux __48: bool
 findAux __49: bool
 findAux __50: bool
 findAux __51: bool
-findAux __52: bool
-findAux __53: bool
-findAux __54: bool
-findAux __55: bool
-findAux __56: bool
-findAux __57: bool
-findAux __58: bool
-findAux __59: bool
-findAux __60: bool
-findAux __61: bool
 
 such that
 
@@ -681,27 +635,17 @@ define(__36 <-> or([y#rank_1,false;int(1..)])) using tseitin,
 define(__37 <-> !((y#rank_2) <-> (__36))) using tseitin,
 define(__38 <-> !(__37)) using tseitin,
 define(__39 <-> or([y#rank_2,__36;int(1..)])) using tseitin,
-define(__40 <-> !(__35)) using tseitin,
-define(__41 <-> !(__38)) using tseitin,
-define(__42 <-> !(__40)) using tseitin,
-define(__43 <-> !((__40) <-> (__41))) using tseitin,
-define(__44 <-> and([__40,__41;int(1..)])) using tseitin,
-define(__45 <-> !((z#rank_1) <-> (false))) using tseitin,
-define(__46 <-> !(__45)) using tseitin,
-define(__47 <-> or([z#rank_1,false;int(1..)])) using tseitin,
-define(__48 <-> !((z#rank_2) <-> (__47))) using tseitin,
-define(__49 <-> !(__48)) using tseitin,
-define(__50 <-> or([z#rank_2,__47;int(1..)])) using tseitin,
-define(__51 <-> !(__46)) using tseitin,
-define(__52 <-> !(__49)) using tseitin,
-define(__53 <-> !(__51)) using tseitin,
-define(__54 <-> !((__51) <-> (__52))) using tseitin,
-define(__55 <-> and([__51,__52;int(1..)])) using tseitin,
-define(__56 <-> !((false) <-> (false))) using tseitin,
-define(__57 <-> !(__56)) using tseitin,
-define(__58 <-> or([false,false;int(1..)])) using tseitin,
-define(__59 <-> !((false) <-> (__58))) using tseitin,
-define(__60 <-> and([false,__58;int(1..)])) using tseitin,
-define(__61 <-> integer-weighted(1*__16, 2*__18, -4*__20, -1*__42, 2*__43, -1*__53, 2*__54, 1*__57, -2*__59, -1*__23, 2*__26, -1*__29, 2*__32) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 5, end: 7, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 7, end: 9, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 9, end: 11, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 11, end: 13, structure: BoundedBinary { lower: -1, upper: 1 } }],
-assert(__61) using tseitin
+define(__40 <-> !((z#rank_1) <-> (false))) using tseitin,
+define(__41 <-> !(__40)) using tseitin,
+define(__42 <-> or([z#rank_1,false;int(1..)])) using tseitin,
+define(__43 <-> !((z#rank_2) <-> (__42))) using tseitin,
+define(__44 <-> !(__43)) using tseitin,
+define(__45 <-> or([z#rank_2,__42;int(1..)])) using tseitin,
+define(__46 <-> !((false) <-> (false))) using tseitin,
+define(__47 <-> !(__46)) using tseitin,
+define(__48 <-> or([false,false;int(1..)])) using tseitin,
+define(__49 <-> !((false) <-> (__48))) using tseitin,
+define(__50 <-> and([false,__48;int(1..)])) using tseitin,
+define(__51 <-> integer-weighted(1*__16, 2*__18, -4*__20, 1*__35, -2*__38, 1*__41, -2*__44, 1*__47, -2*__49, -1*__23, 2*__26, -1*__29, 2*__32) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 5, end: 7, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 7, end: 9, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 9, end: 11, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 11, end: 13, structure: BoundedBinary { lower: -1, upper: 1 } }],
+assert(__51) using tseitin
 

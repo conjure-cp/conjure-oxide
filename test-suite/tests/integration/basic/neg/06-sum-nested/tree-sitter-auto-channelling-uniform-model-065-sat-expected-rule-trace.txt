@@ -1363,9 +1363,9 @@ new SAT encoding decisions:
 
 --
 
--(SATInt(Log, [__142,__144;int(1..)] [-1, 1]))
-   ~~> cnf_int_neg ([("SAT", 4100)])
-SATInt(Log, [__148,__149;int(1..)] [-1, 1])
+-(SATInt(SignMagnitude, [z#sign_magnitude_1,z#sign_magnitude_2;int(1..)] [-1, 1]))
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+-(SATInt(Log, [__147,__149;int(1..)] [-1, 1]))
 new variables:
   findAux __146: bool
   findAux __147: bool
@@ -1373,17 +1373,17 @@ new variables:
   findAux __149: bool
   findAux __150: bool
 new SAT encoding decisions:
-  define(__146 <-> !(__142)) using tseitin
-  define(__147 <-> !(__144)) using tseitin
-  define(__148 <-> !(__146)) using tseitin
-  define(__149 <-> !((__146) <-> (__147))) using tseitin
-  define(__150 <-> and([__146,__147;int(1..)])) using tseitin
+  define(__146 <-> !((z#sign_magnitude_1) <-> (z#sign_magnitude_2))) using tseitin
+  define(__147 <-> !((__146) <-> (z#sign_magnitude_2))) using tseitin
+  define(__148 <-> and([__146,z#sign_magnitude_2;int(1..)])) using tseitin
+  define(__149 <-> !((z#sign_magnitude_2) <-> (__148))) using tseitin
+  define(__150 <-> and([z#sign_magnitude_2,__148;int(1..)])) using tseitin
 
 --
 
--(SATInt(SignMagnitude, [z#sign_magnitude_1,z#sign_magnitude_2;int(1..)] [-1, 1]))
+-(SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
--(SATInt(Log, [__152,__154;int(1..)] [-1, 1]))
+-(SATInt(Log, [__152,__154;int(1..)] [1, 1]))
 new variables:
   findAux __151: bool
   findAux __152: bool
@@ -1391,61 +1391,25 @@ new variables:
   findAux __154: bool
   findAux __155: bool
 new SAT encoding decisions:
-  define(__151 <-> !((z#sign_magnitude_1) <-> (z#sign_magnitude_2))) using tseitin
-  define(__152 <-> !((__151) <-> (z#sign_magnitude_2))) using tseitin
-  define(__153 <-> and([__151,z#sign_magnitude_2;int(1..)])) using tseitin
-  define(__154 <-> !((z#sign_magnitude_2) <-> (__153))) using tseitin
-  define(__155 <-> and([z#sign_magnitude_2,__153;int(1..)])) using tseitin
+  define(__151 <-> !((true) <-> (false))) using tseitin
+  define(__152 <-> !((__151) <-> (false))) using tseitin
+  define(__153 <-> and([__151,false;int(1..)])) using tseitin
+  define(__154 <-> !((false) <-> (__153))) using tseitin
+  define(__155 <-> and([false,__153;int(1..)])) using tseitin
 
 --
 
--(SATInt(Log, [__152,__154;int(1..)] [-1, 1]))
-   ~~> cnf_int_neg ([("SAT", 4100)])
-SATInt(Log, [__158,__159;int(1..)] [-1, 1])
+SATInt(Log, [__8,__11,__13;int(1..)] [1, 3]) = sum([-(SATInt(Log, [__142,__144;int(1..)] [-1, 1])),-(SATInt(Log, [__147,__149;int(1..)] [-1, 1])),-(SATInt(Log, [__152,__154;int(1..)] [1, 1])),SATInt(Log, [__16,__18;int(1..)] [-1, 1]),SATInt(Log, [__21,__23;int(1..)] [-1, 1]);int(1..)])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__156
 new variables:
   findAux __156: bool
-  findAux __157: bool
-  findAux __158: bool
-  findAux __159: bool
-  findAux __160: bool
 new SAT encoding decisions:
-  define(__156 <-> !(__152)) using tseitin
-  define(__157 <-> !(__154)) using tseitin
-  define(__158 <-> !(__156)) using tseitin
-  define(__159 <-> !((__156) <-> (__157))) using tseitin
-  define(__160 <-> and([__156,__157;int(1..)])) using tseitin
+  define(__156 <-> integer-weighted(1*__8, 2*__11, -4*__13, 1*__142, -2*__144, 1*__147, -2*__149, 1*__152, -2*__154, -1*__16, 2*__18, -1*__21, 2*__23) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 5, end: 7, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 7, end: 9, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 9, end: 11, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 11, end: 13, structure: BoundedBinary { lower: -1, upper: 1 } }]
 
 --
 
--(SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]))
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
--(SATInt(Log, [__162,__164;int(1..)] [1, 1]))
-new variables:
-  findAux __161: bool
-  findAux __162: bool
-  findAux __163: bool
-  findAux __164: bool
-  findAux __165: bool
-new SAT encoding decisions:
-  define(__161 <-> !((true) <-> (false))) using tseitin
-  define(__162 <-> !((__161) <-> (false))) using tseitin
-  define(__163 <-> and([__161,false;int(1..)])) using tseitin
-  define(__164 <-> !((false) <-> (__163))) using tseitin
-  define(__165 <-> and([false,__163;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__8,__11,__13;int(1..)] [1, 3]) = sum([SATInt(Log, [__148,__149;int(1..)] [-1, 1]),SATInt(Log, [__158,__159;int(1..)] [-1, 1]),-(SATInt(Log, [__162,__164;int(1..)] [1, 1])),SATInt(Log, [__16,__18;int(1..)] [-1, 1]),SATInt(Log, [__21,__23;int(1..)] [-1, 1]);int(1..)])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__166
-new variables:
-  findAux __166: bool
-new SAT encoding decisions:
-  define(__166 <-> integer-weighted(1*__8, 2*__11, -4*__13, -1*__148, 2*__149, -1*__158, 2*__159, 1*__162, -2*__164, -1*__16, 2*__18, -1*__21, 2*__23) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 5, end: 7, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 7, end: 9, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 9, end: 11, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 11, end: 13, structure: BoundedBinary { lower: -1, upper: 1 } }]
-
---
-
-__166,
+__156,
 true,
 true,
 true,
@@ -1476,7 +1440,7 @@ true,
 true,
 true
 new SAT encoding decisions:
-  assert(__166) using tseitin
+  assert(__156) using tseitin
 
 --
 
@@ -1655,16 +1619,6 @@ findAux __153: bool
 findAux __154: bool
 findAux __155: bool
 findAux __156: bool
-findAux __157: bool
-findAux __158: bool
-findAux __159: bool
-findAux __160: bool
-findAux __161: bool
-findAux __162: bool
-findAux __163: bool
-findAux __164: bool
-findAux __165: bool
-findAux __166: bool
 
 such that
 
@@ -1842,26 +1796,16 @@ define(__142 <-> !((__141) <-> (y#sign_magnitude_2))) using tseitin,
 define(__143 <-> and([__141,y#sign_magnitude_2;int(1..)])) using tseitin,
 define(__144 <-> !((y#sign_magnitude_2) <-> (__143))) using tseitin,
 define(__145 <-> and([y#sign_magnitude_2,__143;int(1..)])) using tseitin,
-define(__146 <-> !(__142)) using tseitin,
-define(__147 <-> !(__144)) using tseitin,
-define(__148 <-> !(__146)) using tseitin,
-define(__149 <-> !((__146) <-> (__147))) using tseitin,
-define(__150 <-> and([__146,__147;int(1..)])) using tseitin,
-define(__151 <-> !((z#sign_magnitude_1) <-> (z#sign_magnitude_2))) using tseitin,
-define(__152 <-> !((__151) <-> (z#sign_magnitude_2))) using tseitin,
-define(__153 <-> and([__151,z#sign_magnitude_2;int(1..)])) using tseitin,
-define(__154 <-> !((z#sign_magnitude_2) <-> (__153))) using tseitin,
-define(__155 <-> and([z#sign_magnitude_2,__153;int(1..)])) using tseitin,
-define(__156 <-> !(__152)) using tseitin,
-define(__157 <-> !(__154)) using tseitin,
-define(__158 <-> !(__156)) using tseitin,
-define(__159 <-> !((__156) <-> (__157))) using tseitin,
-define(__160 <-> and([__156,__157;int(1..)])) using tseitin,
-define(__161 <-> !((true) <-> (false))) using tseitin,
-define(__162 <-> !((__161) <-> (false))) using tseitin,
-define(__163 <-> and([__161,false;int(1..)])) using tseitin,
-define(__164 <-> !((false) <-> (__163))) using tseitin,
-define(__165 <-> and([false,__163;int(1..)])) using tseitin,
-define(__166 <-> integer-weighted(1*__8, 2*__11, -4*__13, -1*__148, 2*__149, -1*__158, 2*__159, 1*__162, -2*__164, -1*__16, 2*__18, -1*__21, 2*__23) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 5, end: 7, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 7, end: 9, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 9, end: 11, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 11, end: 13, structure: BoundedBinary { lower: -1, upper: 1 } }],
-assert(__166) using tseitin
+define(__146 <-> !((z#sign_magnitude_1) <-> (z#sign_magnitude_2))) using tseitin,
+define(__147 <-> !((__146) <-> (z#sign_magnitude_2))) using tseitin,
+define(__148 <-> and([__146,z#sign_magnitude_2;int(1..)])) using tseitin,
+define(__149 <-> !((z#sign_magnitude_2) <-> (__148))) using tseitin,
+define(__150 <-> and([z#sign_magnitude_2,__148;int(1..)])) using tseitin,
+define(__151 <-> !((true) <-> (false))) using tseitin,
+define(__152 <-> !((__151) <-> (false))) using tseitin,
+define(__153 <-> and([__151,false;int(1..)])) using tseitin,
+define(__154 <-> !((false) <-> (__153))) using tseitin,
+define(__155 <-> and([false,__153;int(1..)])) using tseitin,
+define(__156 <-> integer-weighted(1*__8, 2*__11, -4*__13, 1*__142, -2*__144, 1*__147, -2*__149, 1*__152, -2*__154, -1*__16, 2*__18, -1*__21, 2*__23) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 5, end: 7, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 7, end: 9, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 9, end: 11, structure: BoundedBinary { lower: -1, upper: 1 } }, PbTermGroup { start: 11, end: 13, structure: BoundedBinary { lower: -1, upper: 1 } }],
+assert(__156) using tseitin
 
