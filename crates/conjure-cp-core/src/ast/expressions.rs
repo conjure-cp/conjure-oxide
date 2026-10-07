@@ -381,27 +381,31 @@ pub enum Expression {
     #[polyquine_skip]
     IndexOf(Metadata, Moo<Expression>, Moo<Expression>),
 
-    /// `table([x1, x2, ...], {sequence(r11, r12, ...), sequence(r21, r22, ...), ...})`
+    /// `table(sequence(x1, x2, ...), {sequence(r11, r12, ...), sequence(r21, r22, ...), ...})`
     ///
-    /// Represents a positive table constraint: the tuple `[x1, x2, ...]` must match one of the
+    /// Represents a positive table constraint: the input sequence must match one of the
     /// allowed rows.
     #[compatible(JsonInput)]
     Table(Metadata, Moo<Expression>, Moo<Expression>),
 
-    /// `negativeTable(inputs, rows)` forbids the set of ordered sequence rows.
+    /// `negativeTable(sequence(x1, x2, ...), rows)` forbids the set of sequence rows.
     ///
-    /// Represents a negative table constraint: the tuple `[x1, x2, ...]` must NOT match any of the
+    /// Represents a negative table constraint: the input sequence must NOT match any of the
     /// forbidden rows.
     #[compatible(JsonInput)]
     NegativeTable(Metadata, Moo<Expression>, Moo<Expression>),
 
-    /// `shortTable(inputs, {{(position, value), ...}, ...})` uses one-based tuple positions.
+    /// `shortTable(sequence(x1, x2, ...), {{(position, value), ...}, ...})` uses one-based positions.
     /// Omitted positions are wildcards; each sparse row and the relation itself are sets.
     ShortTable(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// Minion table relation with scalar inputs and numeric rows; the flag forbids matching rows.
     #[polyquine_skip]
     FlatTable(Metadata, Vec<Atom>, Vec<Vec<i32>>, bool),
+
+    /// Minion sparse table with zero-based positions and numeric values; omitted inputs are wildcards.
+    #[polyquine_skip]
+    FlatShortTable(Metadata, Vec<Atom>, Vec<Vec<(usize, i32)>>),
 
     /// `atleast(vars, counts, values)`
     ///
@@ -1419,10 +1423,11 @@ impl Expression {
             Expression::SatElement(_, _, _, _) | Expression::SatAllDifferentComparisons(_, _) => {
                 Some(Domain::bool())
             }
-            Expression::Table(_, _, _) | Expression::FlatTable(..) => Some(Domain::bool()),
-            Expression::NegativeTable(_, _, _) | Expression::ShortTable(_, _, _) => {
-                Some(Domain::bool())
-            }
+            Expression::Table(_, _, _)
+            | Expression::FlatTable(..)
+            | Expression::FlatShortTable(..)
+            | Expression::NegativeTable(_, _, _)
+            | Expression::ShortTable(_, _, _) => Some(Domain::bool()),
             Expression::AtLeast(_, _, _, _) => Some(Domain::bool()),
             Expression::AtMost(_, _, _, _) => Some(Domain::bool()),
             Expression::Gcc(_, _, _, _) | Expression::GccWeak(_, _, _, _) => Some(Domain::bool()),
@@ -2100,6 +2105,7 @@ impl Expression {
             FlatAbsEq,
             FlatAllDiff,
             FlatTable,
+            FlatShortTable,
             FlatMinEq,
             FlatSumGeq,
             FlatSumLeq,
@@ -2846,6 +2852,9 @@ impl Display for Expression {
             Expression::SatElement(_, matrix, index, value) => {
                 write!(f, "satElement({matrix}, {index}, {value})")
             }
+            Expression::FlatShortTable(_, inputs, rows) => {
+                write!(f, "FlatShortTable({}, {rows:?})", pretty_vec(inputs))
+            }
             Expression::FlatTable(_, inputs, rows, negative) => {
                 write!(f, "FlatTable({}, {rows:?}, {negative})", pretty_vec(inputs))
             }
@@ -3206,7 +3215,9 @@ impl Typeable for Expression {
             Expression::SatElement(_, _, _, _) | Expression::SatAllDifferentComparisons(_, _) => {
                 ReturnType::Bool
             }
-            Expression::Table(_, _, _) | Expression::FlatTable(..) => ReturnType::Bool,
+            Expression::Table(_, _, _)
+            | Expression::FlatTable(..)
+            | Expression::FlatShortTable(..) => ReturnType::Bool,
             Expression::NegativeTable(_, _, _) | Expression::ShortTable(_, _, _) => {
                 ReturnType::Bool
             }
@@ -3631,6 +3642,7 @@ impl Expression {
             | Expression::MinionPow(_, _, _, _)
             | Expression::FlatAllDiff(_, _)
             | Expression::FlatTable(..)
+            | Expression::FlatShortTable(..)
             | Expression::FlatMinEq(_, _, _)
             | Expression::FlatSumGeq(_, _, _)
             | Expression::FlatSumLeq(_, _, _)
@@ -3987,6 +3999,10 @@ impl Expression {
                 a3.hash(&mut hasher);
             }
 
+            Expression::FlatShortTable(_, inputs, rows) => {
+                inputs.hash(&mut hasher);
+                rows.hash(&mut hasher);
+            }
             Expression::FlatTable(_, inputs, rows, negative) => {
                 inputs.hash(&mut hasher);
                 rows.hash(&mut hasher);

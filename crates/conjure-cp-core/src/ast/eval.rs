@@ -208,6 +208,7 @@ fn constraint_skips_deep_root_normalisation(expr: &Expr) -> bool {
         | Expr::FlatAbsEq(_, _, _)
         | Expr::FlatAllDiff(_, _)
         | Expr::FlatTable(..)
+        | Expr::FlatShortTable(..)
         | Expr::SmtDistinct(_, _)
         | Expr::FlatWeightedSumLeq(_, _, _, _)
         | Expr::FlatWeightedSumGeq(_, _, _, _)
@@ -686,7 +687,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::And(_, e) => {
             vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
         }
-        Expr::Table(_, _, _) | Expr::FlatTable(..) => None,
+        Expr::Table(_, _, _) | Expr::FlatTable(..) | Expr::FlatShortTable(..) => None,
         Expr::NegativeTable(_, _, _) | Expr::ShortTable(_, _, _) => None,
         Expr::AtLeast(_, _, _, _) => None,
         Expr::AtMost(_, _, _, _) => None,

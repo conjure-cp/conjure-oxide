@@ -193,7 +193,8 @@ fn collect_table_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast:
             | conjure_ast::Expression::NegativeTable(_, tuple_expr, _) => {
                 Some(Moo::unwrap_or_clone(tuple_expr))
             }
-            flat @ conjure_ast::Expression::FlatTable(..) => Some(flat),
+            flat @ (conjure_ast::Expression::FlatTable(..)
+            | conjure_ast::Expression::FlatShortTable(..)) => Some(flat),
             _ => None,
         })
         .flat_map(|tuple_expr| Biplate::<conjure_ast::Reference>::universe_bi(&tuple_expr))
@@ -542,6 +543,32 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atomic_expr(Moo::unwrap_or_clone(a))?,
             parse_atomic_expr(Moo::unwrap_or_clone(b))?,
         )),
+        conjure_ast::Expression::FlatShortTable(_, inputs, rows) => {
+            let vars = inputs
+                .into_iter()
+                .map(parse_atom)
+                .collect::<Result<Vec<_>, _>>()?;
+            for row in &rows {
+                let mut positions = HashSet::new();
+                if row
+                    .iter()
+                    .any(|(position, _)| *position >= vars.len() || !positions.insert(*position))
+                {
+                    return Err(ModelInvalid(
+                        "FlatShortTable positions must be distinct and in range".into(),
+                    ));
+                }
+            }
+            let rows = rows
+                .into_iter()
+                .map(|row| {
+                    row.into_iter()
+                        .map(|(position, value)| (position, minion_ast::Constant::Integer(value)))
+                        .collect()
+                })
+                .collect();
+            Ok(minion_ast::Constraint::ShortStr2(vars, rows))
+        }
         conjure_ast::Expression::FlatTable(_, inputs, rows, negative) => {
             let kind = if negative {
                 TableConstraintKind::NegativeTable

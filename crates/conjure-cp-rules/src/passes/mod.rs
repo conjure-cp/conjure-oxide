@@ -8,4 +8,5 @@ mod element_id;
 mod lex;
 mod normalisers;
 pub(crate) mod representation;
+mod table;
 mod variables_in_domains;

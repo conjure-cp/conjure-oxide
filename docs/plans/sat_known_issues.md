@@ -566,3 +566,7 @@ The report and standalone Cargo project are uncommitted under `bug-reports/pinda
 `table` and `negativeTable` accept sets of ordered sequence rows. `shortTable` accepts a set of sparse rows, each a set of `(one-based position, value)` tuples. Matrices remain accepted for existing rectangular table models, but two-element matrices are not short-table pairs. Minion lowers ordinary tables to scalar inputs and numeric rows in `FlatTable`; sparse rows become Boolean combinations of specified equalities. SAT retains its table encoding decisions and variable row views.
 
 The two legacy Savile Row short-table fixtures now use one set-valued `mycon` parameter and one `shortTable` call each. Independent enumeration of their original wildcard relations gives 6 and 92 solutions. Mixed SAT representations/channelling remain deferred.
+
+## Native Minion short tables and canonical inputs
+
+All modelling table constraints normalise to sequence inputs. Ordinary and negative relations use sets of sequence rows; short relations use sets of sets of tuple pairs. Rectangular matrix syntax is normalised before backend lowering. Minion's `FlatShortTable` uses zero-based positions and numeric values and maps to native `ShortStr2`. Variable-valued sparse cells become equality indicators appended to the native input list; constant sparse rows need no Boolean decomposition. Table inputs require discrete Minion variables. SAT retains the existing table encoding choices across every integer representation.

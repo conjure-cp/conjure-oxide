@@ -141,30 +141,6 @@ fn specialise_literal_matrix_index(resolved: &Expr, indices: &[Expr]) -> Option<
     ))
 }
 
-fn materialise_matrix_operand(expr: &Expr) -> Option<Expr> {
-    if expr.clone().unwrap_matrix_unchecked().is_some() {
-        return None;
-    }
-
-    let Expr::Atomic(_, Atom::Reference(reference)) = expr else {
-        return None;
-    };
-
-    if let Some(resolved) = reference.resolve_expression()
-        && resolved.clone().unwrap_matrix_unchecked().is_some()
-    {
-        return Some(resolved);
-    }
-
-    if let Some(lit @ Lit::AbstractLiteral(AbstractLiteral::Matrix(_, _))) =
-        reference.resolve_constant()
-    {
-        return Some(Expr::Atomic(Metadata::new(), Atom::Literal(lit)));
-    }
-
-    None
-}
-
 /// Lower modelling collections to Minion's scalar table relation.
 #[register_rule("Minion", 4050, [Table, NegativeTable])]
 fn flatten_table(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {

@@ -1,4 +1,4 @@
-//! Lower sparse short-table rows to their specified equalities.
+//! Lower sparse modelling rows to Minion's native short-table relation.
 use conjure_cp::ast::{Expression as Expr, Literal, Metadata, Moo, SymbolTable, eval_constant};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
@@ -6,20 +6,26 @@ use conjure_cp::rule_engine::{
 
 use crate::shared::utils::{table_ordered_entries, table_rows, tuple_expr_entries};
 
-/// A short row matches when all specified positions match; omitted positions are unrestricted.
+/// Use native short tuples, introducing equality indicators for variable-valued cells.
 #[register_rule("Minion", 4050, [ShortTable])]
-fn expand_short_table(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn flatten_short_table(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::ShortTable(_, inputs, rows) = expr else {
         return Err(RuleNotApplicable);
     };
     let inputs = table_ordered_entries(inputs).ok_or(RuleNotApplicable)?;
     let rows = table_rows(rows).ok_or(RuleNotApplicable)?;
-    let mut alternatives = Vec::with_capacity(rows.len());
+    let width = inputs.len();
+    let mut symbols = symbols.clone();
+    let mut top = vec![];
+    let mut inputs = inputs
+        .into_iter()
+        .map(|input| super::flatten_expression_to_atom(input, &mut symbols, &mut top))
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut short_rows = Vec::with_capacity(rows.len());
     for row in rows {
-        let row = super::materialise_matrix_operand(&row).unwrap_or(row);
         let pairs = crate::shared::utils::short_table_row_entries(&row).ok_or(RuleNotApplicable)?;
         let mut positions = std::collections::HashSet::new();
-        let mut equalities = Vec::with_capacity(pairs.len());
+        let mut short_row = Vec::with_capacity(pairs.len());
         for pair in pairs {
             let entries = tuple_expr_entries(&pair).ok_or(RuleNotApplicable)?;
             let [position, value] = entries.as_slice() else {
@@ -32,31 +38,59 @@ fn expand_short_table(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 .checked_sub(1)
                 .and_then(|position| usize::try_from(position).ok())
                 .ok_or(RuleNotApplicable)?;
-            let input = inputs.get(position).ok_or(RuleNotApplicable)?;
-            if !positions.insert(position) {
+            if position >= width || !positions.insert(position) {
                 return Err(RuleNotApplicable);
             }
-            equalities.push(Expr::Eq(
-                Metadata::new(),
-                Moo::new(input.clone()),
-                Moo::new(value.clone()),
-            ));
+            match eval_constant(value) {
+                Some(Literal::Int(value)) => short_row.push((position, value)),
+                Some(Literal::Bool(value)) => short_row.push((position, i32::from(value))),
+                Some(_) => return Err(RuleNotApplicable),
+                None => {
+                    let equality = Expr::Eq(
+                        Metadata::new(),
+                        Moo::new(Expr::Atomic(Metadata::new(), inputs[position].clone())),
+                        Moo::new(value.clone()),
+                    );
+                    let indicator =
+                        super::flatten_expression_to_atom(equality, &mut symbols, &mut top)?;
+                    short_row.push((inputs.len(), 1));
+                    inputs.push(indicator);
+                }
+            }
         }
-        alternatives.push(Expr::And(
-            Metadata::new(),
-            Moo::new(conjure_cp::into_matrix_expr!(equalities)),
-        ));
+        short_rows.push(short_row);
     }
-    Ok(RuleEffect::pure(Expr::Or(
-        Metadata::new(),
-        Moo::new(conjure_cp::into_matrix_expr!(alternatives)),
-    )))
+    Ok(RuleEffect::new(
+        Expr::FlatShortTable(Metadata::new(), inputs, short_rows),
+        top,
+        symbols,
+    ))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use conjure_cp::ast::AbstractLiteral;
+
+    fn flat_matches(expression: &Expr) -> bool {
+        let Expr::FlatShortTable(_, inputs, rows) = expression else {
+            panic!("Expected a native short table");
+        };
+        let values = inputs
+            .iter()
+            .map(|atom| {
+                match eval_constant(&Expr::Atomic(Metadata::new(), atom.clone())).unwrap() {
+                    Literal::Int(value) => value,
+                    Literal::Bool(value) => i32::from(value),
+                    _ => panic!("Expected scalar inputs"),
+                }
+            })
+            .collect::<Vec<_>>();
+        rows.iter().any(|row| {
+            row.iter()
+                .all(|(position, value)| values[*position] == *value)
+        })
+    }
 
     #[test]
     fn table_collections_lower_to_numeric_minion_rows() {
@@ -121,8 +155,8 @@ mod tests {
                 Moo::new(conjure_cp::matrix_expr![7.into(), 9.into()]),
                 Moo::new(set(rows)),
             );
-            let effect = expand_short_table(&expression, &SymbolTable::new()).unwrap();
-            assert_eq!(eval_constant(&effect.new_expression), Some(expected.into()));
+            let effect = flatten_short_table(&expression, &SymbolTable::new()).unwrap();
+            assert_eq!(flat_matches(&effect.new_expression), expected);
         }
         // A two-element matrix is not a position/value tuple.
         let expression = Expr::ShortTable(
@@ -133,7 +167,7 @@ mod tests {
                 7.into()
             ]])])),
         );
-        assert!(expand_short_table(&expression, &SymbolTable::new()).is_err());
+        assert!(flatten_short_table(&expression, &SymbolTable::new()).is_err());
     }
 
     #[test]
@@ -162,15 +196,15 @@ mod tests {
             (vec![vec![pair(1, 8)]], false),
             (vec![vec![pair(1, 8)], vec![pair(2, 9)]], true),
         ] {
-            let effect = expand_short_table(&table(rows), &SymbolTable::new()).unwrap();
-            assert_eq!(eval_constant(&effect.new_expression), Some(expected.into()));
+            let effect = flatten_short_table(&table(rows), &SymbolTable::new()).unwrap();
+            assert_eq!(flat_matches(&effect.new_expression), expected);
         }
         for rows in [
             vec![vec![pair(0, 7)]],
             vec![vec![pair(3, 7)]],
             vec![vec![pair(1, 7), pair(1, 8)]],
         ] {
-            assert!(expand_short_table(&table(rows), &SymbolTable::new()).is_err());
+            assert!(flatten_short_table(&table(rows), &SymbolTable::new()).is_err());
         }
         let sequence =
             Expr::AbstractLiteral(Metadata::new(), AbstractLiteral::Sequence(vec![pair(1, 7)]));
@@ -179,7 +213,7 @@ mod tests {
             Moo::new(conjure_cp::matrix_expr![7.into(), 9.into()]),
             Moo::new(conjure_cp::into_matrix_expr!(vec![sequence])),
         );
-        let effect = expand_short_table(&expression, &SymbolTable::new()).unwrap();
-        assert_eq!(eval_constant(&effect.new_expression), Some(true.into()));
+        let effect = flatten_short_table(&expression, &SymbolTable::new()).unwrap();
+        assert!(flat_matches(&effect.new_expression));
     }
 }
