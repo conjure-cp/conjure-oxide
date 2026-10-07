@@ -1,9 +1,9 @@
 [//]: # (Author: Nicholas Davidson)
+[//]: # (Contributor: Shikhar Srivastava)
 [//]: # (Last Updated: 25/05/2026)
 
 # Testing
 ## Types of Tests
-
 Conjure-Oxide currently has four forms of internal tests:
 - [Integration tests](integration-testing.md)
 - [Custom tests](writing-custom-tests.md)

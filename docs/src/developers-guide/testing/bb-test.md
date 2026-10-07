@@ -145,7 +145,7 @@ podman run -it --rm -v ~/my-container-output:/output my-image
 
 Now, inside the container, make sure that the "outfile" in settings.json is set to somewhere inside the /output directory in the container.
 
-After this intial setup step, each of the tools can be used in the usual manner from within the container. 
+After this initial setup step, each of the tools can be used in the usual manner from within the container. 
 
 ---
 
