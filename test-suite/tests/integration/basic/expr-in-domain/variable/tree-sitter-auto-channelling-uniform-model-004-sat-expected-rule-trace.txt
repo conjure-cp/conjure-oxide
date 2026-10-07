@@ -10,33 +10,33 @@ true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true
 new variables:
-  find x#int_direct_1: bool
-  find x#int_direct_2: bool
-  find x#int_direct_3: bool
+  find x#direct_1: bool
+  find x#direct_2: bool
+  find x#direct_3: bool
 new constraints:
-  sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3);int(1..)]) <= 1
-  or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])
+  sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3);int(1..)]) <= 1
+  or([x#direct_1,x#direct_2,x#direct_3;int(1..)])
 
 --
 
 true,
-sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3);int(1..)]) <= 1,
-or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])
+sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3);int(1..)]) <= 1,
+or([x#direct_1,x#direct_2,x#direct_3;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 true,
-or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])
+or([x#direct_1,x#direct_2,x#direct_3;int(1..)])
 new SAT encoding decisions:
-  at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3) using None
+  at-most-one(x#direct_1, x#direct_2, x#direct_3) using None
 
 --
 
-or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])
+or([x#direct_1,x#direct_2,x#direct_3;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin
+  define(__0 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -54,9 +54,9 @@ Final model:
 letting n be 5
 letting dom be domain int(((n - 1))..(sum([n,1;int(1..)])))
 find x: dom
-find x#int_direct_1: bool
-find x#int_direct_2: bool
-find x#int_direct_3: bool
+find x#direct_1: bool
+find x#direct_2: bool
+find x#direct_3: bool
 findAux __0: bool
 
 such that
@@ -65,7 +65,7 @@ true
 
 sat encoding decisions:
 
-at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
-define(__0 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin,
+at-most-one(x#direct_1, x#direct_2, x#direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+define(__0 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin,
 assert(__0) using tseitin
 

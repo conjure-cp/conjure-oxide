@@ -81,34 +81,34 @@ true
 and([y#occurrence_1,y#occurrence_2;int(1..)]),
 true
 new variables:
-  findAux __0#int_log_1: bool
-  findAux __0#int_log_2: bool
-  findAux __1#int_log_1: bool
-  findAux __1#int_log_2: bool
-  findAux __1#int_log_3: bool
+  findAux __0#twos_complement_1: bool
+  findAux __0#twos_complement_2: bool
+  findAux __1#twos_complement_1: bool
+  findAux __1#twos_complement_2: bool
+  findAux __1#twos_complement_3: bool
 new constraints:
-  or([SATInt(Log, [__0#int_log_1,__0#int_log_2;int(1..)] [1, 1]) = 1;int(1..)])
-  or([SATInt(Log, [__1#int_log_1,__1#int_log_2,__1#int_log_3;int(1..)] [2, 2]) = 2;int(1..)])
+  or([SATInt(Log, [__0#twos_complement_1,__0#twos_complement_2;int(1..)] [1, 1]) = 1;int(1..)])
+  or([SATInt(Log, [__1#twos_complement_1,__1#twos_complement_2,__1#twos_complement_3;int(1..)] [2, 2]) = 2;int(1..)])
 
 --
 
-SATInt(Log, [__0#int_log_1,__0#int_log_2;int(1..)] [1, 1]) = 1
+SATInt(Log, [__0#twos_complement_1,__0#twos_complement_2;int(1..)] [1, 1]) = 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*__0#int_log_1, -2*__0#int_log_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }]
+  define(__2 <-> integer-weighted(1*__0#twos_complement_1, -2*__0#twos_complement_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }]
 
 --
 
-SATInt(Log, [__1#int_log_1,__1#int_log_2,__1#int_log_3;int(1..)] [2, 2]) = 2
+SATInt(Log, [__1#twos_complement_1,__1#twos_complement_2,__1#twos_complement_3;int(1..)] [2, 2]) = 2
    ~~> select_integer_relation ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*__1#int_log_1, 2*__1#int_log_2, -4*__1#int_log_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 2 } }]
+  define(__3 <-> integer-weighted(1*__1#twos_complement_1, 2*__1#twos_complement_2, -4*__1#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 2 } }]
 
 --
 
@@ -177,11 +177,11 @@ find y#occurrence_4: bool
 find y#occurrence_5: bool
 findAux __0: int(1)
 findAux __1: int(2)
-findAux __0#int_log_1: bool
-findAux __0#int_log_2: bool
-findAux __1#int_log_1: bool
-findAux __1#int_log_2: bool
-findAux __1#int_log_3: bool
+findAux __0#twos_complement_1: bool
+findAux __0#twos_complement_2: bool
+findAux __1#twos_complement_1: bool
+findAux __1#twos_complement_2: bool
+findAux __1#twos_complement_3: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
@@ -192,10 +192,10 @@ true
 
 sat encoding decisions:
 
-count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5) AtLeast 0 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
-count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5) AtMost 5 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
-define(__2 <-> integer-weighted(1*__0#int_log_1, -2*__0#int_log_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }],
-define(__3 <-> integer-weighted(1*__1#int_log_1, 2*__1#int_log_2, -4*__1#int_log_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 2 } }],
+count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5) AtMost 5 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__2 <-> integer-weighted(1*__0#twos_complement_1, -2*__0#twos_complement_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }],
+define(__3 <-> integer-weighted(1*__1#twos_complement_1, 2*__1#twos_complement_2, -4*__1#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 2 } }],
 define(__4 <-> and([y#occurrence_1,y#occurrence_2;int(1..)])) using tseitin,
 assert(__4) using tseitin,
 assert(__2) using tseitin,

@@ -13,11 +13,11 @@ y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
 new variables:
-  find y#int_rank_1: bool
-  find y#int_rank_2: bool
-  find y#int_rank_3: bool
+  find y#rank_1: bool
+  find y#rank_2: bool
+  find y#rank_3: bool
 new constraints:
-  or([!(y#int_rank_3),and([!(y#int_rank_2),or([!(y#int_rank_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([!(y#rank_3),and([!(y#rank_2),or([!(y#rank_1),true;int(1..)]);int(1..)]);int(1..)])
 
 --
 
@@ -25,101 +25,101 @@ x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
 new variables:
-  find x#int_rank_1: bool
-  find x#int_rank_2: bool
-  find x#int_rank_3: bool
-  find x#int_rank_4: bool
-  find x#int_rank_5: bool
+  find x#rank_1: bool
+  find x#rank_2: bool
+  find x#rank_3: bool
+  find x#rank_4: bool
+  find x#rank_5: bool
 new constraints:
-  or([!(x#int_rank_5),and([!(x#int_rank_4),and([!(x#int_rank_3),or([!(x#int_rank_2),and([!(x#int_rank_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([!(x#rank_5),and([!(x#rank_4),and([!(x#rank_3),or([!(x#rank_2),and([!(x#rank_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
 
 --
 
 y
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5])
+SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5])
 
 --
 
 x
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20])
+SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20])
 
 --
 
-sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),2;int(1..)])
+sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),2;int(1..)])
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)])
+sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)])
 
 --
 
-!(x#int_rank_5)
+!(x#rank_5)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> !(x#int_rank_5)) using tseitin
+  define(__0 <-> !(x#rank_5)) using tseitin
 
 --
 
-!(y#int_rank_3)
+!(y#rank_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> !(y#int_rank_3)) using tseitin
+  define(__1 <-> !(y#rank_3)) using tseitin
 
 --
 
-!(x#int_rank_4)
+!(x#rank_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> !(x#int_rank_4)) using tseitin
+  define(__2 <-> !(x#rank_4)) using tseitin
 
 --
 
-!(y#int_rank_2)
+!(y#rank_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> !(y#int_rank_2)) using tseitin
+  define(__3 <-> !(y#rank_2)) using tseitin
 
 --
 
-!(x#int_rank_3)
+!(x#rank_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> !(x#int_rank_3)) using tseitin
+  define(__4 <-> !(x#rank_3)) using tseitin
 
 --
 
-!(x#int_rank_2)
+!(x#rank_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> !(x#int_rank_2)) using tseitin
+  define(__5 <-> !(x#rank_2)) using tseitin
 
 --
 
-!(x#int_rank_1)
+!(x#rank_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __6
 new variables:
   findAux __6: bool
 new SAT encoding decisions:
-  define(__6 <-> !(x#int_rank_1)) using tseitin
+  define(__6 <-> !(x#rank_1)) using tseitin
 
 --
 
@@ -181,63 +181,63 @@ new SAT encoding decisions:
 
 --
 
-(sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) ** (SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]) / 2)) = 4,
+(sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) ** (SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]) / 2)) = 4,
 __7,
 __10
    ~~> remove_single_atom ([("SAT", 8400)])
-(sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) ** (SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]) / 2)) = 4,
+(sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) ** (SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]) / 2)) = 4,
 __10
 new SAT encoding decisions:
   assert(__7) using tseitin
 
 --
 
-(sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) ** (SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]) / 2)) = 4,
+(sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) ** (SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]) / 2)) = 4,
 __10
    ~~> remove_single_atom ([("SAT", 8400)])
-(sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) ** (SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]) / 2)) = 4
+(sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) ** (SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]) / 2)) = 4
 new SAT encoding decisions:
   assert(__10) using tseitin
 
 --
 
-(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]) / 2)
+(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]) / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), 2) @ 2 != 0}
+{SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), 2) @ 2 != 0}
 
 --
 
-SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), 2)
+SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), 2)
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))
+SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))
 
 --
 
-(sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) ** SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])))
+(sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) ** SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])))
    ~~> pow_to_bubble ([("Bubble", 6000)])
-{SafePow(sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) @ and([or([sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)])}
+{SafePow(sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) @ and([or([sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)])}
 
 --
 
-{SafePow(sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) @ and([or([sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)])} = 4
+{SafePow(sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) @ and([or([sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)])} = 4
    ~~> bubble_up ([("Bubble", 8800)])
-{SafePow(sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) = 4 @ and([or([sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)])}
+{SafePow(sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) = 4 @ and([or([sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)])}
 
 --
 
-{SafePow(sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) = 4 @ and([or([sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)])}
+{SafePow(sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) = 4 @ and([or([sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)])}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafePow(sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) = 4,and([or([sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)]);int(1..)])
+and([SafePow(sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) = 4,and([or([sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)]);int(1..)])
 
 --
 
-and([SafePow(sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) = 4,and([or([sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)]);int(1..)])
+and([SafePow(sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) = 4,and([or([sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SafePow(sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) = 4,or([sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)])
+and([SafePow(sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]), SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))) = 4,or([sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)]) != 0,SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) != 0;int(1..)]),SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])) >= 0;int(1..)])
 
 --
 
-SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))
+SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeDiv(SATInt(Log, [__11,__13,__15,__17;int(1..)] [0, 5]), SATInt(Log, [__19,__22,__24;int(1..)] [2, 2]))
 new variables:
@@ -257,12 +257,12 @@ new variables:
   findAux __24: bool
   findAux __25: bool
 new SAT encoding decisions:
-  define(__11 <-> !((y#int_rank_1) <-> (false))) using tseitin
-  define(__12 <-> and([y#int_rank_1,false;int(1..)])) using tseitin
-  define(__13 <-> !((y#int_rank_2) <-> (__12))) using tseitin
-  define(__14 <-> and([y#int_rank_2,__12;int(1..)])) using tseitin
-  define(__15 <-> !((y#int_rank_3) <-> (__14))) using tseitin
-  define(__16 <-> and([y#int_rank_3,__14;int(1..)])) using tseitin
+  define(__11 <-> !((y#rank_1) <-> (false))) using tseitin
+  define(__12 <-> and([y#rank_1,false;int(1..)])) using tseitin
+  define(__13 <-> !((y#rank_2) <-> (__12))) using tseitin
+  define(__14 <-> and([y#rank_2,__12;int(1..)])) using tseitin
+  define(__15 <-> !((y#rank_3) <-> (__14))) using tseitin
+  define(__16 <-> and([y#rank_3,__14;int(1..)])) using tseitin
   define(__17 <-> !((false) <-> (__16))) using tseitin
   define(__18 <-> and([false,__16;int(1..)])) using tseitin
   define(__19 <-> !((false) <-> (false))) using tseitin
@@ -1095,7 +1095,7 @@ new SAT encoding decisions:
 
 --
 
-sum([SATInt(Rank([(2, 20)]), [x#int_rank_1,x#int_rank_2,x#int_rank_3,x#int_rank_4,x#int_rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)])
+sum([SATInt(Rank([(2, 20)]), [x#rank_1,x#rank_2,x#rank_3,x#rank_4,x#rank_5;int(1..)] [2, 20]),SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 sum([SATInt(Log, [__428,__431,__433,__435,__437,__439;int(1..)] [2, 20]),SATInt(Log, [__441,__444,__446;int(1..)] [2, 2]);int(1..)])
 new variables:
@@ -1120,17 +1120,17 @@ new variables:
   findAux __446: bool
   findAux __447: bool
 new SAT encoding decisions:
-  define(__428 <-> !((x#int_rank_1) <-> (false))) using tseitin
-  define(__429 <-> and([x#int_rank_1,false;int(1..)])) using tseitin
-  define(__430 <-> !((x#int_rank_2) <-> (__429))) using tseitin
+  define(__428 <-> !((x#rank_1) <-> (false))) using tseitin
+  define(__429 <-> and([x#rank_1,false;int(1..)])) using tseitin
+  define(__430 <-> !((x#rank_2) <-> (__429))) using tseitin
   define(__431 <-> !(__430)) using tseitin
-  define(__432 <-> or([x#int_rank_2,__429;int(1..)])) using tseitin
-  define(__433 <-> !((x#int_rank_3) <-> (__432))) using tseitin
-  define(__434 <-> and([x#int_rank_3,__432;int(1..)])) using tseitin
-  define(__435 <-> !((x#int_rank_4) <-> (__434))) using tseitin
-  define(__436 <-> and([x#int_rank_4,__434;int(1..)])) using tseitin
-  define(__437 <-> !((x#int_rank_5) <-> (__436))) using tseitin
-  define(__438 <-> and([x#int_rank_5,__436;int(1..)])) using tseitin
+  define(__432 <-> or([x#rank_2,__429;int(1..)])) using tseitin
+  define(__433 <-> !((x#rank_3) <-> (__432))) using tseitin
+  define(__434 <-> and([x#rank_3,__432;int(1..)])) using tseitin
+  define(__435 <-> !((x#rank_4) <-> (__434))) using tseitin
+  define(__436 <-> and([x#rank_4,__434;int(1..)])) using tseitin
+  define(__437 <-> !((x#rank_5) <-> (__436))) using tseitin
+  define(__438 <-> and([x#rank_5,__436;int(1..)])) using tseitin
   define(__439 <-> !((false) <-> (__438))) using tseitin
   define(__440 <-> and([false,__438;int(1..)])) using tseitin
   define(__441 <-> !((false) <-> (false))) using tseitin
@@ -1205,7 +1205,7 @@ new SAT encoding decisions:
 
 --
 
-SafeDiv(SATInt(Rank([(0, 5)]), [y#int_rank_1,y#int_rank_2,y#int_rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))
+SafeDiv(SATInt(Rank([(0, 5)]), [y#rank_1,y#rank_2,y#rank_3;int(1..)] [0, 5]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeDiv(SATInt(Log, [__475,__477,__479,__481;int(1..)] [0, 5]), SATInt(Log, [__483,__486,__488;int(1..)] [2, 2]))
 new variables:
@@ -1225,12 +1225,12 @@ new variables:
   findAux __488: bool
   findAux __489: bool
 new SAT encoding decisions:
-  define(__475 <-> !((y#int_rank_1) <-> (false))) using tseitin
-  define(__476 <-> and([y#int_rank_1,false;int(1..)])) using tseitin
-  define(__477 <-> !((y#int_rank_2) <-> (__476))) using tseitin
-  define(__478 <-> and([y#int_rank_2,__476;int(1..)])) using tseitin
-  define(__479 <-> !((y#int_rank_3) <-> (__478))) using tseitin
-  define(__480 <-> and([y#int_rank_3,__478;int(1..)])) using tseitin
+  define(__475 <-> !((y#rank_1) <-> (false))) using tseitin
+  define(__476 <-> and([y#rank_1,false;int(1..)])) using tseitin
+  define(__477 <-> !((y#rank_2) <-> (__476))) using tseitin
+  define(__478 <-> and([y#rank_2,__476;int(1..)])) using tseitin
+  define(__479 <-> !((y#rank_3) <-> (__478))) using tseitin
+  define(__480 <-> and([y#rank_3,__478;int(1..)])) using tseitin
   define(__481 <-> !((false) <-> (__480))) using tseitin
   define(__482 <-> and([false,__480;int(1..)])) using tseitin
   define(__483 <-> !((false) <-> (false))) using tseitin
@@ -27857,4 +27857,21 @@ new SAT encoding decisions:
   define(__8505 <-> and([__8494,__8348;int(1..)])) using tseitin
   define(__8506 <-> or([__8504,__8505;int(1..)])) using tseitin
   define(__8507 <-> and([__3892,__8415;int(1..)])) using tseitin
-  define(__8508 <-> and([__8494,__8351;int(1..)])
+  define(__8508 <-> and([__8494,__8351;int(1..)])) using tseitin
+  define(__8509 <-> or([__8507,__8508;int(1..)])) using tseitin
+  define(__8510 <-> and([__3892,__8420;int(1..)])) using tseitin
+  define(__8511 <-> and([__8494,__8354;int(1..)])) using tseitin
+  define(__8512 <-> or([__8510,__8511;int(1..)])) using tseitin
+  define(__8513 <-> and([__3892,__8425;int(1..)])) using tseitin
+  define(__8514 <-> and([__8494,__8357;int(1..)])) using tseitin
+  define(__8515 <-> or([__8513,__8514;int(1..)])) using tseitin
+  define(__8516 <-> and([__3892,__8430;int(1..)])) using tseitin
+  define(__8517 <-> and([__8494,__8360;int(1..)])) using tseitin
+  define(__8518 <-> or([__8516,__8517;int(1..)])) using tseitin
+  define(__8519 <-> and([__3892,__8435;int(1..)])) using tseitin
+  define(__8520 <-> and([__8494,__8363;int(1..)])) using tseitin
+  define(__8521 <-> or([__8519,__8520;int(1..)])) using tseitin
+  define(__8522 <-> and([__3892,__8440;int(1..)])) using tseitin
+  define(__8523 <-> and([__8494,__8366;int(1..)])) using tseitin
+  define(__8524 <-> or([__8522,__8523;int(1..)])) using tseitin
+  define(__852

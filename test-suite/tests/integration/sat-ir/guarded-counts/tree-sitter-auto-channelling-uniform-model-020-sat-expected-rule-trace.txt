@@ -491,11 +491,11 @@ z
    ~~> select_representation ([("ReprGeneral", 10000)])
 z
 new variables:
-  find z#int_direct_1: bool
-  find z#int_direct_2: bool
+  find z#direct_1: bool
+  find z#direct_2: bool
 new constraints:
-  sum([toInt(z#int_direct_1),toInt(z#int_direct_2);int(1..)]) <= 1
-  or([z#int_direct_1,z#int_direct_2;int(1..)])
+  sum([toInt(z#direct_1),toInt(z#direct_2);int(1..)]) <= 1
+  or([z#direct_1,z#direct_2;int(1..)])
 
 --
 
@@ -505,7 +505,7 @@ __12
 new variables:
   findAux __12: bool
 new SAT encoding decisions:
-  define(__12 <-> integer-weighted(0*z#int_direct_1, 1*z#int_direct_2, -1*__0) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+  define(__12 <-> integer-weighted(0*z#direct_1, 1*z#direct_2, -1*__0) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
@@ -522,8 +522,8 @@ __11,
 (__8) <-> (duplicate),
 (g) -> (__9),
 or([!(__10),g;int(1..)]),
-sum([toInt(z#int_direct_1),toInt(z#int_direct_2);int(1..)]) <= 1,
-or([z#int_direct_1,z#int_direct_2;int(1..)])
+sum([toInt(z#direct_1),toInt(z#direct_2);int(1..)]) <= 1,
+or([z#direct_1,z#direct_2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 __12,
 y = sum([toInt(a),toInt(b),toInt(c);int(1..3)]),
@@ -538,9 +538,9 @@ __11,
 (__8) <-> (duplicate),
 (g) -> (__9),
 or([!(__10),g;int(1..)]),
-or([z#int_direct_1,z#int_direct_2;int(1..)])
+or([z#direct_1,z#direct_2;int(1..)])
 new SAT encoding decisions:
-  at-most-one(z#int_direct_1, z#int_direct_2) using None
+  at-most-one(z#direct_1, z#direct_2) using None
 
 --
 
@@ -548,13 +548,13 @@ y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
 new variables:
-  find y#int_direct_1: bool
-  find y#int_direct_2: bool
-  find y#int_direct_3: bool
-  find y#int_direct_4: bool
+  find y#direct_1: bool
+  find y#direct_2: bool
+  find y#direct_3: bool
+  find y#direct_4: bool
 new constraints:
-  sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4);int(1..)]) <= 1
-  or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4;int(1..)])
+  sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3),toInt(y#direct_4);int(1..)]) <= 1
+  or([y#direct_1,y#direct_2,y#direct_3,y#direct_4;int(1..)])
 
 --
 
@@ -564,7 +564,7 @@ __13
 new variables:
   findAux __13: bool
 new SAT encoding decisions:
-  define(__13 <-> integer-weighted(0*y#int_direct_1, 1*y#int_direct_2, 2*y#int_direct_3, 3*y#int_direct_4, -1*a, -1*b, -1*c) Equal 0) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+  define(__13 <-> integer-weighted(0*y#direct_1, 1*y#direct_2, 2*y#direct_3, 3*y#direct_4, -1*a, -1*b, -1*c) Equal 0) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
 
 --
 
@@ -581,9 +581,9 @@ __11,
 (__8) <-> (duplicate),
 (g) -> (__9),
 or([!(__10),g;int(1..)]),
-or([z#int_direct_1,z#int_direct_2;int(1..)]),
-sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4);int(1..)]) <= 1,
-or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4;int(1..)])
+or([z#direct_1,z#direct_2;int(1..)]),
+sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3),toInt(y#direct_4);int(1..)]) <= 1,
+or([y#direct_1,y#direct_2,y#direct_3,y#direct_4;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 __12,
 __13,
@@ -598,10 +598,10 @@ __11,
 (__8) <-> (duplicate),
 (g) -> (__9),
 or([!(__10),g;int(1..)]),
-or([z#int_direct_1,z#int_direct_2;int(1..)]),
-or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4;int(1..)])
+or([z#direct_1,z#direct_2;int(1..)]),
+or([y#direct_1,y#direct_2,y#direct_3,y#direct_4;int(1..)])
 new SAT encoding decisions:
-  at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3, y#int_direct_4) using None
+  at-most-one(y#direct_1, y#direct_2, y#direct_3, y#direct_4) using None
 
 --
 
@@ -715,23 +715,23 @@ new SAT encoding decisions:
 
 --
 
-or([z#int_direct_1,z#int_direct_2;int(1..)])
+or([z#direct_1,z#direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __25
 new variables:
   findAux __25: bool
 new SAT encoding decisions:
-  define(__25 <-> or([z#int_direct_1,z#int_direct_2;int(1..)])) using tseitin
+  define(__25 <-> or([z#direct_1,z#direct_2;int(1..)])) using tseitin
 
 --
 
-or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4;int(1..)])
+or([y#direct_1,y#direct_2,y#direct_3,y#direct_4;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __26
 new variables:
   findAux __26: bool
 new SAT encoding decisions:
-  define(__26 <-> or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4;int(1..)])) using tseitin
+  define(__26 <-> or([y#direct_1,y#direct_2,y#direct_3,y#direct_4;int(1..)])) using tseitin
 
 --
 
@@ -1079,13 +1079,13 @@ findAux __8: bool
 findAux __9: bool
 findAux __10: bool
 findAux __11: bool
-find z#int_direct_1: bool
-find z#int_direct_2: bool
+find z#direct_1: bool
+find z#direct_2: bool
 findAux __12: bool
-find y#int_direct_1: bool
-find y#int_direct_2: bool
-find y#int_direct_3: bool
-find y#int_direct_4: bool
+find y#direct_1: bool
+find y#direct_2: bool
+find y#direct_3: bool
+find y#direct_4: bool
 findAux __13: bool
 findAux __14: bool
 findAux __15: bool
@@ -1121,10 +1121,10 @@ define(__8 <-> count(a, a, !(b), true, false) Equal 2) using Some(EncodingSelect
 define(__9 <-> count(a, b, c) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
 define(__10 <-> count(a, b, c) Equal 2) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
 define(__11 <-> count(eq, ne) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO None,
-define(__12 <-> integer-weighted(0*z#int_direct_1, 1*z#int_direct_2, -1*__0) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
-at-most-one(z#int_direct_1, z#int_direct_2) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
-define(__13 <-> integer-weighted(0*y#int_direct_1, 1*y#int_direct_2, 2*y#int_direct_3, 3*y#int_direct_4, -1*a, -1*b, -1*c) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
-at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3, y#int_direct_4) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+define(__12 <-> integer-weighted(0*z#direct_1, 1*z#direct_2, -1*__0) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+at-most-one(z#direct_1, z#direct_2) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+define(__13 <-> integer-weighted(0*y#direct_1, 1*y#direct_2, 2*y#direct_3, 3*y#direct_4, -1*a, -1*b, -1*c) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+at-most-one(y#direct_1, y#direct_2, y#direct_3, y#direct_4) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
 define(__14 <-> !(__10)) using tseitin,
 define(__15 <-> (__1) <-> (le)) using tseitin,
 define(__16 <-> (__2) <-> (lt)) using tseitin,
@@ -1136,8 +1136,8 @@ define(__21 <-> (__7) <-> (reversed)) using tseitin,
 define(__22 <-> (__8) <-> (duplicate)) using tseitin,
 define(__23 <-> (g) -> (__9)) using tseitin,
 define(__24 <-> or([__14,g;int(1..)])) using tseitin,
-define(__25 <-> or([z#int_direct_1,z#int_direct_2;int(1..)])) using tseitin,
-define(__26 <-> or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4;int(1..)])) using tseitin,
+define(__25 <-> or([z#direct_1,z#direct_2;int(1..)])) using tseitin,
+define(__26 <-> or([y#direct_1,y#direct_2,y#direct_3,y#direct_4;int(1..)])) using tseitin,
 assert(__12) using tseitin,
 assert(__13) using tseitin,
 assert(__11) using tseitin,

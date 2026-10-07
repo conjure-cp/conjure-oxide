@@ -13,13 +13,13 @@ i
    ~~> select_representation ([("ReprGeneral", 10000)])
 i
 new variables:
-  find i#int_log_1: bool
-  find i#int_log_2: bool
-  find i#int_log_3: bool
-  find i#int_log_4: bool
-  find i#int_log_5: bool
+  find i#twos_complement_1: bool
+  find i#twos_complement_2: bool
+  find i#twos_complement_3: bool
+  find i#twos_complement_4: bool
+  find i#twos_complement_5: bool
 new constraints:
-  or([and([SATInt(Log, [i#int_log_1,i#int_log_2,i#int_log_3,i#int_log_4,i#int_log_5;int(1..)] [0, 10]) >= 0,SATInt(Log, [i#int_log_1,i#int_log_2,i#int_log_3,i#int_log_4,i#int_log_5;int(1..)] [0, 10]) <= 10;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [i#twos_complement_1,i#twos_complement_2,i#twos_complement_3,i#twos_complement_4,i#twos_complement_5;int(1..)] [0, 10]) >= 0,SATInt(Log, [i#twos_complement_1,i#twos_complement_2,i#twos_complement_3,i#twos_complement_4,i#twos_complement_5;int(1..)] [0, 10]) <= 10;int(1..)]);int(1..)])
 
 --
 
@@ -29,27 +29,27 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*i#int_log_1, 2*i#int_log_2, 4*i#int_log_3, 8*i#int_log_4, -16*i#int_log_5) Equal 3) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 10 } }]
+  define(__0 <-> integer-weighted(1*i#twos_complement_1, 2*i#twos_complement_2, 4*i#twos_complement_3, 8*i#twos_complement_4, -16*i#twos_complement_5) Equal 3) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 10 } }]
 
 --
 
-SATInt(Log, [i#int_log_1,i#int_log_2,i#int_log_3,i#int_log_4,i#int_log_5;int(1..)] [0, 10]) >= 0
+SATInt(Log, [i#twos_complement_1,i#twos_complement_2,i#twos_complement_3,i#twos_complement_4,i#twos_complement_5;int(1..)] [0, 10]) >= 0
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*i#int_log_1, 2*i#int_log_2, 4*i#int_log_3, 8*i#int_log_4, -16*i#int_log_5) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 10 } }]
+  define(__1 <-> integer-weighted(1*i#twos_complement_1, 2*i#twos_complement_2, 4*i#twos_complement_3, 8*i#twos_complement_4, -16*i#twos_complement_5) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 10 } }]
 
 --
 
-SATInt(Log, [i#int_log_1,i#int_log_2,i#int_log_3,i#int_log_4,i#int_log_5;int(1..)] [0, 10]) <= 10
+SATInt(Log, [i#twos_complement_1,i#twos_complement_2,i#twos_complement_3,i#twos_complement_4,i#twos_complement_5;int(1..)] [0, 10]) <= 10
    ~~> select_integer_relation ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*i#int_log_1, 2*i#int_log_2, 4*i#int_log_3, 8*i#int_log_4, -16*i#int_log_5) LessEqual 10) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 10 } }]
+  define(__2 <-> integer-weighted(1*i#twos_complement_1, 2*i#twos_complement_2, 4*i#twos_complement_3, 8*i#twos_complement_4, -16*i#twos_complement_5) LessEqual 10) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 10 } }]
 
 --
 
@@ -90,11 +90,11 @@ Final model:
 
 letting p be permutation(1,3,4)
 find i: int(0..10)
-find i#int_log_1: bool
-find i#int_log_2: bool
-find i#int_log_3: bool
-find i#int_log_4: bool
-find i#int_log_5: bool
+find i#twos_complement_1: bool
+find i#twos_complement_2: bool
+find i#twos_complement_3: bool
+find i#twos_complement_4: bool
+find i#twos_complement_5: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -106,9 +106,9 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*i#int_log_1, 2*i#int_log_2, 4*i#int_log_3, 8*i#int_log_4, -16*i#int_log_5) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 10 } }],
-define(__1 <-> integer-weighted(1*i#int_log_1, 2*i#int_log_2, 4*i#int_log_3, 8*i#int_log_4, -16*i#int_log_5) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 10 } }],
-define(__2 <-> integer-weighted(1*i#int_log_1, 2*i#int_log_2, 4*i#int_log_3, 8*i#int_log_4, -16*i#int_log_5) LessEqual 10) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 10 } }],
+define(__0 <-> integer-weighted(1*i#twos_complement_1, 2*i#twos_complement_2, 4*i#twos_complement_3, 8*i#twos_complement_4, -16*i#twos_complement_5) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 10 } }],
+define(__1 <-> integer-weighted(1*i#twos_complement_1, 2*i#twos_complement_2, 4*i#twos_complement_3, 8*i#twos_complement_4, -16*i#twos_complement_5) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 10 } }],
+define(__2 <-> integer-weighted(1*i#twos_complement_1, 2*i#twos_complement_2, 4*i#twos_complement_3, 8*i#twos_complement_4, -16*i#twos_complement_5) LessEqual 10) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 10 } }],
 define(__3 <-> and([__1,__2;int(1..)])) using tseitin,
 assert(__0) using tseitin,
 assert(__3) using tseitin

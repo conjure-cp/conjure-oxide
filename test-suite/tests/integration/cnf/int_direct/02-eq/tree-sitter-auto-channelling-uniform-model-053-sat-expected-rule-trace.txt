@@ -12,11 +12,11 @@ a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
 new variables:
-  find a#int_offset_1: bool
-  find a#int_offset_2: bool
+  find a#offset_1: bool
+  find a#offset_2: bool
 new constraints:
-  or([!(a#int_offset_2),and([!(a#int_offset_1),true;int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 2]) >= 0,SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 2]) <= 2;int(1..)]);int(1..)])
+  or([!(a#offset_2),and([!(a#offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 2]) >= 0,SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 2]) <= 2;int(1..)]);int(1..)])
 
 --
 
@@ -26,47 +26,47 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__0 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
-SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 2]) >= 0
+SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 2]) >= 0
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__1 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
-SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 2]) <= 2
+SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 2]) <= 2
    ~~> select_integer_relation ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__2 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
-!(a#int_offset_2)
+!(a#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> !(a#int_offset_2)) using tseitin
+  define(__3 <-> !(a#offset_2)) using tseitin
 
 --
 
-!(a#int_offset_1)
+!(a#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> !(a#int_offset_1)) using tseitin
+  define(__4 <-> !(a#offset_1)) using tseitin
 
 --
 
@@ -133,8 +133,8 @@ new SAT encoding decisions:
 Final model:
 
 find a: int(0..2)
-find a#int_offset_1: bool
-find a#int_offset_2: bool
+find a#offset_1: bool
+find a#offset_2: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -149,11 +149,11 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__1 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__2 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__3 <-> !(a#int_offset_2)) using tseitin,
-define(__4 <-> !(a#int_offset_1)) using tseitin,
+define(__0 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__1 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__2 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__3 <-> !(a#offset_2)) using tseitin,
+define(__4 <-> !(a#offset_1)) using tseitin,
 define(__5 <-> and([__1,__2;int(1..)])) using tseitin,
 define(__6 <-> or([__3,__4;int(1..)])) using tseitin,
 assert(__0) using tseitin,

@@ -12,20 +12,20 @@ or([ x = i | i : int(1..3) ])
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 or([ x = i | i : int(1..3) ])
 new variables:
-  find x#int_log_1: bool
-  find x#int_log_2: bool
+  find x#twos_complement_1: bool
+  find x#twos_complement_2: bool
 new constraints:
-  or([SATInt(Log, [x#int_log_1,x#int_log_2;int(1..)] [1, 1]) = 1;int(1..)])
+  or([SATInt(Log, [x#twos_complement_1,x#twos_complement_2;int(1..)] [1, 1]) = 1;int(1..)])
 
 --
 
-SATInt(Log, [x#int_log_1,x#int_log_2;int(1..)] [1, 1]) = 1
+SATInt(Log, [x#twos_complement_1,x#twos_complement_2;int(1..)] [1, 1]) = 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#int_log_1, -2*x#int_log_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }]
+  define(__0 <-> integer-weighted(1*x#twos_complement_1, -2*x#twos_complement_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }]
 
 --
 
@@ -62,11 +62,11 @@ __1
    ~~> select_representation ([("ReprGeneral", 10000)])
 __1
 new variables:
-  findAux __1#int_log_1: bool
-  findAux __1#int_log_2: bool
-  findAux __1#int_log_3: bool
+  findAux __1#twos_complement_1: bool
+  findAux __1#twos_complement_2: bool
+  findAux __1#twos_complement_3: bool
 new constraints:
-  or([and([SATInt(Log, [__1#int_log_1,__1#int_log_2,__1#int_log_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [__1#int_log_1,__1#int_log_2,__1#int_log_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [__1#twos_complement_1,__1#twos_complement_2,__1#twos_complement_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [__1#twos_complement_1,__1#twos_complement_2,__1#twos_complement_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
 
 --
 
@@ -76,27 +76,27 @@ __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*x#int_log_1, -2*x#int_log_2, -1*__1#int_log_1, -2*__1#int_log_2, 4*__1#int_log_3) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -3, upper: -1 } }]
+  define(__2 <-> integer-weighted(1*x#twos_complement_1, -2*x#twos_complement_2, -1*__1#twos_complement_1, -2*__1#twos_complement_2, 4*__1#twos_complement_3) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -3, upper: -1 } }]
 
 --
 
-SATInt(Log, [__1#int_log_1,__1#int_log_2,__1#int_log_3;int(1..)] [1, 3]) >= 1
+SATInt(Log, [__1#twos_complement_1,__1#twos_complement_2,__1#twos_complement_3;int(1..)] [1, 3]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*__1#int_log_1, 2*__1#int_log_2, -4*__1#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  define(__3 <-> integer-weighted(1*__1#twos_complement_1, 2*__1#twos_complement_2, -4*__1#twos_complement_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
-SATInt(Log, [__1#int_log_1,__1#int_log_2,__1#int_log_3;int(1..)] [1, 3]) <= 3
+SATInt(Log, [__1#twos_complement_1,__1#twos_complement_2,__1#twos_complement_3;int(1..)] [1, 3]) <= 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(1*__1#int_log_1, 2*__1#int_log_2, -4*__1#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  define(__4 <-> integer-weighted(1*__1#twos_complement_1, 2*__1#twos_complement_2, -4*__1#twos_complement_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
@@ -136,13 +136,13 @@ new SAT encoding decisions:
 Final model:
 
 find x: int(1)
-find x#int_log_1: bool
-find x#int_log_2: bool
+find x#twos_complement_1: bool
+find x#twos_complement_2: bool
 findAux __0: bool
 findAux __1: int(1..3)
-findAux __1#int_log_1: bool
-findAux __1#int_log_2: bool
-findAux __1#int_log_3: bool
+findAux __1#twos_complement_1: bool
+findAux __1#twos_complement_2: bool
+findAux __1#twos_complement_3: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
@@ -154,11 +154,11 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#int_log_1, -2*x#int_log_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }],
+define(__0 <-> integer-weighted(1*x#twos_complement_1, -2*x#twos_complement_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }],
 assert(__0) using tseitin,
-define(__2 <-> integer-weighted(1*x#int_log_1, -2*x#int_log_2, -1*__1#int_log_1, -2*__1#int_log_2, 4*__1#int_log_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -3, upper: -1 } }],
-define(__3 <-> integer-weighted(1*__1#int_log_1, 2*__1#int_log_2, -4*__1#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__4 <-> integer-weighted(1*__1#int_log_1, 2*__1#int_log_2, -4*__1#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__2 <-> integer-weighted(1*x#twos_complement_1, -2*x#twos_complement_2, -1*__1#twos_complement_1, -2*__1#twos_complement_2, 4*__1#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__3 <-> integer-weighted(1*__1#twos_complement_1, 2*__1#twos_complement_2, -4*__1#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__4 <-> integer-weighted(1*__1#twos_complement_1, 2*__1#twos_complement_2, -4*__1#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
 define(__5 <-> and([__3,__4;int(1..)])) using tseitin,
 assert(__2) using tseitin,
 assert(__5) using tseitin

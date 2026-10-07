@@ -81,89 +81,100 @@ true
 and([y#occurrence_1,y#occurrence_2;int(1..)]),
 true
 new variables:
-  findAux __0#int_log_1: bool
-  findAux __0#int_log_2: bool
-  findAux __1#int_log_1: bool
-  findAux __1#int_log_2: bool
-  findAux __1#int_log_3: bool
+  findAux __0#direct_1: bool
+  findAux __1#direct_1: bool
 new constraints:
-  or([SATInt(Log, [__0#int_log_1,__0#int_log_2;int(1..)] [1, 1]) = 1;int(1..)])
-  or([SATInt(Log, [__1#int_log_1,__1#int_log_2,__1#int_log_3;int(1..)] [2, 2]) = 2;int(1..)])
+  sum([toInt(__0#direct_1);int(1..)]) <= 1
+  or([__0#direct_1;int(1..)])
+  sum([toInt(__1#direct_1);int(1..)]) <= 1
+  or([__1#direct_1;int(1..)])
 
 --
 
-SATInt(Log, [__0#int_log_1,__0#int_log_2;int(1..)] [1, 1]) = 1
-   ~~> select_integer_relation ([("SAT", 18500)])
-__2
-new variables:
-  findAux __2: bool
+and([y#occurrence_1,y#occurrence_2;int(1..)]),
+true,
+sum([toInt(__0#direct_1);int(1..)]) <= 1,
+or([__0#direct_1;int(1..)]),
+sum([toInt(__1#direct_1);int(1..)]) <= 1,
+or([__1#direct_1;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([y#occurrence_1,y#occurrence_2;int(1..)]),
+true,
+or([__0#direct_1;int(1..)]),
+sum([toInt(__1#direct_1);int(1..)]) <= 1,
+or([__1#direct_1;int(1..)])
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*__0#int_log_1, -2*__0#int_log_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }]
+  at-most-one(__0#direct_1) using None
 
 --
 
-SATInt(Log, [__1#int_log_1,__1#int_log_2,__1#int_log_3;int(1..)] [2, 2]) = 2
-   ~~> select_integer_relation ([("SAT", 18500)])
-__3
-new variables:
-  findAux __3: bool
+and([y#occurrence_1,y#occurrence_2;int(1..)]),
+true,
+or([__0#direct_1;int(1..)]),
+sum([toInt(__1#direct_1);int(1..)]) <= 1,
+or([__1#direct_1;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+and([y#occurrence_1,y#occurrence_2;int(1..)]),
+true,
+or([__0#direct_1;int(1..)]),
+or([__1#direct_1;int(1..)])
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*__1#int_log_1, 2*__1#int_log_2, -4*__1#int_log_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 2 } }]
+  at-most-one(__1#direct_1) using None
 
 --
 
-or([__3;int(1..)])
+or([__0#direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-__3
+__0#direct_1
 
 --
 
-or([__2;int(1..)])
+or([__1#direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-__2
+__1#direct_1
 
 --
 
 and([y#occurrence_1,y#occurrence_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
+__2
 new variables:
-  findAux __4: bool
+  findAux __2: bool
 new SAT encoding decisions:
-  define(__4 <-> and([y#occurrence_1,y#occurrence_2;int(1..)])) using tseitin
+  define(__2 <-> and([y#occurrence_1,y#occurrence_2;int(1..)])) using tseitin
 
 --
 
-__4,
-true,
 __2,
-__3
+true,
+__0#direct_1,
+__1#direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
-__2,
-__3
-new SAT encoding decisions:
-  assert(__4) using tseitin
-
---
-
-true,
-__2,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__3
+__0#direct_1,
+__1#direct_1
 new SAT encoding decisions:
   assert(__2) using tseitin
 
 --
 
 true,
-__3
+__0#direct_1,
+__1#direct_1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+__1#direct_1
+new SAT encoding decisions:
+  assert(__0#direct_1) using tseitin
+
+--
+
+true,
+__1#direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__3) using tseitin
+  assert(__1#direct_1) using tseitin
 
 --
 
@@ -177,14 +188,9 @@ find y#occurrence_4: bool
 find y#occurrence_5: bool
 findAux __0: int(1)
 findAux __1: int(2)
-findAux __0#int_log_1: bool
-findAux __0#int_log_2: bool
-findAux __1#int_log_1: bool
-findAux __1#int_log_2: bool
-findAux __1#int_log_3: bool
+findAux __0#direct_1: bool
+findAux __1#direct_1: bool
 findAux __2: bool
-findAux __3: bool
-findAux __4: bool
 
 such that
 
@@ -192,12 +198,12 @@ true
 
 sat encoding decisions:
 
-count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
-count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5) AtMost 5 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
-define(__2 <-> integer-weighted(1*__0#int_log_1, -2*__0#int_log_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }],
-define(__3 <-> integer-weighted(1*__1#int_log_1, 2*__1#int_log_2, -4*__1#int_log_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 2 } }],
-define(__4 <-> and([y#occurrence_1,y#occurrence_2;int(1..)])) using tseitin,
-assert(__4) using tseitin,
+count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5) AtLeast 0 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5) AtMost 5 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+at-most-one(__0#direct_1) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+at-most-one(__1#direct_1) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+define(__2 <-> and([y#occurrence_1,y#occurrence_2;int(1..)])) using tseitin,
 assert(__2) using tseitin,
-assert(__3) using tseitin
+assert(__0#direct_1) using tseitin,
+assert(__1#direct_1) using tseitin
 

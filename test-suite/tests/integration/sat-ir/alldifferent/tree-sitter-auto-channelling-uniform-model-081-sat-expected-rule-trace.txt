@@ -32,15 +32,15 @@ y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
 new variables:
-  find y#int_direct_1: bool
-  find y#int_direct_2: bool
-  find y#int_direct_3: bool
-  find y#int_direct_4: bool
-  find y#int_direct_5: bool
-  find y#int_direct_6: bool
+  find y#direct_1: bool
+  find y#direct_2: bool
+  find y#direct_3: bool
+  find y#direct_4: bool
+  find y#direct_5: bool
+  find y#direct_6: bool
 new constraints:
-  sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4),toInt(y#int_direct_5),toInt(y#int_direct_6);int(1..)]) <= 1
-  or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)])
+  sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3),toInt(y#direct_4),toInt(y#direct_5),toInt(y#direct_6);int(1..)]) <= 1
+  or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
 
 --
 
@@ -48,15 +48,15 @@ z
    ~~> select_representation ([("ReprGeneral", 10000)])
 z
 new variables:
-  find z#int_direct_1: bool
-  find z#int_direct_2: bool
-  find z#int_direct_3: bool
-  find z#int_direct_4: bool
-  find z#int_direct_5: bool
-  find z#int_direct_6: bool
+  find z#direct_1: bool
+  find z#direct_2: bool
+  find z#direct_3: bool
+  find z#direct_4: bool
+  find z#direct_5: bool
+  find z#direct_6: bool
 new constraints:
-  sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5),toInt(z#int_direct_6);int(1..)]) <= 1
-  or([z#int_direct_1,z#int_direct_3,z#int_direct_6;int(1..)])
+  sum([toInt(z#direct_1),toInt(z#direct_2),toInt(z#direct_3),toInt(z#direct_4),toInt(z#direct_5),toInt(z#direct_6);int(1..)]) <= 1
+  or([z#direct_1,z#direct_3,z#direct_6;int(1..)])
 
 --
 
@@ -66,7 +66,7 @@ __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> allDifferent(0+weighted(-2*y#int_direct_1, -1*y#int_direct_2, 0*y#int_direct_3, 1*y#int_direct_4, 2*y#int_direct_5, 3*y#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#int_direct_1, -1:y#int_direct_2, 0:y#int_direct_3, 1:y#int_direct_4, 2:y#int_direct_5, 3:y#int_direct_6), 0+weighted(-2*z#int_direct_1, -1*z#int_direct_2, 0*z#int_direct_3, 1*z#int_direct_4, 2*z#int_direct_5, 3*z#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:z#int_direct_1, -1:z#int_direct_2, 0:z#int_direct_3, 1:z#int_direct_4, 2:z#int_direct_5, 3:z#int_direct_6))) using None, AMO None, PB None
+  define(__1 <-> allDifferent(0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), 0+weighted(-2*z#direct_1, -1*z#direct_2, 0*z#direct_3, 1*z#direct_4, 2*z#direct_5, 3*z#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:z#direct_1, -1:z#direct_2, 0:z#direct_3, 1:z#direct_4, 2:z#direct_5, 3:z#direct_6))) using None, AMO None, PB None
 
 --
 
@@ -75,21 +75,21 @@ __1,
 allDifferent([x,0;int(1..2)]),
 (distinct) <-> (allDifferent([x,y,z;int(1..3)])),
 (booleanDistinct) <-> (__0),
-sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4),toInt(y#int_direct_5),toInt(y#int_direct_6);int(1..)]) <= 1,
-or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)]),
-sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5),toInt(z#int_direct_6);int(1..)]) <= 1,
-or([z#int_direct_1,z#int_direct_3,z#int_direct_6;int(1..)])
+sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3),toInt(y#direct_4),toInt(y#direct_5),toInt(y#direct_6);int(1..)]) <= 1,
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)]),
+sum([toInt(z#direct_1),toInt(z#direct_2),toInt(z#direct_3),toInt(z#direct_4),toInt(z#direct_5),toInt(z#direct_6);int(1..)]) <= 1,
+or([z#direct_1,z#direct_3,z#direct_6;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 __1,
 !(allDifferent([x,x;int(1..2)])),
 allDifferent([x,0;int(1..2)]),
 (distinct) <-> (allDifferent([x,y,z;int(1..3)])),
 (booleanDistinct) <-> (__0),
-or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)]),
-sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5),toInt(z#int_direct_6);int(1..)]) <= 1,
-or([z#int_direct_1,z#int_direct_3,z#int_direct_6;int(1..)])
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)]),
+sum([toInt(z#direct_1),toInt(z#direct_2),toInt(z#direct_3),toInt(z#direct_4),toInt(z#direct_5),toInt(z#direct_6);int(1..)]) <= 1,
+or([z#direct_1,z#direct_3,z#direct_6;int(1..)])
 new SAT encoding decisions:
-  at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3, y#int_direct_4, y#int_direct_5, y#int_direct_6) using None
+  at-most-one(y#direct_1, y#direct_2, y#direct_3, y#direct_4, y#direct_5, y#direct_6) using None
 
 --
 
@@ -98,19 +98,19 @@ __1,
 allDifferent([x,0;int(1..2)]),
 (distinct) <-> (allDifferent([x,y,z;int(1..3)])),
 (booleanDistinct) <-> (__0),
-or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)]),
-sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5),toInt(z#int_direct_6);int(1..)]) <= 1,
-or([z#int_direct_1,z#int_direct_3,z#int_direct_6;int(1..)])
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)]),
+sum([toInt(z#direct_1),toInt(z#direct_2),toInt(z#direct_3),toInt(z#direct_4),toInt(z#direct_5),toInt(z#direct_6);int(1..)]) <= 1,
+or([z#direct_1,z#direct_3,z#direct_6;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 __1,
 !(allDifferent([x,x;int(1..2)])),
 allDifferent([x,0;int(1..2)]),
 (distinct) <-> (allDifferent([x,y,z;int(1..3)])),
 (booleanDistinct) <-> (__0),
-or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)]),
-or([z#int_direct_1,z#int_direct_3,z#int_direct_6;int(1..)])
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)]),
+or([z#direct_1,z#direct_3,z#direct_6;int(1..)])
 new SAT encoding decisions:
-  at-most-one(z#int_direct_1, z#int_direct_2, z#int_direct_3, z#int_direct_4, z#int_direct_5, z#int_direct_6) using None
+  at-most-one(z#direct_1, z#direct_2, z#direct_3, z#direct_4, z#direct_5, z#direct_6) using None
 
 --
 
@@ -118,15 +118,15 @@ x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
 new variables:
-  find x#int_direct_1: bool
-  find x#int_direct_2: bool
-  find x#int_direct_3: bool
-  find x#int_direct_4: bool
-  find x#int_direct_5: bool
-  find x#int_direct_6: bool
+  find x#direct_1: bool
+  find x#direct_2: bool
+  find x#direct_3: bool
+  find x#direct_4: bool
+  find x#direct_5: bool
+  find x#direct_6: bool
 new constraints:
-  sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6);int(1..)]) <= 1
-  or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)])
+  sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5),toInt(x#direct_6);int(1..)]) <= 1
+  or([x#direct_1,x#direct_3,x#direct_6;int(1..)])
 
 --
 
@@ -136,7 +136,7 @@ __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> allDifferent(0+weighted(-2*x#int_direct_1, -1*x#int_direct_2, 0*x#int_direct_3, 1*x#int_direct_4, 2*x#int_direct_5, 3*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#int_direct_1, -1:x#int_direct_2, 0:x#int_direct_3, 1:x#int_direct_4, 2:x#int_direct_5, 3:x#int_direct_6), 0+weighted() with [] choices(0:true))) using None, AMO None, PB None
+  define(__2 <-> allDifferent(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted() with [] choices(0:true))) using None, AMO None, PB None
 
 --
 
@@ -145,21 +145,21 @@ __1,
 __2,
 (distinct) <-> (allDifferent([x,y,z;int(1..3)])),
 (booleanDistinct) <-> (__0),
-or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)]),
-or([z#int_direct_1,z#int_direct_3,z#int_direct_6;int(1..)]),
-sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6);int(1..)]) <= 1,
-or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)])
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)]),
+or([z#direct_1,z#direct_3,z#direct_6;int(1..)]),
+sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5),toInt(x#direct_6);int(1..)]) <= 1,
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 __1,
 !(allDifferent([x,x;int(1..2)])),
 __2,
 (distinct) <-> (allDifferent([x,y,z;int(1..3)])),
 (booleanDistinct) <-> (__0),
-or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)]),
-or([z#int_direct_1,z#int_direct_3,z#int_direct_6;int(1..)]),
-or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)])
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)]),
+or([z#direct_1,z#direct_3,z#direct_6;int(1..)]),
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)])
 new SAT encoding decisions:
-  at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6) using None
+  at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6) using None
 
 --
 
@@ -199,7 +199,7 @@ __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> allDifferent(0+weighted(-2*x#int_direct_1, -1*x#int_direct_2, 0*x#int_direct_3, 1*x#int_direct_4, 2*x#int_direct_5, 3*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#int_direct_1, -1:x#int_direct_2, 0:x#int_direct_3, 1:x#int_direct_4, 2:x#int_direct_5, 3:x#int_direct_6), 0+weighted(-2*x#int_direct_1, -1*x#int_direct_2, 0*x#int_direct_3, 1*x#int_direct_4, 2*x#int_direct_5, 3*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#int_direct_1, -1:x#int_direct_2, 0:x#int_direct_3, 1:x#int_direct_4, 2:x#int_direct_5, 3:x#int_direct_6))) using None, AMO None, PB None
+  define(__3 <-> allDifferent(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6))) using None, AMO None, PB None
 
 --
 
@@ -209,7 +209,7 @@ __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> allDifferent(0+weighted(-2*x#int_direct_1, -1*x#int_direct_2, 0*x#int_direct_3, 1*x#int_direct_4, 2*x#int_direct_5, 3*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#int_direct_1, -1:x#int_direct_2, 0:x#int_direct_3, 1:x#int_direct_4, 2:x#int_direct_5, 3:x#int_direct_6), 0+weighted(-2*y#int_direct_1, -1*y#int_direct_2, 0*y#int_direct_3, 1*y#int_direct_4, 2*y#int_direct_5, 3*y#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#int_direct_1, -1:y#int_direct_2, 0:y#int_direct_3, 1:y#int_direct_4, 2:y#int_direct_5, 3:y#int_direct_6), 0+weighted(-2*z#int_direct_1, -1*z#int_direct_2, 0*z#int_direct_3, 1*z#int_direct_4, 2*z#int_direct_5, 3*z#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:z#int_direct_1, -1:z#int_direct_2, 0:z#int_direct_3, 1:z#int_direct_4, 2:z#int_direct_5, 3:z#int_direct_6))) using None, AMO None, PB None
+  define(__4 <-> allDifferent(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), 0+weighted(-2*z#direct_1, -1*z#direct_2, 0*z#direct_3, 1*z#direct_4, 2*z#direct_5, 3*z#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:z#direct_1, -1:z#direct_2, 0:z#direct_3, 1:z#direct_4, 2:z#direct_5, 3:z#direct_6))) using None, AMO None, PB None
 
 --
 
@@ -243,33 +243,33 @@ new SAT encoding decisions:
 
 --
 
-or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)])
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __8
 new variables:
   findAux __8: bool
 new SAT encoding decisions:
-  define(__8 <-> or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)])) using tseitin
+  define(__8 <-> or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin
 
 --
 
-or([z#int_direct_1,z#int_direct_3,z#int_direct_6;int(1..)])
+or([z#direct_1,z#direct_3,z#direct_6;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __9
 new variables:
   findAux __9: bool
 new SAT encoding decisions:
-  define(__9 <-> or([z#int_direct_1,z#int_direct_3,z#int_direct_6;int(1..)])) using tseitin
+  define(__9 <-> or([z#direct_1,z#direct_3,z#direct_6;int(1..)])) using tseitin
 
 --
 
-or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)])
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __10
 new variables:
   findAux __10: bool
 new SAT encoding decisions:
-  define(__10 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)])) using tseitin
+  define(__10 <-> or([x#direct_1,x#direct_3,x#direct_6;int(1..)])) using tseitin
 
 --
 
@@ -396,25 +396,25 @@ find booleanDistinct: bool
 find c: bool
 find distinct: bool
 findAux __0: bool
-find y#int_direct_1: bool
-find y#int_direct_2: bool
-find y#int_direct_3: bool
-find y#int_direct_4: bool
-find y#int_direct_5: bool
-find y#int_direct_6: bool
-find z#int_direct_1: bool
-find z#int_direct_2: bool
-find z#int_direct_3: bool
-find z#int_direct_4: bool
-find z#int_direct_5: bool
-find z#int_direct_6: bool
+find y#direct_1: bool
+find y#direct_2: bool
+find y#direct_3: bool
+find y#direct_4: bool
+find y#direct_5: bool
+find y#direct_6: bool
+find z#direct_1: bool
+find z#direct_2: bool
+find z#direct_3: bool
+find z#direct_4: bool
+find z#direct_5: bool
+find z#direct_6: bool
 findAux __1: bool
-find x#int_direct_1: bool
-find x#int_direct_2: bool
-find x#int_direct_3: bool
-find x#int_direct_4: bool
-find x#int_direct_5: bool
-find x#int_direct_6: bool
+find x#direct_1: bool
+find x#direct_2: bool
+find x#direct_3: bool
+find x#direct_4: bool
+find x#direct_5: bool
+find x#direct_6: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
@@ -432,19 +432,19 @@ true
 sat encoding decisions:
 
 define(__0 <-> allDifferent(0+weighted(1*b) with [] choices(0:!(b), 1:b), 0+weighted(1*c) with [] choices(0:!(c), 1:c))) using Some(EncodingSelection { algorithm: ValueAmo, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
-define(__1 <-> allDifferent(0+weighted(-2*y#int_direct_1, -1*y#int_direct_2, 0*y#int_direct_3, 1*y#int_direct_4, 2*y#int_direct_5, 3*y#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#int_direct_1, -1:y#int_direct_2, 0:y#int_direct_3, 1:y#int_direct_4, 2:y#int_direct_5, 3:y#int_direct_6), 0+weighted(-2*z#int_direct_1, -1*z#int_direct_2, 0*z#int_direct_3, 1*z#int_direct_4, 2*z#int_direct_5, 3*z#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:z#int_direct_1, -1:z#int_direct_2, 0:z#int_direct_3, 1:z#int_direct_4, 2:z#int_direct_5, 3:z#int_direct_6))) using Some(EncodingSelection { algorithm: ValueAmo, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
-at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3, y#int_direct_4, y#int_direct_5, y#int_direct_6) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-at-most-one(z#int_direct_1, z#int_direct_2, z#int_direct_3, z#int_direct_4, z#int_direct_5, z#int_direct_6) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-define(__2 <-> allDifferent(0+weighted(-2*x#int_direct_1, -1*x#int_direct_2, 0*x#int_direct_3, 1*x#int_direct_4, 2*x#int_direct_5, 3*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#int_direct_1, -1:x#int_direct_2, 0:x#int_direct_3, 1:x#int_direct_4, 2:x#int_direct_5, 3:x#int_direct_6), 0+weighted() with [] choices(0:true))) using Some(EncodingSelection { algorithm: ValueAmo, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
-at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-define(__3 <-> allDifferent(0+weighted(-2*x#int_direct_1, -1*x#int_direct_2, 0*x#int_direct_3, 1*x#int_direct_4, 2*x#int_direct_5, 3*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#int_direct_1, -1:x#int_direct_2, 0:x#int_direct_3, 1:x#int_direct_4, 2:x#int_direct_5, 3:x#int_direct_6), 0+weighted(-2*x#int_direct_1, -1*x#int_direct_2, 0*x#int_direct_3, 1*x#int_direct_4, 2*x#int_direct_5, 3*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#int_direct_1, -1:x#int_direct_2, 0:x#int_direct_3, 1:x#int_direct_4, 2:x#int_direct_5, 3:x#int_direct_6))) using Some(EncodingSelection { algorithm: ValueAmo, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
-define(__4 <-> allDifferent(0+weighted(-2*x#int_direct_1, -1*x#int_direct_2, 0*x#int_direct_3, 1*x#int_direct_4, 2*x#int_direct_5, 3*x#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#int_direct_1, -1:x#int_direct_2, 0:x#int_direct_3, 1:x#int_direct_4, 2:x#int_direct_5, 3:x#int_direct_6), 0+weighted(-2*y#int_direct_1, -1*y#int_direct_2, 0*y#int_direct_3, 1*y#int_direct_4, 2*y#int_direct_5, 3*y#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#int_direct_1, -1:y#int_direct_2, 0:y#int_direct_3, 1:y#int_direct_4, 2:y#int_direct_5, 3:y#int_direct_6), 0+weighted(-2*z#int_direct_1, -1*z#int_direct_2, 0*z#int_direct_3, 1*z#int_direct_4, 2*z#int_direct_5, 3*z#int_direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:z#int_direct_1, -1:z#int_direct_2, 0:z#int_direct_3, 1:z#int_direct_4, 2:z#int_direct_5, 3:z#int_direct_6))) using Some(EncodingSelection { algorithm: ValueAmo, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+define(__1 <-> allDifferent(0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), 0+weighted(-2*z#direct_1, -1*z#direct_2, 0*z#direct_3, 1*z#direct_4, 2*z#direct_5, 3*z#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:z#direct_1, -1:z#direct_2, 0:z#direct_3, 1:z#direct_4, 2:z#direct_5, 3:z#direct_6))) using Some(EncodingSelection { algorithm: ValueAmo, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+at-most-one(y#direct_1, y#direct_2, y#direct_3, y#direct_4, y#direct_5, y#direct_6) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+at-most-one(z#direct_1, z#direct_2, z#direct_3, z#direct_4, z#direct_5, z#direct_6) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__2 <-> allDifferent(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted() with [] choices(0:true))) using Some(EncodingSelection { algorithm: ValueAmo, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__3 <-> allDifferent(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6))) using Some(EncodingSelection { algorithm: ValueAmo, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+define(__4 <-> allDifferent(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), 0+weighted(-2*z#direct_1, -1*z#direct_2, 0*z#direct_3, 1*z#direct_4, 2*z#direct_5, 3*z#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:z#direct_1, -1:z#direct_2, 0:z#direct_3, 1:z#direct_4, 2:z#direct_5, 3:z#direct_6))) using Some(EncodingSelection { algorithm: ValueAmo, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
 define(__5 <-> !(__3)) using tseitin,
 define(__6 <-> (distinct) <-> (__4)) using tseitin,
 define(__7 <-> (booleanDistinct) <-> (__0)) using tseitin,
-define(__8 <-> or([y#int_direct_1,y#int_direct_3,y#int_direct_6;int(1..)])) using tseitin,
-define(__9 <-> or([z#int_direct_1,z#int_direct_3,z#int_direct_6;int(1..)])) using tseitin,
-define(__10 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_6;int(1..)])) using tseitin,
+define(__8 <-> or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin,
+define(__9 <-> or([z#direct_1,z#direct_3,z#direct_6;int(1..)])) using tseitin,
+define(__10 <-> or([x#direct_1,x#direct_3,x#direct_6;int(1..)])) using tseitin,
 assert(__1) using tseitin,
 assert(__5) using tseitin,
 assert(__2) using tseitin,

@@ -14,10 +14,10 @@ a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
 new variables:
-  find a#int_direct_1: bool
+  find a#direct_1: bool
 new constraints:
-  sum([toInt(a#int_direct_1);int(1..)]) <= 1
-  or([a#int_direct_1;int(1..)])
+  sum([toInt(a#direct_1);int(1..)]) <= 1
+  or([a#direct_1;int(1..)])
 
 --
 
@@ -27,20 +27,20 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(3*a#int_direct_1) Less 100) using None with [PbTermGroup { start: 0, end: 1, structure: Choice }]
+  define(__0 <-> integer-weighted(3*a#direct_1) Less 100) using None with [PbTermGroup { start: 0, end: 1, structure: Choice }]
 
 --
 
 __0,
 b < 100,
-sum([toInt(a#int_direct_1);int(1..)]) <= 1,
-or([a#int_direct_1;int(1..)])
+sum([toInt(a#direct_1);int(1..)]) <= 1,
+or([a#direct_1;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 __0,
 b < 100,
-or([a#int_direct_1;int(1..)])
+or([a#direct_1;int(1..)])
 new SAT encoding decisions:
-  at-most-one(a#int_direct_1) using None
+  at-most-one(a#direct_1) using None
 
 --
 
@@ -48,14 +48,14 @@ b
    ~~> select_representation ([("ReprGeneral", 10000)])
 b
 new variables:
-  find b#int_direct_1: bool
-  find b#int_direct_2: bool
-  find b#int_direct_3: bool
-  find b#int_direct_4: bool
-  find b#int_direct_5: bool
+  find b#direct_1: bool
+  find b#direct_2: bool
+  find b#direct_3: bool
+  find b#direct_4: bool
+  find b#direct_5: bool
 new constraints:
-  sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3),toInt(b#int_direct_4),toInt(b#int_direct_5);int(1..)]) <= 1
-  or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+  sum([toInt(b#direct_1),toInt(b#direct_2),toInt(b#direct_3),toInt(b#direct_4),toInt(b#direct_5);int(1..)]) <= 1
+  or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
 
 --
 
@@ -65,48 +65,48 @@ __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*b#int_direct_1, 2*b#int_direct_2, 3*b#int_direct_3, 4*b#int_direct_4, 5*b#int_direct_5) Less 100) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }]
+  define(__1 <-> integer-weighted(1*b#direct_1, 2*b#direct_2, 3*b#direct_3, 4*b#direct_4, 5*b#direct_5) Less 100) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }]
 
 --
 
 __0,
 __1,
-or([a#int_direct_1;int(1..)]),
-sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3),toInt(b#int_direct_4),toInt(b#int_direct_5);int(1..)]) <= 1,
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+or([a#direct_1;int(1..)]),
+sum([toInt(b#direct_1),toInt(b#direct_2),toInt(b#direct_3),toInt(b#direct_4),toInt(b#direct_5);int(1..)]) <= 1,
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 __0,
 __1,
-or([a#int_direct_1;int(1..)]),
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+or([a#direct_1;int(1..)]),
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
 new SAT encoding decisions:
-  at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3, b#int_direct_4, b#int_direct_5) using None
+  at-most-one(b#direct_1, b#direct_2, b#direct_3, b#direct_4, b#direct_5) using None
 
 --
 
-or([a#int_direct_1;int(1..)])
+or([a#direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-a#int_direct_1
+a#direct_1
 
 --
 
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])) using tseitin
+  define(__2 <-> or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])) using tseitin
 
 --
 
 __0,
 __1,
-a#int_direct_1,
+a#direct_1,
 __2
    ~~> remove_single_atom ([("SAT", 8400)])
 __1,
-a#int_direct_1,
+a#direct_1,
 __2
 new SAT encoding decisions:
   assert(__0) using tseitin
@@ -114,22 +114,22 @@ new SAT encoding decisions:
 --
 
 __1,
-a#int_direct_1,
+a#direct_1,
 __2
    ~~> remove_single_atom ([("SAT", 8400)])
-a#int_direct_1,
+a#direct_1,
 __2
 new SAT encoding decisions:
   assert(__1) using tseitin
 
 --
 
-a#int_direct_1,
+a#direct_1,
 __2
    ~~> remove_single_atom ([("SAT", 8400)])
 __2
 new SAT encoding decisions:
-  assert(a#int_direct_1) using tseitin
+  assert(a#direct_1) using tseitin
 
 --
 
@@ -145,13 +145,13 @@ Final model:
 
 find a: int(3)
 find b: int(1..5)
-find a#int_direct_1: bool
+find a#direct_1: bool
 findAux __0: bool
-find b#int_direct_1: bool
-find b#int_direct_2: bool
-find b#int_direct_3: bool
-find b#int_direct_4: bool
-find b#int_direct_5: bool
+find b#direct_1: bool
+find b#direct_2: bool
+find b#direct_3: bool
+find b#direct_4: bool
+find b#direct_5: bool
 findAux __1: bool
 findAux __2: bool
 
@@ -161,13 +161,13 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(3*a#int_direct_1) Less 100) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Choice }],
-at-most-one(a#int_direct_1) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
-define(__1 <-> integer-weighted(1*b#int_direct_1, 2*b#int_direct_2, 3*b#int_direct_3, 4*b#int_direct_4, 5*b#int_direct_5) Less 100) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }],
-at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3, b#int_direct_4, b#int_direct_5) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
-define(__2 <-> or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(3*a#direct_1) Less 100) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Choice }],
+at-most-one(a#direct_1) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+define(__1 <-> integer-weighted(1*b#direct_1, 2*b#direct_2, 3*b#direct_3, 4*b#direct_4, 5*b#direct_5) Less 100) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }],
+at-most-one(b#direct_1, b#direct_2, b#direct_3, b#direct_4, b#direct_5) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+define(__2 <-> or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])) using tseitin,
 assert(__0) using tseitin,
 assert(__1) using tseitin,
-assert(a#int_direct_1) using tseitin,
+assert(a#direct_1) using tseitin,
 assert(__2) using tseitin
 

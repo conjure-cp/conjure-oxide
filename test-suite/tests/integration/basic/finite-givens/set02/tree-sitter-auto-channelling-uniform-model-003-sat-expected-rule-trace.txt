@@ -9,36 +9,36 @@ true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true
 new variables:
-  find x#int_direct_1: bool
+  find x#direct_1: bool
 new constraints:
-  sum([toInt(x#int_direct_1);int(1..)]) <= 1
-  or([x#int_direct_1;int(1..)])
+  sum([toInt(x#direct_1);int(1..)]) <= 1
+  or([x#direct_1;int(1..)])
 
 --
 
 true,
-sum([toInt(x#int_direct_1);int(1..)]) <= 1,
-or([x#int_direct_1;int(1..)])
+sum([toInt(x#direct_1);int(1..)]) <= 1,
+or([x#direct_1;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 true,
-or([x#int_direct_1;int(1..)])
+or([x#direct_1;int(1..)])
 new SAT encoding decisions:
-  at-most-one(x#int_direct_1) using None
+  at-most-one(x#direct_1) using None
 
 --
 
-or([x#int_direct_1;int(1..)])
+or([x#direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-x#int_direct_1
+x#direct_1
 
 --
 
 true,
-x#int_direct_1
+x#direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(x#int_direct_1) using tseitin
+  assert(x#direct_1) using tseitin
 
 --
 
@@ -46,7 +46,7 @@ Final model:
 
 letting a be {1,2,3,4}
 find x: int((|a|))
-find x#int_direct_1: bool
+find x#direct_1: bool
 
 such that
 
@@ -54,6 +54,6 @@ true
 
 sat encoding decisions:
 
-at-most-one(x#int_direct_1) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
-assert(x#int_direct_1) using tseitin
+at-most-one(x#direct_1) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+assert(x#direct_1) using tseitin
 

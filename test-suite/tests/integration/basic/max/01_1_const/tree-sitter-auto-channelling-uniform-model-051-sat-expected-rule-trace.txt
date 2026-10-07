@@ -12,43 +12,43 @@ a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
 new variables:
-  find a#int_offset_1: bool
-  find a#int_offset_2: bool
+  find a#offset_1: bool
+  find a#offset_2: bool
 new constraints:
-  or([!(a#int_offset_2),or([!(a#int_offset_1),true;int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 3]) >= 0,SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+  or([!(a#offset_2),or([!(a#offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 3]) >= 0,SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
 
 --
 
-SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 3]) >= 0
+SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 3]) >= 0
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__0 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
-SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 3]) <= 3
+SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 3]) <= 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) LessEqual 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__1 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) LessEqual 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
 a
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 3])
+SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 3])
 
 --
 
-max([2,SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 3]);int(1..2)])
+max([2,SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 3]);int(1..2)])
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-max([SATInt(Offset, [false;int(1..)] [2, 2]),SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 3]);int(1..2)])
+max([SATInt(Offset, [false;int(1..)] [2, 2]),SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 3]);int(1..2)])
 
 --
 
@@ -68,18 +68,18 @@ new SAT encoding decisions:
 
 --
 
-max([SATInt(Offset, [false;int(1..)] [2, 2]),SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 3]);int(1..2)]) <= 2,
+max([SATInt(Offset, [false;int(1..)] [2, 2]),SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 3]);int(1..2)]) <= 2,
 true,
 __2
    ~~> remove_single_atom ([("SAT", 8400)])
-max([SATInt(Offset, [false;int(1..)] [2, 2]),SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 3]);int(1..2)]) <= 2,
+max([SATInt(Offset, [false;int(1..)] [2, 2]),SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 3]);int(1..2)]) <= 2,
 true
 new SAT encoding decisions:
   assert(__2) using tseitin
 
 --
 
-max([SATInt(Offset, [false;int(1..)] [2, 2]),SATInt(Offset, [a#int_offset_1,a#int_offset_2;int(1..)] [0, 3]);int(1..2)])
+max([SATInt(Offset, [false;int(1..)] [2, 2]),SATInt(Offset, [a#offset_1,a#offset_2;int(1..)] [0, 3]);int(1..2)])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 max([SATInt(Log, [__3,__6,__8;int(1..)] [2, 2]),SATInt(Log, [__10,__12,__14;int(1..)] [0, 3]);int(1..2)])
 new variables:
@@ -104,10 +104,10 @@ new SAT encoding decisions:
   define(__7 <-> or([false,__4;int(1..)])) using tseitin
   define(__8 <-> !((false) <-> (__7))) using tseitin
   define(__9 <-> and([false,__7;int(1..)])) using tseitin
-  define(__10 <-> !((a#int_offset_1) <-> (false))) using tseitin
-  define(__11 <-> and([a#int_offset_1,false;int(1..)])) using tseitin
-  define(__12 <-> !((a#int_offset_2) <-> (__11))) using tseitin
-  define(__13 <-> and([a#int_offset_2,__11;int(1..)])) using tseitin
+  define(__10 <-> !((a#offset_1) <-> (false))) using tseitin
+  define(__11 <-> and([a#offset_1,false;int(1..)])) using tseitin
+  define(__12 <-> !((a#offset_2) <-> (__11))) using tseitin
+  define(__13 <-> and([a#offset_2,__11;int(1..)])) using tseitin
   define(__14 <-> !((false) <-> (__13))) using tseitin
   define(__15 <-> and([false,__13;int(1..)])) using tseitin
 
@@ -173,8 +173,8 @@ new SAT encoding decisions:
 Final model:
 
 find a: int(0..3)
-find a#int_offset_1: bool
-find a#int_offset_2: bool
+find a#offset_1: bool
+find a#offset_2: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -214,8 +214,8 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__1 <-> integer-weighted(1*a#int_offset_1, 2*a#int_offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__0 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__1 <-> integer-weighted(1*a#offset_1, 2*a#offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
 define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
 assert(__2) using tseitin,
 define(__3 <-> !((false) <-> (false))) using tseitin,
@@ -225,10 +225,10 @@ define(__6 <-> !(__5)) using tseitin,
 define(__7 <-> or([false,__4;int(1..)])) using tseitin,
 define(__8 <-> !((false) <-> (__7))) using tseitin,
 define(__9 <-> and([false,__7;int(1..)])) using tseitin,
-define(__10 <-> !((a#int_offset_1) <-> (false))) using tseitin,
-define(__11 <-> and([a#int_offset_1,false;int(1..)])) using tseitin,
-define(__12 <-> !((a#int_offset_2) <-> (__11))) using tseitin,
-define(__13 <-> and([a#int_offset_2,__11;int(1..)])) using tseitin,
+define(__10 <-> !((a#offset_1) <-> (false))) using tseitin,
+define(__11 <-> and([a#offset_1,false;int(1..)])) using tseitin,
+define(__12 <-> !((a#offset_2) <-> (__11))) using tseitin,
+define(__13 <-> and([a#offset_2,__11;int(1..)])) using tseitin,
 define(__14 <-> !((false) <-> (__13))) using tseitin,
 define(__15 <-> and([false,__13;int(1..)])) using tseitin,
 define(__16 <-> !(__3)) using tseitin,

@@ -15,14 +15,14 @@ y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
 new variables:
-  find y#int_order_1: bool
-  find y#int_order_2: bool
-  find y#int_order_3: bool
+  find y#order_1: bool
+  find y#order_2: bool
+  find y#order_3: bool
 new constraints:
-  y#int_order_1
-  or([!(y#int_order_2),y#int_order_1;int(1..)])
-  or([!(y#int_order_3),y#int_order_2;int(1..)])
-  or([and([SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) >= 1,SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  y#order_1
+  or([!(y#order_2),y#order_1;int(1..)])
+  or([!(y#order_3),y#order_2;int(1..)])
+  or([and([SATInt(Order, [y#order_1,y#order_2,y#order_3;int(1..)] [1, 3]) >= 1,SATInt(Order, [y#order_1,y#order_2,y#order_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
 
 --
 
@@ -32,47 +32,47 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3) Less 2) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
+  define(__0 <-> integer-weighted(1*y#order_2, 1*y#order_3) Less 2) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
 
 --
 
-SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) >= 1
+SATInt(Order, [y#order_1,y#order_2,y#order_3;int(1..)] [1, 3]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
+  define(__1 <-> integer-weighted(1*y#order_2, 1*y#order_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
 
 --
 
-SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) <= 3
+SATInt(Order, [y#order_1,y#order_2,y#order_3;int(1..)] [1, 3]) <= 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
+  define(__2 <-> integer-weighted(1*y#order_2, 1*y#order_3) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
 
 --
 
-!(y#int_order_2)
+!(y#order_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> !(y#int_order_2)) using tseitin
+  define(__3 <-> !(y#order_2)) using tseitin
 
 --
 
-!(y#int_order_3)
+!(y#order_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> !(y#int_order_3)) using tseitin
+  define(__4 <-> !(y#order_3)) using tseitin
 
 --
 
@@ -82,13 +82,13 @@ and([__1,__2;int(1..)])
 
 --
 
-or([__4,y#int_order_2;int(1..)])
+or([__4,y#order_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> or([__4,y#int_order_2;int(1..)])) using tseitin
+  define(__5 <-> or([__4,y#order_2;int(1..)])) using tseitin
 
 --
 
@@ -102,13 +102,13 @@ new SAT encoding decisions:
 
 --
 
-or([__3,y#int_order_1;int(1..)])
+or([__3,y#order_1;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __7
 new variables:
   findAux __7: bool
 new SAT encoding decisions:
-  define(__7 <-> or([__3,y#int_order_1;int(1..)])) using tseitin
+  define(__7 <-> or([__3,y#order_1;int(1..)])) using tseitin
 
 --
 
@@ -123,12 +123,12 @@ new SAT encoding decisions:
 --
 
 __8,
-y#int_order_1,
+y#order_1,
 __7,
 __5,
 __6
    ~~> remove_single_atom ([("SAT", 8400)])
-y#int_order_1,
+y#order_1,
 __7,
 __5,
 __6
@@ -137,7 +137,7 @@ new SAT encoding decisions:
 
 --
 
-y#int_order_1,
+y#order_1,
 __7,
 __5,
 __6
@@ -146,7 +146,7 @@ __7,
 __5,
 __6
 new SAT encoding decisions:
-  assert(y#int_order_1) using tseitin
+  assert(y#order_1) using tseitin
 
 --
 
@@ -184,9 +184,9 @@ letting A be domain bool
 letting B be domain int(1..3)
 find x: A
 find y: B
-find y#int_order_1: bool
-find y#int_order_2: bool
-find y#int_order_3: bool
+find y#order_1: bool
+find y#order_2: bool
+find y#order_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -203,17 +203,17 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3) Less 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
-define(__1 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
-define(__2 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
-define(__3 <-> !(y#int_order_2)) using tseitin,
-define(__4 <-> !(y#int_order_3)) using tseitin,
-define(__5 <-> or([__4,y#int_order_2;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(1*y#order_2, 1*y#order_3) Less 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
+define(__1 <-> integer-weighted(1*y#order_2, 1*y#order_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
+define(__2 <-> integer-weighted(1*y#order_2, 1*y#order_3) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
+define(__3 <-> !(y#order_2)) using tseitin,
+define(__4 <-> !(y#order_3)) using tseitin,
+define(__5 <-> or([__4,y#order_2;int(1..)])) using tseitin,
 define(__6 <-> and([__1,__2;int(1..)])) using tseitin,
-define(__7 <-> or([__3,y#int_order_1;int(1..)])) using tseitin,
+define(__7 <-> or([__3,y#order_1;int(1..)])) using tseitin,
 define(__8 <-> (x) -> (__0)) using tseitin,
 assert(__8) using tseitin,
-assert(y#int_order_1) using tseitin,
+assert(y#order_1) using tseitin,
 assert(__7) using tseitin,
 assert(__5) using tseitin,
 assert(__6) using tseitin

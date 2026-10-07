@@ -14,13 +14,13 @@ j
    ~~> select_representation ([("ReprGeneral", 10000)])
 j
 new variables:
-  find j#int_offset_1: bool
-  find j#int_offset_2: bool
-  find j#int_offset_3: bool
-  find j#int_offset_4: bool
+  find j#offset_1: bool
+  find j#offset_2: bool
+  find j#offset_3: bool
+  find j#offset_4: bool
 new constraints:
-  or([!(j#int_offset_4),and([!(j#int_offset_3),or([!(j#int_offset_2),and([!(j#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [j#int_offset_1,j#int_offset_2,j#int_offset_3,j#int_offset_4;int(1..)] [0, 10]) >= 0,SATInt(Offset, [j#int_offset_1,j#int_offset_2,j#int_offset_3,j#int_offset_4;int(1..)] [0, 10]) <= 10;int(1..)]);int(1..)])
+  or([!(j#offset_4),and([!(j#offset_3),or([!(j#offset_2),and([!(j#offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [j#offset_1,j#offset_2,j#offset_3,j#offset_4;int(1..)] [0, 10]) >= 0,SATInt(Offset, [j#offset_1,j#offset_2,j#offset_3,j#offset_4;int(1..)] [0, 10]) <= 10;int(1..)]);int(1..)])
 
 --
 
@@ -30,67 +30,67 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*j#int_offset_1, 2*j#int_offset_2, 4*j#int_offset_3, 8*j#int_offset_4) Equal 6) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 10 } }]
+  define(__0 <-> integer-weighted(1*j#offset_1, 2*j#offset_2, 4*j#offset_3, 8*j#offset_4) Equal 6) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 10 } }]
 
 --
 
-SATInt(Offset, [j#int_offset_1,j#int_offset_2,j#int_offset_3,j#int_offset_4;int(1..)] [0, 10]) >= 0
+SATInt(Offset, [j#offset_1,j#offset_2,j#offset_3,j#offset_4;int(1..)] [0, 10]) >= 0
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*j#int_offset_1, 2*j#int_offset_2, 4*j#int_offset_3, 8*j#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 10 } }]
+  define(__1 <-> integer-weighted(1*j#offset_1, 2*j#offset_2, 4*j#offset_3, 8*j#offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 10 } }]
 
 --
 
-SATInt(Offset, [j#int_offset_1,j#int_offset_2,j#int_offset_3,j#int_offset_4;int(1..)] [0, 10]) <= 10
+SATInt(Offset, [j#offset_1,j#offset_2,j#offset_3,j#offset_4;int(1..)] [0, 10]) <= 10
    ~~> select_integer_relation ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*j#int_offset_1, 2*j#int_offset_2, 4*j#int_offset_3, 8*j#int_offset_4) LessEqual 10) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 10 } }]
+  define(__2 <-> integer-weighted(1*j#offset_1, 2*j#offset_2, 4*j#offset_3, 8*j#offset_4) LessEqual 10) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 10 } }]
 
 --
 
-!(j#int_offset_4)
+!(j#offset_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> !(j#int_offset_4)) using tseitin
+  define(__3 <-> !(j#offset_4)) using tseitin
 
 --
 
-!(j#int_offset_3)
+!(j#offset_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> !(j#int_offset_3)) using tseitin
+  define(__4 <-> !(j#offset_3)) using tseitin
 
 --
 
-!(j#int_offset_2)
+!(j#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> !(j#int_offset_2)) using tseitin
+  define(__5 <-> !(j#offset_2)) using tseitin
 
 --
 
-!(j#int_offset_1)
+!(j#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __6
 new variables:
   findAux __6: bool
 new SAT encoding decisions:
-  define(__6 <-> !(j#int_offset_1)) using tseitin
+  define(__6 <-> !(j#offset_1)) using tseitin
 
 --
 
@@ -179,10 +179,10 @@ Final model:
 letting i be 6
 letting p be permutation(1,3,4)
 find j: int(0..10)
-find j#int_offset_1: bool
-find j#int_offset_2: bool
-find j#int_offset_3: bool
-find j#int_offset_4: bool
+find j#offset_1: bool
+find j#offset_2: bool
+find j#offset_3: bool
+find j#offset_4: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -201,13 +201,13 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*j#int_offset_1, 2*j#int_offset_2, 4*j#int_offset_3, 8*j#int_offset_4) Equal 6) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 10 } }],
-define(__1 <-> integer-weighted(1*j#int_offset_1, 2*j#int_offset_2, 4*j#int_offset_3, 8*j#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 10 } }],
-define(__2 <-> integer-weighted(1*j#int_offset_1, 2*j#int_offset_2, 4*j#int_offset_3, 8*j#int_offset_4) LessEqual 10) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 10 } }],
-define(__3 <-> !(j#int_offset_4)) using tseitin,
-define(__4 <-> !(j#int_offset_3)) using tseitin,
-define(__5 <-> !(j#int_offset_2)) using tseitin,
-define(__6 <-> !(j#int_offset_1)) using tseitin,
+define(__0 <-> integer-weighted(1*j#offset_1, 2*j#offset_2, 4*j#offset_3, 8*j#offset_4) Equal 6) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 10 } }],
+define(__1 <-> integer-weighted(1*j#offset_1, 2*j#offset_2, 4*j#offset_3, 8*j#offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 10 } }],
+define(__2 <-> integer-weighted(1*j#offset_1, 2*j#offset_2, 4*j#offset_3, 8*j#offset_4) LessEqual 10) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 10 } }],
+define(__3 <-> !(j#offset_4)) using tseitin,
+define(__4 <-> !(j#offset_3)) using tseitin,
+define(__5 <-> !(j#offset_2)) using tseitin,
+define(__6 <-> !(j#offset_1)) using tseitin,
 define(__7 <-> and([__1,__2;int(1..)])) using tseitin,
 define(__8 <-> or([__5,__6;int(1..)])) using tseitin,
 define(__9 <-> and([__4,__8;int(1..)])) using tseitin,

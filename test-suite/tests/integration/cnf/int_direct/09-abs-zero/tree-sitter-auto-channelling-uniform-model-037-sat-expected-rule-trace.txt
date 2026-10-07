@@ -13,10 +13,10 @@ b
    ~~> select_representation ([("ReprGeneral", 10000)])
 b
 new variables:
-  find b#int_direct_1: bool
+  find b#direct_1: bool
 new constraints:
-  sum([toInt(b#int_direct_1);int(1..)]) <= 1
-  or([b#int_direct_1;int(1..)])
+  sum([toInt(b#direct_1);int(1..)]) <= 1
+  or([b#direct_1;int(1..)])
 
 --
 
@@ -24,106 +24,106 @@ a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
 new variables:
-  find a#int_direct_1: bool
+  find a#direct_1: bool
 new constraints:
-  sum([toInt(a#int_direct_1);int(1..)]) <= 1
-  or([a#int_direct_1;int(1..)])
+  sum([toInt(a#direct_1);int(1..)]) <= 1
+  or([a#direct_1;int(1..)])
 
 --
 
 b = |a|,
-sum([toInt(b#int_direct_1);int(1..)]) <= 1,
-or([b#int_direct_1;int(1..)]),
-sum([toInt(a#int_direct_1);int(1..)]) <= 1,
-or([a#int_direct_1;int(1..)])
+sum([toInt(b#direct_1);int(1..)]) <= 1,
+or([b#direct_1;int(1..)]),
+sum([toInt(a#direct_1);int(1..)]) <= 1,
+or([a#direct_1;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 b = |a|,
-or([b#int_direct_1;int(1..)]),
-sum([toInt(a#int_direct_1);int(1..)]) <= 1,
-or([a#int_direct_1;int(1..)])
+or([b#direct_1;int(1..)]),
+sum([toInt(a#direct_1);int(1..)]) <= 1,
+or([a#direct_1;int(1..)])
 new SAT encoding decisions:
-  at-most-one(b#int_direct_1) using None
+  at-most-one(b#direct_1) using None
 
 --
 
 b = |a|,
-or([b#int_direct_1;int(1..)]),
-sum([toInt(a#int_direct_1);int(1..)]) <= 1,
-or([a#int_direct_1;int(1..)])
+or([b#direct_1;int(1..)]),
+sum([toInt(a#direct_1);int(1..)]) <= 1,
+or([a#direct_1;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 b = |a|,
-or([b#int_direct_1;int(1..)]),
-or([a#int_direct_1;int(1..)])
+or([b#direct_1;int(1..)]),
+or([a#direct_1;int(1..)])
 new SAT encoding decisions:
-  at-most-one(a#int_direct_1) using None
+  at-most-one(a#direct_1) using None
 
 --
 
 b
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0])
+SATInt(Direct, [b#direct_1;int(1..)] [0, 0])
 
 --
 
 a
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0])
+SATInt(Direct, [a#direct_1;int(1..)] [0, 0])
 
 --
 
-|SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0])|
+|SATInt(Direct, [a#direct_1;int(1..)] [0, 0])|
    ~~> abs_value_sat_direct ([("SAT", 9100)])
-SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0])
+SATInt(Direct, [a#direct_1;int(1..)] [0, 0])
 
 --
 
-SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0]) = SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0])
+SATInt(Direct, [b#direct_1;int(1..)] [0, 0]) = SATInt(Direct, [a#direct_1;int(1..)] [0, 0])
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(0*b#int_direct_1, 0*a#int_direct_1) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }]
+  define(__0 <-> integer-weighted(0*b#direct_1, 0*a#direct_1) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }]
 
 --
 
-or([b#int_direct_1;int(1..)])
+or([b#direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-b#int_direct_1
+b#direct_1
 
 --
 
-or([a#int_direct_1;int(1..)])
+or([a#direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-a#int_direct_1
+a#direct_1
 
 --
 
 __0,
-b#int_direct_1,
-a#int_direct_1
+b#direct_1,
+a#direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
-b#int_direct_1,
-a#int_direct_1
+b#direct_1,
+a#direct_1
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
-b#int_direct_1,
-a#int_direct_1
+b#direct_1,
+a#direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
-a#int_direct_1
+a#direct_1
 new SAT encoding decisions:
-  assert(b#int_direct_1) using tseitin
+  assert(b#direct_1) using tseitin
 
 --
 
-a#int_direct_1
+a#direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(a#int_direct_1) using tseitin
+  assert(a#direct_1) using tseitin
 
 --
 
@@ -131,8 +131,8 @@ Final model:
 
 find a: int(0..0)
 find b: int(0..0)
-find b#int_direct_1: bool
-find a#int_direct_1: bool
+find b#direct_1: bool
+find a#direct_1: bool
 findAux __0: bool
 
 such that
@@ -141,10 +141,10 @@ true
 
 sat encoding decisions:
 
-at-most-one(b#int_direct_1) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
-at-most-one(a#int_direct_1) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
-define(__0 <-> integer-weighted(0*b#int_direct_1, 0*a#int_direct_1) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }],
+at-most-one(b#direct_1) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+at-most-one(a#direct_1) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__0 <-> integer-weighted(0*b#direct_1, 0*a#direct_1) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }],
 assert(__0) using tseitin,
-assert(b#int_direct_1) using tseitin,
-assert(a#int_direct_1) using tseitin
+assert(b#direct_1) using tseitin,
+assert(a#direct_1) using tseitin
 

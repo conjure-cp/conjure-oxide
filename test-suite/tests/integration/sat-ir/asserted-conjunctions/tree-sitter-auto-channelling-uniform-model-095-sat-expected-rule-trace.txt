@@ -54,11 +54,11 @@ y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
 new variables:
-  find y#int_log_1: bool
-  find y#int_log_2: bool
-  find y#int_log_3: bool
+  find y#twos_complement_1: bool
+  find y#twos_complement_2: bool
+  find y#twos_complement_3: bool
 new constraints:
-  or([and([SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [0, 3]) >= 0,SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [0, 3]) >= 0,SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
 
 --
 
@@ -68,27 +68,27 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3, -1*a, -1*b, -1*c) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__0 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3, -1*a, -1*b, -1*c) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
-SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [0, 3]) >= 0
+SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [0, 3]) >= 0
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__1 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
-SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [0, 3]) <= 3
+SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [0, 3]) <= 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__2 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -104,7 +104,7 @@ __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) LessEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__3 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) LessEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -174,9 +174,9 @@ find b: bool
 find c: bool
 find p: bool
 find y: int(0..3)
-find y#int_log_1: bool
-find y#int_log_2: bool
-find y#int_log_3: bool
+find y#twos_complement_1: bool
+find y#twos_complement_2: bool
+find y#twos_complement_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -193,10 +193,10 @@ sat encoding decisions:
 count(a, b, c) AtLeast 1 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
 count(a, b, c) AtMost 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
 weighted(2*a, 3*b, 1*c) AtMost 4 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
-define(__0 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3, -1*a, -1*b, -1*c) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__1 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__2 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__3 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) LessEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__0 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3, -1*a, -1*b, -1*c) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__1 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__2 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__3 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) LessEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 3 } }],
 define(__4 <-> and([__1,__2;int(1..)])) using tseitin,
 define(__5 <-> (__3) <-> (p)) using tseitin,
 assert(__0) using tseitin,

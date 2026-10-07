@@ -13,11 +13,11 @@ a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
 new variables:
-  find a#int_direct_1: bool
-  find a#int_direct_2: bool
+  find a#direct_1: bool
+  find a#direct_2: bool
 new constraints:
-  sum([toInt(a#int_direct_1),toInt(a#int_direct_2);int(1..)]) <= 1
-  or([a#int_direct_1,a#int_direct_2;int(1..)])
+  sum([toInt(a#direct_1),toInt(a#direct_2);int(1..)]) <= 1
+  or([a#direct_1,a#direct_2;int(1..)])
 
 --
 
@@ -27,28 +27,28 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*a#int_direct_1, 2*a#int_direct_2) Less 2) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+  define(__0 <-> integer-weighted(1*a#direct_1, 2*a#direct_2) Less 2) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
 __0,
-sum([toInt(a#int_direct_1),toInt(a#int_direct_2);int(1..)]) <= 1,
-or([a#int_direct_1,a#int_direct_2;int(1..)])
+sum([toInt(a#direct_1),toInt(a#direct_2);int(1..)]) <= 1,
+or([a#direct_1,a#direct_2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 __0,
-or([a#int_direct_1,a#int_direct_2;int(1..)])
+or([a#direct_1,a#direct_2;int(1..)])
 new SAT encoding decisions:
-  at-most-one(a#int_direct_1, a#int_direct_2) using None
+  at-most-one(a#direct_1, a#direct_2) using None
 
 --
 
-or([a#int_direct_1,a#int_direct_2;int(1..)])
+or([a#direct_1,a#direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> or([a#int_direct_1,a#int_direct_2;int(1..)])) using tseitin
+  define(__1 <-> or([a#direct_1,a#direct_2;int(1..)])) using tseitin
 
 --
 
@@ -73,8 +73,8 @@ Final model:
 
 letting n be 2
 find a: int(1..n)
-find a#int_direct_1: bool
-find a#int_direct_2: bool
+find a#direct_1: bool
+find a#direct_2: bool
 findAux __0: bool
 findAux __1: bool
 
@@ -84,9 +84,9 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*a#int_direct_1, 2*a#int_direct_2) Less 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
-at-most-one(a#int_direct_1, a#int_direct_2) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
-define(__1 <-> or([a#int_direct_1,a#int_direct_2;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(1*a#direct_1, 2*a#direct_2) Less 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+at-most-one(a#direct_1, a#direct_2) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
+define(__1 <-> or([a#direct_1,a#direct_2;int(1..)])) using tseitin,
 assert(__0) using tseitin,
 assert(__1) using tseitin
 

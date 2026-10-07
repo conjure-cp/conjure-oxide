@@ -18,14 +18,14 @@ y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
 new variables:
-  find y#int_direct_1: bool
-  find y#int_direct_2: bool
-  find y#int_direct_3: bool
-  find y#int_direct_4: bool
-  find y#int_direct_5: bool
+  find y#direct_1: bool
+  find y#direct_2: bool
+  find y#direct_3: bool
+  find y#direct_4: bool
+  find y#direct_5: bool
 new constraints:
-  sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4),toInt(y#int_direct_5);int(1..)]) <= 1
-  or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)])
+  sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3),toInt(y#direct_4),toInt(y#direct_5);int(1..)]) <= 1
+  or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)])
 
 --
 
@@ -33,14 +33,14 @@ y <= z
    ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
 y <= z
 new variables:
-  find z#int_direct_1: bool
-  find z#int_direct_2: bool
-  find z#int_direct_3: bool
-  find z#int_direct_4: bool
-  find z#int_direct_5: bool
+  find z#direct_1: bool
+  find z#direct_2: bool
+  find z#direct_3: bool
+  find z#direct_4: bool
+  find z#direct_5: bool
 new constraints:
-  sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5);int(1..)]) <= 1
-  or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5;int(1..)])
+  sum([toInt(z#direct_1),toInt(z#direct_2),toInt(z#direct_3),toInt(z#direct_4),toInt(z#direct_5);int(1..)]) <= 1
+  or([z#direct_1,z#direct_2,z#direct_3,z#direct_4,z#direct_5;int(1..)])
 
 --
 
@@ -50,7 +50,7 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3, 4*y#int_direct_4, 5*y#int_direct_5, -1*z#int_direct_1, -2*z#int_direct_2, -3*z#int_direct_3, -4*z#int_direct_4, -5*z#int_direct_5) LessEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }, PbTermGroup { start: 5, end: 10, structure: Choice }]
+  define(__0 <-> integer-weighted(1*y#direct_1, 2*y#direct_2, 3*y#direct_3, 4*y#direct_4, 5*y#direct_5, -1*z#direct_1, -2*z#direct_2, -3*z#direct_3, -4*z#direct_4, -5*z#direct_5) LessEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }, PbTermGroup { start: 5, end: 10, structure: Choice }]
 
 --
 
@@ -58,20 +58,20 @@ sum([sum([sum([sum([20,x;int(1..)]),5;int(1..)]),y;int(1..)]),min([sum([z,y;int(
 a = allDifferent([x,y,z;int(1..3)]),
 __0,
 x <= y,
-sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4),toInt(y#int_direct_5);int(1..)]) <= 1,
-or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)]),
-sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5);int(1..)]) <= 1,
-or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5;int(1..)])
+sum([toInt(y#direct_1),toInt(y#direct_2),toInt(y#direct_3),toInt(y#direct_4),toInt(y#direct_5);int(1..)]) <= 1,
+or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)]),
+sum([toInt(z#direct_1),toInt(z#direct_2),toInt(z#direct_3),toInt(z#direct_4),toInt(z#direct_5);int(1..)]) <= 1,
+or([z#direct_1,z#direct_2,z#direct_3,z#direct_4,z#direct_5;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 sum([sum([sum([sum([20,x;int(1..)]),5;int(1..)]),y;int(1..)]),min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([sum([z,x;int(1..)]),5;int(1..)]),50;int(1..4)]);int(1..)]) <= 40,
 a = allDifferent([x,y,z;int(1..3)]),
 __0,
 x <= y,
-or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)]),
-sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5);int(1..)]) <= 1,
-or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5;int(1..)])
+or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)]),
+sum([toInt(z#direct_1),toInt(z#direct_2),toInt(z#direct_3),toInt(z#direct_4),toInt(z#direct_5);int(1..)]) <= 1,
+or([z#direct_1,z#direct_2,z#direct_3,z#direct_4,z#direct_5;int(1..)])
 new SAT encoding decisions:
-  at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3, y#int_direct_4, y#int_direct_5) using None
+  at-most-one(y#direct_1, y#direct_2, y#direct_3, y#direct_4, y#direct_5) using None
 
 --
 
@@ -79,18 +79,18 @@ sum([sum([sum([sum([20,x;int(1..)]),5;int(1..)]),y;int(1..)]),min([sum([z,y;int(
 a = allDifferent([x,y,z;int(1..3)]),
 __0,
 x <= y,
-or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)]),
-sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5);int(1..)]) <= 1,
-or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5;int(1..)])
+or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)]),
+sum([toInt(z#direct_1),toInt(z#direct_2),toInt(z#direct_3),toInt(z#direct_4),toInt(z#direct_5);int(1..)]) <= 1,
+or([z#direct_1,z#direct_2,z#direct_3,z#direct_4,z#direct_5;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 sum([sum([sum([sum([20,x;int(1..)]),5;int(1..)]),y;int(1..)]),min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([sum([z,x;int(1..)]),5;int(1..)]),50;int(1..4)]);int(1..)]) <= 40,
 a = allDifferent([x,y,z;int(1..3)]),
 __0,
 x <= y,
-or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)]),
-or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5;int(1..)])
+or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)]),
+or([z#direct_1,z#direct_2,z#direct_3,z#direct_4,z#direct_5;int(1..)])
 new SAT encoding decisions:
-  at-most-one(z#int_direct_1, z#int_direct_2, z#int_direct_3, z#int_direct_4, z#int_direct_5) using None
+  at-most-one(z#direct_1, z#direct_2, z#direct_3, z#direct_4, z#direct_5) using None
 
 --
 
@@ -98,14 +98,14 @@ x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
 new variables:
-  find x#int_direct_1: bool
-  find x#int_direct_2: bool
-  find x#int_direct_3: bool
-  find x#int_direct_4: bool
-  find x#int_direct_5: bool
+  find x#direct_1: bool
+  find x#direct_2: bool
+  find x#direct_3: bool
+  find x#direct_4: bool
+  find x#direct_5: bool
 new constraints:
-  sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5);int(1..)]) <= 1
-  or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)])
+  sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5);int(1..)]) <= 1
+  or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])
 
 --
 
@@ -121,7 +121,7 @@ __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#int_direct_1, 2*x#int_direct_2, 3*x#int_direct_3, 4*x#int_direct_4, 5*x#int_direct_5, -1*y#int_direct_1, -2*y#int_direct_2, -3*y#int_direct_3, -4*y#int_direct_4, -5*y#int_direct_5) LessEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }, PbTermGroup { start: 5, end: 10, structure: Choice }]
+  define(__1 <-> integer-weighted(1*x#direct_1, 2*x#direct_2, 3*x#direct_3, 4*x#direct_4, 5*x#direct_5, -1*y#direct_1, -2*y#direct_2, -3*y#direct_3, -4*y#direct_4, -5*y#direct_5) LessEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }, PbTermGroup { start: 5, end: 10, structure: Choice }]
 
 --
 
@@ -129,20 +129,20 @@ sum([sum([sum([sum([20,x;int(1..)]),5;int(1..)]),y;int(1..)]),min([sum([z,y;int(
 a = allDifferent([x,y,z;int(1..3)]),
 __0,
 __1,
-or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)]),
-or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5;int(1..)]),
-sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5);int(1..)]) <= 1,
-or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)])
+or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)]),
+or([z#direct_1,z#direct_2,z#direct_3,z#direct_4,z#direct_5;int(1..)]),
+sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5);int(1..)]) <= 1,
+or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 sum([sum([sum([sum([20,x;int(1..)]),5;int(1..)]),y;int(1..)]),min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([sum([z,x;int(1..)]),5;int(1..)]),50;int(1..4)]);int(1..)]) <= 40,
 a = allDifferent([x,y,z;int(1..3)]),
 __0,
 __1,
-or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)]),
-or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5;int(1..)]),
-or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)])
+or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)]),
+or([z#direct_1,z#direct_2,z#direct_3,z#direct_4,z#direct_5;int(1..)]),
+or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])
 new SAT encoding decisions:
-  at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5) using None
+  at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5) using None
 
 --
 
@@ -218,65 +218,65 @@ __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> allDifferent(0+weighted(1*x#int_direct_1, 2*x#int_direct_2, 3*x#int_direct_3, 4*x#int_direct_4, 5*x#int_direct_5) with [PbTermGroup { start: 0, end: 5, structure: Choice }] choices(1:x#int_direct_1, 2:x#int_direct_2, 3:x#int_direct_3, 4:x#int_direct_4, 5:x#int_direct_5), 0+weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3, 4*y#int_direct_4, 5*y#int_direct_5) with [PbTermGroup { start: 0, end: 5, structure: Choice }] choices(1:y#int_direct_1, 2:y#int_direct_2, 3:y#int_direct_3, 4:y#int_direct_4, 5:y#int_direct_5), 0+weighted(1*z#int_direct_1, 2*z#int_direct_2, 3*z#int_direct_3, 4*z#int_direct_4, 5*z#int_direct_5) with [PbTermGroup { start: 0, end: 5, structure: Choice }] choices(1:z#int_direct_1, 2:z#int_direct_2, 3:z#int_direct_3, 4:z#int_direct_4, 5:z#int_direct_5))) using None, AMO None, PB None
+  define(__2 <-> allDifferent(0+weighted(1*x#direct_1, 2*x#direct_2, 3*x#direct_3, 4*x#direct_4, 5*x#direct_5) with [PbTermGroup { start: 0, end: 5, structure: Choice }] choices(1:x#direct_1, 2:x#direct_2, 3:x#direct_3, 4:x#direct_4, 5:x#direct_5), 0+weighted(1*y#direct_1, 2*y#direct_2, 3*y#direct_3, 4*y#direct_4, 5*y#direct_5) with [PbTermGroup { start: 0, end: 5, structure: Choice }] choices(1:y#direct_1, 2:y#direct_2, 3:y#direct_3, 4:y#direct_4, 5:y#direct_5), 0+weighted(1*z#direct_1, 2*z#direct_2, 3*z#direct_3, 4*z#direct_4, 5*z#direct_5) with [PbTermGroup { start: 0, end: 5, structure: Choice }] choices(1:z#direct_1, 2:z#direct_2, 3:z#direct_3, 4:z#direct_4, 5:z#direct_5))) using None, AMO None, PB None
 
 --
 
 y
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)] [1, 5])
+SATInt(Direct, [y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)] [1, 5])
 
 --
 
 z
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5;int(1..)] [1, 5])
+SATInt(Direct, [z#direct_1,z#direct_2,z#direct_3,z#direct_4,z#direct_5;int(1..)] [1, 5])
 
 --
 
 y
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)] [1, 5])
+SATInt(Direct, [y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)] [1, 5])
 
 --
 
 y
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)] [1, 5])
+SATInt(Direct, [y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)] [1, 5])
 
 --
 
 x
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)] [1, 5])
+SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)] [1, 5])
 
 --
 
 x
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)] [1, 5])
+SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)] [1, 5])
 
 --
 
 z
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5;int(1..)] [1, 5])
+SATInt(Direct, [z#direct_1,z#direct_2,z#direct_3,z#direct_4,z#direct_5;int(1..)] [1, 5])
 
 --
 
 x
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)] [1, 5])
+SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)] [1, 5])
 
 --
 
-sum([20,SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)] [1, 5]);int(1..)])
+sum([20,SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)] [1, 5]);int(1..)])
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-sum([SATInt(Direct, [true;int(1..)] [20, 20]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)] [1, 5]);int(1..)])
+sum([SATInt(Direct, [true;int(1..)] [20, 20]),SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)] [1, 5]);int(1..)])
 
 --
 
-sum([SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5;int(1..)] [1, 5]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)] [1, 5]);int(1..)])
+sum([SATInt(Direct, [z#direct_1,z#direct_2,z#direct_3,z#direct_4,z#direct_5;int(1..)] [1, 5]),SATInt(Direct, [y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)] [1, 5]);int(1..)])
    ~~> add_sat_direct ([("SAT", 9100)])
 SATInt(Direct, [__4,__8,__14,__22,__32,__40,__46,__50,__52;int(1..)] [2, 10])
 new variables:
@@ -331,66 +331,66 @@ new variables:
   findAux __51: bool
   findAux __52: bool
 new SAT encoding decisions:
-  define(__3 <-> and([z#int_direct_1,y#int_direct_1;int(1..)])) using tseitin
+  define(__3 <-> and([z#direct_1,y#direct_1;int(1..)])) using tseitin
   define(__4 <-> or([false,__3;int(1..)])) using tseitin
-  define(__5 <-> and([z#int_direct_1,y#int_direct_2;int(1..)])) using tseitin
+  define(__5 <-> and([z#direct_1,y#direct_2;int(1..)])) using tseitin
   define(__6 <-> or([false,__5;int(1..)])) using tseitin
-  define(__7 <-> and([z#int_direct_2,y#int_direct_1;int(1..)])) using tseitin
+  define(__7 <-> and([z#direct_2,y#direct_1;int(1..)])) using tseitin
   define(__8 <-> or([__6,__7;int(1..)])) using tseitin
-  define(__9 <-> and([z#int_direct_1,y#int_direct_3;int(1..)])) using tseitin
+  define(__9 <-> and([z#direct_1,y#direct_3;int(1..)])) using tseitin
   define(__10 <-> or([false,__9;int(1..)])) using tseitin
-  define(__11 <-> and([z#int_direct_2,y#int_direct_2;int(1..)])) using tseitin
+  define(__11 <-> and([z#direct_2,y#direct_2;int(1..)])) using tseitin
   define(__12 <-> or([__10,__11;int(1..)])) using tseitin
-  define(__13 <-> and([z#int_direct_3,y#int_direct_1;int(1..)])) using tseitin
+  define(__13 <-> and([z#direct_3,y#direct_1;int(1..)])) using tseitin
   define(__14 <-> or([__12,__13;int(1..)])) using tseitin
-  define(__15 <-> and([z#int_direct_1,y#int_direct_4;int(1..)])) using tseitin
+  define(__15 <-> and([z#direct_1,y#direct_4;int(1..)])) using tseitin
   define(__16 <-> or([false,__15;int(1..)])) using tseitin
-  define(__17 <-> and([z#int_direct_2,y#int_direct_3;int(1..)])) using tseitin
+  define(__17 <-> and([z#direct_2,y#direct_3;int(1..)])) using tseitin
   define(__18 <-> or([__16,__17;int(1..)])) using tseitin
-  define(__19 <-> and([z#int_direct_3,y#int_direct_2;int(1..)])) using tseitin
+  define(__19 <-> and([z#direct_3,y#direct_2;int(1..)])) using tseitin
   define(__20 <-> or([__18,__19;int(1..)])) using tseitin
-  define(__21 <-> and([z#int_direct_4,y#int_direct_1;int(1..)])) using tseitin
+  define(__21 <-> and([z#direct_4,y#direct_1;int(1..)])) using tseitin
   define(__22 <-> or([__20,__21;int(1..)])) using tseitin
-  define(__23 <-> and([z#int_direct_1,y#int_direct_5;int(1..)])) using tseitin
+  define(__23 <-> and([z#direct_1,y#direct_5;int(1..)])) using tseitin
   define(__24 <-> or([false,__23;int(1..)])) using tseitin
-  define(__25 <-> and([z#int_direct_2,y#int_direct_4;int(1..)])) using tseitin
+  define(__25 <-> and([z#direct_2,y#direct_4;int(1..)])) using tseitin
   define(__26 <-> or([__24,__25;int(1..)])) using tseitin
-  define(__27 <-> and([z#int_direct_3,y#int_direct_3;int(1..)])) using tseitin
+  define(__27 <-> and([z#direct_3,y#direct_3;int(1..)])) using tseitin
   define(__28 <-> or([__26,__27;int(1..)])) using tseitin
-  define(__29 <-> and([z#int_direct_4,y#int_direct_2;int(1..)])) using tseitin
+  define(__29 <-> and([z#direct_4,y#direct_2;int(1..)])) using tseitin
   define(__30 <-> or([__28,__29;int(1..)])) using tseitin
-  define(__31 <-> and([z#int_direct_5,y#int_direct_1;int(1..)])) using tseitin
+  define(__31 <-> and([z#direct_5,y#direct_1;int(1..)])) using tseitin
   define(__32 <-> or([__30,__31;int(1..)])) using tseitin
-  define(__33 <-> and([z#int_direct_2,y#int_direct_5;int(1..)])) using tseitin
+  define(__33 <-> and([z#direct_2,y#direct_5;int(1..)])) using tseitin
   define(__34 <-> or([false,__33;int(1..)])) using tseitin
-  define(__35 <-> and([z#int_direct_3,y#int_direct_4;int(1..)])) using tseitin
+  define(__35 <-> and([z#direct_3,y#direct_4;int(1..)])) using tseitin
   define(__36 <-> or([__34,__35;int(1..)])) using tseitin
-  define(__37 <-> and([z#int_direct_4,y#int_direct_3;int(1..)])) using tseitin
+  define(__37 <-> and([z#direct_4,y#direct_3;int(1..)])) using tseitin
   define(__38 <-> or([__36,__37;int(1..)])) using tseitin
-  define(__39 <-> and([z#int_direct_5,y#int_direct_2;int(1..)])) using tseitin
+  define(__39 <-> and([z#direct_5,y#direct_2;int(1..)])) using tseitin
   define(__40 <-> or([__38,__39;int(1..)])) using tseitin
-  define(__41 <-> and([z#int_direct_3,y#int_direct_5;int(1..)])) using tseitin
+  define(__41 <-> and([z#direct_3,y#direct_5;int(1..)])) using tseitin
   define(__42 <-> or([false,__41;int(1..)])) using tseitin
-  define(__43 <-> and([z#int_direct_4,y#int_direct_4;int(1..)])) using tseitin
+  define(__43 <-> and([z#direct_4,y#direct_4;int(1..)])) using tseitin
   define(__44 <-> or([__42,__43;int(1..)])) using tseitin
-  define(__45 <-> and([z#int_direct_5,y#int_direct_3;int(1..)])) using tseitin
+  define(__45 <-> and([z#direct_5,y#direct_3;int(1..)])) using tseitin
   define(__46 <-> or([__44,__45;int(1..)])) using tseitin
-  define(__47 <-> and([z#int_direct_4,y#int_direct_5;int(1..)])) using tseitin
+  define(__47 <-> and([z#direct_4,y#direct_5;int(1..)])) using tseitin
   define(__48 <-> or([false,__47;int(1..)])) using tseitin
-  define(__49 <-> and([z#int_direct_5,y#int_direct_4;int(1..)])) using tseitin
+  define(__49 <-> and([z#direct_5,y#direct_4;int(1..)])) using tseitin
   define(__50 <-> or([__48,__49;int(1..)])) using tseitin
-  define(__51 <-> and([z#int_direct_5,y#int_direct_5;int(1..)])) using tseitin
+  define(__51 <-> and([z#direct_5,y#direct_5;int(1..)])) using tseitin
   define(__52 <-> or([false,__51;int(1..)])) using tseitin
 
 --
 
-min([SATInt(Direct, [__4,__8,__14,__22,__32,__40,__46,__50,__52;int(1..)] [2, 10]),sum([SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)] [1, 5]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)] [1, 5]);int(1..)]),sum([sum([SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5;int(1..)] [1, 5]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)] [1, 5]);int(1..)]),5;int(1..)]),50;int(1..4)])
+min([SATInt(Direct, [__4,__8,__14,__22,__32,__40,__46,__50,__52;int(1..)] [2, 10]),sum([SATInt(Direct, [y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)] [1, 5]),SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)] [1, 5]);int(1..)]),sum([sum([SATInt(Direct, [z#direct_1,z#direct_2,z#direct_3,z#direct_4,z#direct_5;int(1..)] [1, 5]),SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)] [1, 5]);int(1..)]),5;int(1..)]),50;int(1..4)])
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-min([SATInt(Direct, [__4,__8,__14,__22,__32,__40,__46,__50,__52;int(1..)] [2, 10]),sum([SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)] [1, 5]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)] [1, 5]);int(1..)]),sum([sum([SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5;int(1..)] [1, 5]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)] [1, 5]);int(1..)]),5;int(1..)]),SATInt(Direct, [true;int(1..)] [50, 50]);int(1..4)])
+min([SATInt(Direct, [__4,__8,__14,__22,__32,__40,__46,__50,__52;int(1..)] [2, 10]),sum([SATInt(Direct, [y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)] [1, 5]),SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)] [1, 5]);int(1..)]),sum([sum([SATInt(Direct, [z#direct_1,z#direct_2,z#direct_3,z#direct_4,z#direct_5;int(1..)] [1, 5]),SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)] [1, 5]);int(1..)]),5;int(1..)]),SATInt(Direct, [true;int(1..)] [50, 50]);int(1..4)])
 
 --
 
-sum([SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)] [1, 5]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)] [1, 5]);int(1..)])
+sum([SATInt(Direct, [y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)] [1, 5]),SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)] [1, 5]);int(1..)])
    ~~> add_sat_direct ([("SAT", 9100)])
 SATInt(Direct, [__54,__58,__64,__72,__82,__90,__96,__100,__102;int(1..)] [2, 10])
 new variables:
@@ -445,60 +445,60 @@ new variables:
   findAux __101: bool
   findAux __102: bool
 new SAT encoding decisions:
-  define(__53 <-> and([y#int_direct_1,x#int_direct_1;int(1..)])) using tseitin
+  define(__53 <-> and([y#direct_1,x#direct_1;int(1..)])) using tseitin
   define(__54 <-> or([false,__53;int(1..)])) using tseitin
-  define(__55 <-> and([y#int_direct_1,x#int_direct_2;int(1..)])) using tseitin
+  define(__55 <-> and([y#direct_1,x#direct_2;int(1..)])) using tseitin
   define(__56 <-> or([false,__55;int(1..)])) using tseitin
-  define(__57 <-> and([y#int_direct_2,x#int_direct_1;int(1..)])) using tseitin
+  define(__57 <-> and([y#direct_2,x#direct_1;int(1..)])) using tseitin
   define(__58 <-> or([__56,__57;int(1..)])) using tseitin
-  define(__59 <-> and([y#int_direct_1,x#int_direct_3;int(1..)])) using tseitin
+  define(__59 <-> and([y#direct_1,x#direct_3;int(1..)])) using tseitin
   define(__60 <-> or([false,__59;int(1..)])) using tseitin
-  define(__61 <-> and([y#int_direct_2,x#int_direct_2;int(1..)])) using tseitin
+  define(__61 <-> and([y#direct_2,x#direct_2;int(1..)])) using tseitin
   define(__62 <-> or([__60,__61;int(1..)])) using tseitin
-  define(__63 <-> and([y#int_direct_3,x#int_direct_1;int(1..)])) using tseitin
+  define(__63 <-> and([y#direct_3,x#direct_1;int(1..)])) using tseitin
   define(__64 <-> or([__62,__63;int(1..)])) using tseitin
-  define(__65 <-> and([y#int_direct_1,x#int_direct_4;int(1..)])) using tseitin
+  define(__65 <-> and([y#direct_1,x#direct_4;int(1..)])) using tseitin
   define(__66 <-> or([false,__65;int(1..)])) using tseitin
-  define(__67 <-> and([y#int_direct_2,x#int_direct_3;int(1..)])) using tseitin
+  define(__67 <-> and([y#direct_2,x#direct_3;int(1..)])) using tseitin
   define(__68 <-> or([__66,__67;int(1..)])) using tseitin
-  define(__69 <-> and([y#int_direct_3,x#int_direct_2;int(1..)])) using tseitin
+  define(__69 <-> and([y#direct_3,x#direct_2;int(1..)])) using tseitin
   define(__70 <-> or([__68,__69;int(1..)])) using tseitin
-  define(__71 <-> and([y#int_direct_4,x#int_direct_1;int(1..)])) using tseitin
+  define(__71 <-> and([y#direct_4,x#direct_1;int(1..)])) using tseitin
   define(__72 <-> or([__70,__71;int(1..)])) using tseitin
-  define(__73 <-> and([y#int_direct_1,x#int_direct_5;int(1..)])) using tseitin
+  define(__73 <-> and([y#direct_1,x#direct_5;int(1..)])) using tseitin
   define(__74 <-> or([false,__73;int(1..)])) using tseitin
-  define(__75 <-> and([y#int_direct_2,x#int_direct_4;int(1..)])) using tseitin
+  define(__75 <-> and([y#direct_2,x#direct_4;int(1..)])) using tseitin
   define(__76 <-> or([__74,__75;int(1..)])) using tseitin
-  define(__77 <-> and([y#int_direct_3,x#int_direct_3;int(1..)])) using tseitin
+  define(__77 <-> and([y#direct_3,x#direct_3;int(1..)])) using tseitin
   define(__78 <-> or([__76,__77;int(1..)])) using tseitin
-  define(__79 <-> and([y#int_direct_4,x#int_direct_2;int(1..)])) using tseitin
+  define(__79 <-> and([y#direct_4,x#direct_2;int(1..)])) using tseitin
   define(__80 <-> or([__78,__79;int(1..)])) using tseitin
-  define(__81 <-> and([y#int_direct_5,x#int_direct_1;int(1..)])) using tseitin
+  define(__81 <-> and([y#direct_5,x#direct_1;int(1..)])) using tseitin
   define(__82 <-> or([__80,__81;int(1..)])) using tseitin
-  define(__83 <-> and([y#int_direct_2,x#int_direct_5;int(1..)])) using tseitin
+  define(__83 <-> and([y#direct_2,x#direct_5;int(1..)])) using tseitin
   define(__84 <-> or([false,__83;int(1..)])) using tseitin
-  define(__85 <-> and([y#int_direct_3,x#int_direct_4;int(1..)])) using tseitin
+  define(__85 <-> and([y#direct_3,x#direct_4;int(1..)])) using tseitin
   define(__86 <-> or([__84,__85;int(1..)])) using tseitin
-  define(__87 <-> and([y#int_direct_4,x#int_direct_3;int(1..)])) using tseitin
+  define(__87 <-> and([y#direct_4,x#direct_3;int(1..)])) using tseitin
   define(__88 <-> or([__86,__87;int(1..)])) using tseitin
-  define(__89 <-> and([y#int_direct_5,x#int_direct_2;int(1..)])) using tseitin
+  define(__89 <-> and([y#direct_5,x#direct_2;int(1..)])) using tseitin
   define(__90 <-> or([__88,__89;int(1..)])) using tseitin
-  define(__91 <-> and([y#int_direct_3,x#int_direct_5;int(1..)])) using tseitin
+  define(__91 <-> and([y#direct_3,x#direct_5;int(1..)])) using tseitin
   define(__92 <-> or([false,__91;int(1..)])) using tseitin
-  define(__93 <-> and([y#int_direct_4,x#int_direct_4;int(1..)])) using tseitin
+  define(__93 <-> and([y#direct_4,x#direct_4;int(1..)])) using tseitin
   define(__94 <-> or([__92,__93;int(1..)])) using tseitin
-  define(__95 <-> and([y#int_direct_5,x#int_direct_3;int(1..)])) using tseitin
+  define(__95 <-> and([y#direct_5,x#direct_3;int(1..)])) using tseitin
   define(__96 <-> or([__94,__95;int(1..)])) using tseitin
-  define(__97 <-> and([y#int_direct_4,x#int_direct_5;int(1..)])) using tseitin
+  define(__97 <-> and([y#direct_4,x#direct_5;int(1..)])) using tseitin
   define(__98 <-> or([false,__97;int(1..)])) using tseitin
-  define(__99 <-> and([y#int_direct_5,x#int_direct_4;int(1..)])) using tseitin
+  define(__99 <-> and([y#direct_5,x#direct_4;int(1..)])) using tseitin
   define(__100 <-> or([__98,__99;int(1..)])) using tseitin
-  define(__101 <-> and([y#int_direct_5,x#int_direct_5;int(1..)])) using tseitin
+  define(__101 <-> and([y#direct_5,x#direct_5;int(1..)])) using tseitin
   define(__102 <-> or([false,__101;int(1..)])) using tseitin
 
 --
 
-sum([SATInt(Direct, [true;int(1..)] [20, 20]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5;int(1..)] [1, 5]);int(1..)])
+sum([SATInt(Direct, [true;int(1..)] [20, 20]),SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)] [1, 5]);int(1..)])
    ~~> add_sat_direct ([("SAT", 9100)])
 SATInt(Direct, [__104,__108,__114,__122,__132,__144,__158,__174,__192,__212,__234,__258,__284,__312,__342,__374,__408,__444,__482,__522,__560,__596,__630,__662,__692,__720,__746,__770,__792,__812,__830,__846,__860,__872,__882,__890,__896,__900,__902;int(1..)] [2, 40])
 new variables:
@@ -1303,61 +1303,61 @@ new variables:
   findAux __901: bool
   findAux __902: bool
 new SAT encoding decisions:
-  define(__103 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__103 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__104 <-> or([false,__103;int(1..)])) using tseitin
-  define(__105 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__105 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__106 <-> or([false,__105;int(1..)])) using tseitin
-  define(__107 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__107 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__108 <-> or([__106,__107;int(1..)])) using tseitin
-  define(__109 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__109 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__110 <-> or([false,__109;int(1..)])) using tseitin
-  define(__111 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__111 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__112 <-> or([__110,__111;int(1..)])) using tseitin
-  define(__113 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__113 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__114 <-> or([__112,__113;int(1..)])) using tseitin
-  define(__115 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__115 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__116 <-> or([false,__115;int(1..)])) using tseitin
-  define(__117 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__117 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__118 <-> or([__116,__117;int(1..)])) using tseitin
-  define(__119 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__119 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__120 <-> or([__118,__119;int(1..)])) using tseitin
-  define(__121 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__121 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__122 <-> or([__120,__121;int(1..)])) using tseitin
-  define(__123 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__123 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__124 <-> or([false,__123;int(1..)])) using tseitin
-  define(__125 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__125 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__126 <-> or([__124,__125;int(1..)])) using tseitin
-  define(__127 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__127 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__128 <-> or([__126,__127;int(1..)])) using tseitin
-  define(__129 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__129 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__130 <-> or([__128,__129;int(1..)])) using tseitin
-  define(__131 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__131 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__132 <-> or([__130,__131;int(1..)])) using tseitin
   define(__133 <-> and([false,false;int(1..)])) using tseitin
   define(__134 <-> or([false,__133;int(1..)])) using tseitin
-  define(__135 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__135 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__136 <-> or([__134,__135;int(1..)])) using tseitin
-  define(__137 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__137 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__138 <-> or([__136,__137;int(1..)])) using tseitin
-  define(__139 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__139 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__140 <-> or([__138,__139;int(1..)])) using tseitin
-  define(__141 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__141 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__142 <-> or([__140,__141;int(1..)])) using tseitin
-  define(__143 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__143 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__144 <-> or([__142,__143;int(1..)])) using tseitin
   define(__145 <-> and([false,false;int(1..)])) using tseitin
   define(__146 <-> or([false,__145;int(1..)])) using tseitin
   define(__147 <-> and([false,false;int(1..)])) using tseitin
   define(__148 <-> or([__146,__147;int(1..)])) using tseitin
-  define(__149 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__149 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__150 <-> or([__148,__149;int(1..)])) using tseitin
-  define(__151 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__151 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__152 <-> or([__150,__151;int(1..)])) using tseitin
-  define(__153 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__153 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__154 <-> or([__152,__153;int(1..)])) using tseitin
-  define(__155 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__155 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__156 <-> or([__154,__155;int(1..)])) using tseitin
-  define(__157 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__157 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__158 <-> or([__156,__157;int(1..)])) using tseitin
   define(__159 <-> and([false,false;int(1..)])) using tseitin
   define(__160 <-> or([false,__159;int(1..)])) using tseitin
@@ -1365,15 +1365,15 @@ new SAT encoding decisions:
   define(__162 <-> or([__160,__161;int(1..)])) using tseitin
   define(__163 <-> and([false,false;int(1..)])) using tseitin
   define(__164 <-> or([__162,__163;int(1..)])) using tseitin
-  define(__165 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__165 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__166 <-> or([__164,__165;int(1..)])) using tseitin
-  define(__167 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__167 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__168 <-> or([__166,__167;int(1..)])) using tseitin
-  define(__169 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__169 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__170 <-> or([__168,__169;int(1..)])) using tseitin
-  define(__171 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__171 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__172 <-> or([__170,__171;int(1..)])) using tseitin
-  define(__173 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__173 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__174 <-> or([__172,__173;int(1..)])) using tseitin
   define(__175 <-> and([false,false;int(1..)])) using tseitin
   define(__176 <-> or([false,__175;int(1..)])) using tseitin
@@ -1383,15 +1383,15 @@ new SAT encoding decisions:
   define(__180 <-> or([__178,__179;int(1..)])) using tseitin
   define(__181 <-> and([false,false;int(1..)])) using tseitin
   define(__182 <-> or([__180,__181;int(1..)])) using tseitin
-  define(__183 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__183 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__184 <-> or([__182,__183;int(1..)])) using tseitin
-  define(__185 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__185 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__186 <-> or([__184,__185;int(1..)])) using tseitin
-  define(__187 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__187 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__188 <-> or([__186,__187;int(1..)])) using tseitin
-  define(__189 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__189 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__190 <-> or([__188,__189;int(1..)])) using tseitin
-  define(__191 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__191 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__192 <-> or([__190,__191;int(1..)])) using tseitin
   define(__193 <-> and([false,false;int(1..)])) using tseitin
   define(__194 <-> or([false,__193;int(1..)])) using tseitin
@@ -1403,15 +1403,15 @@ new SAT encoding decisions:
   define(__200 <-> or([__198,__199;int(1..)])) using tseitin
   define(__201 <-> and([false,false;int(1..)])) using tseitin
   define(__202 <-> or([__200,__201;int(1..)])) using tseitin
-  define(__203 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__203 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__204 <-> or([__202,__203;int(1..)])) using tseitin
-  define(__205 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__205 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__206 <-> or([__204,__205;int(1..)])) using tseitin
-  define(__207 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__207 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__208 <-> or([__206,__207;int(1..)])) using tseitin
-  define(__209 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__209 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__210 <-> or([__208,__209;int(1..)])) using tseitin
-  define(__211 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__211 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__212 <-> or([__210,__211;int(1..)])) using tseitin
   define(__213 <-> and([false,false;int(1..)])) using tseitin
   define(__214 <-> or([false,__213;int(1..)])) using tseitin
@@ -1425,15 +1425,15 @@ new SAT encoding decisions:
   define(__222 <-> or([__220,__221;int(1..)])) using tseitin
   define(__223 <-> and([false,false;int(1..)])) using tseitin
   define(__224 <-> or([__222,__223;int(1..)])) using tseitin
-  define(__225 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__225 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__226 <-> or([__224,__225;int(1..)])) using tseitin
-  define(__227 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__227 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__228 <-> or([__226,__227;int(1..)])) using tseitin
-  define(__229 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__229 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__230 <-> or([__228,__229;int(1..)])) using tseitin
-  define(__231 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__231 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__232 <-> or([__230,__231;int(1..)])) using tseitin
-  define(__233 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__233 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__234 <-> or([__232,__233;int(1..)])) using tseitin
   define(__235 <-> and([false,false;int(1..)])) using tseitin
   define(__236 <-> or([false,__235;int(1..)])) using tseitin
@@ -1449,15 +1449,15 @@ new SAT encoding decisions:
   define(__246 <-> or([__244,__245;int(1..)])) using tseitin
   define(__247 <-> and([false,false;int(1..)])) using tseitin
   define(__248 <-> or([__246,__247;int(1..)])) using tseitin
-  define(__249 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__249 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__250 <-> or([__248,__249;int(1..)])) using tseitin
-  define(__251 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__251 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__252 <-> or([__250,__251;int(1..)])) using tseitin
-  define(__253 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__253 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__254 <-> or([__252,__253;int(1..)])) using tseitin
-  define(__255 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__255 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__256 <-> or([__254,__255;int(1..)])) using tseitin
-  define(__257 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__257 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__258 <-> or([__256,__257;int(1..)])) using tseitin
   define(__259 <-> and([false,false;int(1..)])) using tseitin
   define(__260 <-> or([false,__259;int(1..)])) using tseitin
@@ -1475,15 +1475,15 @@ new SAT encoding decisions:
   define(__272 <-> or([__270,__271;int(1..)])) using tseitin
   define(__273 <-> and([false,false;int(1..)])) using tseitin
   define(__274 <-> or([__272,__273;int(1..)])) using tseitin
-  define(__275 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__275 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__276 <-> or([__274,__275;int(1..)])) using tseitin
-  define(__277 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__277 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__278 <-> or([__276,__277;int(1..)])) using tseitin
-  define(__279 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__279 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__280 <-> or([__278,__279;int(1..)])) using tseitin
-  define(__281 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__281 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__282 <-> or([__280,__281;int(1..)])) using tseitin
-  define(__283 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__283 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__284 <-> or([__282,__283;int(1..)])) using tseitin
   define(__285 <-> and([false,false;int(1..)])) using tseitin
   define(__286 <-> or([false,__285;int(1..)])) using tseitin
@@ -1503,15 +1503,15 @@ new SAT encoding decisions:
   define(__300 <-> or([__298,__299;int(1..)])) using tseitin
   define(__301 <-> and([false,false;int(1..)])) using tseitin
   define(__302 <-> or([__300,__301;int(1..)])) using tseitin
-  define(__303 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__303 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__304 <-> or([__302,__303;int(1..)])) using tseitin
-  define(__305 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__305 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__306 <-> or([__304,__305;int(1..)])) using tseitin
-  define(__307 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__307 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__308 <-> or([__306,__307;int(1..)])) using tseitin
-  define(__309 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__309 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__310 <-> or([__308,__309;int(1..)])) using tseitin
-  define(__311 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__311 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__312 <-> or([__310,__311;int(1..)])) using tseitin
   define(__313 <-> and([false,false;int(1..)])) using tseitin
   define(__314 <-> or([false,__313;int(1..)])) using tseitin
@@ -1533,15 +1533,15 @@ new SAT encoding decisions:
   define(__330 <-> or([__328,__329;int(1..)])) using tseitin
   define(__331 <-> and([false,false;int(1..)])) using tseitin
   define(__332 <-> or([__330,__331;int(1..)])) using tseitin
-  define(__333 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__333 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__334 <-> or([__332,__333;int(1..)])) using tseitin
-  define(__335 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__335 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__336 <-> or([__334,__335;int(1..)])) using tseitin
-  define(__337 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__337 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__338 <-> or([__336,__337;int(1..)])) using tseitin
-  define(__339 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__339 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__340 <-> or([__338,__339;int(1..)])) using tseitin
-  define(__341 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__341 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__342 <-> or([__340,__341;int(1..)])) using tseitin
   define(__343 <-> and([false,false;int(1..)])) using tseitin
   define(__344 <-> or([false,__343;int(1..)])) using tseitin
@@ -1565,15 +1565,15 @@ new SAT encoding decisions:
   define(__362 <-> or([__360,__361;int(1..)])) using tseitin
   define(__363 <-> and([false,false;int(1..)])) using tseitin
   define(__364 <-> or([__362,__363;int(1..)])) using tseitin
-  define(__365 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__365 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__366 <-> or([__364,__365;int(1..)])) using tseitin
-  define(__367 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__367 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__368 <-> or([__366,__367;int(1..)])) using tseitin
-  define(__369 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__369 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__370 <-> or([__368,__369;int(1..)])) using tseitin
-  define(__371 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__371 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__372 <-> or([__370,__371;int(1..)])) using tseitin
-  define(__373 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__373 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__374 <-> or([__372,__373;int(1..)])) using tseitin
   define(__375 <-> and([false,false;int(1..)])) using tseitin
   define(__376 <-> or([false,__375;int(1..)])) using tseitin
@@ -1599,15 +1599,15 @@ new SAT encoding decisions:
   define(__396 <-> or([__394,__395;int(1..)])) using tseitin
   define(__397 <-> and([false,false;int(1..)])) using tseitin
   define(__398 <-> or([__396,__397;int(1..)])) using tseitin
-  define(__399 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__399 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__400 <-> or([__398,__399;int(1..)])) using tseitin
-  define(__401 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__401 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__402 <-> or([__400,__401;int(1..)])) using tseitin
-  define(__403 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__403 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__404 <-> or([__402,__403;int(1..)])) using tseitin
-  define(__405 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__405 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__406 <-> or([__404,__405;int(1..)])) using tseitin
-  define(__407 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__407 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__408 <-> or([__406,__407;int(1..)])) using tseitin
   define(__409 <-> and([false,false;int(1..)])) using tseitin
   define(__410 <-> or([false,__409;int(1..)])) using tseitin
@@ -1635,15 +1635,15 @@ new SAT encoding decisions:
   define(__432 <-> or([__430,__431;int(1..)])) using tseitin
   define(__433 <-> and([false,false;int(1..)])) using tseitin
   define(__434 <-> or([__432,__433;int(1..)])) using tseitin
-  define(__435 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__435 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__436 <-> or([__434,__435;int(1..)])) using tseitin
-  define(__437 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__437 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__438 <-> or([__436,__437;int(1..)])) using tseitin
-  define(__439 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__439 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__440 <-> or([__438,__439;int(1..)])) using tseitin
-  define(__441 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__441 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__442 <-> or([__440,__441;int(1..)])) using tseitin
-  define(__443 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__443 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__444 <-> or([__442,__443;int(1..)])) using tseitin
   define(__445 <-> and([false,false;int(1..)])) using tseitin
   define(__446 <-> or([false,__445;int(1..)])) using tseitin
@@ -1673,15 +1673,15 @@ new SAT encoding decisions:
   define(__470 <-> or([__468,__469;int(1..)])) using tseitin
   define(__471 <-> and([false,false;int(1..)])) using tseitin
   define(__472 <-> or([__470,__471;int(1..)])) using tseitin
-  define(__473 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__473 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__474 <-> or([__472,__473;int(1..)])) using tseitin
-  define(__475 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__475 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__476 <-> or([__474,__475;int(1..)])) using tseitin
-  define(__477 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__477 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__478 <-> or([__476,__477;int(1..)])) using tseitin
-  define(__479 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__479 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__480 <-> or([__478,__479;int(1..)])) using tseitin
-  define(__481 <-> and([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__481 <-> and([false,x#direct_1;int(1..)])) using tseitin
   define(__482 <-> or([__480,__481;int(1..)])) using tseitin
   define(__483 <-> and([false,false;int(1..)])) using tseitin
   define(__484 <-> or([false,__483;int(1..)])) using tseitin
@@ -1713,15 +1713,15 @@ new SAT encoding decisions:
   define(__510 <-> or([__508,__509;int(1..)])) using tseitin
   define(__511 <-> and([false,false;int(1..)])) using tseitin
   define(__512 <-> or([__510,__511;int(1..)])) using tseitin
-  define(__513 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__513 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__514 <-> or([__512,__513;int(1..)])) using tseitin
-  define(__515 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__515 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__516 <-> or([__514,__515;int(1..)])) using tseitin
-  define(__517 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__517 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__518 <-> or([__516,__517;int(1..)])) using tseitin
-  define(__519 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__519 <-> and([false,x#direct_2;int(1..)])) using tseitin
   define(__520 <-> or([__518,__519;int(1..)])) using tseitin
-  define(__521 <-> and([true,x#int_direct_1;int(1..)])) using tseitin
+  define(__521 <-> and([true,x#direct_1;int(1..)])) using tseitin
   define(__522 <-> or([__520,__521;int(1..)])) using tseitin
   define(__523 <-> and([false,false;int(1..)])) using tseitin
   define(__524 <-> or([false,__523;int(1..)])) using tseitin
@@ -1753,13 +1753,13 @@ new SAT encoding decisions:
   define(__550 <-> or([__548,__549;int(1..)])) using tseitin
   define(__551 <-> and([false,false;int(1..)])) using tseitin
   define(__552 <-> or([__550,__551;int(1..)])) using tseitin
-  define(__553 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__553 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__554 <-> or([__552,__553;int(1..)])) using tseitin
-  define(__555 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__555 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__556 <-> or([__554,__555;int(1..)])) using tseitin
-  define(__557 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__557 <-> and([false,x#direct_3;int(1..)])) using tseitin
   define(__558 <-> or([__556,__557;int(1..)])) using tseitin
-  define(__559 <-> and([true,x#int_direct_2;int(1..)])) using tseitin
+  define(__559 <-> and([true,x#direct_2;int(1..)])) using tseitin
   define(__560 <-> or([__558,__559;int(1..)])) using tseitin
   define(__561 <-> and([false,false;int(1..)])) using tseitin
   define(__562 <-> or([false,__561;int(1..)])) using tseitin
@@ -1791,11 +1791,11 @@ new SAT encoding decisions:
   define(__588 <-> or([__586,__587;int(1..)])) using tseitin
   define(__589 <-> and([false,false;int(1..)])) using tseitin
   define(__590 <-> or([__588,__589;int(1..)])) using tseitin
-  define(__591 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__591 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__592 <-> or([__590,__591;int(1..)])) using tseitin
-  define(__593 <-> and([false,x#int_direct_4;int(1..)])) using tseitin
+  define(__593 <-> and([false,x#direct_4;int(1..)])) using tseitin
   define(__594 <-> or([__592,__593;int(1..)])) using tseitin
-  define(__595 <-> and([true,x#int_direct_3;int(1..)])) using tseitin
+  define(__595 <-> and([true,x#direct_3;int(1..)])) using tseitin
   define(__596 <-> or([__594,__595;int(1..)])) using tseitin
   define(__597 <-> and([false,false;int(1..)])) using tseitin
   define(__598 <-> or([false,__597;int(1..)])) using tseitin
@@ -1827,9 +1827,9 @@ new SAT encoding decisions:
   define(__624 <-> or([__622,__623;int(1..)])) using tseitin
   define(__625 <-> and([false,false;int(1..)])) using tseitin
   define(__626 <-> or([__624,__625;int(1..)])) using tseitin
-  define(__627 <-> and([false,x#int_direct_5;int(1..)])) using tseitin
+  define(__627 <-> and([false,x#direct_5;int(1..)])) using tseitin
   define(__628 <-> or([__626,__627;int(1..)])) using tseitin
-  define(__629 <-> and([true,x#int_direct_4;int(1..)])) using tseitin
+  define(__629 <-> and([true,x#direct_4;int(1..)])) using tseitin
   define(__630 <-> or([__628,__629;int(1..)])) using tseitin
   define(__631 <-> and([false,false;int(1..)])) using tseitin
   define(__632 <-> or([false,__631;int(1..)])) using tseitin
@@ -1861,7 +1861,7 @@ new SAT encoding decisions:
   define(__658 <-> or([__656,__657;int(1..)])) using tseitin
   define(__659 <-> and([false,false;int(1..)])) using tseitin
   define(__660 <-> or([__658,__659;int(1..)])) using tseitin
-  define(__661 <-> and([true,x#int_direct_5;int(1..)])) using tseitin
+  define(__661 <-> and([true,x#direct_5;int(1..)])) using tseitin
   define(__662 <-> or([__660,__661;int(1..)])) using tseitin
   define(__663 <-> and([false,false;int(1..)])) using tseitin
   define(__664 <-> or([false,__663;int(1..)])) using tseitin
@@ -8204,7 +8204,7 @@ new SAT encoding decisions:
 
 --
 
-sum([SATInt(Direct, [__904,__908,__914,__922,__932,__944,__958,__974,__992,__1012,__1034,__1058,__1084,__1112,__1142,__1174,__1208,__1244,__1282,__1322,__1364,__1408,__1454,__1502,__1552,__1604,__1658,__1714,__1772,__1832,__1894,__1958,__2024,__2092,__2162,__2234,__2308,__2384,__2462,__2538,__2612,__2684,__2754,__2822,__2888,__2952,__3014,__3074,__3132,__3188,__3242,__3294,__3344,__3392,__3438,__3482,__3524,__3564,__3602,__3638,__3672,__3704,__3734,__3762,__3788,__3812,__3834,__3854,__3872,__3888,__3902,__3914,__3924,__3932,__3938,__3942,__3944;int(1..)] [4, 80]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5;int(1..)] [1, 5]);int(1..)])
+sum([SATInt(Direct, [__904,__908,__914,__922,__932,__944,__958,__974,__992,__1012,__1034,__1058,__1084,__1112,__1142,__1174,__1208,__1244,__1282,__1322,__1364,__1408,__1454,__1502,__1552,__1604,__1658,__1714,__1772,__1832,__1894,__1958,__2024,__2092,__2162,__2234,__2308,__2384,__2462,__2538,__2612,__2684,__2754,__2822,__2888,__2952,__3014,__3074,__3132,__3188,__3242,__3294,__3344,__3392,__3438,__3482,__3524,__3564,__3602,__3638,__3672,__3704,__3734,__3762,__3788,__3812,__3834,__3854,__3872,__3888,__3902,__3914,__3924,__3932,__3938,__3942,__3944;int(1..)] [4, 80]),SATInt(Direct, [y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5;int(1..)] [1, 5]);int(1..)])
    ~~> add_sat_direct ([("SAT", 9100)])
 SATInt(Direct, [__3946,__3950,__3956,__3964,__3974,__3986,__4000,__4016,__4034,__4054,__4076,__4100,__4126,__4154,__4184,__4216,__4250,__4286,__4324,__4364,__4406,__4450,__4496,__4544,__4594,__4646,__4700,__4756,__4814,__4874,__4936,__5000,__5066,__5134,__5204,__5276,__5350,__5426,__5504,__5584,__5666,__5750,__5836,__5924,__6014,__6106,__6200,__6296,__6394,__6494,__6596,__6700,__6806,__6914,__7024,__7136,__7250,__7366,__7484,__7604,__7726,__7850,__7976,__8104,__8234,__8366,__8500,__8636,__8774,__8914,__9056,__9200,__9346,__9494,__9644,__9796,__9950,__10106,__10264,__10424,__10582,__10738,__10892,__11044,__11194,__11342,__11488,__11632,__11774,__11914,__12052,__12188,__12322,__12454,__12584,__12712,__12838,__12962,__13084,__13204,__13322,__13438,__13552,__13664,__13774,__13882,__13988,__14092,__14194,__14294,__14392,__14488,__14582,__14674,__14764,__14852,__14938,__15022,__15104,__15184,__15262,__15338,__15412,__15484,__15554,__15622,__15688,__15752,__15814,__15874,__15932,__15988,__16042,__16094,__16144,__16192,__16238,__16282,__16324,__16364,__16402,__16438,__16472,__16504,__16534,__16562,__16588,__16612,__16634,__16654,__16672,__16688,__16702,__16714,__16724,__16732,__16738,__16742,__16744;int(1..)] [2, 160])
 new variables:
@@ -21009,61 +21009,61 @@ new variables:
   findAux __16743: bool
   findAux __16744: bool
 new SAT encoding decisions:
-  define(__3945 <-> and([false,y#int_direct_1;int(1..)])) using tseitin
+  define(__3945 <-> and([false,y#direct_1;int(1..)])) using tseitin
   define(__3946 <-> or([false,__3945;int(1..)])) using tseitin
-  define(__3947 <-> and([false,y#int_direct_2;int(1..)])) using tseitin
+  define(__3947 <-> and([false,y#direct_2;int(1..)])) using tseitin
   define(__3948 <-> or([false,__3947;int(1..)])) using tseitin
-  define(__3949 <-> and([false,y#int_direct_1;int(1..)])) using tseitin
+  define(__3949 <-> and([false,y#direct_1;int(1..)])) using tseitin
   define(__3950 <-> or([__3948,__3949;int(1..)])) using tseitin
-  define(__3951 <-> and([false,y#int_direct_3;int(1..)])) using tseitin
+  define(__3951 <-> and([false,y#direct_3;int(1..)])) using tseitin
   define(__3952 <-> or([false,__3951;int(1..)])) using tseitin
-  define(__3953 <-> and([false,y#int_direct_2;int(1..)])) using tseitin
+  define(__3953 <-> and([false,y#direct_2;int(1..)])) using tseitin
   define(__3954 <-> or([__3952,__3953;int(1..)])) using tseitin
-  define(__3955 <-> and([false,y#int_direct_1;int(1..)])) using tseitin
+  define(__3955 <-> and([false,y#direct_1;int(1..)])) using tseitin
   define(__3956 <-> or([__3954,__3955;int(1..)])) using tseitin
-  define(__3957 <-> and([false,y#int_direct_4;int(1..)])) using tseitin
+  define(__3957 <-> and([false,y#direct_4;int(1..)])) using tseitin
   define(__3958 <-> or([false,__3957;int(1..)])) using tseitin
-  define(__3959 <-> and([false,y#int_direct_3;int(1..)])) using tseitin
+  define(__3959 <-> and([false,y#direct_3;int(1..)])) using tseitin
   define(__3960 <-> or([__3958,__3959;int(1..)])) using tseitin
-  define(__3961 <-> and([false,y#int_direct_2;int(1..)])) using tseitin
+  define(__3961 <-> and([false,y#direct_2;int(1..)])) using tseitin
   define(__3962 <-> or([__3960,__3961;int(1..)])) using tseitin
-  define(__3963 <-> and([__904,y#int_direct_1;int(1..)])) using tseitin
+  define(__3963 <-> and([__904,y#direct_1;int(1..)])) using tseitin
   define(__3964 <-> or([__3962,__3963;int(1..)])) using tseitin
-  define(__3965 <-> and([false,y#int_direct_5;int(1..)])) using tseitin
+  define(__3965 <-> and([false,y#direct_5;int(1..)])) using tseitin
   define(__3966 <-> or([false,__3965;int(1..)])) using tseitin
-  define(__3967 <-> and([false,y#int_direct_4;int(1..)])) using tseitin
+  define(__3967 <-> and([false,y#direct_4;int(1..)])) using tseitin
   define(__3968 <-> or([__3966,__3967;int(1..)])) using tseitin
-  define(__3969 <-> and([false,y#int_direct_3;int(1..)])) using tseitin
+  define(__3969 <-> and([false,y#direct_3;int(1..)])) using tseitin
   define(__3970 <-> or([__3968,__3969;int(1..)])) using tseitin
-  define(__3971 <-> and([__904,y#int_direct_2;int(1..)])) using tseitin
+  define(__3971 <-> and([__904,y#direct_2;int(1..)])) using tseitin
   define(__3972 <-> or([__3970,__3971;int(1..)])) using tseitin
-  define(__3973 <-> and([__908,y#int_direct_1;int(1..)])) using tseitin
+  define(__3973 <-> and([__908,y#direct_1;int(1..)])) using tseitin
   define(__3974 <-> or([__3972,__3973;int(1..)])) using tseitin
   define(__3975 <-> and([false,false;int(1..)])) using tseitin
   define(__3976 <-> or([false,__3975;int(1..)])) using tseitin
-  define(__3977 <-> and([false,y#int_direct_5;int(1..)])) using tseitin
+  define(__3977 <-> and([false,y#direct_5;int(1..)])) using tseitin
   define(__3978 <-> or([__3976,__3977;int(1..)])) using tseitin
-  define(__3979 <-> and([false,y#int_direct_4;int(1..)])) using tseitin
+  define(__3979 <-> and([false,y#direct_4;int(1..)])) using tseitin
   define(__3980 <-> or([__3978,__3979;int(1..)])) using tseitin
-  define(__3981 <-> and([__904,y#int_direct_3;int(1..)])) using tseitin
+  define(__3981 <-> and([__904,y#direct_3;int(1..)])) using tseitin
   define(__3982 <-> or([__3980,__3981;int(1..)])) using tseitin
-  define(__3983 <-> and([__908,y#int_direct_2;int(1..)])) using tseitin
+  define(__3983 <-> and([__908,y#direct_2;int(1..)])) using tseitin
   define(__3984 <-> or([__3982,__3983;int(1..)])) using tseitin
-  define(__3985 <-> and([__914,y#int_direct_1;int(1..)])) using tseitin
+  define(__3985 <-> and([__914,y#direct_1;int(1..)])) using tseitin
   define(__3986 <-> or([__3984,__3985;int(1..)])) using tseitin
   define(__3987 <-> and([false,false;int(1..)])) using tseitin
   define(__3988 <-> or([false,__3987;int(1..)])) using tseitin
   define(__3989 <-> and([false,false;int(1..)])) using tseitin
   define(__3990 <-> or([__3988,__3989;int(1..)])) using tseitin
-  define(__3991 <-> and([false,y#int_direct_5;int(1..)])) using tseitin
+  define(__3991 <-> and([false,y#direct_5;int(1..)])) using tseitin
   define(__3992 <-> or([__3990,__3991;int(1..)])) using tseitin
-  define(__3993 <-> and([__904,y#int_direct_4;int(1..)])) using tseitin
+  define(__3993 <-> and([__904,y#direct_4;int(1..)])) using tseitin
   define(__3994 <-> or([__3992,__3993;int(1..)])) using tseitin
-  define(__3995 <-> and([__908,y#int_direct_3;int(1..)])) using tseitin
+  define(__3995 <-> and([__908,y#direct_3;int(1..)])) using tseitin
   define(__3996 <-> or([__3994,__3995;int(1..)])) using tseitin
-  define(__3997 <-> and([__914,y#int_direct_2;int(1..)])) using tseitin
+  define(__3997 <-> and([__914,y#direct_2;int(1..)])) using tseitin
   define(__3998 <-> or([__3996,__3997;int(1..)])) using tseitin
-  define(__3999 <-> and([__922,y#int_direct_1;int(1..)])) using tseitin
+  define(__3999 <-> and([__922,y#direct_1;int(1..)])) using tseitin
   define(__4000 <-> or([__3998,__3999;int(1..)])) using tseitin
   define(__4001 <-> and([false,false;int(1..)])) using tseitin
   define(__4002 <-> or([false,__4001;int(1..)])) using tseitin
@@ -21071,15 +21071,15 @@ new SAT encoding decisions:
   define(__4004 <-> or([__4002,__4003;int(1..)])) using tseitin
   define(__4005 <-> and([false,false;int(1..)])) using tseitin
   define(__4006 <-> or([__4004,__4005;int(1..)])) using tseitin
-  define(__4007 <-> and([__904,y#int_direct_5;int(1..)])) using tseitin
+  define(__4007 <-> and([__904,y#direct_5;int(1..)])) using tseitin
   define(__4008 <-> or([__4006,__4007;int(1..)])) using tseitin
-  define(__4009 <-> and([__908,y#int_direct_4;int(1..)])) using tseitin
+  define(__4009 <-> and([__908,y#direct_4;int(1..)])) using tseitin
   define(__4010 <-> or([__4008,__4009;int(1..)])) using tseitin
-  define(__4011 <-> and([__914,y#int_direct_3;int(1..)])) using tseitin
+  define(__4011 <-> and([__914,y#direct_3;int(1..)])) using tseitin
   define(__4012 <-> or([__4010,__4011;int(1..)])) using tseitin
-  define(__4013 <-> and([__922,y#int_direct_2;int(1..)])) using tseitin
+  define(__4013 <-> and([__922,y#direct_2;int(1..)])) using tseitin
   define(__4014 <-> or([__4012,__4013;int(1..)])) using tseitin
-  define(__4015 <-> and([__932,y#int_direct_1;int(1..)])) using tseitin
+  define(__4015 <-> and([__932,y#direct_1;int(1..)])) using tseitin
   define(__4016 <-> or([__4014,__4015;int(1..)])) using tseitin
   define(__4017 <-> and([false,false;int(1..)])) using tseitin
   define(__4018 <-> or([false,__4017;int(1..)])) using tseitin
@@ -21089,15 +21089,15 @@ new SAT encoding decisions:
   define(__4022 <-> or([__4020,__4021;int(1..)])) using tseitin
   define(__4023 <-> and([__904,false;int(1..)])) using tseitin
   define(__4024 <-> or([__4022,__4023;int(1..)])) using tseitin
-  define(__4025 <-> and([__908,y#int_direct_5;int(1..)])) using tseitin
+  define(__4025 <-> and([__908,y#direct_5;int(1..)])) using tseitin
   define(__4026 <-> or([__4024,__4025;int(1..)])) using tseitin
-  define(__4027 <-> and([__914,y#int_direct_4;int(1..)])) using tseitin
+  define(__4027 <-> and([__914,y#direct_4;int(1..)])) using tseitin
   define(__4028 <-> or([__4026,__4027;int(1..)])) using tseitin
-  define(__4029 <-> and([__922,y#int_direct_3;int(1..)])) using tseitin
+  define(__4029 <-> and([__922,y#direct_3;int(1..)])) using tseitin
   define(__4030 <-> or([__4028,__4029;int(1..)])) using tseitin
-  define(__4031 <-> and([__932,y#int_direct_2;int(1..)])) using tseitin
+  define(__4031 <-> and([__932,y#direct_2;int(1..)])) using tseitin
   define(__4032 <-> or([__4030,__4031;int(1..)])) using tseitin
-  define(__4033 <-> and([__944,y#int_direct_1;int(1..)])) using tseitin
+  define(__4033 <-> and([__944,y#direct_1;int(1..)])) using tseitin
   define(__4034 <-> or([__4032,__4033;int(1..)])) using tseitin
   define(__4035 <-> and([false,false;int(1..)])) using tseitin
   define(__4036 <-> or([false,__4035;int(1..)])) using tseitin
@@ -21109,15 +21109,15 @@ new SAT encoding decisions:
   define(__4042 <-> or([__4040,__4041;int(1..)])) using tseitin
   define(__4043 <-> and([__908,false;int(1..)])) using tseitin
   define(__4044 <-> or([__4042,__4043;int(1..)])) using tseitin
-  define(__4045 <-> and([__914,y#int_direct_5;int(1..)])) using tseitin
+  define(__4045 <-> and([__914,y#direct_5;int(1..)])) using tseitin
   define(__4046 <-> or([__4044,__4045;int(1..)])) using tseitin
-  define(__4047 <-> and([__922,y#int_direct_4;int(1..)])) using tseitin
+  define(__4047 <-> and([__922,y#direct_4;int(1..)])) using tseitin
   define(__4048 <-> or([__4046,__4047;int(1..)])) using tseitin
-  define(__4049 <-> and([__932,y#int_direct_3;int(1..)])) using tseitin
+  define(__4049 <-> and([__932,y#direct_3;int(1..)])) using tseitin
   define(__4050 <-> or([__4048,__4049;int(1..)])) using tseitin
-  define(__4051 <-> and([__944,y#int_direct_2;int(1..)])) using tseitin
+  define(__4051 <-> and([__944,y#direct_2;int(1..)])) using tseitin
   define(__4052 <-> or([__4050,__4051;int(1..)])) using tseitin
-  define(__4053 <-> and([__958,y#int_direct_1;int(1..)])) using tseitin
+  define(__4053 <-> and([__958,y#direct_1;int(1..)])) using tseitin
   define(__4054 <-> or([__4052,__4053;int(1..)])) using tseitin
   define(__4055 <-> and([false,false;int(1..)])) using tseitin
   define(__4056 <-> or([false,__4055;int(1..)])) using tseitin
@@ -21131,15 +21131,15 @@ new SAT encoding decisions:
   define(__4064 <-> or([__4062,__4063;int(1..)])) using tseitin
   define(__4065 <-> and([__914,false;int(1..)])) using tseitin
   define(__4066 <-> or([__4064,__4065;int(1..)])) using tseitin
-  define(__4067 <-> and([__922,y#int_direct_5;int(1..)])) using tseitin
+  define(__4067 <-> and([__922,y#direct_5;int(1..)])) using tseitin
   define(__4068 <-> or([__4066,__4067;int(1..)])) using tseitin
-  define(__4069 <-> and([__932,y#int_direct_4;int(1..)])) using tseitin
+  define(__4069 <-> and([__932,y#direct_4;int(1..)])) using tseitin
   define(__4070 <-> or([__4068,__4069;int(1..)])) using tseitin
-  define(__4071 <-> and([__944,y#int_direct_3;int(1..)])) using tseitin
+  define(__4071 <-> and([__944,y#direct_3;int(1..)])) using tseitin
   define(__4072 <-> or([__4070,__4071;int(1..)])) using tseitin
-  define(__4073 <-> and([__958,y#int_direct_2;int(1..)])) using tseitin
+  define(__4073 <-> and([__958,y#direct_2;int(1..)])) using tseitin
   define(__4074 <-> or([__4072,__4073;int(1..)])) using tseitin
-  define(__4075 <-> and([__974,y#int_direct_1;int(1..)])) using tseitin
+  define(__4075 <-> and([__974,y#direct_1;int(1..)])) using tseitin
   define(__4076 <-> or([__4074,__4075;int(1..)])) using tseitin
   define(__4077 <-> and([false,false;int(1..)])) using tseitin
   define(__4078 <-> or([false,__4077;int(1..)])) using tseitin
@@ -21155,15 +21155,15 @@ new SAT encoding decisions:
   define(__4088 <-> or([__4086,__4087;int(1..)])) using tseitin
   define(__4089 <-> and([__922,false;int(1..)])) using tseitin
   define(__4090 <-> or([__4088,__4089;int(1..)])) using tseitin
-  define(__4091 <-> and([__932,y#int_direct_5;int(1..)])) using tseitin
+  define(__4091 <-> and([__932,y#direct_5;int(1..)])) using tseitin
   define(__4092 <-> or([__4090,__4091;int(1..)])) using tseitin
-  define(__4093 <-> and([__944,y#int_direct_4;int(1..)])) using tseitin
+  define(__4093 <-> and([__944,y#direct_4;int(1..)])) using tseitin
   define(__4094 <-> or([__4092,__4093;int(1..)])) using tseitin
-  define(__4095 <-> and([__958,y#int_direct_3;int(1..)])) using tseitin
+  define(__4095 <-> and([__958,y#direct_3;int(1..)])) using tseitin
   define(__4096 <-> or([__4094,__4095;int(1..)])) using tseitin
-  define(__4097 <-> and([__974,y#int_direct_2;int(1..)])) using tseitin
+  define(__4097 <-> and([__974,y#direct_2;int(1..)])) using tseitin
   define(__4098 <-> or([__4096,__4097;int(1..)])) using tseitin
-  define(__4099 <-> and([__992,y#int_direct_1;int(1..)])) using tseitin
+  define(__4099 <-> and([__992,y#direct_1;int(1..)])) using tseitin
   define(__4100 <-> or([__4098,__4099;int(1..)])) using tseitin
   define(__4101 <-> and([false,false;int(1..)])) using tseitin
   define(__4102 <-> or([false,__4101;int(1..)])) using tseitin
@@ -21181,15 +21181,15 @@ new SAT encoding decisions:
   define(__4114 <-> or([__4112,__4113;int(1..)])) using tseitin
   define(__4115 <-> and([__932,false;int(1..)])) using tseitin
   define(__4116 <-> or([__4114,__4115;int(1..)])) using tseitin
-  define(__4117 <-> and([__944,y#int_direct_5;int(1..)])) using tseitin
+  define(__4117 <-> and([__944,y#direct_5;int(1..)])) using tseitin
   define(__4118 <-> or([__4116,__4117;int(1..)])) using tseitin
-  define(__4119 <-> and([__958,y#int_direct_4;int(1..)])) using tseitin
+  define(__4119 <-> and([__958,y#direct_4;int(1..)])) using tseitin
   define(__4120 <-> or([__4118,__4119;int(1..)])) using tseitin
-  define(__4121 <-> and([__974,y#int_direct_3;int(1..)])) using tseitin
+  define(__4121 <-> and([__974,y#direct_3;int(1..)])) using tseitin
   define(__4122 <-> or([__4120,__4121;int(1..)])) using tseitin
-  define(__4123 <-> and([__992,y#int_direct_2;int(1..)])) using tseitin
+  define(__4123 <-> and([__992,y#direct_2;int(1..)])) using tseitin
   define(__4124 <-> or([__4122,__4123;int(1..)])) using tseitin
-  define(__4125 <-> and([__1012,y#int_direct_1;int(1..)])) using tseitin
+  define(__4125 <-> and([__1012,y#direct_1;int(1..)])) using tseitin
   define(__4126 <-> or([__4124,__4125;int(1..)])) using tseitin
   define(__4127 <-> and([false,false;int(1..)])) using tseitin
   define(__4128 <-> or([false,__4127;int(1..)])) using tseitin
@@ -21209,15 +21209,15 @@ new SAT encoding decisions:
   define(__4142 <-> or([__4140,__4141;int(1..)])) using tseitin
   define(__4143 <-> and([__944,false;int(1..)])) using tseitin
   define(__4144 <-> or([__4142,__4143;int(1..)])) using tseitin
-  define(__4145 <-> and([__958,y#int_direct_5;int(1..)])) using tseitin
+  define(__4145 <-> and([__958,y#direct_5;int(1..)])) using tseitin
   define(__4146 <-> or([__4144,__4145;int(1..)])) using tseitin
-  define(__4147 <-> and([__974,y#int_direct_4;int(1..)])) using tseitin
+  define(__4147 <-> and([__974,y#direct_4;int(1..)])) using tseitin
   define(__4148 <-> or([__4146,__4147;int(1..)])) using tseitin
-  define(__4149 <-> and([__992,y#int_direct_3;int(1..)])) using tseitin
+  define(__4149 <-> and([__992,y#direct_3;int(1..)])) using tseitin
   define(__4150 <-> or([__4148,__4149;int(1..)])) using tseitin
-  define(__4151 <-> and([__1012,y#int_direct_2;int(1..)])) using tseitin
+  define(__4151 <-> and([__1012,y#direct_2;int(1..)])) using tseitin
   define(__4152 <-> or([__4150,__4151;int(1..)])) using tseitin
-  define(__4153 <-> and([__1034,y#int_direct_1;int(1..)])) using tseitin
+  define(__4153 <-> and([__1034,y#direct_1;int(1..)])) using tseitin
   define(__4154 <-> or([__4152,__4153;int(1..)])) using tseitin
   define(__4155 <-> and([false,false;int(1..)])) using tseitin
   define(__4156 <-> or([false,__4155;int(1..)])) using tseitin
@@ -21239,15 +21239,15 @@ new SAT encoding decisions:
   define(__4172 <-> or([__4170,__4171;int(1..)])) using tseitin
   define(__4173 <-> and([__958,false;int(1..)])) using tseitin
   define(__4174 <-> or([__4172,__4173;int(1..)])) using tseitin
-  define(__4175 <-> and([__974,y#int_direct_5;int(1..)])) using tseitin
+  define(__4175 <-> and([__974,y#direct_5;int(1..)])) using tseitin
   define(__4176 <-> or([__4174,__4175;int(1..)])) using tseitin
-  define(__4177 <-> and([__992,y#int_direct_4;int(1..)])) using tseitin
+  define(__4177 <-> and([__992,y#direct_4;int(1..)])) using tseitin
   define(__4178 <-> or([__4176,__4177;int(1..)])) using tseitin
-  define(__4179 <-> and([__1012,y#int_direct_3;int(1..)])) using tseitin
+  define(__4179 <-> and([__1012,y#direct_3;int(1..)])) using tseitin
   define(__4180 <-> or([__4178,__4179;int(1..)])) using tseitin
-  define(__4181 <-> and([__1034,y#int_direct_2;int(1..)])) using tseitin
+  define(__4181 <-> and([__1034,y#direct_2;int(1..)])) using tseitin
   define(__4182 <-> or([__4180,__4181;int(1..)])) using tseitin
-  define(__4183 <-> and([__1058,y#int_direct_1;int(1..)])) using tseitin
+  define(__4183 <-> and([__1058,y#direct_1;int(1..)])) using tseitin
   define(__4184 <-> or([__4182,__4183;int(1..)])) using tseitin
   define(__4185 <-> and([false,false;int(1..)])) using tseitin
   define(__4186 <-> or([false,__4185;int(1..)])) using tseitin
@@ -21271,15 +21271,15 @@ new SAT encoding decisions:
   define(__4204 <-> or([__4202,__4203;int(1..)])) using tseitin
   define(__4205 <-> and([__974,false;int(1..)])) using tseitin
   define(__4206 <-> or([__4204,__4205;int(1..)])) using tseitin
-  define(__4207 <-> and([__992,y#int_direct_5;int(1..)])) using tseitin
+  define(__4207 <-> and([__992,y#direct_5;int(1..)])) using tseitin
   define(__4208 <-> or([__4206,__4207;int(1..)])) using tseitin
-  define(__4209 <-> and([__1012,y#int_direct_4;int(1..)])) using tseitin
+  define(__4209 <-> and([__1012,y#direct_4;int(1..)])) using tseitin
   define(__4210 <-> or([__4208,__4209;int(1..)])) using tseitin
-  define(__4211 <-> and([__1034,y#int_direct_3;int(1..)])) using tseitin
+  define(__4211 <-> and([__1034,y#direct_3;int(1..)])) using tseitin
   define(__4212 <-> or([__4210,__4211;int(1..)])) using tseitin
-  define(__4213 <-> and([__1058,y#int_direct_2;int(1..)])) using tseitin
+  define(__4213 <-> and([__1058,y#direct_2;int(1..)])) using tseitin
   define(__4214 <-> or([__4212,__4213;int(1..)])) using tseitin
-  define(__4215 <-> and([__1084,y#int_direct_1;int(1..)])) using tseitin
+  define(__4215 <-> and([__1084,y#direct_1;int(1..)])) using tseitin
   define(__4216 <-> or([__4214,__4215;int(1..)])) using tseitin
   define(__4217 <-> and([false,false;int(1..)])) using tseitin
   define(__4218 <-> or([false,__4217;int(1..)])) using tseitin
@@ -21305,15 +21305,15 @@ new SAT encoding decisions:
   define(__4238 <-> or([__4236,__4237;int(1..)])) using tseitin
   define(__4239 <-> and([__992,false;int(1..)])) using tseitin
   define(__4240 <-> or([__4238,__4239;int(1..)])) using tseitin
-  define(__4241 <-> and([__1012,y#int_direct_5;int(1..)])) using tseitin
+  define(__4241 <-> and([__1012,y#direct_5;int(1..)])) using tseitin
   define(__4242 <-> or([__4240,__4241;int(1..)])) using tseitin
-  define(__4243 <-> and([__1034,y#int_direct_4;int(1..)])) using tseitin
+  define(__4243 <-> and([__1034,y#direct_4;int(1..)])) using tseitin
   define(__4244 <-> or([__4242,__4243;int(1..)])) using tseitin
-  define(__4245 <-> and([__1058,y#int_direct_3;int(1..)])) using tseitin
+  define(__4245 <-> and([__1058,y#direct_3;int(1..)])) using tseitin
   define(__4246 <-> or([__4244,__4245;int(1..)])) using tseitin
-  define(__4247 <-> and([__1084,y#int_direct_2;int(1..)])) using tseitin
+  define(__4247 <-> and([__1084,y#direct_2;int(1..)])) using tseitin
   define(__4248 <-> or([__4246,__4247;int(1..)])) using tseitin
-  define(__4249 <-> and([__1112,y#int_direct_1;int(1..)])) using tseitin
+  define(__4249 <-> and([__1112,y#direct_1;int(1..)])) using tseitin
   define(__4250 <-> or([__4248,__4249;int(1..)])) using tseitin
   define(__4251 <-> and([false,false;int(1..)])) using tseitin
   define(__4252 <-> or([false,__4251;int(1..)])) using tseitin
@@ -21341,15 +21341,15 @@ new SAT encoding decisions:
   define(__4274 <-> or([__4272,__4273;int(1..)])) using tseitin
   define(__4275 <-> and([__1012,false;int(1..)])) using tseitin
   define(__4276 <-> or([__4274,__4275;int(1..)])) using tseitin
-  define(__4277 <-> and([__1034,y#int_direct_5;int(1..)])) using tseitin
+  define(__4277 <-> and([__1034,y#direct_5;int(1..)])) using tseitin
   define(__4278 <-> or([__4276,__4277;int(1..)])) using tseitin
-  define(__4279 <-> and([__1058,y#int_direct_4;int(1..)])) using tseitin
+  define(__4279 <-> and([__1058,y#direct_4;int(1..)])) using tseitin
   define(__4280 <-> or([__4278,__4279;int(1..)])) using tseitin
-  define(__4281 <-> and([__1084,y#int_direct_3;int(1..)])) using tseitin
+  define(__4281 <-> and([__1084,y#direct_3;int(1..)])) using tseitin
   define(__4282 <-> or([__4280,__4281;int(1..)])) using tseitin
-  define(__4283 <-> and([__1112,y#int_direct_2;int(1..)])) using tseitin
+  define(__4283 <-> and([__1112,y#direct_2;int(1..)])) using tseitin
   define(__4284 <-> or([__4282,__4283;int(1..)])) using tseitin
-  define(__4285 <-> and([__1142,y#int_direct_1;int(1..)])) using tseitin
+  define(__4285 <-> and([__1142,y#direct_1;int(1..)])) using tseitin
   define(__4286 <-> or([__4284,__4285;int(1..)])) using tseitin
   define(__4287 <-> and([false,false;int(1..)])) using tseitin
   define(__4288 <-> or([false,__4287;int(1..)])) using tseitin
@@ -21379,15 +21379,15 @@ new SAT encoding decisions:
   define(__4312 <-> or([__4310,__4311;int(1..)])) using tseitin
   define(__4313 <-> and([__1034,false;int(1..)])) using tseitin
   define(__4314 <-> or([__4312,__4313;int(1..)])) using tseitin
-  define(__4315 <-> and([__1058,y#int_direct_5;int(1..)])) using tseitin
+  define(__4315 <-> and([__1058,y#direct_5;int(1..)])) using tseitin
   define(__4316 <-> or([__4314,__4315;int(1..)])) using tseitin
-  define(__4317 <-> and([__1084,y#int_direct_4;int(1..)])) using tseitin
+  define(__4317 <-> and([__1084,y#direct_4;int(1..)])) using tseitin
   define(__4318 <-> or([__4316,__4317;int(1..)])) using tseitin
-  define(__4319 <-> and([__1112,y#int_direct_3;int(1..)])) using tseitin
+  define(__4319 <-> and([__1112,y#direct_3;int(1..)])) using tseitin
   define(__4320 <-> or([__4318,__4319;int(1..)])) using tseitin
-  define(__4321 <-> and([__1142,y#int_direct_2;int(1..)])) using tseitin
+  define(__4321 <-> and([__1142,y#direct_2;int(1..)])) using tseitin
   define(__4322 <-> or([__4320,__4321;int(1..)])) using tseitin
-  define(__4323 <-> and([__1174,y#int_direct_1;int(1..)])) using tseitin
+  define(__4323 <-> and([__1174,y#direct_1;int(1..)])) using tseitin
   define(__4324 <-> or([__4322,__4323;int(1..)])) using tseitin
   define(__4325 <-> and([false,false;int(1..)])) using tseitin
   define(__4326 <-> or([false,__4325;int(1..)])) using tseitin
@@ -21419,15 +21419,15 @@ new SAT encoding decisions:
   define(__4352 <-> or([__4350,__4351;int(1..)])) using tseitin
   define(__4353 <-> and([__1058,false;int(1..)])) using tseitin
   define(__4354 <-> or([__4352,__4353;int(1..)])) using tseitin
-  define(__4355 <-> and([__1084,y#int_direct_5;int(1..)])) using tseitin
+  define(__4355 <-> and([__1084,y#direct_5;int(1..)])) using tseitin
   define(__4356 <-> or([__4354,__4355;int(1..)])) using tseitin
-  define(__4357 <-> and([__1112,y#int_direct_4;int(1..)])) using tseitin
+  define(__4357 <-> and([__1112,y#direct_4;int(1..)])) using tseitin
   define(__4358 <-> or([__4356,__4357;int(1..)])) using tseitin
-  define(__4359 <-> and([__1142,y#int_direct_3;int(1..)])) using tseitin
+  define(__4359 <-> and([__1142,y#direct_3;int(1..)])) using tseitin
   define(__4360 <-> or([__4358,__4359;int(1..)])) using tseitin
-  define(__4361 <-> and([__1174,y#int_direct_2;int(1..)])) using tseitin
+  define(__4361 <-> and([__1174,y#direct_2;int(1..)])) using tseitin
   define(__4362 <-> or([__4360,__4361;int(1..)])) using tseitin
-  define(__4363 <-> and([__1208,y#int_direct_1;int(1..)])) using tseitin
+  define(__4363 <-> and([__1208,y#direct_1;int(1..)])) using tseitin
   define(__4364 <-> or([__4362,__4363;int(1..)])) using tseitin
   define(__4365 <-> and([false,false;int(1..)])) using tseitin
   define(__4366 <-> or([false,__4365;int(1..)])) using tseitin
@@ -21461,15 +21461,15 @@ new SAT encoding decisions:
   define(__4394 <-> or([__4392,__4393;int(1..)])) using tseitin
   define(__4395 <-> and([__1084,false;int(1..)])) using tseitin
   define(__4396 <-> or([__4394,__4395;int(1..)])) using tseitin
-  define(__4397 <-> and([__1112,y#int_direct_5;int(1..)])) using tseitin
+  define(__4397 <-> and([__1112,y#direct_5;int(1..)])) using tseitin
   define(__4398 <-> or([__4396,__4397;int(1..)])) using tseitin
-  define(__4399 <-> and([__1142,y#int_direct_4;int(1..)])) using tseitin
+  define(__4399 <-> and([__1142,y#direct_4;int(1..)])) using tseitin
   define(__4400 <-> or([__4398,__4399;int(1..)])) using tseitin
-  define(__4401 <-> and([__1174,y#int_direct_3;int(1..)])) using tseitin
+  define(__4401 <-> and([__1174,y#direct_3;int(1..)])) using tseitin
   define(__4402 <-> or([__4400,__4401;int(1..)])) using tseitin
-  define(__4403 <-> and([__1208,y#int_direct_2;int(1..)])) using tseitin
+  define(__4403 <-> and([__1208,y#direct_2;int(1..)])) using tseitin
   define(__4404 <-> or([__4402,__4403;int(1..)])) using tseitin
-  define(__4405 <-> and([__1244,y#int_direct_1;int(1..)])) using tseitin
+  define(__4405 <-> and([__1244,y#direct_1;int(1..)])) using tseitin
   define(__4406 <-> or([__4404,__4405;int(1..)])) using tseitin
   define(__4407 <-> and([false,false;int(1..)])) using tseitin
   define(__4408 <-> or([false,__4407;int(1..)])) using tseitin
@@ -21505,15 +21505,15 @@ new SAT encoding decisions:
   define(__4438 <-> or([__4436,__4437;int(1..)])) using tseitin
   define(__4439 <-> and([__1112,false;int(1..)])) using tseitin
   define(__4440 <-> or([__4438,__4439;int(1..)])) using tseitin
-  define(__4441 <-> and([__1142,y#int_direct_5;int(1..)])) using tseitin
+  define(__4441 <-> and([__1142,y#direct_5;int(1..)])) using tseitin
   define(__4442 <-> or([__4440,__4441;int(1..)])) using tseitin
-  define(__4443 <-> and([__1174,y#int_direct_4;int(1..)])) using tseitin
+  define(__4443 <-> and([__1174,y#direct_4;int(1..)])) using tseitin
   define(__4444 <-> or([__4442,__4443;int(1..)])) using tseitin
-  define(__4445 <-> and([__1208,y#int_direct_3;int(1..)])) using tseitin
+  define(__4445 <-> and([__1208,y#direct_3;int(1..)])) using tseitin
   define(__4446 <-> or([__4444,__4445;int(1..)])) using tseitin
-  define(__4447 <-> and([__1244,y#int_direct_2;int(1..)])) using tseitin
+  define(__4447 <-> and([__1244,y#direct_2;int(1..)])) using tseitin
   define(__4448 <-> or([__4446,__4447;int(1..)])) using tseitin
-  define(__4449 <-> and([__1282,y#int_direct_1;int(1..)])) using tseitin
+  define(__4449 <-> and([__1282,y#direct_1;int(1..)])) using tseitin
   define(__4450 <-> or([__4448,__4449;int(1..)])) using tseitin
   define(__4451 <-> and([false,false;int(1..)])) using tseitin
   define(__4452 <-> or([false,__4451;int(1..)])) using tseitin
@@ -21551,15 +21551,15 @@ new SAT encoding decisions:
   define(__4484 <-> or([__4482,__4483;int(1..)])) using tseitin
   define(__4485 <-> and([__1142,false;int(1..)])) using tseitin
   define(__4486 <-> or([__4484,__4485;int(1..)])) using tseitin
-  define(__4487 <-> and([__1174,y#int_direct_5;int(1..)])) using tseitin
+  define(__4487 <-> and([__1174,y#direct_5;int(1..)])) using tseitin
   define(__4488 <-> or([__4486,__4487;int(1..)])) using tseitin
-  define(__4489 <-> and([__1208,y#int_direct_4;int(1..)])) using tseitin
+  define(__4489 <-> and([__1208,y#direct_4;int(1..)])) using tseitin
   define(__4490 <-> or([__4488,__4489;int(1..)])) using tseitin
-  define(__4491 <-> and([__1244,y#int_direct_3;int(1..)])) using tseitin
+  define(__4491 <-> and([__1244,y#direct_3;int(1..)])) using tseitin
   define(__4492 <-> or([__4490,__4491;int(1..)])) using tseitin
-  define(__4493 <-> and([__1282,y#int_direct_2;int(1..)])) using tseitin
+  define(__4493 <-> and([__1282,y#direct_2;int(1..)])) using tseitin
   define(__4494 <-> or([__4492,__4493;int(1..)])) using tseitin
-  define(__4495 <-> and([__1322,y#int_direct_1;int(1..)])) using tseitin
+  define(__4495 <-> and([__1322,y#direct_1;int(1..)])) using tseitin
   define(__4496 <-> or([__4494,__4495;int(1..)])) using tseitin
   define(__4497 <-> and([false,false;int(1..)])) using tseitin
   define(__4498 <-> or([false,__4497;int(1..)])) using tseitin
@@ -21599,15 +21599,15 @@ new SAT encoding decisions:
   define(__4532 <-> or([__4530,__4531;int(1..)])) using tseitin
   define(__4533 <-> and([__1174,false;int(1..)])) using tseitin
   define(__4534 <-> or([__4532,__4533;int(1..)])) using tseitin
-  define(__4535 <-> and([__1208,y#int_direct_5;int(1..)])) using tseitin
+  define(__4535 <-> and([__1208,y#direct_5;int(1..)])) using tseitin
   define(__4536 <-> or([__4534,__4535;int(1..)])) using tseitin
-  define(__4537 <-> and([__1244,y#int_direct_4;int(1..)])) using tseitin
+  define(__4537 <-> and([__1244,y#direct_4;int(1..)])) using tseitin
   define(__4538 <-> or([__4536,__4537;int(1..)])) using tseitin
-  define(__4539 <-> and([__1282,y#int_direct_3;int(1..)])) using tseitin
+  define(__4539 <-> and([__1282,y#direct_3;int(1..)])) using tseitin
   define(__4540 <-> or([__4538,__4539;int(1..)])) using tseitin
-  define(__4541 <-> and([__1322,y#int_direct_2;int(1..)])) using tseitin
+  define(__4541 <-> and([__1322,y#direct_2;int(1..)])) using tseitin
   define(__4542 <-> or([__4540,__4541;int(1..)])) using tseitin
-  define(__4543 <-> and([__1364,y#int_direct_1;int(1..)])) using tseitin
+  define(__4543 <-> and([__1364,y#direct_1;int(1..)])) using tseitin
   define(__4544 <-> or([__4542,__4543;int(1..)])) using tseitin
   define(__4545 <-> and([false,false;int(1..)])) using tseitin
   define(__4546 <-> or([false,__4545;int(1..)])) using tseitin
@@ -21649,15 +21649,15 @@ new SAT encoding decisions:
   define(__4582 <-> or([__4580,__4581;int(1..)])) using tseitin
   define(__4583 <-> and([__1208,false;int(1..)])) using tseitin
   define(__4584 <-> or([__4582,__4583;int(1..)])) using tseitin
-  define(__4585 <-> and([__1244,y#int_direct_5;int(1..)])) using tseitin
+  define(__4585 <-> and([__1244,y#direct_5;int(1..)])) using tseitin
   define(__4586 <-> or([__4584,__4585;int(1..)])) using tseitin
-  define(__4587 <-> and([__1282,y#int_direct_4;int(1..)])) using tseitin
+  define(__4587 <-> and([__1282,y#direct_4;int(1..)])) using tseitin
   define(__4588 <-> or([__4586,__4587;int(1..)])) using tseitin
-  define(__4589 <-> and([__1322,y#int_direct_3;int(1..)])) using tseitin
+  define(__4589 <-> and([__1322,y#direct_3;int(1..)])) using tseitin
   define(__4590 <-> or([__4588,__4589;int(1..)])) using tseitin
-  define(__4591 <-> and([__1364,y#int_direct_2;int(1..)])) using tseitin
+  define(__4591 <-> and([__1364,y#direct_2;int(1..)])) using tseitin
   define(__4592 <-> or([__4590,__4591;int(1..)])) using tseitin
-  define(__4593 <-> and([__1408,y#int_direct_1;int(1..)])) using tseitin
+  define(__4593 <-> and([__1408,y#direct_1;int(1..)])) using tseitin
   define(__4594 <-> or([__4592,__4593;int(1..)])) using tseitin
   define(__4595 <-> and([false,false;int(1..)])) using tseitin
   define(__4596 <-> or([false,__4595;int(1..)])) using tseitin
@@ -21701,15 +21701,15 @@ new SAT encoding decisions:
   define(__4634 <-> or([__4632,__4633;int(1..)])) using tseitin
   define(__4635 <-> and([__1244,false;int(1..)])) using tseitin
   define(__4636 <-> or([__4634,__4635;int(1..)])) using tseitin
-  define(__4637 <-> and([__1282,y#int_direct_5;int(1..)])) using tseitin
+  define(__4637 <-> and([__1282,y#direct_5;int(1..)])) using tseitin
   define(__4638 <-> or([__4636,__4637;int(1..)])) using tseitin
-  define(__4639 <-> and([__1322,y#int_direct_4;int(1..)])) using tseitin
+  define(__4639 <-> and([__1322,y#direct_4;int(1..)])) using tseitin
   define(__4640 <-> or([__4638,__4639;int(1..)])) using tseitin
-  define(__4641 <-> and([__1364,y#int_direct_3;int(1..)])) using tseitin
+  define(__4641 <-> and([__1364,y#direct_3;int(1..)])) using tseitin
   define(__4642 <-> or([__4640,__4641;int(1..)])) using tseitin
-  define(__4643 <-> and([__1408,y#int_direct_2;int(1..)])) using tseitin
+  define(__4643 <-> and([__1408,y#direct_2;int(1..)])) using tseitin
   define(__4644 <-> or([__4642,__4643;int(1..)])) using tseitin
-  define(__4645 <-> and([__1454,y#int_direct_1;int(1..)])) using tseitin
+  define(__4645 <-> and([__1454,y#direct_1;int(1..)])) using tseitin
   define(__4646 <-> or([__4644,__4645;int(1..)])) using tseitin
   define(__4647 <-> and([false,false;int(1..)])) using tseitin
   define(__4648 <-> or([false,__4647;int(1..)])) using tseitin
@@ -21755,15 +21755,15 @@ new SAT encoding decisions:
   define(__4688 <-> or([__4686,__4687;int(1..)])) using tseitin
   define(__4689 <-> and([__1282,false;int(1..)])) using tseitin
   define(__4690 <-> or([__4688,__4689;int(1..)])) using tseitin
-  define(__4691 <-> and([__1322,y#int_direct_5;int(1..)])) using tseitin
+  define(__4691 <-> and([__1322,y#direct_5;int(1..)])) using tseitin
   define(__4692 <-> or([__4690,__4691;int(1..)])) using tseitin
-  define(__4693 <-> and([__1364,y#int_direct_4;int(1..)])) using tseitin
+  define(__4693 <-> and([__1364,y#direct_4;int(1..)])) using tseitin
   define(__4694 <-> or([__4692,__4693;int(1..)])) using tseitin
-  define(__4695 <-> and([__1408,y#int_direct_3;int(1..)])) using tseitin
+  define(__4695 <-> and([__1408,y#direct_3;int(1..)])) using tseitin
   define(__4696 <-> or([__4694,__4695;int(1..)])) using tseitin
-  define(__4697 <-> and([__1454,y#int_direct_2;int(1..)])) using tseitin
+  define(__4697 <-> and([__1454,y#direct_2;int(1..)])) using tseitin
   define(__4698 <-> or([__4696,__4697;int(1..)])) using tseitin
-  define(__4699 <-> and([__1502,y#int_direct_1;int(1..)])) using tseitin
+  define(__4699 <-> and([__1502,y#direct_1;int(1..)])) using tseitin
   define(__4700 <-> or([__4698,__4699;int(1..)])) using tseitin
   define(__4701 <-> and([false,false;int(1..)])) using tseitin
   define(__4702 <-> or([false,__4701;int(1..)])) using tseitin
@@ -21811,15 +21811,15 @@ new SAT encoding decisions:
   define(__4744 <-> or([__4742,__4743;int(1..)])) using tseitin
   define(__4745 <-> and([__1322,false;int(1..)])) using tseitin
   define(__4746 <-> or([__4744,__4745;int(1..)])) using tseitin
-  define(__4747 <-> and([__1364,y#int_direct_5;int(1..)])) using tseitin
+  define(__4747 <-> and([__1364,y#direct_5;int(1..)])) using tseitin
   define(__4748 <-> or([__4746,__4747;int(1..)])) using tseitin
-  define(__4749 <-> and([__1408,y#int_direct_4;int(1..)])) using tseitin
+  define(__4749 <-> and([__1408,y#direct_4;int(1..)])) using tseitin
   define(__4750 <-> or([__4748,__4749;int(1..)])) using tseitin
-  define(__4751 <-> and([__1454,y#int_direct_3;int(1..)])) using tseitin
+  define(__4751 <-> and([__1454,y#direct_3;int(1..)])) using tseitin
   define(__4752 <-> or([__4750,__4751;int(1..)])) using tseitin
-  define(__4753 <-> and([__1502,y#int_direct_2;int(1..)])) using tseitin
+  define(__4753 <-> and([__1502,y#direct_2;int(1..)])) using tseitin
   define(__4754 <-> or([__4752,__4753;int(1..)])) using tseitin
-  define(__4755 <-> and([__1552,y#int_direct_1;int(1..)])) using tseitin
+  define(__4755 <-> and([__1552,y#direct_1;int(1..)])) using tseitin
   define(__4756 <-> or([__4754,__4755;int(1..)])) using tseitin
   define(__4757 <-> and([false,false;int(1..)])) using tseitin
   define(__4758 <-> or([false,__4757;int(1..)])) using tseitin
@@ -21869,15 +21869,15 @@ new SAT encoding decisions:
   define(__4802 <-> or([__4800,__4801;int(1..)])) using tseitin
   define(__4803 <-> and([__1364,false;int(1..)])) using tseitin
   define(__4804 <-> or([__4802,__4803;int(1..)])) using tseitin
-  define(__4805 <-> and([__1408,y#int_direct_5;int(1..)])) using tseitin
+  define(__4805 <-> and([__1408,y#direct_5;int(1..)])) using tseitin
   define(__4806 <-> or([__4804,__4805;int(1..)])) using tseitin
-  define(__4807 <-> and([__1454,y#int_direct_4;int(1..)])) using tseitin
+  define(__4807 <-> and([__1454,y#direct_4;int(1..)])) using tseitin
   define(__4808 <-> or([__4806,__4807;int(1..)])) using tseitin
-  define(__4809 <-> and([__1502,y#int_direct_3;int(1..)])) using tseitin
+  define(__4809 <-> and([__1502,y#direct_3;int(1..)])) using tseitin
   define(__4810 <-> or([__4808,__4809;int(1..)])) using tseitin
-  define(__4811 <-> and([__1552,y#int_direct_2;int(1..)])) using tseitin
+  define(__4811 <-> and([__1552,y#direct_2;int(1..)])) using tseitin
   define(__4812 <-> or([__4810,__4811;int(1..)])) using tseitin
-  define(__4813 <-> and([__1604,y#int_direct_1;int(1..)])) using tseitin
+  define(__4813 <-> and([__1604,y#direct_1;int(1..)])) using tseitin
   define(__4814 <-> or([__4812,__4813;int(1..)])) using tseitin
   define(__4815 <-> and([false,false;int(1..)])) using tseitin
   define(__4816 <-> or([false,__4815;int(1..)])) using tseitin
@@ -21929,15 +21929,15 @@ new SAT encoding decisions:
   define(__4862 <-> or([__4860,__4861;int(1..)])) using tseitin
   define(__4863 <-> and([__1408,false;int(1..)])) using tseitin
   define(__4864 <-> or([__4862,__4863;int(1..)])) using tseitin
-  define(__4865 <-> and([__1454,y#int_direct_5;int(1..)])) using tseitin
+  define(__4865 <-> and([__1454,y#direct_5;int(1..)])) using tseitin
   define(__4866 <-> or([__4864,__4865;int(1..)])) using tseitin
-  define(__4867 <-> and([__1502,y#int_direct_4;int(1..)])) using tseitin
+  define(__4867 <-> and([__1502,y#direct_4;int(1..)])) using tseitin
   define(__4868 <-> or([__4866,__4867;int(1..)])) using tseitin
-  define(__4869 <-> and([__1552,y#int_direct_3;int(1..)])) using tseitin
+  define(__4869 <-> and([__1552,y#direct_3;int(1..)])) using tseitin
   define(__4870 <-> or([__4868,__4869;int(1..)])) using tseitin
-  define(__4871 <-> and([__1604,y#int_direct_2;int(1..)])) using tseitin
+  define(__4871 <-> and([__1604,y#direct_2;int(1..)])) using tseitin
   define(__4872 <-> or([__4870,__4871;int(1..)])) using tseitin
-  define(__4873 <-> and([__1658,y#int_direct_1;int(1..)])) using tseitin
+  define(__4873 <-> and([__1658,y#direct_1;int(1..)])) using tseitin
   define(__4874 <-> or([__4872,__4873;int(1..)])) using tseitin
   define(__4875 <-> and([false,false;int(1..)])) using tseitin
   define(__4876 <-> or([false,__4875;int(1..)])) using tseitin
@@ -21991,15 +21991,15 @@ new SAT encoding decisions:
   define(__4924 <-> or([__4922,__4923;int(1..)])) using tseitin
   define(__4925 <-> and([__1454,false;int(1..)])) using tseitin
   define(__4926 <-> or([__4924,__4925;int(1..)])) using tseitin
-  define(__4927 <-> and([__1502,y#int_direct_5;int(1..)])) using tseitin
+  define(__4927 <-> and([__1502,y#direct_5;int(1..)])) using tseitin
   define(__4928 <-> or([__4926,__4927;int(1..)])) using tseitin
-  define(__4929 <-> and([__1552,y#int_direct_4;int(1..)])) using tseitin
+  define(__4929 <-> and([__1552,y#direct_4;int(1..)])) using tseitin
   define(__4930 <-> or([__4928,__4929;int(1..)])) using tseitin
-  define(__4931 <-> and([__1604,y#int_direct_3;int(1..)])) using tseitin
+  define(__4931 <-> and([__1604,y#direct_3;int(1..)])) using tseitin
   define(__4932 <-> or([__4930,__4931;int(1..)])) using tseitin
-  define(__4933 <-> and([__1658,y#int_direct_2;int(1..)])) using tseitin
+  define(__4933 <-> and([__1658,y#direct_2;int(1..)])) using tseitin
   define(__4934 <-> or([__4932,__4933;int(1..)])) using tseitin
-  define(__4935 <-> and([__1714,y#int_direct_1;int(1..)])) using tseitin
+  define(__4935 <-> and([__1714,y#direct_1;int(1..)])) using tseitin
   define(__4936 <-> or([__4934,__4935;int(1..)])) using tseitin
   define(__4937 <-> and([false,false;int(1..)])) using tseitin
   define(__4938 <-> or([false,__4937;int(1..)])) using tseitin
@@ -22055,15 +22055,15 @@ new SAT encoding decisions:
   define(__4988 <-> or([__4986,__4987;int(1..)])) using tseitin
   define(__4989 <-> and([__1502,false;int(1..)])) using tseitin
   define(__4990 <-> or([__4988,__4989;int(1..)])) using tseitin
-  define(__4991 <-> and([__1552,y#int_direct_5;int(1..)])) using tseitin
+  define(__4991 <-> and([__1552,y#direct_5;int(1..)])) using tseitin
   define(__4992 <-> or([__4990,__4991;int(1..)])) using tseitin
-  define(__4993 <-> and([__1604,y#int_direct_4;int(1..)])) using tseitin
+  define(__4993 <-> and([__1604,y#direct_4;int(1..)])) using tseitin
   define(__4994 <-> or([__4992,__4993;int(1..)])) using tseitin
-  define(__4995 <-> and([__1658,y#int_direct_3;int(1..)])) using tseitin
+  define(__4995 <-> and([__1658,y#direct_3;int(1..)])) using tseitin
   define(__4996 <-> or([__4994,__4995;int(1..)])) using tseitin
-  define(__4997 <-> and([__1714,y#int_direct_2;int(1..)])) using tseitin
+  define(__4997 <-> and([__1714,y#direct_2;int(1..)])) using tseitin
   define(__4998 <-> or([__4996,__4997;int(1..)])) using tseitin
-  define(__4999 <-> and([__1772,y#int_direct_1;int(1..)])) using tseitin
+  define(__4999 <-> and([__1772,y#direct_1;int(1..)])) using tseitin
   define(__5000 <-> or([__4998,__4999;int(1..)])) using tseitin
   define(__5001 <-> and([false,false;int(1..)])) using tseitin
   define(__5002 <-> or([false,__5001;int(1..)])) using tseitin
@@ -22121,15 +22121,15 @@ new SAT encoding decisions:
   define(__5054 <-> or([__5052,__5053;int(1..)])) using tseitin
   define(__5055 <-> and([__1552,false;int(1..)])) using tseitin
   define(__5056 <-> or([__5054,__5055;int(1..)])) using tseitin
-  define(__5057 <-> and([__1604,y#int_direct_5;int(1..)])) using tseitin
+  define(__5057 <-> and([__1604,y#direct_5;int(1..)])) using tseitin
   define(__5058 <-> or([__5056,__5057;int(1..)])) using tseitin
-  define(__5059 <-> and([__1658,y#int_direct_4;int(1..)])) using tseitin
+  define(__5059 <-> and([__1658,y#direct_4;int(1..)])) using tseitin
   define(__5060 <-> or([__5058,__5059;int(1..)])) using tseitin
-  define(__5061 <-> and([__1714,y#int_direct_3;int(1..)])) using tseitin
+  define(__5061 <-> and([__1714,y#direct_3;int(1..)])) using tseitin
   define(__5062 <-> or([__5060,__5061;int(1..)])) using tseitin
-  define(__5063 <-> and([__1772,y#int_direct_2;int(1..)])) using tseitin
+  define(__5063 <-> and([__1772,y#direct_2;int(1..)])) using tseitin
   define(__5064 <-> or([__5062,__5063;int(1..)])) using tseitin
-  define(__5065 <-> and([__1832,y#int_direct_1;int(1..)])) using tseitin
+  define(__5065 <-> and([__1832,y#direct_1;int(1..)])) using tseitin
   define(__5066 <-> or([__5064,__5065;int(1..)])) using tseitin
   define(__5067 <-> and([false,false;int(1..)])) using tseitin
   define(__5068 <-> or([false,__5067;int(1..)])) using tseitin
@@ -22189,15 +22189,15 @@ new SAT encoding decisions:
   define(__5122 <-> or([__5120,__5121;int(1..)])) using tseitin
   define(__5123 <-> and([__1604,false;int(1..)])) using tseitin
   define(__5124 <-> or([__5122,__5123;int(1..)])) using tseitin
-  define(__5125 <-> and([__1658,y#int_direct_5;int(1..)])) using tseitin
+  define(__5125 <-> and([__1658,y#direct_5;int(1..)])) using tseitin
   define(__5126 <-> or([__5124,__5125;int(1..)])) using tseitin
-  define(__5127 <-> and([__1714,y#int_direct_4;int(1..)])) using tseitin
+  define(__5127 <-> and([__1714,y#direct_4;int(1..)])) using tseitin
   define(__5128 <-> or([__5126,__5127;int(1..)])) using tseitin
-  define(__5129 <-> and([__1772,y#int_direct_3;int(1..)])) using tseitin
+  define(__5129 <-> and([__1772,y#direct_3;int(1..)])) using tseitin
   define(__5130 <-> or([__5128,__5129;int(1..)])) using tseitin
-  define(__5131 <-> and([__1832,y#int_direct_2;int(1..)])) using tseitin
+  define(__5131 <-> and([__1832,y#direct_2;int(1..)])) using tseitin
   define(__5132 <-> or([__5130,__5131;int(1..)])) using tseitin
-  define(__5133 <-> and([__1894,y#int_direct_1;int(1..)])) using tseitin
+  define(__5133 <-> and([__1894,y#direct_1;int(1..)])) using tseitin
   define(__5134 <-> or([__5132,__5133;int(1..)])) using tseitin
   define(__5135 <-> and([false,false;int(1..)])) using tseitin
   define(__5136 <-> or([false,__5135;int(1..)])) using tseitin
@@ -22259,15 +22259,15 @@ new SAT encoding decisions:
   define(__5192 <-> or([__5190,__5191;int(1..)])) using tseitin
   define(__5193 <-> and([__1658,false;int(1..)])) using tseitin
   define(__5194 <-> or([__5192,__5193;int(1..)])) using tseitin
-  define(__5195 <-> and([__1714,y#int_direct_5;int(1..)])) using tseitin
+  define(__5195 <-> and([__1714,y#direct_5;int(1..)])) using tseitin
   define(__5196 <-> or([__5194,__5195;int(1..)])) using tseitin
-  define(__5197 <-> and([__1772,y#int_direct_4;int(1..)])) using tseitin
+  define(__5197 <-> and([__1772,y#direct_4;int(1..)])) using tseitin
   define(__5198 <-> or([__5196,__5197;int(1..)])) using tseitin
-  define(__5199 <-> and([__1832,y#int_direct_3;int(1..)])) using tseitin
+  define(__5199 <-> and([__1832,y#direct_3;int(1..)])) using tseitin
   define(__5200 <-> or([__5198,__5199;int(1..)])) using tseitin
-  define(__5201 <-> and([__1894,y#int_direct_2;int(1..)])) using tseitin
+  define(__5201 <-> and([__1894,y#direct_2;int(1..)])) using tseitin
   define(__5202 <-> or([__5200,__5201;int(1..)])) using tseitin
-  define(__5203 <-> and([__1958,y#int_direct_1;int(1..)])) using tseitin
+  define(__5203 <-> and([__1958,y#direct_1;int(1..)])) using tseitin
   define(__5204 <-> or([__5202,__5203;int(1..)])) using tseitin
   define(__5205 <-> and([false,false;int(1..)])) using tseitin
   define(__5206 <-> or([false,__5205;int(1..)])) using tseitin
@@ -22331,15 +22331,15 @@ new SAT encoding decisions:
   define(__5264 <-> or([__5262,__5263;int(1..)])) using tseitin
   define(__5265 <-> and([__1714,false;int(1..)])) using tseitin
   define(__5266 <-> or([__5264,__5265;int(1..)])) using tseitin
-  define(__5267 <-> and([__1772,y#int_direct_5;int(1..)])) using tseitin
+  define(__5267 <-> and([__1772,y#direct_5;int(1..)])) using tseitin
   define(__5268 <-> or([__5266,__5267;int(1..)])) using tseitin
-  define(__5269 <-> and([__1832,y#int_direct_4;int(1..)])) using tseitin
+  define(__5269 <-> and([__1832,y#direct_4;int(1..)])) using tseitin
   define(__5270 <-> or([__5268,__5269;int(1..)])) using tseitin
-  define(__5271 <-> and([__1894,y#int_direct_3;int(1..)])) using tseitin
+  define(__5271 <-> and([__1894,y#direct_3;int(1..)])) using tseitin
   define(__5272 <-> or([__5270,__5271;int(1..)])) using tseitin
-  define(__5273 <-> and([__1958,y#int_direct_2;int(1..)])) using tseitin
+  define(__5273 <-> and([__1958,y#direct_2;int(1..)])) using tseitin
   define(__5274 <-> or([__5272,__5273;int(1..)])) using tseitin
-  define(__5275 <-> and([__2024,y#int_direct_1;int(1..)])) using tseitin
+  define(__5275 <-> and([__2024,y#direct_1;int(1..)])) using tseitin
   define(__5276 <-> or([__5274,__5275;int(1..)])) using tseitin
   define(__5277 <-> and([false,false;int(1..)])) using tseitin
   define(__5278 <-> or([false,__5277;int(1..)])) using tseitin
@@ -22405,15 +22405,15 @@ new SAT encoding decisions:
   define(__5338 <-> or([__5336,__5337;int(1..)])) using tseitin
   define(__5339 <-> and([__1772,false;int(1..)])) using tseitin
   define(__5340 <-> or([__5338,__5339;int(1..)])) using tseitin
-  define(__5341 <-> and([__1832,y#int_direct_5;int(1..)])) using tseitin
+  define(__5341 <-> and([__1832,y#direct_5;int(1..)])) using tseitin
   define(__5342 <-> or([__5340,__5341;int(1..)])) using tseitin
-  define(__5343 <-> and([__1894,y#int_direct_4;int(1..)])) using tseitin
+  define(__5343 <-> and([__1894,y#direct_4;int(1..)])) using tseitin
   define(__5344 <-> or([__5342,__5343;int(1..)])) using tseitin
-  define(__5345 <-> and([__1958,y#int_direct_3;int(1..)])) using tseitin
+  define(__5345 <-> and([__1958,y#direct_3;int(1..)])) using tseitin
   define(__5346 <-> or([__5344,__5345;int(1..)])) using tseitin
-  define(__5347 <-> and([__2024,y#int_direct_2;int(1..)])) using tseitin
+  define(__5347 <-> and([__2024,y#direct_2;int(1..)])) using tseitin
   define(__5348 <-> or([__5346,__5347;int(1..)])) using tseitin
-  define(__5349 <-> and([__2092,y#int_direct_1;int(1..)])) using tseitin
+  define(__5349 <-> and([__2092,y#direct_1;int(1..)])) using tseitin
   define(__5350 <-> or([__5348,__5349;int(1..)])) using tseitin
   define(__5351 <-> and([false,false;int(1..)])) using tseitin
   define(__5352 <-> or([false,__5351;int(1..)])) using tseitin
@@ -22481,15 +22481,15 @@ new SAT encoding decisions:
   define(__5414 <-> or([__5412,__5413;int(1..)])) using tseitin
   define(__5415 <-> and([__1832,false;int(1..)])) using tseitin
   define(__5416 <-> or([__5414,__5415;int(1..)])) using tseitin
-  define(__5417 <-> and([__1894,y#int_direct_5;int(1..)])) using tseitin
+  define(__5417 <-> and([__1894,y#direct_5;int(1..)])) using tseitin
   define(__5418 <-> or([__5416,__5417;int(1..)])) using tseitin
-  define(__5419 <-> and([__1958,y#int_direct_4;int(1..)])) using tseitin
+  define(__5419 <-> and([__1958,y#direct_4;int(1..)])) using tseitin
   define(__5420 <-> or([__5418,__5419;int(1..)])) using tseitin
-  define(__5421 <-> and([__2024,y#int_direct_3;int(1..)])) using tseitin
+  define(__5421 <-> and([__2024,y#direct_3;int(1..)])) using tseitin
   define(__5422 <-> or([__5420,__5421;int(1..)])) using tseitin
-  define(__5423 <-> and([__2092,y#int_direct_2;int(1..)])) using tseitin
+  define(__5423 <-> and([__2092,y#direct_2;int(1..)])) using tseitin
   define(__5424 <-> or([__5422,__5423;int(1..)])) using tseitin
-  define(__5425 <-> and([__2162,y#int_direct_1;int(1..)])) using tseitin
+  define(__5425 <-> and([__2162,y#direct_1;int(1..)])) using tseitin
   define(__5426 <-> or([__5424,__5425;int(1..)])) using tseitin
   define(__5427 <-> and([false,false;int(1..)])) using tseitin
   define(__5428 <-> or([false,__5427;int(1..)])) using tseitin
@@ -22559,15 +22559,15 @@ new SAT encoding decisions:
   define(__5492 <-> or([__5490,__5491;int(1..)])) using tseitin
   define(__5493 <-> and([__1894,false;int(1..)])) using tseitin
   define(__5494 <-> or([__5492,__5493;int(1..)])) using tseitin
-  define(__5495 <-> and([__1958,y#int_direct_5;int(1..)])) using tseitin
+  define(__5495 <-> and([__1958,y#direct_5;int(1..)])) using tseitin
   define(__5496 <-> or([__5494,__5495;int(1..)])) using tseitin
-  define(__5497 <-> and([__2024,y#int_direct_4;int(1..)])) using tseitin
+  define(__5497 <-> and([__2024,y#direct_4;int(1..)])) using tseitin
   define(__5498 <-> or([__5496,__5497;int(1..)])) using tseitin
-  define(__5499 <-> and([__2092,y#int_direct_3;int(1..)])) using tseitin
+  define(__5499 <-> and([__2092,y#direct_3;int(1..)])) using tseitin
   define(__5500 <-> or([__5498,__5499;int(1..)])) using tseitin
-  define(__5501 <-> and([__2162,y#int_direct_2;int(1..)])) using tseitin
+  define(__5501 <-> and([__2162,y#direct_2;int(1..)])) using tseitin
   define(__5502 <-> or([__5500,__5501;int(1..)])) using tseitin
-  define(__5503 <-> and([__2234,y#int_direct_1;int(1..)])) using tseitin
+  define(__5503 <-> and([__2234,y#direct_1;int(1..)])) using tseitin
   define(__5504 <-> or([__5502,__5503;int(1..)])) using tseitin
   define(__5505 <-> and([false,false;int(1..)])) using tseitin
   define(__5506 <-> or([false,__5505;int(1..)])) using tseitin
@@ -22639,15 +22639,15 @@ new SAT encoding decisions:
   define(__5572 <-> or([__5570,__5571;int(1..)])) using tseitin
   define(__5573 <-> and([__1958,false;int(1..)])) using tseitin
   define(__5574 <-> or([__5572,__5573;int(1..)])) using tseitin
-  define(__5575 <-> and([__2024,y#int_direct_5;int(1..)])) using tseitin
+  define(__5575 <-> and([__2024,y#direct_5;int(1..)])) using tseitin
   define(__5576 <-> or([__5574,__5575;int(1..)])) using tseitin
-  define(__5577 <-> and([__2092,y#int_direct_4;int(1..)])) using tseitin
+  define(__5577 <-> and([__2092,y#direct_4;int(1..)])) using tseitin
   define(__5578 <-> or([__5576,__5577;int(1..)])) using tseitin
-  define(__5579 <-> and([__2162,y#int_direct_3;int(1..)])) using tseitin
+  define(__5579 <-> and([__2162,y#direct_3;int(1..)])) using tseitin
   define(__5580 <-> or([__5578,__5579;int(1..)])) using tseitin
-  define(__5581 <-> and([__2234,y#int_direct_2;int(1..)])) using tseitin
+  define(__5581 <-> and([__2234,y#direct_2;int(1..)])) using tseitin
   define(__5582 <-> or([__5580,__5581;int(1..)])) using tseitin
-  define(__5583 <-> and([__2308,y#int_direct_1;int(1..)])) using tseitin
+  define(__5583 <-> and([__2308,y#direct_1;int(1..)])) using tseitin
   define(__5584 <-> or([__5582,__5583;int(1..)])) using tseitin
   define(__5585 <-> and([false,false;int(1..)])) using tseitin
   define(__5586 <-> or([false,__5585;int(1..)])) using tseitin
@@ -22721,15 +22721,15 @@ new SAT encoding decisions:
   define(__5654 <-> or([__5652,__5653;int(1..)])) using tseitin
   define(__5655 <-> and([__2024,false;int(1..)])) using tseitin
   define(__5656 <-> or([__5654,__5655;int(1..)])) using tseitin
-  define(__5657 <-> and([__2092,y#int_direct_5;int(1..)])) using tseitin
+  define(__5657 <-> and([__2092,y#direct_5;int(1..)])) using tseitin
   define(__5658 <-> or([__5656,__5657;int(1..)])) using tseitin
-  define(__5659 <-> and([__2162,y#int_direct_4;int(1..)])) using tseitin
+  define(__5659 <-> and([__2162,y#direct_4;int(1..)])) using tseitin
   define(__5660 <-> or([__5658,__5659;int(1..)])) using tseitin
-  define(__5661 <-> and([__2234,y#int_direct_3;int(1..)])) using tseitin
+  define(__5661 <-> and([__2234,y#direct_3;int(1..)])) using tseitin
   define(__5662 <-> or([__5660,__5661;int(1..)])) using tseitin
-  define(__5663 <-> and([__2308,y#int_direct_2;int(1..)])) using tseitin
+  define(__5663 <-> and([__2308,y#direct_2;int(1..)])) using tseitin
   define(__5664 <-> or([__5662,__5663;int(1..)])) using tseitin
-  define(__5665 <-> and([__2384,y#int_direct_1;int(1..)])) using tseitin
+  define(__5665 <-> and([__2384,y#direct_1;int(1..)])) using tseitin
   define(__5666 <-> or([__5664,__5665;int(1..)])) using tseitin
   define(__5667 <-> and([false,false;int(1..)])) using tseitin
   define(__5668 <-> or([false,__5667;int(1..)])) using tseitin
@@ -22805,15 +22805,15 @@ new SAT encoding decisions:
   define(__5738 <-> or([__5736,__5737;int(1..)])) using tseitin
   define(__5739 <-> and([__2092,false;int(1..)])) using tseitin
   define(__5740 <-> or([__5738,__5739;int(1..)])) using tseitin
-  define(__5741 <-> and([__2162,y#int_direct_5;int(1..)])) using tseitin
+  define(__5741 <-> and([__2162,y#direct_5;int(1..)])) using tseitin
   define(__5742 <-> or([__5740,__5741;int(1..)])) using tseitin
-  define(__5743 <-> and([__2234,y#int_direct_4;int(1..)])) using tseitin
+  define(__5743 <-> and([__2234,y#direct_4;int(1..)])) using tseitin
   define(__5744 <-> or([__5742,__5743;int(1..)])) using tseitin
-  define(__5745 <-> and([__2308,y#int_direct_3;int(1..)])) using tseitin
+  define(__5745 <-> and([__2308,y#direct_3;int(1..)])) using tseitin
   define(__5746 <-> or([__5744,__5745;int(1..)])) using tseitin
-  define(__5747 <-> and([__2384,y#int_direct_2;int(1..)])) using tseitin
+  define(__5747 <-> and([__2384,y#direct_2;int(1..)])) using tseitin
   define(__5748 <-> or([__5746,__5747;int(1..)])) using tseitin
-  define(__5749 <-> and([__2462,y#int_direct_1;int(1..)])) using tseitin
+  define(__5749 <-> and([__2462,y#direct_1;int(1..)])) using tseitin
   define(__5750 <-> or([__5748,__5749;int(1..)])) using tseitin
   define(__5751 <-> and([false,false;int(1..)])) using tseitin
   define(__5752 <-> or([false,__5751;int(1..)])) using tseitin
@@ -22891,15 +22891,15 @@ new SAT encoding decisions:
   define(__5824 <-> or([__5822,__5823;int(1..)])) using tseitin
   define(__5825 <-> and([__2162,false;int(1..)])) using tseitin
   define(__5826 <-> or([__5824,__5825;int(1..)])) using tseitin
-  define(__5827 <-> and([__2234,y#int_direct_5;int(1..)])) using tseitin
+  define(__5827 <-> and([__2234,y#direct_5;int(1..)])) using tseitin
   define(__5828 <-> or([__5826,__5827;int(1..)])) using tseitin
-  define(__5829 <-> and([__2308,y#int_direct_4;int(1..)])) using tseitin
+  define(__5829 <-> and([__2308,y#direct_4;int(1..)])) using tseitin
   define(__5830 <-> or([__5828,__5829;int(1..)])) using tseitin
-  define(__5831 <-> and([__2384,y#int_direct_3;int(1..)])) using tseitin
+  define(__5831 <-> and([__2384,y#direct_3;int(1..)])) using tseitin
   define(__5832 <-> or([__5830,__5831;int(1..)])) using tseitin
-  define(__5833 <-> and([__2462,y#int_direct_2;int(1..)])) using tseitin
+  define(__5833 <-> and([__2462,y#direct_2;int(1..)])) using tseitin
   define(__5834 <-> or([__5832,__5833;int(1..)])) using tseitin
-  define(__5835 <-> and([__2538,y#int_direct_1;int(1..)])) using tseitin
+  define(__5835 <-> and([__2538,y#direct_1;int(1..)])) using tseitin
   define(__5836 <-> or([__5834,__5835;int(1..)])) using tseitin
   define(__5837 <-> and([false,false;int(1..)])) using tseitin
   define(__5838 <-> or([false,__5837;int(1..)])) using tseitin
@@ -22979,15 +22979,15 @@ new SAT encoding decisions:
   define(__5912 <-> or([__5910,__5911;int(1..)])) using tseitin
   define(__5913 <-> and([__2234,false;int(1..)])) using tseitin
   define(__5914 <-> or([__5912,__5913;int(1..)])) using tseitin
-  define(__5915 <-> and([__2308,y#int_direct_5;int(1..)])) using tseitin
+  define(__5915 <-> and([__2308,y#direct_5;int(1..)])) using tseitin
   define(__5916 <-> or([__5914,__5915;int(1..)])) using tseitin
-  define(__5917 <-> and([__2384,y#int_direct_4;int(1..)])) using tseitin
+  define(__5917 <-> and([__2384,y#direct_4;int(1..)])) using tseitin
   define(__5918 <-> or([__5916,__5917;int(1..)])) using tseitin
-  define(__5919 <-> and([__2462,y#int_direct_3;int(1..)])) using tseitin
+  define(__5919 <-> and([__2462,y#direct_3;int(1..)])) using tseitin
   define(__5920 <-> or([__5918,__5919;int(1..)])) using tseitin
-  define(__5921 <-> and([__2538,y#int_direct_2;int(1..)])) using tseitin
+  define(__5921 <-> and([__2538,y#direct_2;int(1..)])) using tseitin
   define(__5922 <-> or([__5920,__5921;int(1..)])) using tseitin
-  define(__5923 <-> and([__2612,y#int_direct_1;int(1..)])) using tseitin
+  define(__5923 <-> and([__2612,y#direct_1;int(1..)])) using tseitin
   define(__5924 <-> or([__5922,__5923;int(1..)])) using tseitin
   define(__5925 <-> and([false,false;int(1..)])) using tseitin
   define(__5926 <-> or([false,__5925;int(1..)])) using tseitin
@@ -23069,15 +23069,15 @@ new SAT encoding decisions:
   define(__6002 <-> or([__6000,__6001;int(1..)])) using tseitin
   define(__6003 <-> and([__2308,false;int(1..)])) using tseitin
   define(__6004 <-> or([__6002,__6003;int(1..)])) using tseitin
-  define(__6005 <-> and([__2384,y#int_direct_5;int(1..)])) using tseitin
+  define(__6005 <-> and([__2384,y#direct_5;int(1..)])) using tseitin
   define(__6006 <-> or([__6004,__6005;int(1..)])) using tseitin
-  define(__6007 <-> and([__2462,y#int_direct_4;int(1..)])) using tseitin
+  define(__6007 <-> and([__2462,y#direct_4;int(1..)])) using tseitin
   define(__6008 <-> or([__6006,__6007;int(1..)])) using tseitin
-  define(__6009 <-> and([__2538,y#int_direct_3;int(1..)])) using tseitin
+  define(__6009 <-> and([__2538,y#direct_3;int(1..)])) using tseitin
   define(__6010 <-> or([__6008,__6009;int(1..)])) using tseitin
-  define(__6011 <-> and([__2612,y#int_direct_2;int(1..)])) using tseitin
+  define(__6011 <-> and([__2612,y#direct_2;int(1..)])) using tseitin
   define(__6012 <-> or([__6010,__6011;int(1..)])) using tseitin
-  define(__6013 <-> and([__2684,y#int_direct_1;int(1..)])) using tseitin
+  define(__6013 <-> and([__2684,y#direct_1;int(1..)])) using tseitin
   define(__6014 <-> or([__6012,__6013;int(1..)])) using tseitin
   define(__6015 <-> and([false,false;int(1..)])) using tseitin
   define(__6016 <-> or([false,__6015;int(1..)])) using tseitin
@@ -23161,15 +23161,15 @@ new SAT encoding decisions:
   define(__6094 <-> or([__6092,__6093;int(1..)])) using tseitin
   define(__6095 <-> and([__2384,false;int(1..)])) using tseitin
   define(__6096 <-> or([__6094,__6095;int(1..)])) using tseitin
-  define(__6097 <-> and([__2462,y#int_direct_5;int(1..)])) using tseitin
+  define(__6097 <-> and([__2462,y#direct_5;int(1..)])) using tseitin
   define(__6098 <-> or([__6096,__6097;int(1..)])) using tseitin
-  define(__6099 <-> and([__2538,y#int_direct_4;int(1..)])) using tseitin
+  define(__6099 <-> and([__2538,y#direct_4;int(1..)])) using tseitin
   define(__6100 <-> or([__6098,__6099;int(1..)])) using tseitin
-  define(__6101 <-> and([__2612,y#int_direct_3;int(1..)])) using tseitin
+  define(__6101 <-> and([__2612,y#direct_3;int(1..)])) using tseitin
   define(__6102 <-> or([__6100,__6101;int(1..)])) using tseitin
-  define(__6103 <-> and([__2684,y#int_direct_2;int(1..)])) using tseitin
+  define(__6103 <-> and([__2684,y#direct_2;int(1..)])) using tseitin
   define(__6104 <-> or([__6102,__6103;int(1..)])) using tseitin
-  define(__6105 <-> and([__2754,y#int_direct_1;int(1..)])) using tseitin
+  define(__6105 <-> and([__2754,y#direct_1;int(1..)])) using tseitin
   define(__6106 <-> or([__6104,__6105;int(1..)])) using tseitin
   define(__6107 <-> and([false,false;int(1..)])) using tseitin
   define(__6108 <-> or([false,__6107;int(1..)])) using tseitin
@@ -23255,15 +23255,15 @@ new SAT encoding decisions:
   define(__6188 <-> or([__6186,__6187;int(1..)])) using tseitin
   define(__6189 <-> and([__2462,false;int(1..)])) using tseitin
   define(__6190 <-> or([__6188,__6189;int(1..)])) using tseitin
-  define(__6191 <-> and([__2538,y#int_direct_5;int(1..)])) using tseitin
+  define(__6191 <-> and([__2538,y#direct_5;int(1..)])) using tseitin
   define(__6192 <-> or([__6190,__6191;int(1..)])) using tseitin
-  define(__6193 <-> and([__2612,y#int_direct_4;int(1..)])) using tseitin
+  define(__6193 <-> and([__2612,y#direct_4;int(1..)])) using tseitin
   define(__6194 <-> or([__6192,__6193;int(1..)])) using tseitin
-  define(__6195 <-> and([__2684,y#int_direct_3;int(1..)])) using tseitin
+  define(__6195 <-> and([__2684,y#direct_3;int(1..)])) using tseitin
   define(__6196 <-> or([__6194,__6195;int(1..)])) using tseitin
-  define(__6197 <-> and([__2754,y#int_direct_2;int(1..)])) using tseitin
+  define(__6197 <-> and([__2754,y#direct_2;int(1..)])) using tseitin
   define(__6198 <-> or([__6196,__6197;int(1..)])) using tseitin
-  define(__6199 <-> and([__2822,y#int_direct_1;int(1..)])) using tseitin
+  define(__6199 <-> and([__2822,y#direct_1;int(1..)])) using tseitin
   define(__6200 <-> or([__6198,__6199;int(1..)])) using tseitin
   define(__6201 <-> and([false,false;int(1..)])) using tseitin
   define(__6202 <-> or([false,__6201;int(1..)])) using tseitin
@@ -23351,15 +23351,15 @@ new SAT encoding decisions:
   define(__6284 <-> or([__6282,__6283;int(1..)])) using tseitin
   define(__6285 <-> and([__2538,false;int(1..)])) using tseitin
   define(__6286 <-> or([__6284,__6285;int(1..)])) using tseitin
-  define(__6287 <-> and([__2612,y#int_direct_5;int(1..)])) using tseitin
+  define(__6287 <-> and([__2612,y#direct_5;int(1..)])) using tseitin
   define(__6288 <-> or([__6286,__6287;int(1..)])) using tseitin
-  define(__6289 <-> and([__2684,y#int_direct_4;int(1..)])) using tseitin
+  define(__6289 <-> and([__2684,y#direct_4;int(1..)])) using tseitin
   define(__6290 <-> or([__6288,__6289;int(1..)])) using tseitin
-  define(__6291 <-> and([__2754,y#int_direct_3;int(1..)])) using tseitin
+  define(__6291 <-> and([__2754,y#direct_3;int(1..)])) using tseitin
   define(__6292 <-> or([__6290,__6291;int(1..)])) using tseitin
-  define(__6293 <-> and([__2822,y#int_direct_2;int(1..)])) using tseitin
+  define(__6293 <-> and([__2822,y#direct_2;int(1..)])) using tseitin
   define(__6294 <-> or([__6292,__6293;int(1..)])) using tseitin
-  define(__6295 <-> and([__2888,y#int_direct_1;int(1..)])) using tseitin
+  define(__6295 <-> and([__2888,y#direct_1;int(1..)])) using tseitin
   define(__6296 <-> or([__6294,__6295;int(1..)])) using tseitin
   define(__6297 <-> and([false,false;int(1..)])) using tseitin
   define(__6298 <-> or([false,__6297;int(1..)])) using tseitin
@@ -23449,15 +23449,15 @@ new SAT encoding decisions:
   define(__6382 <-> or([__6380,__6381;int(1..)])) using tseitin
   define(__6383 <-> and([__2612,false;int(1..)])) using tseitin
   define(__6384 <-> or([__6382,__6383;int(1..)])) using tseitin
-  define(__6385 <-> and([__2684,y#int_direct_5;int(1..)])) using tseitin
+  define(__6385 <-> and([__2684,y#direct_5;int(1..)])) using tseitin
   define(__6386 <-> or([__6384,__6385;int(1..)])) using tseitin
-  define(__6387 <-> and([__2754,y#int_direct_4;int(1..)])) using tseitin
+  define(__6387 <-> and([__2754,y#direct_4;int(1..)])) using tseitin
   define(__6388 <-> or([__6386,__6387;int(1..)])) using tseitin
-  define(__6389 <-> and([__2822,y#int_direct_3;int(1..)])) using tseitin
+  define(__6389 <-> and([__2822,y#direct_3;int(1..)])) using tseitin
   define(__6390 <-> or([__6388,__6389;int(1..)])) using tseitin
-  define(__6391 <-> and([__2888,y#int_direct_2;int(1..)])) using tseitin
+  define(__6391 <-> and([__2888,y#direct_2;int(1..)])) using tseitin
   define(__6392 <-> or([__6390,__6391;int(1..)])) using tseitin
-  define(__6393 <-> and([__2952,y#int_direct_1;int(1..)])) using tseitin
+  define(__6393 <-> and([__2952,y#direct_1;int(1..)])) using tseitin
   define(__6394 <-> or([__6392,__6393;int(1..)])) using tseitin
   define(__6395 <-> and([false,false;int(1..)])) using tseitin
   define(__6396 <-> or([false,__6395;int(1..)])) using tseitin
@@ -23549,15 +23549,15 @@ new SAT encoding decisions:
   define(__6482 <-> or([__6480,__6481;int(1..)])) using tseitin
   define(__6483 <-> and([__2684,false;int(1..)])) using tseitin
   define(__6484 <-> or([__6482,__6483;int(1..)])) using tseitin
-  define(__6485 <-> and([__2754,y#int_direct_5;int(1..)])) using tseitin
+  define(__6485 <-> and([__2754,y#direct_5;int(1..)])) using tseitin
   define(__6486 <-> or([__6484,__6485;int(1..)])) using tseitin
-  define(__6487 <-> and([__2822,y#int_direct_4;int(1..)])) using tseitin
+  define(__6487 <-> and([__2822,y#direct_4;int(1..)])) using tseitin
   define(__6488 <-> or([__6486,__6487;int(1..)])) using tseitin
-  define(__6489 <-> and([__2888,y#int_direct_3;int(1..)])) using tseitin
+  define(__6489 <-> and([__2888,y#direct_3;int(1..)])) using tseitin
   define(__6490 <-> or([__6488,__6489;int(1..)])) using tseitin
-  define(__6491 <-> and([__2952,y#int_direct_2;int(1..)])) using tseitin
+  define(__6491 <-> and([__2952,y#direct_2;int(1..)])) using tseitin
   define(__6492 <-> or([__6490,__6491;int(1..)])) using tseitin
-  define(__6493 <-> and([__3014,y#int_direct_1;int(1..)])) using tseitin
+  define(__6493 <-> and([__3014,y#direct_1;int(1..)])) using tseitin
   define(__6494 <-> or([__6492,__6493;int(1..)])) using tseitin
   define(__6495 <-> and([false,false;int(1..)])) using tseitin
   define(__6496 <-> or([false,__6495;int(1..)])) using tseitin
@@ -23651,15 +23651,15 @@ new SAT encoding decisions:
   define(__6584 <-> or([__6582,__6583;int(1..)])) using tseitin
   define(__6585 <-> and([__2754,false;int(1..)])) using tseitin
   define(__6586 <-> or([__6584,__6585;int(1..)])) using tseitin
-  define(__6587 <-> and([__2822,y#int_direct_5;int(1..)])) using tseitin
+  define(__6587 <-> and([__2822,y#direct_5;int(1..)])) using tseitin
   define(__6588 <-> or([__6586,__6587;int(1..)])) using tseitin
-  define(__6589 <-> and([__2888,y#int_direct_4;int(1..)])) using tseitin
+  define(__6589 <-> and([__2888,y#direct_4;int(1..)])) using tseitin
   define(__6590 <-> or([__6588,__6589;int(1..)])) using tseitin
-  define(__6591 <-> and([__2952,y#int_direct_3;int(1..)])) using tseitin
+  define(__6591 <-> and([__2952,y#direct_3;int(1..)])) using tseitin
   define(__6592 <-> or([__6590,__6591;int(1..)])) using tseitin
-  define(__6593 <-> and([__3014,y#int_direct_2;int(1..)])) using tseitin
+  define(__6593 <-> and([__3014,y#direct_2;int(1..)])) using tseitin
   define(__6594 <-> or([__6592,__6593;int(1..)])) using tseitin
-  define(__6595 <-> and([__3074,y#int_direct_1;int(1..)])) using tseitin
+  define(__6595 <-> and([__3074,y#direct_1;int(1..)])) using tseitin
   define(__6596 <-> or([__6594,__6595;int(1..)])) using tseitin
   define(__6597 <-> and([false,false;int(1..)])) using tseitin
   define(__6598 <-> or([false,__6597;int(1..)])) using tseitin
@@ -23755,15 +23755,15 @@ new SAT encoding decisions:
   define(__6688 <-> or([__6686,__6687;int(1..)])) using tseitin
   define(__6689 <-> and([__2822,false;int(1..)])) using tseitin
   define(__6690 <-> or([__6688,__6689;int(1..)])) using tseitin
-  define(__6691 <-> and([__2888,y#int_direct_5;int(1..)])) using tseitin
+  define(__6691 <-> and([__2888,y#direct_5;int(1..)])) using tseitin
   define(__6692 <-> or([__6690,__6691;int(1..)])) using tseitin
-  define(__6693 <-> and([__2952,y#int_direct_4;int(1..)])) using tseitin
+  define(__6693 <-> and([__2952,y#direct_4;int(1..)])) using tseitin
   define(__6694 <-> or([__6692,__6693;int(1..)])) using tseitin
-  define(__6695 <-> and([__3014,y#int_direct_3;int(1..)])) using tseitin
+  define(__6695 <-> and([__3014,y#direct_3;int(1..)])) using tseitin
   define(__6696 <-> or([__6694,__6695;int(1..)])) using tseitin
-  define(__6697 <-> and([__3074,y#int_direct_2;int(1..)])) using tseitin
+  define(__6697 <-> and([__3074,y#direct_2;int(1..)])) using tseitin
   define(__6698 <-> or([__6696,__6697;int(1..)])) using tseitin
-  define(__6699 <-> and([__3132,y#int_direct_1;int(1..)])) using tseitin
+  define(__6699 <-> and([__3132,y#direct_1;int(1..)])) using tseitin
   define(__6700 <-> or([__6698,__6699;int(1..)])) using tseitin
   define(__6701 <-> and([false,false;int(1..)])) using tseitin
   define(__6702 <-> or([false,__6701;int(1..)])) using tseitin
@@ -23861,15 +23861,15 @@ new SAT encoding decisions:
   define(__6794 <-> or([__6792,__6793;int(1..)])) using tseitin
   define(__6795 <-> and([__2888,false;int(1..)])) using tseitin
   define(__6796 <-> or([__6794,__6795;int(1..)])) using tseitin
-  define(__6797 <-> and([__2952,y#int_direct_5;int(1..)])) using tseitin
+  define(__6797 <-> and([__2952,y#direct_5;int(1..)])) using tseitin
   define(__6798 <-> or([__6796,__6797;int(1..)])) using tseitin
-  define(__6799 <-> and([__3014,y#int_direct_4;int(1..)])) using tseitin
+  define(__6799 <-> and([__3014,y#direct_4;int(1..)])) using tseitin
   define(__6800 <-> or([__6798,__6799;int(1..)])) using tseitin
-  define(__6801 <-> and([__3074,y#int_direct_3;int(1..)])) using tseitin
+  define(__6801 <-> and([__3074,y#direct_3;int(1..)])) using tseitin
   define(__6802 <-> or([__6800,__6801;int(1..)])) using tseitin
-  define(__6803 <-> and([__3132,y#int_direct_2;int(1..)])) using tseitin
+  define(__6803 <-> and([__3132,y#direct_2;int(1..)])) using tseitin
   define(__6804 <-> or([__6802,__6803;int(1..)])) using tseitin
-  define(__6805 <-> and([__3188,y#int_direct_1;int(1..)])) using tseitin
+  define(__6805 <-> and([__3188,y#direct_1;int(1..)])) using tseitin
   define(__6806 <-> or([__6804,__6805;int(1..)])) using tseitin
   define(__6807 <-> and([false,false;int(1..)])) using tseitin
   define(__6808 <-> or([false,__6807;int(1..)])) using tseitin
@@ -23969,15 +23969,15 @@ new SAT encoding decisions:
   define(__6902 <-> or([__6900,__6901;int(1..)])) using tseitin
   define(__6903 <-> and([__2952,false;int(1..)])) using tseitin
   define(__6904 <-> or([__6902,__6903;int(1..)])) using tseitin
-  define(__6905 <-> and([__3014,y#int_direct_5;int(1..)])) using tseitin
+  define(__6905 <-> and([__3014,y#direct_5;int(1..)])) using tseitin
   define(__6906 <-> or([__6904,__6905;int(1..)])) using tseitin
-  define(__6907 <-> and([__3074,y#int_direct_4;int(1..)])) using tseitin
+  define(__6907 <-> and([__3074,y#direct_4;int(1..)])) using tseitin
   define(__6908 <-> or([__6906,__6907;int(1..)])) using tseitin
-  define(__6909 <-> and([__3132,y#int_direct_3;int(1..)])) using tseitin
+  define(__6909 <-> and([__3132,y#direct_3;int(1..)])) using tseitin
   define(__6910 <-> or([__6908,__6909;int(1..)])) using tseitin
-  define(__6911 <-> and([__3188,y#int_direct_2;int(1..)])) using tseitin
+  define(__6911 <-> and([__3188,y#direct_2;int(1..)])) using tseitin
   define(__6912 <-> or([__6910,__6911;int(1..)])) using tseitin
-  define(__6913 <-> and([__3242,y#int_direct_1;int(1..)])) using tseitin
+  define(__6913 <-> and([__3242,y#direct_1;int(1..)])) using tseitin
   define(__6914 <-> or([__6912,__6913;int(1..)])) using tseitin
   define(__6915 <-> and([false,false;int(1..)])) using tseitin
   define(__6916 <-> or([false,__6915;int(1..)])) using tseitin
@@ -24079,15 +24079,15 @@ new SAT encoding decisions:
   define(__7012 <-> or([__7010,__7011;int(1..)])) using tseitin
   define(__7013 <-> and([__3014,false;int(1..)])) using tseitin
   define(__7014 <-> or([__7012,__7013;int(1..)])) using tseitin
-  define(__7015 <-> and([__3074,y#int_direct_5;int(1..)])) using tseitin
+  define(__7015 <-> and([__3074,y#direct_5;int(1..)])) using tseitin
   define(__7016 <-> or([__7014,__7015;int(1..)])) using tseitin
-  define(__7017 <-> and([__3132,y#int_direct_4;int(1..)])) using tseitin
+  define(__7017 <-> and([__3132,y#direct_4;int(1..)])) using tseitin
   define(__7018 <-> or([__7016,__7017;int(1..)])) using tseitin
-  define(__7019 <-> and([__3188,y#int_direct_3;int(1..)])) using tseitin
+  define(__7019 <-> and([__3188,y#direct_3;int(1..)])) using tseitin
   define(__7020 <-> or([__7018,__7019;int(1..)])) using tseitin
-  define(__7021 <-> and([__3242,y#int_direct_2;int(1..)])) using tseitin
+  define(__7021 <-> and([__3242,y#direct_2;int(1..)])) using tseitin
   define(__7022 <-> or([__7020,__7021;int(1..)])) using tseitin
-  define(__7023 <-> and([__3294,y#int_direct_1;int(1..)])) using tseitin
+  define(__7023 <-> and([__3294,y#direct_1;int(1..)])) using tseitin
   define(__7024 <-> or([__7022,__7023;int(1..)])) using tseitin
   define(__7025 <-> and([false,false;int(1..)])) using tseitin
   define(__7026 <-> or([false,__7025;int(1..)])) using tseitin
@@ -24191,15 +24191,15 @@ new SAT encoding decisions:
   define(__7124 <-> or([__7122,__7123;int(1..)])) using tseitin
   define(__7125 <-> and([__3074,false;int(1..)])) using tseitin
   define(__7126 <-> or([__7124,__7125;int(1..)])) using tseitin
-  define(__7127 <-> and([__3132,y#int_direct_5;int(1..)])) using tseitin
+  define(__7127 <-> and([__3132,y#direct_5;int(1..)])) using tseitin
   define(__7128 <-> or([__7126,__7127;int(1..)])) using tseitin
-  define(__7129 <-> and([__3188,y#int_direct_4;int(1..)])) using tseitin
+  define(__7129 <-> and([__3188,y#direct_4;int(1..)])) using tseitin
   define(__7130 <-> or([__7128,__7129;int(1..)])) using tseitin
-  define(__7131 <-> and([__3242,y#int_direct_3;int(1..)])) using tseitin
+  define(__7131 <-> and([__3242,y#direct_3;int(1..)])) using tseitin
   define(__7132 <-> or([__7130,__7131;int(1..)])) using tseitin
-  define(__7133 <-> and([__3294,y#int_direct_2;int(1..)])) using tseitin
+  define(__7133 <-> and([__3294,y#direct_2;int(1..)])) using tseitin
   define(__7134 <-> or([__7132,__7133;int(1..)])) using tseitin
-  define(__7135 <-> and([__3344,y#int_direct_1;int(1..)])) using tseitin
+  define(__7135 <-> and([__3344,y#direct_1;int(1..)])) using tseitin
   define(__7136 <-> or([__7134,__7135;int(1..)])) using tseitin
   define(__7137 <-> and([false,false;int(1..)])) using tseitin
   define(__7138 <-> or([false,__7137;int(1..)])) using tseitin
@@ -24305,15 +24305,15 @@ new SAT encoding decisions:
   define(__7238 <-> or([__7236,__7237;int(1..)])) using tseitin
   define(__7239 <-> and([__3132,false;int(1..)])) using tseitin
   define(__7240 <-> or([__7238,__7239;int(1..)])) using tseitin
-  define(__7241 <-> and([__3188,y#int_direct_5;int(1..)])) using tseitin
+  define(__7241 <-> and([__3188,y#direct_5;int(1..)])) using tseitin
   define(__7242 <-> or([__7240,__7241;int(1..)])) using tseitin
-  define(__7243 <-> and([__3242,y#int_direct_4;int(1..)])) using tseitin
+  define(__7243 <-> and([__3242,y#direct_4;int(1..)])) using tseitin
   define(__7244 <-> or([__7242,__7243;int(1..)])) using tseitin
-  define(__7245 <-> and([__3294,y#int_direct_3;int(1..)])) using tseitin
+  define(__7245 <-> and([__3294,y#direct_3;int(1..)])) using tseitin
   define(__7246 <-> or([__7244,__7245;int(1..)])) using tseitin
-  define(__7247 <-> and([__3344,y#int_direct_2;int(1..)])) using tseitin
+  define(__7247 <-> and([__3344,y#direct_2;int(1..)])) using tseitin
   define(__7248 <-> or([__7246,__7247;int(1..)])) using tseitin
-  define(__7249 <-> and([__3392,y#int_direct_1;int(1..)])) using tseitin
+  define(__7249 <-> and([__3392,y#direct_1;int(1..)])) using tseitin
   define(__7250 <-> or([__7248,__7249;int(1..)])) using tseitin
   define(__7251 <-> and([false,false;int(1..)])) using tseitin
   define(__7252 <-> or([false,__7251;int(1..)])) using tseitin
@@ -24421,15 +24421,15 @@ new SAT encoding decisions:
   define(__7354 <-> or([__7352,__7353;int(1..)])) using tseitin
   define(__7355 <-> and([__3188,false;int(1..)])) using tseitin
   define(__7356 <-> or([__7354,__7355;int(1..)])) using tseitin
-  define(__7357 <-> and([__3242,y#int_direct_5;int(1..)])) using tseitin
+  define(__7357 <-> and([__3242,y#direct_5;int(1..)])) using tseitin
   define(__7358 <-> or([__7356,__7357;int(1..)])) using tseitin
-  define(__7359 <-> and([__3294,y#int_direct_4;int(1..)])) using tseitin
+  define(__7359 <-> and([__3294,y#direct_4;int(1..)])) using tseitin
   define(__7360 <-> or([__7358,__7359;int(1..)])) using tseitin
-  define(__7361 <-> and([__3344,y#int_direct_3;int(1..)])) using tseitin
+  define(__7361 <-> and([__3344,y#direct_3;int(1..)])) using tseitin
   define(__7362 <-> or([__7360,__7361;int(1..)])) using tseitin
-  define(__7363 <-> and([__3392,y#int_direct_2;int(1..)])) using tseitin
+  define(__7363 <-> and([__3392,y#direct_2;int(1..)])) using tseitin
   define(__7364 <-> or([__7362,__7363;int(1..)])) using tseitin
-  define(__7365 <-> and([__3438,y#int_direct_1;int(1..)])) using tseitin
+  define(__7365 <-> and([__3438,y#direct_1;int(1..)])) using tseitin
   define(__7366 <-> or([__7364,__7365;int(1..)])) using tseitin
   define(__7367 <-> and([false,false;int(1..)])) using tseitin
   define(__7368 <-> or([false,__7367;int(1..)])) using tseitin
@@ -24539,15 +24539,15 @@ new SAT encoding decisions:
   define(__7472 <-> or([__7470,__7471;int(1..)])) using tseitin
   define(__7473 <-> and([__3242,false;int(1..)])) using tseitin
   define(__7474 <-> or([__7472,__7473;int(1..)])) using tseitin
-  define(__7475 <-> and([__3294,y#int_direct_5;int(1..)])) using tseitin
+  define(__7475 <-> and([__3294,y#direct_5;int(1..)])) using tseitin
   define(__7476 <-> or([__7474,__7475;int(1..)])) using tseitin
-  define(__7477 <-> and([__3344,y#int_direct_4;int(1..)])) using tseitin
+  define(__7477 <-> and([__3344,y#direct_4;int(1..)])) using tseitin
   define(__7478 <-> or([__7476,__7477;int(1..)])) using tseitin
-  define(__7479 <-> and([__3392,y#int_direct_3;int(1..)])) using tseitin
+  define(__7479 <-> and([__3392,y#direct_3;int(1..)])) using tseitin
   define(__7480 <-> or([__7478,__7479;int(1..)])) using tseitin
-  define(__7481 <-> and([__3438,y#int_direct_2;int(1..)])) using tseitin
+  define(__7481 <-> and([__3438,y#direct_2;int(1..)])) using tseitin
   define(__7482 <-> or([__7480,__7481;int(1..)])) using tseitin
-  define(__7483 <-> and([__3482,y#int_direct_1;int(1..)])) using tseitin
+  define(__7483 <-> and([__3482,y#direct_1;int(1..)])) using tseitin
   define(__7484 <-> or([__7482,__7483;int(1..)])) using tseitin
   define(__7485 <-> and([false,false;int(1..)])) using tseitin
   define(__7486 <-> or([false,__7485;int(1..)])) using tseitin
@@ -24659,15 +24659,15 @@ new SAT encoding decisions:
   define(__7592 <-> or([__7590,__7591;int(1..)])) using tseitin
   define(__7593 <-> and([__3294,false;int(1..)])) using tseitin
   define(__7594 <-> or([__7592,__7593;int(1..)])) using tseitin
-  define(__7595 <-> and([__3344,y#int_direct_5;int(1..)])) using tseitin
+  define(__7595 <-> and([__3344,y#direct_5;int(1..)])) using tseitin
   define(__7596 <-> or([__7594,__7595;int(1..)])) using tseitin
-  define(__7597 <-> and([__3392,y#int_direct_4;int(1..)])) using tseitin
+  define(__7597 <-> and([__3392,y#direct_4;int(1..)])) using tseitin
   define(__7598 <-> or([__7596,__7597;int(1..)])) using tseitin
-  define(__7599 <-> and([__3438,y#int_direct_3;int(1..)])) using tseitin
+  define(__7599 <-> and([__3438,y#direct_3;int(1..)])) using tseitin
   define(__7600 <-> or([__7598,__7599;int(1..)])) using tseitin
-  define(__7601 <-> and([__3482,y#int_direct_2;int(1..)])) using tseitin
+  define(__7601 <-> and([__3482,y#direct_2;int(1..)])) using tseitin
   define(__7602 <-> or([__7600,__7601;int(1..)])) using tseitin
-  define(__7603 <-> and([__3524,y#int_direct_1;int(1..)])) using tseitin
+  define(__7603 <-> and([__3524,y#direct_1;int(1..)])) using tseitin
   define(__7604 <-> or([__7602,__7603;int(1..)])) using tseitin
   define(__7605 <-> and([false,false;int(1..)])) using tseitin
   define(__7606 <-> or([false,__7605;int(1..)])) using tseitin
@@ -24781,15 +24781,15 @@ new SAT encoding decisions:
   define(__7714 <-> or([__7712,__7713;int(1..)])) using tseitin
   define(__7715 <-> and([__3344,false;int(1..)])) using tseitin
   define(__7716 <-> or([__7714,__7715;int(1..)])) using tseitin
-  define(__7717 <-> and([__3392,y#int_direct_5;int(1..)])) using tseitin
+  define(__7717 <-> and([__3392,y#direct_5;int(1..)])) using tseitin
   define(__7718 <-> or([__7716,__7717;int(1..)])) using tseitin
-  define(__7719 <-> and([__3438,y#int_direct_4;int(1..)])) using tseitin
+  define(__7719 <-> and([__3438,y#direct_4;int(1..)])) using tseitin
   define(__7720 <-> or([__7718,__7719;int(1..)])) using tseitin
-  define(__7721 <-> and([__3482,y#int_direct_3;int(1..)])) using tseitin
+  define(__7721 <-> and([__3482,y#direct_3;int(1..)])) using tseitin
   define(__7722 <-> or([__7720,__7721;int(1..)])) using tseitin
-  define(__7723 <-> and([__3524,y#int_direct_2;int(1..)])) using tseitin
+  define(__7723 <-> and([__3524,y#direct_2;int(1..)])) using tseitin
   define(__7724 <-> or([__7722,__7723;int(1..)])) using tseitin
-  define(__7725 <-> and([__3564,y#int_direct_1;int(1..)])) using tseitin
+  define(__7725 <-> and([__3564,y#direct_1;int(1..)])) using tseitin
   define(__7726 <-> or([__7724,__7725;int(1..)])) using tseitin
   define(__7727 <-> and([false,false;int(1..)])) using tseitin
   define(__7728 <-> or([false,__7727;int(1..)])) using tseitin
@@ -24905,15 +24905,15 @@ new SAT encoding decisions:
   define(__7838 <-> or([__7836,__7837;int(1..)])) using tseitin
   define(__7839 <-> and([__3392,false;int(1..)])) using tseitin
   define(__7840 <-> or([__7838,__7839;int(1..)])) using tseitin
-  define(__7841 <-> and([__3438,y#int_direct_5;int(1..)])) using tseitin
+  define(__7841 <-> and([__3438,y#direct_5;int(1..)])) using tseitin
   define(__7842 <-> or([__7840,__7841;int(1..)])) using tseitin
-  define(__7843 <-> and([__3482,y#int_direct_4;int(1..)])) using tseitin
+  define(__7843 <-> and([__3482,y#direct_4;int(1..)])) using tseitin
   define(__7844 <-> or([__7842,__7843;int(1..)])) using tseitin
-  define(__7845 <-> and([__3524,y#int_direct_3;int(1..)])) using tseitin
+  define(__7845 <-> and([__3524,y#direct_3;int(1..)])) using tseitin
   define(__7846 <-> or([__7844,__7845;int(1..)])) using tseitin
-  define(__7847 <-> and([__3564,y#int_direct_2;int(1..)])) using tseitin
+  define(__7847 <-> and([__3564,y#direct_2;int(1..)])) using tseitin
   define(__7848 <-> or([__7846,__7847;int(1..)])) using tseitin
-  define(__7849 <-> and([__3602,y#int_direct_1;int(1..)])) using tseitin
+  define(__7849 <-> and([__3602,y#direct_1;int(1..)])) using tseitin
   define(__7850 <-> or([__7848,__7849;int(1..)])) using tseitin
   define(__7851 <-> and([false,false;int(1..)])) using tseitin
   define(__7852 <-> or([false,__7851;int(1..)])) using tseitin
@@ -25031,15 +25031,15 @@ new SAT encoding decisions:
   define(__7964 <-> or([__7962,__7963;int(1..)])) using tseitin
   define(__7965 <-> and([__3438,false;int(1..)])) using tseitin
   define(__7966 <-> or([__7964,__7965;int(1..)])) using tseitin
-  define(__7967 <-> and([__3482,y#int_direct_5;int(1..)])) using tseitin
+  define(__7967 <-> and([__3482,y#direct_5;int(1..)])) using tseitin
   define(__7968 <-> or([__7966,__7967;int(1..)])) using tseitin
-  define(__7969 <-> and([__3524,y#int_direct_4;int(1..)])) using tseitin
+  define(__7969 <-> and([__3524,y#direct_4;int(1..)])) using tseitin
   define(__7970 <-> or([__7968,__7969;int(1..)])) using tseitin
-  define(__7971 <-> and([__3564,y#int_direct_3;int(1..)])) using tseitin
+  define(__7971 <-> and([__3564,y#direct_3;int(1..)])) using tseitin
   define(__7972 <-> or([__7970,__7971;int(1..)])) using tseitin
-  define(__7973 <-> and([__3602,y#int_direct_2;int(1..)])) using tseitin
+  define(__7973 <-> and([__3602,y#direct_2;int(1..)])) using tseitin
   define(__7974 <-> or([__7972,__7973;int(1..)])) using tseitin
-  define(__7975 <-> and([__3638,y#int_direct_1;int(1..)])) using tseitin
+  define(__7975 <-> and([__3638,y#direct_1;int(1..)])) using tseitin
   define(__7976 <-> or([__7974,__7975;int(1..)])) using tseitin
   define(__7977 <-> and([false,false;int(1..)])) using tseitin
   define(__7978 <-> or([false,__7977;int(1..)])) using tseitin
@@ -25159,15 +25159,15 @@ new SAT encoding decisions:
   define(__8092 <-> or([__8090,__8091;int(1..)])) using tseitin
   define(__8093 <-> and([__3482,false;int(1..)])) using tseitin
   define(__8094 <-> or([__8092,__8093;int(1..)])) using tseitin
-  define(__8095 <-> and([__3524,y#int_direct_5;int(1..)])) using tseitin
+  define(__8095 <-> and([__3524,y#direct_5;int(1..)])) using tseitin
   define(__8096 <-> or([__8094,__8095;int(1..)])) using tseitin
-  define(__8097 <-> and([__3564,y#int_direct_4;int(1..)])) using tseitin
+  define(__8097 <-> and([__3564,y#direct_4;int(1..)])) using tseitin
   define(__8098 <-> or([__8096,__8097;int(1..)])) using tseitin
-  define(__8099 <-> and([__3602,y#int_direct_3;int(1..)])) using tseitin
+  define(__8099 <-> and([__3602,y#direct_3;int(1..)])) using tseitin
   define(__8100 <-> or([__8098,__8099;int(1..)])) using tseitin
-  define(__8101 <-> and([__3638,y#int_direct_2;int(1..)])) using tseitin
+  define(__8101 <-> and([__3638,y#direct_2;int(1..)])) using tseitin
   define(__8102 <-> or([__8100,__8101;int(1..)])) using tseitin
-  define(__8103 <-> and([__3672,y#int_direct_1;int(1..)])) using tseitin
+  define(__8103 <-> and([__3672,y#direct_1;int(1..)])) using tseitin
   define(__8104 <-> or([__8102,__8103;int(1..)])) using tseitin
   define(__8105 <-> and([false,false;int(1..)])) using tseitin
   define(__8106 <-> or([false,__8105;int(1..)])) using tseitin
@@ -25289,15 +25289,15 @@ new SAT encoding decisions:
   define(__8222 <-> or([__8220,__8221;int(1..)])) using tseitin
   define(__8223 <-> and([__3524,false;int(1..)])) using tseitin
   define(__8224 <-> or([__8222,__8223;int(1..)])) using tseitin
-  define(__8225 <-> and([__3564,y#int_direct_5;int(1..)])) using tseitin
+  define(__8225 <-> and([__3564,y#direct_5;int(1..)])) using tseitin
   define(__8226 <-> or([__8224,__8225;int(1..)])) using tseitin
-  define(__8227 <-> and([__3602,y#int_direct_4;int(1..)])) using tseitin
+  define(__8227 <-> and([__3602,y#direct_4;int(1..)])) using tseitin
   define(__8228 <-> or([__8226,__8227;int(1..)])) using tseitin
-  define(__8229 <-> and([__3638,y#int_direct_3;int(1..)])) using tseitin
+  define(__8229 <-> and([__3638,y#direct_3;int(1..)])) using tseitin
   define(__8230 <-> or([__8228,__8229;int(1..)])) using tseitin
-  define(__8231 <-> and([__3672,y#int_direct_2;int(1..)])) using tseitin
+  define(__8231 <-> and([__3672,y#direct_2;int(1..)])) using tseitin
   define(__8232 <-> or([__8230,__8231;int(1..)])) using tseitin
-  define(__8233 <-> and([__3704,y#int_direct_1;int(1..)])) using tseitin
+  define(__8233 <-> and([__3704,y#direct_1;int(1..)])) using tseitin
   define(__8234 <-> or([__8232,__8233;int(1..)])) using tseitin
   define(__8235 <-> and([false,false;int(1..)])) using tseitin
   define(__8236 <-> or([false,__8235;int(1..)])) using tseitin
@@ -25421,15 +25421,15 @@ new SAT encoding decisions:
   define(__8354 <-> or([__8352,__8353;int(1..)])) using tseitin
   define(__8355 <-> and([__3564,false;int(1..)])) using tseitin
   define(__8356 <-> or([__8354,__8355;int(1..)])) using tseitin
-  define(__8357 <-> and([__3602,y#int_direct_5;int(1..)])) using tseitin
+  define(__8357 <-> and([__3602,y#direct_5;int(1..)])) using tseitin
   define(__8358 <-> or([__8356,__8357;int(1..)])) using tseitin
-  define(__8359 <-> and([__3638,y#int_direct_4;int(1..)])) using tseitin
+  define(__8359 <-> and([__3638,y#direct_4;int(1..)])) using tseitin
   define(__8360 <-> or([__8358,__8359;int(1..)])) using tseitin
-  define(__8361 <-> and([__3672,y#int_direct_3;int(1..)])) using tseitin
+  define(__8361 <-> and([__3672,y#direct_3;int(1..)])) using tseitin
   define(__8362 <-> or([__8360,__8361;int(1..)])) using tseitin
-  define(__8363 <-> and([__3704,y#int_direct_2;int(1..)])) using tseitin
+  define(__8363 <-> and([__3704,y#direct_2;int(1..)])) using tseitin
   define(__8364 <-> or([__8362,__8363;int(1..)])) using tseitin
-  define(__8365 <-> and([__3734,y#int_direct_1;int(1..)])) using tseitin
+  define(__8365 <-> and([__3734,y#direct_1;int(1..)])) using tseitin
   define(__8366 <-> or([__8364,__8365;int(1..)])) using tseitin
   define(__8367 <-> and([false,false;int(1..)])) using tseitin
   define(__8368 <-> or([false,__8367;int(1..)])) using tseitin
@@ -25555,15 +25555,15 @@ new SAT encoding decisions:
   define(__8488 <-> or([__8486,__8487;int(1..)])) using tseitin
   define(__8489 <-> and([__3602,false;int(1..)])) using tseitin
   define(__8490 <-> or([__8488,__8489;int(1..)])) using tseitin
-  define(__8491 <-> and([__3638,y#int_direct_5;int(1..)])) using tseitin
+  define(__8491 <-> and([__3638,y#direct_5;int(1..)])) using tseitin
   define(__8492 <-> or([__8490,__8491;int(1..)])) using tseitin
-  define(__8493 <-> and([__3672,y#int_direct_4;int(1..)])) using tseitin
+  define(__8493 <-> and([__3672,y#direct_4;int(1..)])) using tseitin
   define(__8494 <-> or([__8492,__8493;int(1..)])) using tseitin
-  define(__8495 <-> and([__3704,y#int_direct_3;int(1..)])) using tseitin
+  define(__8495 <-> and([__3704,y#direct_3;int(1..)])) using tseitin
   define(__8496 <-> or([__8494,__8495;int(1..)])) using tseitin
-  define(__8497 <-> and([__3734,y#int_direct_2;int(1..)])) using tseitin
+  define(__8497 <-> and([__3734,y#direct_2;int(1..)])) using tseitin
   define(__8498 <-> or([__8496,__8497;int(1..)])) using tseitin
-  define(__8499 <-> and([__3762,y#int_direct_1;int(1..)])) using tseitin
+  define(__8499 <-> and([__3762,y#direct_1;int(1..)])) using tseitin
   define(__8500 <-> or([__8498,__8499;int(1..)])) using tseitin
   define(__8501 <-> and([false,false;int(1..)])) using tseitin
   define(__8502 <-> or([false,__8501;int(1..)])) using tseitin
@@ -25691,15 +25691,15 @@ new SAT encoding decisions:
   define(__8624 <-> or([__8622,__8623;int(1..)])) using tseitin
   define(__8625 <-> and([__3638,false;int(1..)])) using tseitin
   define(__8626 <-> or([__8624,__8625;int(1..)])) using tseitin
-  define(__8627 <-> and([__3672,y#int_direct_5;int(1..)])) using tseitin
+  define(__8627 <-> and([__3672,y#direct_5;int(1..)])) using tseitin
   define(__8628 <-> or([__8626,__8627;int(1..)])) using tseitin
-  define(__8629 <-> and([__3704,y#int_direct_4;int(1..)])) using tseitin
+  define(__8629 <-> and([__3704,y#direct_4;int(1..)])) using tseitin
   define(__8630 <-> or([__8628,__8629;int(1..)])) using tseitin
-  define(__8631 <-> and([__3734,y#int_direct_3;int(1..)])) using tseitin
+  define(__8631 <-> and([__3734,y#direct_3;int(1..)])) using tseitin
   define(__8632 <-> or([__8630,__8631;int(1..)])) using tseitin
-  define(__8633 <-> and([__3762,y#int_direct_2;int(1..)])) using tseitin
+  define(__8633 <-> and([__3762,y#direct_2;int(1..)])) using tseitin
   define(__8634 <-> or([__8632,__8633;int(1..)])) using tseitin
-  define(__8635 <-> and([__3788,y#int_direct_1;int(1..)])) using tseitin
+  define(__8635 <-> and([__3788,y#direct_1;int(1..)])) using tseitin
   define(__8636 <-> or([__8634,__8635;int(1..)])) using tseitin
   define(__8637 <-> and([false,false;int(1..)])) using tseitin
   define(__8638 <-> or([false,__8637;int(1..)])) using tseitin
@@ -25829,15 +25829,15 @@ new SAT encoding decisions:
   define(__8762 <-> or([__8760,__8761;int(1..)])) using tseitin
   define(__8763 <-> and([__3672,false;int(1..)])) using tseitin
   define(__8764 <-> or([__8762,__8763;int(1..)])) using tseitin
-  define(__8765 <-> and([__3704,y#int_direct_5;int(1..)])) using tseitin
+  define(__8765 <-> and([__3704,y#direct_5;int(1..)])) using tseitin
   define(__8766 <-> or([__8764,__8765;int(1..)])) using tseitin
-  define(__8767 <-> and([__3734,y#int_direct_4;int(1..)])) using tseitin
+  define(__8767 <-> and([__3734,y#direct_4;int(1..)])) using tseitin
   define(__8768 <-> or([__8766,__8767;int(1..)])) using tseitin
-  define(__8769 <-> and([__3762,y#int_direct_3;int(1..)])) using tseitin
+  define(__8769 <-> and([__3762,y#direct_3;int(1..)])) using tseitin
   define(__8770 <-> or([__8768,__8769;int(1..)])) using tseitin
-  define(__8771 <-> and([__3788,y#int_direct_2;int(1..)])) using tseitin
+  define(__8771 <-> and([__3788,y#direct_2;int(1..)])) using tseitin
   define(__8772 <-> or([__8770,__8771;int(1..)])) using tseitin
-  define(__8773 <-> and([__3812,y#int_direct_1;int(1..)])) using tseitin
+  define(__8773 <-> and([__3812,y#direct_1;int(1..)])) using tseitin
   define(__8774 <-> or([__8772,__8773;int(1..)])) using tseitin
   define(__8775 <-> and([false,false;int(1..)])) using tseitin
   define(__8776 <-> or([false,__8775;int(1..)])) using tseitin
@@ -25969,15 +25969,15 @@ new SAT encoding decisions:
   define(__8902 <-> or([__8900,__8901;int(1..)])) using tseitin
   define(__8903 <-> and([__3704,false;int(1..)])) using tseitin
   define(__8904 <-> or([__8902,__8903;int(1..)])) using tseitin
-  define(__8905 <-> and([__3734,y#int_direct_5;int(1..)])) using tseitin
+  define(__8905 <-> and([__3734,y#direct_5;int(1..)])) using tseitin
   define(__8906 <-> or([__8904,__8905;int(1..)])) using tseitin
-  define(__8907 <-> and([__3762,y#int_direct_4;int(1..)])) using tseitin
+  define(__8907 <-> and([__3762,y#direct_4;int(1..)])) using tseitin
   define(__8908 <-> or([__8906,__8907;int(1..)])) using tseitin
-  define(__8909 <-> and([__3788,y#int_direct_3;int(1..)])) using tseitin
+  define(__8909 <-> and([__3788,y#direct_3;int(1..)])) using tseitin
   define(__8910 <-> or([__8908,__8909;int(1..)])) using tseitin
-  define(__8911 <-> and([__3812,y#int_direct_2;int(1..)])) using tseitin
+  define(__8911 <-> and([__3812,y#direct_2;int(1..)])) using tseitin
   define(__8912 <-> or([__8910,__8911;int(1..)])) using tseitin
-  define(__8913 <-> and([__3834,y#int_direct_1;int(1..)])) using tseitin
+  define(__8913 <-> and([__3834,y#direct_1;int(1..)])) using tseitin
   define(__8914 <-> or([__8912,__8913;int(1..)])) using tseitin
   define(__8915 <-> and([false,false;int(1..)])) using tseitin
   define(__8916 <-> or([false,__8915;int(1..)])) using tseitin
@@ -26111,15 +26111,15 @@ new SAT encoding decisions:
   define(__9044 <-> or([__9042,__9043;int(1..)])) using tseitin
   define(__9045 <-> and([__3734,false;int(1..)])) using tseitin
   define(__9046 <-> or([__9044,__9045;int(1..)])) using tseitin
-  define(__9047 <-> and([__3762,y#int_direct_5;int(1..)])) using tseitin
+  define(__9047 <-> and([__3762,y#direct_5;int(1..)])) using tseitin
   define(__9048 <-> or([__9046,__9047;int(1..)])) using tseitin
-  define(__9049 <-> and([__3788,y#int_direct_4;int(1..)])) using tseitin
+  define(__9049 <-> and([__3788,y#direct_4;int(1..)])) using tseitin
   define(__9050 <-> or([__9048,__9049;int(1..)])) using tseitin
-  define(__9051 <-> and([__3812,y#int_direct_3;int(1..)])) using tseitin
+  define(__9051 <-> and([__3812,y#direct_3;int(1..)])) using tseitin
   define(__9052 <-> or([__9050,__9051;int(1..)])) using tseitin
-  define(__9053 <-> and([__3834,y#int_direct_2;int(1..)])) using tseitin
+  define(__9053 <-> and([__3834,y#direct_2;int(1..)])) using tseitin
   define(__9054 <-> or([__9052,__9053;int(1..)])) using tseitin
-  define(__9055 <-> and([__3854,y#int_direct_1;int(1..)])) using tseitin
+  define(__9055 <-> and([__3854,y#direct_1;int(1..)])) using tseitin
   define(__9056 <-> or([__9054,__9055;int(1..)])) using tseitin
   define(__9057 <-> and([false,false;int(1..)])) using tseitin
   define(__9058 <-> or([false,__9057;int(1..)])) using tseitin
@@ -26255,15 +26255,15 @@ new SAT encoding decisions:
   define(__9188 <-> or([__9186,__9187;int(1..)])) using tseitin
   define(__9189 <-> and([__3762,false;int(1..)])) using tseitin
   define(__9190 <-> or([__9188,__9189;int(1..)])) using tseitin
-  define(__9191 <-> and([__3788,y#int_direct_5;int(1..)])) using tseitin
+  define(__9191 <-> and([__3788,y#direct_5;int(1..)])) using tseitin
   define(__9192 <-> or([__9190,__9191;int(1..)])) using tseitin
-  define(__9193 <-> and([__3812,y#int_direct_4;int(1..)])) using tseitin
+  define(__9193 <-> and([__3812,y#direct_4;int(1..)])) using tseitin
   define(__9194 <-> or([__9192,__9193;int(1..)])) using tseitin
-  define(__9195 <-> and([__3834,y#int_direct_3;int(1..)])) using tseitin
+  define(__9195 <-> and([__3834,y#direct_3;int(1..)])) using tseitin
   define(__9196 <-> or([__9194,__9195;int(1..)])) using tseitin
-  define(__9197 <-> and([__3854,y#int_direct_2;int(1..)])) using tseitin
+  define(__9197 <-> and([__3854,y#direct_2;int(1..)])) using tseitin
   define(__9198 <-> or([__9196,__9197;int(1..)])) using tseitin
-  define(__9199 <-> and([__3872,y#int_direct_1;int(1..)])) using tseitin
+  define(__9199 <-> and([__3872,y#direct_1;int(1..)])) using tseitin
   define(__9200 <-> or([__9198,__9199;int(1..)])) using tseitin
   define(__9201 <-> and([false,false;int(1..)])) using tseitin
   define(__9202 <-> or([false,__9201;int(1..)])) using tseitin
@@ -26334,4 +26334,59 @@ new SAT encoding decisions:
   define(__9267 <-> and([__1894,false;int(1..)])) using tseitin
   define(__9268 <-> or([__9266,__9267;int(1..)])) using tseitin
   define(__9269 <-> and([__1958,false;int(1..)])) using tseitin
-  define(__9270 <-> or([__9268,__9269;int(1..)])) using ts
+  define(__9270 <-> or([__9268,__9269;int(1..)])) using tseitin
+  define(__9271 <-> and([__2024,false;int(1..)])) using tseitin
+  define(__9272 <-> or([__9270,__9271;int(1..)])) using tseitin
+  define(__9273 <-> and([__2092,false;int(1..)])) using tseitin
+  define(__9274 <-> or([__9272,__9273;int(1..)])) using tseitin
+  define(__9275 <-> and([__2162,false;int(1..)])) using tseitin
+  define(__9276 <-> or([__9274,__9275;int(1..)])) using tseitin
+  define(__9277 <-> and([__2234,false;int(1..)])) using tseitin
+  define(__9278 <-> or([__9276,__9277;int(1..)])) using tseitin
+  define(__9279 <-> and([__2308,false;int(1..)])) using tseitin
+  define(__9280 <-> or([__9278,__9279;int(1..)])) using tseitin
+  define(__9281 <-> and([__2384,false;int(1..)])) using tseitin
+  define(__9282 <-> or([__9280,__9281;int(1..)])) using tseitin
+  define(__9283 <-> and([__2462,false;int(1..)])) using tseitin
+  define(__9284 <-> or([__9282,__9283;int(1..)])) using tseitin
+  define(__9285 <-> and([__2538,false;int(1..)])) using tseitin
+  define(__9286 <-> or([__9284,__9285;int(1..)])) using tseitin
+  define(__9287 <-> and([__2612,false;int(1..)])) using tseitin
+  define(__9288 <-> or([__9286,__9287;int(1..)])) using tseitin
+  define(__9289 <-> and([__2684,false;int(1..)])) using tseitin
+  define(__9290 <-> or([__9288,__9289;int(1..)])) using tseitin
+  define(__9291 <-> and([__2754,false;int(1..)])) using tseitin
+  define(__9292 <-> or([__9290,__9291;int(1..)])) using tseitin
+  define(__9293 <-> and([__2822,false;int(1..)])) using tseitin
+  define(__9294 <-> or([__9292,__9293;int(1..)])) using tseitin
+  define(__9295 <-> and([__2888,false;int(1..)])) using tseitin
+  define(__9296 <-> or([__9294,__9295;int(1..)])) using tseitin
+  define(__9297 <-> and([__2952,false;int(1..)])) using tseitin
+  define(__9298 <-> or([__9296,__9297;int(1..)])) using tseitin
+  define(__9299 <-> and([__3014,false;int(1..)])) using tseitin
+  define(__9300 <-> or([__9298,__9299;int(1..)])) using tseitin
+  define(__9301 <-> and([__3074,false;int(1..)])) using tseitin
+  define(__9302 <-> or([__9300,__9301;int(1..)])) using tseitin
+  define(__9303 <-> and([__3132,false;int(1..)])) using tseitin
+  define(__9304 <-> or([__9302,__9303;int(1..)])) using tseitin
+  define(__9305 <-> and([__3188,false;int(1..)])) using tseitin
+  define(__9306 <-> or([__9304,__9305;int(1..)])) using tseitin
+  define(__9307 <-> and([__3242,false;int(1..)])) using tseitin
+  define(__9308 <-> or([__9306,__9307;int(1..)])) using tseitin
+  define(__9309 <-> and([__3294,false;int(1..)])) using tseitin
+  define(__9310 <-> or([__9308,__9309;int(1..)])) using tseitin
+  define(__9311 <-> and([__3344,false;int(1..)])) using tseitin
+  define(__9312 <-> or([__9310,__9311;int(1..)])) using tseitin
+  define(__9313 <-> and([__3392,false;int(1..)])) using tseitin
+  define(__9314 <-> or([__9312,__9313;int(1..)])) using tseitin
+  define(__9315 <-> and([__3438,false;int(1..)])) using tseitin
+  define(__9316 <-> or([__9314,__9315;int(1..)])) using tseitin
+  define(__9317 <-> and([__3482,false;int(1..)])) using tseitin
+  define(__9318 <-> or([__9316,__9317;int(1..)])) using tseitin
+  define(__9319 <-> and([__3524,false;int(1..)])) using tseitin
+  define(__9320 <-> or([__9318,__9319;int(1..)])) using tseitin
+  define(__9321 <-> and([__3564,false;int(1..)])) using tseitin
+  define(__9322 <-> or([__9320,__9321;int(1..)])) using tseitin
+  define(__9323 <-> and([__3602,false;int(1..)])) using tseitin
+  define(__9324 <-> or([__9322,__9323;int(1..)])) using tseitin
+  define(__9325 <-> and([__3638,false;

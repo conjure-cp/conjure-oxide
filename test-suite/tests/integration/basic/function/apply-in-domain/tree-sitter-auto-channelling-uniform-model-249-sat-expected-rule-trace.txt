@@ -14,32 +14,32 @@ true
 true
 new variables:
   find f#as_relation_1: relation (size 2) of (int(1..2) * int(1))
-  find y#int_log_1: bool
-  find y#int_log_2: bool
-  find y#int_log_3: bool
+  find y#twos_complement_1: bool
+  find y#twos_complement_2: bool
+  find y#twos_complement_3: bool
 new constraints:
   and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
-  or([and([SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [1, 2]) >= 1,SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [1, 2]) <= 2;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [1, 2]) >= 1,SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [1, 2]) <= 2;int(1..)]);int(1..)])
 
 --
 
-SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [1, 2]) >= 1
+SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [1, 2]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__0 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3;int(1..)] [1, 2]) <= 2
+SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [1, 2]) <= 2
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) LessEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__1 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) LessEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
@@ -165,9 +165,9 @@ Final model:
 find f: function (total) int(1..2) --> int(1) 
 find y: int(1..2)
 find f#as_relation_1: relation (size 2) of (int(1..2) * int(1))
-find y#int_log_1: bool
-find y#int_log_2: bool
-find y#int_log_3: bool
+find y#twos_complement_1: bool
+find y#twos_complement_2: bool
+find y#twos_complement_3: bool
 findAux __0: bool
 findAux __1: bool
 find f#as_relation_1#occurrence_1: matrix indexed by [int(1..2), int(1)] of bool
@@ -182,8 +182,8 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__1 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, -4*y#int_log_3) LessEqual 2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__0 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__1 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) LessEqual 2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
 define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
 assert(__2) using tseitin,
 count(f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_2) Exactly 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic })

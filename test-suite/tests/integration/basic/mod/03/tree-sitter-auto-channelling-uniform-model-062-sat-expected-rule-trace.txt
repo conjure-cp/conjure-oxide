@@ -12,48 +12,48 @@ a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
 new variables:
-  find a#int_rank_1: bool
-  find a#int_rank_2: bool
-  find a#int_rank_3: bool
-  find a#int_rank_4: bool
+  find a#rank_1: bool
+  find a#rank_2: bool
+  find a#rank_3: bool
+  find a#rank_4: bool
 new constraints:
-  or([!(a#int_rank_4),and([!(a#int_rank_3),and([!(a#int_rank_2),or([!(a#int_rank_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([!(a#rank_4),and([!(a#rank_3),and([!(a#rank_2),or([!(a#rank_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
 
 --
 
 a
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9])
+SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9])
 
 --
 
-!(a#int_rank_4)
+!(a#rank_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> !(a#int_rank_4)) using tseitin
+  define(__0 <-> !(a#rank_4)) using tseitin
 
 --
 
-!(a#int_rank_3)
+!(a#rank_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> !(a#int_rank_3)) using tseitin
+  define(__1 <-> !(a#rank_3)) using tseitin
 
 --
 
-!(a#int_rank_2)
+!(a#rank_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> !(a#int_rank_2)) using tseitin
+  define(__2 <-> !(a#rank_2)) using tseitin
 
 --
 
@@ -83,46 +83,46 @@ new SAT encoding decisions:
 
 --
 
-2 = 8 % SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9]),
+2 = 8 % SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9]),
 __4
    ~~> remove_single_atom ([("SAT", 8400)])
-2 = 8 % SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9])
+2 = 8 % SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9])
 new SAT encoding decisions:
   assert(__4) using tseitin
 
 --
 
-8 % SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9])
+8 % SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9])
    ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(8,SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9])) @ SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9]) != 0}
+{SafeMod(8,SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9])) @ SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9]) != 0}
 
 --
 
-SafeMod(8,SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9]))
+SafeMod(8,SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9]))
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-SafeMod(SATInt(Rank([(8, 8)]), [false;int(1..)] [8, 8]),SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9]))
+SafeMod(SATInt(Rank([(8, 8)]), [false;int(1..)] [8, 8]),SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9]))
 
 --
 
-SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9]) != 0
+SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9]) != 0
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9]) != SATInt(Rank([(0, 0)]), [false;int(1..)] [0, 0])
+SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9]) != SATInt(Rank([(0, 0)]), [false;int(1..)] [0, 0])
 
 --
 
-2 = {SafeMod(SATInt(Rank([(8, 8)]), [false;int(1..)] [8, 8]),SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9])) @ SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9]) != SATInt(Rank([(0, 0)]), [false;int(1..)] [0, 0])}
+2 = {SafeMod(SATInt(Rank([(8, 8)]), [false;int(1..)] [8, 8]),SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9])) @ SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9]) != SATInt(Rank([(0, 0)]), [false;int(1..)] [0, 0])}
    ~~> bubble_up ([("Bubble", 8800)])
-{2 = SafeMod(SATInt(Rank([(8, 8)]), [false;int(1..)] [8, 8]),SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9])) @ SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9]) != SATInt(Rank([(0, 0)]), [false;int(1..)] [0, 0])}
+{2 = SafeMod(SATInt(Rank([(8, 8)]), [false;int(1..)] [8, 8]),SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9])) @ SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9]) != SATInt(Rank([(0, 0)]), [false;int(1..)] [0, 0])}
 
 --
 
-{2 = SafeMod(SATInt(Rank([(8, 8)]), [false;int(1..)] [8, 8]),SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9])) @ SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9]) != SATInt(Rank([(0, 0)]), [false;int(1..)] [0, 0])}
+{2 = SafeMod(SATInt(Rank([(8, 8)]), [false;int(1..)] [8, 8]),SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9])) @ SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9]) != SATInt(Rank([(0, 0)]), [false;int(1..)] [0, 0])}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([2 = SafeMod(SATInt(Rank([(8, 8)]), [false;int(1..)] [8, 8]),SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9])),SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9]) != SATInt(Rank([(0, 0)]), [false;int(1..)] [0, 0]);int(1..)])
+and([2 = SafeMod(SATInt(Rank([(8, 8)]), [false;int(1..)] [8, 8]),SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9])),SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9]) != SATInt(Rank([(0, 0)]), [false;int(1..)] [0, 0]);int(1..)])
 
 --
 
-SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9]) != SATInt(Rank([(0, 0)]), [false;int(1..)] [0, 0])
+SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9]) != SATInt(Rank([(0, 0)]), [false;int(1..)] [0, 0])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SATInt(Log, [__5,__7,__9,__11,__13;int(1..)] [0, 9]) != SATInt(Log, [__15;int(1..)] [0, 0])
 new variables:
@@ -139,14 +139,14 @@ new variables:
   findAux __15: bool
   findAux __16: bool
 new SAT encoding decisions:
-  define(__5 <-> !((a#int_rank_1) <-> (false))) using tseitin
-  define(__6 <-> and([a#int_rank_1,false;int(1..)])) using tseitin
-  define(__7 <-> !((a#int_rank_2) <-> (__6))) using tseitin
-  define(__8 <-> and([a#int_rank_2,__6;int(1..)])) using tseitin
-  define(__9 <-> !((a#int_rank_3) <-> (__8))) using tseitin
-  define(__10 <-> and([a#int_rank_3,__8;int(1..)])) using tseitin
-  define(__11 <-> !((a#int_rank_4) <-> (__10))) using tseitin
-  define(__12 <-> and([a#int_rank_4,__10;int(1..)])) using tseitin
+  define(__5 <-> !((a#rank_1) <-> (false))) using tseitin
+  define(__6 <-> and([a#rank_1,false;int(1..)])) using tseitin
+  define(__7 <-> !((a#rank_2) <-> (__6))) using tseitin
+  define(__8 <-> and([a#rank_2,__6;int(1..)])) using tseitin
+  define(__9 <-> !((a#rank_3) <-> (__8))) using tseitin
+  define(__10 <-> and([a#rank_3,__8;int(1..)])) using tseitin
+  define(__11 <-> !((a#rank_4) <-> (__10))) using tseitin
+  define(__12 <-> and([a#rank_4,__10;int(1..)])) using tseitin
   define(__13 <-> !((false) <-> (__12))) using tseitin
   define(__14 <-> and([false,__12;int(1..)])) using tseitin
   define(__15 <-> !((false) <-> (false))) using tseitin
@@ -164,7 +164,7 @@ new SAT encoding decisions:
 
 --
 
-SafeMod(SATInt(Rank([(8, 8)]), [false;int(1..)] [8, 8]),SATInt(Rank([(0, 9)]), [a#int_rank_1,a#int_rank_2,a#int_rank_3,a#int_rank_4;int(1..)] [0, 9]))
+SafeMod(SATInt(Rank([(8, 8)]), [false;int(1..)] [8, 8]),SATInt(Rank([(0, 9)]), [a#rank_1,a#rank_2,a#rank_3,a#rank_4;int(1..)] [0, 9]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeMod(SATInt(Log, [__18,__20,__22,__25,__27;int(1..)] [8, 8]),SATInt(Log, [__29,__31,__33,__35,__37;int(1..)] [0, 9]))
 new variables:
@@ -201,14 +201,14 @@ new SAT encoding decisions:
   define(__26 <-> or([false,__23;int(1..)])) using tseitin
   define(__27 <-> !((false) <-> (__26))) using tseitin
   define(__28 <-> and([false,__26;int(1..)])) using tseitin
-  define(__29 <-> !((a#int_rank_1) <-> (false))) using tseitin
-  define(__30 <-> and([a#int_rank_1,false;int(1..)])) using tseitin
-  define(__31 <-> !((a#int_rank_2) <-> (__30))) using tseitin
-  define(__32 <-> and([a#int_rank_2,__30;int(1..)])) using tseitin
-  define(__33 <-> !((a#int_rank_3) <-> (__32))) using tseitin
-  define(__34 <-> and([a#int_rank_3,__32;int(1..)])) using tseitin
-  define(__35 <-> !((a#int_rank_4) <-> (__34))) using tseitin
-  define(__36 <-> and([a#int_rank_4,__34;int(1..)])) using tseitin
+  define(__29 <-> !((a#rank_1) <-> (false))) using tseitin
+  define(__30 <-> and([a#rank_1,false;int(1..)])) using tseitin
+  define(__31 <-> !((a#rank_2) <-> (__30))) using tseitin
+  define(__32 <-> and([a#rank_2,__30;int(1..)])) using tseitin
+  define(__33 <-> !((a#rank_3) <-> (__32))) using tseitin
+  define(__34 <-> and([a#rank_3,__32;int(1..)])) using tseitin
+  define(__35 <-> !((a#rank_4) <-> (__34))) using tseitin
+  define(__36 <-> and([a#rank_4,__34;int(1..)])) using tseitin
   define(__37 <-> !((false) <-> (__36))) using tseitin
   define(__38 <-> and([false,__36;int(1..)])) using tseitin
 
@@ -1421,10 +1421,10 @@ new SAT encoding decisions:
 Final model:
 
 find a: int(0..9)
-find a#int_rank_1: bool
-find a#int_rank_2: bool
-find a#int_rank_3: bool
-find a#int_rank_4: bool
+find a#rank_1: bool
+find a#rank_2: bool
+find a#rank_3: bool
+find a#rank_4: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -2057,20 +2057,20 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !(a#int_rank_4)) using tseitin,
-define(__1 <-> !(a#int_rank_3)) using tseitin,
-define(__2 <-> !(a#int_rank_2)) using tseitin,
+define(__0 <-> !(a#rank_4)) using tseitin,
+define(__1 <-> !(a#rank_3)) using tseitin,
+define(__2 <-> !(a#rank_2)) using tseitin,
 define(__3 <-> and([__1,__2;int(1..)])) using tseitin,
 define(__4 <-> or([__0,__3;int(1..)])) using tseitin,
 assert(__4) using tseitin,
-define(__5 <-> !((a#int_rank_1) <-> (false))) using tseitin,
-define(__6 <-> and([a#int_rank_1,false;int(1..)])) using tseitin,
-define(__7 <-> !((a#int_rank_2) <-> (__6))) using tseitin,
-define(__8 <-> and([a#int_rank_2,__6;int(1..)])) using tseitin,
-define(__9 <-> !((a#int_rank_3) <-> (__8))) using tseitin,
-define(__10 <-> and([a#int_rank_3,__8;int(1..)])) using tseitin,
-define(__11 <-> !((a#int_rank_4) <-> (__10))) using tseitin,
-define(__12 <-> and([a#int_rank_4,__10;int(1..)])) using tseitin,
+define(__5 <-> !((a#rank_1) <-> (false))) using tseitin,
+define(__6 <-> and([a#rank_1,false;int(1..)])) using tseitin,
+define(__7 <-> !((a#rank_2) <-> (__6))) using tseitin,
+define(__8 <-> and([a#rank_2,__6;int(1..)])) using tseitin,
+define(__9 <-> !((a#rank_3) <-> (__8))) using tseitin,
+define(__10 <-> and([a#rank_3,__8;int(1..)])) using tseitin,
+define(__11 <-> !((a#rank_4) <-> (__10))) using tseitin,
+define(__12 <-> and([a#rank_4,__10;int(1..)])) using tseitin,
 define(__13 <-> !((false) <-> (__12))) using tseitin,
 define(__14 <-> and([false,__12;int(1..)])) using tseitin,
 define(__15 <-> !((false) <-> (false))) using tseitin,
@@ -2087,14 +2087,14 @@ define(__25 <-> !(__24)) using tseitin,
 define(__26 <-> or([false,__23;int(1..)])) using tseitin,
 define(__27 <-> !((false) <-> (__26))) using tseitin,
 define(__28 <-> and([false,__26;int(1..)])) using tseitin,
-define(__29 <-> !((a#int_rank_1) <-> (false))) using tseitin,
-define(__30 <-> and([a#int_rank_1,false;int(1..)])) using tseitin,
-define(__31 <-> !((a#int_rank_2) <-> (__30))) using tseitin,
-define(__32 <-> and([a#int_rank_2,__30;int(1..)])) using tseitin,
-define(__33 <-> !((a#int_rank_3) <-> (__32))) using tseitin,
-define(__34 <-> and([a#int_rank_3,__32;int(1..)])) using tseitin,
-define(__35 <-> !((a#int_rank_4) <-> (__34))) using tseitin,
-define(__36 <-> and([a#int_rank_4,__34;int(1..)])) using tseitin,
+define(__29 <-> !((a#rank_1) <-> (false))) using tseitin,
+define(__30 <-> and([a#rank_1,false;int(1..)])) using tseitin,
+define(__31 <-> !((a#rank_2) <-> (__30))) using tseitin,
+define(__32 <-> and([a#rank_2,__30;int(1..)])) using tseitin,
+define(__33 <-> !((a#rank_3) <-> (__32))) using tseitin,
+define(__34 <-> and([a#rank_3,__32;int(1..)])) using tseitin,
+define(__35 <-> !((a#rank_4) <-> (__34))) using tseitin,
+define(__36 <-> and([a#rank_4,__34;int(1..)])) using tseitin,
 define(__37 <-> !((false) <-> (__36))) using tseitin,
 define(__38 <-> and([false,__36;int(1..)])) using tseitin,
 define(__39 <-> !(__18)) using tseitin,

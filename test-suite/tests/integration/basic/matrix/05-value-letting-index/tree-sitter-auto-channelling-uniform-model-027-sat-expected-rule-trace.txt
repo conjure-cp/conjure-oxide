@@ -14,14 +14,14 @@ b
    ~~> select_representation ([("ReprGeneral", 10000)])
 b
 new variables:
-  find b#int_direct_1: bool
-  find b#int_direct_2: bool
-  find b#int_direct_3: bool
-  find b#int_direct_4: bool
-  find b#int_direct_5: bool
+  find b#direct_1: bool
+  find b#direct_2: bool
+  find b#direct_3: bool
+  find b#direct_4: bool
+  find b#direct_5: bool
 new constraints:
-  sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3),toInt(b#int_direct_4),toInt(b#int_direct_5);int(1..)]) <= 1
-  or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+  sum([toInt(b#direct_1),toInt(b#direct_2),toInt(b#direct_3),toInt(b#direct_4),toInt(b#direct_5);int(1..)]) <= 1
+  or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
 
 --
 
@@ -31,40 +31,40 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*b#int_direct_1, 2*b#int_direct_2, 3*b#int_direct_3, 4*b#int_direct_4, 5*b#int_direct_5) Less 2) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }]
+  define(__0 <-> integer-weighted(1*b#direct_1, 2*b#direct_2, 3*b#direct_3, 4*b#direct_4, 5*b#direct_5) Less 2) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }]
 
 --
 
 __0,
 true,
-sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3),toInt(b#int_direct_4),toInt(b#int_direct_5);int(1..)]) <= 1,
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+sum([toInt(b#direct_1),toInt(b#direct_2),toInt(b#direct_3),toInt(b#direct_4),toInt(b#direct_5);int(1..)]) <= 1,
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 __0,
 true,
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
 new SAT encoding decisions:
-  at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3, b#int_direct_4, b#int_direct_5) using None
+  at-most-one(b#direct_1, b#direct_2, b#direct_3, b#direct_4, b#direct_5) using None
 
 --
 
 __0,
 true,
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
    ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
 __0,
 true,
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
 
 --
 
-or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])) using tseitin
+  define(__1 <-> or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])) using tseitin
 
 --
 
@@ -92,11 +92,11 @@ Final model:
 
 letting a be [[1,2,3;int(1..2, 4)],[1,3,2;int(1..2, 4)],[3,2,1;int(1..2, 4)];int(-2..0)]
 find b: int(1..5)
-find b#int_direct_1: bool
-find b#int_direct_2: bool
-find b#int_direct_3: bool
-find b#int_direct_4: bool
-find b#int_direct_5: bool
+find b#direct_1: bool
+find b#direct_2: bool
+find b#direct_3: bool
+find b#direct_4: bool
+find b#direct_5: bool
 findAux __0: bool
 letting a#components_1 be 1
 letting a#components_2 be 2
@@ -115,9 +115,9 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*b#int_direct_1, 2*b#int_direct_2, 3*b#int_direct_3, 4*b#int_direct_4, 5*b#int_direct_5) Less 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }],
-at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3, b#int_direct_4, b#int_direct_5) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-define(__1 <-> or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(1*b#direct_1, 2*b#direct_2, 3*b#direct_3, 4*b#direct_4, 5*b#direct_5) Less 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }],
+at-most-one(b#direct_1, b#direct_2, b#direct_3, b#direct_4, b#direct_5) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__1 <-> or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])) using tseitin,
 assert(__0) using tseitin,
 assert(__1) using tseitin
 

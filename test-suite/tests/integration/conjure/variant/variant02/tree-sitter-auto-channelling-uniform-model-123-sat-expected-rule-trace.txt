@@ -42,36 +42,31 @@ x
 (active(x, a)) -> (x[a] = true),
 (active(x, b)) -> (x[b] = 0)
 new variables:
-  find x#packed_1#int_order_1: bool
-  find x#packed_1#int_order_2: bool
-  find x#packed_1#int_order_3: bool
-  find x#packed_1#int_order_4: bool
+  find x#packed_1#offset_1: bool
+  find x#packed_1#offset_2: bool
 new constraints:
-  x#packed_1#int_order_1
-  or([!(x#packed_1#int_order_2),x#packed_1#int_order_1;int(1..)])
-  or([!(x#packed_1#int_order_3),x#packed_1#int_order_2;int(1..)])
-  or([!(x#packed_1#int_order_4),x#packed_1#int_order_3;int(1..)])
-  or([and([SATInt(Order, [x#packed_1#int_order_1,x#packed_1#int_order_2,x#packed_1#int_order_3,x#packed_1#int_order_4;int(1..)] [0, 3]) >= 0,SATInt(Order, [x#packed_1#int_order_1,x#packed_1#int_order_2,x#packed_1#int_order_3,x#packed_1#int_order_4;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+  or([!(x#packed_1#offset_2),or([!(x#packed_1#offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [x#packed_1#offset_1,x#packed_1#offset_2;int(1..)] [0, 3]) >= 0,SATInt(Offset, [x#packed_1#offset_1,x#packed_1#offset_2;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
 
 --
 
-SATInt(Order, [x#packed_1#int_order_1,x#packed_1#int_order_2,x#packed_1#int_order_3,x#packed_1#int_order_4;int(1..)] [0, 3]) >= 0
+SATInt(Offset, [x#packed_1#offset_1,x#packed_1#offset_2;int(1..)] [0, 3]) >= 0
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
+  define(__0 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
-SATInt(Order, [x#packed_1#int_order_1,x#packed_1#int_order_2,x#packed_1#int_order_3,x#packed_1#int_order_4;int(1..)] [0, 3]) <= 3
+SATInt(Offset, [x#packed_1#offset_1,x#packed_1#offset_2;int(1..)] [0, 3]) <= 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
+  define(__1 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) LessEqual 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -93,7 +88,7 @@ __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
+  define(__2 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -115,7 +110,7 @@ __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
+  define(__3 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) Equal 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -143,7 +138,7 @@ __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
+  define(__4 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -153,7 +148,7 @@ __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) Less 2) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
+  define(__5 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) Less 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -181,7 +176,7 @@ __6
 new variables:
   findAux __6: bool
 new SAT encoding decisions:
-  define(__6 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
+  define(__6 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -191,37 +186,7 @@ __7
 new variables:
   findAux __7: bool
 new SAT encoding decisions:
-  define(__7 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) Less 4) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
-
---
-
-!(x#packed_1#int_order_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> !(x#packed_1#int_order_2)) using tseitin
-
---
-
-!(x#packed_1#int_order_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> !(x#packed_1#int_order_3)) using tseitin
-
---
-
-!(x#packed_1#int_order_4)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> !(x#packed_1#int_order_4)) using tseitin
+  define(__7 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) Less 4) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -255,175 +220,86 @@ __3
 
 --
 
-or([__9,x#packed_1#int_order_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> or([__9,x#packed_1#int_order_2;int(1..)])) using tseitin
-
---
-
-or([__10,x#packed_1#int_order_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__12
-new variables:
-  findAux __12: bool
-new SAT encoding decisions:
-  define(__12 <-> or([__10,x#packed_1#int_order_3;int(1..)])) using tseitin
-
---
-
 and([__0,__1;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
+__8
 new variables:
-  findAux __13: bool
+  findAux __8: bool
 new SAT encoding decisions:
-  define(__13 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-or([__8,x#packed_1#int_order_1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> or([__8,x#packed_1#int_order_1;int(1..)])) using tseitin
+  define(__8 <-> and([__0,__1;int(1..)])) using tseitin
 
 --
 
 and([__4,__5;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__15
+__9
 new variables:
-  findAux __15: bool
+  findAux __9: bool
 new SAT encoding decisions:
-  define(__15 <-> and([__4,__5;int(1..)])) using tseitin
+  define(__9 <-> and([__4,__5;int(1..)])) using tseitin
 
 --
 
-(__15) -> (__2)
+(__9) -> (__2)
    ~~> apply_tseytin_imply ([("SAT", 8500)])
-__16
+__10
 new variables:
-  findAux __16: bool
+  findAux __10: bool
 new SAT encoding decisions:
-  define(__16 <-> (__15) -> (__2)) using tseitin
+  define(__10 <-> (__9) -> (__2)) using tseitin
 
 --
 
 and([__6,__7;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__17
+__11
 new variables:
-  findAux __17: bool
+  findAux __11: bool
 new SAT encoding decisions:
-  define(__17 <-> and([__6,__7;int(1..)])) using tseitin
+  define(__11 <-> and([__6,__7;int(1..)])) using tseitin
 
 --
 
-(__17) -> (__3)
+(__11) -> (__3)
    ~~> apply_tseytin_imply ([("SAT", 8500)])
-__18
+__12
 new variables:
-  findAux __18: bool
+  findAux __12: bool
 new SAT encoding decisions:
-  define(__18 <-> (__17) -> (__3)) using tseitin
+  define(__12 <-> (__11) -> (__3)) using tseitin
 
 --
 
-__16,
-__18,
-x#packed_1#int_order_1,
-__14,
-__11,
+__10,
 __12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__18,
-x#packed_1#int_order_1,
-__14,
-__11,
-__12,
-__13
-new SAT encoding decisions:
-  assert(__16) using tseitin
-
---
-
-__18,
-x#packed_1#int_order_1,
-__14,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-x#packed_1#int_order_1,
-__14,
-__11,
-__12,
-__13
-new SAT encoding decisions:
-  assert(__18) using tseitin
-
---
-
-x#packed_1#int_order_1,
-__14,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__14,
-__11,
-__12,
-__13
-new SAT encoding decisions:
-  assert(x#packed_1#int_order_1) using tseitin
-
---
-
-__14,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__11,
-__12,
-__13
-new SAT encoding decisions:
-  assert(__14) using tseitin
-
---
-
-__11,
-__12,
-__13
+true,
+__8
    ~~> remove_single_atom ([("SAT", 8400)])
 __12,
-__13
+true,
+__8
 new SAT encoding decisions:
-  assert(__11) using tseitin
+  assert(__10) using tseitin
 
 --
 
 __12,
-__13
+true,
+__8
    ~~> remove_single_atom ([("SAT", 8400)])
-__13
+true,
+__8
 new SAT encoding decisions:
   assert(__12) using tseitin
 
 --
 
-__13
+true,
+__8
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__13) using tseitin
+  assert(__8) using tseitin
 
 --
 
@@ -432,10 +308,8 @@ Final model:
 letting V be domain variant {a: bool, b: int(0, 4)}
 find x: V
 find x#packed_1: int(0..3)
-find x#packed_1#int_order_1: bool
-find x#packed_1#int_order_2: bool
-find x#packed_1#int_order_3: bool
-find x#packed_1#int_order_4: bool
+find x#packed_1#offset_1: bool
+find x#packed_1#offset_2: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -449,12 +323,6 @@ findAux __9: bool
 findAux __10: bool
 findAux __11: bool
 findAux __12: bool
-findAux __13: bool
-findAux __14: bool
-findAux __15: bool
-findAux __16: bool
-findAux __17: bool
-findAux __18: bool
 
 such that
 
@@ -462,30 +330,20 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
-define(__1 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
-define(__2 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
-define(__3 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) Equal 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
-define(__4 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
-define(__5 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) Less 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
-define(__6 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
-define(__7 <-> integer-weighted(1*x#packed_1#int_order_2, 1*x#packed_1#int_order_3, 1*x#packed_1#int_order_4) Less 4) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
-define(__8 <-> !(x#packed_1#int_order_2)) using tseitin,
-define(__9 <-> !(x#packed_1#int_order_3)) using tseitin,
-define(__10 <-> !(x#packed_1#int_order_4)) using tseitin,
-define(__11 <-> or([__9,x#packed_1#int_order_2;int(1..)])) using tseitin,
-define(__12 <-> or([__10,x#packed_1#int_order_3;int(1..)])) using tseitin,
-define(__13 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__14 <-> or([__8,x#packed_1#int_order_1;int(1..)])) using tseitin,
-define(__15 <-> and([__4,__5;int(1..)])) using tseitin,
-define(__16 <-> (__15) -> (__2)) using tseitin,
-define(__17 <-> and([__6,__7;int(1..)])) using tseitin,
-define(__18 <-> (__17) -> (__3)) using tseitin,
-assert(__16) using tseitin,
-assert(__18) using tseitin,
-assert(x#packed_1#int_order_1) using tseitin,
-assert(__14) using tseitin,
-assert(__11) using tseitin,
+define(__0 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__1 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__2 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__3 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) Equal 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__4 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__5 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) Less 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__6 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__7 <-> integer-weighted(1*x#packed_1#offset_1, 2*x#packed_1#offset_2) Less 4) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__8 <-> and([__0,__1;int(1..)])) using tseitin,
+define(__9 <-> and([__4,__5;int(1..)])) using tseitin,
+define(__10 <-> (__9) -> (__2)) using tseitin,
+define(__11 <-> and([__6,__7;int(1..)])) using tseitin,
+define(__12 <-> (__11) -> (__3)) using tseitin,
+assert(__10) using tseitin,
 assert(__12) using tseitin,
-assert(__13) using tseitin
+assert(__8) using tseitin
 

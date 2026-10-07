@@ -23,72 +23,72 @@ t[1] = (7,false)
 new variables:
   find t#components_1#components_1: int(7..8)
   find t#components_1#components_2: bool
-  find t#components_2#int_direct_1: bool
-  find t#components_2#int_direct_2: bool
-  find t#components_2#int_direct_3: bool
-  find t#components_2#int_direct_4: bool
-  find t#components_2#int_direct_5: bool
+  find t#components_2#direct_1: bool
+  find t#components_2#direct_2: bool
+  find t#components_2#direct_3: bool
+  find t#components_2#direct_4: bool
+  find t#components_2#direct_5: bool
 new constraints:
-  sum([toInt(t#components_2#int_direct_1),toInt(t#components_2#int_direct_2),toInt(t#components_2#int_direct_3),toInt(t#components_2#int_direct_4),toInt(t#components_2#int_direct_5);int(1..)]) <= 1
-  or([t#components_2#int_direct_1,t#components_2#int_direct_5;int(1..)])
+  sum([toInt(t#components_2#direct_1),toInt(t#components_2#direct_2),toInt(t#components_2#direct_3),toInt(t#components_2#direct_4),toInt(t#components_2#direct_5);int(1..)]) <= 1
+  or([t#components_2#direct_1,t#components_2#direct_5;int(1..)])
 
 --
 
 t[1] = (7,false),
-sum([toInt(t#components_2#int_direct_1),toInt(t#components_2#int_direct_2),toInt(t#components_2#int_direct_3),toInt(t#components_2#int_direct_4),toInt(t#components_2#int_direct_5);int(1..)]) <= 1,
-or([t#components_2#int_direct_1,t#components_2#int_direct_5;int(1..)])
+sum([toInt(t#components_2#direct_1),toInt(t#components_2#direct_2),toInt(t#components_2#direct_3),toInt(t#components_2#direct_4),toInt(t#components_2#direct_5);int(1..)]) <= 1,
+or([t#components_2#direct_1,t#components_2#direct_5;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 t[1] = (7,false),
-or([t#components_2#int_direct_1,t#components_2#int_direct_5;int(1..)])
+or([t#components_2#direct_1,t#components_2#direct_5;int(1..)])
 new SAT encoding decisions:
-  at-most-one(t#components_2#int_direct_1, t#components_2#int_direct_2, t#components_2#int_direct_3, t#components_2#int_direct_4, t#components_2#int_direct_5) using None
+  at-most-one(t#components_2#direct_1, t#components_2#direct_2, t#components_2#direct_3, t#components_2#direct_4, t#components_2#direct_5) using None
 
 --
 
 t[1] = (7,false),
-or([t#components_2#int_direct_1,t#components_2#int_direct_5;int(1..)])
+or([t#components_2#direct_1,t#components_2#direct_5;int(1..)])
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 t[1] = (7,false),
-or([t#components_2#int_direct_1,t#components_2#int_direct_5;int(1..)])
+or([t#components_2#direct_1,t#components_2#direct_5;int(1..)])
 new variables:
-  find t#components_1#components_1#int_direct_1: bool
-  find t#components_1#components_1#int_direct_2: bool
+  find t#components_1#components_1#direct_1: bool
+  find t#components_1#components_1#direct_2: bool
 new constraints:
-  sum([toInt(t#components_1#components_1#int_direct_1),toInt(t#components_1#components_1#int_direct_2);int(1..)]) <= 1
-  or([t#components_1#components_1#int_direct_1,t#components_1#components_1#int_direct_2;int(1..)])
+  sum([toInt(t#components_1#components_1#direct_1),toInt(t#components_1#components_1#direct_2);int(1..)]) <= 1
+  or([t#components_1#components_1#direct_1,t#components_1#components_1#direct_2;int(1..)])
 
 --
 
 t[1] = (7,false),
-or([t#components_2#int_direct_1,t#components_2#int_direct_5;int(1..)]),
-sum([toInt(t#components_1#components_1#int_direct_1),toInt(t#components_1#components_1#int_direct_2);int(1..)]) <= 1,
-or([t#components_1#components_1#int_direct_1,t#components_1#components_1#int_direct_2;int(1..)])
+or([t#components_2#direct_1,t#components_2#direct_5;int(1..)]),
+sum([toInt(t#components_1#components_1#direct_1),toInt(t#components_1#components_1#direct_2);int(1..)]) <= 1,
+or([t#components_1#components_1#direct_1,t#components_1#components_1#direct_2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 t[1] = (7,false),
-or([t#components_2#int_direct_1,t#components_2#int_direct_5;int(1..)]),
-or([t#components_1#components_1#int_direct_1,t#components_1#components_1#int_direct_2;int(1..)])
+or([t#components_2#direct_1,t#components_2#direct_5;int(1..)]),
+or([t#components_1#components_1#direct_1,t#components_1#components_1#direct_2;int(1..)])
 new SAT encoding decisions:
-  at-most-one(t#components_1#components_1#int_direct_1, t#components_1#components_1#int_direct_2) using None
+  at-most-one(t#components_1#components_1#direct_1, t#components_1#components_1#direct_2) using None
 
 --
 
-or([t#components_2#int_direct_1,t#components_2#int_direct_5;int(1..)])
+or([t#components_2#direct_1,t#components_2#direct_5;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> or([t#components_2#int_direct_1,t#components_2#int_direct_5;int(1..)])) using tseitin
+  define(__0 <-> or([t#components_2#direct_1,t#components_2#direct_5;int(1..)])) using tseitin
 
 --
 
-or([t#components_1#components_1#int_direct_1,t#components_1#components_1#int_direct_2;int(1..)])
+or([t#components_1#components_1#direct_1,t#components_1#components_1#direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> or([t#components_1#components_1#int_direct_1,t#components_1#components_1#int_direct_2;int(1..)])) using tseitin
+  define(__1 <-> or([t#components_1#components_1#direct_1,t#components_1#components_1#direct_2;int(1..)])) using tseitin
 
 --
 
@@ -148,7 +148,7 @@ __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(7*t#components_1#components_1#int_direct_1, 8*t#components_1#components_1#int_direct_2) Equal 7) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+  define(__2 <-> integer-weighted(7*t#components_1#components_1#direct_1, 8*t#components_1#components_1#direct_2) Equal 7) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
@@ -187,13 +187,13 @@ find t#components_1: tuple (int(7..8), bool)
 find t#components_2: int(13, 17)
 find t#components_1#components_1: int(7..8)
 find t#components_1#components_2: bool
-find t#components_2#int_direct_1: bool
-find t#components_2#int_direct_2: bool
-find t#components_2#int_direct_3: bool
-find t#components_2#int_direct_4: bool
-find t#components_2#int_direct_5: bool
-find t#components_1#components_1#int_direct_1: bool
-find t#components_1#components_1#int_direct_2: bool
+find t#components_2#direct_1: bool
+find t#components_2#direct_2: bool
+find t#components_2#direct_3: bool
+find t#components_2#direct_4: bool
+find t#components_2#direct_5: bool
+find t#components_1#components_1#direct_1: bool
+find t#components_1#components_1#direct_2: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -206,13 +206,13 @@ true
 
 sat encoding decisions:
 
-at-most-one(t#components_2#int_direct_1, t#components_2#int_direct_2, t#components_2#int_direct_3, t#components_2#int_direct_4, t#components_2#int_direct_5) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
-at-most-one(t#components_1#components_1#int_direct_1, t#components_1#components_1#int_direct_2) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
-define(__0 <-> or([t#components_2#int_direct_1,t#components_2#int_direct_5;int(1..)])) using tseitin,
-define(__1 <-> or([t#components_1#components_1#int_direct_1,t#components_1#components_1#int_direct_2;int(1..)])) using tseitin,
+at-most-one(t#components_2#direct_1, t#components_2#direct_2, t#components_2#direct_3, t#components_2#direct_4, t#components_2#direct_5) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+at-most-one(t#components_1#components_1#direct_1, t#components_1#components_1#direct_2) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+define(__0 <-> or([t#components_2#direct_1,t#components_2#direct_5;int(1..)])) using tseitin,
+define(__1 <-> or([t#components_1#components_1#direct_1,t#components_1#components_1#direct_2;int(1..)])) using tseitin,
 assert(__0) using tseitin,
 assert(__1) using tseitin,
-define(__2 <-> integer-weighted(7*t#components_1#components_1#int_direct_1, 8*t#components_1#components_1#int_direct_2) Equal 7) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__2 <-> integer-weighted(7*t#components_1#components_1#direct_1, 8*t#components_1#components_1#direct_2) Equal 7) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 define(__3 <-> (t#components_1#components_2) <-> (false)) using tseitin,
 define(__4 <-> and([__2,__3;int(1..)])) using tseitin,
 assert(__4) using tseitin

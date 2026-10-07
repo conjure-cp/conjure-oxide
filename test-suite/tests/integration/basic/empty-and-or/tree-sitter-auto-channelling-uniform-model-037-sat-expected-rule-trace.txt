@@ -15,11 +15,11 @@ x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
 new variables:
-  find x#int_direct_1: bool
-  find x#int_direct_2: bool
+  find x#direct_1: bool
+  find x#direct_2: bool
 new constraints:
-  sum([toInt(x#int_direct_1),toInt(x#int_direct_2);int(1..)]) <= 1
-  or([x#int_direct_1,x#int_direct_2;int(1..)])
+  sum([toInt(x#direct_1),toInt(x#direct_2);int(1..)]) <= 1
+  or([x#direct_1,x#direct_2;int(1..)])
 
 --
 
@@ -29,7 +29,7 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(0*x#int_direct_1, 1*x#int_direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+  define(__0 <-> integer-weighted(0*x#direct_1, 1*x#direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
@@ -37,16 +37,16 @@ true,
 true,
 true,
 or([__0;int(1..)]),
-sum([toInt(x#int_direct_1),toInt(x#int_direct_2);int(1..)]) <= 1,
-or([x#int_direct_1,x#int_direct_2;int(1..)])
+sum([toInt(x#direct_1),toInt(x#direct_2);int(1..)]) <= 1,
+or([x#direct_1,x#direct_2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 true,
 true,
 true,
 or([__0;int(1..)]),
-or([x#int_direct_1,x#int_direct_2;int(1..)])
+or([x#direct_1,x#direct_2;int(1..)])
 new SAT encoding decisions:
-  at-most-one(x#int_direct_1, x#int_direct_2) using None
+  at-most-one(x#direct_1, x#direct_2) using None
 
 --
 
@@ -56,13 +56,13 @@ __0
 
 --
 
-or([x#int_direct_1,x#int_direct_2;int(1..)])
+or([x#direct_1,x#direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> or([x#int_direct_1,x#int_direct_2;int(1..)])) using tseitin
+  define(__1 <-> or([x#direct_1,x#direct_2;int(1..)])) using tseitin
 
 --
 
@@ -97,8 +97,8 @@ new SAT encoding decisions:
 Final model:
 
 find x: int(0..1)
-find x#int_direct_1: bool
-find x#int_direct_2: bool
+find x#direct_1: bool
+find x#direct_2: bool
 findAux __0: bool
 findAux __1: bool
 
@@ -110,9 +110,9 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(0*x#int_direct_1, 1*x#int_direct_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
-at-most-one(x#int_direct_1, x#int_direct_2) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
-define(__1 <-> or([x#int_direct_1,x#int_direct_2;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(0*x#direct_1, 1*x#direct_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+at-most-one(x#direct_1, x#direct_2) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__1 <-> or([x#direct_1,x#direct_2;int(1..)])) using tseitin,
 assert(__0) using tseitin,
 assert(__1) using tseitin
 

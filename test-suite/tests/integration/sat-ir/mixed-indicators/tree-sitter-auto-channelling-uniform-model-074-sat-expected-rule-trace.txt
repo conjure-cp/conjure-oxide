@@ -24,16 +24,16 @@ mixed
    ~~> select_representation ([("ReprGeneral", 10000)])
 mixed
 new variables:
-  find mixed#int_direct_1: bool
-  find mixed#int_direct_2: bool
-  find mixed#int_direct_3: bool
-  find mixed#int_direct_4: bool
-  find mixed#int_direct_5: bool
-  find mixed#int_direct_6: bool
-  find mixed#int_direct_7: bool
+  find mixed#direct_1: bool
+  find mixed#direct_2: bool
+  find mixed#direct_3: bool
+  find mixed#direct_4: bool
+  find mixed#direct_5: bool
+  find mixed#direct_6: bool
+  find mixed#direct_7: bool
 new constraints:
-  sum([toInt(mixed#int_direct_1),toInt(mixed#int_direct_2),toInt(mixed#int_direct_3),toInt(mixed#int_direct_4),toInt(mixed#int_direct_5),toInt(mixed#int_direct_6),toInt(mixed#int_direct_7);int(1..)]) <= 1
-  or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)])
+  sum([toInt(mixed#direct_1),toInt(mixed#direct_2),toInt(mixed#direct_3),toInt(mixed#direct_4),toInt(mixed#direct_5),toInt(mixed#direct_6),toInt(mixed#direct_7);int(1..)]) <= 1
+  or([mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)])
 
 --
 
@@ -47,16 +47,16 @@ quotient
    ~~> select_representation ([("ReprGeneral", 10000)])
 quotient
 new variables:
-  find quotient#int_direct_1: bool
-  find quotient#int_direct_2: bool
-  find quotient#int_direct_3: bool
-  find quotient#int_direct_4: bool
-  find quotient#int_direct_5: bool
-  find quotient#int_direct_6: bool
-  find quotient#int_direct_7: bool
+  find quotient#direct_1: bool
+  find quotient#direct_2: bool
+  find quotient#direct_3: bool
+  find quotient#direct_4: bool
+  find quotient#direct_5: bool
+  find quotient#direct_6: bool
+  find quotient#direct_7: bool
 new constraints:
-  sum([toInt(quotient#int_direct_1),toInt(quotient#int_direct_2),toInt(quotient#int_direct_3),toInt(quotient#int_direct_4),toInt(quotient#int_direct_5),toInt(quotient#int_direct_6),toInt(quotient#int_direct_7);int(1..)]) <= 1
-  or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)])
+  sum([toInt(quotient#direct_1),toInt(quotient#direct_2),toInt(quotient#direct_3),toInt(quotient#direct_4),toInt(quotient#direct_5),toInt(quotient#direct_6),toInt(quotient#direct_7);int(1..)]) <= 1
+  or([quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)])
 
 --
 
@@ -64,11 +64,11 @@ remainder
    ~~> select_representation ([("ReprGeneral", 10000)])
 remainder
 new variables:
-  find remainder#int_direct_1: bool
-  find remainder#int_direct_2: bool
+  find remainder#direct_1: bool
+  find remainder#direct_2: bool
 new constraints:
-  sum([toInt(remainder#int_direct_1),toInt(remainder#int_direct_2);int(1..)]) <= 1
-  or([remainder#int_direct_1,remainder#int_direct_2;int(1..)])
+  sum([toInt(remainder#direct_1),toInt(remainder#direct_2);int(1..)]) <= 1
+  or([remainder#direct_1,remainder#direct_2;int(1..)])
 
 --
 
@@ -76,16 +76,16 @@ x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
 new variables:
-  find x#int_direct_1: bool
-  find x#int_direct_2: bool
-  find x#int_direct_3: bool
-  find x#int_direct_4: bool
-  find x#int_direct_5: bool
-  find x#int_direct_6: bool
-  find x#int_direct_7: bool
+  find x#direct_1: bool
+  find x#direct_2: bool
+  find x#direct_3: bool
+  find x#direct_4: bool
+  find x#direct_5: bool
+  find x#direct_6: bool
+  find x#direct_7: bool
 new constraints:
-  sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6),toInt(x#int_direct_7);int(1..)]) <= 1
-  or([x#int_direct_1,x#int_direct_2,x#int_direct_4,x#int_direct_7;int(1..)])
+  sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5),toInt(x#direct_6),toInt(x#direct_7);int(1..)]) <= 1
+  or([x#direct_1,x#direct_2,x#direct_4,x#direct_7;int(1..)])
 
 --
 
@@ -137,14 +137,14 @@ product([x,toInt(and([b,x != 0;int(1..)]));int(1..)]) = mixed,
 quotient = (x / sum([toInt(b),1;int(1..)])),
 remainder = x % sum([toInt(b),1;int(1..)]),
 (at_most_two) <-> (sum([toInt(b),toInt(c),toInt(x % 2 != 0),toInt(x != 0);int(1..4)]) <= 2),
-sum([toInt(mixed#int_direct_1),toInt(mixed#int_direct_2),toInt(mixed#int_direct_3),toInt(mixed#int_direct_4),toInt(mixed#int_direct_5),toInt(mixed#int_direct_6),toInt(mixed#int_direct_7);int(1..)]) <= 1,
-or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)]),
-sum([toInt(quotient#int_direct_1),toInt(quotient#int_direct_2),toInt(quotient#int_direct_3),toInt(quotient#int_direct_4),toInt(quotient#int_direct_5),toInt(quotient#int_direct_6),toInt(quotient#int_direct_7);int(1..)]) <= 1,
-or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)]),
-sum([toInt(remainder#int_direct_1),toInt(remainder#int_direct_2);int(1..)]) <= 1,
-or([remainder#int_direct_1,remainder#int_direct_2;int(1..)]),
-sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6),toInt(x#int_direct_7);int(1..)]) <= 1,
-or([x#int_direct_1,x#int_direct_2,x#int_direct_4,x#int_direct_7;int(1..)])
+sum([toInt(mixed#direct_1),toInt(mixed#direct_2),toInt(mixed#direct_3),toInt(mixed#direct_4),toInt(mixed#direct_5),toInt(mixed#direct_6),toInt(mixed#direct_7);int(1..)]) <= 1,
+or([mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)]),
+sum([toInt(quotient#direct_1),toInt(quotient#direct_2),toInt(quotient#direct_3),toInt(quotient#direct_4),toInt(quotient#direct_5),toInt(quotient#direct_6),toInt(quotient#direct_7);int(1..)]) <= 1,
+or([quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)]),
+sum([toInt(remainder#direct_1),toInt(remainder#direct_2);int(1..)]) <= 1,
+or([remainder#direct_1,remainder#direct_2;int(1..)]),
+sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5),toInt(x#direct_6),toInt(x#direct_7);int(1..)]) <= 1,
+or([x#direct_1,x#direct_2,x#direct_4,x#direct_7;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 mixed = product([x,toInt(b);int(1..)]),
 (zero) <-> (product([x,toInt(b);int(1..)]) = 0),
@@ -152,15 +152,15 @@ product([x,toInt(and([b,x != 0;int(1..)]));int(1..)]) = mixed,
 quotient = (x / sum([toInt(b),1;int(1..)])),
 remainder = x % sum([toInt(b),1;int(1..)]),
 (at_most_two) <-> (sum([toInt(b),toInt(c),toInt(x % 2 != 0),toInt(x != 0);int(1..4)]) <= 2),
-or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)]),
-sum([toInt(quotient#int_direct_1),toInt(quotient#int_direct_2),toInt(quotient#int_direct_3),toInt(quotient#int_direct_4),toInt(quotient#int_direct_5),toInt(quotient#int_direct_6),toInt(quotient#int_direct_7);int(1..)]) <= 1,
-or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)]),
-sum([toInt(remainder#int_direct_1),toInt(remainder#int_direct_2);int(1..)]) <= 1,
-or([remainder#int_direct_1,remainder#int_direct_2;int(1..)]),
-sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6),toInt(x#int_direct_7);int(1..)]) <= 1,
-or([x#int_direct_1,x#int_direct_2,x#int_direct_4,x#int_direct_7;int(1..)])
+or([mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)]),
+sum([toInt(quotient#direct_1),toInt(quotient#direct_2),toInt(quotient#direct_3),toInt(quotient#direct_4),toInt(quotient#direct_5),toInt(quotient#direct_6),toInt(quotient#direct_7);int(1..)]) <= 1,
+or([quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)]),
+sum([toInt(remainder#direct_1),toInt(remainder#direct_2);int(1..)]) <= 1,
+or([remainder#direct_1,remainder#direct_2;int(1..)]),
+sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5),toInt(x#direct_6),toInt(x#direct_7);int(1..)]) <= 1,
+or([x#direct_1,x#direct_2,x#direct_4,x#direct_7;int(1..)])
 new SAT encoding decisions:
-  at-most-one(mixed#int_direct_1, mixed#int_direct_2, mixed#int_direct_3, mixed#int_direct_4, mixed#int_direct_5, mixed#int_direct_6, mixed#int_direct_7) using None
+  at-most-one(mixed#direct_1, mixed#direct_2, mixed#direct_3, mixed#direct_4, mixed#direct_5, mixed#direct_6, mixed#direct_7) using None
 
 --
 
@@ -170,13 +170,13 @@ product([x,toInt(and([b,x != 0;int(1..)]));int(1..)]) = mixed,
 quotient = (x / sum([toInt(b),1;int(1..)])),
 remainder = x % sum([toInt(b),1;int(1..)]),
 (at_most_two) <-> (sum([toInt(b),toInt(c),toInt(x % 2 != 0),toInt(x != 0);int(1..4)]) <= 2),
-or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)]),
-sum([toInt(quotient#int_direct_1),toInt(quotient#int_direct_2),toInt(quotient#int_direct_3),toInt(quotient#int_direct_4),toInt(quotient#int_direct_5),toInt(quotient#int_direct_6),toInt(quotient#int_direct_7);int(1..)]) <= 1,
-or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)]),
-sum([toInt(remainder#int_direct_1),toInt(remainder#int_direct_2);int(1..)]) <= 1,
-or([remainder#int_direct_1,remainder#int_direct_2;int(1..)]),
-sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6),toInt(x#int_direct_7);int(1..)]) <= 1,
-or([x#int_direct_1,x#int_direct_2,x#int_direct_4,x#int_direct_7;int(1..)])
+or([mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)]),
+sum([toInt(quotient#direct_1),toInt(quotient#direct_2),toInt(quotient#direct_3),toInt(quotient#direct_4),toInt(quotient#direct_5),toInt(quotient#direct_6),toInt(quotient#direct_7);int(1..)]) <= 1,
+or([quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)]),
+sum([toInt(remainder#direct_1),toInt(remainder#direct_2);int(1..)]) <= 1,
+or([remainder#direct_1,remainder#direct_2;int(1..)]),
+sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5),toInt(x#direct_6),toInt(x#direct_7);int(1..)]) <= 1,
+or([x#direct_1,x#direct_2,x#direct_4,x#direct_7;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 mixed = product([x,toInt(b);int(1..)]),
 (zero) <-> (product([x,toInt(b);int(1..)]) = 0),
@@ -184,14 +184,14 @@ product([x,toInt(and([b,x != 0;int(1..)]));int(1..)]) = mixed,
 quotient = (x / sum([toInt(b),1;int(1..)])),
 remainder = x % sum([toInt(b),1;int(1..)]),
 (at_most_two) <-> (sum([toInt(b),toInt(c),toInt(x % 2 != 0),toInt(x != 0);int(1..4)]) <= 2),
-or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)]),
-or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)]),
-sum([toInt(remainder#int_direct_1),toInt(remainder#int_direct_2);int(1..)]) <= 1,
-or([remainder#int_direct_1,remainder#int_direct_2;int(1..)]),
-sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6),toInt(x#int_direct_7);int(1..)]) <= 1,
-or([x#int_direct_1,x#int_direct_2,x#int_direct_4,x#int_direct_7;int(1..)])
+or([mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)]),
+or([quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)]),
+sum([toInt(remainder#direct_1),toInt(remainder#direct_2);int(1..)]) <= 1,
+or([remainder#direct_1,remainder#direct_2;int(1..)]),
+sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5),toInt(x#direct_6),toInt(x#direct_7);int(1..)]) <= 1,
+or([x#direct_1,x#direct_2,x#direct_4,x#direct_7;int(1..)])
 new SAT encoding decisions:
-  at-most-one(quotient#int_direct_1, quotient#int_direct_2, quotient#int_direct_3, quotient#int_direct_4, quotient#int_direct_5, quotient#int_direct_6, quotient#int_direct_7) using None
+  at-most-one(quotient#direct_1, quotient#direct_2, quotient#direct_3, quotient#direct_4, quotient#direct_5, quotient#direct_6, quotient#direct_7) using None
 
 --
 
@@ -201,12 +201,12 @@ product([x,toInt(and([b,x != 0;int(1..)]));int(1..)]) = mixed,
 quotient = (x / sum([toInt(b),1;int(1..)])),
 remainder = x % sum([toInt(b),1;int(1..)]),
 (at_most_two) <-> (sum([toInt(b),toInt(c),toInt(x % 2 != 0),toInt(x != 0);int(1..4)]) <= 2),
-or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)]),
-or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)]),
-sum([toInt(remainder#int_direct_1),toInt(remainder#int_direct_2);int(1..)]) <= 1,
-or([remainder#int_direct_1,remainder#int_direct_2;int(1..)]),
-sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6),toInt(x#int_direct_7);int(1..)]) <= 1,
-or([x#int_direct_1,x#int_direct_2,x#int_direct_4,x#int_direct_7;int(1..)])
+or([mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)]),
+or([quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)]),
+sum([toInt(remainder#direct_1),toInt(remainder#direct_2);int(1..)]) <= 1,
+or([remainder#direct_1,remainder#direct_2;int(1..)]),
+sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5),toInt(x#direct_6),toInt(x#direct_7);int(1..)]) <= 1,
+or([x#direct_1,x#direct_2,x#direct_4,x#direct_7;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 mixed = product([x,toInt(b);int(1..)]),
 (zero) <-> (product([x,toInt(b);int(1..)]) = 0),
@@ -214,13 +214,13 @@ product([x,toInt(and([b,x != 0;int(1..)]));int(1..)]) = mixed,
 quotient = (x / sum([toInt(b),1;int(1..)])),
 remainder = x % sum([toInt(b),1;int(1..)]),
 (at_most_two) <-> (sum([toInt(b),toInt(c),toInt(x % 2 != 0),toInt(x != 0);int(1..4)]) <= 2),
-or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)]),
-or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)]),
-or([remainder#int_direct_1,remainder#int_direct_2;int(1..)]),
-sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6),toInt(x#int_direct_7);int(1..)]) <= 1,
-or([x#int_direct_1,x#int_direct_2,x#int_direct_4,x#int_direct_7;int(1..)])
+or([mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)]),
+or([quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)]),
+or([remainder#direct_1,remainder#direct_2;int(1..)]),
+sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5),toInt(x#direct_6),toInt(x#direct_7);int(1..)]) <= 1,
+or([x#direct_1,x#direct_2,x#direct_4,x#direct_7;int(1..)])
 new SAT encoding decisions:
-  at-most-one(remainder#int_direct_1, remainder#int_direct_2) using None
+  at-most-one(remainder#direct_1, remainder#direct_2) using None
 
 --
 
@@ -230,11 +230,11 @@ product([x,toInt(and([b,x != 0;int(1..)]));int(1..)]) = mixed,
 quotient = (x / sum([toInt(b),1;int(1..)])),
 remainder = x % sum([toInt(b),1;int(1..)]),
 (at_most_two) <-> (sum([toInt(b),toInt(c),toInt(x % 2 != 0),toInt(x != 0);int(1..4)]) <= 2),
-or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)]),
-or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)]),
-or([remainder#int_direct_1,remainder#int_direct_2;int(1..)]),
-sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6),toInt(x#int_direct_7);int(1..)]) <= 1,
-or([x#int_direct_1,x#int_direct_2,x#int_direct_4,x#int_direct_7;int(1..)])
+or([mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)]),
+or([quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)]),
+or([remainder#direct_1,remainder#direct_2;int(1..)]),
+sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5),toInt(x#direct_6),toInt(x#direct_7);int(1..)]) <= 1,
+or([x#direct_1,x#direct_2,x#direct_4,x#direct_7;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 mixed = product([x,toInt(b);int(1..)]),
 (zero) <-> (product([x,toInt(b);int(1..)]) = 0),
@@ -242,12 +242,12 @@ product([x,toInt(and([b,x != 0;int(1..)]));int(1..)]) = mixed,
 quotient = (x / sum([toInt(b),1;int(1..)])),
 remainder = x % sum([toInt(b),1;int(1..)]),
 (at_most_two) <-> (sum([toInt(b),toInt(c),toInt(x % 2 != 0),toInt(x != 0);int(1..4)]) <= 2),
-or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)]),
-or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)]),
-or([remainder#int_direct_1,remainder#int_direct_2;int(1..)]),
-or([x#int_direct_1,x#int_direct_2,x#int_direct_4,x#int_direct_7;int(1..)])
+or([mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)]),
+or([quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)]),
+or([remainder#direct_1,remainder#direct_2;int(1..)]),
+or([x#direct_1,x#direct_2,x#direct_4,x#direct_7;int(1..)])
 new SAT encoding decisions:
-  at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6, x#int_direct_7) using None
+  at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6, x#direct_7) using None
 
 --
 
@@ -257,7 +257,7 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(-3*x#int_direct_1, -2*x#int_direct_2, -1*x#int_direct_3, 0*x#int_direct_4, 1*x#int_direct_5, 2*x#int_direct_6, 3*x#int_direct_7) NotEqual 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__0 <-> integer-weighted(-3*x#direct_1, -2*x#direct_2, -1*x#direct_3, 0*x#direct_4, 1*x#direct_5, 2*x#direct_6, 3*x#direct_7) NotEqual 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
@@ -267,107 +267,107 @@ __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(-3*x#int_direct_1, -2*x#int_direct_2, -1*x#int_direct_3, 0*x#int_direct_4, 1*x#int_direct_5, 2*x#int_direct_6, 3*x#int_direct_7) NotEqual 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__1 <-> integer-weighted(-3*x#direct_1, -2*x#direct_2, -1*x#direct_3, 0*x#direct_4, 1*x#direct_5, 2*x#direct_6, 3*x#direct_7) NotEqual 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 mixed
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3])
+SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3])
 
 --
 
 mixed
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3])
+SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3])
 
 --
 
 quotient
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3])
+SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3])
 
 --
 
 remainder
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1])
+SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1])
 
 --
 
 x
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3])
+SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3])
 
 --
 
 x
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3])
+SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3])
 
 --
 
 x
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3])
+SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3])
 
 --
 
 x
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3])
+SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3])
 
 --
 
 x
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3])
+SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3])
 
 --
 
 x
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3])
+SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3])
 
 --
 
-or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)])
+or([mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)])) using tseitin
+  define(__2 <-> or([mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)])) using tseitin
 
 --
 
-or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)])
+or([quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)])) using tseitin
+  define(__3 <-> or([quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)])) using tseitin
 
 --
 
-or([remainder#int_direct_1,remainder#int_direct_2;int(1..)])
+or([remainder#direct_1,remainder#direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> or([remainder#int_direct_1,remainder#int_direct_2;int(1..)])) using tseitin
+  define(__4 <-> or([remainder#direct_1,remainder#direct_2;int(1..)])) using tseitin
 
 --
 
-or([x#int_direct_1,x#int_direct_2,x#int_direct_4,x#int_direct_7;int(1..)])
+or([x#direct_1,x#direct_2,x#direct_4,x#direct_7;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_4,x#int_direct_7;int(1..)])) using tseitin
+  define(__5 <-> or([x#direct_1,x#direct_2,x#direct_4,x#direct_7;int(1..)])) using tseitin
 
 --
 
@@ -381,23 +381,23 @@ new SAT encoding decisions:
 
 --
 
-SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
-(zero) <-> (product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]),
-SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
-SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
+SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
+(zero) <-> (product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]),
+SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
+SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
 __2,
 __3,
 __4,
 __5
    ~~> remove_single_atom ([("SAT", 8400)])
-SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
-(zero) <-> (product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]),
-SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
-SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
+SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
+(zero) <-> (product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]),
+SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
+SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
 __3,
 __4,
 __5
@@ -406,22 +406,22 @@ new SAT encoding decisions:
 
 --
 
-SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
-(zero) <-> (product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]),
-SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
-SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
+SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
+(zero) <-> (product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]),
+SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
+SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
 __3,
 __4,
 __5
    ~~> remove_single_atom ([("SAT", 8400)])
-SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
-(zero) <-> (product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]),
-SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
-SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
+SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
+(zero) <-> (product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]),
+SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
+SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
 __4,
 __5
 new SAT encoding decisions:
@@ -429,49 +429,49 @@ new SAT encoding decisions:
 
 --
 
-SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
-(zero) <-> (product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]),
-SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
-SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
+SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
+(zero) <-> (product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]),
+SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
+SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
 __4,
 __5
    ~~> remove_single_atom ([("SAT", 8400)])
-SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
-(zero) <-> (product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]),
-SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
-SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
+SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
+(zero) <-> (product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]),
+SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
+SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
 __5
 new SAT encoding decisions:
   assert(__4) using tseitin
 
 --
 
-SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
-(zero) <-> (product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]),
-SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
-SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
+SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
+(zero) <-> (product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]),
+SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
+SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2),
 __5
    ~~> remove_single_atom ([("SAT", 8400)])
-SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
-(zero) <-> (product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]),
-SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
-SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2)
+SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]),
+(zero) <-> (product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]),
+SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = (SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)])),
+SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % 2 != 0),toInt(__0);int(1..4)]) <= 2)
 new SAT encoding decisions:
   assert(__5) using tseitin
 
 --
 
-(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)]))
+(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) / sum([toInt(b),1;int(1..)]))
    ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])) @ sum([toInt(b),1;int(1..)]) != 0}
+{SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])) @ sum([toInt(b),1;int(1..)]) != 0}
 
 --
 
@@ -485,21 +485,21 @@ new SAT encoding decisions:
 
 --
 
-SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = {SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])) @ __7}
+SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = {SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])) @ __7}
    ~~> bubble_up ([("Bubble", 8800)])
-{SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])) @ __7}
+{SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])) @ __7}
 
 --
 
-{SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])) @ __7}
+{SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])) @ __7}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)])
+and([SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)])
 
 --
 
-SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)])
+SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % sum([toInt(b),1;int(1..)])
    ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])) @ sum([toInt(b),1;int(1..)]) != 0}
+{SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])) @ sum([toInt(b),1;int(1..)]) != 0}
 
 --
 
@@ -513,59 +513,59 @@ new SAT encoding decisions:
 
 --
 
-SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = {SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])) @ __8}
+SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = {SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])) @ __8}
    ~~> bubble_up ([("Bubble", 8800)])
-{SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])) @ __8}
+{SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])) @ __8}
 
 --
 
-{SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])) @ __8}
+{SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])) @ __8}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)])
+and([SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)])
 
 --
 
-SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]) % 2
+SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]) % 2
    ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),2) @ 2 != 0}
+{SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),2) @ 2 != 0}
 
 --
 
-SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),2)
+SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),2)
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2]))
+SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2]))
 
 --
 
-SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)])
+SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__9,__10,__11;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)])
+SATInt(Log, [__9,__10,__11;int(1..)] [-3, 3]) = product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)])
 new variables:
   findAux __9: bool
   findAux __10: bool
   findAux __11: bool
 new SAT encoding decisions:
-  define(__9 <-> or([mixed#int_direct_1,mixed#int_direct_3,mixed#int_direct_5,mixed#int_direct_7;int(1..)])) using tseitin
-  define(__10 <-> or([mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_6,mixed#int_direct_7;int(1..)])) using tseitin
-  define(__11 <-> or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3;int(1..)])) using tseitin
+  define(__9 <-> or([mixed#direct_1,mixed#direct_3,mixed#direct_5,mixed#direct_7;int(1..)])) using tseitin
+  define(__10 <-> or([mixed#direct_2,mixed#direct_3,mixed#direct_6,mixed#direct_7;int(1..)])) using tseitin
+  define(__11 <-> or([mixed#direct_1,mixed#direct_2,mixed#direct_3;int(1..)])) using tseitin
 
 --
 
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)] [-3, 3])
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Direct, [mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)] [-3, 3])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Log, [__12,__13,__14;int(1..)] [-3, 3])
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Log, [__12,__13,__14;int(1..)] [-3, 3])
 new variables:
   findAux __12: bool
   findAux __13: bool
   findAux __14: bool
 new SAT encoding decisions:
-  define(__12 <-> or([mixed#int_direct_1,mixed#int_direct_3,mixed#int_direct_5,mixed#int_direct_7;int(1..)])) using tseitin
-  define(__13 <-> or([mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_6,mixed#int_direct_7;int(1..)])) using tseitin
-  define(__14 <-> or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3;int(1..)])) using tseitin
+  define(__12 <-> or([mixed#direct_1,mixed#direct_3,mixed#direct_5,mixed#direct_7;int(1..)])) using tseitin
+  define(__13 <-> or([mixed#direct_2,mixed#direct_3,mixed#direct_6,mixed#direct_7;int(1..)])) using tseitin
+  define(__14 <-> or([mixed#direct_1,mixed#direct_2,mixed#direct_3;int(1..)])) using tseitin
 
 --
 
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)])
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 product([SATInt(Log, [__15,__16,__17;int(1..)] [-3, 3]),SATInt(Log, [b,false;int(1..)] [0, 1]);int(1..)])
 new variables:
@@ -573,9 +573,9 @@ new variables:
   findAux __16: bool
   findAux __17: bool
 new SAT encoding decisions:
-  define(__15 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_5,x#int_direct_7;int(1..)])) using tseitin
-  define(__16 <-> or([x#int_direct_2,x#int_direct_3,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin
-  define(__17 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin
+  define(__15 <-> or([x#direct_1,x#direct_3,x#direct_5,x#direct_7;int(1..)])) using tseitin
+  define(__16 <-> or([x#direct_2,x#direct_3,x#direct_6,x#direct_7;int(1..)])) using tseitin
+  define(__17 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -1070,23 +1070,23 @@ new SAT encoding decisions:
 --
 
 __254,
-(zero) <-> (product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Log, [__12,__13,__14;int(1..)] [-3, 3]),
-and([SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)]),
-and([SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
+(zero) <-> (product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Log, [__12,__13,__14;int(1..)] [-3, 3]),
+and([SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)]),
+and([SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
    ~~> remove_single_atom ([("SAT", 8400)])
-(zero) <-> (product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Log, [__12,__13,__14;int(1..)] [-3, 3]),
-and([SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)]),
-and([SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
+(zero) <-> (product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)]) = SATInt(Log, [__12,__13,__14;int(1..)] [-3, 3]),
+and([SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)]),
+and([SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
 new SAT encoding decisions:
   assert(__254) using tseitin
 
 --
 
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)])
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(__6);int(1..)])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 product([SATInt(Log, [__255,__256,__257;int(1..)] [-3, 3]),SATInt(Log, [__6,false;int(1..)] [0, 1]);int(1..)])
 new variables:
@@ -1094,9 +1094,9 @@ new variables:
   findAux __256: bool
   findAux __257: bool
 new SAT encoding decisions:
-  define(__255 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_5,x#int_direct_7;int(1..)])) using tseitin
-  define(__256 <-> or([x#int_direct_2,x#int_direct_3,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin
-  define(__257 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin
+  define(__255 <-> or([x#direct_1,x#direct_3,x#direct_5,x#direct_7;int(1..)])) using tseitin
+  define(__256 <-> or([x#direct_2,x#direct_3,x#direct_6,x#direct_7;int(1..)])) using tseitin
+  define(__257 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -1590,22 +1590,22 @@ new SAT encoding decisions:
 
 --
 
-(zero) <-> (product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
+(zero) <-> (product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
 __494,
-and([SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)]),
-and([SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
+and([SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)]),
+and([SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
    ~~> remove_single_atom ([("SAT", 8400)])
-(zero) <-> (product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
-and([SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)]),
-and([SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
+(zero) <-> (product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)]) = 0),
+and([SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)]),
+and([SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
 new SAT encoding decisions:
   assert(__494) using tseitin
 
 --
 
-product([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)])
+product([SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),toInt(b);int(1..)])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 product([SATInt(Log, [__495,__496,__497;int(1..)] [-3, 3]),SATInt(Log, [b,false;int(1..)] [0, 1]);int(1..)])
 new variables:
@@ -1613,9 +1613,9 @@ new variables:
   findAux __496: bool
   findAux __497: bool
 new SAT encoding decisions:
-  define(__495 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_5,x#int_direct_7;int(1..)])) using tseitin
-  define(__496 <-> or([x#int_direct_2,x#int_direct_3,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin
-  define(__497 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin
+  define(__495 <-> or([x#direct_1,x#direct_3,x#direct_5,x#direct_7;int(1..)])) using tseitin
+  define(__496 <-> or([x#direct_2,x#direct_3,x#direct_6,x#direct_7;int(1..)])) using tseitin
+  define(__497 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -2120,39 +2120,39 @@ new SAT encoding decisions:
 --
 
 __735,
-and([SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)]),
-and([SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
+and([SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)]),
+and([SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
    ~~> remove_single_atom ([("SAT", 8400)])
-and([SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)]),
-and([SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
+and([SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)])),__7;int(1..)]),
+and([SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
 new SAT encoding decisions:
   assert(__735) using tseitin
 
 --
 
-SATInt(Direct, [quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)]))
+SATInt(Direct, [quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__736,__737,__738;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)]))
+SATInt(Log, [__736,__737,__738;int(1..)] [-3, 3]) = SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)]))
 new variables:
   findAux __736: bool
   findAux __737: bool
   findAux __738: bool
 new SAT encoding decisions:
-  define(__736 <-> or([quotient#int_direct_1,quotient#int_direct_3,quotient#int_direct_5,quotient#int_direct_7;int(1..)])) using tseitin
-  define(__737 <-> or([quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_6,quotient#int_direct_7;int(1..)])) using tseitin
-  define(__738 <-> or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3;int(1..)])) using tseitin
+  define(__736 <-> or([quotient#direct_1,quotient#direct_3,quotient#direct_5,quotient#direct_7;int(1..)])) using tseitin
+  define(__737 <-> or([quotient#direct_2,quotient#direct_3,quotient#direct_6,quotient#direct_7;int(1..)])) using tseitin
+  define(__738 <-> or([quotient#direct_1,quotient#direct_2,quotient#direct_3;int(1..)])) using tseitin
 
 --
 
-SATInt(Direct, [remainder#int_direct_1,remainder#int_direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)]))
+SATInt(Direct, [remainder#direct_1,remainder#direct_2;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [remainder#int_direct_2,false;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)]))
+SATInt(Log, [remainder#direct_2,false;int(1..)] [0, 1]) = SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)]))
 
 --
 
-SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)]))
+SafeDiv(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeDiv(SATInt(Log, [__739,__740,__741;int(1..)] [-3, 3]), sum([toInt(b),1;int(1..)]))
 new variables:
@@ -2160,13 +2160,13 @@ new variables:
   findAux __740: bool
   findAux __741: bool
 new SAT encoding decisions:
-  define(__739 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_5,x#int_direct_7;int(1..)])) using tseitin
-  define(__740 <-> or([x#int_direct_2,x#int_direct_3,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin
-  define(__741 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin
+  define(__739 <-> or([x#direct_1,x#direct_3,x#direct_5,x#direct_7;int(1..)])) using tseitin
+  define(__740 <-> or([x#direct_2,x#direct_3,x#direct_6,x#direct_7;int(1..)])) using tseitin
+  define(__741 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin
 
 --
 
-SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)]))
+SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeMod(SATInt(Log, [__742,__743,__744;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)]))
 new variables:
@@ -2174,9 +2174,9 @@ new variables:
   findAux __743: bool
   findAux __744: bool
 new SAT encoding decisions:
-  define(__742 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_5,x#int_direct_7;int(1..)])) using tseitin
-  define(__743 <-> or([x#int_direct_2,x#int_direct_3,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin
-  define(__744 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin
+  define(__742 <-> or([x#direct_1,x#direct_3,x#direct_5,x#direct_7;int(1..)])) using tseitin
+  define(__743 <-> or([x#direct_2,x#direct_3,x#direct_6,x#direct_7;int(1..)])) using tseitin
+  define(__744 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -2797,11 +2797,11 @@ new SAT encoding decisions:
 --
 
 __1030,
-and([SATInt(Log, [remainder#int_direct_2,false;int(1..)] [0, 1]) = SafeMod(SATInt(Log, [__742,__743,__744;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
+and([SATInt(Log, [remainder#direct_2,false;int(1..)] [0, 1]) = SafeMod(SATInt(Log, [__742,__743,__744;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
    ~~> remove_single_atom ([("SAT", 8400)])
-and([SATInt(Log, [remainder#int_direct_2,false;int(1..)] [0, 1]) = SafeMod(SATInt(Log, [__742,__743,__744;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
+and([SATInt(Log, [remainder#direct_2,false;int(1..)] [0, 1]) = SafeMod(SATInt(Log, [__742,__743,__744;int(1..)] [-3, 3]),sum([toInt(b),1;int(1..)])),__8;int(1..)]),
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
 new SAT encoding decisions:
   assert(__1030) using tseitin
 
@@ -3443,13 +3443,13 @@ new SAT encoding decisions:
 
 --
 
-SATInt(Log, [remainder#int_direct_2,false;int(1..)] [0, 1]) = SATInt(Log, [__1331,__1332,__1333,__1334;int(1..)] [0, 1])
+SATInt(Log, [remainder#direct_2,false;int(1..)] [0, 1]) = SATInt(Log, [__1331,__1332,__1333,__1334;int(1..)] [0, 1])
    ~~> select_integer_relation ([("SAT", 18500)])
 __1335
 new variables:
   findAux __1335: bool
 new SAT encoding decisions:
-  define(__1335 <-> integer-weighted(1*remainder#int_direct_2, -2*false, -1*__1331, -2*__1332, -4*__1333, 8*__1334) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 6, structure: BoundedBinary { lower: -1, upper: 0 } }]
+  define(__1335 <-> integer-weighted(1*remainder#direct_2, -2*false, -1*__1331, -2*__1332, -4*__1333, 8*__1334) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 6, structure: BoundedBinary { lower: -1, upper: 0 } }]
 
 --
 
@@ -3464,15 +3464,15 @@ new SAT encoding decisions:
 --
 
 __1336,
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
    ~~> remove_single_atom ([("SAT", 8400)])
-(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
+(at_most_two) <-> (sum([toInt(b),toInt(c),toInt(SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2])) != 0),toInt(__0);int(1..4)]) <= 2)
 new SAT encoding decisions:
   assert(__1336) using tseitin
 
 --
 
-SafeMod(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2]))
+SafeMod(SATInt(Direct, [x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)] [-3, 3]),SATInt(Direct, [true;int(1..)] [2, 2]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeMod(SATInt(Log, [__1337,__1338,__1339;int(1..)] [-3, 3]),SATInt(Log, [false,true,false;int(1..)] [2, 2]))
 new variables:
@@ -3480,9 +3480,9 @@ new variables:
   findAux __1338: bool
   findAux __1339: bool
 new SAT encoding decisions:
-  define(__1337 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_5,x#int_direct_7;int(1..)])) using tseitin
-  define(__1338 <-> or([x#int_direct_2,x#int_direct_3,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin
-  define(__1339 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin
+  define(__1337 <-> or([x#direct_1,x#direct_3,x#direct_5,x#direct_7;int(1..)])) using tseitin
+  define(__1338 <-> or([x#direct_2,x#direct_3,x#direct_6,x#direct_7;int(1..)])) using tseitin
+  define(__1339 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -4126,29 +4126,29 @@ find zero: bool
 find mixed: int(-3..3)
 find quotient: int(-3..3)
 find remainder: int(0..1)
-find mixed#int_direct_1: bool
-find mixed#int_direct_2: bool
-find mixed#int_direct_3: bool
-find mixed#int_direct_4: bool
-find mixed#int_direct_5: bool
-find mixed#int_direct_6: bool
-find mixed#int_direct_7: bool
-find quotient#int_direct_1: bool
-find quotient#int_direct_2: bool
-find quotient#int_direct_3: bool
-find quotient#int_direct_4: bool
-find quotient#int_direct_5: bool
-find quotient#int_direct_6: bool
-find quotient#int_direct_7: bool
-find remainder#int_direct_1: bool
-find remainder#int_direct_2: bool
-find x#int_direct_1: bool
-find x#int_direct_2: bool
-find x#int_direct_3: bool
-find x#int_direct_4: bool
-find x#int_direct_5: bool
-find x#int_direct_6: bool
-find x#int_direct_7: bool
+find mixed#direct_1: bool
+find mixed#direct_2: bool
+find mixed#direct_3: bool
+find mixed#direct_4: bool
+find mixed#direct_5: bool
+find mixed#direct_6: bool
+find mixed#direct_7: bool
+find quotient#direct_1: bool
+find quotient#direct_2: bool
+find quotient#direct_3: bool
+find quotient#direct_4: bool
+find quotient#direct_5: bool
+find quotient#direct_6: bool
+find quotient#direct_7: bool
+find remainder#direct_1: bool
+find remainder#direct_2: bool
+find x#direct_1: bool
+find x#direct_2: bool
+find x#direct_3: bool
+find x#direct_4: bool
+find x#direct_5: bool
+find x#direct_6: bool
+find x#direct_7: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -5791,16 +5791,16 @@ true
 
 sat encoding decisions:
 
-at-most-one(mixed#int_direct_1, mixed#int_direct_2, mixed#int_direct_3, mixed#int_direct_4, mixed#int_direct_5, mixed#int_direct_6, mixed#int_direct_7) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
-at-most-one(quotient#int_direct_1, quotient#int_direct_2, quotient#int_direct_3, quotient#int_direct_4, quotient#int_direct_5, quotient#int_direct_6, quotient#int_direct_7) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
-at-most-one(remainder#int_direct_1, remainder#int_direct_2) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
-at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6, x#int_direct_7) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
-define(__0 <-> integer-weighted(-3*x#int_direct_1, -2*x#int_direct_2, -1*x#int_direct_3, 0*x#int_direct_4, 1*x#int_direct_5, 2*x#int_direct_6, 3*x#int_direct_7) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__1 <-> integer-weighted(-3*x#int_direct_1, -2*x#int_direct_2, -1*x#int_direct_3, 0*x#int_direct_4, 1*x#int_direct_5, 2*x#int_direct_6, 3*x#int_direct_7) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__2 <-> or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_4,mixed#int_direct_5,mixed#int_direct_6,mixed#int_direct_7;int(1..)])) using tseitin,
-define(__3 <-> or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_4,quotient#int_direct_5,quotient#int_direct_6,quotient#int_direct_7;int(1..)])) using tseitin,
-define(__4 <-> or([remainder#int_direct_1,remainder#int_direct_2;int(1..)])) using tseitin,
-define(__5 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_4,x#int_direct_7;int(1..)])) using tseitin,
+at-most-one(mixed#direct_1, mixed#direct_2, mixed#direct_3, mixed#direct_4, mixed#direct_5, mixed#direct_6, mixed#direct_7) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+at-most-one(quotient#direct_1, quotient#direct_2, quotient#direct_3, quotient#direct_4, quotient#direct_5, quotient#direct_6, quotient#direct_7) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+at-most-one(remainder#direct_1, remainder#direct_2) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6, x#direct_7) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+define(__0 <-> integer-weighted(-3*x#direct_1, -2*x#direct_2, -1*x#direct_3, 0*x#direct_4, 1*x#direct_5, 2*x#direct_6, 3*x#direct_7) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__1 <-> integer-weighted(-3*x#direct_1, -2*x#direct_2, -1*x#direct_3, 0*x#direct_4, 1*x#direct_5, 2*x#direct_6, 3*x#direct_7) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__2 <-> or([mixed#direct_1,mixed#direct_2,mixed#direct_3,mixed#direct_4,mixed#direct_5,mixed#direct_6,mixed#direct_7;int(1..)])) using tseitin,
+define(__3 <-> or([quotient#direct_1,quotient#direct_2,quotient#direct_3,quotient#direct_4,quotient#direct_5,quotient#direct_6,quotient#direct_7;int(1..)])) using tseitin,
+define(__4 <-> or([remainder#direct_1,remainder#direct_2;int(1..)])) using tseitin,
+define(__5 <-> or([x#direct_1,x#direct_2,x#direct_4,x#direct_7;int(1..)])) using tseitin,
 define(__6 <-> and([b,__1;int(1..)])) using tseitin,
 assert(__2) using tseitin,
 assert(__3) using tseitin,
@@ -5808,15 +5808,15 @@ assert(__4) using tseitin,
 assert(__5) using tseitin,
 define(__7 <-> count(b, true) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO None,
 define(__8 <-> count(b, true) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO None,
-define(__9 <-> or([mixed#int_direct_1,mixed#int_direct_3,mixed#int_direct_5,mixed#int_direct_7;int(1..)])) using tseitin,
-define(__10 <-> or([mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_6,mixed#int_direct_7;int(1..)])) using tseitin,
-define(__11 <-> or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3;int(1..)])) using tseitin,
-define(__12 <-> or([mixed#int_direct_1,mixed#int_direct_3,mixed#int_direct_5,mixed#int_direct_7;int(1..)])) using tseitin,
-define(__13 <-> or([mixed#int_direct_2,mixed#int_direct_3,mixed#int_direct_6,mixed#int_direct_7;int(1..)])) using tseitin,
-define(__14 <-> or([mixed#int_direct_1,mixed#int_direct_2,mixed#int_direct_3;int(1..)])) using tseitin,
-define(__15 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_5,x#int_direct_7;int(1..)])) using tseitin,
-define(__16 <-> or([x#int_direct_2,x#int_direct_3,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin,
-define(__17 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin,
+define(__9 <-> or([mixed#direct_1,mixed#direct_3,mixed#direct_5,mixed#direct_7;int(1..)])) using tseitin,
+define(__10 <-> or([mixed#direct_2,mixed#direct_3,mixed#direct_6,mixed#direct_7;int(1..)])) using tseitin,
+define(__11 <-> or([mixed#direct_1,mixed#direct_2,mixed#direct_3;int(1..)])) using tseitin,
+define(__12 <-> or([mixed#direct_1,mixed#direct_3,mixed#direct_5,mixed#direct_7;int(1..)])) using tseitin,
+define(__13 <-> or([mixed#direct_2,mixed#direct_3,mixed#direct_6,mixed#direct_7;int(1..)])) using tseitin,
+define(__14 <-> or([mixed#direct_1,mixed#direct_2,mixed#direct_3;int(1..)])) using tseitin,
+define(__15 <-> or([x#direct_1,x#direct_3,x#direct_5,x#direct_7;int(1..)])) using tseitin,
+define(__16 <-> or([x#direct_2,x#direct_3,x#direct_6,x#direct_7;int(1..)])) using tseitin,
+define(__17 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin,
 define(__18 <-> and([__15,b;int(1..)])) using tseitin,
 define(__19 <-> and([__15,false;int(1..)])) using tseitin,
 define(__20 <-> and([__15,false;int(1..)])) using tseitin,
@@ -6055,9 +6055,9 @@ define(__252 <-> and([__235,__207;int(1..)])) using tseitin,
 define(__253 <-> or([__251,__252;int(1..)])) using tseitin,
 define(__254 <-> integer-weighted(1*__9, 2*__10, -4*__11, -1*__238, -2*__241, 4*__244) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -3, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 3 } }],
 assert(__254) using tseitin,
-define(__255 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_5,x#int_direct_7;int(1..)])) using tseitin,
-define(__256 <-> or([x#int_direct_2,x#int_direct_3,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin,
-define(__257 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin,
+define(__255 <-> or([x#direct_1,x#direct_3,x#direct_5,x#direct_7;int(1..)])) using tseitin,
+define(__256 <-> or([x#direct_2,x#direct_3,x#direct_6,x#direct_7;int(1..)])) using tseitin,
+define(__257 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin,
 define(__258 <-> and([__255,__6;int(1..)])) using tseitin,
 define(__259 <-> and([__255,false;int(1..)])) using tseitin,
 define(__260 <-> and([__255,false;int(1..)])) using tseitin,
@@ -6296,9 +6296,9 @@ define(__492 <-> and([__475,__447;int(1..)])) using tseitin,
 define(__493 <-> or([__491,__492;int(1..)])) using tseitin,
 define(__494 <-> integer-weighted(1*__478, 2*__481, -4*__484, -1*__12, -2*__13, 4*__14) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -3, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: 3 } }],
 assert(__494) using tseitin,
-define(__495 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_5,x#int_direct_7;int(1..)])) using tseitin,
-define(__496 <-> or([x#int_direct_2,x#int_direct_3,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin,
-define(__497 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin,
+define(__495 <-> or([x#direct_1,x#direct_3,x#direct_5,x#direct_7;int(1..)])) using tseitin,
+define(__496 <-> or([x#direct_2,x#direct_3,x#direct_6,x#direct_7;int(1..)])) using tseitin,
+define(__497 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin,
 define(__498 <-> and([__495,b;int(1..)])) using tseitin,
 define(__499 <-> and([__495,false;int(1..)])) using tseitin,
 define(__500 <-> and([__495,false;int(1..)])) using tseitin,
@@ -6538,15 +6538,15 @@ define(__733 <-> or([__731,__732;int(1..)])) using tseitin,
 define(__734 <-> integer-weighted(1*__718, 2*__721, -4*__724) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -3, upper: 3 } }],
 define(__735 <-> (zero) <-> (__734)) using tseitin,
 assert(__735) using tseitin,
-define(__736 <-> or([quotient#int_direct_1,quotient#int_direct_3,quotient#int_direct_5,quotient#int_direct_7;int(1..)])) using tseitin,
-define(__737 <-> or([quotient#int_direct_2,quotient#int_direct_3,quotient#int_direct_6,quotient#int_direct_7;int(1..)])) using tseitin,
-define(__738 <-> or([quotient#int_direct_1,quotient#int_direct_2,quotient#int_direct_3;int(1..)])) using tseitin,
-define(__739 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_5,x#int_direct_7;int(1..)])) using tseitin,
-define(__740 <-> or([x#int_direct_2,x#int_direct_3,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin,
-define(__741 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin,
-define(__742 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_5,x#int_direct_7;int(1..)])) using tseitin,
-define(__743 <-> or([x#int_direct_2,x#int_direct_3,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin,
-define(__744 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin,
+define(__736 <-> or([quotient#direct_1,quotient#direct_3,quotient#direct_5,quotient#direct_7;int(1..)])) using tseitin,
+define(__737 <-> or([quotient#direct_2,quotient#direct_3,quotient#direct_6,quotient#direct_7;int(1..)])) using tseitin,
+define(__738 <-> or([quotient#direct_1,quotient#direct_2,quotient#direct_3;int(1..)])) using tseitin,
+define(__739 <-> or([x#direct_1,x#direct_3,x#direct_5,x#direct_7;int(1..)])) using tseitin,
+define(__740 <-> or([x#direct_2,x#direct_3,x#direct_6,x#direct_7;int(1..)])) using tseitin,
+define(__741 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin,
+define(__742 <-> or([x#direct_1,x#direct_3,x#direct_5,x#direct_7;int(1..)])) using tseitin,
+define(__743 <-> or([x#direct_2,x#direct_3,x#direct_6,x#direct_7;int(1..)])) using tseitin,
+define(__744 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin,
 define(__745 <-> !((b) <-> (true))) using tseitin,
 define(__746 <-> and([b,true;int(1..)])) using tseitin,
 define(__747 <-> !((false) <-> (false))) using tseitin,
@@ -7138,12 +7138,12 @@ define(__1331 <-> or([and([__1330,__1326;int(1..)]),and([!(__1330),false;int(1..
 define(__1332 <-> or([and([__1330,__1327;int(1..)]),and([!(__1330),false;int(1..)]);int(1..)])) using tseitin,
 define(__1333 <-> or([and([__1330,__1328;int(1..)]),and([!(__1330),false;int(1..)]);int(1..)])) using tseitin,
 define(__1334 <-> or([and([__1330,__1329;int(1..)]),and([!(__1330),false;int(1..)]);int(1..)])) using tseitin,
-define(__1335 <-> integer-weighted(1*remainder#int_direct_2, -2*false, -1*__1331, -2*__1332, -4*__1333, 8*__1334) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 6, structure: BoundedBinary { lower: -1, upper: 0 } }],
+define(__1335 <-> integer-weighted(1*remainder#direct_2, -2*false, -1*__1331, -2*__1332, -4*__1333, 8*__1334) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 6, structure: BoundedBinary { lower: -1, upper: 0 } }],
 define(__1336 <-> and([__1335,__8;int(1..)])) using tseitin,
 assert(__1336) using tseitin,
-define(__1337 <-> or([x#int_direct_1,x#int_direct_3,x#int_direct_5,x#int_direct_7;int(1..)])) using tseitin,
-define(__1338 <-> or([x#int_direct_2,x#int_direct_3,x#int_direct_6,x#int_direct_7;int(1..)])) using tseitin,
-define(__1339 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin,
+define(__1337 <-> or([x#direct_1,x#direct_3,x#direct_5,x#direct_7;int(1..)])) using tseitin,
+define(__1338 <-> or([x#direct_2,x#direct_3,x#direct_6,x#direct_7;int(1..)])) using tseitin,
+define(__1339 <-> or([x#direct_1,x#direct_2,x#direct_3;int(1..)])) using tseitin,
 define(__1340 <-> !(__1337)) using tseitin,
 define(__1341 <-> !(__1338)) using tseitin,
 define(__1342 <-> !(__1339)) using tseitin,

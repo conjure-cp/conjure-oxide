@@ -12,12 +12,12 @@ a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
 new variables:
-  find a#int_direct_1: bool
-  find a#int_direct_2: bool
-  find a#int_direct_3: bool
+  find a#direct_1: bool
+  find a#direct_2: bool
+  find a#direct_3: bool
 new constraints:
-  sum([toInt(a#int_direct_1),toInt(a#int_direct_2),toInt(a#int_direct_3);int(1..)]) <= 1
-  or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])
+  sum([toInt(a#direct_1),toInt(a#direct_2),toInt(a#direct_3);int(1..)]) <= 1
+  or([a#direct_1,a#direct_2,a#direct_3;int(1..)])
 
 --
 
@@ -27,28 +27,28 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(0*a#int_direct_1, 1*a#int_direct_2, 2*a#int_direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+  define(__0 <-> integer-weighted(0*a#direct_1, 1*a#direct_2, 2*a#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
 
 --
 
 __0,
-sum([toInt(a#int_direct_1),toInt(a#int_direct_2),toInt(a#int_direct_3);int(1..)]) <= 1,
-or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])
+sum([toInt(a#direct_1),toInt(a#direct_2),toInt(a#direct_3);int(1..)]) <= 1,
+or([a#direct_1,a#direct_2,a#direct_3;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 __0,
-or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])
+or([a#direct_1,a#direct_2,a#direct_3;int(1..)])
 new SAT encoding decisions:
-  at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3) using None
+  at-most-one(a#direct_1, a#direct_2, a#direct_3) using None
 
 --
 
-or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])
+or([a#direct_1,a#direct_2,a#direct_3;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])) using tseitin
+  define(__1 <-> or([a#direct_1,a#direct_2,a#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -72,9 +72,9 @@ new SAT encoding decisions:
 Final model:
 
 find a: int(0..2)
-find a#int_direct_1: bool
-find a#int_direct_2: bool
-find a#int_direct_3: bool
+find a#direct_1: bool
+find a#direct_2: bool
+find a#direct_3: bool
 findAux __0: bool
 findAux __1: bool
 
@@ -84,9 +84,9 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(0*a#int_direct_1, 1*a#int_direct_2, 2*a#int_direct_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
-at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
-define(__1 <-> or([a#int_direct_1,a#int_direct_2,a#int_direct_3;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(0*a#direct_1, 1*a#direct_2, 2*a#direct_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+at-most-one(a#direct_1, a#direct_2, a#direct_3) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+define(__1 <-> or([a#direct_1,a#direct_2,a#direct_3;int(1..)])) using tseitin,
 assert(__0) using tseitin,
 assert(__1) using tseitin
 

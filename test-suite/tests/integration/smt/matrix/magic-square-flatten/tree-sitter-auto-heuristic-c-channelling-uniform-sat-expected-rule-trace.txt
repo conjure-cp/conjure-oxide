@@ -20,34 +20,34 @@ s
    ~~> select_representation ([("ReprGeneral", 10000)])
 s
 new variables:
-  find s#int_offset_1: bool
-  find s#int_offset_2: bool
-  find s#int_offset_3: bool
-  find s#int_offset_4: bool
-  find s#int_offset_5: bool
+  find s#offset_1: bool
+  find s#offset_2: bool
+  find s#offset_3: bool
+  find s#offset_4: bool
+  find s#offset_5: bool
 new constraints:
-  or([!(s#int_offset_5),and([!(s#int_offset_4),or([!(s#int_offset_3),or([!(s#int_offset_2),or([!(s#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]) >= 1,SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]) <= 24;int(1..)]);int(1..)])
+  or([!(s#offset_5),and([!(s#offset_4),or([!(s#offset_3),or([!(s#offset_2),or([!(s#offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]) >= 1,SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]) <= 24;int(1..)]);int(1..)])
 
 --
 
-SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]) >= 1
+SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*s#int_offset_1, 2*s#int_offset_2, 4*s#int_offset_3, 8*s#int_offset_4, 16*s#int_offset_5) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 23 } }]
+  define(__0 <-> integer-weighted(1*s#offset_1, 2*s#offset_2, 4*s#offset_3, 8*s#offset_4, 16*s#offset_5) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 23 } }]
 
 --
 
-SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]) <= 24
+SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]) <= 24
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*s#int_offset_1, 2*s#int_offset_2, 4*s#int_offset_3, 8*s#int_offset_4, 16*s#int_offset_5) LessEqual 23) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 23 } }]
+  define(__1 <-> integer-weighted(1*s#offset_1, 2*s#offset_2, 4*s#offset_3, 8*s#offset_4, 16*s#offset_5) LessEqual 23) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 23 } }]
 
 --
 
@@ -78,7 +78,7 @@ and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
 sum([ square[d, d] | d : Index ]) = s,
 sum([ square[d, (4 - d)] | d : Index ]) = s,
-or([!(s#int_offset_5),and([!(s#int_offset_4);int(1..)]);int(1..)]),
+or([!(s#offset_5),and([!(s#offset_4);int(1..)]);int(1..)]),
 or([and([__0,__1;int(1..)]);int(1..)])
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 allDifferent(flatten(square)),
@@ -86,636 +86,636 @@ and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
 sum([ square[d, d] | d : Index ]) = s,
 sum([ square[d, (4 - d)] | d : Index ]) = s,
-or([!(s#int_offset_5),and([!(s#int_offset_4);int(1..)]);int(1..)]),
+or([!(s#offset_5),and([!(s#offset_4);int(1..)]);int(1..)]),
 or([and([__0,__1;int(1..)]);int(1..)])
 new variables:
-  find square#components_1#int_offset_1: bool
-  find square#components_1#int_offset_2: bool
-  find square#components_1#int_offset_3: bool
-  find square#components_1#int_offset_4: bool
-  find square#components_2#int_offset_1: bool
-  find square#components_2#int_offset_2: bool
-  find square#components_2#int_offset_3: bool
-  find square#components_2#int_offset_4: bool
-  find square#components_3#int_offset_1: bool
-  find square#components_3#int_offset_2: bool
-  find square#components_3#int_offset_3: bool
-  find square#components_3#int_offset_4: bool
-  find square#components_4#int_offset_1: bool
-  find square#components_4#int_offset_2: bool
-  find square#components_4#int_offset_3: bool
-  find square#components_4#int_offset_4: bool
-  find square#components_5#int_offset_1: bool
-  find square#components_5#int_offset_2: bool
-  find square#components_5#int_offset_3: bool
-  find square#components_5#int_offset_4: bool
-  find square#components_6#int_offset_1: bool
-  find square#components_6#int_offset_2: bool
-  find square#components_6#int_offset_3: bool
-  find square#components_6#int_offset_4: bool
-  find square#components_7#int_offset_1: bool
-  find square#components_7#int_offset_2: bool
-  find square#components_7#int_offset_3: bool
-  find square#components_7#int_offset_4: bool
-  find square#components_8#int_offset_1: bool
-  find square#components_8#int_offset_2: bool
-  find square#components_8#int_offset_3: bool
-  find square#components_8#int_offset_4: bool
-  find square#components_9#int_offset_1: bool
-  find square#components_9#int_offset_2: bool
-  find square#components_9#int_offset_3: bool
-  find square#components_9#int_offset_4: bool
+  find square#components_1#offset_1: bool
+  find square#components_1#offset_2: bool
+  find square#components_1#offset_3: bool
+  find square#components_1#offset_4: bool
+  find square#components_2#offset_1: bool
+  find square#components_2#offset_2: bool
+  find square#components_2#offset_3: bool
+  find square#components_2#offset_4: bool
+  find square#components_3#offset_1: bool
+  find square#components_3#offset_2: bool
+  find square#components_3#offset_3: bool
+  find square#components_3#offset_4: bool
+  find square#components_4#offset_1: bool
+  find square#components_4#offset_2: bool
+  find square#components_4#offset_3: bool
+  find square#components_4#offset_4: bool
+  find square#components_5#offset_1: bool
+  find square#components_5#offset_2: bool
+  find square#components_5#offset_3: bool
+  find square#components_5#offset_4: bool
+  find square#components_6#offset_1: bool
+  find square#components_6#offset_2: bool
+  find square#components_6#offset_3: bool
+  find square#components_6#offset_4: bool
+  find square#components_7#offset_1: bool
+  find square#components_7#offset_2: bool
+  find square#components_7#offset_3: bool
+  find square#components_7#offset_4: bool
+  find square#components_8#offset_1: bool
+  find square#components_8#offset_2: bool
+  find square#components_8#offset_3: bool
+  find square#components_8#offset_4: bool
+  find square#components_9#offset_1: bool
+  find square#components_9#offset_2: bool
+  find square#components_9#offset_3: bool
+  find square#components_9#offset_4: bool
 new constraints:
-  or([!(square#components_1#int_offset_4),and([!(square#components_1#int_offset_3),and([!(square#components_1#int_offset_2),and([!(square#components_1#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [square#components_1#int_offset_1,square#components_1#int_offset_2,square#components_1#int_offset_3,square#components_1#int_offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_1#int_offset_1,square#components_1#int_offset_2,square#components_1#int_offset_3,square#components_1#int_offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
-  or([!(square#components_2#int_offset_4),and([!(square#components_2#int_offset_3),and([!(square#components_2#int_offset_2),and([!(square#components_2#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [square#components_2#int_offset_1,square#components_2#int_offset_2,square#components_2#int_offset_3,square#components_2#int_offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_2#int_offset_1,square#components_2#int_offset_2,square#components_2#int_offset_3,square#components_2#int_offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
-  or([!(square#components_3#int_offset_4),and([!(square#components_3#int_offset_3),and([!(square#components_3#int_offset_2),and([!(square#components_3#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [square#components_3#int_offset_1,square#components_3#int_offset_2,square#components_3#int_offset_3,square#components_3#int_offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_3#int_offset_1,square#components_3#int_offset_2,square#components_3#int_offset_3,square#components_3#int_offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
-  or([!(square#components_4#int_offset_4),and([!(square#components_4#int_offset_3),and([!(square#components_4#int_offset_2),and([!(square#components_4#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [square#components_4#int_offset_1,square#components_4#int_offset_2,square#components_4#int_offset_3,square#components_4#int_offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_4#int_offset_1,square#components_4#int_offset_2,square#components_4#int_offset_3,square#components_4#int_offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
-  or([!(square#components_5#int_offset_4),and([!(square#components_5#int_offset_3),and([!(square#components_5#int_offset_2),and([!(square#components_5#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [square#components_5#int_offset_1,square#components_5#int_offset_2,square#components_5#int_offset_3,square#components_5#int_offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_5#int_offset_1,square#components_5#int_offset_2,square#components_5#int_offset_3,square#components_5#int_offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
-  or([!(square#components_6#int_offset_4),and([!(square#components_6#int_offset_3),and([!(square#components_6#int_offset_2),and([!(square#components_6#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [square#components_6#int_offset_1,square#components_6#int_offset_2,square#components_6#int_offset_3,square#components_6#int_offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_6#int_offset_1,square#components_6#int_offset_2,square#components_6#int_offset_3,square#components_6#int_offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
-  or([!(square#components_7#int_offset_4),and([!(square#components_7#int_offset_3),and([!(square#components_7#int_offset_2),and([!(square#components_7#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [square#components_7#int_offset_1,square#components_7#int_offset_2,square#components_7#int_offset_3,square#components_7#int_offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_7#int_offset_1,square#components_7#int_offset_2,square#components_7#int_offset_3,square#components_7#int_offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
-  or([!(square#components_8#int_offset_4),and([!(square#components_8#int_offset_3),and([!(square#components_8#int_offset_2),and([!(square#components_8#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [square#components_8#int_offset_1,square#components_8#int_offset_2,square#components_8#int_offset_3,square#components_8#int_offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_8#int_offset_1,square#components_8#int_offset_2,square#components_8#int_offset_3,square#components_8#int_offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
-  or([!(square#components_9#int_offset_4),and([!(square#components_9#int_offset_3),and([!(square#components_9#int_offset_2),and([!(square#components_9#int_offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [square#components_9#int_offset_1,square#components_9#int_offset_2,square#components_9#int_offset_3,square#components_9#int_offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_9#int_offset_1,square#components_9#int_offset_2,square#components_9#int_offset_3,square#components_9#int_offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(square#components_1#offset_4),and([!(square#components_1#offset_3),and([!(square#components_1#offset_2),and([!(square#components_1#offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [square#components_1#offset_1,square#components_1#offset_2,square#components_1#offset_3,square#components_1#offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_1#offset_1,square#components_1#offset_2,square#components_1#offset_3,square#components_1#offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(square#components_2#offset_4),and([!(square#components_2#offset_3),and([!(square#components_2#offset_2),and([!(square#components_2#offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [square#components_2#offset_1,square#components_2#offset_2,square#components_2#offset_3,square#components_2#offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_2#offset_1,square#components_2#offset_2,square#components_2#offset_3,square#components_2#offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(square#components_3#offset_4),and([!(square#components_3#offset_3),and([!(square#components_3#offset_2),and([!(square#components_3#offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [square#components_3#offset_1,square#components_3#offset_2,square#components_3#offset_3,square#components_3#offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_3#offset_1,square#components_3#offset_2,square#components_3#offset_3,square#components_3#offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(square#components_4#offset_4),and([!(square#components_4#offset_3),and([!(square#components_4#offset_2),and([!(square#components_4#offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [square#components_4#offset_1,square#components_4#offset_2,square#components_4#offset_3,square#components_4#offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_4#offset_1,square#components_4#offset_2,square#components_4#offset_3,square#components_4#offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(square#components_5#offset_4),and([!(square#components_5#offset_3),and([!(square#components_5#offset_2),and([!(square#components_5#offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [square#components_5#offset_1,square#components_5#offset_2,square#components_5#offset_3,square#components_5#offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_5#offset_1,square#components_5#offset_2,square#components_5#offset_3,square#components_5#offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(square#components_6#offset_4),and([!(square#components_6#offset_3),and([!(square#components_6#offset_2),and([!(square#components_6#offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [square#components_6#offset_1,square#components_6#offset_2,square#components_6#offset_3,square#components_6#offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_6#offset_1,square#components_6#offset_2,square#components_6#offset_3,square#components_6#offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(square#components_7#offset_4),and([!(square#components_7#offset_3),and([!(square#components_7#offset_2),and([!(square#components_7#offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [square#components_7#offset_1,square#components_7#offset_2,square#components_7#offset_3,square#components_7#offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_7#offset_1,square#components_7#offset_2,square#components_7#offset_3,square#components_7#offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(square#components_8#offset_4),and([!(square#components_8#offset_3),and([!(square#components_8#offset_2),and([!(square#components_8#offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [square#components_8#offset_1,square#components_8#offset_2,square#components_8#offset_3,square#components_8#offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_8#offset_1,square#components_8#offset_2,square#components_8#offset_3,square#components_8#offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
+  or([!(square#components_9#offset_4),and([!(square#components_9#offset_3),and([!(square#components_9#offset_2),and([!(square#components_9#offset_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [square#components_9#offset_1,square#components_9#offset_2,square#components_9#offset_3,square#components_9#offset_4;int(1..)] [1, 9]) >= 1,SATInt(Offset, [square#components_9#offset_1,square#components_9#offset_2,square#components_9#offset_3,square#components_9#offset_4;int(1..)] [1, 9]) <= 9;int(1..)]);int(1..)])
 
 --
 
-SATInt(Offset, [square#components_1#int_offset_1,square#components_1#int_offset_2,square#components_1#int_offset_3,square#components_1#int_offset_4;int(1..)] [1, 9]) >= 1
+SATInt(Offset, [square#components_1#offset_1,square#components_1#offset_2,square#components_1#offset_3,square#components_1#offset_4;int(1..)] [1, 9]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*square#components_1#int_offset_1, 2*square#components_1#int_offset_2, 4*square#components_1#int_offset_3, 8*square#components_1#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__2 <-> integer-weighted(1*square#components_1#offset_1, 2*square#components_1#offset_2, 4*square#components_1#offset_3, 8*square#components_1#offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_1#int_offset_1,square#components_1#int_offset_2,square#components_1#int_offset_3,square#components_1#int_offset_4;int(1..)] [1, 9]) <= 9
+SATInt(Offset, [square#components_1#offset_1,square#components_1#offset_2,square#components_1#offset_3,square#components_1#offset_4;int(1..)] [1, 9]) <= 9
    ~~> select_integer_relation ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*square#components_1#int_offset_1, 2*square#components_1#int_offset_2, 4*square#components_1#int_offset_3, 8*square#components_1#int_offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__3 <-> integer-weighted(1*square#components_1#offset_1, 2*square#components_1#offset_2, 4*square#components_1#offset_3, 8*square#components_1#offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_2#int_offset_1,square#components_2#int_offset_2,square#components_2#int_offset_3,square#components_2#int_offset_4;int(1..)] [1, 9]) >= 1
+SATInt(Offset, [square#components_2#offset_1,square#components_2#offset_2,square#components_2#offset_3,square#components_2#offset_4;int(1..)] [1, 9]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(1*square#components_2#int_offset_1, 2*square#components_2#int_offset_2, 4*square#components_2#int_offset_3, 8*square#components_2#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__4 <-> integer-weighted(1*square#components_2#offset_1, 2*square#components_2#offset_2, 4*square#components_2#offset_3, 8*square#components_2#offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_2#int_offset_1,square#components_2#int_offset_2,square#components_2#int_offset_3,square#components_2#int_offset_4;int(1..)] [1, 9]) <= 9
+SATInt(Offset, [square#components_2#offset_1,square#components_2#offset_2,square#components_2#offset_3,square#components_2#offset_4;int(1..)] [1, 9]) <= 9
    ~~> select_integer_relation ([("SAT", 18500)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> integer-weighted(1*square#components_2#int_offset_1, 2*square#components_2#int_offset_2, 4*square#components_2#int_offset_3, 8*square#components_2#int_offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__5 <-> integer-weighted(1*square#components_2#offset_1, 2*square#components_2#offset_2, 4*square#components_2#offset_3, 8*square#components_2#offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_3#int_offset_1,square#components_3#int_offset_2,square#components_3#int_offset_3,square#components_3#int_offset_4;int(1..)] [1, 9]) >= 1
+SATInt(Offset, [square#components_3#offset_1,square#components_3#offset_2,square#components_3#offset_3,square#components_3#offset_4;int(1..)] [1, 9]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __6
 new variables:
   findAux __6: bool
 new SAT encoding decisions:
-  define(__6 <-> integer-weighted(1*square#components_3#int_offset_1, 2*square#components_3#int_offset_2, 4*square#components_3#int_offset_3, 8*square#components_3#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__6 <-> integer-weighted(1*square#components_3#offset_1, 2*square#components_3#offset_2, 4*square#components_3#offset_3, 8*square#components_3#offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_3#int_offset_1,square#components_3#int_offset_2,square#components_3#int_offset_3,square#components_3#int_offset_4;int(1..)] [1, 9]) <= 9
+SATInt(Offset, [square#components_3#offset_1,square#components_3#offset_2,square#components_3#offset_3,square#components_3#offset_4;int(1..)] [1, 9]) <= 9
    ~~> select_integer_relation ([("SAT", 18500)])
 __7
 new variables:
   findAux __7: bool
 new SAT encoding decisions:
-  define(__7 <-> integer-weighted(1*square#components_3#int_offset_1, 2*square#components_3#int_offset_2, 4*square#components_3#int_offset_3, 8*square#components_3#int_offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__7 <-> integer-weighted(1*square#components_3#offset_1, 2*square#components_3#offset_2, 4*square#components_3#offset_3, 8*square#components_3#offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_4#int_offset_1,square#components_4#int_offset_2,square#components_4#int_offset_3,square#components_4#int_offset_4;int(1..)] [1, 9]) >= 1
+SATInt(Offset, [square#components_4#offset_1,square#components_4#offset_2,square#components_4#offset_3,square#components_4#offset_4;int(1..)] [1, 9]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __8
 new variables:
   findAux __8: bool
 new SAT encoding decisions:
-  define(__8 <-> integer-weighted(1*square#components_4#int_offset_1, 2*square#components_4#int_offset_2, 4*square#components_4#int_offset_3, 8*square#components_4#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__8 <-> integer-weighted(1*square#components_4#offset_1, 2*square#components_4#offset_2, 4*square#components_4#offset_3, 8*square#components_4#offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_4#int_offset_1,square#components_4#int_offset_2,square#components_4#int_offset_3,square#components_4#int_offset_4;int(1..)] [1, 9]) <= 9
+SATInt(Offset, [square#components_4#offset_1,square#components_4#offset_2,square#components_4#offset_3,square#components_4#offset_4;int(1..)] [1, 9]) <= 9
    ~~> select_integer_relation ([("SAT", 18500)])
 __9
 new variables:
   findAux __9: bool
 new SAT encoding decisions:
-  define(__9 <-> integer-weighted(1*square#components_4#int_offset_1, 2*square#components_4#int_offset_2, 4*square#components_4#int_offset_3, 8*square#components_4#int_offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__9 <-> integer-weighted(1*square#components_4#offset_1, 2*square#components_4#offset_2, 4*square#components_4#offset_3, 8*square#components_4#offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_5#int_offset_1,square#components_5#int_offset_2,square#components_5#int_offset_3,square#components_5#int_offset_4;int(1..)] [1, 9]) >= 1
+SATInt(Offset, [square#components_5#offset_1,square#components_5#offset_2,square#components_5#offset_3,square#components_5#offset_4;int(1..)] [1, 9]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __10
 new variables:
   findAux __10: bool
 new SAT encoding decisions:
-  define(__10 <-> integer-weighted(1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__10 <-> integer-weighted(1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_5#int_offset_1,square#components_5#int_offset_2,square#components_5#int_offset_3,square#components_5#int_offset_4;int(1..)] [1, 9]) <= 9
+SATInt(Offset, [square#components_5#offset_1,square#components_5#offset_2,square#components_5#offset_3,square#components_5#offset_4;int(1..)] [1, 9]) <= 9
    ~~> select_integer_relation ([("SAT", 18500)])
 __11
 new variables:
   findAux __11: bool
 new SAT encoding decisions:
-  define(__11 <-> integer-weighted(1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__11 <-> integer-weighted(1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_6#int_offset_1,square#components_6#int_offset_2,square#components_6#int_offset_3,square#components_6#int_offset_4;int(1..)] [1, 9]) >= 1
+SATInt(Offset, [square#components_6#offset_1,square#components_6#offset_2,square#components_6#offset_3,square#components_6#offset_4;int(1..)] [1, 9]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __12
 new variables:
   findAux __12: bool
 new SAT encoding decisions:
-  define(__12 <-> integer-weighted(1*square#components_6#int_offset_1, 2*square#components_6#int_offset_2, 4*square#components_6#int_offset_3, 8*square#components_6#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__12 <-> integer-weighted(1*square#components_6#offset_1, 2*square#components_6#offset_2, 4*square#components_6#offset_3, 8*square#components_6#offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_6#int_offset_1,square#components_6#int_offset_2,square#components_6#int_offset_3,square#components_6#int_offset_4;int(1..)] [1, 9]) <= 9
+SATInt(Offset, [square#components_6#offset_1,square#components_6#offset_2,square#components_6#offset_3,square#components_6#offset_4;int(1..)] [1, 9]) <= 9
    ~~> select_integer_relation ([("SAT", 18500)])
 __13
 new variables:
   findAux __13: bool
 new SAT encoding decisions:
-  define(__13 <-> integer-weighted(1*square#components_6#int_offset_1, 2*square#components_6#int_offset_2, 4*square#components_6#int_offset_3, 8*square#components_6#int_offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__13 <-> integer-weighted(1*square#components_6#offset_1, 2*square#components_6#offset_2, 4*square#components_6#offset_3, 8*square#components_6#offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_7#int_offset_1,square#components_7#int_offset_2,square#components_7#int_offset_3,square#components_7#int_offset_4;int(1..)] [1, 9]) >= 1
+SATInt(Offset, [square#components_7#offset_1,square#components_7#offset_2,square#components_7#offset_3,square#components_7#offset_4;int(1..)] [1, 9]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __14
 new variables:
   findAux __14: bool
 new SAT encoding decisions:
-  define(__14 <-> integer-weighted(1*square#components_7#int_offset_1, 2*square#components_7#int_offset_2, 4*square#components_7#int_offset_3, 8*square#components_7#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__14 <-> integer-weighted(1*square#components_7#offset_1, 2*square#components_7#offset_2, 4*square#components_7#offset_3, 8*square#components_7#offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_7#int_offset_1,square#components_7#int_offset_2,square#components_7#int_offset_3,square#components_7#int_offset_4;int(1..)] [1, 9]) <= 9
+SATInt(Offset, [square#components_7#offset_1,square#components_7#offset_2,square#components_7#offset_3,square#components_7#offset_4;int(1..)] [1, 9]) <= 9
    ~~> select_integer_relation ([("SAT", 18500)])
 __15
 new variables:
   findAux __15: bool
 new SAT encoding decisions:
-  define(__15 <-> integer-weighted(1*square#components_7#int_offset_1, 2*square#components_7#int_offset_2, 4*square#components_7#int_offset_3, 8*square#components_7#int_offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__15 <-> integer-weighted(1*square#components_7#offset_1, 2*square#components_7#offset_2, 4*square#components_7#offset_3, 8*square#components_7#offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_8#int_offset_1,square#components_8#int_offset_2,square#components_8#int_offset_3,square#components_8#int_offset_4;int(1..)] [1, 9]) >= 1
+SATInt(Offset, [square#components_8#offset_1,square#components_8#offset_2,square#components_8#offset_3,square#components_8#offset_4;int(1..)] [1, 9]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __16
 new variables:
   findAux __16: bool
 new SAT encoding decisions:
-  define(__16 <-> integer-weighted(1*square#components_8#int_offset_1, 2*square#components_8#int_offset_2, 4*square#components_8#int_offset_3, 8*square#components_8#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__16 <-> integer-weighted(1*square#components_8#offset_1, 2*square#components_8#offset_2, 4*square#components_8#offset_3, 8*square#components_8#offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_8#int_offset_1,square#components_8#int_offset_2,square#components_8#int_offset_3,square#components_8#int_offset_4;int(1..)] [1, 9]) <= 9
+SATInt(Offset, [square#components_8#offset_1,square#components_8#offset_2,square#components_8#offset_3,square#components_8#offset_4;int(1..)] [1, 9]) <= 9
    ~~> select_integer_relation ([("SAT", 18500)])
 __17
 new variables:
   findAux __17: bool
 new SAT encoding decisions:
-  define(__17 <-> integer-weighted(1*square#components_8#int_offset_1, 2*square#components_8#int_offset_2, 4*square#components_8#int_offset_3, 8*square#components_8#int_offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__17 <-> integer-weighted(1*square#components_8#offset_1, 2*square#components_8#offset_2, 4*square#components_8#offset_3, 8*square#components_8#offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_9#int_offset_1,square#components_9#int_offset_2,square#components_9#int_offset_3,square#components_9#int_offset_4;int(1..)] [1, 9]) >= 1
+SATInt(Offset, [square#components_9#offset_1,square#components_9#offset_2,square#components_9#offset_3,square#components_9#offset_4;int(1..)] [1, 9]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __18
 new variables:
   findAux __18: bool
 new SAT encoding decisions:
-  define(__18 <-> integer-weighted(1*square#components_9#int_offset_1, 2*square#components_9#int_offset_2, 4*square#components_9#int_offset_3, 8*square#components_9#int_offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__18 <-> integer-weighted(1*square#components_9#offset_1, 2*square#components_9#offset_2, 4*square#components_9#offset_3, 8*square#components_9#offset_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
-SATInt(Offset, [square#components_9#int_offset_1,square#components_9#int_offset_2,square#components_9#int_offset_3,square#components_9#int_offset_4;int(1..)] [1, 9]) <= 9
+SATInt(Offset, [square#components_9#offset_1,square#components_9#offset_2,square#components_9#offset_3,square#components_9#offset_4;int(1..)] [1, 9]) <= 9
    ~~> select_integer_relation ([("SAT", 18500)])
 __19
 new variables:
   findAux __19: bool
 new SAT encoding decisions:
-  define(__19 <-> integer-weighted(1*square#components_9#int_offset_1, 2*square#components_9#int_offset_2, 4*square#components_9#int_offset_3, 8*square#components_9#int_offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
+  define(__19 <-> integer-weighted(1*square#components_9#offset_1, 2*square#components_9#offset_2, 4*square#components_9#offset_3, 8*square#components_9#offset_4) LessEqual 8) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }]
 
 --
 
 s
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24])
+SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24])
 
 --
 
 s
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24])
+SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24])
 
 --
 
-!(square#components_2#int_offset_4)
+!(square#components_2#offset_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __20
 new variables:
   findAux __20: bool
 new SAT encoding decisions:
-  define(__20 <-> !(square#components_2#int_offset_4)) using tseitin
+  define(__20 <-> !(square#components_2#offset_4)) using tseitin
 
 --
 
-!(square#components_3#int_offset_4)
+!(square#components_3#offset_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __21
 new variables:
   findAux __21: bool
 new SAT encoding decisions:
-  define(__21 <-> !(square#components_3#int_offset_4)) using tseitin
+  define(__21 <-> !(square#components_3#offset_4)) using tseitin
 
 --
 
-!(square#components_4#int_offset_4)
+!(square#components_4#offset_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __22
 new variables:
   findAux __22: bool
 new SAT encoding decisions:
-  define(__22 <-> !(square#components_4#int_offset_4)) using tseitin
+  define(__22 <-> !(square#components_4#offset_4)) using tseitin
 
 --
 
-!(square#components_5#int_offset_4)
+!(square#components_5#offset_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __23
 new variables:
   findAux __23: bool
 new SAT encoding decisions:
-  define(__23 <-> !(square#components_5#int_offset_4)) using tseitin
+  define(__23 <-> !(square#components_5#offset_4)) using tseitin
 
 --
 
-!(square#components_6#int_offset_4)
+!(square#components_6#offset_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __24
 new variables:
   findAux __24: bool
 new SAT encoding decisions:
-  define(__24 <-> !(square#components_6#int_offset_4)) using tseitin
+  define(__24 <-> !(square#components_6#offset_4)) using tseitin
 
 --
 
-!(square#components_7#int_offset_4)
+!(square#components_7#offset_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __25
 new variables:
   findAux __25: bool
 new SAT encoding decisions:
-  define(__25 <-> !(square#components_7#int_offset_4)) using tseitin
+  define(__25 <-> !(square#components_7#offset_4)) using tseitin
 
 --
 
-!(square#components_8#int_offset_4)
+!(square#components_8#offset_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __26
 new variables:
   findAux __26: bool
 new SAT encoding decisions:
-  define(__26 <-> !(square#components_8#int_offset_4)) using tseitin
+  define(__26 <-> !(square#components_8#offset_4)) using tseitin
 
 --
 
-!(square#components_9#int_offset_4)
+!(square#components_9#offset_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __27
 new variables:
   findAux __27: bool
 new SAT encoding decisions:
-  define(__27 <-> !(square#components_9#int_offset_4)) using tseitin
+  define(__27 <-> !(square#components_9#offset_4)) using tseitin
 
 --
 
-!(square#components_1#int_offset_4)
+!(square#components_1#offset_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __28
 new variables:
   findAux __28: bool
 new SAT encoding decisions:
-  define(__28 <-> !(square#components_1#int_offset_4)) using tseitin
+  define(__28 <-> !(square#components_1#offset_4)) using tseitin
 
 --
 
-!(s#int_offset_5)
+!(s#offset_5)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __29
 new variables:
   findAux __29: bool
 new SAT encoding decisions:
-  define(__29 <-> !(s#int_offset_5)) using tseitin
+  define(__29 <-> !(s#offset_5)) using tseitin
 
 --
 
-!(square#components_2#int_offset_3)
+!(square#components_2#offset_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __30
 new variables:
   findAux __30: bool
 new SAT encoding decisions:
-  define(__30 <-> !(square#components_2#int_offset_3)) using tseitin
+  define(__30 <-> !(square#components_2#offset_3)) using tseitin
 
 --
 
-!(square#components_3#int_offset_3)
+!(square#components_3#offset_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __31
 new variables:
   findAux __31: bool
 new SAT encoding decisions:
-  define(__31 <-> !(square#components_3#int_offset_3)) using tseitin
+  define(__31 <-> !(square#components_3#offset_3)) using tseitin
 
 --
 
-!(square#components_4#int_offset_3)
+!(square#components_4#offset_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __32
 new variables:
   findAux __32: bool
 new SAT encoding decisions:
-  define(__32 <-> !(square#components_4#int_offset_3)) using tseitin
+  define(__32 <-> !(square#components_4#offset_3)) using tseitin
 
 --
 
-!(square#components_5#int_offset_3)
+!(square#components_5#offset_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __33
 new variables:
   findAux __33: bool
 new SAT encoding decisions:
-  define(__33 <-> !(square#components_5#int_offset_3)) using tseitin
+  define(__33 <-> !(square#components_5#offset_3)) using tseitin
 
 --
 
-!(square#components_6#int_offset_3)
+!(square#components_6#offset_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __34
 new variables:
   findAux __34: bool
 new SAT encoding decisions:
-  define(__34 <-> !(square#components_6#int_offset_3)) using tseitin
+  define(__34 <-> !(square#components_6#offset_3)) using tseitin
 
 --
 
-!(square#components_7#int_offset_3)
+!(square#components_7#offset_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __35
 new variables:
   findAux __35: bool
 new SAT encoding decisions:
-  define(__35 <-> !(square#components_7#int_offset_3)) using tseitin
+  define(__35 <-> !(square#components_7#offset_3)) using tseitin
 
 --
 
-!(square#components_8#int_offset_3)
+!(square#components_8#offset_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __36
 new variables:
   findAux __36: bool
 new SAT encoding decisions:
-  define(__36 <-> !(square#components_8#int_offset_3)) using tseitin
+  define(__36 <-> !(square#components_8#offset_3)) using tseitin
 
 --
 
-!(square#components_9#int_offset_3)
+!(square#components_9#offset_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __37
 new variables:
   findAux __37: bool
 new SAT encoding decisions:
-  define(__37 <-> !(square#components_9#int_offset_3)) using tseitin
+  define(__37 <-> !(square#components_9#offset_3)) using tseitin
 
 --
 
-!(square#components_1#int_offset_3)
+!(square#components_1#offset_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __38
 new variables:
   findAux __38: bool
 new SAT encoding decisions:
-  define(__38 <-> !(square#components_1#int_offset_3)) using tseitin
+  define(__38 <-> !(square#components_1#offset_3)) using tseitin
 
 --
 
-!(s#int_offset_4)
+!(s#offset_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __39
 new variables:
   findAux __39: bool
 new SAT encoding decisions:
-  define(__39 <-> !(s#int_offset_4)) using tseitin
+  define(__39 <-> !(s#offset_4)) using tseitin
 
 --
 
-!(square#components_2#int_offset_2)
+!(square#components_2#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __40
 new variables:
   findAux __40: bool
 new SAT encoding decisions:
-  define(__40 <-> !(square#components_2#int_offset_2)) using tseitin
+  define(__40 <-> !(square#components_2#offset_2)) using tseitin
 
 --
 
-!(square#components_3#int_offset_2)
+!(square#components_3#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __41
 new variables:
   findAux __41: bool
 new SAT encoding decisions:
-  define(__41 <-> !(square#components_3#int_offset_2)) using tseitin
+  define(__41 <-> !(square#components_3#offset_2)) using tseitin
 
 --
 
-!(square#components_4#int_offset_2)
+!(square#components_4#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __42
 new variables:
   findAux __42: bool
 new SAT encoding decisions:
-  define(__42 <-> !(square#components_4#int_offset_2)) using tseitin
+  define(__42 <-> !(square#components_4#offset_2)) using tseitin
 
 --
 
-!(square#components_5#int_offset_2)
+!(square#components_5#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __43
 new variables:
   findAux __43: bool
 new SAT encoding decisions:
-  define(__43 <-> !(square#components_5#int_offset_2)) using tseitin
+  define(__43 <-> !(square#components_5#offset_2)) using tseitin
 
 --
 
-!(square#components_6#int_offset_2)
+!(square#components_6#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __44
 new variables:
   findAux __44: bool
 new SAT encoding decisions:
-  define(__44 <-> !(square#components_6#int_offset_2)) using tseitin
+  define(__44 <-> !(square#components_6#offset_2)) using tseitin
 
 --
 
-!(square#components_7#int_offset_2)
+!(square#components_7#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __45
 new variables:
   findAux __45: bool
 new SAT encoding decisions:
-  define(__45 <-> !(square#components_7#int_offset_2)) using tseitin
+  define(__45 <-> !(square#components_7#offset_2)) using tseitin
 
 --
 
-!(square#components_8#int_offset_2)
+!(square#components_8#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __46
 new variables:
   findAux __46: bool
 new SAT encoding decisions:
-  define(__46 <-> !(square#components_8#int_offset_2)) using tseitin
+  define(__46 <-> !(square#components_8#offset_2)) using tseitin
 
 --
 
-!(square#components_9#int_offset_2)
+!(square#components_9#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __47
 new variables:
   findAux __47: bool
 new SAT encoding decisions:
-  define(__47 <-> !(square#components_9#int_offset_2)) using tseitin
+  define(__47 <-> !(square#components_9#offset_2)) using tseitin
 
 --
 
-!(square#components_1#int_offset_2)
+!(square#components_1#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __48
 new variables:
   findAux __48: bool
 new SAT encoding decisions:
-  define(__48 <-> !(square#components_1#int_offset_2)) using tseitin
+  define(__48 <-> !(square#components_1#offset_2)) using tseitin
 
 --
 
-!(square#components_2#int_offset_1)
+!(square#components_2#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __49
 new variables:
   findAux __49: bool
 new SAT encoding decisions:
-  define(__49 <-> !(square#components_2#int_offset_1)) using tseitin
+  define(__49 <-> !(square#components_2#offset_1)) using tseitin
 
 --
 
-!(square#components_3#int_offset_1)
+!(square#components_3#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __50
 new variables:
   findAux __50: bool
 new SAT encoding decisions:
-  define(__50 <-> !(square#components_3#int_offset_1)) using tseitin
+  define(__50 <-> !(square#components_3#offset_1)) using tseitin
 
 --
 
-!(square#components_4#int_offset_1)
+!(square#components_4#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __51
 new variables:
   findAux __51: bool
 new SAT encoding decisions:
-  define(__51 <-> !(square#components_4#int_offset_1)) using tseitin
+  define(__51 <-> !(square#components_4#offset_1)) using tseitin
 
 --
 
-!(square#components_5#int_offset_1)
+!(square#components_5#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __52
 new variables:
   findAux __52: bool
 new SAT encoding decisions:
-  define(__52 <-> !(square#components_5#int_offset_1)) using tseitin
+  define(__52 <-> !(square#components_5#offset_1)) using tseitin
 
 --
 
-!(square#components_6#int_offset_1)
+!(square#components_6#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __53
 new variables:
   findAux __53: bool
 new SAT encoding decisions:
-  define(__53 <-> !(square#components_6#int_offset_1)) using tseitin
+  define(__53 <-> !(square#components_6#offset_1)) using tseitin
 
 --
 
-!(square#components_7#int_offset_1)
+!(square#components_7#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __54
 new variables:
   findAux __54: bool
 new SAT encoding decisions:
-  define(__54 <-> !(square#components_7#int_offset_1)) using tseitin
+  define(__54 <-> !(square#components_7#offset_1)) using tseitin
 
 --
 
-!(square#components_8#int_offset_1)
+!(square#components_8#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __55
 new variables:
   findAux __55: bool
 new SAT encoding decisions:
-  define(__55 <-> !(square#components_8#int_offset_1)) using tseitin
+  define(__55 <-> !(square#components_8#offset_1)) using tseitin
 
 --
 
-!(square#components_9#int_offset_1)
+!(square#components_9#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __56
 new variables:
   findAux __56: bool
 new SAT encoding decisions:
-  define(__56 <-> !(square#components_9#int_offset_1)) using tseitin
+  define(__56 <-> !(square#components_9#offset_1)) using tseitin
 
 --
 
-!(square#components_1#int_offset_1)
+!(square#components_1#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __57
 new variables:
   findAux __57: bool
 new SAT encoding decisions:
-  define(__57 <-> !(square#components_1#int_offset_1)) using tseitin
+  define(__57 <-> !(square#components_1#offset_1)) using tseitin
 
 --
 
@@ -1132,8 +1132,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __68,
 __66,
 __86,
@@ -1158,8 +1158,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __66,
 __86,
 __64,
@@ -1187,8 +1187,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __66,
 __86,
 __64,
@@ -1212,8 +1212,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __86,
 __64,
 __70,
@@ -1240,8 +1240,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __86,
 __64,
 __70,
@@ -1264,8 +1264,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __64,
 __70,
 __65,
@@ -1291,8 +1291,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __64,
 __70,
 __65,
@@ -1314,8 +1314,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __70,
 __65,
 __72,
@@ -1340,8 +1340,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __70,
 __65,
 __72,
@@ -1362,8 +1362,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __65,
 __72,
 __67,
@@ -1387,8 +1387,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __65,
 __72,
 __67,
@@ -1408,8 +1408,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __72,
 __67,
 __74,
@@ -1432,8 +1432,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __72,
 __67,
 __74,
@@ -1452,8 +1452,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __67,
 __74,
 __58,
@@ -1475,8 +1475,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __67,
 __74,
 __58,
@@ -1494,8 +1494,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __74,
 __58,
 __76,
@@ -1516,8 +1516,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __74,
 __58,
 __76,
@@ -1534,8 +1534,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __58,
 __76,
 __59,
@@ -1555,8 +1555,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __58,
 __76,
 __59,
@@ -1572,8 +1572,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __76,
 __59,
 __78,
@@ -1592,8 +1592,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __76,
 __59,
 __78,
@@ -1608,8 +1608,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __59,
 __78,
 __60,
@@ -1627,8 +1627,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __59,
 __78,
 __60,
@@ -1642,8 +1642,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __78,
 __60,
 __80,
@@ -1660,8 +1660,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __78,
 __60,
 __80,
@@ -1674,8 +1674,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __60,
 __80,
 __61,
@@ -1691,8 +1691,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __60,
 __80,
 __61,
@@ -1704,8 +1704,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __80,
 __61,
 __82,
@@ -1720,8 +1720,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __80,
 __61,
 __82,
@@ -1732,8 +1732,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __61,
 __82,
 __62,
@@ -1747,8 +1747,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __61,
 __82,
 __62,
@@ -1758,8 +1758,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __82,
 __62,
 __84,
@@ -1772,8 +1772,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __82,
 __62,
 __84,
@@ -1782,8 +1782,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __62,
 __84,
 __63
@@ -1795,8 +1795,8 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __62,
 __84,
 __63
@@ -1804,8 +1804,8 @@ __63
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __84,
 __63
 new SAT encoding decisions:
@@ -1816,16 +1816,16 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __84,
 __63
    ~~> remove_single_atom ([("SAT", 8400)])
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __63
 new SAT encoding decisions:
   assert(__84) using tseitin
@@ -1835,15 +1835,15 @@ new SAT encoding decisions:
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
 __63
    ~~> remove_single_atom ([("SAT", 8400)])
 allDifferent(flatten(square)),
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24])
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24])
 new SAT encoding decisions:
   assert(__63) using tseitin
 
@@ -1915,26 +1915,26 @@ __87
 new variables:
   findAux __87: bool
 new SAT encoding decisions:
-  define(__87 <-> allDifferent(1+weighted(1*square#components_1#int_offset_1, 2*square#components_1#int_offset_2, 4*square#components_1#int_offset_3, 8*square#components_1#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_2#int_offset_1, 2*square#components_2#int_offset_2, 4*square#components_2#int_offset_3, 8*square#components_2#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_3#int_offset_1, 2*square#components_3#int_offset_2, 4*square#components_3#int_offset_3, 8*square#components_3#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_4#int_offset_1, 2*square#components_4#int_offset_2, 4*square#components_4#int_offset_3, 8*square#components_4#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_6#int_offset_1, 2*square#components_6#int_offset_2, 4*square#components_6#int_offset_3, 8*square#components_6#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_7#int_offset_1, 2*square#components_7#int_offset_2, 4*square#components_7#int_offset_3, 8*square#components_7#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_8#int_offset_1, 2*square#components_8#int_offset_2, 4*square#components_8#int_offset_3, 8*square#components_8#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_9#int_offset_1, 2*square#components_9#int_offset_2, 4*square#components_9#int_offset_3, 8*square#components_9#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }])) using None, AMO None, PB None
+  define(__87 <-> allDifferent(1+weighted(1*square#components_1#offset_1, 2*square#components_1#offset_2, 4*square#components_1#offset_3, 8*square#components_1#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_2#offset_1, 2*square#components_2#offset_2, 4*square#components_2#offset_3, 8*square#components_2#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_3#offset_1, 2*square#components_3#offset_2, 4*square#components_3#offset_3, 8*square#components_3#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_4#offset_1, 2*square#components_4#offset_2, 4*square#components_4#offset_3, 8*square#components_4#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_6#offset_1, 2*square#components_6#offset_2, 4*square#components_6#offset_3, 8*square#components_6#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_7#offset_1, 2*square#components_7#offset_2, 4*square#components_7#offset_3, 8*square#components_7#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_8#offset_1, 2*square#components_8#offset_2, 4*square#components_8#offset_3, 8*square#components_8#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_9#offset_1, 2*square#components_9#offset_2, 4*square#components_9#offset_3, 8*square#components_9#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }])) using None, AMO None, PB None
 
 --
 
 __87,
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24])
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24])
    ~~> remove_single_atom ([("SAT", 8400)])
 and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
 and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24]),
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24])
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24]),
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24])
 new SAT encoding decisions:
   assert(__87) using tseitin
 
 --
 
-sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24])
+sum([ square[d, d] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 sum([ square[d, d] | d : Index ]) = SATInt(Log, [__89,__91,__93,__95,__97,__99;int(1..)] [1, 24])
 new variables:
@@ -1952,23 +1952,23 @@ new variables:
   findAux __99: bool
   findAux __100: bool
 new SAT encoding decisions:
-  define(__88 <-> !((s#int_offset_1) <-> (false))) using tseitin
+  define(__88 <-> !((s#offset_1) <-> (false))) using tseitin
   define(__89 <-> !(__88)) using tseitin
-  define(__90 <-> or([s#int_offset_1,false;int(1..)])) using tseitin
-  define(__91 <-> !((s#int_offset_2) <-> (__90))) using tseitin
-  define(__92 <-> and([s#int_offset_2,__90;int(1..)])) using tseitin
-  define(__93 <-> !((s#int_offset_3) <-> (__92))) using tseitin
-  define(__94 <-> and([s#int_offset_3,__92;int(1..)])) using tseitin
-  define(__95 <-> !((s#int_offset_4) <-> (__94))) using tseitin
-  define(__96 <-> and([s#int_offset_4,__94;int(1..)])) using tseitin
-  define(__97 <-> !((s#int_offset_5) <-> (__96))) using tseitin
-  define(__98 <-> and([s#int_offset_5,__96;int(1..)])) using tseitin
+  define(__90 <-> or([s#offset_1,false;int(1..)])) using tseitin
+  define(__91 <-> !((s#offset_2) <-> (__90))) using tseitin
+  define(__92 <-> and([s#offset_2,__90;int(1..)])) using tseitin
+  define(__93 <-> !((s#offset_3) <-> (__92))) using tseitin
+  define(__94 <-> and([s#offset_3,__92;int(1..)])) using tseitin
+  define(__95 <-> !((s#offset_4) <-> (__94))) using tseitin
+  define(__96 <-> and([s#offset_4,__94;int(1..)])) using tseitin
+  define(__97 <-> !((s#offset_5) <-> (__96))) using tseitin
+  define(__98 <-> and([s#offset_5,__96;int(1..)])) using tseitin
   define(__99 <-> !((false) <-> (__98))) using tseitin
   define(__100 <-> and([false,__98;int(1..)])) using tseitin
 
 --
 
-sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#int_offset_1,s#int_offset_2,s#int_offset_3,s#int_offset_4,s#int_offset_5;int(1..)] [1, 24])
+sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Offset, [s#offset_1,s#offset_2,s#offset_3,s#offset_4,s#offset_5;int(1..)] [1, 24])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Log, [__102,__104,__106,__108,__110,__112;int(1..)] [1, 24])
 new variables:
@@ -1986,17 +1986,17 @@ new variables:
   findAux __112: bool
   findAux __113: bool
 new SAT encoding decisions:
-  define(__101 <-> !((s#int_offset_1) <-> (false))) using tseitin
+  define(__101 <-> !((s#offset_1) <-> (false))) using tseitin
   define(__102 <-> !(__101)) using tseitin
-  define(__103 <-> or([s#int_offset_1,false;int(1..)])) using tseitin
-  define(__104 <-> !((s#int_offset_2) <-> (__103))) using tseitin
-  define(__105 <-> and([s#int_offset_2,__103;int(1..)])) using tseitin
-  define(__106 <-> !((s#int_offset_3) <-> (__105))) using tseitin
-  define(__107 <-> and([s#int_offset_3,__105;int(1..)])) using tseitin
-  define(__108 <-> !((s#int_offset_4) <-> (__107))) using tseitin
-  define(__109 <-> and([s#int_offset_4,__107;int(1..)])) using tseitin
-  define(__110 <-> !((s#int_offset_5) <-> (__109))) using tseitin
-  define(__111 <-> and([s#int_offset_5,__109;int(1..)])) using tseitin
+  define(__103 <-> or([s#offset_1,false;int(1..)])) using tseitin
+  define(__104 <-> !((s#offset_2) <-> (__103))) using tseitin
+  define(__105 <-> and([s#offset_2,__103;int(1..)])) using tseitin
+  define(__106 <-> !((s#offset_3) <-> (__105))) using tseitin
+  define(__107 <-> and([s#offset_3,__105;int(1..)])) using tseitin
+  define(__108 <-> !((s#offset_4) <-> (__107))) using tseitin
+  define(__109 <-> and([s#offset_4,__107;int(1..)])) using tseitin
+  define(__110 <-> !((s#offset_5) <-> (__109))) using tseitin
+  define(__111 <-> and([s#offset_5,__109;int(1..)])) using tseitin
   define(__112 <-> !((false) <-> (__111))) using tseitin
   define(__113 <-> and([false,__111;int(1..)])) using tseitin
 
@@ -2090,7 +2090,7 @@ and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
 sum([ square[d, d] | d : Index ]) = SATInt(Log, [__89,__91,__93,__95,__97,__99;int(1..)] [1, 24]),
 sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Log, [__102,__104,__106,__108,__110,__112;int(1..)] [1, 24])
 new SAT encoding decisions:
-  weighted(1*square#components_1#int_offset_1, 2*square#components_1#int_offset_2, 4*square#components_1#int_offset_3, 8*square#components_1#int_offset_4, 1*square#components_2#int_offset_1, 2*square#components_2#int_offset_2, 4*square#components_2#int_offset_3, 8*square#components_2#int_offset_4, 1*square#components_3#int_offset_1, 2*square#components_3#int_offset_2, 4*square#components_3#int_offset_3, 8*square#components_3#int_offset_4, -1*s#int_offset_1, -2*s#int_offset_2, -4*s#int_offset_3, -8*s#int_offset_4, -16*s#int_offset_5) Exactly -2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }]
+  weighted(1*square#components_1#offset_1, 2*square#components_1#offset_2, 4*square#components_1#offset_3, 8*square#components_1#offset_4, 1*square#components_2#offset_1, 2*square#components_2#offset_2, 4*square#components_2#offset_3, 8*square#components_2#offset_4, 1*square#components_3#offset_1, 2*square#components_3#offset_2, 4*square#components_3#offset_3, 8*square#components_3#offset_4, -1*s#offset_1, -2*s#offset_2, -4*s#offset_3, -8*s#offset_4, -16*s#offset_5) Exactly -2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }]
 
 --
 
@@ -2104,7 +2104,7 @@ and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
 sum([ square[d, d] | d : Index ]) = SATInt(Log, [__89,__91,__93,__95,__97,__99;int(1..)] [1, 24]),
 sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Log, [__102,__104,__106,__108,__110,__112;int(1..)] [1, 24])
 new SAT encoding decisions:
-  weighted(1*square#components_4#int_offset_1, 2*square#components_4#int_offset_2, 4*square#components_4#int_offset_3, 8*square#components_4#int_offset_4, 1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4, 1*square#components_6#int_offset_1, 2*square#components_6#int_offset_2, 4*square#components_6#int_offset_3, 8*square#components_6#int_offset_4, -1*s#int_offset_1, -2*s#int_offset_2, -4*s#int_offset_3, -8*s#int_offset_4, -16*s#int_offset_5) Exactly -2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }]
+  weighted(1*square#components_4#offset_1, 2*square#components_4#offset_2, 4*square#components_4#offset_3, 8*square#components_4#offset_4, 1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4, 1*square#components_6#offset_1, 2*square#components_6#offset_2, 4*square#components_6#offset_3, 8*square#components_6#offset_4, -1*s#offset_1, -2*s#offset_2, -4*s#offset_3, -8*s#offset_4, -16*s#offset_5) Exactly -2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }]
 
 --
 
@@ -2118,7 +2118,7 @@ and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
 sum([ square[d, d] | d : Index ]) = SATInt(Log, [__89,__91,__93,__95,__97,__99;int(1..)] [1, 24]),
 sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Log, [__102,__104,__106,__108,__110,__112;int(1..)] [1, 24])
 new SAT encoding decisions:
-  weighted(1*square#components_7#int_offset_1, 2*square#components_7#int_offset_2, 4*square#components_7#int_offset_3, 8*square#components_7#int_offset_4, 1*square#components_8#int_offset_1, 2*square#components_8#int_offset_2, 4*square#components_8#int_offset_3, 8*square#components_8#int_offset_4, 1*square#components_9#int_offset_1, 2*square#components_9#int_offset_2, 4*square#components_9#int_offset_3, 8*square#components_9#int_offset_4, -1*s#int_offset_1, -2*s#int_offset_2, -4*s#int_offset_3, -8*s#int_offset_4, -16*s#int_offset_5) Exactly -2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }]
+  weighted(1*square#components_7#offset_1, 2*square#components_7#offset_2, 4*square#components_7#offset_3, 8*square#components_7#offset_4, 1*square#components_8#offset_1, 2*square#components_8#offset_2, 4*square#components_8#offset_3, 8*square#components_8#offset_4, 1*square#components_9#offset_1, 2*square#components_9#offset_2, 4*square#components_9#offset_3, 8*square#components_9#offset_4, -1*s#offset_1, -2*s#offset_2, -4*s#offset_3, -8*s#offset_4, -16*s#offset_5) Exactly -2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }]
 
 --
 
@@ -2210,7 +2210,7 @@ and([true,sum([square#components_2,square#components_5,square#components_8;int(1
 sum([ square[d, d] | d : Index ]) = SATInt(Log, [__89,__91,__93,__95,__97,__99;int(1..)] [1, 24]),
 sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Log, [__102,__104,__106,__108,__110,__112;int(1..)] [1, 24])
 new SAT encoding decisions:
-  weighted(1*square#components_1#int_offset_1, 2*square#components_1#int_offset_2, 4*square#components_1#int_offset_3, 8*square#components_1#int_offset_4, 1*square#components_4#int_offset_1, 2*square#components_4#int_offset_2, 4*square#components_4#int_offset_3, 8*square#components_4#int_offset_4, 1*square#components_7#int_offset_1, 2*square#components_7#int_offset_2, 4*square#components_7#int_offset_3, 8*square#components_7#int_offset_4, -1*s#int_offset_1, -2*s#int_offset_2, -4*s#int_offset_3, -8*s#int_offset_4, -16*s#int_offset_5) Exactly -2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }]
+  weighted(1*square#components_1#offset_1, 2*square#components_1#offset_2, 4*square#components_1#offset_3, 8*square#components_1#offset_4, 1*square#components_4#offset_1, 2*square#components_4#offset_2, 4*square#components_4#offset_3, 8*square#components_4#offset_4, 1*square#components_7#offset_1, 2*square#components_7#offset_2, 4*square#components_7#offset_3, 8*square#components_7#offset_4, -1*s#offset_1, -2*s#offset_2, -4*s#offset_3, -8*s#offset_4, -16*s#offset_5) Exactly -2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }]
 
 --
 
@@ -2224,7 +2224,7 @@ and([true,sum([square#components_3,square#components_6,square#components_9;int(1
 sum([ square[d, d] | d : Index ]) = SATInt(Log, [__89,__91,__93,__95,__97,__99;int(1..)] [1, 24]),
 sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Log, [__102,__104,__106,__108,__110,__112;int(1..)] [1, 24])
 new SAT encoding decisions:
-  weighted(1*square#components_2#int_offset_1, 2*square#components_2#int_offset_2, 4*square#components_2#int_offset_3, 8*square#components_2#int_offset_4, 1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4, 1*square#components_8#int_offset_1, 2*square#components_8#int_offset_2, 4*square#components_8#int_offset_3, 8*square#components_8#int_offset_4, -1*s#int_offset_1, -2*s#int_offset_2, -4*s#int_offset_3, -8*s#int_offset_4, -16*s#int_offset_5) Exactly -2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }]
+  weighted(1*square#components_2#offset_1, 2*square#components_2#offset_2, 4*square#components_2#offset_3, 8*square#components_2#offset_4, 1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4, 1*square#components_8#offset_1, 2*square#components_8#offset_2, 4*square#components_8#offset_3, 8*square#components_8#offset_4, -1*s#offset_1, -2*s#offset_2, -4*s#offset_3, -8*s#offset_4, -16*s#offset_5) Exactly -2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }]
 
 --
 
@@ -2238,7 +2238,7 @@ and([true;int(1..)]),
 sum([ square[d, d] | d : Index ]) = SATInt(Log, [__89,__91,__93,__95,__97,__99;int(1..)] [1, 24]),
 sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Log, [__102,__104,__106,__108,__110,__112;int(1..)] [1, 24])
 new SAT encoding decisions:
-  weighted(1*square#components_3#int_offset_1, 2*square#components_3#int_offset_2, 4*square#components_3#int_offset_3, 8*square#components_3#int_offset_4, 1*square#components_6#int_offset_1, 2*square#components_6#int_offset_2, 4*square#components_6#int_offset_3, 8*square#components_6#int_offset_4, 1*square#components_9#int_offset_1, 2*square#components_9#int_offset_2, 4*square#components_9#int_offset_3, 8*square#components_9#int_offset_4, -1*s#int_offset_1, -2*s#int_offset_2, -4*s#int_offset_3, -8*s#int_offset_4, -16*s#int_offset_5) Exactly -2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }]
+  weighted(1*square#components_3#offset_1, 2*square#components_3#offset_2, 4*square#components_3#offset_3, 8*square#components_3#offset_4, 1*square#components_6#offset_1, 2*square#components_6#offset_2, 4*square#components_6#offset_3, 8*square#components_6#offset_4, 1*square#components_9#offset_1, 2*square#components_9#offset_2, 4*square#components_9#offset_3, 8*square#components_9#offset_4, -1*s#offset_1, -2*s#offset_2, -4*s#offset_3, -8*s#offset_4, -16*s#offset_5) Exactly -2 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }]
 
 --
 
@@ -2275,7 +2275,7 @@ true,
 true,
 sum([ square[d, (4 - d)] | d : Index ]) = SATInt(Log, [__102,__104,__106,__108,__110,__112;int(1..)] [1, 24])
 new SAT encoding decisions:
-  weighted(1*square#components_1#int_offset_1, 2*square#components_1#int_offset_2, 4*square#components_1#int_offset_3, 8*square#components_1#int_offset_4, 1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4, 1*square#components_9#int_offset_1, 2*square#components_9#int_offset_2, 4*square#components_9#int_offset_3, 8*square#components_9#int_offset_4, -1*__89, -2*__91, -4*__93, -8*__95, -16*__97, 32*__99) Exactly -3 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 18, structure: BoundedBinary { lower: -24, upper: -1 } }]
+  weighted(1*square#components_1#offset_1, 2*square#components_1#offset_2, 4*square#components_1#offset_3, 8*square#components_1#offset_4, 1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4, 1*square#components_9#offset_1, 2*square#components_9#offset_2, 4*square#components_9#offset_3, 8*square#components_9#offset_4, -1*__89, -2*__91, -4*__93, -8*__95, -16*__97, 32*__99) Exactly -3 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 18, structure: BoundedBinary { lower: -24, upper: -1 } }]
 
 --
 
@@ -2310,7 +2310,7 @@ sum([square#components_3,square#components_5,square#components_7;int(1..)]) = SA
 true,
 true
 new SAT encoding decisions:
-  weighted(1*square#components_3#int_offset_1, 2*square#components_3#int_offset_2, 4*square#components_3#int_offset_3, 8*square#components_3#int_offset_4, 1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4, 1*square#components_7#int_offset_1, 2*square#components_7#int_offset_2, 4*square#components_7#int_offset_3, 8*square#components_7#int_offset_4, -1*__102, -2*__104, -4*__106, -8*__108, -16*__110, 32*__112) Exactly -3 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 18, structure: BoundedBinary { lower: -24, upper: -1 } }]
+  weighted(1*square#components_3#offset_1, 2*square#components_3#offset_2, 4*square#components_3#offset_3, 8*square#components_3#offset_4, 1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4, 1*square#components_7#offset_1, 2*square#components_7#offset_2, 4*square#components_7#offset_3, 8*square#components_7#offset_4, -1*__102, -2*__104, -4*__106, -8*__108, -16*__110, 32*__112) Exactly -3 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 18, structure: BoundedBinary { lower: -24, upper: -1 } }]
 
 --
 
@@ -2321,11 +2321,11 @@ letting Index be domain int(1..3)
 letting Value be domain int(1..9)
 find square: matrix indexed by [Index, Index] of Value
 find s: int(1..24)
-find s#int_offset_1: bool
-find s#int_offset_2: bool
-find s#int_offset_3: bool
-find s#int_offset_4: bool
-find s#int_offset_5: bool
+find s#offset_1: bool
+find s#offset_2: bool
+find s#offset_3: bool
+find s#offset_4: bool
+find s#offset_5: bool
 findAux __0: bool
 findAux __1: bool
 find square#components_1: int(1..9)
@@ -2337,42 +2337,42 @@ find square#components_6: int(1..9)
 find square#components_7: int(1..9)
 find square#components_8: int(1..9)
 find square#components_9: int(1..9)
-find square#components_1#int_offset_1: bool
-find square#components_1#int_offset_2: bool
-find square#components_1#int_offset_3: bool
-find square#components_1#int_offset_4: bool
-find square#components_2#int_offset_1: bool
-find square#components_2#int_offset_2: bool
-find square#components_2#int_offset_3: bool
-find square#components_2#int_offset_4: bool
-find square#components_3#int_offset_1: bool
-find square#components_3#int_offset_2: bool
-find square#components_3#int_offset_3: bool
-find square#components_3#int_offset_4: bool
-find square#components_4#int_offset_1: bool
-find square#components_4#int_offset_2: bool
-find square#components_4#int_offset_3: bool
-find square#components_4#int_offset_4: bool
-find square#components_5#int_offset_1: bool
-find square#components_5#int_offset_2: bool
-find square#components_5#int_offset_3: bool
-find square#components_5#int_offset_4: bool
-find square#components_6#int_offset_1: bool
-find square#components_6#int_offset_2: bool
-find square#components_6#int_offset_3: bool
-find square#components_6#int_offset_4: bool
-find square#components_7#int_offset_1: bool
-find square#components_7#int_offset_2: bool
-find square#components_7#int_offset_3: bool
-find square#components_7#int_offset_4: bool
-find square#components_8#int_offset_1: bool
-find square#components_8#int_offset_2: bool
-find square#components_8#int_offset_3: bool
-find square#components_8#int_offset_4: bool
-find square#components_9#int_offset_1: bool
-find square#components_9#int_offset_2: bool
-find square#components_9#int_offset_3: bool
-find square#components_9#int_offset_4: bool
+find square#components_1#offset_1: bool
+find square#components_1#offset_2: bool
+find square#components_1#offset_3: bool
+find square#components_1#offset_4: bool
+find square#components_2#offset_1: bool
+find square#components_2#offset_2: bool
+find square#components_2#offset_3: bool
+find square#components_2#offset_4: bool
+find square#components_3#offset_1: bool
+find square#components_3#offset_2: bool
+find square#components_3#offset_3: bool
+find square#components_3#offset_4: bool
+find square#components_4#offset_1: bool
+find square#components_4#offset_2: bool
+find square#components_4#offset_3: bool
+find square#components_4#offset_4: bool
+find square#components_5#offset_1: bool
+find square#components_5#offset_2: bool
+find square#components_5#offset_3: bool
+find square#components_5#offset_4: bool
+find square#components_6#offset_1: bool
+find square#components_6#offset_2: bool
+find square#components_6#offset_3: bool
+find square#components_6#offset_4: bool
+find square#components_7#offset_1: bool
+find square#components_7#offset_2: bool
+find square#components_7#offset_3: bool
+find square#components_7#offset_4: bool
+find square#components_8#offset_1: bool
+find square#components_8#offset_2: bool
+find square#components_8#offset_3: bool
+find square#components_8#offset_4: bool
+find square#components_9#offset_1: bool
+find square#components_9#offset_2: bool
+find square#components_9#offset_3: bool
+find square#components_9#offset_4: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
@@ -2493,64 +2493,64 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*s#int_offset_1, 2*s#int_offset_2, 4*s#int_offset_3, 8*s#int_offset_4, 16*s#int_offset_5) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 23 } }],
-define(__1 <-> integer-weighted(1*s#int_offset_1, 2*s#int_offset_2, 4*s#int_offset_3, 8*s#int_offset_4, 16*s#int_offset_5) LessEqual 23) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 23 } }],
-define(__2 <-> integer-weighted(1*square#components_1#int_offset_1, 2*square#components_1#int_offset_2, 4*square#components_1#int_offset_3, 8*square#components_1#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__3 <-> integer-weighted(1*square#components_1#int_offset_1, 2*square#components_1#int_offset_2, 4*square#components_1#int_offset_3, 8*square#components_1#int_offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__4 <-> integer-weighted(1*square#components_2#int_offset_1, 2*square#components_2#int_offset_2, 4*square#components_2#int_offset_3, 8*square#components_2#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__5 <-> integer-weighted(1*square#components_2#int_offset_1, 2*square#components_2#int_offset_2, 4*square#components_2#int_offset_3, 8*square#components_2#int_offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__6 <-> integer-weighted(1*square#components_3#int_offset_1, 2*square#components_3#int_offset_2, 4*square#components_3#int_offset_3, 8*square#components_3#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__7 <-> integer-weighted(1*square#components_3#int_offset_1, 2*square#components_3#int_offset_2, 4*square#components_3#int_offset_3, 8*square#components_3#int_offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__8 <-> integer-weighted(1*square#components_4#int_offset_1, 2*square#components_4#int_offset_2, 4*square#components_4#int_offset_3, 8*square#components_4#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__9 <-> integer-weighted(1*square#components_4#int_offset_1, 2*square#components_4#int_offset_2, 4*square#components_4#int_offset_3, 8*square#components_4#int_offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__10 <-> integer-weighted(1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__11 <-> integer-weighted(1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__12 <-> integer-weighted(1*square#components_6#int_offset_1, 2*square#components_6#int_offset_2, 4*square#components_6#int_offset_3, 8*square#components_6#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__13 <-> integer-weighted(1*square#components_6#int_offset_1, 2*square#components_6#int_offset_2, 4*square#components_6#int_offset_3, 8*square#components_6#int_offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__14 <-> integer-weighted(1*square#components_7#int_offset_1, 2*square#components_7#int_offset_2, 4*square#components_7#int_offset_3, 8*square#components_7#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__15 <-> integer-weighted(1*square#components_7#int_offset_1, 2*square#components_7#int_offset_2, 4*square#components_7#int_offset_3, 8*square#components_7#int_offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__16 <-> integer-weighted(1*square#components_8#int_offset_1, 2*square#components_8#int_offset_2, 4*square#components_8#int_offset_3, 8*square#components_8#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__17 <-> integer-weighted(1*square#components_8#int_offset_1, 2*square#components_8#int_offset_2, 4*square#components_8#int_offset_3, 8*square#components_8#int_offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__18 <-> integer-weighted(1*square#components_9#int_offset_1, 2*square#components_9#int_offset_2, 4*square#components_9#int_offset_3, 8*square#components_9#int_offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__19 <-> integer-weighted(1*square#components_9#int_offset_1, 2*square#components_9#int_offset_2, 4*square#components_9#int_offset_3, 8*square#components_9#int_offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
-define(__20 <-> !(square#components_2#int_offset_4)) using tseitin,
-define(__21 <-> !(square#components_3#int_offset_4)) using tseitin,
-define(__22 <-> !(square#components_4#int_offset_4)) using tseitin,
-define(__23 <-> !(square#components_5#int_offset_4)) using tseitin,
-define(__24 <-> !(square#components_6#int_offset_4)) using tseitin,
-define(__25 <-> !(square#components_7#int_offset_4)) using tseitin,
-define(__26 <-> !(square#components_8#int_offset_4)) using tseitin,
-define(__27 <-> !(square#components_9#int_offset_4)) using tseitin,
-define(__28 <-> !(square#components_1#int_offset_4)) using tseitin,
-define(__29 <-> !(s#int_offset_5)) using tseitin,
-define(__30 <-> !(square#components_2#int_offset_3)) using tseitin,
-define(__31 <-> !(square#components_3#int_offset_3)) using tseitin,
-define(__32 <-> !(square#components_4#int_offset_3)) using tseitin,
-define(__33 <-> !(square#components_5#int_offset_3)) using tseitin,
-define(__34 <-> !(square#components_6#int_offset_3)) using tseitin,
-define(__35 <-> !(square#components_7#int_offset_3)) using tseitin,
-define(__36 <-> !(square#components_8#int_offset_3)) using tseitin,
-define(__37 <-> !(square#components_9#int_offset_3)) using tseitin,
-define(__38 <-> !(square#components_1#int_offset_3)) using tseitin,
-define(__39 <-> !(s#int_offset_4)) using tseitin,
-define(__40 <-> !(square#components_2#int_offset_2)) using tseitin,
-define(__41 <-> !(square#components_3#int_offset_2)) using tseitin,
-define(__42 <-> !(square#components_4#int_offset_2)) using tseitin,
-define(__43 <-> !(square#components_5#int_offset_2)) using tseitin,
-define(__44 <-> !(square#components_6#int_offset_2)) using tseitin,
-define(__45 <-> !(square#components_7#int_offset_2)) using tseitin,
-define(__46 <-> !(square#components_8#int_offset_2)) using tseitin,
-define(__47 <-> !(square#components_9#int_offset_2)) using tseitin,
-define(__48 <-> !(square#components_1#int_offset_2)) using tseitin,
-define(__49 <-> !(square#components_2#int_offset_1)) using tseitin,
-define(__50 <-> !(square#components_3#int_offset_1)) using tseitin,
-define(__51 <-> !(square#components_4#int_offset_1)) using tseitin,
-define(__52 <-> !(square#components_5#int_offset_1)) using tseitin,
-define(__53 <-> !(square#components_6#int_offset_1)) using tseitin,
-define(__54 <-> !(square#components_7#int_offset_1)) using tseitin,
-define(__55 <-> !(square#components_8#int_offset_1)) using tseitin,
-define(__56 <-> !(square#components_9#int_offset_1)) using tseitin,
-define(__57 <-> !(square#components_1#int_offset_1)) using tseitin,
+define(__0 <-> integer-weighted(1*s#offset_1, 2*s#offset_2, 4*s#offset_3, 8*s#offset_4, 16*s#offset_5) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 23 } }],
+define(__1 <-> integer-weighted(1*s#offset_1, 2*s#offset_2, 4*s#offset_3, 8*s#offset_4, 16*s#offset_5) LessEqual 23) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 23 } }],
+define(__2 <-> integer-weighted(1*square#components_1#offset_1, 2*square#components_1#offset_2, 4*square#components_1#offset_3, 8*square#components_1#offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__3 <-> integer-weighted(1*square#components_1#offset_1, 2*square#components_1#offset_2, 4*square#components_1#offset_3, 8*square#components_1#offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__4 <-> integer-weighted(1*square#components_2#offset_1, 2*square#components_2#offset_2, 4*square#components_2#offset_3, 8*square#components_2#offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__5 <-> integer-weighted(1*square#components_2#offset_1, 2*square#components_2#offset_2, 4*square#components_2#offset_3, 8*square#components_2#offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__6 <-> integer-weighted(1*square#components_3#offset_1, 2*square#components_3#offset_2, 4*square#components_3#offset_3, 8*square#components_3#offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__7 <-> integer-weighted(1*square#components_3#offset_1, 2*square#components_3#offset_2, 4*square#components_3#offset_3, 8*square#components_3#offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__8 <-> integer-weighted(1*square#components_4#offset_1, 2*square#components_4#offset_2, 4*square#components_4#offset_3, 8*square#components_4#offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__9 <-> integer-weighted(1*square#components_4#offset_1, 2*square#components_4#offset_2, 4*square#components_4#offset_3, 8*square#components_4#offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__10 <-> integer-weighted(1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__11 <-> integer-weighted(1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__12 <-> integer-weighted(1*square#components_6#offset_1, 2*square#components_6#offset_2, 4*square#components_6#offset_3, 8*square#components_6#offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__13 <-> integer-weighted(1*square#components_6#offset_1, 2*square#components_6#offset_2, 4*square#components_6#offset_3, 8*square#components_6#offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__14 <-> integer-weighted(1*square#components_7#offset_1, 2*square#components_7#offset_2, 4*square#components_7#offset_3, 8*square#components_7#offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__15 <-> integer-weighted(1*square#components_7#offset_1, 2*square#components_7#offset_2, 4*square#components_7#offset_3, 8*square#components_7#offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__16 <-> integer-weighted(1*square#components_8#offset_1, 2*square#components_8#offset_2, 4*square#components_8#offset_3, 8*square#components_8#offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__17 <-> integer-weighted(1*square#components_8#offset_1, 2*square#components_8#offset_2, 4*square#components_8#offset_3, 8*square#components_8#offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__18 <-> integer-weighted(1*square#components_9#offset_1, 2*square#components_9#offset_2, 4*square#components_9#offset_3, 8*square#components_9#offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__19 <-> integer-weighted(1*square#components_9#offset_1, 2*square#components_9#offset_2, 4*square#components_9#offset_3, 8*square#components_9#offset_4) LessEqual 8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }],
+define(__20 <-> !(square#components_2#offset_4)) using tseitin,
+define(__21 <-> !(square#components_3#offset_4)) using tseitin,
+define(__22 <-> !(square#components_4#offset_4)) using tseitin,
+define(__23 <-> !(square#components_5#offset_4)) using tseitin,
+define(__24 <-> !(square#components_6#offset_4)) using tseitin,
+define(__25 <-> !(square#components_7#offset_4)) using tseitin,
+define(__26 <-> !(square#components_8#offset_4)) using tseitin,
+define(__27 <-> !(square#components_9#offset_4)) using tseitin,
+define(__28 <-> !(square#components_1#offset_4)) using tseitin,
+define(__29 <-> !(s#offset_5)) using tseitin,
+define(__30 <-> !(square#components_2#offset_3)) using tseitin,
+define(__31 <-> !(square#components_3#offset_3)) using tseitin,
+define(__32 <-> !(square#components_4#offset_3)) using tseitin,
+define(__33 <-> !(square#components_5#offset_3)) using tseitin,
+define(__34 <-> !(square#components_6#offset_3)) using tseitin,
+define(__35 <-> !(square#components_7#offset_3)) using tseitin,
+define(__36 <-> !(square#components_8#offset_3)) using tseitin,
+define(__37 <-> !(square#components_9#offset_3)) using tseitin,
+define(__38 <-> !(square#components_1#offset_3)) using tseitin,
+define(__39 <-> !(s#offset_4)) using tseitin,
+define(__40 <-> !(square#components_2#offset_2)) using tseitin,
+define(__41 <-> !(square#components_3#offset_2)) using tseitin,
+define(__42 <-> !(square#components_4#offset_2)) using tseitin,
+define(__43 <-> !(square#components_5#offset_2)) using tseitin,
+define(__44 <-> !(square#components_6#offset_2)) using tseitin,
+define(__45 <-> !(square#components_7#offset_2)) using tseitin,
+define(__46 <-> !(square#components_8#offset_2)) using tseitin,
+define(__47 <-> !(square#components_9#offset_2)) using tseitin,
+define(__48 <-> !(square#components_1#offset_2)) using tseitin,
+define(__49 <-> !(square#components_2#offset_1)) using tseitin,
+define(__50 <-> !(square#components_3#offset_1)) using tseitin,
+define(__51 <-> !(square#components_4#offset_1)) using tseitin,
+define(__52 <-> !(square#components_5#offset_1)) using tseitin,
+define(__53 <-> !(square#components_6#offset_1)) using tseitin,
+define(__54 <-> !(square#components_7#offset_1)) using tseitin,
+define(__55 <-> !(square#components_8#offset_1)) using tseitin,
+define(__56 <-> !(square#components_9#offset_1)) using tseitin,
+define(__57 <-> !(square#components_1#offset_1)) using tseitin,
 define(__58 <-> and([__8,__9;int(1..)])) using tseitin,
 define(__59 <-> and([__10,__11;int(1..)])) using tseitin,
 define(__60 <-> and([__12,__13;int(1..)])) using tseitin,
@@ -2600,40 +2600,40 @@ assert(__82) using tseitin,
 assert(__62) using tseitin,
 assert(__84) using tseitin,
 assert(__63) using tseitin,
-define(__87 <-> allDifferent(1+weighted(1*square#components_1#int_offset_1, 2*square#components_1#int_offset_2, 4*square#components_1#int_offset_3, 8*square#components_1#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_2#int_offset_1, 2*square#components_2#int_offset_2, 4*square#components_2#int_offset_3, 8*square#components_2#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_3#int_offset_1, 2*square#components_3#int_offset_2, 4*square#components_3#int_offset_3, 8*square#components_3#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_4#int_offset_1, 2*square#components_4#int_offset_2, 4*square#components_4#int_offset_3, 8*square#components_4#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_6#int_offset_1, 2*square#components_6#int_offset_2, 4*square#components_6#int_offset_3, 8*square#components_6#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_7#int_offset_1, 2*square#components_7#int_offset_2, 4*square#components_7#int_offset_3, 8*square#components_7#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_8#int_offset_1, 2*square#components_8#int_offset_2, 4*square#components_8#int_offset_3, 8*square#components_8#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_9#int_offset_1, 2*square#components_9#int_offset_2, 4*square#components_9#int_offset_3, 8*square#components_9#int_offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
+define(__87 <-> allDifferent(1+weighted(1*square#components_1#offset_1, 2*square#components_1#offset_2, 4*square#components_1#offset_3, 8*square#components_1#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_2#offset_1, 2*square#components_2#offset_2, 4*square#components_2#offset_3, 8*square#components_2#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_3#offset_1, 2*square#components_3#offset_2, 4*square#components_3#offset_3, 8*square#components_3#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_4#offset_1, 2*square#components_4#offset_2, 4*square#components_4#offset_3, 8*square#components_4#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_6#offset_1, 2*square#components_6#offset_2, 4*square#components_6#offset_3, 8*square#components_6#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_7#offset_1, 2*square#components_7#offset_2, 4*square#components_7#offset_3, 8*square#components_7#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_8#offset_1, 2*square#components_8#offset_2, 4*square#components_8#offset_3, 8*square#components_8#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }], 1+weighted(1*square#components_9#offset_1, 2*square#components_9#offset_2, 4*square#components_9#offset_3, 8*square#components_9#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
 assert(__87) using tseitin,
-define(__88 <-> !((s#int_offset_1) <-> (false))) using tseitin,
+define(__88 <-> !((s#offset_1) <-> (false))) using tseitin,
 define(__89 <-> !(__88)) using tseitin,
-define(__90 <-> or([s#int_offset_1,false;int(1..)])) using tseitin,
-define(__91 <-> !((s#int_offset_2) <-> (__90))) using tseitin,
-define(__92 <-> and([s#int_offset_2,__90;int(1..)])) using tseitin,
-define(__93 <-> !((s#int_offset_3) <-> (__92))) using tseitin,
-define(__94 <-> and([s#int_offset_3,__92;int(1..)])) using tseitin,
-define(__95 <-> !((s#int_offset_4) <-> (__94))) using tseitin,
-define(__96 <-> and([s#int_offset_4,__94;int(1..)])) using tseitin,
-define(__97 <-> !((s#int_offset_5) <-> (__96))) using tseitin,
-define(__98 <-> and([s#int_offset_5,__96;int(1..)])) using tseitin,
+define(__90 <-> or([s#offset_1,false;int(1..)])) using tseitin,
+define(__91 <-> !((s#offset_2) <-> (__90))) using tseitin,
+define(__92 <-> and([s#offset_2,__90;int(1..)])) using tseitin,
+define(__93 <-> !((s#offset_3) <-> (__92))) using tseitin,
+define(__94 <-> and([s#offset_3,__92;int(1..)])) using tseitin,
+define(__95 <-> !((s#offset_4) <-> (__94))) using tseitin,
+define(__96 <-> and([s#offset_4,__94;int(1..)])) using tseitin,
+define(__97 <-> !((s#offset_5) <-> (__96))) using tseitin,
+define(__98 <-> and([s#offset_5,__96;int(1..)])) using tseitin,
 define(__99 <-> !((false) <-> (__98))) using tseitin,
 define(__100 <-> and([false,__98;int(1..)])) using tseitin,
-define(__101 <-> !((s#int_offset_1) <-> (false))) using tseitin,
+define(__101 <-> !((s#offset_1) <-> (false))) using tseitin,
 define(__102 <-> !(__101)) using tseitin,
-define(__103 <-> or([s#int_offset_1,false;int(1..)])) using tseitin,
-define(__104 <-> !((s#int_offset_2) <-> (__103))) using tseitin,
-define(__105 <-> and([s#int_offset_2,__103;int(1..)])) using tseitin,
-define(__106 <-> !((s#int_offset_3) <-> (__105))) using tseitin,
-define(__107 <-> and([s#int_offset_3,__105;int(1..)])) using tseitin,
-define(__108 <-> !((s#int_offset_4) <-> (__107))) using tseitin,
-define(__109 <-> and([s#int_offset_4,__107;int(1..)])) using tseitin,
-define(__110 <-> !((s#int_offset_5) <-> (__109))) using tseitin,
-define(__111 <-> and([s#int_offset_5,__109;int(1..)])) using tseitin,
+define(__103 <-> or([s#offset_1,false;int(1..)])) using tseitin,
+define(__104 <-> !((s#offset_2) <-> (__103))) using tseitin,
+define(__105 <-> and([s#offset_2,__103;int(1..)])) using tseitin,
+define(__106 <-> !((s#offset_3) <-> (__105))) using tseitin,
+define(__107 <-> and([s#offset_3,__105;int(1..)])) using tseitin,
+define(__108 <-> !((s#offset_4) <-> (__107))) using tseitin,
+define(__109 <-> and([s#offset_4,__107;int(1..)])) using tseitin,
+define(__110 <-> !((s#offset_5) <-> (__109))) using tseitin,
+define(__111 <-> and([s#offset_5,__109;int(1..)])) using tseitin,
 define(__112 <-> !((false) <-> (__111))) using tseitin,
 define(__113 <-> and([false,__111;int(1..)])) using tseitin,
-weighted(1*square#components_1#int_offset_1, 2*square#components_1#int_offset_2, 4*square#components_1#int_offset_3, 8*square#components_1#int_offset_4, 1*square#components_2#int_offset_1, 2*square#components_2#int_offset_2, 4*square#components_2#int_offset_3, 8*square#components_2#int_offset_4, 1*square#components_3#int_offset_1, 2*square#components_3#int_offset_2, 4*square#components_3#int_offset_3, 8*square#components_3#int_offset_4, -1*s#int_offset_1, -2*s#int_offset_2, -4*s#int_offset_3, -8*s#int_offset_4, -16*s#int_offset_5) Exactly -2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }],
-weighted(1*square#components_4#int_offset_1, 2*square#components_4#int_offset_2, 4*square#components_4#int_offset_3, 8*square#components_4#int_offset_4, 1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4, 1*square#components_6#int_offset_1, 2*square#components_6#int_offset_2, 4*square#components_6#int_offset_3, 8*square#components_6#int_offset_4, -1*s#int_offset_1, -2*s#int_offset_2, -4*s#int_offset_3, -8*s#int_offset_4, -16*s#int_offset_5) Exactly -2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }],
-weighted(1*square#components_7#int_offset_1, 2*square#components_7#int_offset_2, 4*square#components_7#int_offset_3, 8*square#components_7#int_offset_4, 1*square#components_8#int_offset_1, 2*square#components_8#int_offset_2, 4*square#components_8#int_offset_3, 8*square#components_8#int_offset_4, 1*square#components_9#int_offset_1, 2*square#components_9#int_offset_2, 4*square#components_9#int_offset_3, 8*square#components_9#int_offset_4, -1*s#int_offset_1, -2*s#int_offset_2, -4*s#int_offset_3, -8*s#int_offset_4, -16*s#int_offset_5) Exactly -2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }],
-weighted(1*square#components_1#int_offset_1, 2*square#components_1#int_offset_2, 4*square#components_1#int_offset_3, 8*square#components_1#int_offset_4, 1*square#components_4#int_offset_1, 2*square#components_4#int_offset_2, 4*square#components_4#int_offset_3, 8*square#components_4#int_offset_4, 1*square#components_7#int_offset_1, 2*square#components_7#int_offset_2, 4*square#components_7#int_offset_3, 8*square#components_7#int_offset_4, -1*s#int_offset_1, -2*s#int_offset_2, -4*s#int_offset_3, -8*s#int_offset_4, -16*s#int_offset_5) Exactly -2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }],
-weighted(1*square#components_2#int_offset_1, 2*square#components_2#int_offset_2, 4*square#components_2#int_offset_3, 8*square#components_2#int_offset_4, 1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4, 1*square#components_8#int_offset_1, 2*square#components_8#int_offset_2, 4*square#components_8#int_offset_3, 8*square#components_8#int_offset_4, -1*s#int_offset_1, -2*s#int_offset_2, -4*s#int_offset_3, -8*s#int_offset_4, -16*s#int_offset_5) Exactly -2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }],
-weighted(1*square#components_3#int_offset_1, 2*square#components_3#int_offset_2, 4*square#components_3#int_offset_3, 8*square#components_3#int_offset_4, 1*square#components_6#int_offset_1, 2*square#components_6#int_offset_2, 4*square#components_6#int_offset_3, 8*square#components_6#int_offset_4, 1*square#components_9#int_offset_1, 2*square#components_9#int_offset_2, 4*square#components_9#int_offset_3, 8*square#components_9#int_offset_4, -1*s#int_offset_1, -2*s#int_offset_2, -4*s#int_offset_3, -8*s#int_offset_4, -16*s#int_offset_5) Exactly -2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }],
-weighted(1*square#components_1#int_offset_1, 2*square#components_1#int_offset_2, 4*square#components_1#int_offset_3, 8*square#components_1#int_offset_4, 1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4, 1*square#components_9#int_offset_1, 2*square#components_9#int_offset_2, 4*square#components_9#int_offset_3, 8*square#components_9#int_offset_4, -1*__89, -2*__91, -4*__93, -8*__95, -16*__97, 32*__99) Exactly -3 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 18, structure: BoundedBinary { lower: -24, upper: -1 } }],
-weighted(1*square#components_3#int_offset_1, 2*square#components_3#int_offset_2, 4*square#components_3#int_offset_3, 8*square#components_3#int_offset_4, 1*square#components_5#int_offset_1, 2*square#components_5#int_offset_2, 4*square#components_5#int_offset_3, 8*square#components_5#int_offset_4, 1*square#components_7#int_offset_1, 2*square#components_7#int_offset_2, 4*square#components_7#int_offset_3, 8*square#components_7#int_offset_4, -1*__102, -2*__104, -4*__106, -8*__108, -16*__110, 32*__112) Exactly -3 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 18, structure: BoundedBinary { lower: -24, upper: -1 } }]
+weighted(1*square#components_1#offset_1, 2*square#components_1#offset_2, 4*square#components_1#offset_3, 8*square#components_1#offset_4, 1*square#components_2#offset_1, 2*square#components_2#offset_2, 4*square#components_2#offset_3, 8*square#components_2#offset_4, 1*square#components_3#offset_1, 2*square#components_3#offset_2, 4*square#components_3#offset_3, 8*square#components_3#offset_4, -1*s#offset_1, -2*s#offset_2, -4*s#offset_3, -8*s#offset_4, -16*s#offset_5) Exactly -2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }],
+weighted(1*square#components_4#offset_1, 2*square#components_4#offset_2, 4*square#components_4#offset_3, 8*square#components_4#offset_4, 1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4, 1*square#components_6#offset_1, 2*square#components_6#offset_2, 4*square#components_6#offset_3, 8*square#components_6#offset_4, -1*s#offset_1, -2*s#offset_2, -4*s#offset_3, -8*s#offset_4, -16*s#offset_5) Exactly -2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }],
+weighted(1*square#components_7#offset_1, 2*square#components_7#offset_2, 4*square#components_7#offset_3, 8*square#components_7#offset_4, 1*square#components_8#offset_1, 2*square#components_8#offset_2, 4*square#components_8#offset_3, 8*square#components_8#offset_4, 1*square#components_9#offset_1, 2*square#components_9#offset_2, 4*square#components_9#offset_3, 8*square#components_9#offset_4, -1*s#offset_1, -2*s#offset_2, -4*s#offset_3, -8*s#offset_4, -16*s#offset_5) Exactly -2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }],
+weighted(1*square#components_1#offset_1, 2*square#components_1#offset_2, 4*square#components_1#offset_3, 8*square#components_1#offset_4, 1*square#components_4#offset_1, 2*square#components_4#offset_2, 4*square#components_4#offset_3, 8*square#components_4#offset_4, 1*square#components_7#offset_1, 2*square#components_7#offset_2, 4*square#components_7#offset_3, 8*square#components_7#offset_4, -1*s#offset_1, -2*s#offset_2, -4*s#offset_3, -8*s#offset_4, -16*s#offset_5) Exactly -2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }],
+weighted(1*square#components_2#offset_1, 2*square#components_2#offset_2, 4*square#components_2#offset_3, 8*square#components_2#offset_4, 1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4, 1*square#components_8#offset_1, 2*square#components_8#offset_2, 4*square#components_8#offset_3, 8*square#components_8#offset_4, -1*s#offset_1, -2*s#offset_2, -4*s#offset_3, -8*s#offset_4, -16*s#offset_5) Exactly -2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }],
+weighted(1*square#components_3#offset_1, 2*square#components_3#offset_2, 4*square#components_3#offset_3, 8*square#components_3#offset_4, 1*square#components_6#offset_1, 2*square#components_6#offset_2, 4*square#components_6#offset_3, 8*square#components_6#offset_4, 1*square#components_9#offset_1, 2*square#components_9#offset_2, 4*square#components_9#offset_3, 8*square#components_9#offset_4, -1*s#offset_1, -2*s#offset_2, -4*s#offset_3, -8*s#offset_4, -16*s#offset_5) Exactly -2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 17, structure: BoundedBinary { lower: -23, upper: 0 } }],
+weighted(1*square#components_1#offset_1, 2*square#components_1#offset_2, 4*square#components_1#offset_3, 8*square#components_1#offset_4, 1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4, 1*square#components_9#offset_1, 2*square#components_9#offset_2, 4*square#components_9#offset_3, 8*square#components_9#offset_4, -1*__89, -2*__91, -4*__93, -8*__95, -16*__97, 32*__99) Exactly -3 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 18, structure: BoundedBinary { lower: -24, upper: -1 } }],
+weighted(1*square#components_3#offset_1, 2*square#components_3#offset_2, 4*square#components_3#offset_3, 8*square#components_3#offset_4, 1*square#components_5#offset_1, 2*square#components_5#offset_2, 4*square#components_5#offset_3, 8*square#components_5#offset_4, 1*square#components_7#offset_1, 2*square#components_7#offset_2, 4*square#components_7#offset_3, 8*square#components_7#offset_4, -1*__102, -2*__104, -4*__106, -8*__108, -16*__110, 32*__112) Exactly -3 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 8, end: 12, structure: BoundedBinary { lower: 0, upper: 8 } }, PbTermGroup { start: 12, end: 18, structure: BoundedBinary { lower: -24, upper: -1 } }]
 

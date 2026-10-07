@@ -36,20 +36,20 @@ true,
 true,
 true
 new variables:
-  find x#int_log_1: bool
-  find x#int_log_2: bool
+  find x#twos_complement_1: bool
+  find x#twos_complement_2: bool
 new constraints:
-  or([SATInt(Log, [x#int_log_1,x#int_log_2;int(1..)] [1, 1]) = 1;int(1..)])
+  or([SATInt(Log, [x#twos_complement_1,x#twos_complement_2;int(1..)] [1, 1]) = 1;int(1..)])
 
 --
 
-SATInt(Log, [x#int_log_1,x#int_log_2;int(1..)] [1, 1]) = 1
+SATInt(Log, [x#twos_complement_1,x#twos_complement_2;int(1..)] [1, 1]) = 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#int_log_1, -2*x#int_log_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }]
+  define(__0 <-> integer-weighted(1*x#twos_complement_1, -2*x#twos_complement_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }]
 
 --
 
@@ -87,8 +87,8 @@ new SAT encoding decisions:
 Final model:
 
 find x: int(1..1)
-find x#int_log_1: bool
-find x#int_log_2: bool
+find x#twos_complement_1: bool
+find x#twos_complement_2: bool
 findAux __0: bool
 
 such that
@@ -105,6 +105,6 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#int_log_1, -2*x#int_log_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }],
+define(__0 <-> integer-weighted(1*x#twos_complement_1, -2*x#twos_complement_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }],
 assert(__0) using tseitin
 

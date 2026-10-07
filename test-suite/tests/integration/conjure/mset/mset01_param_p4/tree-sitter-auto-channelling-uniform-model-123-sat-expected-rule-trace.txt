@@ -24,34 +24,31 @@ x#occurrence_1
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#occurrence_1
 new variables:
-  find x#occurrence_1#int_order_1: bool
-  find x#occurrence_1#int_order_2: bool
-  find x#occurrence_1#int_order_3: bool
+  find x#occurrence_1#offset_1: bool
+  find x#occurrence_1#offset_2: bool
 new constraints:
-  x#occurrence_1#int_order_1
-  or([!(x#occurrence_1#int_order_2),x#occurrence_1#int_order_1;int(1..)])
-  or([!(x#occurrence_1#int_order_3),x#occurrence_1#int_order_2;int(1..)])
-  or([and([SATInt(Order, [x#occurrence_1#int_order_1,x#occurrence_1#int_order_2,x#occurrence_1#int_order_3;int(1..)] [0, 2]) >= 0,SATInt(Order, [x#occurrence_1#int_order_1,x#occurrence_1#int_order_2,x#occurrence_1#int_order_3;int(1..)] [0, 2]) <= 2;int(1..)]);int(1..)])
+  or([!(x#occurrence_1#offset_2),and([!(x#occurrence_1#offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [x#occurrence_1#offset_1,x#occurrence_1#offset_2;int(1..)] [0, 2]) >= 0,SATInt(Offset, [x#occurrence_1#offset_1,x#occurrence_1#offset_2;int(1..)] [0, 2]) <= 2;int(1..)]);int(1..)])
 
 --
 
-SATInt(Order, [x#occurrence_1#int_order_1,x#occurrence_1#int_order_2,x#occurrence_1#int_order_3;int(1..)] [0, 2]) >= 0
+SATInt(Offset, [x#occurrence_1#offset_1,x#occurrence_1#offset_2;int(1..)] [0, 2]) >= 0
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#occurrence_1#int_order_2, 1*x#occurrence_1#int_order_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
+  define(__0 <-> integer-weighted(1*x#occurrence_1#offset_1, 2*x#occurrence_1#offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
-SATInt(Order, [x#occurrence_1#int_order_1,x#occurrence_1#int_order_2,x#occurrence_1#int_order_3;int(1..)] [0, 2]) <= 2
+SATInt(Offset, [x#occurrence_1#offset_1,x#occurrence_1#offset_2;int(1..)] [0, 2]) <= 2
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#occurrence_1#int_order_2, 1*x#occurrence_1#int_order_3) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
+  define(__1 <-> integer-weighted(1*x#occurrence_1#offset_1, 2*x#occurrence_1#offset_2) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
@@ -59,14 +56,11 @@ x#occurrence_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#occurrence_2
 new variables:
-  find x#occurrence_2#int_order_1: bool
-  find x#occurrence_2#int_order_2: bool
-  find x#occurrence_2#int_order_3: bool
+  find x#occurrence_2#offset_1: bool
+  find x#occurrence_2#offset_2: bool
 new constraints:
-  x#occurrence_2#int_order_1
-  or([!(x#occurrence_2#int_order_2),x#occurrence_2#int_order_1;int(1..)])
-  or([!(x#occurrence_2#int_order_3),x#occurrence_2#int_order_2;int(1..)])
-  or([and([SATInt(Order, [x#occurrence_2#int_order_1,x#occurrence_2#int_order_2,x#occurrence_2#int_order_3;int(1..)] [0, 2]) >= 0,SATInt(Order, [x#occurrence_2#int_order_1,x#occurrence_2#int_order_2,x#occurrence_2#int_order_3;int(1..)] [0, 2]) <= 2;int(1..)]);int(1..)])
+  or([!(x#occurrence_2#offset_2),and([!(x#occurrence_2#offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [x#occurrence_2#offset_1,x#occurrence_2#offset_2;int(1..)] [0, 2]) >= 0,SATInt(Offset, [x#occurrence_2#offset_1,x#occurrence_2#offset_2;int(1..)] [0, 2]) <= 2;int(1..)]);int(1..)])
 
 --
 
@@ -76,27 +70,27 @@ __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*x#occurrence_1#int_order_2, 1*x#occurrence_1#int_order_3, 1*x#occurrence_2#int_order_2, 1*x#occurrence_2#int_order_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }, PbTermGroup { start: 2, end: 4, structure: Chain }]
+  define(__2 <-> integer-weighted(1*x#occurrence_1#offset_1, 2*x#occurrence_1#offset_2, 1*x#occurrence_2#offset_1, 2*x#occurrence_2#offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
-SATInt(Order, [x#occurrence_2#int_order_1,x#occurrence_2#int_order_2,x#occurrence_2#int_order_3;int(1..)] [0, 2]) >= 0
+SATInt(Offset, [x#occurrence_2#offset_1,x#occurrence_2#offset_2;int(1..)] [0, 2]) >= 0
    ~~> select_integer_relation ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*x#occurrence_2#int_order_2, 1*x#occurrence_2#int_order_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
+  define(__3 <-> integer-weighted(1*x#occurrence_2#offset_1, 2*x#occurrence_2#offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
-SATInt(Order, [x#occurrence_2#int_order_1,x#occurrence_2#int_order_2,x#occurrence_2#int_order_3;int(1..)] [0, 2]) <= 2
+SATInt(Offset, [x#occurrence_2#offset_1,x#occurrence_2#offset_2;int(1..)] [0, 2]) <= 2
    ~~> select_integer_relation ([("SAT", 18500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(1*x#occurrence_2#int_order_2, 1*x#occurrence_2#int_order_3) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
+  define(__4 <-> integer-weighted(1*x#occurrence_2#offset_1, 2*x#occurrence_2#offset_2) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
@@ -114,27 +108,19 @@ x#occurrence_2
 
 mset(1,2) = x,
 and([__2,sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)]),
-x#occurrence_1#int_order_1,
-or([!(x#occurrence_1#int_order_2),x#occurrence_1#int_order_1;int(1..)]),
-or([!(x#occurrence_1#int_order_3),x#occurrence_1#int_order_2;int(1..)]),
+or([!(x#occurrence_1#offset_2),and([!(x#occurrence_1#offset_1);int(1..)]);int(1..)]),
 or([and([__0,__1;int(1..)]);int(1..)]),
-x#occurrence_2#int_order_1,
-or([!(x#occurrence_2#int_order_2),x#occurrence_2#int_order_1;int(1..)]),
-or([!(x#occurrence_2#int_order_3),x#occurrence_2#int_order_2;int(1..)]),
+or([!(x#occurrence_2#offset_2),and([!(x#occurrence_2#offset_1);int(1..)]);int(1..)]),
 or([and([__3,__4;int(1..)]);int(1..)])
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 mset(1,2) = x,
 and([__2,true;int(1..)]),
-x#occurrence_1#int_order_1,
-or([!(x#occurrence_1#int_order_2),x#occurrence_1#int_order_1;int(1..)]),
-or([!(x#occurrence_1#int_order_3),x#occurrence_1#int_order_2;int(1..)]),
+or([!(x#occurrence_1#offset_2),and([!(x#occurrence_1#offset_1);int(1..)]);int(1..)]),
 or([and([__0,__1;int(1..)]);int(1..)]),
-x#occurrence_2#int_order_1,
-or([!(x#occurrence_2#int_order_2),x#occurrence_2#int_order_1;int(1..)]),
-or([!(x#occurrence_2#int_order_3),x#occurrence_2#int_order_2;int(1..)]),
+or([!(x#occurrence_2#offset_2),and([!(x#occurrence_2#offset_1);int(1..)]);int(1..)]),
 or([and([__3,__4;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  weighted(1*x#occurrence_1#int_order_2, 1*x#occurrence_1#int_order_3, 1*x#occurrence_2#int_order_2, 1*x#occurrence_2#int_order_3) AtMost 4 using None with [PbTermGroup { start: 0, end: 2, structure: Chain }, PbTermGroup { start: 2, end: 4, structure: Chain }]
+  weighted(1*x#occurrence_1#offset_1, 2*x#occurrence_1#offset_2, 1*x#occurrence_2#offset_1, 2*x#occurrence_2#offset_2) AtMost 4 using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
@@ -162,7 +148,7 @@ __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> integer-weighted(1*x#occurrence_1#int_order_2, 1*x#occurrence_1#int_order_3) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
+  define(__5 <-> integer-weighted(1*x#occurrence_1#offset_1, 2*x#occurrence_1#offset_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
@@ -172,47 +158,47 @@ __6
 new variables:
   findAux __6: bool
 new SAT encoding decisions:
-  define(__6 <-> integer-weighted(1*x#occurrence_2#int_order_2, 1*x#occurrence_2#int_order_3) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
+  define(__6 <-> integer-weighted(1*x#occurrence_2#offset_1, 2*x#occurrence_2#offset_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
-!(x#occurrence_1#int_order_2)
+!(x#occurrence_1#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __7
 new variables:
   findAux __7: bool
 new SAT encoding decisions:
-  define(__7 <-> !(x#occurrence_1#int_order_2)) using tseitin
+  define(__7 <-> !(x#occurrence_1#offset_2)) using tseitin
 
 --
 
-!(x#occurrence_1#int_order_3)
+!(x#occurrence_2#offset_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __8
 new variables:
   findAux __8: bool
 new SAT encoding decisions:
-  define(__8 <-> !(x#occurrence_1#int_order_3)) using tseitin
+  define(__8 <-> !(x#occurrence_2#offset_2)) using tseitin
 
 --
 
-!(x#occurrence_2#int_order_2)
+!(x#occurrence_1#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __9
 new variables:
   findAux __9: bool
 new SAT encoding decisions:
-  define(__9 <-> !(x#occurrence_2#int_order_2)) using tseitin
+  define(__9 <-> !(x#occurrence_1#offset_1)) using tseitin
 
 --
 
-!(x#occurrence_2#int_order_3)
+!(x#occurrence_2#offset_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __10
 new variables:
   findAux __10: bool
 new SAT encoding decisions:
-  define(__10 <-> !(x#occurrence_2#int_order_3)) using tseitin
+  define(__10 <-> !(x#occurrence_2#offset_1)) using tseitin
 
 --
 
@@ -231,6 +217,18 @@ and([__0,__1;int(1..)])
 or([and([__3,__4;int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
 and([__3,__4;int(1..)])
+
+--
+
+and([__9;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__9
+
+--
+
+and([__10;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__10
 
 --
 
@@ -264,65 +262,37 @@ new SAT encoding decisions:
 
 --
 
-or([__7,x#occurrence_1#int_order_1;int(1..)])
+or([__7,__9;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __14
 new variables:
   findAux __14: bool
 new SAT encoding decisions:
-  define(__14 <-> or([__7,x#occurrence_1#int_order_1;int(1..)])) using tseitin
+  define(__14 <-> or([__7,__9;int(1..)])) using tseitin
 
 --
 
-or([__8,x#occurrence_1#int_order_2;int(1..)])
+or([__8,__10;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __15
 new variables:
   findAux __15: bool
 new SAT encoding decisions:
-  define(__15 <-> or([__8,x#occurrence_1#int_order_2;int(1..)])) using tseitin
-
---
-
-or([__9,x#occurrence_2#int_order_1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__16
-new variables:
-  findAux __16: bool
-new SAT encoding decisions:
-  define(__16 <-> or([__9,x#occurrence_2#int_order_1;int(1..)])) using tseitin
-
---
-
-or([__10,x#occurrence_2#int_order_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__17
-new variables:
-  findAux __17: bool
-new SAT encoding decisions:
-  define(__17 <-> or([__10,x#occurrence_2#int_order_2;int(1..)])) using tseitin
+  define(__15 <-> or([__8,__10;int(1..)])) using tseitin
 
 --
 
 __13,
 __2,
-x#occurrence_1#int_order_1,
 __14,
-__15,
 __11,
-x#occurrence_2#int_order_1,
-__16,
-__17,
+__15,
 __12
    ~~> remove_single_atom ([("SAT", 8400)])
 __2,
-x#occurrence_1#int_order_1,
 __14,
-__15,
 __11,
-x#occurrence_2#int_order_1,
-__16,
-__17,
+__15,
 __12
 new SAT encoding decisions:
   assert(__13) using tseitin
@@ -330,130 +300,50 @@ new SAT encoding decisions:
 --
 
 __2,
-x#occurrence_1#int_order_1,
 __14,
-__15,
 __11,
-x#occurrence_2#int_order_1,
-__16,
-__17,
+__15,
 __12
    ~~> remove_single_atom ([("SAT", 8400)])
-x#occurrence_1#int_order_1,
 __14,
-__15,
 __11,
-x#occurrence_2#int_order_1,
-__16,
-__17,
+__15,
 __12
 new SAT encoding decisions:
   assert(__2) using tseitin
 
 --
 
-x#occurrence_1#int_order_1,
 __14,
-__15,
 __11,
-x#occurrence_2#int_order_1,
-__16,
-__17,
+__15,
 __12
    ~~> remove_single_atom ([("SAT", 8400)])
-__14,
-__15,
 __11,
-x#occurrence_2#int_order_1,
-__16,
-__17,
-__12
-new SAT encoding decisions:
-  assert(x#occurrence_1#int_order_1) using tseitin
-
---
-
-__14,
 __15,
-__11,
-x#occurrence_2#int_order_1,
-__16,
-__17,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-__15,
-__11,
-x#occurrence_2#int_order_1,
-__16,
-__17,
 __12
 new SAT encoding decisions:
   assert(__14) using tseitin
 
 --
 
+__11,
 __15,
-__11,
-x#occurrence_2#int_order_1,
-__16,
-__17,
 __12
    ~~> remove_single_atom ([("SAT", 8400)])
-__11,
-x#occurrence_2#int_order_1,
-__16,
-__17,
-__12
-new SAT encoding decisions:
-  assert(__15) using tseitin
-
---
-
-__11,
-x#occurrence_2#int_order_1,
-__16,
-__17,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-x#occurrence_2#int_order_1,
-__16,
-__17,
+__15,
 __12
 new SAT encoding decisions:
   assert(__11) using tseitin
 
 --
 
-x#occurrence_2#int_order_1,
-__16,
-__17,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-__16,
-__17,
-__12
-new SAT encoding decisions:
-  assert(x#occurrence_2#int_order_1) using tseitin
-
---
-
-__16,
-__17,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-__17,
-__12
-new SAT encoding decisions:
-  assert(__16) using tseitin
-
---
-
-__17,
+__15,
 __12
    ~~> remove_single_atom ([("SAT", 8400)])
 __12
 new SAT encoding decisions:
-  assert(__17) using tseitin
+  assert(__15) using tseitin
 
 --
 
@@ -471,14 +361,12 @@ letting g be mset(1,2)
 find x: mset (representation occurrence, maxSize 4, maxOccur(2)) of int(1..2)
 find x#occurrence_1: int(0..2)
 find x#occurrence_2: int(0..2)
-find x#occurrence_1#int_order_1: bool
-find x#occurrence_1#int_order_2: bool
-find x#occurrence_1#int_order_3: bool
+find x#occurrence_1#offset_1: bool
+find x#occurrence_1#offset_2: bool
 findAux __0: bool
 findAux __1: bool
-find x#occurrence_2#int_order_1: bool
-find x#occurrence_2#int_order_2: bool
-find x#occurrence_2#int_order_3: bool
+find x#occurrence_2#offset_1: bool
+find x#occurrence_2#offset_2: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
@@ -493,8 +381,6 @@ findAux __12: bool
 findAux __13: bool
 findAux __14: bool
 findAux __15: bool
-findAux __16: bool
-findAux __17: bool
 
 such that
 
@@ -502,33 +388,27 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#occurrence_1#int_order_2, 1*x#occurrence_1#int_order_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
-define(__1 <-> integer-weighted(1*x#occurrence_1#int_order_2, 1*x#occurrence_1#int_order_3) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
-define(__2 <-> integer-weighted(1*x#occurrence_1#int_order_2, 1*x#occurrence_1#int_order_3, 1*x#occurrence_2#int_order_2, 1*x#occurrence_2#int_order_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }, PbTermGroup { start: 2, end: 4, structure: Chain }],
-define(__3 <-> integer-weighted(1*x#occurrence_2#int_order_2, 1*x#occurrence_2#int_order_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
-define(__4 <-> integer-weighted(1*x#occurrence_2#int_order_2, 1*x#occurrence_2#int_order_3) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
-weighted(1*x#occurrence_1#int_order_2, 1*x#occurrence_1#int_order_3, 1*x#occurrence_2#int_order_2, 1*x#occurrence_2#int_order_3) AtMost 4 using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }, PbTermGroup { start: 2, end: 4, structure: Chain }],
-define(__5 <-> integer-weighted(1*x#occurrence_1#int_order_2, 1*x#occurrence_1#int_order_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
-define(__6 <-> integer-weighted(1*x#occurrence_2#int_order_2, 1*x#occurrence_2#int_order_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
-define(__7 <-> !(x#occurrence_1#int_order_2)) using tseitin,
-define(__8 <-> !(x#occurrence_1#int_order_3)) using tseitin,
-define(__9 <-> !(x#occurrence_2#int_order_2)) using tseitin,
-define(__10 <-> !(x#occurrence_2#int_order_3)) using tseitin,
+define(__0 <-> integer-weighted(1*x#occurrence_1#offset_1, 2*x#occurrence_1#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__1 <-> integer-weighted(1*x#occurrence_1#offset_1, 2*x#occurrence_1#offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__2 <-> integer-weighted(1*x#occurrence_1#offset_1, 2*x#occurrence_1#offset_2, 1*x#occurrence_2#offset_1, 2*x#occurrence_2#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__3 <-> integer-weighted(1*x#occurrence_2#offset_1, 2*x#occurrence_2#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__4 <-> integer-weighted(1*x#occurrence_2#offset_1, 2*x#occurrence_2#offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+weighted(1*x#occurrence_1#offset_1, 2*x#occurrence_1#offset_2, 1*x#occurrence_2#offset_1, 2*x#occurrence_2#offset_2) AtMost 4 using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__5 <-> integer-weighted(1*x#occurrence_1#offset_1, 2*x#occurrence_1#offset_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__6 <-> integer-weighted(1*x#occurrence_2#offset_1, 2*x#occurrence_2#offset_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__7 <-> !(x#occurrence_1#offset_2)) using tseitin,
+define(__8 <-> !(x#occurrence_2#offset_2)) using tseitin,
+define(__9 <-> !(x#occurrence_1#offset_1)) using tseitin,
+define(__10 <-> !(x#occurrence_2#offset_1)) using tseitin,
 define(__11 <-> and([__0,__1;int(1..)])) using tseitin,
 define(__12 <-> and([__3,__4;int(1..)])) using tseitin,
 define(__13 <-> and([__5,__6;int(1..)])) using tseitin,
-define(__14 <-> or([__7,x#occurrence_1#int_order_1;int(1..)])) using tseitin,
-define(__15 <-> or([__8,x#occurrence_1#int_order_2;int(1..)])) using tseitin,
-define(__16 <-> or([__9,x#occurrence_2#int_order_1;int(1..)])) using tseitin,
-define(__17 <-> or([__10,x#occurrence_2#int_order_2;int(1..)])) using tseitin,
+define(__14 <-> or([__7,__9;int(1..)])) using tseitin,
+define(__15 <-> or([__8,__10;int(1..)])) using tseitin,
 assert(__13) using tseitin,
 assert(__2) using tseitin,
-assert(x#occurrence_1#int_order_1) using tseitin,
 assert(__14) using tseitin,
-assert(__15) using tseitin,
 assert(__11) using tseitin,
-assert(x#occurrence_2#int_order_1) using tseitin,
-assert(__16) using tseitin,
-assert(__17) using tseitin,
+assert(__15) using tseitin,
 assert(__12) using tseitin
 

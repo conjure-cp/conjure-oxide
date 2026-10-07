@@ -8,31 +8,31 @@ true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true
 new variables:
-  find x#int_rank_1: bool
-  find x#int_rank_2: bool
-  find x#int_rank_3: bool
+  find x#rank_1: bool
+  find x#rank_2: bool
+  find x#rank_3: bool
 new constraints:
-  or([!(x#int_rank_3),and([!(x#int_rank_2),or([!(x#int_rank_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([!(x#rank_3),and([!(x#rank_2),or([!(x#rank_1),true;int(1..)]);int(1..)]);int(1..)])
 
 --
 
-!(x#int_rank_3)
+!(x#rank_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> !(x#int_rank_3)) using tseitin
+  define(__0 <-> !(x#rank_3)) using tseitin
 
 --
 
-!(x#int_rank_2)
+!(x#rank_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> !(x#int_rank_2)) using tseitin
+  define(__1 <-> !(x#rank_2)) using tseitin
 
 --
 
@@ -64,9 +64,9 @@ new SAT encoding decisions:
 Final model:
 
 find x: int(0, 2..3, 5..7)
-find x#int_rank_1: bool
-find x#int_rank_2: bool
-find x#int_rank_3: bool
+find x#rank_1: bool
+find x#rank_2: bool
+find x#rank_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -77,8 +77,8 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !(x#int_rank_3)) using tseitin,
-define(__1 <-> !(x#int_rank_2)) using tseitin,
+define(__0 <-> !(x#rank_3)) using tseitin,
+define(__1 <-> !(x#rank_2)) using tseitin,
 define(__2 <-> or([__0,__1;int(1..)])) using tseitin,
 assert(__2) using tseitin
 

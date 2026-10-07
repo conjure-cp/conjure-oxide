@@ -1,0 +1,189 @@
+Model before rewriting:
+
+find a: int(1..7)
+find c: int(7..10)
+
+such that
+
+sum([min([5,7;int(1..2)]),a;int(1..)]) <= 10,
+sum([min([5,7;int(1..2)]),3;int(1..)]) <= c
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+new variables:
+  find c#direct_1: bool
+  find c#direct_2: bool
+  find c#direct_3: bool
+  find c#direct_4: bool
+new constraints:
+  sum([toInt(c#direct_1),toInt(c#direct_2),toInt(c#direct_3),toInt(c#direct_4);int(1..)]) <= 1
+  or([c#direct_1,c#direct_2,c#direct_3,c#direct_4;int(1..)])
+
+--
+
+8 <= c
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(-7*c#direct_1, -8*c#direct_2, -9*c#direct_3, -10*c#direct_4) LessEqual -8) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+
+--
+
+sum([5,a;int(1..)]) <= 10,
+__0,
+sum([toInt(c#direct_1),toInt(c#direct_2),toInt(c#direct_3),toInt(c#direct_4);int(1..)]) <= 1,
+or([c#direct_1,c#direct_2,c#direct_3,c#direct_4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+sum([5,a;int(1..)]) <= 10,
+__0,
+or([c#direct_1,c#direct_2,c#direct_3,c#direct_4;int(1..)])
+new SAT encoding decisions:
+  at-most-one(c#direct_1, c#direct_2, c#direct_3, c#direct_4) using None
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#direct_1: bool
+  find a#direct_2: bool
+  find a#direct_3: bool
+  find a#direct_4: bool
+  find a#direct_5: bool
+  find a#direct_6: bool
+  find a#direct_7: bool
+new constraints:
+  sum([toInt(a#direct_1),toInt(a#direct_2),toInt(a#direct_3),toInt(a#direct_4),toInt(a#direct_5),toInt(a#direct_6),toInt(a#direct_7);int(1..)]) <= 1
+  or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])
+
+--
+
+sum([5,a;int(1..)]) <= 10
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*a#direct_1, 2*a#direct_2, 3*a#direct_3, 4*a#direct_4, 5*a#direct_5, 6*a#direct_6, 7*a#direct_7) LessEqual 5) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+__1,
+__0,
+or([c#direct_1,c#direct_2,c#direct_3,c#direct_4;int(1..)]),
+sum([toInt(a#direct_1),toInt(a#direct_2),toInt(a#direct_3),toInt(a#direct_4),toInt(a#direct_5),toInt(a#direct_6),toInt(a#direct_7);int(1..)]) <= 1,
+or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+__1,
+__0,
+or([c#direct_1,c#direct_2,c#direct_3,c#direct_4;int(1..)]),
+or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])
+new SAT encoding decisions:
+  at-most-one(a#direct_1, a#direct_2, a#direct_3, a#direct_4, a#direct_5, a#direct_6, a#direct_7) using None
+
+--
+
+or([c#direct_1,c#direct_2,c#direct_3,c#direct_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> or([c#direct_1,c#direct_2,c#direct_3,c#direct_4;int(1..)])) using tseitin
+
+--
+
+or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])) using tseitin
+
+--
+
+__1,
+__0,
+__2,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+__0,
+__2,
+__3
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+__0,
+__2,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+__2,
+__3
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+__2,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+__3
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__3) using tseitin
+
+--
+
+Final model:
+
+find a: int(1..7)
+find c: int(7..10)
+find c#direct_1: bool
+find c#direct_2: bool
+find c#direct_3: bool
+find c#direct_4: bool
+findAux __0: bool
+find a#direct_1: bool
+find a#direct_2: bool
+find a#direct_3: bool
+find a#direct_4: bool
+find a#direct_5: bool
+find a#direct_6: bool
+find a#direct_7: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(-7*c#direct_1, -8*c#direct_2, -9*c#direct_3, -10*c#direct_4) LessEqual -8) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+at-most-one(c#direct_1, c#direct_2, c#direct_3, c#direct_4) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__1 <-> integer-weighted(1*a#direct_1, 2*a#direct_2, 3*a#direct_3, 4*a#direct_4, 5*a#direct_5, 6*a#direct_6, 7*a#direct_7) LessEqual 5) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+at-most-one(a#direct_1, a#direct_2, a#direct_3, a#direct_4, a#direct_5, a#direct_6, a#direct_7) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+define(__2 <-> or([c#direct_1,c#direct_2,c#direct_3,c#direct_4;int(1..)])) using tseitin,
+define(__3 <-> or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])) using tseitin,
+assert(__1) using tseitin,
+assert(__0) using tseitin,
+assert(__2) using tseitin,
+assert(__3) using tseitin
+

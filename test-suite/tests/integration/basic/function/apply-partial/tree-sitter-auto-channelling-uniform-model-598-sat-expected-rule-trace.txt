@@ -23,45 +23,45 @@ y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
 new variables:
-  find y#int_order_1: bool
-  find y#int_order_2: bool
+  find y#order_1: bool
+  find y#order_2: bool
 new constraints:
-  y#int_order_1
-  or([!(y#int_order_2),y#int_order_1;int(1..)])
-  or([and([SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) >= 1,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) <= 2;int(1..)]);int(1..)])
+  y#order_1
+  or([!(y#order_2),y#order_1;int(1..)])
+  or([and([SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) >= 1,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) <= 2;int(1..)]);int(1..)])
 
 --
 
-SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) >= 1
+SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*y#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+  define(__0 <-> integer-weighted(1*y#order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
 
 --
 
-SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) <= 2
+SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) <= 2
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*y#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+  define(__1 <-> integer-weighted(1*y#order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
 
 --
 
 image(f,y) = 1,
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
-y#int_order_1,
-or([!(y#int_order_2),y#int_order_1;int(1..)]),
+y#order_1,
+or([!(y#order_2),y#order_1;int(1..)]),
 or([and([__0,__1;int(1..)]);int(1..)])
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 image(f,y) = 1,
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
-y#int_order_1,
-or([!(y#int_order_2),y#int_order_1;int(1..)]),
+y#order_1,
+or([!(y#order_2),y#order_1;int(1..)]),
 or([and([__0,__1;int(1..)]);int(1..)])
 new variables:
   find f#as_relation_1#packed_1: int(0..3)
@@ -74,36 +74,36 @@ f#as_relation_1#packed_1
    ~~> select_representation ([("ReprGeneral", 10000)])
 f#as_relation_1#packed_1
 new variables:
-  find f#as_relation_1#packed_1#int_order_1: bool
-  find f#as_relation_1#packed_1#int_order_2: bool
-  find f#as_relation_1#packed_1#int_order_3: bool
-  find f#as_relation_1#packed_1#int_order_4: bool
+  find f#as_relation_1#packed_1#order_1: bool
+  find f#as_relation_1#packed_1#order_2: bool
+  find f#as_relation_1#packed_1#order_3: bool
+  find f#as_relation_1#packed_1#order_4: bool
 new constraints:
-  f#as_relation_1#packed_1#int_order_1
-  or([!(f#as_relation_1#packed_1#int_order_2),f#as_relation_1#packed_1#int_order_1;int(1..)])
-  or([!(f#as_relation_1#packed_1#int_order_3),f#as_relation_1#packed_1#int_order_2;int(1..)])
-  or([!(f#as_relation_1#packed_1#int_order_4),f#as_relation_1#packed_1#int_order_3;int(1..)])
-  or([and([SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) >= 0,SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+  f#as_relation_1#packed_1#order_1
+  or([!(f#as_relation_1#packed_1#order_2),f#as_relation_1#packed_1#order_1;int(1..)])
+  or([!(f#as_relation_1#packed_1#order_3),f#as_relation_1#packed_1#order_2;int(1..)])
+  or([!(f#as_relation_1#packed_1#order_4),f#as_relation_1#packed_1#order_3;int(1..)])
+  or([and([SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) >= 0,SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
 
 --
 
-SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) >= 0
+SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) >= 0
    ~~> select_integer_relation ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*f#as_relation_1#packed_1#int_order_2, 1*f#as_relation_1#packed_1#int_order_3, 1*f#as_relation_1#packed_1#int_order_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
+  define(__2 <-> integer-weighted(1*f#as_relation_1#packed_1#order_2, 1*f#as_relation_1#packed_1#order_3, 1*f#as_relation_1#packed_1#order_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
 
 --
 
-SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) <= 3
+SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) <= 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*f#as_relation_1#packed_1#int_order_2, 1*f#as_relation_1#packed_1#int_order_3, 1*f#as_relation_1#packed_1#int_order_4) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
+  define(__3 <-> integer-weighted(1*f#as_relation_1#packed_1#order_2, 1*f#as_relation_1#packed_1#order_3, 1*f#as_relation_1#packed_1#order_4) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
 
 --
 
@@ -115,59 +115,59 @@ f#as_relation_1#packed_1
 
 y
    ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])
+SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])
 
 --
 
 f#as_relation_1#packed_1
    ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3])
+SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3])
 
 --
 
 f#as_relation_1#packed_1
    ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3])
+SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3])
 
 --
 
-!(f#as_relation_1#packed_1#int_order_3)
+!(f#as_relation_1#packed_1#order_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin
+  define(__4 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin
 
 --
 
-!(f#as_relation_1#packed_1#int_order_4)
+!(f#as_relation_1#packed_1#order_4)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin
+  define(__5 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin
 
 --
 
-!(f#as_relation_1#packed_1#int_order_2)
+!(f#as_relation_1#packed_1#order_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __6
 new variables:
   findAux __6: bool
 new SAT encoding decisions:
-  define(__6 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin
+  define(__6 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin
 
 --
 
-!(y#int_order_2)
+!(y#order_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __7
 new variables:
   findAux __7: bool
 new SAT encoding decisions:
-  define(__7 <-> !(y#int_order_2)) using tseitin
+  define(__7 <-> !(y#order_2)) using tseitin
 
 --
 
@@ -195,33 +195,33 @@ and([__0,__1;int(1..)])
 
 --
 
-or([__4,f#as_relation_1#packed_1#int_order_2;int(1..)])
+or([__4,f#as_relation_1#packed_1#order_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __8
 new variables:
   findAux __8: bool
 new SAT encoding decisions:
-  define(__8 <-> or([__4,f#as_relation_1#packed_1#int_order_2;int(1..)])) using tseitin
+  define(__8 <-> or([__4,f#as_relation_1#packed_1#order_2;int(1..)])) using tseitin
 
 --
 
-or([__5,f#as_relation_1#packed_1#int_order_3;int(1..)])
+or([__5,f#as_relation_1#packed_1#order_3;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __9
 new variables:
   findAux __9: bool
 new SAT encoding decisions:
-  define(__9 <-> or([__5,f#as_relation_1#packed_1#int_order_3;int(1..)])) using tseitin
+  define(__9 <-> or([__5,f#as_relation_1#packed_1#order_3;int(1..)])) using tseitin
 
 --
 
-or([__6,f#as_relation_1#packed_1#int_order_1;int(1..)])
+or([__6,f#as_relation_1#packed_1#order_1;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __10
 new variables:
   findAux __10: bool
 new SAT encoding decisions:
-  define(__10 <-> or([__6,f#as_relation_1#packed_1#int_order_1;int(1..)])) using tseitin
+  define(__10 <-> or([__6,f#as_relation_1#packed_1#order_1;int(1..)])) using tseitin
 
 --
 
@@ -245,59 +245,59 @@ new SAT encoding decisions:
 
 --
 
-or([__7,y#int_order_1;int(1..)])
+or([__7,y#order_1;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __13
 new variables:
   findAux __13: bool
 new SAT encoding decisions:
-  define(__13 <-> or([__7,y#int_order_1;int(1..)])) using tseitin
+  define(__13 <-> or([__7,y#order_1;int(1..)])) using tseitin
 
 --
 
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-y#int_order_1,
+y#order_1,
 __13,
 __12,
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-f#as_relation_1#packed_1#int_order_1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+f#as_relation_1#packed_1#order_1,
 __10,
 __8,
 __9,
 __11
    ~~> remove_single_atom ([("SAT", 8400)])
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
 __13,
 __12,
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-f#as_relation_1#packed_1#int_order_1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+f#as_relation_1#packed_1#order_1,
 __10,
 __8,
 __9,
 __11
 new SAT encoding decisions:
-  assert(y#int_order_1) using tseitin
+  assert(y#order_1) using tseitin
 
 --
 
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
 __13,
 __12,
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-f#as_relation_1#packed_1#int_order_1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+f#as_relation_1#packed_1#order_1,
 __10,
 __8,
 __9,
 __11
    ~~> remove_single_atom ([("SAT", 8400)])
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
 __12,
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-f#as_relation_1#packed_1#int_order_1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+f#as_relation_1#packed_1#order_1,
 __10,
 __8,
 __9,
@@ -307,20 +307,20 @@ new SAT encoding decisions:
 
 --
 
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
 __12,
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-f#as_relation_1#packed_1#int_order_1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+f#as_relation_1#packed_1#order_1,
 __10,
 __8,
 __9,
 __11
    ~~> remove_single_atom ([("SAT", 8400)])
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-f#as_relation_1#packed_1#int_order_1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+f#as_relation_1#packed_1#order_1,
 __10,
 __8,
 __9,
@@ -330,38 +330,38 @@ new SAT encoding decisions:
 
 --
 
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-f#as_relation_1#packed_1#int_order_1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+f#as_relation_1#packed_1#order_1,
 __10,
 __8,
 __9,
 __11
    ~~> remove_single_atom ([("SAT", 8400)])
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
 __10,
 __8,
 __9,
 __11
 new SAT encoding decisions:
-  assert(f#as_relation_1#packed_1#int_order_1) using tseitin
+  assert(f#as_relation_1#packed_1#order_1) using tseitin
 
 --
 
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
 __10,
 __8,
 __9,
 __11
    ~~> remove_single_atom ([("SAT", 8400)])
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
 __8,
 __9,
 __11
@@ -370,16 +370,16 @@ new SAT encoding decisions:
 
 --
 
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
 __8,
 __9,
 __11
    ~~> remove_single_atom ([("SAT", 8400)])
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
 __9,
 __11
 new SAT encoding decisions:
@@ -387,43 +387,43 @@ new SAT encoding decisions:
 
 --
 
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
 __9,
 __11
    ~~> remove_single_atom ([("SAT", 8400)])
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
 __11
 new SAT encoding decisions:
   assert(__9) using tseitin
 
 --
 
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
 __11
    ~~> remove_single_atom ([("SAT", 8400)])
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])) = 1,
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])) = 1,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1
 new SAT encoding decisions:
   assert(__11) using tseitin
 
 --
 
-image(f,SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]))
+image(f,SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]))
    ~~> image_function_as_relation ([("Base", 8400)])
 {__14 @ __15}
 new variables:
   findAux __14: int(1)
   findAux __15: bool
 new constraints:
-  (__15) <-> (or([ SafeIndex(e,[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e <- f#as_relation_1 ]))
-  (__15) -> ((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),__14) in f#as_relation_1)
+  (__15) <-> (or([ SafeIndex(e,[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e <- f#as_relation_1 ]))
+  (__15) -> ((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),__14) in f#as_relation_1)
 
 --
 
@@ -431,14 +431,14 @@ __14
    ~~> select_representation ([("ReprGeneral", 10000)])
 __14
 new variables:
-  findAux __14#int_order_1: bool
+  findAux __14#order_1: bool
 new constraints:
-  __14#int_order_1
-  or([SATInt(Order, [__14#int_order_1;int(1..)] [1, 1]) = 1;int(1..)])
+  __14#order_1
+  or([SATInt(Order, [__14#order_1;int(1..)] [1, 1]) = 1;int(1..)])
 
 --
 
-SATInt(Order, [__14#int_order_1;int(1..)] [1, 1]) = 1
+SATInt(Order, [__14#order_1;int(1..)] [1, 1]) = 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __16
 new variables:
@@ -462,23 +462,23 @@ __14
 
 __14
    ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])
+SATInt(Order, [__14#order_1;int(1..)] [1, 1])
 
 --
 
 __14
    ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])
+SATInt(Order, [__14#order_1;int(1..)] [1, 1])
 
 --
 
-{SATInt(Order, [__14#int_order_1;int(1..)] [1, 1]) @ __15} = 1
+{SATInt(Order, [__14#order_1;int(1..)] [1, 1]) @ __15} = 1
    ~~> bubble_up ([("Bubble", 8800)])
-{SATInt(Order, [__14#int_order_1;int(1..)] [1, 1]) = 1 @ __15}
+{SATInt(Order, [__14#order_1;int(1..)] [1, 1]) = 1 @ __15}
 
 --
 
-SATInt(Order, [__14#int_order_1;int(1..)] [1, 1]) = 1
+SATInt(Order, [__14#order_1;int(1..)] [1, 1]) = 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __17
 new variables:
@@ -500,9 +500,9 @@ __16
 
 --
 
-(SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])) in f#as_relation_1
+(SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])) in f#as_relation_1
    ~~> membership_relation_packed ([("Base", 8650)])
-or([and([and([SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[1]) = 1,SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[2]) = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[1]) = 2,SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[2]) = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)])
+or([and([and([SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[1]) = 1,SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[2]) = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[1]) = 2,SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[2]) = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)])
 
 --
 
@@ -520,63 +520,63 @@ f#as_relation_1#packed_1
 
 f#as_relation_1#packed_1
    ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3])
+SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3])
 
 --
 
 f#as_relation_1#packed_1
    ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3])
+SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3])
 
 --
 
-and([and([SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[1]) = 1,SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[2]) = 1;int(1..)]),(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)])
+and([and([SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[1]) = 1,SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[2]) = 1;int(1..)]),(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[1]) = 1,SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[2]) = 1,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)])
+and([SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[1]) = 1,SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[2]) = 1,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)])
 
 --
 
-and([and([SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[1]) = 2,SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[2]) = 1;int(1..)]),(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)])
+and([and([SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[1]) = 2,SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[2]) = 1;int(1..)]),(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[1]) = 2,SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[2]) = 1,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)])
+and([SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[1]) = 2,SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[2]) = 1,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)])
 
 --
 
-SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[1])
+SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[1])
    ~~> tuple_literal_index ([("Base", 8700)])
-SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])
+SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])
 
 --
 
-SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[2])
+SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[2])
    ~~> tuple_literal_index ([("Base", 8700)])
-SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])
+SATInt(Order, [__14#order_1;int(1..)] [1, 1])
 
 --
 
-SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[1])
+SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[1])
    ~~> tuple_literal_index ([("Base", 8700)])
-SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])
+SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])
 
 --
 
-SafeIndex((SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]),SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])),[2])
+SafeIndex((SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]),SATInt(Order, [__14#order_1;int(1..)] [1, 1])),[2])
    ~~> tuple_literal_index ([("Base", 8700)])
-SATInt(Order, [__14#int_order_1;int(1..)] [1, 1])
+SATInt(Order, [__14#order_1;int(1..)] [1, 1])
 
 --
 
-SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) = 1
+SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) = 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __18
 new variables:
   findAux __18: bool
 new SAT encoding decisions:
-  define(__18 <-> integer-weighted(1*y#int_order_2) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+  define(__18 <-> integer-weighted(1*y#order_2) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
 
 --
 
-SATInt(Order, [__14#int_order_1;int(1..)] [1, 1]) = 1
+SATInt(Order, [__14#order_1;int(1..)] [1, 1]) = 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __19
 new variables:
@@ -586,17 +586,17 @@ new SAT encoding decisions:
 
 --
 
-SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) = 2
+SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) = 2
    ~~> select_integer_relation ([("SAT", 18500)])
 __20
 new variables:
   findAux __20: bool
 new SAT encoding decisions:
-  define(__20 <-> integer-weighted(1*y#int_order_2) Equal 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+  define(__20 <-> integer-weighted(1*y#order_2) Equal 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
 
 --
 
-SATInt(Order, [__14#int_order_1;int(1..)] [1, 1]) = 1
+SATInt(Order, [__14#order_1;int(1..)] [1, 1]) = 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __21
 new variables:
@@ -606,9 +606,9 @@ new SAT encoding decisions:
 
 --
 
-[ SafeIndex(e,[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e <- f#as_relation_1 ]
+[ SafeIndex(e,[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e <- f#as_relation_1 ]
    ~~> lower_relation_packed_expression_generator ([("Base", 8650)])
-[ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]
+[ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]
 
 --
 
@@ -624,17 +624,17 @@ new SAT encoding decisions:
 
 __22,
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
-(__15) -> (or([and([__18,__19,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]),and([__20,__21,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)])),
-__14#int_order_1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
+(__15) -> (or([and([__18,__19,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]),and([__20,__21,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)])),
+__14#order_1,
 __16
    ~~> remove_single_atom ([("SAT", 8400)])
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
-(__15) -> (or([and([__18,__19,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]),and([__20,__21,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)])),
-__14#int_order_1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
+(__15) -> (or([and([__18,__19,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]),and([__20,__21,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)])),
+__14#order_1,
 __16
 new SAT encoding decisions:
   assert(__22) using tseitin
@@ -642,110 +642,110 @@ new SAT encoding decisions:
 --
 
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
-(__15) -> (or([and([__18,__19,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]),and([__20,__21,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)])),
-__14#int_order_1,
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
+(__15) -> (or([and([__18,__19,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]),and([__20,__21,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)])),
+__14#order_1,
 __16
    ~~> remove_single_atom ([("SAT", 8400)])
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
-(__15) -> (or([and([__18,__19,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]),and([__20,__21,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)])),
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
+(__15) -> (or([and([__18,__19,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]),and([__20,__21,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)])),
 __16
 new SAT encoding decisions:
-  assert(__14#int_order_1) using tseitin
+  assert(__14#order_1) using tseitin
 
 --
 
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
-(__15) -> (or([and([__18,__19,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]),and([__20,__21,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)])),
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
+(__15) -> (or([and([__18,__19,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]),and([__20,__21,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)])),
 __16
    ~~> remove_single_atom ([("SAT", 8400)])
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-sum([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
-(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
-(__15) -> (or([and([__18,__19,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]),and([__20,__21,(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)]))
+sum([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2;int(1..)]) = 1,
+(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
+(__15) -> (or([and([__18,__19,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]),and([__20,__21,(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)]))
 new SAT encoding decisions:
   assert(__16) using tseitin
 
 --
 
-(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1)
+(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1)
    ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), 1) @ 1 != 0}
+{SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), 1) @ 1 != 0}
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), 1)
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), 1)
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1]))
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1]))
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])) % 2
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])) % 2
    ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])),2) @ 2 != 0}
+{SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])),2) @ 2 != 0}
 
 --
 
-(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2)
+(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), 2) @ 2 != 0}
+{SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), 2) @ 2 != 0}
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), 2)
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), 2)
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2]))
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2]))
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])) % 2
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])) % 2
    ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) @ 2 != 0}
+{SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) @ 2 != 0}
 
 --
 
-(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1)
+(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1)
    ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), 1) @ 1 != 0}
+{SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), 1) @ 1 != 0}
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), 1)
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), 1)
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1]))
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1]))
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])) % 2
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])) % 2
    ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])),2) @ 2 != 0}
+{SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])),2) @ 2 != 0}
 
 --
 
-(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2)
+(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), 2) @ 2 != 0}
+{SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), 2) @ 2 != 0}
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), 2)
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), 2)
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2]))
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2]))
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])) % 2
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])) % 2
    ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) @ 2 != 0}
+{SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) @ 2 != 0}
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1]))
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeDiv(SATInt(Log, [__29,__30,false;int(1..)] [0, 3]), SATInt(Log, [true,false;int(1..)] [1, 1]))
 new variables:
@@ -758,14 +758,14 @@ new variables:
   findAux __29: bool
   findAux __30: bool
 new SAT encoding decisions:
-  define(__23 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin
-  define(__24 <-> and([f#as_relation_1#packed_1#int_order_1,__23;int(1..)])) using tseitin
-  define(__25 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin
-  define(__26 <-> and([f#as_relation_1#packed_1#int_order_2,__25;int(1..)])) using tseitin
-  define(__27 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin
-  define(__28 <-> and([f#as_relation_1#packed_1#int_order_3,__27;int(1..)])) using tseitin
-  define(__29 <-> or([__26,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin
-  define(__30 <-> or([__28,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin
+  define(__23 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin
+  define(__24 <-> and([f#as_relation_1#packed_1#order_1,__23;int(1..)])) using tseitin
+  define(__25 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin
+  define(__26 <-> and([f#as_relation_1#packed_1#order_2,__25;int(1..)])) using tseitin
+  define(__27 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin
+  define(__28 <-> and([f#as_relation_1#packed_1#order_3,__27;int(1..)])) using tseitin
+  define(__29 <-> or([__26,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin
+  define(__30 <-> or([__28,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin
 
 --
 
@@ -2187,7 +2187,7 @@ new SAT encoding decisions:
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2]))
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeDiv(SATInt(Log, [__735,__736,false;int(1..)] [0, 3]), SATInt(Log, [false,true,false;int(1..)] [2, 2]))
 new variables:
@@ -2200,14 +2200,14 @@ new variables:
   findAux __735: bool
   findAux __736: bool
 new SAT encoding decisions:
-  define(__729 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin
-  define(__730 <-> and([f#as_relation_1#packed_1#int_order_1,__729;int(1..)])) using tseitin
-  define(__731 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin
-  define(__732 <-> and([f#as_relation_1#packed_1#int_order_2,__731;int(1..)])) using tseitin
-  define(__733 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin
-  define(__734 <-> and([f#as_relation_1#packed_1#int_order_3,__733;int(1..)])) using tseitin
-  define(__735 <-> or([__732,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin
-  define(__736 <-> or([__734,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin
+  define(__729 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin
+  define(__730 <-> and([f#as_relation_1#packed_1#order_1,__729;int(1..)])) using tseitin
+  define(__731 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin
+  define(__732 <-> and([f#as_relation_1#packed_1#order_2,__731;int(1..)])) using tseitin
+  define(__733 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin
+  define(__734 <-> and([f#as_relation_1#packed_1#order_3,__733;int(1..)])) using tseitin
+  define(__735 <-> or([__732,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin
+  define(__736 <-> or([__734,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin
 
 --
 
@@ -3641,18 +3641,18 @@ new SAT encoding decisions:
 
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
 __1435,
-(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
-(__15) -> (or([and([__18,__19,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])),2) = 1;int(1..)]),and([__20,__21,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) = 1;int(1..)]);int(1..)]))
+(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
+(__15) -> (or([and([__18,__19,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])),2) = 1;int(1..)]),and([__20,__21,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) = 1;int(1..)]);int(1..)]))
    ~~> remove_single_atom ([("SAT", 8400)])
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
-(__15) -> (or([and([__18,__19,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])),2) = 1;int(1..)]),and([__20,__21,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) = 1;int(1..)]);int(1..)]))
+(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
+(__15) -> (or([and([__18,__19,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])),2) = 1;int(1..)]),and([__20,__21,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) = 1;int(1..)]);int(1..)]))
 new SAT encoding decisions:
   assert(__1435) using tseitin
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1]))
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeDiv(SATInt(Log, [__1442,__1443,false;int(1..)] [0, 3]), SATInt(Log, [true,false;int(1..)] [1, 1]))
 new variables:
@@ -3665,14 +3665,14 @@ new variables:
   findAux __1442: bool
   findAux __1443: bool
 new SAT encoding decisions:
-  define(__1436 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin
-  define(__1437 <-> and([f#as_relation_1#packed_1#int_order_1,__1436;int(1..)])) using tseitin
-  define(__1438 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin
-  define(__1439 <-> and([f#as_relation_1#packed_1#int_order_2,__1438;int(1..)])) using tseitin
-  define(__1440 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin
-  define(__1441 <-> and([f#as_relation_1#packed_1#int_order_3,__1440;int(1..)])) using tseitin
-  define(__1442 <-> or([__1439,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin
-  define(__1443 <-> or([__1441,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin
+  define(__1436 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin
+  define(__1437 <-> and([f#as_relation_1#packed_1#order_1,__1436;int(1..)])) using tseitin
+  define(__1438 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin
+  define(__1439 <-> and([f#as_relation_1#packed_1#order_2,__1438;int(1..)])) using tseitin
+  define(__1440 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin
+  define(__1441 <-> and([f#as_relation_1#packed_1#order_3,__1440;int(1..)])) using tseitin
+  define(__1442 <-> or([__1439,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin
+  define(__1443 <-> or([__1441,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin
 
 --
 
@@ -5114,9 +5114,9 @@ new SAT encoding decisions:
 
 --
 
-or([__2143,and([__20,__21,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) = 1;int(1..)]);int(1..)])
+or([__2143,and([__20,__21,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) = 1;int(1..)]);int(1..)])
    ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([__2143,__20;int(1..)]),or([__2143,__21;int(1..)]),or([__2143,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) = 1;int(1..)]);int(1..)])
+and([or([__2143,__20;int(1..)]),or([__2143,__21;int(1..)]),or([__2143,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) = 1;int(1..)]);int(1..)])
 
 --
 
@@ -5140,7 +5140,7 @@ new SAT encoding decisions:
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2]))
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeDiv(SATInt(Log, [__2152,__2153,false;int(1..)] [0, 3]), SATInt(Log, [false,true,false;int(1..)] [2, 2]))
 new variables:
@@ -5153,14 +5153,14 @@ new variables:
   findAux __2152: bool
   findAux __2153: bool
 new SAT encoding decisions:
-  define(__2146 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin
-  define(__2147 <-> and([f#as_relation_1#packed_1#int_order_1,__2146;int(1..)])) using tseitin
-  define(__2148 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin
-  define(__2149 <-> and([f#as_relation_1#packed_1#int_order_2,__2148;int(1..)])) using tseitin
-  define(__2150 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin
-  define(__2151 <-> and([f#as_relation_1#packed_1#int_order_3,__2150;int(1..)])) using tseitin
-  define(__2152 <-> or([__2149,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin
-  define(__2153 <-> or([__2151,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin
+  define(__2146 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin
+  define(__2147 <-> and([f#as_relation_1#packed_1#order_1,__2146;int(1..)])) using tseitin
+  define(__2148 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin
+  define(__2149 <-> and([f#as_relation_1#packed_1#order_2,__2148;int(1..)])) using tseitin
+  define(__2150 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin
+  define(__2151 <-> and([f#as_relation_1#packed_1#order_3,__2150;int(1..)])) using tseitin
+  define(__2152 <-> or([__2149,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin
+  define(__2153 <-> or([__2151,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin
 
 --
 
@@ -6623,11 +6623,11 @@ new SAT encoding decisions:
 --
 
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
+(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ])),
 __2855
    ~~> remove_single_atom ([("SAT", 8400)])
 and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), or([and([and([i0 = 1,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([i0 = 2,i1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]), j0 : int(1..2), j1 : int(1), or([and([and([j0 = 1,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([j0 = 2,j1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]),
-(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]))
+(__15) <-> (or([ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]))
 new SAT encoding decisions:
   assert(__2855) using tseitin
 
@@ -6639,29 +6639,29 @@ new SAT encoding decisions:
 
 --
 
-[ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]
+[ SafeIndex((e0,e1),[1]) = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]) | e0 : int(1..2), e1 : int(1), or([and([and([e0 = 1,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]),and([and([e0 = 2,e1 = 1;int(1..)]),(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[and([or([and([(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]);int(1..)]),or([1 = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]);int(1..)]);int(1..)]),and([or([and([(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]),or([2 = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2]);int(1..)]);int(1..)]);int(1..)]
+[and([or([and([(f#as_relation_1#packed_1 / 1) % 2 = 1;int(1..)]);int(1..)]),or([1 = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]);int(1..)]);int(1..)]),and([or([and([(f#as_relation_1#packed_1 / 2) % 2 = 1;int(1..)]);int(1..)]),or([2 = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2]);int(1..)]);int(1..)]);int(1..)]
 
 --
 
-1 = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])
+1 = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])
    ~~> select_integer_relation ([("SAT", 18500)])
 __2856
 new variables:
   findAux __2856: bool
 new SAT encoding decisions:
-  define(__2856 <-> integer-weighted(-1*y#int_order_2) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+  define(__2856 <-> integer-weighted(-1*y#order_2) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
 
 --
 
-2 = SATInt(Order, [y#int_order_1,y#int_order_2;int(1..)] [1, 2])
+2 = SATInt(Order, [y#order_1,y#order_2;int(1..)] [1, 2])
    ~~> select_integer_relation ([("SAT", 18500)])
 __2857
 new variables:
   findAux __2857: bool
 new SAT encoding decisions:
-  define(__2857 <-> integer-weighted(-1*y#int_order_2) Equal -1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+  define(__2857 <-> integer-weighted(-1*y#order_2) Equal -1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
 
 --
 
@@ -6679,19 +6679,19 @@ f#as_relation_1#packed_1
 
 f#as_relation_1#packed_1
    ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3])
+SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3])
 
 --
 
 f#as_relation_1#packed_1
    ~~> integer_decision_representation_order ([("SAT", 9500)])
-SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3])
+SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3])
 
 --
 
-or([and([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]);int(1..)])
+or([and([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-and([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)])
+and([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)])
 
 --
 
@@ -6701,9 +6701,9 @@ __2856
 
 --
 
-or([and([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)])
+or([and([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-and([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)])
+and([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)])
 
 --
 
@@ -6713,55 +6713,55 @@ __2857
 
 --
 
-and([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)])
+and([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2 = 1;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
-(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1) % 2 = 1
+(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1) % 2 = 1
 
 --
 
-and([(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)])
+and([(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2 = 1;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
-(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2) % 2 = 1
+(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2) % 2 = 1
 
 --
 
-(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 2)
+(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), 2) @ 2 != 0}
+{SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), 2) @ 2 != 0}
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), 2)
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), 2)
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2]))
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2]))
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])) % 2
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])) % 2
    ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) @ 2 != 0}
+{SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) @ 2 != 0}
 
 --
 
-(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]) / 1)
+(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]) / 1)
    ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), 1) @ 1 != 0}
+{SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), 1) @ 1 != 0}
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), 1)
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), 1)
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1]))
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1]))
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])) % 2
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])) % 2
    ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])),2) @ 2 != 0}
+{SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1])),2) @ 2 != 0}
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1]))
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [1, 1]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeDiv(SATInt(Log, [__2864,__2865,false;int(1..)] [0, 3]), SATInt(Log, [true,false;int(1..)] [1, 1]))
 new variables:
@@ -6774,14 +6774,14 @@ new variables:
   findAux __2864: bool
   findAux __2865: bool
 new SAT encoding decisions:
-  define(__2858 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin
-  define(__2859 <-> and([f#as_relation_1#packed_1#int_order_1,__2858;int(1..)])) using tseitin
-  define(__2860 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin
-  define(__2861 <-> and([f#as_relation_1#packed_1#int_order_2,__2860;int(1..)])) using tseitin
-  define(__2862 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin
-  define(__2863 <-> and([f#as_relation_1#packed_1#int_order_3,__2862;int(1..)])) using tseitin
-  define(__2864 <-> or([__2861,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin
-  define(__2865 <-> or([__2863,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin
+  define(__2858 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin
+  define(__2859 <-> and([f#as_relation_1#packed_1#order_1,__2858;int(1..)])) using tseitin
+  define(__2860 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin
+  define(__2861 <-> and([f#as_relation_1#packed_1#order_2,__2860;int(1..)])) using tseitin
+  define(__2862 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin
+  define(__2863 <-> and([f#as_relation_1#packed_1#order_3,__2862;int(1..)])) using tseitin
+  define(__2864 <-> or([__2861,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin
+  define(__2865 <-> or([__2863,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin
 
 --
 
@@ -8223,9 +8223,9 @@ new SAT encoding decisions:
 
 --
 
-or([__3565,and([SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) = 1,__2857;int(1..)]);int(1..)])
+or([__3565,and([SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) = 1,__2857;int(1..)]);int(1..)])
    ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([__3565,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) = 1;int(1..)]),or([__3565,__2857;int(1..)]);int(1..)])
+and([or([__3565,SafeMod(SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2])),2) = 1;int(1..)]),or([__3565,__2857;int(1..)]);int(1..)])
 
 --
 
@@ -8239,7 +8239,7 @@ new SAT encoding decisions:
 
 --
 
-SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#int_order_1,f#as_relation_1#packed_1#int_order_2,f#as_relation_1#packed_1#int_order_3,f#as_relation_1#packed_1#int_order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2]))
+SafeDiv(SATInt(Order, [f#as_relation_1#packed_1#order_1,f#as_relation_1#packed_1#order_2,f#as_relation_1#packed_1#order_3,f#as_relation_1#packed_1#order_4;int(1..)] [0, 3]), SATInt(Order, [true;int(1..)] [2, 2]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeDiv(SATInt(Log, [__3573,__3574,false;int(1..)] [0, 3]), SATInt(Log, [false,true,false;int(1..)] [2, 2]))
 new variables:
@@ -8252,14 +8252,14 @@ new variables:
   findAux __3573: bool
   findAux __3574: bool
 new SAT encoding decisions:
-  define(__3567 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin
-  define(__3568 <-> and([f#as_relation_1#packed_1#int_order_1,__3567;int(1..)])) using tseitin
-  define(__3569 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin
-  define(__3570 <-> and([f#as_relation_1#packed_1#int_order_2,__3569;int(1..)])) using tseitin
-  define(__3571 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin
-  define(__3572 <-> and([f#as_relation_1#packed_1#int_order_3,__3571;int(1..)])) using tseitin
-  define(__3573 <-> or([__3570,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin
-  define(__3574 <-> or([__3572,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin
+  define(__3567 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin
+  define(__3568 <-> and([f#as_relation_1#packed_1#order_1,__3567;int(1..)])) using tseitin
+  define(__3569 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin
+  define(__3570 <-> and([f#as_relation_1#packed_1#order_2,__3569;int(1..)])) using tseitin
+  define(__3571 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin
+  define(__3572 <-> and([f#as_relation_1#packed_1#order_3,__3571;int(1..)])) using tseitin
+  define(__3573 <-> or([__3570,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin
+  define(__3574 <-> or([__3572,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin
 
 --
 
@@ -9735,15 +9735,15 @@ Final model:
 find f: function (size 1) int(1..2) --> int(1) 
 find y: int(1..2)
 find f#as_relation_1: relation (size 1) of (int(1..2) * int(1))
-find y#int_order_1: bool
-find y#int_order_2: bool
+find y#order_1: bool
+find y#order_2: bool
 findAux __0: bool
 findAux __1: bool
 find f#as_relation_1#packed_1: int(0..3)
-find f#as_relation_1#packed_1#int_order_1: bool
-find f#as_relation_1#packed_1#int_order_2: bool
-find f#as_relation_1#packed_1#int_order_3: bool
-find f#as_relation_1#packed_1#int_order_4: bool
+find f#as_relation_1#packed_1#order_1: bool
+find f#as_relation_1#packed_1#order_2: bool
+find f#as_relation_1#packed_1#order_3: bool
+find f#as_relation_1#packed_1#order_4: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
@@ -9758,7 +9758,7 @@ findAux __12: bool
 findAux __13: bool
 findAux __14: int(1)
 findAux __15: bool
-findAux __14#int_order_1: bool
+findAux __14#order_1: bool
 findAux __16: bool
 findAux __17: bool
 findAux __18: bool
@@ -14027,46 +14027,46 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*y#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__1 <-> integer-weighted(1*y#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__2 <-> integer-weighted(1*f#as_relation_1#packed_1#int_order_2, 1*f#as_relation_1#packed_1#int_order_3, 1*f#as_relation_1#packed_1#int_order_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
-define(__3 <-> integer-weighted(1*f#as_relation_1#packed_1#int_order_2, 1*f#as_relation_1#packed_1#int_order_3, 1*f#as_relation_1#packed_1#int_order_4) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
-define(__4 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin,
-define(__5 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin,
-define(__6 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin,
-define(__7 <-> !(y#int_order_2)) using tseitin,
-define(__8 <-> or([__4,f#as_relation_1#packed_1#int_order_2;int(1..)])) using tseitin,
-define(__9 <-> or([__5,f#as_relation_1#packed_1#int_order_3;int(1..)])) using tseitin,
-define(__10 <-> or([__6,f#as_relation_1#packed_1#int_order_1;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(1*y#order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__1 <-> integer-weighted(1*y#order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__2 <-> integer-weighted(1*f#as_relation_1#packed_1#order_2, 1*f#as_relation_1#packed_1#order_3, 1*f#as_relation_1#packed_1#order_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
+define(__3 <-> integer-weighted(1*f#as_relation_1#packed_1#order_2, 1*f#as_relation_1#packed_1#order_3, 1*f#as_relation_1#packed_1#order_4) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
+define(__4 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin,
+define(__5 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin,
+define(__6 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin,
+define(__7 <-> !(y#order_2)) using tseitin,
+define(__8 <-> or([__4,f#as_relation_1#packed_1#order_2;int(1..)])) using tseitin,
+define(__9 <-> or([__5,f#as_relation_1#packed_1#order_3;int(1..)])) using tseitin,
+define(__10 <-> or([__6,f#as_relation_1#packed_1#order_1;int(1..)])) using tseitin,
 define(__11 <-> and([__2,__3;int(1..)])) using tseitin,
 define(__12 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__13 <-> or([__7,y#int_order_1;int(1..)])) using tseitin,
-assert(y#int_order_1) using tseitin,
+define(__13 <-> or([__7,y#order_1;int(1..)])) using tseitin,
+assert(y#order_1) using tseitin,
 assert(__13) using tseitin,
 assert(__12) using tseitin,
-assert(f#as_relation_1#packed_1#int_order_1) using tseitin,
+assert(f#as_relation_1#packed_1#order_1) using tseitin,
 assert(__10) using tseitin,
 assert(__8) using tseitin,
 assert(__9) using tseitin,
 assert(__11) using tseitin,
 define(__16 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [],
 define(__17 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [],
-define(__18 <-> integer-weighted(1*y#int_order_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__18 <-> integer-weighted(1*y#order_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
 define(__19 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [],
-define(__20 <-> integer-weighted(1*y#int_order_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__20 <-> integer-weighted(1*y#order_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
 define(__21 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [],
 define(__22 <-> and([__17,__15;int(1..)])) using tseitin,
 assert(__22) using tseitin,
-assert(__14#int_order_1) using tseitin,
+assert(__14#order_1) using tseitin,
 assert(__16) using tseitin,
-define(__23 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin,
-define(__24 <-> and([f#as_relation_1#packed_1#int_order_1,__23;int(1..)])) using tseitin,
-define(__25 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin,
-define(__26 <-> and([f#as_relation_1#packed_1#int_order_2,__25;int(1..)])) using tseitin,
-define(__27 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin,
-define(__28 <-> and([f#as_relation_1#packed_1#int_order_3,__27;int(1..)])) using tseitin,
-define(__29 <-> or([__26,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin,
-define(__30 <-> or([__28,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin,
+define(__23 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin,
+define(__24 <-> and([f#as_relation_1#packed_1#order_1,__23;int(1..)])) using tseitin,
+define(__25 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin,
+define(__26 <-> and([f#as_relation_1#packed_1#order_2,__25;int(1..)])) using tseitin,
+define(__27 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin,
+define(__28 <-> and([f#as_relation_1#packed_1#order_3,__27;int(1..)])) using tseitin,
+define(__29 <-> or([__26,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin,
+define(__30 <-> or([__28,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin,
 define(__31 <-> !(__29)) using tseitin,
 define(__32 <-> !(__30)) using tseitin,
 define(__33 <-> !(false)) using tseitin,
@@ -14765,14 +14765,14 @@ define(__725 <-> or([and([__723,__719;int(1..)]),and([!(__723),false;int(1..)]);
 define(__726 <-> or([and([__723,__720;int(1..)]),and([!(__723),false;int(1..)]);int(1..)])) using tseitin,
 define(__727 <-> or([and([__723,__721;int(1..)]),and([!(__723),false;int(1..)]);int(1..)])) using tseitin,
 define(__728 <-> or([and([__723,__722;int(1..)]),and([!(__723),false;int(1..)]);int(1..)])) using tseitin,
-define(__729 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin,
-define(__730 <-> and([f#as_relation_1#packed_1#int_order_1,__729;int(1..)])) using tseitin,
-define(__731 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin,
-define(__732 <-> and([f#as_relation_1#packed_1#int_order_2,__731;int(1..)])) using tseitin,
-define(__733 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin,
-define(__734 <-> and([f#as_relation_1#packed_1#int_order_3,__733;int(1..)])) using tseitin,
-define(__735 <-> or([__732,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin,
-define(__736 <-> or([__734,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin,
+define(__729 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin,
+define(__730 <-> and([f#as_relation_1#packed_1#order_1,__729;int(1..)])) using tseitin,
+define(__731 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin,
+define(__732 <-> and([f#as_relation_1#packed_1#order_2,__731;int(1..)])) using tseitin,
+define(__733 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin,
+define(__734 <-> and([f#as_relation_1#packed_1#order_3,__733;int(1..)])) using tseitin,
+define(__735 <-> or([__732,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin,
+define(__736 <-> or([__734,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin,
 define(__737 <-> !(__735)) using tseitin,
 define(__738 <-> !(__736)) using tseitin,
 define(__739 <-> !(false)) using tseitin,
@@ -15473,14 +15473,14 @@ define(__1433 <-> or([and([__1429,__1427;int(1..)]),and([!(__1429),false;int(1..
 define(__1434 <-> or([and([__1429,__1428;int(1..)]),and([!(__1429),false;int(1..)]);int(1..)])) using tseitin,
 define(__1435 <-> integer-weighted(1*__724, 2*__725, 4*__726, 8*__727, -16*__728, 1*__1430, 2*__1431, 4*__1432, 8*__1433, -16*__1434) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 5, end: 10, structure: BoundedBinary { lower: 0, upper: 1 } }],
 assert(__1435) using tseitin,
-define(__1436 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin,
-define(__1437 <-> and([f#as_relation_1#packed_1#int_order_1,__1436;int(1..)])) using tseitin,
-define(__1438 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin,
-define(__1439 <-> and([f#as_relation_1#packed_1#int_order_2,__1438;int(1..)])) using tseitin,
-define(__1440 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin,
-define(__1441 <-> and([f#as_relation_1#packed_1#int_order_3,__1440;int(1..)])) using tseitin,
-define(__1442 <-> or([__1439,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin,
-define(__1443 <-> or([__1441,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin,
+define(__1436 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin,
+define(__1437 <-> and([f#as_relation_1#packed_1#order_1,__1436;int(1..)])) using tseitin,
+define(__1438 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin,
+define(__1439 <-> and([f#as_relation_1#packed_1#order_2,__1438;int(1..)])) using tseitin,
+define(__1440 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin,
+define(__1441 <-> and([f#as_relation_1#packed_1#order_3,__1440;int(1..)])) using tseitin,
+define(__1442 <-> or([__1439,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin,
+define(__1443 <-> or([__1441,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin,
 define(__1444 <-> !(__1442)) using tseitin,
 define(__1445 <-> !(__1443)) using tseitin,
 define(__1446 <-> !(false)) using tseitin,
@@ -16183,14 +16183,14 @@ define(__2142 <-> integer-weighted(1*__2137, 2*__2138, 4*__2139, 8*__2140, -16*_
 define(__2143 <-> and([__18,__19,__2142;int(1..)])) using tseitin,
 define(__2144 <-> or([__2143,__20;int(1..)])) using tseitin,
 define(__2145 <-> or([__2143,__21;int(1..)])) using tseitin,
-define(__2146 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin,
-define(__2147 <-> and([f#as_relation_1#packed_1#int_order_1,__2146;int(1..)])) using tseitin,
-define(__2148 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin,
-define(__2149 <-> and([f#as_relation_1#packed_1#int_order_2,__2148;int(1..)])) using tseitin,
-define(__2150 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin,
-define(__2151 <-> and([f#as_relation_1#packed_1#int_order_3,__2150;int(1..)])) using tseitin,
-define(__2152 <-> or([__2149,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin,
-define(__2153 <-> or([__2151,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin,
+define(__2146 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin,
+define(__2147 <-> and([f#as_relation_1#packed_1#order_1,__2146;int(1..)])) using tseitin,
+define(__2148 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin,
+define(__2149 <-> and([f#as_relation_1#packed_1#order_2,__2148;int(1..)])) using tseitin,
+define(__2150 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin,
+define(__2151 <-> and([f#as_relation_1#packed_1#order_3,__2150;int(1..)])) using tseitin,
+define(__2152 <-> or([__2149,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin,
+define(__2153 <-> or([__2151,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin,
 define(__2154 <-> !(__2152)) using tseitin,
 define(__2155 <-> !(__2153)) using tseitin,
 define(__2156 <-> !(false)) using tseitin,
@@ -16894,16 +16894,16 @@ define(__2853 <-> or([__2143,__2852;int(1..)])) using tseitin,
 define(__2854 <-> and([__2144,__2145,__2853;int(1..)])) using tseitin,
 define(__2855 <-> (__15) -> (__2854)) using tseitin,
 assert(__2855) using tseitin,
-define(__2856 <-> integer-weighted(-1*y#int_order_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__2857 <-> integer-weighted(-1*y#int_order_2) Equal -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__2858 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin,
-define(__2859 <-> and([f#as_relation_1#packed_1#int_order_1,__2858;int(1..)])) using tseitin,
-define(__2860 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin,
-define(__2861 <-> and([f#as_relation_1#packed_1#int_order_2,__2860;int(1..)])) using tseitin,
-define(__2862 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin,
-define(__2863 <-> and([f#as_relation_1#packed_1#int_order_3,__2862;int(1..)])) using tseitin,
-define(__2864 <-> or([__2861,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin,
-define(__2865 <-> or([__2863,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin,
+define(__2856 <-> integer-weighted(-1*y#order_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__2857 <-> integer-weighted(-1*y#order_2) Equal -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__2858 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin,
+define(__2859 <-> and([f#as_relation_1#packed_1#order_1,__2858;int(1..)])) using tseitin,
+define(__2860 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin,
+define(__2861 <-> and([f#as_relation_1#packed_1#order_2,__2860;int(1..)])) using tseitin,
+define(__2862 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin,
+define(__2863 <-> and([f#as_relation_1#packed_1#order_3,__2862;int(1..)])) using tseitin,
+define(__2864 <-> or([__2861,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin,
+define(__2865 <-> or([__2863,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin,
 define(__2866 <-> !(__2864)) using tseitin,
 define(__2867 <-> !(__2865)) using tseitin,
 define(__2868 <-> !(false)) using tseitin,
@@ -17605,14 +17605,14 @@ define(__3563 <-> or([and([__3558,__3557;int(1..)]),and([!(__3558),false;int(1..
 define(__3564 <-> integer-weighted(1*__3559, 2*__3560, 4*__3561, 8*__3562, -16*__3563) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 1 } }],
 define(__3565 <-> and([__3564,__2856;int(1..)])) using tseitin,
 define(__3566 <-> or([__3565,__2857;int(1..)])) using tseitin,
-define(__3567 <-> !(f#as_relation_1#packed_1#int_order_2)) using tseitin,
-define(__3568 <-> and([f#as_relation_1#packed_1#int_order_1,__3567;int(1..)])) using tseitin,
-define(__3569 <-> !(f#as_relation_1#packed_1#int_order_3)) using tseitin,
-define(__3570 <-> and([f#as_relation_1#packed_1#int_order_2,__3569;int(1..)])) using tseitin,
-define(__3571 <-> !(f#as_relation_1#packed_1#int_order_4)) using tseitin,
-define(__3572 <-> and([f#as_relation_1#packed_1#int_order_3,__3571;int(1..)])) using tseitin,
-define(__3573 <-> or([__3570,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin,
-define(__3574 <-> or([__3572,f#as_relation_1#packed_1#int_order_4;int(1..)])) using tseitin,
+define(__3567 <-> !(f#as_relation_1#packed_1#order_2)) using tseitin,
+define(__3568 <-> and([f#as_relation_1#packed_1#order_1,__3567;int(1..)])) using tseitin,
+define(__3569 <-> !(f#as_relation_1#packed_1#order_3)) using tseitin,
+define(__3570 <-> and([f#as_relation_1#packed_1#order_2,__3569;int(1..)])) using tseitin,
+define(__3571 <-> !(f#as_relation_1#packed_1#order_4)) using tseitin,
+define(__3572 <-> and([f#as_relation_1#packed_1#order_3,__3571;int(1..)])) using tseitin,
+define(__3573 <-> or([__3570,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin,
+define(__3574 <-> or([__3572,f#as_relation_1#packed_1#order_4;int(1..)])) using tseitin,
 define(__3575 <-> !(__3573)) using tseitin,
 define(__3576 <-> !(__3574)) using tseitin,
 define(__3577 <-> !(false)) using tseitin,

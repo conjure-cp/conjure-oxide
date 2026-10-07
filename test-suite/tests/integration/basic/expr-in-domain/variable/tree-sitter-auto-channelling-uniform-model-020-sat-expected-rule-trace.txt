@@ -10,54 +10,54 @@ true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true
 new variables:
-  find x#int_order_1: bool
-  find x#int_order_2: bool
-  find x#int_order_3: bool
+  find x#order_1: bool
+  find x#order_2: bool
+  find x#order_3: bool
 new constraints:
-  x#int_order_1
-  or([!(x#int_order_2),x#int_order_1;int(1..)])
-  or([!(x#int_order_3),x#int_order_2;int(1..)])
-  or([and([SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [4, 6]) >= 4,SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [4, 6]) <= 6;int(1..)]);int(1..)])
+  x#order_1
+  or([!(x#order_2),x#order_1;int(1..)])
+  or([!(x#order_3),x#order_2;int(1..)])
+  or([and([SATInt(Order, [x#order_1,x#order_2,x#order_3;int(1..)] [4, 6]) >= 4,SATInt(Order, [x#order_1,x#order_2,x#order_3;int(1..)] [4, 6]) <= 6;int(1..)]);int(1..)])
 
 --
 
-SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [4, 6]) >= 4
+SATInt(Order, [x#order_1,x#order_2,x#order_3;int(1..)] [4, 6]) >= 4
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
+  define(__0 <-> integer-weighted(1*x#order_2, 1*x#order_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
 
 --
 
-SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [4, 6]) <= 6
+SATInt(Order, [x#order_1,x#order_2,x#order_3;int(1..)] [4, 6]) <= 6
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
+  define(__1 <-> integer-weighted(1*x#order_2, 1*x#order_3) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: Chain }]
 
 --
 
-!(x#int_order_2)
+!(x#order_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> !(x#int_order_2)) using tseitin
+  define(__2 <-> !(x#order_2)) using tseitin
 
 --
 
-!(x#int_order_3)
+!(x#order_3)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> !(x#int_order_3)) using tseitin
+  define(__3 <-> !(x#order_3)) using tseitin
 
 --
 
@@ -67,13 +67,13 @@ and([__0,__1;int(1..)])
 
 --
 
-or([__3,x#int_order_2;int(1..)])
+or([__3,x#order_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> or([__3,x#int_order_2;int(1..)])) using tseitin
+  define(__4 <-> or([__3,x#order_2;int(1..)])) using tseitin
 
 --
 
@@ -87,18 +87,18 @@ new SAT encoding decisions:
 
 --
 
-or([__2,x#int_order_1;int(1..)])
+or([__2,x#order_1;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __6
 new variables:
   findAux __6: bool
 new SAT encoding decisions:
-  define(__6 <-> or([__2,x#int_order_1;int(1..)])) using tseitin
+  define(__6 <-> or([__2,x#order_1;int(1..)])) using tseitin
 
 --
 
 true,
-x#int_order_1,
+x#order_1,
 __6,
 __4,
 __5
@@ -108,7 +108,7 @@ __6,
 __4,
 __5
 new SAT encoding decisions:
-  assert(x#int_order_1) using tseitin
+  assert(x#order_1) using tseitin
 
 --
 
@@ -150,9 +150,9 @@ Final model:
 letting n be 5
 letting dom be domain int(((n - 1))..(sum([n,1;int(1..)])))
 find x: dom
-find x#int_order_1: bool
-find x#int_order_2: bool
-find x#int_order_3: bool
+find x#order_1: bool
+find x#order_2: bool
+find x#order_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -167,14 +167,14 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
-define(__1 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
-define(__2 <-> !(x#int_order_2)) using tseitin,
-define(__3 <-> !(x#int_order_3)) using tseitin,
-define(__4 <-> or([__3,x#int_order_2;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(1*x#order_2, 1*x#order_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
+define(__1 <-> integer-weighted(1*x#order_2, 1*x#order_3) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Chain }],
+define(__2 <-> !(x#order_2)) using tseitin,
+define(__3 <-> !(x#order_3)) using tseitin,
+define(__4 <-> or([__3,x#order_2;int(1..)])) using tseitin,
 define(__5 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__6 <-> or([__2,x#int_order_1;int(1..)])) using tseitin,
-assert(x#int_order_1) using tseitin,
+define(__6 <-> or([__2,x#order_1;int(1..)])) using tseitin,
+assert(x#order_1) using tseitin,
 assert(__6) using tseitin,
 assert(__4) using tseitin,
 assert(__5) using tseitin

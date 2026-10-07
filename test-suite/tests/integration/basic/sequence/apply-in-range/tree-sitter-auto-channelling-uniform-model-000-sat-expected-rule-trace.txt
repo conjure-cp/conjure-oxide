@@ -14,40 +14,40 @@ true
 true
 new variables:
   find x#explicit_1: matrix indexed by [int(1..2)] of int(1)
-  find y#int_direct_1: bool
-  find y#int_direct_2: bool
+  find y#direct_1: bool
+  find y#direct_2: bool
 new constraints:
   or([1 <= 2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)])
   or([2 <= 2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
-  sum([toInt(y#int_direct_1),toInt(y#int_direct_2);int(1..)]) <= 1
-  or([y#int_direct_1,y#int_direct_2;int(1..)])
+  sum([toInt(y#direct_1),toInt(y#direct_2);int(1..)]) <= 1
+  or([y#direct_1,y#direct_2;int(1..)])
 
 --
 
 true,
 true,
 true,
-sum([toInt(y#int_direct_1),toInt(y#int_direct_2);int(1..)]) <= 1,
-or([y#int_direct_1,y#int_direct_2;int(1..)])
+sum([toInt(y#direct_1),toInt(y#direct_2);int(1..)]) <= 1,
+or([y#direct_1,y#direct_2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 true,
 true,
 true,
-or([y#int_direct_1,y#int_direct_2;int(1..)])
+or([y#direct_1,y#direct_2;int(1..)])
 new SAT encoding decisions:
-  at-most-one(y#int_direct_1, y#int_direct_2) using None
+  at-most-one(y#direct_1, y#direct_2) using None
 
 --
 
 true,
 true,
 true,
-or([y#int_direct_1,y#int_direct_2;int(1..)])
+or([y#direct_1,y#direct_2;int(1..)])
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true,
 true,
 true,
-or([y#int_direct_1,y#int_direct_2;int(1..)])
+or([y#direct_1,y#direct_2;int(1..)])
 new variables:
   find x#explicit_1#components_1: int(1)
   find x#explicit_1#components_2: int(1)
@@ -57,82 +57,82 @@ new variables:
 true,
 true,
 true,
-or([y#int_direct_1,y#int_direct_2;int(1..)])
+or([y#direct_1,y#direct_2;int(1..)])
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true,
 true,
 true,
-or([y#int_direct_1,y#int_direct_2;int(1..)])
+or([y#direct_1,y#direct_2;int(1..)])
 new variables:
-  find x#explicit_1#components_1#int_direct_1: bool
-  find x#explicit_1#components_2#int_direct_1: bool
+  find x#explicit_1#components_1#direct_1: bool
+  find x#explicit_1#components_2#direct_1: bool
 new constraints:
-  sum([toInt(x#explicit_1#components_1#int_direct_1);int(1..)]) <= 1
-  or([x#explicit_1#components_1#int_direct_1;int(1..)])
-  sum([toInt(x#explicit_1#components_2#int_direct_1);int(1..)]) <= 1
-  or([x#explicit_1#components_2#int_direct_1;int(1..)])
+  sum([toInt(x#explicit_1#components_1#direct_1);int(1..)]) <= 1
+  or([x#explicit_1#components_1#direct_1;int(1..)])
+  sum([toInt(x#explicit_1#components_2#direct_1);int(1..)]) <= 1
+  or([x#explicit_1#components_2#direct_1;int(1..)])
 
 --
 
 true,
 true,
 true,
-or([y#int_direct_1,y#int_direct_2;int(1..)]),
-sum([toInt(x#explicit_1#components_1#int_direct_1);int(1..)]) <= 1,
-or([x#explicit_1#components_1#int_direct_1;int(1..)]),
-sum([toInt(x#explicit_1#components_2#int_direct_1);int(1..)]) <= 1,
-or([x#explicit_1#components_2#int_direct_1;int(1..)])
+or([y#direct_1,y#direct_2;int(1..)]),
+sum([toInt(x#explicit_1#components_1#direct_1);int(1..)]) <= 1,
+or([x#explicit_1#components_1#direct_1;int(1..)]),
+sum([toInt(x#explicit_1#components_2#direct_1);int(1..)]) <= 1,
+or([x#explicit_1#components_2#direct_1;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 true,
 true,
 true,
-or([y#int_direct_1,y#int_direct_2;int(1..)]),
-or([x#explicit_1#components_1#int_direct_1;int(1..)]),
-sum([toInt(x#explicit_1#components_2#int_direct_1);int(1..)]) <= 1,
-or([x#explicit_1#components_2#int_direct_1;int(1..)])
+or([y#direct_1,y#direct_2;int(1..)]),
+or([x#explicit_1#components_1#direct_1;int(1..)]),
+sum([toInt(x#explicit_1#components_2#direct_1);int(1..)]) <= 1,
+or([x#explicit_1#components_2#direct_1;int(1..)])
 new SAT encoding decisions:
-  at-most-one(x#explicit_1#components_1#int_direct_1) using None
+  at-most-one(x#explicit_1#components_1#direct_1) using None
 
 --
 
 true,
 true,
 true,
-or([y#int_direct_1,y#int_direct_2;int(1..)]),
-or([x#explicit_1#components_1#int_direct_1;int(1..)]),
-sum([toInt(x#explicit_1#components_2#int_direct_1);int(1..)]) <= 1,
-or([x#explicit_1#components_2#int_direct_1;int(1..)])
+or([y#direct_1,y#direct_2;int(1..)]),
+or([x#explicit_1#components_1#direct_1;int(1..)]),
+sum([toInt(x#explicit_1#components_2#direct_1);int(1..)]) <= 1,
+or([x#explicit_1#components_2#direct_1;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 true,
 true,
 true,
-or([y#int_direct_1,y#int_direct_2;int(1..)]),
-or([x#explicit_1#components_1#int_direct_1;int(1..)]),
-or([x#explicit_1#components_2#int_direct_1;int(1..)])
+or([y#direct_1,y#direct_2;int(1..)]),
+or([x#explicit_1#components_1#direct_1;int(1..)]),
+or([x#explicit_1#components_2#direct_1;int(1..)])
 new SAT encoding decisions:
-  at-most-one(x#explicit_1#components_2#int_direct_1) using None
+  at-most-one(x#explicit_1#components_2#direct_1) using None
 
 --
 
-or([x#explicit_1#components_1#int_direct_1;int(1..)])
+or([x#explicit_1#components_1#direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-x#explicit_1#components_1#int_direct_1
+x#explicit_1#components_1#direct_1
 
 --
 
-or([x#explicit_1#components_2#int_direct_1;int(1..)])
+or([x#explicit_1#components_2#direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-x#explicit_1#components_2#int_direct_1
+x#explicit_1#components_2#direct_1
 
 --
 
-or([y#int_direct_1,y#int_direct_2;int(1..)])
+or([y#direct_1,y#direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> or([y#int_direct_1,y#int_direct_2;int(1..)])) using tseitin
+  define(__0 <-> or([y#direct_1,y#direct_2;int(1..)])) using tseitin
 
 --
 
@@ -140,14 +140,14 @@ true,
 true,
 true,
 __0,
-x#explicit_1#components_1#int_direct_1,
-x#explicit_1#components_2#int_direct_1
+x#explicit_1#components_1#direct_1,
+x#explicit_1#components_2#direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 true,
 true,
-x#explicit_1#components_1#int_direct_1,
-x#explicit_1#components_2#int_direct_1
+x#explicit_1#components_1#direct_1,
+x#explicit_1#components_2#direct_1
 new SAT encoding decisions:
   assert(__0) using tseitin
 
@@ -156,28 +156,28 @@ new SAT encoding decisions:
 true,
 true,
 true,
-x#explicit_1#components_1#int_direct_1,
-x#explicit_1#components_2#int_direct_1
+x#explicit_1#components_1#direct_1,
+x#explicit_1#components_2#direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 true,
 true,
-x#explicit_1#components_2#int_direct_1
+x#explicit_1#components_2#direct_1
 new SAT encoding decisions:
-  assert(x#explicit_1#components_1#int_direct_1) using tseitin
+  assert(x#explicit_1#components_1#direct_1) using tseitin
 
 --
 
 true,
 true,
 true,
-x#explicit_1#components_2#int_direct_1
+x#explicit_1#components_2#direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 true,
 true
 new SAT encoding decisions:
-  assert(x#explicit_1#components_2#int_direct_1) using tseitin
+  assert(x#explicit_1#components_2#direct_1) using tseitin
 
 --
 
@@ -186,12 +186,12 @@ Final model:
 find x: sequence (size 2) of int(1)
 find y: int(1..2)
 find x#explicit_1: matrix indexed by [int(1..2)] of int(1)
-find y#int_direct_1: bool
-find y#int_direct_2: bool
+find y#direct_1: bool
+find y#direct_2: bool
 find x#explicit_1#components_1: int(1)
 find x#explicit_1#components_2: int(1)
-find x#explicit_1#components_1#int_direct_1: bool
-find x#explicit_1#components_2#int_direct_1: bool
+find x#explicit_1#components_1#direct_1: bool
+find x#explicit_1#components_2#direct_1: bool
 findAux __0: bool
 
 such that
@@ -202,11 +202,11 @@ true
 
 sat encoding decisions:
 
-at-most-one(y#int_direct_1, y#int_direct_2) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-at-most-one(x#explicit_1#components_1#int_direct_1) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-at-most-one(x#explicit_1#components_2#int_direct_1) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-define(__0 <-> or([y#int_direct_1,y#int_direct_2;int(1..)])) using tseitin,
+at-most-one(y#direct_1, y#direct_2) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+at-most-one(x#explicit_1#components_1#direct_1) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+at-most-one(x#explicit_1#components_2#direct_1) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__0 <-> or([y#direct_1,y#direct_2;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(x#explicit_1#components_1#int_direct_1) using tseitin,
-assert(x#explicit_1#components_2#int_direct_1) using tseitin
+assert(x#explicit_1#components_1#direct_1) using tseitin,
+assert(x#explicit_1#components_2#direct_1) using tseitin
 

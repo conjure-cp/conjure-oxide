@@ -27,31 +27,31 @@ toInt(x[1]) = x[2] % 2
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 toInt(x[1]) = x[2] % 2
 new variables:
-  find x#components_2#int_offset_1: bool
-  find x#components_2#int_offset_2: bool
+  find x#components_2#offset_1: bool
+  find x#components_2#offset_2: bool
 new constraints:
-  or([!(x#components_2#int_offset_2),or([!(x#components_2#int_offset_1),true;int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [1, 4]) >= 1,SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [1, 4]) <= 4;int(1..)]);int(1..)])
+  or([!(x#components_2#offset_2),or([!(x#components_2#offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [x#components_2#offset_1,x#components_2#offset_2;int(1..)] [1, 4]) >= 1,SATInt(Offset, [x#components_2#offset_1,x#components_2#offset_2;int(1..)] [1, 4]) <= 4;int(1..)]);int(1..)])
 
 --
 
-SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [1, 4]) >= 1
+SATInt(Offset, [x#components_2#offset_1,x#components_2#offset_2;int(1..)] [1, 4]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__0 <-> integer-weighted(1*x#components_2#offset_1, 2*x#components_2#offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
-SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [1, 4]) <= 4
+SATInt(Offset, [x#components_2#offset_1,x#components_2#offset_2;int(1..)] [1, 4]) <= 4
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2) LessEqual 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__1 <-> integer-weighted(1*x#components_2#offset_1, 2*x#components_2#offset_2) LessEqual 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
@@ -114,23 +114,23 @@ x#components_2
 
 x#components_2
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [1, 4])
+SATInt(Offset, [x#components_2#offset_1,x#components_2#offset_2;int(1..)] [1, 4])
 
 --
 
-SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [1, 4]) % 2
+SATInt(Offset, [x#components_2#offset_1,x#components_2#offset_2;int(1..)] [1, 4]) % 2
    ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [1, 4]),2) @ 2 != 0}
+{SafeMod(SATInt(Offset, [x#components_2#offset_1,x#components_2#offset_2;int(1..)] [1, 4]),2) @ 2 != 0}
 
 --
 
-SafeMod(SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [1, 4]),2)
+SafeMod(SATInt(Offset, [x#components_2#offset_1,x#components_2#offset_2;int(1..)] [1, 4]),2)
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-SafeMod(SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [1, 4]),SATInt(Offset, [false;int(1..)] [2, 2]))
+SafeMod(SATInt(Offset, [x#components_2#offset_1,x#components_2#offset_2;int(1..)] [1, 4]),SATInt(Offset, [false;int(1..)] [2, 2]))
 
 --
 
-SafeMod(SATInt(Offset, [x#components_2#int_offset_1,x#components_2#int_offset_2;int(1..)] [1, 4]),SATInt(Offset, [false;int(1..)] [2, 2]))
+SafeMod(SATInt(Offset, [x#components_2#offset_1,x#components_2#offset_2;int(1..)] [1, 4]),SATInt(Offset, [false;int(1..)] [2, 2]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeMod(SATInt(Log, [__4,__6,__8,__10;int(1..)] [1, 4]),SATInt(Log, [__12,__15,__17;int(1..)] [2, 2]))
 new variables:
@@ -151,11 +151,11 @@ new variables:
   findAux __17: bool
   findAux __18: bool
 new SAT encoding decisions:
-  define(__3 <-> !((x#components_2#int_offset_1) <-> (false))) using tseitin
+  define(__3 <-> !((x#components_2#offset_1) <-> (false))) using tseitin
   define(__4 <-> !(__3)) using tseitin
-  define(__5 <-> or([x#components_2#int_offset_1,false;int(1..)])) using tseitin
-  define(__6 <-> !((x#components_2#int_offset_2) <-> (__5))) using tseitin
-  define(__7 <-> and([x#components_2#int_offset_2,__5;int(1..)])) using tseitin
+  define(__5 <-> or([x#components_2#offset_1,false;int(1..)])) using tseitin
+  define(__6 <-> !((x#components_2#offset_2) <-> (__5))) using tseitin
+  define(__7 <-> and([x#components_2#offset_2,__5;int(1..)])) using tseitin
   define(__8 <-> !((false) <-> (__7))) using tseitin
   define(__9 <-> and([false,__7;int(1..)])) using tseitin
   define(__10 <-> !((false) <-> (__9))) using tseitin
@@ -1054,8 +1054,8 @@ Final model:
 find x: tuple (bool, int(1..4))
 find x#components_1: bool
 find x#components_2: int(1..4)
-find x#components_2#int_offset_1: bool
-find x#components_2#int_offset_2: bool
+find x#components_2#offset_1: bool
+find x#components_2#offset_2: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -1509,15 +1509,15 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__1 <-> integer-weighted(1*x#components_2#int_offset_1, 2*x#components_2#int_offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__0 <-> integer-weighted(1*x#components_2#offset_1, 2*x#components_2#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__1 <-> integer-weighted(1*x#components_2#offset_1, 2*x#components_2#offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
 define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
 assert(__2) using tseitin,
-define(__3 <-> !((x#components_2#int_offset_1) <-> (false))) using tseitin,
+define(__3 <-> !((x#components_2#offset_1) <-> (false))) using tseitin,
 define(__4 <-> !(__3)) using tseitin,
-define(__5 <-> or([x#components_2#int_offset_1,false;int(1..)])) using tseitin,
-define(__6 <-> !((x#components_2#int_offset_2) <-> (__5))) using tseitin,
-define(__7 <-> and([x#components_2#int_offset_2,__5;int(1..)])) using tseitin,
+define(__5 <-> or([x#components_2#offset_1,false;int(1..)])) using tseitin,
+define(__6 <-> !((x#components_2#offset_2) <-> (__5))) using tseitin,
+define(__7 <-> and([x#components_2#offset_2,__5;int(1..)])) using tseitin,
 define(__8 <-> !((false) <-> (__7))) using tseitin,
 define(__9 <-> and([false,__7;int(1..)])) using tseitin,
 define(__10 <-> !((false) <-> (__9))) using tseitin,

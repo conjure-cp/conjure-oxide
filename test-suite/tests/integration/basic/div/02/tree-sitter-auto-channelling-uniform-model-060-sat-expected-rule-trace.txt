@@ -12,26 +12,26 @@ a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
 new variables:
-  find a#int_rank_1: bool
-  find a#int_rank_2: bool
+  find a#rank_1: bool
+  find a#rank_2: bool
 new constraints:
-  or([!(a#int_rank_2),or([!(a#int_rank_1),true;int(1..)]);int(1..)])
+  or([!(a#rank_2),or([!(a#rank_1),true;int(1..)]);int(1..)])
 
 --
 
 a
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(0, 3)]), [a#int_rank_1,a#int_rank_2;int(1..)] [0, 3])
+SATInt(Rank([(0, 3)]), [a#rank_1,a#rank_2;int(1..)] [0, 3])
 
 --
 
-SATInt(Rank([(0, 3)]), [a#int_rank_1,a#int_rank_2;int(1..)] [0, 3]) >= 2
+SATInt(Rank([(0, 3)]), [a#rank_1,a#rank_2;int(1..)] [0, 3]) >= 2
    ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Rank([(0, 3)]), [a#int_rank_1,a#int_rank_2;int(1..)] [0, 3]) >= SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])
+SATInt(Rank([(0, 3)]), [a#rank_1,a#rank_2;int(1..)] [0, 3]) >= SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])
 
 --
 
-SATInt(Rank([(0, 3)]), [a#int_rank_1,a#int_rank_2;int(1..)] [0, 3]) >= SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])
+SATInt(Rank([(0, 3)]), [a#rank_1,a#rank_2;int(1..)] [0, 3]) >= SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SATInt(Log, [__0,__2,__4;int(1..)] [0, 3]) >= SATInt(Log, [__6,__9,__11;int(1..)] [2, 2])
 new variables:
@@ -49,10 +49,10 @@ new variables:
   findAux __11: bool
   findAux __12: bool
 new SAT encoding decisions:
-  define(__0 <-> !((a#int_rank_1) <-> (false))) using tseitin
-  define(__1 <-> and([a#int_rank_1,false;int(1..)])) using tseitin
-  define(__2 <-> !((a#int_rank_2) <-> (__1))) using tseitin
-  define(__3 <-> and([a#int_rank_2,__1;int(1..)])) using tseitin
+  define(__0 <-> !((a#rank_1) <-> (false))) using tseitin
+  define(__1 <-> and([a#rank_1,false;int(1..)])) using tseitin
+  define(__2 <-> !((a#rank_2) <-> (__1))) using tseitin
+  define(__3 <-> and([a#rank_2,__1;int(1..)])) using tseitin
   define(__4 <-> !((false) <-> (__3))) using tseitin
   define(__5 <-> and([false,__3;int(1..)])) using tseitin
   define(__6 <-> !((false) <-> (false))) using tseitin
@@ -87,8 +87,8 @@ new SAT encoding decisions:
 Final model:
 
 find a: int(0..3)
-find a#int_rank_1: bool
-find a#int_rank_2: bool
+find a#rank_1: bool
+find a#rank_2: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -110,10 +110,10 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !((a#int_rank_1) <-> (false))) using tseitin,
-define(__1 <-> and([a#int_rank_1,false;int(1..)])) using tseitin,
-define(__2 <-> !((a#int_rank_2) <-> (__1))) using tseitin,
-define(__3 <-> and([a#int_rank_2,__1;int(1..)])) using tseitin,
+define(__0 <-> !((a#rank_1) <-> (false))) using tseitin,
+define(__1 <-> and([a#rank_1,false;int(1..)])) using tseitin,
+define(__2 <-> !((a#rank_2) <-> (__1))) using tseitin,
+define(__3 <-> and([a#rank_2,__1;int(1..)])) using tseitin,
 define(__4 <-> !((false) <-> (__3))) using tseitin,
 define(__5 <-> and([false,__3;int(1..)])) using tseitin,
 define(__6 <-> !((false) <-> (false))) using tseitin,

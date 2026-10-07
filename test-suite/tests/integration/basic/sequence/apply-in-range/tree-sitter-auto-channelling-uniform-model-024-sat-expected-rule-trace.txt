@@ -14,11 +14,11 @@ true
 true
 new variables:
   find x#explicit_1: matrix indexed by [int(1..2)] of int(1)
-  find y#int_rank_1: bool
+  find y#rank_1: bool
 new constraints:
   or([1 <= 2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)])
   or([2 <= 2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
-  or([!(y#int_rank_1),true;int(1..)])
+  or([!(y#rank_1),true;int(1..)])
 
 --
 
@@ -47,31 +47,31 @@ true,
 true,
 true
 new variables:
-  find x#explicit_1#components_1#int_rank_1: bool
-  find x#explicit_1#components_2#int_rank_1: bool
+  find x#explicit_1#components_1#rank_1: bool
+  find x#explicit_1#components_2#rank_1: bool
 new constraints:
-  and([!(x#explicit_1#components_1#int_rank_1),true;int(1..)])
-  and([!(x#explicit_1#components_2#int_rank_1),true;int(1..)])
+  and([!(x#explicit_1#components_1#rank_1),true;int(1..)])
+  and([!(x#explicit_1#components_2#rank_1),true;int(1..)])
 
 --
 
-!(x#explicit_1#components_2#int_rank_1)
+!(x#explicit_1#components_2#rank_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> !(x#explicit_1#components_2#int_rank_1)) using tseitin
+  define(__0 <-> !(x#explicit_1#components_2#rank_1)) using tseitin
 
 --
 
-!(x#explicit_1#components_1#int_rank_1)
+!(x#explicit_1#components_1#rank_1)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> !(x#explicit_1#components_1#int_rank_1)) using tseitin
+  define(__1 <-> !(x#explicit_1#components_1#rank_1)) using tseitin
 
 --
 
@@ -124,11 +124,11 @@ Final model:
 find x: sequence (size 2) of int(1)
 find y: int(1..2)
 find x#explicit_1: matrix indexed by [int(1..2)] of int(1)
-find y#int_rank_1: bool
+find y#rank_1: bool
 find x#explicit_1#components_1: int(1)
 find x#explicit_1#components_2: int(1)
-find x#explicit_1#components_1#int_rank_1: bool
-find x#explicit_1#components_2#int_rank_1: bool
+find x#explicit_1#components_1#rank_1: bool
+find x#explicit_1#components_2#rank_1: bool
 findAux __0: bool
 findAux __1: bool
 
@@ -141,8 +141,8 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !(x#explicit_1#components_2#int_rank_1)) using tseitin,
-define(__1 <-> !(x#explicit_1#components_1#int_rank_1)) using tseitin,
+define(__0 <-> !(x#explicit_1#components_2#rank_1)) using tseitin,
+define(__1 <-> !(x#explicit_1#components_1#rank_1)) using tseitin,
 assert(__1) using tseitin,
 assert(__0) using tseitin
 

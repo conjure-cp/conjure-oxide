@@ -14,42 +14,42 @@ and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,pro
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ])
 new variables:
-  find x#int_order_1: bool
-  find x#int_order_2: bool
+  find x#order_1: bool
+  find x#order_2: bool
 new constraints:
-  x#int_order_1
-  or([!(x#int_order_2),x#int_order_1;int(1..)])
-  or([and([SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [1, 2]) >= 1,SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [1, 2]) <= 2;int(1..)]);int(1..)])
+  x#order_1
+  or([!(x#order_2),x#order_1;int(1..)])
+  or([and([SATInt(Order, [x#order_1,x#order_2;int(1..)] [1, 2]) >= 1,SATInt(Order, [x#order_1,x#order_2;int(1..)] [1, 2]) <= 2;int(1..)]);int(1..)])
 
 --
 
-SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [1, 2]) >= 1
+SATInt(Order, [x#order_1,x#order_2;int(1..)] [1, 2]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+  define(__0 <-> integer-weighted(1*x#order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
 
 --
 
-SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [1, 2]) <= 2
+SATInt(Order, [x#order_1,x#order_2;int(1..)] [1, 2]) <= 2
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+  define(__1 <-> integer-weighted(1*x#order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
 
 --
 
-!(x#int_order_2)
+!(x#order_2)
    ~~> apply_tseytin_not ([("SAT", 9005)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> !(x#int_order_2)) using tseitin
+  define(__2 <-> !(x#order_2)) using tseitin
 
 --
 
@@ -69,18 +69,18 @@ new SAT encoding decisions:
 
 --
 
-or([__2,x#int_order_1;int(1..)])
+or([__2,x#order_1;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> or([__2,x#int_order_1;int(1..)])) using tseitin
+  define(__4 <-> or([__2,x#order_1;int(1..)])) using tseitin
 
 --
 
 and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ]),
-x#int_order_1,
+x#order_1,
 __4,
 __3
    ~~> remove_single_atom ([("SAT", 8400)])
@@ -88,7 +88,7 @@ and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,pro
 __4,
 __3
 new SAT encoding decisions:
-  assert(x#int_order_1) using tseitin
+  assert(x#order_1) using tseitin
 
 --
 
@@ -123,8 +123,8 @@ Final model:
 letting k be 2
 letting n be 2
 find x: int(1..n)
-find x#int_order_1: bool
-find x#int_order_2: bool
+find x#order_1: bool
+find x#order_2: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -137,12 +137,12 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__1 <-> integer-weighted(1*x#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
-define(__2 <-> !(x#int_order_2)) using tseitin,
+define(__0 <-> integer-weighted(1*x#order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__1 <-> integer-weighted(1*x#order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__2 <-> !(x#order_2)) using tseitin,
 define(__3 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__4 <-> or([__2,x#int_order_1;int(1..)])) using tseitin,
-assert(x#int_order_1) using tseitin,
+define(__4 <-> or([__2,x#order_1;int(1..)])) using tseitin,
+assert(x#order_1) using tseitin,
 assert(__4) using tseitin,
 assert(__3) using tseitin
 

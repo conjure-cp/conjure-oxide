@@ -13,10 +13,10 @@ x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
 new variables:
-  find x#int_rank_1: bool
-  find x#int_rank_2: bool
+  find x#rank_1: bool
+  find x#rank_2: bool
 new constraints:
-  or([!(x#int_rank_2),or([!(x#int_rank_1),true;int(1..)]);int(1..)])
+  or([!(x#rank_2),or([!(x#rank_1),true;int(1..)]);int(1..)])
 
 --
 
@@ -24,26 +24,26 @@ x < y
    ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
 x < y
 new variables:
-  find y#int_rank_1: bool
-  find y#int_rank_2: bool
+  find y#rank_1: bool
+  find y#rank_2: bool
 new constraints:
-  or([!(y#int_rank_2),or([!(y#int_rank_1),true;int(1..)]);int(1..)])
+  or([!(y#rank_2),or([!(y#rank_1),true;int(1..)]);int(1..)])
 
 --
 
 x
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(1, 4)]), [x#int_rank_1,x#int_rank_2;int(1..)] [1, 4])
+SATInt(Rank([(1, 4)]), [x#rank_1,x#rank_2;int(1..)] [1, 4])
 
 --
 
 y
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Rank([(1, 4)]), [y#int_rank_1,y#int_rank_2;int(1..)] [1, 4])
+SATInt(Rank([(1, 4)]), [y#rank_1,y#rank_2;int(1..)] [1, 4])
 
 --
 
-SATInt(Rank([(1, 4)]), [x#int_rank_1,x#int_rank_2;int(1..)] [1, 4]) < SATInt(Rank([(1, 4)]), [y#int_rank_1,y#int_rank_2;int(1..)] [1, 4])
+SATInt(Rank([(1, 4)]), [x#rank_1,x#rank_2;int(1..)] [1, 4]) < SATInt(Rank([(1, 4)]), [y#rank_1,y#rank_2;int(1..)] [1, 4])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SATInt(Log, [__1,__3,__5,__7;int(1..)] [1, 4]) < SATInt(Log, [__10,__12,__14,__16;int(1..)] [1, 4])
 new variables:
@@ -66,20 +66,20 @@ new variables:
   findAux __16: bool
   findAux __17: bool
 new SAT encoding decisions:
-  define(__0 <-> !((x#int_rank_1) <-> (false))) using tseitin
+  define(__0 <-> !((x#rank_1) <-> (false))) using tseitin
   define(__1 <-> !(__0)) using tseitin
-  define(__2 <-> or([x#int_rank_1,false;int(1..)])) using tseitin
-  define(__3 <-> !((x#int_rank_2) <-> (__2))) using tseitin
-  define(__4 <-> and([x#int_rank_2,__2;int(1..)])) using tseitin
+  define(__2 <-> or([x#rank_1,false;int(1..)])) using tseitin
+  define(__3 <-> !((x#rank_2) <-> (__2))) using tseitin
+  define(__4 <-> and([x#rank_2,__2;int(1..)])) using tseitin
   define(__5 <-> !((false) <-> (__4))) using tseitin
   define(__6 <-> and([false,__4;int(1..)])) using tseitin
   define(__7 <-> !((false) <-> (__6))) using tseitin
   define(__8 <-> and([false,__6;int(1..)])) using tseitin
-  define(__9 <-> !((y#int_rank_1) <-> (false))) using tseitin
+  define(__9 <-> !((y#rank_1) <-> (false))) using tseitin
   define(__10 <-> !(__9)) using tseitin
-  define(__11 <-> or([y#int_rank_1,false;int(1..)])) using tseitin
-  define(__12 <-> !((y#int_rank_2) <-> (__11))) using tseitin
-  define(__13 <-> and([y#int_rank_2,__11;int(1..)])) using tseitin
+  define(__11 <-> or([y#rank_1,false;int(1..)])) using tseitin
+  define(__12 <-> !((y#rank_2) <-> (__11))) using tseitin
+  define(__13 <-> and([y#rank_2,__11;int(1..)])) using tseitin
   define(__14 <-> !((false) <-> (__13))) using tseitin
   define(__15 <-> and([false,__13;int(1..)])) using tseitin
   define(__16 <-> !((false) <-> (__15))) using tseitin
@@ -112,10 +112,10 @@ Final model:
 
 find x: int(1..4)
 find y: int(1..4)
-find x#int_rank_1: bool
-find x#int_rank_2: bool
-find y#int_rank_1: bool
-find y#int_rank_2: bool
+find x#rank_1: bool
+find x#rank_2: bool
+find y#rank_1: bool
+find y#rank_2: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -143,20 +143,20 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !((x#int_rank_1) <-> (false))) using tseitin,
+define(__0 <-> !((x#rank_1) <-> (false))) using tseitin,
 define(__1 <-> !(__0)) using tseitin,
-define(__2 <-> or([x#int_rank_1,false;int(1..)])) using tseitin,
-define(__3 <-> !((x#int_rank_2) <-> (__2))) using tseitin,
-define(__4 <-> and([x#int_rank_2,__2;int(1..)])) using tseitin,
+define(__2 <-> or([x#rank_1,false;int(1..)])) using tseitin,
+define(__3 <-> !((x#rank_2) <-> (__2))) using tseitin,
+define(__4 <-> and([x#rank_2,__2;int(1..)])) using tseitin,
 define(__5 <-> !((false) <-> (__4))) using tseitin,
 define(__6 <-> and([false,__4;int(1..)])) using tseitin,
 define(__7 <-> !((false) <-> (__6))) using tseitin,
 define(__8 <-> and([false,__6;int(1..)])) using tseitin,
-define(__9 <-> !((y#int_rank_1) <-> (false))) using tseitin,
+define(__9 <-> !((y#rank_1) <-> (false))) using tseitin,
 define(__10 <-> !(__9)) using tseitin,
-define(__11 <-> or([y#int_rank_1,false;int(1..)])) using tseitin,
-define(__12 <-> !((y#int_rank_2) <-> (__11))) using tseitin,
-define(__13 <-> and([y#int_rank_2,__11;int(1..)])) using tseitin,
+define(__11 <-> or([y#rank_1,false;int(1..)])) using tseitin,
+define(__12 <-> !((y#rank_2) <-> (__11))) using tseitin,
+define(__13 <-> and([y#rank_2,__11;int(1..)])) using tseitin,
 define(__14 <-> !((false) <-> (__13))) using tseitin,
 define(__15 <-> and([false,__13;int(1..)])) using tseitin,
 define(__16 <-> !((false) <-> (__15))) using tseitin,

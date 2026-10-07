@@ -105,95 +105,55 @@ sum([toInt(and([SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([SafeInd
 sum([toInt(and([SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([SafeIndex(x#repetition_1,[2]) = 2;int(1..)]));int(1..)]) <= 2,
 sum([toInt(and([SafeIndex(x#repetition_1,[1]) = 3;int(1..)])),toInt(and([SafeIndex(x#repetition_1,[2]) = 3;int(1..)]));int(1..)]) <= 2
 new variables:
-  find x#repetition_1#components_1#int_offset_1: bool
-  find x#repetition_1#components_1#int_offset_2: bool
-  find x#repetition_1#components_2#int_offset_1: bool
-  find x#repetition_1#components_2#int_offset_2: bool
+  find x#repetition_1#components_1#twos_complement_1: bool
+  find x#repetition_1#components_1#twos_complement_2: bool
+  find x#repetition_1#components_1#twos_complement_3: bool
+  find x#repetition_1#components_2#twos_complement_1: bool
+  find x#repetition_1#components_2#twos_complement_2: bool
+  find x#repetition_1#components_2#twos_complement_3: bool
 new constraints:
-  or([!(x#repetition_1#components_1#int_offset_2),and([!(x#repetition_1#components_1#int_offset_1),true;int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [x#repetition_1#components_1#int_offset_1,x#repetition_1#components_1#int_offset_2;int(1..)] [1, 3]) >= 1,SATInt(Offset, [x#repetition_1#components_1#int_offset_1,x#repetition_1#components_1#int_offset_2;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
-  or([!(x#repetition_1#components_2#int_offset_2),and([!(x#repetition_1#components_2#int_offset_1),true;int(1..)]);int(1..)])
-  or([and([SATInt(Offset, [x#repetition_1#components_2#int_offset_1,x#repetition_1#components_2#int_offset_2;int(1..)] [1, 3]) >= 1,SATInt(Offset, [x#repetition_1#components_2#int_offset_1,x#repetition_1#components_2#int_offset_2;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [x#repetition_1#components_2#twos_complement_1,x#repetition_1#components_2#twos_complement_2,x#repetition_1#components_2#twos_complement_3;int(1..)] [1, 3]) >= 1,SATInt(Log, [x#repetition_1#components_2#twos_complement_1,x#repetition_1#components_2#twos_complement_2,x#repetition_1#components_2#twos_complement_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
 
 --
 
-SATInt(Offset, [x#repetition_1#components_1#int_offset_1,x#repetition_1#components_1#int_offset_2;int(1..)] [1, 3]) >= 1
+SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 3]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__0 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
-SATInt(Offset, [x#repetition_1#components_1#int_offset_1,x#repetition_1#components_1#int_offset_2;int(1..)] [1, 3]) <= 3
+SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 3]) <= 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__1 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
-SATInt(Offset, [x#repetition_1#components_2#int_offset_1,x#repetition_1#components_2#int_offset_2;int(1..)] [1, 3]) >= 1
+SATInt(Log, [x#repetition_1#components_2#twos_complement_1,x#repetition_1#components_2#twos_complement_2,x#repetition_1#components_2#twos_complement_3;int(1..)] [1, 3]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*x#repetition_1#components_2#int_offset_1, 2*x#repetition_1#components_2#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__2 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
-SATInt(Offset, [x#repetition_1#components_2#int_offset_1,x#repetition_1#components_2#int_offset_2;int(1..)] [1, 3]) <= 3
+SATInt(Log, [x#repetition_1#components_2#twos_complement_1,x#repetition_1#components_2#twos_complement_2,x#repetition_1#components_2#twos_complement_3;int(1..)] [1, 3]) <= 3
    ~~> select_integer_relation ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*x#repetition_1#components_2#int_offset_1, 2*x#repetition_1#components_2#int_offset_2) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
-
---
-
-!(x#repetition_1#components_1#int_offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> !(x#repetition_1#components_1#int_offset_2)) using tseitin
-
---
-
-!(x#repetition_1#components_2#int_offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> !(x#repetition_1#components_2#int_offset_2)) using tseitin
-
---
-
-!(x#repetition_1#components_1#int_offset_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> !(x#repetition_1#components_1#int_offset_1)) using tseitin
-
---
-
-!(x#repetition_1#components_2#int_offset_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> !(x#repetition_1#components_2#int_offset_1)) using tseitin
+  define(__3 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
@@ -212,18 +172,6 @@ and([__2,__3;int(1..)])
 or([and([__0,__1;int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
 and([__0,__1;int(1..)])
-
---
-
-and([__6;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__6
-
---
-
-and([__7;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__7
 
 --
 
@@ -271,130 +219,167 @@ SafeIndex(x#repetition_1,[2]) = 3
 
 and([__2,__3;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
+__4
 new variables:
-  findAux __8: bool
+  findAux __4: bool
 new SAT encoding decisions:
-  define(__8 <-> and([__2,__3;int(1..)])) using tseitin
+  define(__4 <-> and([__2,__3;int(1..)])) using tseitin
 
 --
 
 and([__0,__1;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__9
+__5
 new variables:
-  findAux __9: bool
+  findAux __5: bool
 new SAT encoding decisions:
-  define(__9 <-> and([__0,__1;int(1..)])) using tseitin
+  define(__5 <-> and([__0,__1;int(1..)])) using tseitin
 
 --
 
-or([__4,__6;int(1..)])
+true,
+or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
+true,
+true,
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2,
+__5,
+__4
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
+true,
+true,
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2,
+__4
+new SAT encoding decisions:
+  assert(__5) using tseitin
+
+--
+
+true,
+or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
+true,
+true,
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2,
+__4
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
+true,
+true,
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2
+new SAT encoding decisions:
+  assert(__4) using tseitin
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+x#repetition_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_1
+
+--
+
+x#repetition_1#components_1
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 3])
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+x#repetition_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_2
+
+--
+
+SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 3]) < x#repetition_1#components_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3, -1*x#repetition_1#components_2#twos_complement_1, -2*x#repetition_1#components_2#twos_complement_2, 4*x#repetition_1#components_2#twos_complement_3) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+x#repetition_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_1
+
+--
+
+x#repetition_1#components_1
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 3])
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+x#repetition_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_2
+
+--
+
+SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 3]) = x#repetition_1#components_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3, -1*x#repetition_1#components_2#twos_complement_1, -2*x#repetition_1#components_2#twos_complement_2, 4*x#repetition_1#components_2#twos_complement_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+
+--
+
+or([__6,__7;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__10
+__8
 new variables:
-  findAux __10: bool
+  findAux __8: bool
 new SAT encoding decisions:
-  define(__10 <-> or([__4,__6;int(1..)])) using tseitin
-
---
-
-or([__5,__7;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> or([__5,__7;int(1..)])) using tseitin
+  define(__8 <-> or([__6,__7;int(1..)])) using tseitin
 
 --
 
 true,
-or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
+__8,
 true,
 true,
 sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
 sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2,
-__10,
-__9,
-__11,
-__8
+sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
-or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-true,
-true,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2,
-__9,
-__11,
-__8
-new SAT encoding decisions:
-  assert(__10) using tseitin
-
---
-
-true,
-or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-true,
-true,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2,
-__9,
-__11,
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-true,
-true,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2,
-__11,
-__8
-new SAT encoding decisions:
-  assert(__9) using tseitin
-
---
-
-true,
-or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-true,
-true,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2,
-__11,
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-true,
-true,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2,
-__8
-new SAT encoding decisions:
-  assert(__11) using tseitin
-
---
-
-true,
-or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-true,
-true,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2,
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
 true,
 true,
 sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
@@ -417,122 +402,13 @@ x#repetition_1#components_1
 
 --
 
-x#repetition_1#components_1
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Offset, [x#repetition_1#components_1#int_offset_1,x#repetition_1#components_1#int_offset_2;int(1..)] [1, 3])
-
---
-
-SafeIndex(x#repetition_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_2
-
---
-
-x#repetition_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_2
-
---
-
-SATInt(Offset, [x#repetition_1#components_1#int_offset_1,x#repetition_1#components_1#int_offset_2;int(1..)] [1, 3]) < x#repetition_1#components_2
-   ~~> select_integer_relation ([("SAT", 18500)])
-__12
-new variables:
-  findAux __12: bool
-new SAT encoding decisions:
-  define(__12 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2, -1*x#repetition_1#components_2#int_offset_1, -2*x#repetition_1#components_2#int_offset_2) Less 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -2, upper: 0 } }]
-
---
-
-SafeIndex(x#repetition_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_1
-
---
-
-x#repetition_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_1
-
---
-
-x#repetition_1#components_1
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(Offset, [x#repetition_1#components_1#int_offset_1,x#repetition_1#components_1#int_offset_2;int(1..)] [1, 3])
-
---
-
-SafeIndex(x#repetition_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_2
-
---
-
-x#repetition_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_2
-
---
-
-SATInt(Offset, [x#repetition_1#components_1#int_offset_1,x#repetition_1#components_1#int_offset_2;int(1..)] [1, 3]) = x#repetition_1#components_2
-   ~~> select_integer_relation ([("SAT", 18500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2, -1*x#repetition_1#components_2#int_offset_1, -2*x#repetition_1#components_2#int_offset_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -2, upper: 0 } }]
-
---
-
-or([__12,__13;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> or([__12,__13;int(1..)])) using tseitin
-
---
-
-true,
-__14,
-true,
-true,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 1),toInt(SafeIndex(x#repetition_1,[2]) = 1);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
-sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2
-new SAT encoding decisions:
-  assert(__14) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_1
-
---
-
-x#repetition_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_1
-
---
-
 x#repetition_1#components_1 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__15
+__9
 new variables:
-  findAux __15: bool
+  findAux __9: bool
 new SAT encoding decisions:
-  define(__15 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__9 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
@@ -550,18 +426,18 @@ x#repetition_1#components_2
 
 x#repetition_1#components_2 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__16
+__10
 new variables:
-  findAux __16: bool
+  findAux __10: bool
 new SAT encoding decisions:
-  define(__16 <-> integer-weighted(1*x#repetition_1#components_2#int_offset_1, 2*x#repetition_1#components_2#int_offset_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__10 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
 true,
 true,
 true,
-sum([toInt(__15),toInt(__16);int(1..)]) <= 2,
+sum([toInt(__9),toInt(__10);int(1..)]) <= 2,
 sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
 sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2
    ~~> select_cardinality ([("SAT", 20000)])
@@ -571,7 +447,7 @@ true,
 sum([toInt(SafeIndex(x#repetition_1,[1]) = 2),toInt(SafeIndex(x#repetition_1,[2]) = 2);int(1..)]) <= 2,
 sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2
 new SAT encoding decisions:
-  count(__15, __16) AtMost 2 using None
+  count(__9, __10) AtMost 2 using None
 
 --
 
@@ -589,11 +465,11 @@ x#repetition_1#components_1
 
 x#repetition_1#components_1 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__17
+__11
 new variables:
-  findAux __17: bool
+  findAux __11: bool
 new SAT encoding decisions:
-  define(__17 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__11 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
@@ -611,18 +487,18 @@ x#repetition_1#components_2
 
 x#repetition_1#components_2 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__18
+__12
 new variables:
-  findAux __18: bool
+  findAux __12: bool
 new SAT encoding decisions:
-  define(__18 <-> integer-weighted(1*x#repetition_1#components_2#int_offset_1, 2*x#repetition_1#components_2#int_offset_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__12 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
 true,
 true,
 true,
-sum([toInt(__17),toInt(__18);int(1..)]) <= 2,
+sum([toInt(__11),toInt(__12);int(1..)]) <= 2,
 sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2
    ~~> select_cardinality ([("SAT", 20000)])
 true,
@@ -630,7 +506,7 @@ true,
 true,
 sum([toInt(SafeIndex(x#repetition_1,[1]) = 3),toInt(SafeIndex(x#repetition_1,[2]) = 3);int(1..)]) <= 2
 new SAT encoding decisions:
-  count(__17, __18) AtMost 2 using None
+  count(__11, __12) AtMost 2 using None
 
 --
 
@@ -648,11 +524,11 @@ x#repetition_1#components_1
 
 x#repetition_1#components_1 = 3
    ~~> select_integer_relation ([("SAT", 18500)])
-__19
+__13
 new variables:
-  findAux __19: bool
+  findAux __13: bool
 new SAT encoding decisions:
-  define(__19 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2) Equal 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__13 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
@@ -670,24 +546,24 @@ x#repetition_1#components_2
 
 x#repetition_1#components_2 = 3
    ~~> select_integer_relation ([("SAT", 18500)])
-__20
+__14
 new variables:
-  findAux __20: bool
+  findAux __14: bool
 new SAT encoding decisions:
-  define(__20 <-> integer-weighted(1*x#repetition_1#components_2#int_offset_1, 2*x#repetition_1#components_2#int_offset_2) Equal 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__14 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
 true,
 true,
 true,
-sum([toInt(__19),toInt(__20);int(1..)]) <= 2
+sum([toInt(__13),toInt(__14);int(1..)]) <= 2
    ~~> select_cardinality ([("SAT", 20000)])
 true,
 true,
 true
 new SAT encoding decisions:
-  count(__19, __20) AtMost 2 using None
+  count(__13, __14) AtMost 2 using None
 
 --
 
@@ -698,10 +574,12 @@ find x: mset (representation repetition, size 2) of int(1..a)
 find x#repetition_1: matrix indexed by [int(1..2)] of int(1..3)
 find x#repetition_1#components_1: int(1..3)
 find x#repetition_1#components_2: int(1..3)
-find x#repetition_1#components_1#int_offset_1: bool
-find x#repetition_1#components_1#int_offset_2: bool
-find x#repetition_1#components_2#int_offset_1: bool
-find x#repetition_1#components_2#int_offset_2: bool
+find x#repetition_1#components_1#twos_complement_1: bool
+find x#repetition_1#components_1#twos_complement_2: bool
+find x#repetition_1#components_1#twos_complement_3: bool
+find x#repetition_1#components_2#twos_complement_1: bool
+find x#repetition_1#components_2#twos_complement_2: bool
+find x#repetition_1#components_2#twos_complement_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -717,12 +595,6 @@ findAux __11: bool
 findAux __12: bool
 findAux __13: bool
 findAux __14: bool
-findAux __15: bool
-findAux __16: bool
-findAux __17: bool
-findAux __18: bool
-findAux __19: bool
-findAux __20: bool
 
 such that
 
@@ -732,33 +604,25 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__1 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__2 <-> integer-weighted(1*x#repetition_1#components_2#int_offset_1, 2*x#repetition_1#components_2#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__3 <-> integer-weighted(1*x#repetition_1#components_2#int_offset_1, 2*x#repetition_1#components_2#int_offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__4 <-> !(x#repetition_1#components_1#int_offset_2)) using tseitin,
-define(__5 <-> !(x#repetition_1#components_2#int_offset_2)) using tseitin,
-define(__6 <-> !(x#repetition_1#components_1#int_offset_1)) using tseitin,
-define(__7 <-> !(x#repetition_1#components_2#int_offset_1)) using tseitin,
-define(__8 <-> and([__2,__3;int(1..)])) using tseitin,
-define(__9 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__10 <-> or([__4,__6;int(1..)])) using tseitin,
-define(__11 <-> or([__5,__7;int(1..)])) using tseitin,
-assert(__10) using tseitin,
-assert(__9) using tseitin,
-assert(__11) using tseitin,
+define(__0 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__1 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__2 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__3 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__4 <-> and([__2,__3;int(1..)])) using tseitin,
+define(__5 <-> and([__0,__1;int(1..)])) using tseitin,
+assert(__5) using tseitin,
+assert(__4) using tseitin,
+define(__6 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3, -1*x#repetition_1#components_2#twos_complement_1, -2*x#repetition_1#components_2#twos_complement_2, 4*x#repetition_1#components_2#twos_complement_3) Less 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__7 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3, -1*x#repetition_1#components_2#twos_complement_1, -2*x#repetition_1#components_2#twos_complement_2, 4*x#repetition_1#components_2#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
+define(__8 <-> or([__6,__7;int(1..)])) using tseitin,
 assert(__8) using tseitin,
-define(__12 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2, -1*x#repetition_1#components_2#int_offset_1, -2*x#repetition_1#components_2#int_offset_2) Less 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -2, upper: 0 } }],
-define(__13 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2, -1*x#repetition_1#components_2#int_offset_1, -2*x#repetition_1#components_2#int_offset_2) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -2, upper: 0 } }],
-define(__14 <-> or([__12,__13;int(1..)])) using tseitin,
-assert(__14) using tseitin,
-define(__15 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__16 <-> integer-weighted(1*x#repetition_1#components_2#int_offset_1, 2*x#repetition_1#components_2#int_offset_2) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-count(__15, __16) AtMost 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
-define(__17 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__18 <-> integer-weighted(1*x#repetition_1#components_2#int_offset_1, 2*x#repetition_1#components_2#int_offset_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-count(__17, __18) AtMost 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
-define(__19 <-> integer-weighted(1*x#repetition_1#components_1#int_offset_1, 2*x#repetition_1#components_1#int_offset_2) Equal 2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__20 <-> integer-weighted(1*x#repetition_1#components_2#int_offset_1, 2*x#repetition_1#components_2#int_offset_2) Equal 2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-count(__19, __20) AtMost 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic })
+define(__9 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__10 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+count(__9, __10) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__11 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__12 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+count(__11, __12) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__13 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__14 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+count(__13, __14) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic })
 

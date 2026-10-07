@@ -17,14 +17,14 @@ y != false
 x,
 y != false
 new variables:
-  find z#int_order_1: bool
+  find z#order_1: bool
 new constraints:
-  z#int_order_1
-  or([SATInt(Order, [z#int_order_1;int(1..)] [42, 42]) = 42;int(1..)])
+  z#order_1
+  or([SATInt(Order, [z#order_1;int(1..)] [42, 42]) = 42;int(1..)])
 
 --
 
-SATInt(Order, [z#int_order_1;int(1..)] [42, 42]) = 42
+SATInt(Order, [z#order_1;int(1..)] [42, 42]) = 42
    ~~> select_integer_relation ([("SAT", 18500)])
 __0
 new variables:
@@ -52,11 +52,11 @@ new SAT encoding decisions:
 
 x,
 __1,
-z#int_order_1,
+z#order_1,
 __0
    ~~> remove_single_atom ([("SAT", 8400)])
 __1,
-z#int_order_1,
+z#order_1,
 __0
 new SAT encoding decisions:
   assert(x) using tseitin
@@ -64,22 +64,22 @@ new SAT encoding decisions:
 --
 
 __1,
-z#int_order_1,
+z#order_1,
 __0
    ~~> remove_single_atom ([("SAT", 8400)])
-z#int_order_1,
+z#order_1,
 __0
 new SAT encoding decisions:
   assert(__1) using tseitin
 
 --
 
-z#int_order_1,
+z#order_1,
 __0
    ~~> remove_single_atom ([("SAT", 8400)])
 __0
 new SAT encoding decisions:
-  assert(z#int_order_1) using tseitin
+  assert(z#order_1) using tseitin
 
 --
 
@@ -96,7 +96,7 @@ Final model:
 find x: bool
 find y: bool
 find z: int(42)
-find z#int_order_1: bool
+find z#order_1: bool
 findAux __0: bool
 findAux __1: bool
 
@@ -110,6 +110,6 @@ define(__0 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algori
 define(__1 <-> !((y) <-> (false))) using tseitin,
 assert(x) using tseitin,
 assert(__1) using tseitin,
-assert(z#int_order_1) using tseitin,
+assert(z#order_1) using tseitin,
 assert(__0) using tseitin
 

@@ -17,29 +17,29 @@ y != false
 x,
 y != false
 new variables:
-  find z#int_direct_1: bool
+  find z#direct_1: bool
 new constraints:
-  sum([toInt(z#int_direct_1);int(1..)]) <= 1
-  or([z#int_direct_1;int(1..)])
+  sum([toInt(z#direct_1);int(1..)]) <= 1
+  or([z#direct_1;int(1..)])
 
 --
 
 x,
 y != false,
-sum([toInt(z#int_direct_1);int(1..)]) <= 1,
-or([z#int_direct_1;int(1..)])
+sum([toInt(z#direct_1);int(1..)]) <= 1,
+or([z#direct_1;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 x,
 y != false,
-or([z#int_direct_1;int(1..)])
+or([z#direct_1;int(1..)])
 new SAT encoding decisions:
-  at-most-one(z#int_direct_1) using None
+  at-most-one(z#direct_1) using None
 
 --
 
-or([z#int_direct_1;int(1..)])
+or([z#direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-z#int_direct_1
+z#direct_1
 
 --
 
@@ -55,29 +55,29 @@ new SAT encoding decisions:
 
 x,
 __0,
-z#int_direct_1
+z#direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
 __0,
-z#int_direct_1
+z#direct_1
 new SAT encoding decisions:
   assert(x) using tseitin
 
 --
 
 __0,
-z#int_direct_1
+z#direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
-z#int_direct_1
+z#direct_1
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
-z#int_direct_1
+z#direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(z#int_direct_1) using tseitin
+  assert(z#direct_1) using tseitin
 
 --
 
@@ -86,7 +86,7 @@ Final model:
 find x: bool
 find y: bool
 find z: int(42)
-find z#int_direct_1: bool
+find z#direct_1: bool
 findAux __0: bool
 
 such that
@@ -95,9 +95,9 @@ true
 
 sat encoding decisions:
 
-at-most-one(z#int_direct_1) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
+at-most-one(z#direct_1) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
 define(__0 <-> !((y) <-> (false))) using tseitin,
 assert(x) using tseitin,
 assert(__0) using tseitin,
-assert(z#int_direct_1) using tseitin
+assert(z#direct_1) using tseitin
 

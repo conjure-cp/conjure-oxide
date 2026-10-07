@@ -1,0 +1,267 @@
+Model before rewriting:
+
+find f: function (total) int(1..2) --> int(1) 
+find y: int(1..2)
+
+such that
+
+image(f,y) = 1
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find f#explicit_1: matrix indexed by [int(1..2)] of int(1)
+  find y#offset_1: bool
+new constraints:
+  or([!(y#offset_1),true;int(1..)])
+  or([and([SATInt(Offset, [y#offset_1;int(1..)] [1, 2]) >= 1,SATInt(Offset, [y#offset_1;int(1..)] [1, 2]) <= 2;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [y#offset_1;int(1..)] [1, 2]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*y#offset_1) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 1 } }]
+
+--
+
+SATInt(Offset, [y#offset_1;int(1..)] [1, 2]) <= 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*y#offset_1) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 1 } }]
+
+--
+
+true,
+true,
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+true,
+or([and([__0,__1;int(1..)]);int(1..)])
+new variables:
+  find f#explicit_1#components_1: int(1)
+  find f#explicit_1#components_2: int(1)
+
+--
+
+true,
+true,
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+true,
+or([and([__0,__1;int(1..)]);int(1..)])
+new variables:
+  find f#explicit_1#components_1#offset_1: bool
+  find f#explicit_1#components_2#offset_1: bool
+new constraints:
+  and([!(f#explicit_1#components_1#offset_1),true;int(1..)])
+  or([SATInt(Offset, [f#explicit_1#components_1#offset_1;int(1..)] [1, 1]) = 1;int(1..)])
+  and([!(f#explicit_1#components_2#offset_1),true;int(1..)])
+  or([SATInt(Offset, [f#explicit_1#components_2#offset_1;int(1..)] [1, 1]) = 1;int(1..)])
+
+--
+
+SATInt(Offset, [f#explicit_1#components_1#offset_1;int(1..)] [1, 1]) = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*f#explicit_1#components_1#offset_1) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }]
+
+--
+
+SATInt(Offset, [f#explicit_1#components_2#offset_1;int(1..)] [1, 1]) = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*f#explicit_1#components_2#offset_1) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }]
+
+--
+
+!(f#explicit_1#components_2#offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> !(f#explicit_1#components_2#offset_1)) using tseitin
+
+--
+
+!(f#explicit_1#components_1#offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> !(f#explicit_1#components_1#offset_1)) using tseitin
+
+--
+
+or([__3;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__3
+
+--
+
+or([__2;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__2
+
+--
+
+and([__4;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__4
+
+--
+
+and([__5;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__5
+
+--
+
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+true,
+true,
+__6,
+__5,
+__2,
+__4,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+__5,
+__2,
+__4,
+__3
+new SAT encoding decisions:
+  assert(__6) using tseitin
+
+--
+
+true,
+true,
+__5,
+__2,
+__4,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+__2,
+__4,
+__3
+new SAT encoding decisions:
+  assert(__5) using tseitin
+
+--
+
+true,
+true,
+__2,
+__4,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+__4,
+__3
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+true,
+true,
+__4,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+__3
+new SAT encoding decisions:
+  assert(__4) using tseitin
+
+--
+
+true,
+true,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true
+new SAT encoding decisions:
+  assert(__3) using tseitin
+
+--
+
+Final model:
+
+find f: function (total) int(1..2) --> int(1) 
+find y: int(1..2)
+find f#explicit_1: matrix indexed by [int(1..2)] of int(1)
+find y#offset_1: bool
+findAux __0: bool
+findAux __1: bool
+find f#explicit_1#components_1: int(1)
+find f#explicit_1#components_2: int(1)
+find f#explicit_1#components_1#offset_1: bool
+find f#explicit_1#components_2#offset_1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*y#offset_1) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__1 <-> integer-weighted(1*y#offset_1) LessEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__2 <-> integer-weighted(1*f#explicit_1#components_1#offset_1) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }],
+define(__3 <-> integer-weighted(1*f#explicit_1#components_2#offset_1) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }],
+define(__4 <-> !(f#explicit_1#components_2#offset_1)) using tseitin,
+define(__5 <-> !(f#explicit_1#components_1#offset_1)) using tseitin,
+define(__6 <-> and([__0,__1;int(1..)])) using tseitin,
+assert(__6) using tseitin,
+assert(__5) using tseitin,
+assert(__2) using tseitin,
+assert(__4) using tseitin,
+assert(__3) using tseitin
+

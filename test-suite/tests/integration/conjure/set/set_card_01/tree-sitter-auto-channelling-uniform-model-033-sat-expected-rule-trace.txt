@@ -40,24 +40,24 @@ true
 |s| in s,
 true
 new variables:
-  find s#explicit_1#components_1#int_direct_1: bool
-  find s#explicit_1#components_1#int_direct_2: bool
+  find s#explicit_1#components_1#direct_1: bool
+  find s#explicit_1#components_1#direct_2: bool
 new constraints:
-  sum([toInt(s#explicit_1#components_1#int_direct_1),toInt(s#explicit_1#components_1#int_direct_2);int(1..)]) <= 1
-  or([s#explicit_1#components_1#int_direct_1,s#explicit_1#components_1#int_direct_2;int(1..)])
+  sum([toInt(s#explicit_1#components_1#direct_1),toInt(s#explicit_1#components_1#direct_2);int(1..)]) <= 1
+  or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)])
 
 --
 
 |s| in s,
 true,
-sum([toInt(s#explicit_1#components_1#int_direct_1),toInt(s#explicit_1#components_1#int_direct_2);int(1..)]) <= 1,
-or([s#explicit_1#components_1#int_direct_1,s#explicit_1#components_1#int_direct_2;int(1..)])
+sum([toInt(s#explicit_1#components_1#direct_1),toInt(s#explicit_1#components_1#direct_2);int(1..)]) <= 1,
+or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 |s| in s,
 true,
-or([s#explicit_1#components_1#int_direct_1,s#explicit_1#components_1#int_direct_2;int(1..)])
+or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)])
 new SAT encoding decisions:
-  at-most-one(s#explicit_1#components_1#int_direct_1, s#explicit_1#components_1#int_direct_2) using None
+  at-most-one(s#explicit_1#components_1#direct_1, s#explicit_1#components_1#direct_2) using None
 
 --
 
@@ -91,13 +91,13 @@ SafeIndex(s#explicit_1,[1]) = 1
 
 --
 
-or([s#explicit_1#components_1#int_direct_1,s#explicit_1#components_1#int_direct_2;int(1..)])
+or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> or([s#explicit_1#components_1#int_direct_1,s#explicit_1#components_1#int_direct_2;int(1..)])) using tseitin
+  define(__0 <-> or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)])) using tseitin
 
 --
 
@@ -130,7 +130,7 @@ __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*s#explicit_1#components_1#int_direct_1, 2*s#explicit_1#components_1#int_direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+  define(__1 <-> integer-weighted(1*s#explicit_1#components_1#direct_1, 2*s#explicit_1#components_1#direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
@@ -148,8 +148,8 @@ Final model:
 find s: set (representation explicit, size 1) of int(1..2)
 find s#explicit_1: matrix indexed by [int(1..1)] of int(1..2)
 find s#explicit_1#components_1: int(1..2)
-find s#explicit_1#components_1#int_direct_1: bool
-find s#explicit_1#components_1#int_direct_2: bool
+find s#explicit_1#components_1#direct_1: bool
+find s#explicit_1#components_1#direct_2: bool
 findAux __0: bool
 findAux __1: bool
 
@@ -159,9 +159,9 @@ true
 
 sat encoding decisions:
 
-at-most-one(s#explicit_1#components_1#int_direct_1, s#explicit_1#components_1#int_direct_2) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
-define(__0 <-> or([s#explicit_1#components_1#int_direct_1,s#explicit_1#components_1#int_direct_2;int(1..)])) using tseitin,
+at-most-one(s#explicit_1#components_1#direct_1, s#explicit_1#components_1#direct_2) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
+define(__0 <-> or([s#explicit_1#components_1#direct_1,s#explicit_1#components_1#direct_2;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-define(__1 <-> integer-weighted(1*s#explicit_1#components_1#int_direct_1, 2*s#explicit_1#components_1#int_direct_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__1 <-> integer-weighted(1*s#explicit_1#components_1#direct_1, 2*s#explicit_1#components_1#direct_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 assert(__1) using tseitin
 

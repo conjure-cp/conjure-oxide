@@ -24,12 +24,12 @@ x#occurrence_1
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#occurrence_1
 new variables:
-  find x#occurrence_1#int_direct_1: bool
-  find x#occurrence_1#int_direct_2: bool
-  find x#occurrence_1#int_direct_3: bool
+  find x#occurrence_1#direct_1: bool
+  find x#occurrence_1#direct_2: bool
+  find x#occurrence_1#direct_3: bool
 new constraints:
-  sum([toInt(x#occurrence_1#int_direct_1),toInt(x#occurrence_1#int_direct_2),toInt(x#occurrence_1#int_direct_3);int(1..)]) <= 1
-  or([x#occurrence_1#int_direct_1,x#occurrence_1#int_direct_2,x#occurrence_1#int_direct_3;int(1..)])
+  sum([toInt(x#occurrence_1#direct_1),toInt(x#occurrence_1#direct_2),toInt(x#occurrence_1#direct_3);int(1..)]) <= 1
+  or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])
 
 --
 
@@ -37,12 +37,12 @@ x#occurrence_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#occurrence_2
 new variables:
-  find x#occurrence_2#int_direct_1: bool
-  find x#occurrence_2#int_direct_2: bool
-  find x#occurrence_2#int_direct_3: bool
+  find x#occurrence_2#direct_1: bool
+  find x#occurrence_2#direct_2: bool
+  find x#occurrence_2#direct_3: bool
 new constraints:
-  sum([toInt(x#occurrence_2#int_direct_1),toInt(x#occurrence_2#int_direct_2),toInt(x#occurrence_2#int_direct_3);int(1..)]) <= 1
-  or([x#occurrence_2#int_direct_1,x#occurrence_2#int_direct_2,x#occurrence_2#int_direct_3;int(1..)])
+  sum([toInt(x#occurrence_2#direct_1),toInt(x#occurrence_2#direct_2),toInt(x#occurrence_2#direct_3);int(1..)]) <= 1
+  or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
 
 --
 
@@ -52,39 +52,39 @@ __0
 new variables:
   findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> integer-weighted(0*x#occurrence_1#int_direct_1, 1*x#occurrence_1#int_direct_2, 2*x#occurrence_1#int_direct_3, 0*x#occurrence_2#int_direct_1, 1*x#occurrence_2#int_direct_2, 2*x#occurrence_2#int_direct_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
+  define(__0 <-> integer-weighted(0*x#occurrence_1#direct_1, 1*x#occurrence_1#direct_2, 2*x#occurrence_1#direct_3, 0*x#occurrence_2#direct_1, 1*x#occurrence_2#direct_2, 2*x#occurrence_2#direct_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
 
 --
 
 mset(1,2) = x,
 and([__0,sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)]),
-sum([toInt(x#occurrence_1#int_direct_1),toInt(x#occurrence_1#int_direct_2),toInt(x#occurrence_1#int_direct_3);int(1..)]) <= 1,
-or([x#occurrence_1#int_direct_1,x#occurrence_1#int_direct_2,x#occurrence_1#int_direct_3;int(1..)]),
-sum([toInt(x#occurrence_2#int_direct_1),toInt(x#occurrence_2#int_direct_2),toInt(x#occurrence_2#int_direct_3);int(1..)]) <= 1,
-or([x#occurrence_2#int_direct_1,x#occurrence_2#int_direct_2,x#occurrence_2#int_direct_3;int(1..)])
+sum([toInt(x#occurrence_1#direct_1),toInt(x#occurrence_1#direct_2),toInt(x#occurrence_1#direct_3);int(1..)]) <= 1,
+or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)]),
+sum([toInt(x#occurrence_2#direct_1),toInt(x#occurrence_2#direct_2),toInt(x#occurrence_2#direct_3);int(1..)]) <= 1,
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 mset(1,2) = x,
 and([__0,sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)]),
-or([x#occurrence_1#int_direct_1,x#occurrence_1#int_direct_2,x#occurrence_1#int_direct_3;int(1..)]),
-sum([toInt(x#occurrence_2#int_direct_1),toInt(x#occurrence_2#int_direct_2),toInt(x#occurrence_2#int_direct_3);int(1..)]) <= 1,
-or([x#occurrence_2#int_direct_1,x#occurrence_2#int_direct_2,x#occurrence_2#int_direct_3;int(1..)])
+or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)]),
+sum([toInt(x#occurrence_2#direct_1),toInt(x#occurrence_2#direct_2),toInt(x#occurrence_2#direct_3);int(1..)]) <= 1,
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
 new SAT encoding decisions:
-  at-most-one(x#occurrence_1#int_direct_1, x#occurrence_1#int_direct_2, x#occurrence_1#int_direct_3) using None
+  at-most-one(x#occurrence_1#direct_1, x#occurrence_1#direct_2, x#occurrence_1#direct_3) using None
 
 --
 
 mset(1,2) = x,
 and([__0,sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)]),
-or([x#occurrence_1#int_direct_1,x#occurrence_1#int_direct_2,x#occurrence_1#int_direct_3;int(1..)]),
-sum([toInt(x#occurrence_2#int_direct_1),toInt(x#occurrence_2#int_direct_2),toInt(x#occurrence_2#int_direct_3);int(1..)]) <= 1,
-or([x#occurrence_2#int_direct_1,x#occurrence_2#int_direct_2,x#occurrence_2#int_direct_3;int(1..)])
+or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)]),
+sum([toInt(x#occurrence_2#direct_1),toInt(x#occurrence_2#direct_2),toInt(x#occurrence_2#direct_3);int(1..)]) <= 1,
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 mset(1,2) = x,
 and([__0,sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)]),
-or([x#occurrence_1#int_direct_1,x#occurrence_1#int_direct_2,x#occurrence_1#int_direct_3;int(1..)]),
-or([x#occurrence_2#int_direct_1,x#occurrence_2#int_direct_2,x#occurrence_2#int_direct_3;int(1..)])
+or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)]),
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
 new SAT encoding decisions:
-  at-most-one(x#occurrence_2#int_direct_1, x#occurrence_2#int_direct_2, x#occurrence_2#int_direct_3) using None
+  at-most-one(x#occurrence_2#direct_1, x#occurrence_2#direct_2, x#occurrence_2#direct_3) using None
 
 --
 
@@ -102,15 +102,15 @@ x#occurrence_2
 
 mset(1,2) = x,
 and([__0,sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)]),
-or([x#occurrence_1#int_direct_1,x#occurrence_1#int_direct_2,x#occurrence_1#int_direct_3;int(1..)]),
-or([x#occurrence_2#int_direct_1,x#occurrence_2#int_direct_2,x#occurrence_2#int_direct_3;int(1..)])
+or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)]),
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 mset(1,2) = x,
 and([__0,true;int(1..)]),
-or([x#occurrence_1#int_direct_1,x#occurrence_1#int_direct_2,x#occurrence_1#int_direct_3;int(1..)]),
-or([x#occurrence_2#int_direct_1,x#occurrence_2#int_direct_2,x#occurrence_2#int_direct_3;int(1..)])
+or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)]),
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
 new SAT encoding decisions:
-  weighted(0*x#occurrence_1#int_direct_1, 1*x#occurrence_1#int_direct_2, 2*x#occurrence_1#int_direct_3, 0*x#occurrence_2#int_direct_1, 1*x#occurrence_2#int_direct_2, 2*x#occurrence_2#int_direct_3) AtMost 4 using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
+  weighted(0*x#occurrence_1#direct_1, 1*x#occurrence_1#direct_2, 2*x#occurrence_1#direct_3, 0*x#occurrence_2#direct_1, 1*x#occurrence_2#direct_2, 2*x#occurrence_2#direct_3) AtMost 4 using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
 
 --
 
@@ -138,7 +138,7 @@ __1
 new variables:
   findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(0*x#occurrence_1#int_direct_1, 1*x#occurrence_1#int_direct_2, 2*x#occurrence_1#int_direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+  define(__1 <-> integer-weighted(0*x#occurrence_1#direct_1, 1*x#occurrence_1#direct_2, 2*x#occurrence_1#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
 
 --
 
@@ -148,7 +148,7 @@ __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(0*x#occurrence_2#int_direct_1, 1*x#occurrence_2#int_direct_2, 2*x#occurrence_2#int_direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+  define(__2 <-> integer-weighted(0*x#occurrence_2#direct_1, 1*x#occurrence_2#direct_2, 2*x#occurrence_2#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
 
 --
 
@@ -168,23 +168,23 @@ new SAT encoding decisions:
 
 --
 
-or([x#occurrence_1#int_direct_1,x#occurrence_1#int_direct_2,x#occurrence_1#int_direct_3;int(1..)])
+or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> or([x#occurrence_1#int_direct_1,x#occurrence_1#int_direct_2,x#occurrence_1#int_direct_3;int(1..)])) using tseitin
+  define(__4 <-> or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])) using tseitin
 
 --
 
-or([x#occurrence_2#int_direct_1,x#occurrence_2#int_direct_2,x#occurrence_2#int_direct_3;int(1..)])
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> or([x#occurrence_2#int_direct_1,x#occurrence_2#int_direct_2,x#occurrence_2#int_direct_3;int(1..)])) using tseitin
+  define(__5 <-> or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -235,12 +235,12 @@ letting g be mset(1,2)
 find x: mset (representation occurrence, maxSize 4, maxOccur(2)) of int(1..2)
 find x#occurrence_1: int(0..2)
 find x#occurrence_2: int(0..2)
-find x#occurrence_1#int_direct_1: bool
-find x#occurrence_1#int_direct_2: bool
-find x#occurrence_1#int_direct_3: bool
-find x#occurrence_2#int_direct_1: bool
-find x#occurrence_2#int_direct_2: bool
-find x#occurrence_2#int_direct_3: bool
+find x#occurrence_1#direct_1: bool
+find x#occurrence_1#direct_2: bool
+find x#occurrence_1#direct_3: bool
+find x#occurrence_2#direct_1: bool
+find x#occurrence_2#direct_2: bool
+find x#occurrence_2#direct_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
@@ -254,15 +254,15 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(0*x#occurrence_1#int_direct_1, 1*x#occurrence_1#int_direct_2, 2*x#occurrence_1#int_direct_3, 0*x#occurrence_2#int_direct_1, 1*x#occurrence_2#int_direct_2, 2*x#occurrence_2#int_direct_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
-at-most-one(x#occurrence_1#int_direct_1, x#occurrence_1#int_direct_2, x#occurrence_1#int_direct_3) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
-at-most-one(x#occurrence_2#int_direct_1, x#occurrence_2#int_direct_2, x#occurrence_2#int_direct_3) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
-weighted(0*x#occurrence_1#int_direct_1, 1*x#occurrence_1#int_direct_2, 2*x#occurrence_1#int_direct_3, 0*x#occurrence_2#int_direct_1, 1*x#occurrence_2#int_direct_2, 2*x#occurrence_2#int_direct_3) AtMost 4 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
-define(__1 <-> integer-weighted(0*x#occurrence_1#int_direct_1, 1*x#occurrence_1#int_direct_2, 2*x#occurrence_1#int_direct_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
-define(__2 <-> integer-weighted(0*x#occurrence_2#int_direct_1, 1*x#occurrence_2#int_direct_2, 2*x#occurrence_2#int_direct_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+define(__0 <-> integer-weighted(0*x#occurrence_1#direct_1, 1*x#occurrence_1#direct_2, 2*x#occurrence_1#direct_3, 0*x#occurrence_2#direct_1, 1*x#occurrence_2#direct_2, 2*x#occurrence_2#direct_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
+at-most-one(x#occurrence_1#direct_1, x#occurrence_1#direct_2, x#occurrence_1#direct_3) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+at-most-one(x#occurrence_2#direct_1, x#occurrence_2#direct_2, x#occurrence_2#direct_3) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+weighted(0*x#occurrence_1#direct_1, 1*x#occurrence_1#direct_2, 2*x#occurrence_1#direct_3, 0*x#occurrence_2#direct_1, 1*x#occurrence_2#direct_2, 2*x#occurrence_2#direct_3) AtMost 4 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
+define(__1 <-> integer-weighted(0*x#occurrence_1#direct_1, 1*x#occurrence_1#direct_2, 2*x#occurrence_1#direct_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+define(__2 <-> integer-weighted(0*x#occurrence_2#direct_1, 1*x#occurrence_2#direct_2, 2*x#occurrence_2#direct_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
 define(__3 <-> and([__1,__2;int(1..)])) using tseitin,
-define(__4 <-> or([x#occurrence_1#int_direct_1,x#occurrence_1#int_direct_2,x#occurrence_1#int_direct_3;int(1..)])) using tseitin,
-define(__5 <-> or([x#occurrence_2#int_direct_1,x#occurrence_2#int_direct_2,x#occurrence_2#int_direct_3;int(1..)])) using tseitin,
+define(__4 <-> or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])) using tseitin,
+define(__5 <-> or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])) using tseitin,
 assert(__3) using tseitin,
 assert(__0) using tseitin,
 assert(__4) using tseitin,
