@@ -182,3 +182,10 @@ The public `TseitinEncoder` in pinned Pindakaas 0.5.1 changes ITE truth when one
 Keep the Tseitin connection blocked pending an upstream correction. No workaround or local library patch is added. A report, Cargo reproducer and captured output are kept uncommitted in `bug-reports/pindakaas-0.5.1/tseitin-constant-branches`; no upstream issue has been submitted. RustSAT Boolean generation remains the active provider.
 
 Default upstream `develop` at `8e19a741a26d42db1e0a222af10019c6fd013ace` retains the same three branch-negating expressions in its moved propositional-logic module (source inspected on 2026-10-05). The development branch has not been built here; executable exhaustive reproduction targets pinned 0.5.1.
+
+
+## Materialised linear operands
+
+Linear arithmetic needed as an operand of a nonlinear operation now creates an ordinary auxiliary integer and a defining equality, compiled by the selected PB provider. Linear comparisons remain whole weighted relations. Standalone binary addition/negation and Direct sum materialisation no longer build their own arithmetic circuits. Clause-free Direct/Order negation remains a representation rewrite. Internal arithmetic helpers remain active inside variable multiplication, division, modulo and power.
+
+Uniform representation selection applies to the auxiliary integers as well as source declarations. Actual-value conversions remain necessary for Rank and SignMagnitude. This reuse is not universally faster: the initial evaluation finds fewer clauses for compact and Direct configurations but greater rewriting cost and larger encodings for some other representations. See [the evaluation](sat_linear_materialisation_eval.md) for the method and all measured configurations.
