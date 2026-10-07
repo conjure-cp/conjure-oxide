@@ -1,0 +1,35 @@
+Model before rewriting:
+
+letting p be 3
+find x: int(0..4)
+
+such that
+
+x = p
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(0..4)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+Final model:
+
+letting p be 3
+find x: int(0..4)
+find x#bv_1: int(0..4)
+
+such that
+
+x#bv_1 = 3
+

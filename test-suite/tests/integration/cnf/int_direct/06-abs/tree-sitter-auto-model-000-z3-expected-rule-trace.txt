@@ -1,0 +1,78 @@
+Model before rewriting:
+
+find a: int(-5..5)
+find b: int(0..5)
+
+such that
+
+a = -3,
+b = |a|,
+b = 3
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#bv_1: int(-5..5)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#bv_1: int(0..5)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#bv_1
+
+--
+
+b
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#bv_1
+
+--
+
+b
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#bv_1
+
+--
+
+a
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#bv_1
+
+--
+
+Final model:
+
+find a: int(-5..5)
+find b: int(0..5)
+find a#bv_1: int(-5..5)
+find b#bv_1: int(0..5)
+
+such that
+
+a#bv_1 = -3,
+b#bv_1 = |a#bv_1|,
+b#bv_1 = 3
+

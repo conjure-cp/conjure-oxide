@@ -1,0 +1,51 @@
+Model before rewriting:
+
+find a: int(0..9)
+
+such that
+
+2 = (8 / a)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#lia_1: int(0..9)
+
+--
+
+a
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#lia_1
+
+--
+
+(8 / a#lia_1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(8, a#lia_1) @ a#lia_1 != 0}
+
+--
+
+2 = {SafeDiv(8, a#lia_1) @ a#lia_1 != 0}
+   ~~> bubble_up ([("Bubble", 8800)])
+{2 = SafeDiv(8, a#lia_1) @ a#lia_1 != 0}
+
+--
+
+{2 = SafeDiv(8, a#lia_1) @ a#lia_1 != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([2 = SafeDiv(8, a#lia_1),a#lia_1 != 0;int(1..)])
+
+--
+
+Final model:
+
+find a: int(0..9)
+find a#lia_1: int(0..9)
+
+such that
+
+and([2 = SafeDiv(8, a#lia_1),a#lia_1 != 0;int(1..)])
+

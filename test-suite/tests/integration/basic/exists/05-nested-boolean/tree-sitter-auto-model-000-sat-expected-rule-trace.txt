@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find check: bool
+
+such that
+
+check = or([ and([p > 2,p < 4;int(1..)]) | p : int(1..5) ])
+
+--
+
+check
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (check)
+
+--
+
+Final model:
+
+find check: bool
+
+such that
+
+true
+
+clauses:
+
+(check)
+

@@ -1,0 +1,77 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+or([or([a,b;int(1..)]),false;int(1..)]),
+or([allDifferent([1,2,3;int(1..3)]),true;int(1..)]),
+and([c,true;int(1..)])
+
+--
+
+or([or([a,b;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([a,b;int(1..)])
+
+--
+
+and([c;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+c
+
+--
+
+or([a,b;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (¬a \/ __0)
+  (¬b \/ __0)
+  (¬__0 \/ a \/ b)
+
+--
+
+__0,
+true,
+c
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+c
+new clauses:
+  (__0)
+
+--
+
+true,
+c
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (c)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+findAux __0: bool
+
+such that
+
+true
+
+clauses:
+
+(¬a \/ __0),
+(¬b \/ __0),
+(¬__0 \/ a \/ b),
+(__0),
+(c)
+

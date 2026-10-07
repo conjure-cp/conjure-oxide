@@ -16,16 +16,16 @@ The following dependencies are required to build and use Conjure Oxide:
 
 ### Building
 1. Clone the repository:
-    ```
+    ```bash
     git clone https://github.com/conjure-cp/conjure-oxide.git
     cd conjure-oxide
     ```
 2. Run the install command to install `conjure-oxide` (this may take some time):
-    ```
+    ```bash
     cargo install --path crates/conjure-cp-cli
     ```
 3. Verify `conjure-oxide` is installed and working by running a command:
-    ```
+    ```bash
     conjure-oxide --help
     ```
 
@@ -38,11 +38,11 @@ The following dependencies are required to build and use Conjure Oxide:
         - If you have both Conjure and the solvers on your system, download the archive for your system ending with `standalone`.
 2. Extract the archive using your preferred method.
 3. Open a terminal in the extracted directory and run a test command:
-    ```
+    ```bash
     ./conjure-oxide --help
     ```
 - If you are on macOS, you may run into a problem with binaries being blocked from running. If this is the case, run the following command in the extracted directory:
-    ```
+    ```zsh
     xattr -dr com.apple.quarantine .
     ```
 - If you would like these commands to be available everywhere on your system, copy the binaries into a directory which is in your PATH.

@@ -34,6 +34,17 @@ use serde::{Deserialize, Serialize};
 pub struct DecisionVariable {
     pub domain: DomainPtr,
 
+    /// Per-element domains for a matrix find, parallel to the flat elements of a components
+    /// representation.
+    ///
+    /// When present, representation instantiation uses these instead of repeating the declared
+    /// inner domain. Used by the pre-rewrite domain-tightening pass when a `forAll` over a matrix
+    /// of sequences proves a different `|m[i]|` at each index.
+    ///
+    /// Re-inferred each rewrite, so it is not serialised.
+    #[serde(skip)]
+    pub element_domains: Option<Vec<DomainPtr>>,
+
     // use this through [`Declaration`] - in the future, this probably will be stored in
     // declaration / domain, not here.
     #[serde(skip)]
@@ -45,6 +56,7 @@ impl DecisionVariable {
     pub fn new(domain: DomainPtr) -> DecisionVariable {
         DecisionVariable {
             domain,
+            element_domains: None,
             representations: vec![],
         }
     }

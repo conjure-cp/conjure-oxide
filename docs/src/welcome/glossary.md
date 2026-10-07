@@ -15,21 +15,21 @@
 
     The following describes a problem class:
   
-    ```
-    given N: int
+    ```essence
+    given N : int
     find x
     such that x < N
     ```
 
     The following are instances of that class:
 
-    ```
+    ```essence
     letting N be 3
     find x
     such that x < N
     ```
 
-    ```
+    ```essence
     letting N be 42
     find x
     such that x < N

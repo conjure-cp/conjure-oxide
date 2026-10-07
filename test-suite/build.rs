@@ -1,0 +1,252 @@
+use std::env::var;
+use std::fs::{File, read_dir};
+use std::io::{self, Write};
+use std::path::Path;
+
+use walkdir::WalkDir;
+
+#[path = "src/test_discovery.rs"]
+mod test_discovery;
+use test_discovery::{is_compile_time_test_input, is_roundtrip_model_input};
+
+// Include the TestConfig module directly so it can be used in build.rs
+// (build.rs cannot depend on the crate it's building)
+#[path = "src/test_config.rs"]
+mod test_config;
+use test_config::{TestConfig, TestRunStats, stats_path};
+
+fn main() -> io::Result<()> {
+    emit_test_input_watches()?;
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-env-changed=MAX_EXPECTED_TIME");
+
+    let out_dir = var("OUT_DIR").map_err(io::Error::other)?; // wrapping in a std::io::Error to match main's error type
+
+    // Integration Tests
+    let dest = Path::new(&out_dir).join("gen_tests.rs");
+    let mut f = File::create(dest)?;
+    let test_dir = "tests/integration";
+
+    for subdir in WalkDir::new(test_dir) {
+        let subdir = subdir?;
+        if subdir.file_type().is_dir() {
+            let stems: Vec<String> = read_dir(subdir.path())?
+                .filter_map(Result::ok)
+                .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "essence"))
+                .filter_map(|entry| {
+                    entry
+                        .path()
+                        .file_stem()
+                        .and_then(|stem| stem.to_str())
+                        .map(|s| s.to_owned())
+                })
+                .collect();
+
+            let exts: Vec<String> = read_dir(subdir.path())?
+                .filter_map(Result::ok)
+                .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "essence"))
+                .filter_map(|entry| {
+                    entry
+                        .path()
+                        .extension()
+                        .and_then(|ext| ext.to_str())
+                        .map(|s| s.to_owned())
+                })
+                .collect();
+
+            let essence_files: Vec<(String, String)> = std::iter::zip(stems, exts).collect();
+            write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
+        }
+    }
+
+    // Custom Tests
+    let dest_custom = Path::new(&out_dir).join("gen_tests_custom.rs");
+    let mut f = File::create(dest_custom)?;
+    let test_dir = "tests/custom";
+
+    for subdir in WalkDir::new(test_dir) {
+        let subdir = subdir?;
+        if subdir.file_type().is_dir()
+            && read_dir(subdir.path())
+                .unwrap_or_else(|_| std::fs::read_dir(subdir.path()).unwrap())
+                .filter_map(Result::ok)
+                .any(|entry| entry.file_name() == "run.sh" && entry.path().is_file())
+        {
+            write_custom_test(&mut f, subdir.path().display().to_string())?;
+        }
+    }
+
+    // Roundtrip Tests
+    let dest_roundtrip = Path::new(&out_dir).join("gen_tests_roundtrip.rs");
+    let mut f = File::create(dest_roundtrip)?;
+    let test_dir = "tests/roundtrip";
+
+    for subdir in WalkDir::new(test_dir) {
+        let subdir = subdir?;
+        // Checks every subdirectory
+        if subdir.file_type().is_dir() {
+            let essence_files: Vec<(String, String)> = read_dir(subdir.path())?
+                .filter_map(Result::ok)
+                .map(|entry| entry.path())
+                .filter(|path| is_roundtrip_model_input(path))
+                .filter_map(|path| {
+                    Some((
+                        path.file_stem()?.to_str()?.to_string(),
+                        path.extension()?.to_str()?.to_string(),
+                    ))
+                })
+                .collect();
+
+            // There should only be one test file per directory
+            if essence_files.len() == 1 {
+                write_roundtrip_test(
+                    &mut f,
+                    subdir.path().display().to_string(),
+                    essence_files[0].clone(),
+                )?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn emit_test_input_watches() -> io::Result<()> {
+    for entry in WalkDir::new("tests") {
+        let entry = entry?;
+        if entry.file_type().is_file() && is_compile_time_test_input(entry.path()) {
+            println!("cargo:rerun-if-changed={}", entry.path().display());
+        }
+    }
+
+    Ok(())
+}
+
+fn read_config_or_default(path: &str) -> TestConfig {
+    let config_path = format!("{path}/config.toml");
+    if let Ok(contents) = std::fs::read_to_string(&config_path) {
+        toml::from_str(&contents)
+            .unwrap_or_else(|err| panic!("failed to parse {config_path}: {err}"))
+    } else {
+        TestConfig::default()
+    }
+}
+
+fn read_stats_or_default(path: &str) -> TestRunStats {
+    let stats_path = stats_path(Path::new(path));
+    if let Ok(contents) = std::fs::read_to_string(&stats_path) {
+        toml::from_str(&contents)
+            .unwrap_or_else(|err| panic!("failed to parse {}: {err}", stats_path.display()))
+    } else {
+        TestRunStats::default()
+    }
+}
+
+fn max_expected_time_limit() -> io::Result<Option<u64>> {
+    match std::env::var("MAX_EXPECTED_TIME") {
+        Ok(value) => {
+            let limit = value.parse::<u64>().map_err(|err| {
+                io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    format!("invalid MAX_EXPECTED_TIME value '{value}': {err}"),
+                )
+            })?;
+            Ok((limit != 0).then_some(limit))
+        }
+        Err(std::env::VarError::NotPresent) => Ok(None),
+        Err(err) => Err(io::Error::other(err)),
+    }
+}
+
+fn escape_ignore_reason(reason: &str) -> String {
+    reason.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+fn get_ignore_attr(
+    cfg: &TestConfig,
+    stats: &TestRunStats,
+    include_expected_time: bool,
+) -> io::Result<String> {
+    if let Some(reason) = cfg.skip_reason() {
+        Ok(format!(
+            "#[ignore = \"{}\"]\n",
+            escape_ignore_reason(reason)
+        ))
+    } else if include_expected_time
+        && let (Some(expected_time), Some(limit)) =
+            (stats.expected_time, max_expected_time_limit()?)
+    {
+        if expected_time > limit {
+            Ok(format!(
+                "#[ignore = \"this test declares 'expected-time={expected_time}' in its stats.toml, which exceeds MAX_EXPECTED_TIME={limit}\"]\n",
+            ))
+        } else {
+            Ok(String::new())
+        }
+    } else {
+        Ok(String::new())
+    }
+}
+
+fn write_integration_test(
+    file: &mut File,
+    path: String,
+    essence_files: Vec<(String, String)>,
+) -> io::Result<()> {
+    // TODO: Consider supporting multiple Essence files?
+    if essence_files.len() == 1 {
+        let cfg = read_config_or_default(&path);
+        let stats = read_stats_or_default(&path);
+        let ignore = get_ignore_attr(&cfg, &stats, true)?;
+
+        write!(
+            file,
+            include_str!("./tests/integration_test_template"),
+            // TODO: better sanitisation of paths to function names
+            test_name = path.replace("./", "").replace(['/', '-'], "_"),
+            test_dir = path,
+            essence_file = essence_files[0].0,
+            ext = essence_files[0].1,
+            ignore_attr = ignore
+        )
+    } else {
+        Ok(())
+    }
+}
+
+fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
+    let cfg = read_config_or_default(&path);
+    let stats = TestRunStats {
+        expected_time: cfg.expected_time,
+        ..TestRunStats::default()
+    };
+    let ignore = get_ignore_attr(&cfg, &stats, true)?;
+
+    write!(
+        file,
+        include_str!("./tests/custom_test_template"),
+        test_name = path.replace("./", "").replace(['/', '-'], "_"),
+        test_dir = path,
+        ignore_attr = ignore
+    )
+}
+
+fn write_roundtrip_test(
+    file: &mut File,
+    path: String,
+    essence_file: (String, String),
+) -> io::Result<()> {
+    let cfg = read_config_or_default(&path);
+    let stats = TestRunStats::default();
+    let ignore = get_ignore_attr(&cfg, &stats, false)?;
+
+    write!(
+        file,
+        include_str!("./tests/roundtrip_test_template"),
+        test_name = path.replace("./", "").replace(['/', '-'], "_"),
+        test_dir = path,
+        essence_file = essence_file.0,
+        ext = essence_file.1,
+        ignore_attr = ignore
+    )
+}

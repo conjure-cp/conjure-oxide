@@ -1,19 +1,28 @@
 use crate::ast::domains::Int;
 use crate::ast::domains::range::Range;
+use funcmap::{FuncMap, TryFuncMap};
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FuncMap, TryFuncMap, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub struct SetAttr<A = Int> {
     pub size: Range<A>,
+    /// Optional user-facing representation preference (short name), e.g. `"packed"`.
+    ///
+    /// Written in Essence as `set (representation packed) of …`. When present, representation selection
+    /// heuristics default to this representation if it is applicable.
+    pub representation: Option<String>,
 }
 
 impl<A> SetAttr<A> {
     pub fn new(size: Range<A>) -> Self {
-        Self { size }
+        Self {
+            size,
+            representation: None,
+        }
     }
 
     pub fn new_min_max_size(min: A, max: A) -> Self {
@@ -31,38 +40,61 @@ impl<A> SetAttr<A> {
     pub fn new_size(sz: A) -> Self {
         Self::new(Range::Single(sz))
     }
+
+    /// Set the representation preference (Essence short name), returning the updated attributes.
+    pub fn with_representation(mut self, name: impl Into<String>) -> Self {
+        self.representation = Some(name.into());
+        self
+    }
 }
 
 impl<A> Default for SetAttr<A> {
     fn default() -> Self {
         SetAttr {
             size: Range::Unbounded,
+            representation: None,
         }
     }
 }
 
 impl<A: Display> Display for SetAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match &self.size {
-            Range::Single(x) => write!(f, "(size {x})"),
-            Range::Bounded(l, r) => write!(f, "(minSize {l}, maxSize {r})"),
-            Range::UnboundedL(r) => write!(f, "(maxSize {r})"),
-            Range::UnboundedR(l) => write!(f, "(minSize {l})"),
-            Range::Unbounded => write!(f, ""),
+        let mut attrs = Vec::new();
+        if let Some(representation) = &self.representation {
+            attrs.push(format!("representation {representation}"));
+        }
+        let size = fmt_size("size", &self.size);
+        if !size.is_empty() {
+            attrs.push(size);
+        }
+        if attrs.is_empty() {
+            Ok(())
+        } else {
+            write!(f, "({})", attrs.join(", "))
         }
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FuncMap, TryFuncMap, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub struct MSetAttr<A = Int> {
     pub size: Range<A>,
     pub occurrence: Range<A>,
+    /// Optional user-facing representation preference (short name), e.g. `"repetition"`.
+    ///
+    /// Written in Essence as `mset (representation repetition) of …`. When present, representation selection
+    /// heuristics default to this representation if it is applicable.
+    #[serde(default)]
+    pub representation: Option<String>,
 }
 
 impl<A> MSetAttr<A> {
     pub fn new(size: Range<A>, occurrence: Range<A>) -> Self {
-        Self { size, occurrence }
+        Self {
+            size,
+            occurrence,
+            representation: None,
+        }
     }
 
     pub fn new_min_max_size(min: A, max: A) -> Self {
@@ -80,29 +112,34 @@ impl<A> MSetAttr<A> {
     pub fn new_size(sz: A) -> Self {
         Self::new(Range::Single(sz), Range::Unbounded)
     }
+
+    /// Set the representation preference (Essence short name), returning the updated attributes.
+    pub fn with_representation(mut self, name: impl Into<String>) -> Self {
+        self.representation = Some(name.into());
+        self
+    }
 }
 
 impl<A: Display> Display for MSetAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let size_str = match &self.size {
-            Range::Single(x) => format!("size {x}"),
-            Range::Bounded(l, r) => format!("minSize {l}, maxSize {r}"),
-            Range::UnboundedL(r) => format!("maxSize {r}"),
-            Range::UnboundedR(l) => format!("minSize {l}"),
-            Range::Unbounded => "".to_string(),
-        };
+        let size_str = fmt_size("size", &self.size);
 
         // It only makes sense in terms of min and max occurrence for the essence language,
         // so for single ranges it is still presented as min and max occurrence.
         let occ_str = match &self.occurrence {
-            Range::Single(x) => format!("minOccur {x}, maxOccur {x}"),
-            Range::Bounded(l, r) => format!("minOccur {l} , maxOccur {r}"),
-            Range::UnboundedL(r) => format!("maxOccur {r}"),
-            Range::UnboundedR(l) => format!("minOccur {l}"),
+            Range::Single(x) => format!("minOccur({x}), maxOccur({x})"),
+            Range::Bounded(l, r) => format!("minOccur({l}), maxOccur({r})"),
+            Range::UnboundedL(r) => format!("maxOccur({r})"),
+            Range::UnboundedR(l) => format!("minOccur({l})"),
             Range::Unbounded => "".to_string(),
         };
 
-        let mut strs = [size_str, occ_str]
+        let representation_str = self
+            .representation
+            .as_ref()
+            .map(|name| format!("representation {name}"))
+            .unwrap_or_default();
+        let mut strs = [representation_str, size_str, occ_str]
             .iter()
             .filter(|s| !s.is_empty())
             .join(", ");
@@ -118,11 +155,12 @@ impl<A> Default for MSetAttr<A> {
         MSetAttr {
             size: Range::Unbounded,
             occurrence: Range::Unbounded,
+            representation: None,
         }
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FuncMap, TryFuncMap, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub struct FuncAttr<A = Int> {
     pub size: Range<A>,
@@ -130,15 +168,21 @@ pub struct FuncAttr<A = Int> {
     pub jectivity: JectivityAttr,
 }
 
+impl<A> Default for FuncAttr<A> {
+    fn default() -> Self {
+        FuncAttr {
+            size: Range::Unbounded,
+            // Matches Conjure's own default (`Domain.hs`): a bare `function` with no explicit
+            // `total` attribute is partial.
+            partiality: PartialityAttr::Partial,
+            jectivity: JectivityAttr::None,
+        }
+    }
+}
+
 impl<A: Display> Display for FuncAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let size_str = match &self.size {
-            Range::Single(x) => format!("size({x})"),
-            Range::Bounded(l, r) => format!("minSize({l}), maxSize({r})"),
-            Range::UnboundedL(r) => format!("maxSize({r})"),
-            Range::UnboundedR(l) => format!("minSize({l})"),
-            Range::Unbounded => "".to_string(),
-        };
+        let size_str = fmt_size("size", &self.size);
         let mut strs = [
             size_str,
             self.partiality.to_string(),
@@ -154,11 +198,24 @@ impl<A: Display> Display for FuncAttr<A> {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FuncMap, TryFuncMap, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub struct SequenceAttr<A = Int> {
     pub size: Range<A>,
     pub jectivity: JectivityAttr,
+    /// Optional user-facing representation preference (short name), e.g. `"packed"`.
+    ///
+    /// Written in Essence as `sequence{packed} of …`. When present, representation selection
+    /// heuristics default to this representation if it is applicable.
+    pub representation: Option<String>,
+}
+
+impl<A> SequenceAttr<A> {
+    /// Set the representation preference (Essence short name), returning the updated attributes.
+    pub fn with_representation(mut self, name: impl Into<String>) -> Self {
+        self.representation = Some(name.into());
+        self
+    }
 }
 
 impl<A> Default for SequenceAttr<A> {
@@ -166,19 +223,14 @@ impl<A> Default for SequenceAttr<A> {
         SequenceAttr {
             size: Range::Unbounded,
             jectivity: JectivityAttr::None,
+            representation: None,
         }
     }
 }
 
 impl<A: Display> Display for SequenceAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let size_str = match &self.size {
-            Range::Single(x) => format!("size {x}"),
-            Range::Bounded(l, r) => format!("minSize {l}, maxSize {r}"),
-            Range::UnboundedL(r) => format!("maxSize {r}"),
-            Range::UnboundedR(l) => format!("minSize {l}"),
-            Range::Unbounded => "".to_string(),
-        };
+        let size_str = fmt_size("size", &self.size);
         let mut strs = [size_str, self.jectivity.to_string()]
             .iter()
             .filter(|s| !s.is_empty())
@@ -190,7 +242,7 @@ impl<A: Display> Display for SequenceAttr<A> {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FuncMap, TryFuncMap, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub struct PartitionAttr<A = Int> {
     pub num_parts: Range<A>, // i.e. how many parts there are in the partition
@@ -200,21 +252,8 @@ pub struct PartitionAttr<A = Int> {
 
 impl<A: Display> Display for PartitionAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let num_parts_str = match &self.num_parts {
-            Range::Single(x) => format!("numParts {x}"),
-            Range::Bounded(l, r) => format!("minNumParts {l}, maxNumParts {r}"),
-            Range::UnboundedL(r) => format!("maxNumParts {r}"),
-            Range::UnboundedR(l) => format!("minNumParts {l}"),
-            Range::Unbounded => "".to_string(),
-        };
-
-        let part_len_str = match &self.part_len {
-            Range::Single(x) => format!("partSize {x}"),
-            Range::Bounded(l, r) => format!("minPartSize {l} , maxPartSize {r}"),
-            Range::UnboundedL(r) => format!("maxPartSize {r}"),
-            Range::UnboundedR(l) => format!("minPartSize {l}"),
-            Range::Unbounded => "".to_string(),
-        };
+        let num_parts_str = fmt_size("numParts", &self.num_parts);
+        let part_len_str = fmt_size("partSize", &self.part_len);
 
         let regular_str = match &self.is_regular {
             true => "regular".to_string(),
@@ -238,6 +277,32 @@ impl<A> Default for PartitionAttr<A> {
             num_parts: Range::Unbounded,
             part_len: Range::Unbounded,
             is_regular: false,
+        }
+    }
+}
+
+/// A permutation is inherently total and bijective by definition, so unlike partition or
+/// function, its only attribute is a size constraint on `numMoved`, the number of moved points
+/// (i.e. the points not fixed by the permutation) -- confirmed against real Conjure's own
+/// `numMoved`/`minNumMoved`/`maxNumMoved` keywords (real Conjure does not accept
+/// `size`/`minSize`/`maxSize` here, unlike set/relation/etc).
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FuncMap, TryFuncMap, Quine)]
+#[path_prefix(conjure_cp::ast)]
+pub struct PermutationAttr<A = Int> {
+    pub num_moved: Range<A>,
+}
+
+impl<A: Display> Display for PermutationAttr<A> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let size_str = fmt_size("numMoved", &self.num_moved);
+        write!(f, "{size_str}")
+    }
+}
+
+impl<A> Default for PermutationAttr<A> {
+    fn default() -> Self {
+        PermutationAttr {
+            num_moved: Range::Unbounded,
         }
     }
 }
@@ -276,7 +341,7 @@ impl Display for JectivityAttr {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FuncMap, TryFuncMap, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub struct RelAttr<A = Int> {
     pub size: Range<A>,
@@ -294,13 +359,7 @@ impl<A> Default for RelAttr<A> {
 
 impl<A: Display> Display for RelAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let size_str = match &self.size {
-            Range::Single(x) => format!("size {x}"),
-            Range::Bounded(l, r) => format!("minSize {l}, maxSize {r}"),
-            Range::UnboundedL(r) => format!("maxSize {r}"),
-            Range::UnboundedR(l) => format!("minSize {l}"),
-            Range::Unbounded => "".to_string(),
-        };
+        let size_str = fmt_size("size", &self.size);
         let mut strs = [size_str, self.binary.iter().join(", ")]
             .iter()
             .filter(|s| !s.is_empty())
@@ -327,6 +386,12 @@ pub enum BinaryAttr {
     Serial,
     Equivalence,
     PartialOrder,
+    LeftTotal,
+    RightTotal,
+    LinearOrder,
+    WeakOrder,
+    PreOrder,
+    StrictPartialOrder,
 }
 
 impl Display for BinaryAttr {
@@ -345,6 +410,64 @@ impl Display for BinaryAttr {
             BinaryAttr::Serial => write!(f, "serial"),
             BinaryAttr::Equivalence => write!(f, "equivalence"),
             BinaryAttr::PartialOrder => write!(f, "partialOrder"),
+            BinaryAttr::LeftTotal => write!(f, "leftTotal"),
+            BinaryAttr::RightTotal => write!(f, "rightTotal"),
+            BinaryAttr::LinearOrder => write!(f, "linearOrder"),
+            BinaryAttr::WeakOrder => write!(f, "weakOrder"),
+            BinaryAttr::PreOrder => write!(f, "preOrder"),
+            BinaryAttr::StrictPartialOrder => write!(f, "strictPartialOrder"),
         }
+    }
+}
+
+impl BinaryAttr {
+    /// Parses the Essence keyword for a binary relation attribute (the inverse of `Display`).
+    /// Used both by native domain-attribute parsing (`relation (reflexive, ...) of ...`) and by
+    /// attribute-as-constraint lifting (`reflexive(r)`).
+    pub fn from_keyword(s: &str) -> Option<Self> {
+        Some(match s {
+            "reflexive" => BinaryAttr::Reflexive,
+            "irreflexive" => BinaryAttr::Irreflexive,
+            "coreflexive" => BinaryAttr::Coreflexive,
+            "symmetric" => BinaryAttr::Symmetric,
+            "antiSymmetric" => BinaryAttr::AntiSymmetric,
+            "aSymmetric" => BinaryAttr::ASymmetric,
+            "transitive" => BinaryAttr::Transitive,
+            "total" => BinaryAttr::Total,
+            "connex" => BinaryAttr::Connex,
+            "Euclidean" => BinaryAttr::Euclidean,
+            "serial" => BinaryAttr::Serial,
+            "equivalence" => BinaryAttr::Equivalence,
+            "partialOrder" => BinaryAttr::PartialOrder,
+            "leftTotal" => BinaryAttr::LeftTotal,
+            "rightTotal" => BinaryAttr::RightTotal,
+            "linearOrder" => BinaryAttr::LinearOrder,
+            "weakOrder" => BinaryAttr::WeakOrder,
+            "preOrder" => BinaryAttr::PreOrder,
+            "strictPartialOrder" => BinaryAttr::StrictPartialOrder,
+            _ => return None,
+        })
+    }
+}
+
+/// Format a range as Essence size attribute
+#[inline]
+fn fmt_size<A: Display>(suffix: &str, sz: &Range<A>) -> String {
+    let cap_suffix = capitalize(suffix);
+    match sz {
+        Range::Single(x) => format!("{suffix} {x}"),
+        Range::Bounded(l, r) => format!("min{cap_suffix} {l}, max{cap_suffix} {r}"),
+        Range::UnboundedL(r) => format!("max{cap_suffix} {r}"),
+        Range::UnboundedR(l) => format!("min{cap_suffix} {l}"),
+        Range::Unbounded => "".to_string(),
+    }
+}
+
+#[inline]
+fn capitalize(s: &str) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        None => String::new(),
+        Some(f) => f.to_uppercase().to_string() + c.as_str(),
     }
 }

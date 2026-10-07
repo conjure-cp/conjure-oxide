@@ -1,0 +1,153 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+
+such that
+
+or([a,b;int(1..)]),
+or([!(c),and([b,d;int(1..)]);int(1..)]),
+b,
+or([d,c;int(1..)])
+
+--
+
+!(c)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (¬c \/ ¬__0)
+  (c \/ __0)
+
+--
+
+or([a,b;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new clauses:
+  (¬a \/ __1)
+  (¬b \/ __1)
+  (¬__1 \/ a \/ b)
+
+--
+
+or([d,c;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new clauses:
+  (¬d \/ __2)
+  (¬c \/ __2)
+  (¬__2 \/ d \/ c)
+
+--
+
+and([b,d;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  findAux __3: bool
+new clauses:
+  (¬__3 \/ b)
+  (¬__3 \/ d)
+  (__3 \/ ¬b \/ ¬d)
+
+--
+
+or([__0,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__4
+new variables:
+  findAux __4: bool
+new clauses:
+  (¬__0 \/ __4)
+  (¬__3 \/ __4)
+  (¬__4 \/ __0 \/ __3)
+
+--
+
+__1,
+__4,
+b,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+__4,
+b,
+__2
+new clauses:
+  (__1)
+
+--
+
+__4,
+b,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+b,
+__2
+new clauses:
+  (__4)
+
+--
+
+b,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+__2
+new clauses:
+  (b)
+
+--
+
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__2)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+
+such that
+
+true
+
+clauses:
+
+(¬c \/ ¬__0),
+(c \/ __0),
+(¬a \/ __1),
+(¬b \/ __1),
+(¬__1 \/ a \/ b),
+(¬d \/ __2),
+(¬c \/ __2),
+(¬__2 \/ d \/ c),
+(¬__3 \/ b),
+(¬__3 \/ d),
+(__3 \/ ¬b \/ ¬d),
+(¬__0 \/ __4),
+(¬__3 \/ __4),
+(¬__4 \/ __0 \/ __3),
+(__1),
+(__4),
+(b),
+(__2)
+

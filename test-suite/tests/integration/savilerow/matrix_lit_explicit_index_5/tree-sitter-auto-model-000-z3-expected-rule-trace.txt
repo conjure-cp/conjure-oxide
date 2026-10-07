@@ -1,0 +1,35 @@
+Model before rewriting:
+
+letting y be [3,2,1,0;int(4, 6..8)][7]
+find x: int(0..9)
+
+such that
+
+x = y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(0..9)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+Final model:
+
+letting y be 1
+find x: int(0..9)
+find x#bv_1: int(0..9)
+
+such that
+
+x#bv_1 = 1
+

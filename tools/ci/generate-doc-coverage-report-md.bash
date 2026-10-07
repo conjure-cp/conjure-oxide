@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Calculates RustDoc coverage, pretty printing the resulting tables as Github
-# Flavoured Markdown for consumption by Github Actions.
+# Calculates RustDoc coverage, pretty printing the resulting tables as GitHub
+# Flavoured Markdown for consumption by GitHub Actions.
 #
 # Author: niklasdewally
 # Date: 2024/12/04
@@ -9,6 +9,9 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+COVERAGE_PATHS=$(mktemp)
+trap 'rm -f "${COVERAGE_PATHS}"' EXIT
+
 JQ_SCRIPT=$(cat <<- 'EOF'
 def merge_reports:
   reduce .[] as $report ({};
@@ -69,9 +72,32 @@ while IFS=$'\t' read -r crate flag1 flag2; do
 
   echo "## RustDoc coverage for \`${crate}\`"
   echo ""
-  RUSTDOCFLAGS='-Z unstable-options --show-coverage --output-format=json' \
-    cargo +nightly doc -p "${crate}" "${flags[@]}" --no-deps |\
-    jq -s -r "${JQ_SCRIPT}" |\
+  # Cargo supplies an output directory to rustdoc, so current nightlies write
+  # coverage JSON to files instead of stdout. Discover those files through
+  # Cargo's machine-readable artifact messages.
+  RUSTDOCFLAGS='-Z unstable-options --show-coverage' \
+    cargo +nightly -Z unstable-options doc \
+      --output-format=json \
+      --message-format=json \
+      -p "${crate}" "${flags[@]}" --no-deps | \
+    jq -Rr '
+      fromjson?
+      | select(.reason == "compiler-artifact")
+      | .filenames[]?
+      | select(endswith(".json"))
+    ' > "${COVERAGE_PATHS}"
+
+  coverage_files=()
+  while IFS= read -r coverage_file; do
+    coverage_files+=("${coverage_file}")
+  done < "${COVERAGE_PATHS}"
+
+  if [[ ${#coverage_files[@]} -eq 0 ]]; then
+    echo "No RustDoc coverage files generated for ${crate}" >&2
+    exit 1
+  fi
+
+  jq -s -r "${JQ_SCRIPT}" "${coverage_files[@]}" |\
     pandoc -f csv -t gfm |\
     # pandoc escapes ` in generated markdown, but we want to use it as formatting
     sed 's/\\`/`/g' |\

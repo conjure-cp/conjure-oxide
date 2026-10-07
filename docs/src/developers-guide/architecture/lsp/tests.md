@@ -17,27 +17,27 @@ To be able to accurately diagnose the Essence files for errors, tests cases have
 ## Testing
 ### Parser
 <!-- TODO: Roundtrip testing does not exist -- waiting on an update from LSP team -->
-Test cases that test the coverage of the Native parser use [Roundtrip testing](../../testing/roundtrip-testing.md). The `syntax-error` and `semantic-error` test directories exist in the `test-integration` crate as child directories of `roundtrip\native-errors`. Furthermore, `config.toml` sets only the Native parser to be used when testing test cases.
+Test cases that test the coverage of the Native parser use [Roundtrip testing](../../testing/roundtrip-testing.md). The `syntax-error` and `semantic-error` test directories exist in the `test-suite` crate as child directories of `roundtrip\native-errors`. Furthermore, `config.toml` sets only the Native parser to be used when testing test cases.
 
-These test cases will run alongside all the integration tests in the `tests-integration` crate, which can be done by using:
+These test cases will run alongside all the integration tests in the `test-suite` crate, which can be done by using:
 ```bash
-cargo test
+cargo nextest run
 ```
 
 Alternatively, to run only the Roundtrip tests, use the command:
 ```bash
-cargo test tests_roundtrip
+cargo nextest run -E 'test(tests_roundtrip)'
 ```
 
 ### Diagnostics API
 For testing the Diagnostics API, test cases are written in the `tests` directory of the `conjure-cp-essence-parser` crate, which uses normal [Rust unit testing](https://doc.rust-lang.org/book/ch11-01-writing-tests.html). To run these tests, use the command:
 ```bash
-cargo test -p conjure-cp-essence-parser
+cargo nextest run -p conjure-cp-essence-parser
 ```
 
 Or, to run the test files individually, use the command:
 ```bash
-cargo test -p conjure-cp-essence-parser --test {file_name}
+cargo nextest run -p conjure-cp-essence-parser --test {file_name}
 ```
 
 The sections below will categorise all test cases into one of the categories based on the error classification, with an explanation of the purpose of each test case.

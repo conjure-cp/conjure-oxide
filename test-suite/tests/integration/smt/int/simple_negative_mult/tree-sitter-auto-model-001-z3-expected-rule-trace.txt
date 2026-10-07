@@ -1,0 +1,50 @@
+Model before rewriting:
+
+find x: int(-4..4)
+find y: int(-4..4)
+
+such that
+
+product([x,y;int(1..)]) = -4
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(-4..4)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#lia_1: int(-4..4)
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+Final model:
+
+find x: int(-4..4)
+find y: int(-4..4)
+find x#lia_1: int(-4..4)
+find y#lia_1: int(-4..4)
+
+such that
+
+product([x#lia_1,y#lia_1;int(1..)]) = -4
+

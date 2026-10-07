@@ -26,4 +26,4 @@ TARGET_DIR=$(cargo metadata --format-version 1 | jq -r .target_directory)
 cd "$PROJECT_ROOT"
 rm -rf "$TARGET_DIR/doc"
 
-RUSTDOCFLAGS="-Zunstable-options --show-type-layout --markdown-no-toc --enable-index-page" cargo +nightly doc --no-deps --all-features -p conjure-cp-cli -p conjure-cp-rule-macros -p conjure-cp-core -p minion-sys -p conjure-cp-enum-compatibility-macro -p conjure-cp-essence-parser -p conjure-cp-essence-macros -p conjure-cp -p tree-morph $@
+RUSTDOCFLAGS="-Zunstable-options --show-type-layout --markdown-no-toc --enable-index-page" cargo +nightly doc --no-deps --all-features -p conjure-cp-cli -p conjure-cp-rule-macros -p conjure-cp-core -p minion-sys -p conjure-cp-enum-compatibility-macro -p conjure-cp-essence-parser -p conjure-cp-essence-macros -p conjure-cp $@

@@ -1,0 +1,116 @@
+Model before rewriting:
+
+find x: int(2..3, 5..8)
+find y: int(1..2, 4..6)
+find z: int(x..3, y..10)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#lia_1: int(2..3, 5..8)
+  find y#bv_1: int(1..2, 4..6)
+
+--
+
+true
+   ~~> handle_variables_in_domains ([("Base", 8990)])
+true
+
+updated variables:
+  find z: int(x..3, y..10) ~~> find z: int(1..10)
+new constraints:
+  or([and([z >= x,z <= 3;int(1..)]),and([z >= y,z <= 10;int(1..)]);int(1..)])
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#lia_1: int(1..10)
+
+--
+
+z >= x
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+z >= x
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+
+--
+
+z
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+z#lia_1
+
+--
+
+z
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+z#lia_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+z
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+z#lia_1
+
+--
+
+z
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+z#lia_1
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+Final model:
+
+find x: int(2..3, 5..8)
+find y: int(1..2, 4..6)
+find z: int(1..10)
+find x#lia_1: int(2..3, 5..8)
+find y#bv_1: int(1..2, 4..6)
+find z#lia_1: int(1..10)
+
+such that
+
+true,
+or([and([z#lia_1 >= x#lia_1,z#lia_1 <= 3;int(1..)]),and([z#lia_1 >= y#bv_1,z#lia_1 <= 10;int(1..)]);int(1..)])
+

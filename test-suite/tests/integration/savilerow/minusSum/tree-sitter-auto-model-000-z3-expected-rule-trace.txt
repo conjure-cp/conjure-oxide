@@ -1,0 +1,69 @@
+Model before rewriting:
+
+find q: int(1..5)
+
+such that
+
+(q - 1) = (q - q)
+
+--
+
+q
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q
+new variables:
+  find q#bv_1: int(1..5)
+
+--
+
+q
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q
+
+--
+
+q
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q
+
+--
+
+q
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+q#bv_1
+
+--
+
+q
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+q#bv_1
+
+--
+
+q
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+q#bv_1
+
+--
+
+(q#bv_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q#bv_1,-(1);int(1..)])
+
+--
+
+(q#bv_1 - q#bv_1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q#bv_1,-(q#bv_1);int(1..)])
+
+--
+
+Final model:
+
+find q: int(1..5)
+find q#bv_1: int(1..5)
+
+such that
+
+sum([q#bv_1,-1;int(1..)]) = sum([q#bv_1,-(q#bv_1);int(1..)])
+

@@ -1,0 +1,329 @@
+Model before rewriting:
+
+find x: int(0..1)
+
+such that
+
+and([;int(1..0)]),
+!(or([;int(1..0)])),
+or([and([;int(1..0)]),x = 0;int(1..)]),
+or([or([;int(1..0)]),x = 1;int(1..)])
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#int_order_1: bool
+  find x#int_order_2: bool
+new constraints:
+  x#int_order_1
+  or([!(x#int_order_2),x#int_order_1;int(1..)])
+  or([and([SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) >= 0,SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) <= 1;int(1..)]);int(1..)])
+
+--
+
+x
+   ~~> integer_decision_representation_order ([("SAT", 9500)])
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1])
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) = 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) = SATInt(Order, [true;int(1..)] [1, 1])
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) >= 0
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) >= SATInt(Order, [true;int(1..)] [0, 0])
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) <= 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) <= SATInt(Order, [true;int(1..)] [1, 1])
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) = SATInt(Order, [true;int(1..)] [1, 1])
+   ~~> eq_sat_order ([("SAT", 9100)])
+__3
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+  findAux __2: bool
+  findAux __3: bool
+new clauses:
+  (¬x#int_order_1 \/ __0)
+  (x#int_order_1 \/ ¬__0)
+  (¬__1 \/ __0)
+  (__1 \/ ¬__0)
+  (¬x#int_order_2 \/ __2)
+  (x#int_order_2 \/ ¬__2)
+  (¬__3 \/ __2)
+  (¬__3 \/ __1)
+  (__3 \/ ¬__2 \/ ¬__1)
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) >= SATInt(Order, [true;int(1..)] [0, 0])
+   ~~> ineq_sat_order ([("SAT", 9100)])
+__10
+new variables:
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
+new clauses:
+  (¬x#int_order_1 \/ ¬__4)
+  (x#int_order_1 \/ __4)
+  (¬__5 \/ __4)
+  (__5 \/ ¬__4)
+  (¬__5 \/ __6)
+  (¬__6 \/ __5)
+  (¬x#int_order_2 \/ ¬__7)
+  (x#int_order_2 \/ __7)
+  (¬__8 \/ __7)
+  (¬__8)
+  (¬__6 \/ __9)
+  (¬__8 \/ __9)
+  (¬__9 \/ __6 \/ __8)
+  (¬__9 \/ ¬__10)
+  (__9 \/ __10)
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [0, 1]) <= SATInt(Order, [true;int(1..)] [1, 1])
+   ~~> ineq_sat_order ([("SAT", 9100)])
+__17
+new variables:
+  findAux __11: bool
+  findAux __12: bool
+  findAux __13: bool
+  findAux __14: bool
+  findAux __15: bool
+  findAux __16: bool
+  findAux __17: bool
+new clauses:
+  (¬__11)
+  (¬__12 \/ __11)
+  (¬__12 \/ x#int_order_1)
+  (__12 \/ ¬__11 \/ ¬x#int_order_1)
+  (¬__12 \/ __13)
+  (¬__13 \/ __12)
+  (¬__14)
+  (¬__15 \/ __14)
+  (¬__15 \/ x#int_order_2)
+  (__15 \/ ¬__14 \/ ¬x#int_order_2)
+  (¬__13 \/ __16)
+  (¬__15 \/ __16)
+  (¬__16 \/ __13 \/ __15)
+  (¬__16 \/ ¬__17)
+  (__16 \/ __17)
+
+--
+
+!(x#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__18
+new variables:
+  findAux __18: bool
+new clauses:
+  (¬x#int_order_2 \/ ¬__18)
+  (x#int_order_2 \/ __18)
+
+--
+
+or([and([__10,__17;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__10,__17;int(1..)])
+
+--
+
+or([__3;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__3
+
+--
+
+and([__10,__17;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__19
+new variables:
+  findAux __19: bool
+new clauses:
+  (¬__19 \/ __10)
+  (¬__19 \/ __17)
+  (__19 \/ ¬__10 \/ ¬__17)
+
+--
+
+or([__18,x#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__20
+new variables:
+  findAux __20: bool
+new clauses:
+  (¬__18 \/ __20)
+  (¬x#int_order_1 \/ __20)
+  (¬__20 \/ __18 \/ x#int_order_1)
+
+--
+
+true,
+true,
+true,
+__3,
+x#int_order_1,
+__20,
+__19
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+x#int_order_1,
+__20,
+__19
+new clauses:
+  (__3)
+
+--
+
+true,
+true,
+true,
+x#int_order_1,
+__20,
+__19
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+__20,
+__19
+new clauses:
+  (x#int_order_1)
+
+--
+
+true,
+true,
+true,
+__20,
+__19
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+__19
+new clauses:
+  (__20)
+
+--
+
+true,
+true,
+true,
+__19
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true
+new clauses:
+  (__19)
+
+--
+
+Final model:
+
+find x: int(0..1)
+find x#int_order_1: bool
+find x#int_order_2: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+
+such that
+
+true,
+true,
+true
+
+clauses:
+
+(¬x#int_order_1 \/ __0),
+(x#int_order_1 \/ ¬__0),
+(¬__1 \/ __0),
+(__1 \/ ¬__0),
+(¬x#int_order_2 \/ __2),
+(x#int_order_2 \/ ¬__2),
+(¬__3 \/ __2),
+(¬__3 \/ __1),
+(__3 \/ ¬__2 \/ ¬__1),
+(¬x#int_order_1 \/ ¬__4),
+(x#int_order_1 \/ __4),
+(¬__5 \/ __4),
+(__5 \/ ¬__4),
+(¬__5 \/ __6),
+(¬__6 \/ __5),
+(¬x#int_order_2 \/ ¬__7),
+(x#int_order_2 \/ __7),
+(¬__8 \/ __7),
+(¬__8),
+(¬__6 \/ __9),
+(¬__8 \/ __9),
+(¬__9 \/ __6 \/ __8),
+(¬__9 \/ ¬__10),
+(__9 \/ __10),
+(¬__11),
+(¬__12 \/ __11),
+(¬__12 \/ x#int_order_1),
+(__12 \/ ¬__11 \/ ¬x#int_order_1),
+(¬__12 \/ __13),
+(¬__13 \/ __12),
+(¬__14),
+(¬__15 \/ __14),
+(¬__15 \/ x#int_order_2),
+(__15 \/ ¬__14 \/ ¬x#int_order_2),
+(¬__13 \/ __16),
+(¬__15 \/ __16),
+(¬__16 \/ __13 \/ __15),
+(¬__16 \/ ¬__17),
+(__16 \/ __17),
+(¬x#int_order_2 \/ ¬__18),
+(x#int_order_2 \/ __18),
+(¬__19 \/ __10),
+(¬__19 \/ __17),
+(__19 \/ ¬__10 \/ ¬__17),
+(¬__18 \/ __20),
+(¬x#int_order_1 \/ __20),
+(¬__20 \/ __18 \/ x#int_order_1),
+(__3),
+(x#int_order_1),
+(__20),
+(__19)
+

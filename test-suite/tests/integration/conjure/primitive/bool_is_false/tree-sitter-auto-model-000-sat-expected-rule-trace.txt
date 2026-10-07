@@ -1,0 +1,44 @@
+Model before rewriting:
+
+find x: bool
+
+such that
+
+x = false
+
+--
+
+x = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (x \/ __0)
+  (¬x \/ ¬__0)
+
+--
+
+__0
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__0)
+
+--
+
+Final model:
+
+find x: bool
+findAux __0: bool
+
+such that
+
+true
+
+clauses:
+
+(x \/ __0),
+(¬x \/ ¬__0),
+(__0)
+

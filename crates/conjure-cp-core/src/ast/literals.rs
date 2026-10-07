@@ -1,16 +1,20 @@
+use funcmap::FuncMap;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
+use std::cmp::Ordering;
+use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 use ustr::Ustr;
 
 use super::{
-    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, PartitionAttr, Range,
-    ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int, records::FieldValue,
+    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, PartitionAttr,
+    PermutationAttr, Range, ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int,
+    records::Field,
 };
 use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::bug;
+use crate::bug_assert;
 use polyquine::Quine;
 use uniplate::{Biplate, Tree, Uniplate};
 
@@ -19,8 +23,8 @@ use uniplate::{Biplate, Tree, Uniplate};
 #[biplate(to=Atom)]
 #[biplate(to=AbstractLiteral<Literal>)]
 #[biplate(to=AbstractLiteral<Expression>)]
-#[biplate(to=FieldValue<Literal>)]
-#[biplate(to=FieldValue<Expression>)]
+#[biplate(to=Field<Literal>)]
+#[biplate(to=Field<Expression>)]
 #[biplate(to=Expression)]
 #[path_prefix(conjure_cp::ast)]
 /// A literal value, equivalent to constants in Conjure.
@@ -42,17 +46,189 @@ impl HasDomain for Literal {
     }
 }
 
+impl Literal {
+    /// Compare values using Essence-aware value ordering.
+    ///
+    /// Booleans and integers use their natural order, tuple-like values use
+    /// lexicographic order, and sets use lexicographic occurrence order over
+    /// ascending element values (`false < true`).
+    pub fn essence_cmp(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            (Literal::Bool(lhs), Literal::Bool(rhs)) => lhs.cmp(rhs),
+            (Literal::Int(lhs), Literal::Int(rhs)) => lhs.cmp(rhs),
+            (Literal::AbstractLiteral(lhs), Literal::AbstractLiteral(rhs)) => {
+                abstract_literal_essence_cmp(lhs, rhs)
+            }
+            _ => literal_kind(self).cmp(&literal_kind(other)),
+        }
+    }
+}
+
+fn literal_kind(literal: &Literal) -> u8 {
+    match literal {
+        Literal::Bool(_) => 0,
+        Literal::Int(_) => 1,
+        Literal::AbstractLiteral(_) => 2,
+    }
+}
+
+fn abstract_literal_essence_cmp(
+    lhs: &AbstractLiteral<Literal>,
+    rhs: &AbstractLiteral<Literal>,
+) -> Ordering {
+    match (lhs, rhs) {
+        (AbstractLiteral::Set(lhs), AbstractLiteral::Set(rhs)) => set_essence_cmp(lhs, rhs),
+        (AbstractLiteral::MSet(lhs), AbstractLiteral::MSet(rhs)) => sorted_literals_cmp(lhs, rhs),
+        (AbstractLiteral::Matrix(lhs, _), AbstractLiteral::Matrix(rhs, _))
+        | (AbstractLiteral::Tuple(lhs), AbstractLiteral::Tuple(rhs))
+        | (AbstractLiteral::Sequence(lhs), AbstractLiteral::Sequence(rhs)) => {
+            literal_slice_cmp(lhs, rhs)
+        }
+        (AbstractLiteral::Record(lhs), AbstractLiteral::Record(rhs)) => lhs
+            .iter()
+            .zip(rhs)
+            .find_map(|(lhs, rhs)| {
+                let ordering = lhs.name.to_string().cmp(&rhs.name.to_string());
+                (ordering != Ordering::Equal)
+                    .then_some(ordering)
+                    .or_else(|| {
+                        let ordering = lhs.value.essence_cmp(&rhs.value);
+                        (ordering != Ordering::Equal).then_some(ordering)
+                    })
+            })
+            .unwrap_or_else(|| lhs.len().cmp(&rhs.len())),
+        (AbstractLiteral::Function(lhs), AbstractLiteral::Function(rhs)) => lhs
+            .iter()
+            .zip(rhs)
+            .find_map(|((lhs_from, lhs_to), (rhs_from, rhs_to))| {
+                let ordering = lhs_from.essence_cmp(rhs_from);
+                (ordering != Ordering::Equal)
+                    .then_some(ordering)
+                    .or_else(|| {
+                        let ordering = lhs_to.essence_cmp(rhs_to);
+                        (ordering != Ordering::Equal).then_some(ordering)
+                    })
+            })
+            .unwrap_or_else(|| lhs.len().cmp(&rhs.len())),
+        (AbstractLiteral::Variant(lhs), AbstractLiteral::Variant(rhs)) => lhs
+            .name
+            .to_string()
+            .cmp(&rhs.name.to_string())
+            .then_with(|| lhs.value.essence_cmp(&rhs.value)),
+        (AbstractLiteral::Partition(lhs), AbstractLiteral::Partition(rhs))
+        | (AbstractLiteral::Relation(lhs), AbstractLiteral::Relation(rhs))
+        | (AbstractLiteral::Permutation(lhs), AbstractLiteral::Permutation(rhs)) => lhs
+            .iter()
+            .zip(rhs)
+            .find_map(|(lhs, rhs)| {
+                let ordering = literal_slice_cmp(lhs, rhs);
+                (ordering != Ordering::Equal).then_some(ordering)
+            })
+            .unwrap_or_else(|| lhs.len().cmp(&rhs.len())),
+        _ => abstract_literal_kind(lhs).cmp(&abstract_literal_kind(rhs)),
+    }
+}
+
+fn abstract_literal_kind(literal: &AbstractLiteral<Literal>) -> u8 {
+    match literal {
+        AbstractLiteral::Set(_) => 0,
+        AbstractLiteral::MSet(_) => 1,
+        AbstractLiteral::Matrix(..) => 2,
+        AbstractLiteral::Tuple(_) => 3,
+        AbstractLiteral::Record(_) => 4,
+        AbstractLiteral::Sequence(_) => 5,
+        AbstractLiteral::Function(_) => 6,
+        AbstractLiteral::Variant(_) => 7,
+        AbstractLiteral::Partition(_) => 8,
+        AbstractLiteral::Relation(_) => 9,
+        AbstractLiteral::Permutation(_) => 10,
+    }
+}
+
+fn literal_slice_cmp(lhs: &[Literal], rhs: &[Literal]) -> Ordering {
+    lhs.iter()
+        .zip(rhs)
+        .find_map(|(lhs, rhs)| {
+            let ordering = lhs.essence_cmp(rhs);
+            (ordering != Ordering::Equal).then_some(ordering)
+        })
+        .unwrap_or_else(|| lhs.len().cmp(&rhs.len()))
+}
+
+fn sorted_literals_cmp(lhs: &[Literal], rhs: &[Literal]) -> Ordering {
+    let mut lhs = lhs.iter().collect::<Vec<_>>();
+    let mut rhs = rhs.iter().collect::<Vec<_>>();
+    lhs.sort_by(|lhs, rhs| lhs.essence_cmp(rhs));
+    rhs.sort_by(|lhs, rhs| lhs.essence_cmp(rhs));
+    lhs.iter()
+        .zip(&rhs)
+        .find_map(|(lhs, rhs)| {
+            let ordering = lhs.essence_cmp(rhs);
+            (ordering != Ordering::Equal).then_some(ordering)
+        })
+        .unwrap_or_else(|| lhs.len().cmp(&rhs.len()))
+}
+
+/// Compare sets as occurrence vectors over the ordered union of their elements.
+fn set_essence_cmp(lhs: &[Literal], rhs: &[Literal]) -> Ordering {
+    let mut lhs = lhs.iter().collect::<Vec<_>>();
+    let mut rhs = rhs.iter().collect::<Vec<_>>();
+    lhs.sort_by(|lhs, rhs| lhs.essence_cmp(rhs));
+    rhs.sort_by(|lhs, rhs| lhs.essence_cmp(rhs));
+
+    let (mut lhs_index, mut rhs_index) = (0, 0);
+    while lhs_index < lhs.len() && rhs_index < rhs.len() {
+        match lhs[lhs_index].essence_cmp(rhs[rhs_index]) {
+            Ordering::Equal => {
+                lhs_index += 1;
+                rhs_index += 1;
+            }
+            // `lhs` contains the least differing element and `rhs` does not.
+            Ordering::Less => return Ordering::Greater,
+            // `rhs` contains the least differing element and `lhs` does not.
+            Ordering::Greater => return Ordering::Less,
+        }
+    }
+    match (lhs_index < lhs.len(), rhs_index < rhs.len()) {
+        (false, false) => Ordering::Equal,
+        (true, false) => Ordering::Greater,
+        (false, true) => Ordering::Less,
+        (true, true) => unreachable!(),
+    }
+}
+
 // make possible values of an AbstractLiteral a closed world to make the trait bounds more sane (particularly in Uniplate instances!!)
 pub trait AbstractLiteralValue:
-    Clone + Eq + PartialEq + Display + Uniplate + Biplate<FieldValue<Self>> + 'static
+    Clone + Eq + PartialEq + Display + Uniplate + Biplate<Field<Self>> + 'static
 {
-    type Dom: Clone + Eq + PartialEq + Display + Quine + From<GroundDomain> + Into<DomainPtr>;
+    type Dom: Clone
+        + Eq
+        + PartialEq
+        + Debug
+        + Display
+        + Quine
+        + From<GroundDomain>
+        + Into<DomainPtr>;
+
+    /// Returns whether `domain` is the implicit one-based list index domain.
+    fn has_implied_list_domain(domain: &Self::Dom) -> bool;
 }
 impl AbstractLiteralValue for Expression {
     type Dom = DomainPtr;
+
+    fn has_implied_list_domain(domain: &Self::Dom) -> bool {
+        let Domain::Ground(domain) = domain.as_ref() else {
+            return false;
+        };
+        matches!(domain.as_ref(), GroundDomain::Int(ranges) if ranges.as_slice() == [Range::UnboundedR(1)])
+    }
 }
 impl AbstractLiteralValue for Literal {
     type Dom = Moo<GroundDomain>;
+
+    fn has_implied_list_domain(domain: &Self::Dom) -> bool {
+        matches!(domain.as_ref(), GroundDomain::Int(ranges) if ranges.as_slice() == [Range::UnboundedR(1)])
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
@@ -68,21 +244,41 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     // a tuple of literals
     Tuple(Vec<T>),
 
-    Record(Vec<FieldValue<T>>),
+    Record(Vec<Field<T>>),
 
     Sequence(Vec<T>),
 
     Function(Vec<(T, T)>),
 
     // Variants only contain one of their name-domain pairs
-    Variant(Moo<FieldValue<T>>),
+    Variant(Moo<Field<T>>),
 
     // A list of partitions, each part has a set of values
     Partition(Vec<Vec<T>>),
     Relation(Vec<Vec<T>>),
+
+    /// Cycle notation for a permutation: each inner vec is one cycle. Unlike `Partition`, this is
+    /// *sparse* -- any element of the permutation's domain not mentioned in any cycle is an
+    /// implicit fixed point (maps to itself), rather than every element needing to be covered.
+    Permutation(Vec<Vec<T>>),
 }
 
 // TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
+fn union_item_domains(item_domains: Vec<DomainPtr>, literal_kind: &str) -> Option<DomainPtr> {
+    let mut item_domain_iter = item_domains.into_iter();
+    let first_item = item_domain_iter.next()?;
+
+    Some(
+        item_domain_iter
+            .try_fold(first_item, |x, y| x.union(&y))
+            .unwrap_or_else(|error| {
+                bug!(
+                    "taking the union of all item domains of a {literal_kind} literal should succeed: {error}"
+                )
+            }),
+    )
+}
+
 impl AbstractLiteral<Expression> {
     pub fn domain_of(&self) -> Option<DomainPtr> {
         match self {
@@ -94,17 +290,13 @@ impl AbstractLiteral<Expression> {
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
-                let mut item_domain_iter = item_domains.iter().cloned();
-                let first_item = item_domain_iter.next()?;
-                let item_domain = item_domains
-                    .iter()
-                    .try_fold(first_item, |x, y| x.union(y))
-                    .expect("taking the union of all item domains of a set literal should succeed");
+                let item_domain = union_item_domains(item_domains, "set")?;
 
                 Some(Domain::set(SetAttr::<Int>::default(), item_domain))
             }
 
             AbstractLiteral::MSet(items) => {
+                let cardinality = i32::try_from(items.len()).ok()?;
                 // ensure that all items have a domain, or return None
                 let item_domains: Vec<DomainPtr> = items
                     .iter()
@@ -112,14 +304,17 @@ impl AbstractLiteral<Expression> {
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
-                let mut item_domain_iter = item_domains.iter().cloned();
-                let first_item = item_domain_iter.next()?;
-                let item_domain = item_domains
-                    .iter()
-                    .try_fold(first_item, |x, y| x.union(y))
-                    .expect("taking the union of all item domains of a set literal should succeed");
+                let item_domain = union_item_domains(item_domains, "mset")?;
 
-                Some(Domain::mset(MSetAttr::<Int>::default(), item_domain))
+                let occurrence = if cardinality == 0 {
+                    Range::Single(0)
+                } else {
+                    Range::Bounded(1, cardinality)
+                };
+                Some(Domain::mset(
+                    MSetAttr::new(Range::Single(cardinality), occurrence),
+                    item_domain,
+                ))
             }
 
             AbstractLiteral::Sequence(elems) => {
@@ -130,15 +325,16 @@ impl AbstractLiteral<Expression> {
 
                 // Get the union of all domains in the sequence.
                 // i.e. if <(1..3), (1..3), (5), (8..9)> then seq dom is (1..3, 5, 8..9)
-                let mut item_domain_iter = item_domains.iter().cloned();
-                let first_item = item_domain_iter.next()?;
-                let item_domain = item_domains
-                    .iter()
-                    .try_fold(first_item, |x, y| x.union(y))
-                    .expect("taking the union of all item domains of a set literal should succeed");
+                let item_domain = union_item_domains(item_domains, "sequence")?;
 
+                // The literal's own length is its size: without it nothing downstream can tell
+                // how many positions the sequence has.
+                let size = Range::Single(i32::try_from(elems.len()).ok()?);
                 Some(Domain::sequence(
-                    SequenceAttr::<Int>::default(),
+                    SequenceAttr::<Int> {
+                        size,
+                        ..SequenceAttr::default()
+                    },
                     item_domain,
                 ))
             }
@@ -154,15 +350,28 @@ impl AbstractLiteral<Expression> {
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
-                let mut item_domain_iter = item_domains.iter().cloned();
-                let first_item = item_domain_iter.next()?;
-                let item_domain = item_domains
-                    .iter()
-                    .try_fold(first_item, |x, y| x.union(y))
-                    .expect("taking the union of all item domains of a partition literal should succeed");
+                let item_domain = union_item_domains(item_domains, "partition")?;
 
                 Some(Domain::partition(
                     PartitionAttr::<Int>::default(),
+                    item_domain,
+                ))
+            }
+
+            AbstractLiteral::Permutation(cycles) => {
+                // Flatten the Vec<Vec< into a single vec; unlike partition, elements not
+                // mentioned in any cycle are implicit fixed points, so an empty literal (or one
+                // with no domain-bearing elements) has no way to infer an inner domain.
+                let item_domains: Vec<DomainPtr> = cycles
+                    .iter()
+                    .flatten()
+                    .map(|x| x.domain_of())
+                    .collect::<Option<Vec<DomainPtr>>>()?;
+
+                let item_domain = union_item_domains(item_domains, "permutation")?;
+
+                Some(Domain::permutation(
+                    PermutationAttr::<Int>::default(),
                     item_domain,
                 ))
             }
@@ -175,23 +384,14 @@ impl AbstractLiteral<Expression> {
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
-                let mut item_domain_iter = item_domains.iter().cloned();
-
-                let first_item = item_domain_iter.next()?;
-
-                let item_domain = item_domains
-                    .iter()
-                    .try_fold(first_item, |x, y| x.union(y))
-                    .expect(
-                        "taking the union of all item domains of a matrix literal should succeed",
-                    );
+                let item_domain = union_item_domains(item_domains, "matrix")?;
 
                 let mut new_index_domain = vec![];
 
                 // flatten index domains of n-d matrix into list
                 let mut e = Expression::AbstractLiteral(Metadata::new(), self.clone());
                 while let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, idx)) = e {
-                    assert!(
+                    bug_assert!(
                         idx.as_matrix().is_none(),
                         "n-dimensional matrix literals should be represented as a matrix inside a matrix, got {idx}"
                     );
@@ -228,7 +428,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 // if any items do not have a type, return none.
                 let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
 
-                assert!(
+                bug_assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in a set should have the same type"
                 );
@@ -244,7 +444,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 // if any items do not have a type, return none.
                 let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
 
-                assert!(
+                bug_assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in a set should have the same type"
                 );
@@ -260,7 +460,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 // if any items do not have a type, return none.
                 let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
 
-                assert!(
+                bug_assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in a sequence should have the same type"
                 );
@@ -277,12 +477,28 @@ impl Typeable for AbstractLiteral<Expression> {
                 let item_types: Vec<ReturnType> =
                     items.iter().flatten().map(|x| x.return_type()).collect();
 
-                assert!(
+                bug_assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in every part of a partition should have the same type"
                 );
 
                 ReturnType::Partition(Box::new(item_type))
+            }
+            AbstractLiteral::Permutation(items) if items.is_empty() || items[0].is_empty() => {
+                ReturnType::Permutation(Box::new(ReturnType::Unknown))
+            }
+            AbstractLiteral::Permutation(items) => {
+                let item_type = items[0][0].return_type();
+
+                let item_types: Vec<ReturnType> =
+                    items.iter().flatten().map(|x| x.return_type()).collect();
+
+                bug_assert!(
+                    item_types.iter().all(|x| x == &item_type),
+                    "all items in every cycle of a permutation should have the same type"
+                );
+
+                ReturnType::Permutation(Box::new(item_type))
             }
             AbstractLiteral::Matrix(items, _) if items.is_empty() => {
                 ReturnType::Matrix(Box::new(ReturnType::Unknown))
@@ -293,7 +509,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 // if any items do not have a type, return none.
                 let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
 
-                assert!(
+                bug_assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in a matrix should have the same type. items: {items} types: {types:#?}",
                     items = pretty_vec(items),
@@ -315,7 +531,7 @@ impl Typeable for AbstractLiteral<Expression> {
             AbstractLiteral::Record(items) => {
                 let mut item_types = vec![];
                 for item in items {
-                    item_types.push(item.value.return_type());
+                    item_types.push(item.clone().func_map(|x| x.return_type()));
                 }
                 ReturnType::Record(item_types)
             }
@@ -344,7 +560,7 @@ impl Typeable for AbstractLiteral<Expression> {
             }
             AbstractLiteral::Variant(item) => {
                 // Variants hold multiple possible types. In the case of a literal we know which type it chose
-                ReturnType::Variant(vec![item.value.return_type()])
+                ReturnType::Variant(vec![item.as_ref().clone().func_map(|x| x.return_type())])
             }
             AbstractLiteral::Relation(items) => {
                 if items.is_empty() {
@@ -396,16 +612,16 @@ where
             return None;
         };
 
-        let domain: DomainPtr = domain.clone().into();
-        let Some(GroundDomain::Int(ranges)) = domain.as_ground() else {
+        T::has_implied_list_domain(domain).then_some(elems)
+    }
+
+    /// If this abstract literal is a list, consumes it and returns its elements.
+    pub fn into_list(self) -> Option<Vec<T>> {
+        let AbstractLiteral::Matrix(elems, domain) = self else {
             return None;
         };
 
-        let [Range::UnboundedR(1)] = ranges[..] else {
-            return None;
-        };
-
-        Some(elems)
+        T::has_implied_list_domain(&domain).then_some(elems)
     }
 }
 
@@ -445,6 +661,17 @@ where
                     .join(", ");
 
                 write!(f, "partition({elems_str})")
+            }
+            AbstractLiteral::Permutation(cycles) => {
+                let cycles_str: String = cycles
+                    .iter()
+                    .map(|cycle| {
+                        let elems_str = cycle.iter().map(|x| format!("{x}")).join(",");
+                        format!("({elems_str})")
+                    })
+                    .join("");
+
+                write!(f, "permutation{cycles_str}")
             }
             AbstractLiteral::Record(entries) => {
                 let entries_str: String = entries
@@ -568,6 +795,13 @@ where
                     Box::new(move |x| AbstractLiteral::Partition(f1_ctx(x))),
                 )
             }
+            AbstractLiteral::Permutation(elems) => {
+                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(elems);
+                (
+                    f1_tree,
+                    Box::new(move |x| AbstractLiteral::Permutation(f1_ctx(x))),
+                )
+            }
         }
     }
 }
@@ -576,7 +810,7 @@ impl<U, To> Biplate<To> for AbstractLiteral<U>
 where
     To: Uniplate,
     U: AbstractLiteralValue + Biplate<AbstractLiteral<U>> + Biplate<To>,
-    FieldValue<U>: Biplate<AbstractLiteral<U>> + Biplate<To>,
+    Field<U>: Biplate<AbstractLiteral<U>> + Biplate<To>,
 {
     fn biplate(&self) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> Self>) {
         if std::any::TypeId::of::<To>() == std::any::TypeId::of::<AbstractLiteral<U>>() {
@@ -685,6 +919,85 @@ where
                         Box::new(move |x| AbstractLiteral::Partition(f1_ctx(x))),
                     )
                 }
+                AbstractLiteral::Permutation(elems) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Permutation(f1_ctx(x))),
+                    )
+                }
+            }
+        }
+    }
+
+    fn children_bi_count(&self) -> usize {
+        // Manual `biplate` (not derive): delegate counts to the plated containers so wide
+        // matrices/lists stay O(1) instead of materialising `children_bi`.
+        if std::any::TypeId::of::<To>() == std::any::TypeId::of::<AbstractLiteral<U>>() {
+            return 1;
+        }
+        match self {
+            AbstractLiteral::Set(v)
+            | AbstractLiteral::MSet(v)
+            | AbstractLiteral::Sequence(v)
+            | AbstractLiteral::Tuple(v)
+            | AbstractLiteral::Matrix(v, _) => <Vec<U> as Biplate<To>>::children_bi_count(v),
+            AbstractLiteral::Record(entries) => {
+                <Vec<Field<U>> as Biplate<To>>::children_bi_count(entries)
+            }
+            AbstractLiteral::Variant(entry) => {
+                <Moo<Field<U>> as Biplate<To>>::children_bi_count(entry)
+            }
+            AbstractLiteral::Relation(elems)
+            | AbstractLiteral::Partition(elems)
+            | AbstractLiteral::Permutation(elems) => {
+                <Vec<Vec<U>> as Biplate<To>>::children_bi_count(elems)
+            }
+            AbstractLiteral::Function(_) => <Self as Biplate<To>>::children_bi(self).len(),
+        }
+    }
+
+    fn try_replace_child_at_bi(&mut self, index: usize, child: To) -> bool {
+        // Same as `children_bi_count`: keep in-place updates for owned vectors (lee-distance).
+        if std::any::TypeId::of::<To>() == std::any::TypeId::of::<AbstractLiteral<U>>() {
+            if index != 0 {
+                return false;
+            }
+            // SAFETY: TypeId equality means To and AbstractLiteral<U> are the same type.
+            unsafe {
+                let child_as_self = std::mem::transmute_copy::<To, AbstractLiteral<U>>(&child);
+                std::mem::forget(child);
+                *self = child_as_self;
+            }
+            return true;
+        }
+        match self {
+            AbstractLiteral::Set(v)
+            | AbstractLiteral::MSet(v)
+            | AbstractLiteral::Sequence(v)
+            | AbstractLiteral::Tuple(v)
+            | AbstractLiteral::Matrix(v, _) => {
+                <Vec<U> as Biplate<To>>::try_replace_child_at_bi(v, index, child)
+            }
+            AbstractLiteral::Record(entries) => {
+                <Vec<Field<U>> as Biplate<To>>::try_replace_child_at_bi(entries, index, child)
+            }
+            AbstractLiteral::Variant(entry) => {
+                <Moo<Field<U>> as Biplate<To>>::try_replace_child_at_bi(entry, index, child)
+            }
+            AbstractLiteral::Relation(elems)
+            | AbstractLiteral::Partition(elems)
+            | AbstractLiteral::Permutation(elems) => {
+                <Vec<Vec<U>> as Biplate<To>>::try_replace_child_at_bi(elems, index, child)
+            }
+            AbstractLiteral::Function(_) => {
+                let mut children = <Self as Biplate<To>>::children_bi(self);
+                if index >= children.len() {
+                    return false;
+                }
+                children[index] = child;
+                *self = self.with_children_bi(children);
+                true
             }
         }
     }
@@ -777,6 +1090,12 @@ impl From<Literal> for Ustr {
     }
 }
 
+impl From<AbstractLiteral<Literal>> for Literal {
+    fn from(literal: AbstractLiteral<Literal>) -> Self {
+        Literal::AbstractLiteral(literal)
+    }
+}
+
 impl AbstractLiteral<Expression> {
     /// If all the elements are literals, returns this as an AbstractLiteral<Literal>.
     /// Otherwise, returns `None`.
@@ -830,6 +1149,26 @@ impl AbstractLiteral<Expression> {
 
                 Some(AbstractLiteral::Partition(partition))
             }
+            AbstractLiteral::Permutation(elems) => {
+                let mut permutation: Vec<Vec<_>> = Vec::new();
+
+                for cycle in elems {
+                    let literals = cycle
+                        .into_iter()
+                        .map(|expr| match expr {
+                            Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                            Expression::AbstractLiteral(_, abslit) => {
+                                Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                            }
+                            _ => None,
+                        })
+                        .collect::<Option<Vec<_>>>()?;
+
+                    permutation.push(literals);
+                }
+
+                Some(AbstractLiteral::Permutation(permutation))
+            }
             AbstractLiteral::Matrix(items, domain) => {
                 let mut literals = vec![];
                 for item in items {
@@ -843,7 +1182,7 @@ impl AbstractLiteral<Expression> {
                     literals.push(literal);
                 }
 
-                Some(AbstractLiteral::Matrix(literals, domain.resolve()?))
+                Some(AbstractLiteral::Matrix(literals, domain.resolve().ok()?))
             }
             AbstractLiteral::Sequence(elements) => {
                 let literals = elements
@@ -889,7 +1228,7 @@ impl AbstractLiteral<Expression> {
                 Some(AbstractLiteral::Record(
                     literals
                         .into_iter()
-                        .map(|(name, literal)| FieldValue {
+                        .map(|(name, literal)| Field {
                             name,
                             value: literal,
                         })
@@ -905,12 +1244,28 @@ impl AbstractLiteral<Expression> {
                     }
                     _ => None,
                 }?;
-                Some(AbstractLiteral::Variant(Moo::new(FieldValue {
+                Some(AbstractLiteral::Variant(Moo::new(Field {
                     name: entry.name.clone(),
                     value: literal,
                 })))
             }
-            AbstractLiteral::Relation(_) => todo!("Implement into_literals for relations"),
+            AbstractLiteral::Relation(tuples) => {
+                let mut literal_tuples = Vec::with_capacity(tuples.len());
+                for fields in tuples {
+                    let literals = fields
+                        .into_iter()
+                        .map(|expr| match expr {
+                            Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                            Expression::AbstractLiteral(_, abslit) => {
+                                Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                            }
+                            _ => None,
+                        })
+                        .collect::<Option<Vec<_>>>()?;
+                    literal_tuples.push(literals);
+                }
+                Some(AbstractLiteral::Relation(literal_tuples))
+            }
         }
     }
 }
@@ -930,8 +1285,88 @@ impl Display for Literal {
 mod tests {
 
     use super::*;
-    use crate::{into_matrix, matrix};
+    use crate::ast::matrix::{flatten, partial_flatten, shape_of};
+    use crate::ast::{DeclarationPtr, Name};
+    use crate::{domain_int_ground, into_matrix, matrix, matrix_lit, range};
     use uniplate::Uniplate;
+
+    #[test]
+    fn essence_value_ordering_uses_occurrence_lex_for_sets() {
+        let set = |values: &[i32]| {
+            Literal::AbstractLiteral(AbstractLiteral::Set(
+                values.iter().copied().map(Literal::Int).collect(),
+            ))
+        };
+        let ordered = [
+            set(&[]),
+            set(&[3]),
+            set(&[2]),
+            set(&[2, 3]),
+            set(&[1]),
+            set(&[1, 3]),
+            set(&[1, 2]),
+            set(&[1, 2, 3]),
+        ];
+
+        for pair in ordered.windows(2) {
+            assert_eq!(pair[0].essence_cmp(&pair[1]), Ordering::Less);
+        }
+    }
+
+    #[test]
+    fn essence_value_ordering_is_lexicographic_for_tuples_and_matrices() {
+        let tuple = |values: &[i32]| {
+            Literal::AbstractLiteral(AbstractLiteral::Tuple(
+                values.iter().copied().map(Literal::Int).collect(),
+            ))
+        };
+        assert_eq!(tuple(&[1, 2]).essence_cmp(&tuple(&[1, 3])), Ordering::Less);
+        assert_eq!(
+            tuple(&[1, 2]).essence_cmp(&tuple(&[1, 2, 0])),
+            Ordering::Less
+        );
+
+        let matrix = |values: &[i32]| {
+            Literal::AbstractLiteral(AbstractLiteral::Matrix(
+                values.iter().copied().map(Literal::Int).collect(),
+                Moo::new(GroundDomain::Int(vec![Range::Bounded(
+                    1,
+                    values.len() as i32,
+                )])),
+            ))
+        };
+        assert_eq!(
+            matrix(&[1, 2]).essence_cmp(&matrix(&[1, 3])),
+            Ordering::Less
+        );
+    }
+
+    #[test]
+    fn mset_domain_accepts_domain_letting_references() {
+        let declaration = DeclarationPtr::new_domain_letting(
+            Name::user("NUM"),
+            Domain::int(vec![Range::Bounded(1, 999)]),
+        );
+        let alias = Domain::reference(declaration).unwrap();
+        let item = Expression::DomainAnnotation(
+            Metadata::new(),
+            Moo::new(Expression::Atomic(
+                Metadata::new(),
+                Atom::Literal(Literal::Int(1)),
+            )),
+            alias,
+        );
+
+        let domain = AbstractLiteral::MSet(vec![item.clone(), item])
+            .domain_of()
+            .unwrap();
+        let (_, item_domain) = domain.as_mset().unwrap();
+
+        assert_eq!(
+            item_domain.resolve(),
+            Ok(Moo::new(GroundDomain::Int(vec![Range::Bounded(1, 999)])))
+        );
+    }
 
     #[test]
     fn matrix_uniplate_universe() {
@@ -954,5 +1389,124 @@ mod tests {
             });
 
         assert_eq!(actual_index_domains, expected_index_domains);
+    }
+
+    #[test]
+    fn matrix_flatten() {
+        let tensor: AbstractLiteral<Literal> = matrix![
+            [
+                // batch 1
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                // batch 2
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ]
+        ];
+
+        let actual_elems: Vec<Literal> = flatten(&tensor).cloned().collect();
+        let expected_elems = (1..25).map(Literal::from).collect::<Vec<_>>();
+        assert_eq!(actual_elems, expected_elems);
+    }
+
+    #[test]
+    fn matrix_domain_1d() {
+        let matrix = matrix_lit![10, 11, 12, 13; domain_int_ground!(1..4)];
+        let dom = matrix.domain_of();
+
+        let (inner_dom, idx_doms) = dom.as_matrix_ground().expect("must be ground matrix");
+        assert_eq!(inner_dom, &domain_int_ground!(10..13));
+        assert_eq!(idx_doms.len(), 1);
+        assert_eq!(&idx_doms[0], &domain_int_ground!(1..4));
+    }
+
+    #[test]
+    fn matrix_domain_2d() {
+        let matrix = matrix_lit![
+            [1, 2, 3, 4],
+            [5, 6, 7, 8];
+            [
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..4)
+            ]
+        ];
+        let dom = matrix.domain_of();
+
+        let (inner_dom, idx_doms) = dom.as_matrix_ground().expect("must be ground matrix");
+        assert_eq!(inner_dom, &domain_int_ground!(1..8));
+        assert_eq!(idx_doms.len(), 2);
+        assert_eq!(&idx_doms[0], &domain_int_ground!(1..2));
+        assert_eq!(&idx_doms[1], &domain_int_ground!(1..4));
+    }
+
+    #[test]
+    fn matrix_shape_3d() {
+        let tensor: AbstractLiteral<Literal> = matrix![
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ];
+            [
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..3),
+                domain_int_ground!(1..4)
+            ]
+        ];
+        let shape = shape_of(&tensor).expect("shape_of to work on a 3D matrix");
+
+        assert_eq!(shape.size, 24);
+        assert_eq!(shape.dims, vec![2, 3, 4]);
+        assert_eq!(shape.strides, vec![12, 4, 1]);
+        assert_eq!(
+            shape.idx_doms,
+            vec![
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..3),
+                domain_int_ground!(1..4)
+            ]
+        );
+    }
+
+    #[test]
+    fn matrix_partial_flatten() {
+        let tensor: AbstractLiteral<Literal> = matrix![
+            [
+                // batch 1
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                // batch 2
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ]
+        ];
+        assert_eq!(partial_flatten(0, tensor.clone()), tensor);
+
+        let expected_flatten_1: AbstractLiteral<Literal> = matrix![
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+            [17, 18, 19, 20],
+            [21, 22, 23, 24]
+        ];
+        assert_eq!(partial_flatten(1, tensor.clone()), expected_flatten_1);
+
+        let expected_flatten_2 =
+            AbstractLiteral::matrix_implied_indices((1..25).map(Literal::from).collect());
+        assert_eq!(partial_flatten(2, tensor), expected_flatten_2);
     }
 }

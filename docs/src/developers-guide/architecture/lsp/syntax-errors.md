@@ -11,13 +11,13 @@ Description: expected token is absent
 Detection: Empty node or a missing child node. (MISSING node is inserted)
 Example: missing variable name
 
-```text
-find: bool
+```essence
+find : bool
 ```
 
 Example: missing Expression
 
-```text
+```essence
 letting x be 
 ```
 
@@ -28,7 +28,7 @@ Detection: ERROR node containing all the tokens where that failed to match the g
 
 Example: missing colon, `int` is unexpected (here `x` and `int` will be children of the ERROR node)
 
-```text
+```essence
 find x int
 ```
 
@@ -38,8 +38,8 @@ Description: a token appearing after a valid construct is complete
 Detection: ERROR node containing the extra token (ERROR node will likely be the last child of a valid construct)
 Example: second `)` is extra
 
-```text
-find x: int(1..2))
+```essence
+find x : int(1..2))
 ```
 
 ### 4. Invalid Token
@@ -48,8 +48,8 @@ Description: token is malformed or not part of the grammar
 Detection: look for an ERROR node with the invalid token
 Example: `@int` is not a valid token (ERROR node with `@`)
 
-```text
-find x: @int
+```essence
+find x : @int
 ```
 
 Conjure does not identify `int` at all, just says "Skipped token", "Missing Domain"
@@ -62,8 +62,8 @@ Description: unmatched or missing closing bracket, parenthesis, brace
 Detection: MISSING node ")"
 Example: missing `)`
 
-```text
-find x: int(1..2
+```essence
+find x : int(1..2
 ```
 
 Conjure allows it but since out grammar enforces it Tree-Sitter produces an error.
@@ -74,8 +74,8 @@ Description: statement not recognised by Essence grammar
 Detection: ERROR node with the unrecognised statement
 Example:  
 
-```text
-find x: int(1..5)
+```essence
+find x : int(1..5)
 print x 
 ```
 
@@ -95,12 +95,12 @@ Description: token's name is not allowed
 Detection: compare the variable names against the set of keywords
 Example: Keyword "bool" used as a variable name
 
-```text
-find bool: bool
+```essence
+find bool : bool
 ```
 
-```text
-find x: letting
+```essence
+find x : letting
 ```
 
 Conjure doesn't allow it but Tree-Sitter does so we will have to check as part of semantic checks.
@@ -111,8 +111,8 @@ Description: variable not declared
 Detection: save the declared variables and check if the ones used in expressions are in the declared set
 Example: x was not declared before
 
-```text
-find y: int (1..4)
+```essence
+find y : int (1..4)
 such that x = 5
 ```
 
@@ -122,16 +122,16 @@ Description: logically or mathematically invalid bounds/domain + infinite domain
 
 Example: a bigger value before smaller
 
-```text
-find x: int(10..5)
+```essence
+find x : int(10..5)
 ```
 
 Conjure doesn't flag as error just says no solutions found.
 
 Example: infinite domain
 
-```text
-find x: int(1..) 
+```essence
+find x : int(1..) 
 ```
 
 Might want to restrict infinite domain with the grammar so it could be a syntax error.
@@ -142,9 +142,9 @@ Description: attempt to do an operation on illegal types
 
 Example: cannot add integer and boolean
 
-```text
+```essence
 letting y be true 
-find x: int (5..10)
+find x : int (5..10)
 such that 5 + y = 6
 ```
 
@@ -154,8 +154,8 @@ Description: cannot divide/modulo by zero
 
 Example: cannot divide by zero
 
-```text
-find x: int(5..10)
+```essence
+find x : int(5..10)
 such that x/0 = 3
 ```
 
@@ -167,7 +167,7 @@ Description: Tuples and matrices are indexed from . Negative, zero or index out 
 
 Example: s tuple index of out bounds
 
-```text
+```essence
 letting s be tuple(0,1,1,0)
 letting t be tuple(0,0,0,1)
 find a : bool such that a = (s[5] = t[1]) $ true

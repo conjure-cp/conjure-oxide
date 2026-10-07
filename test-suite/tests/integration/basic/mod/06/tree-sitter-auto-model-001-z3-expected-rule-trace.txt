@@ -1,0 +1,103 @@
+Model before rewriting:
+
+find a: int(0..3)
+find b: int(0..3)
+find c: int(0..3)
+
+such that
+
+!(a = b % c)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#lia_1: int(0..3)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#lia_1: int(0..3)
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+new variables:
+  find c#lia_1: int(0..3)
+
+--
+
+a
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#lia_1
+
+--
+
+b
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+b#lia_1
+
+--
+
+c
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+c#lia_1
+
+--
+
+b#lia_1 % c#lia_1
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(b#lia_1,c#lia_1) @ c#lia_1 != 0}
+
+--
+
+a#lia_1 = {SafeMod(b#lia_1,c#lia_1) @ c#lia_1 != 0}
+   ~~> bubble_up ([("Bubble", 8800)])
+{a#lia_1 = SafeMod(b#lia_1,c#lia_1) @ c#lia_1 != 0}
+
+--
+
+{a#lia_1 = SafeMod(b#lia_1,c#lia_1) @ c#lia_1 != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([a#lia_1 = SafeMod(b#lia_1,c#lia_1),c#lia_1 != 0;int(1..)])
+
+--
+
+!(and([a#lia_1 = SafeMod(b#lia_1,c#lia_1),c#lia_1 != 0;int(1..)]))
+   ~~> distribute_not_over_and ([("Base", 8400)])
+or([!(a#lia_1 = SafeMod(b#lia_1,c#lia_1)),!(c#lia_1 != 0);int(1..)])
+
+--
+
+!(a#lia_1 = SafeMod(b#lia_1,c#lia_1))
+   ~~> negated_eq_to_neq ([("Base", 8800)])
+a#lia_1 != SafeMod(b#lia_1,c#lia_1)
+
+--
+
+!(c#lia_1 != 0)
+   ~~> negated_neq_to_eq ([("Base", 8800)])
+c#lia_1 = 0
+
+--
+
+Final model:
+
+find a: int(0..3)
+find b: int(0..3)
+find c: int(0..3)
+find a#lia_1: int(0..3)
+find b#lia_1: int(0..3)
+find c#lia_1: int(0..3)
+
+such that
+
+or([a#lia_1 != SafeMod(b#lia_1,c#lia_1),c#lia_1 = 0;int(1..)])
+

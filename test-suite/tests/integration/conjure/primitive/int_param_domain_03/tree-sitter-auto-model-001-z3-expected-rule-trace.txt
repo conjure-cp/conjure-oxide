@@ -1,0 +1,37 @@
+Model before rewriting:
+
+letting s be {1,2,3,4,5}
+letting c be 3
+find x: int((min(s))..(max(s)))
+
+such that
+
+x = c
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(1..5)
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+Final model:
+
+letting s be {1,2,3,4,5}
+letting c be 3
+find x: int((min(s))..(max(s)))
+find x#lia_1: int(1..5)
+
+such that
+
+x#lia_1 = 3
+

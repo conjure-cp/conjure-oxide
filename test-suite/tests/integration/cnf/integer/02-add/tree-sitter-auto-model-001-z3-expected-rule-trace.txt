@@ -1,0 +1,50 @@
+Model before rewriting:
+
+find a: int(1..20)
+find b: int(1..20)
+
+such that
+
+sum([a,b;int(1..)]) = 30
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#lia_1: int(1..20)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#lia_1: int(1..20)
+
+--
+
+a
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#lia_1
+
+--
+
+b
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+b#lia_1
+
+--
+
+Final model:
+
+find a: int(1..20)
+find b: int(1..20)
+find a#lia_1: int(1..20)
+find b#lia_1: int(1..20)
+
+such that
+
+sum([a#lia_1,b#lia_1;int(1..)]) = 30
+

@@ -1,0 +1,76 @@
+Model before rewriting:
+
+find t: tuple (tuple (int(7..8), bool), int(13, 17))
+
+such that
+
+t[1] = (7,false)
+
+--
+
+t
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t
+new variables:
+  find t#components_1: tuple (int(7..8), bool)
+  find t#components_2: int(13, 17)
+
+--
+
+t[1] = (7,false)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+t[1] = (7,false)
+new variables:
+  find t#components_1#components_1: int(7..8)
+  find t#components_1#components_2: bool
+
+--
+
+t[1]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(t,[1]) @ and([1 >= 1,1 <= 2;int(1..)])}
+
+--
+
+SafeIndex(t,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+t#components_1
+
+--
+
+t#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t#components_1
+
+--
+
+t#components_1 = (7,false)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+and([t#components_1#components_1 = 7,t#components_1#components_2 = false;int(1..)])
+
+--
+
+t#components_1#components_1 = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(t#components_1#components_1,7)
+
+--
+
+t#components_1#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(t#components_1#components_2,false)
+
+--
+
+Final model:
+
+find t: tuple (tuple (int(7..8), bool), int(13, 17))
+find t#components_1: tuple (int(7..8), bool)
+find t#components_2: int(13, 17)
+find t#components_1#components_1: int(7..8)
+find t#components_1#components_2: bool
+
+such that
+
+and([WatchedLiteral(t#components_1#components_1,7),WatchedLiteral(t#components_1#components_2,false);int(1..)])
+

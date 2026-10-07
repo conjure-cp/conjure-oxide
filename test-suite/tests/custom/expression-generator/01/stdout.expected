@@ -1,0 +1,455 @@
+{
+  "cnf_clauses": [],
+  "constraints": {
+    "Root": [
+      {
+        "etype": null
+      },
+      [
+        {
+          "Eq": [
+            {
+              "etype": null
+            },
+            {
+              "Sum": [
+                {
+                  "etype": null
+                },
+                {
+                  "Comprehension": [
+                    {
+                      "etype": null
+                    },
+                    {
+                      "qualifiers": [
+                        {
+                          "ExpressionGenerator": {
+                            "ptr": {
+                              "object_id": 3,
+                              "type_name": "DeclarationPtrInner"
+                            }
+                          }
+                        }
+                      ],
+                      "return_expression": {
+                        "Atomic": [
+                          {
+                            "etype": null
+                          },
+                          {
+                            "Reference": {
+                              "ptr": {
+                                "object_id": 3,
+                                "type_name": "DeclarationPtrInner"
+                              },
+                              "repr": null
+                            }
+                          }
+                        ]
+                      },
+                      "skip_operator": "Sum",
+                      "symbols": {
+                        "id": {
+                          "object_id": 2,
+                          "type_name": "SymbolTable"
+                        },
+                        "next_machine_name": 0,
+                        "parent": {
+                          "object_id": 0,
+                          "type_name": "SymbolTable"
+                        },
+                        "table": [
+                          [
+                            {
+                              "User": "i"
+                            },
+                            {
+                              "id": {
+                                "object_id": 3,
+                                "type_name": "DeclarationPtrInner"
+                              },
+                              "kind": {
+                                "QuantifiedExpr": {
+                                  "Atomic": [
+                                    {
+                                      "etype": null
+                                    },
+                                    {
+                                      "Reference": {
+                                        "ptr": {
+                                          "object_id": 1,
+                                          "type_name": "DeclarationPtrInner"
+                                        },
+                                        "repr": null
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              "name": {
+                                "User": "i"
+                              }
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Atomic": [
+                {
+                  "etype": null
+                },
+                {
+                  "Literal": {
+                    "Int": 2
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    ]
+  },
+  "dominance": null,
+  "objective": null,
+  "search_order": null,
+  "symbols": {
+    "id": {
+      "object_id": 0,
+      "type_name": "SymbolTable"
+    },
+    "next_machine_name": 0,
+    "parent": null,
+    "table": [
+      [
+        {
+          "User": "x"
+        },
+        {
+          "id": {
+            "object_id": 1,
+            "type_name": "DeclarationPtrInner"
+          },
+          "kind": {
+            "Find": {
+              "domain": {
+                "Ground": {
+                  "Set": [
+                    {
+                      "representation": null,
+                      "size": "Unbounded"
+                    },
+                    {
+                      "Int": [
+                        {
+                          "Bounded": [
+                            1,
+                            10
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "name": {
+            "User": "x"
+          }
+        }
+      ]
+    ]
+  }
+}
+
+
+find x: set (representation occurrence) of int(1..10)
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+find x#occurrence_4: bool
+find x#occurrence_5: bool
+find x#occurrence_6: bool
+find x#occurrence_7: bool
+find x#occurrence_8: bool
+find x#occurrence_9: bool
+find x#occurrence_10: bool
+
+such that
+
+FlatWeightedSumLeq([1, 10, 2, 3, 4, 5, 6, 7, 8, 9],[x#occurrence_1, x#occurrence_10, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9],2),
+FlatWeightedSumGeq([1, 10, 2, 3, 4, 5, 6, 7, 8, 9],[x#occurrence_1, x#occurrence_10, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9],2),
+SumGeq([x#occurrence_1, x#occurrence_10, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9], 0),
+SumLeq([x#occurrence_1, x#occurrence_10, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9], 10)
+
+Model before rewriting:
+
+find x: set of int(1..10)
+
+such that
+
+sum([ i | i <- x ]) = 2
+
+--
+
+sum([ i | i <- x ]) = 2
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+sum([ i | i <- x ]) = 2
+new variables:
+  find x#occurrence_1: bool
+  find x#occurrence_10: bool
+  find x#occurrence_2: bool
+  find x#occurrence_3: bool
+  find x#occurrence_4: bool
+  find x#occurrence_5: bool
+  find x#occurrence_6: bool
+  find x#occurrence_7: bool
+  find x#occurrence_8: bool
+  find x#occurrence_9: bool
+new constraints:
+  and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5),toInt(x#occurrence_6),toInt(x#occurrence_7),toInt(x#occurrence_8),toInt(x#occurrence_9),toInt(x#occurrence_10);int(1..)]) >= 0,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5),toInt(x#occurrence_6),toInt(x#occurrence_7),toInt(x#occurrence_8),toInt(x#occurrence_9),toInt(x#occurrence_10);int(1..)]) <= 10;int(1..)])
+
+--
+
+[ i | i <- x ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ i | i : int(1..10), i in x ]
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5),toInt(x#occurrence_6),toInt(x#occurrence_7),toInt(x#occurrence_8),toInt(x#occurrence_9),toInt(x#occurrence_10);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([x#occurrence_1, x#occurrence_10, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9], 0)
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5),toInt(x#occurrence_6),toInt(x#occurrence_7),toInt(x#occurrence_8),toInt(x#occurrence_9),toInt(x#occurrence_10);int(1..)]) <= 10
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#occurrence_1, x#occurrence_10, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9], 10)
+
+--
+
+[ i | i : int(1..10), i in x ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(1 in x),1;int(1..)]),product([toInt(2 in x),2;int(1..)]),product([toInt(3 in x),3;int(1..)]),product([toInt(4 in x),4;int(1..)]),product([toInt(5 in x),5;int(1..)]),product([toInt(6 in x),6;int(1..)]),product([toInt(7 in x),7;int(1..)]),product([toInt(8 in x),8;int(1..)]),product([toInt(9 in x),9;int(1..)]),product([toInt(10 in x),10;int(1..)]);int(1..)]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+1 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_1
+
+--
+
+2 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_2
+
+--
+
+3 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_3
+
+--
+
+4 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_4
+
+--
+
+5 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_5
+
+--
+
+6 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_6
+
+--
+
+7 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_7
+
+--
+
+8 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_8
+
+--
+
+9 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_9
+
+--
+
+10 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_10
+
+--
+
+product([toInt(x#occurrence_1),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#occurrence_1);int(1..)])
+
+--
+
+product([toInt(x#occurrence_2),2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(x#occurrence_2);int(1..)])
+
+--
+
+product([toInt(x#occurrence_3),3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,toInt(x#occurrence_3);int(1..)])
+
+--
+
+product([toInt(x#occurrence_4),4;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([4,toInt(x#occurrence_4);int(1..)])
+
+--
+
+product([toInt(x#occurrence_5),5;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([5,toInt(x#occurrence_5);int(1..)])
+
+--
+
+product([toInt(x#occurrence_6),6;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([6,toInt(x#occurrence_6);int(1..)])
+
+--
+
+product([toInt(x#occurrence_7),7;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([7,toInt(x#occurrence_7);int(1..)])
+
+--
+
+product([toInt(x#occurrence_8),8;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([8,toInt(x#occurrence_8);int(1..)])
+
+--
+
+product([toInt(x#occurrence_9),9;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([9,toInt(x#occurrence_9);int(1..)])
+
+--
+
+product([toInt(x#occurrence_10),10;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([10,toInt(x#occurrence_10);int(1..)])
+
+--
+
+product([toInt(x#occurrence_1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#occurrence_1)
+
+--
+
+sum([toInt(x#occurrence_1),product([2,toInt(x#occurrence_2);int(1..)]),product([3,toInt(x#occurrence_3);int(1..)]),product([4,toInt(x#occurrence_4);int(1..)]),product([5,toInt(x#occurrence_5);int(1..)]),product([6,toInt(x#occurrence_6);int(1..)]),product([7,toInt(x#occurrence_7);int(1..)]),product([8,toInt(x#occurrence_8);int(1..)]),product([9,toInt(x#occurrence_9);int(1..)]),product([10,toInt(x#occurrence_10);int(1..)]);int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, 10, 2, 3, 4, 5, 6, 7, 8, 9],[x#occurrence_1, x#occurrence_10, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9],2),FlatWeightedSumGeq([1, 10, 2, 3, 4, 5, 6, 7, 8, 9],[x#occurrence_1, x#occurrence_10, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9],2);int(1..)])
+
+--
+
+Final model:
+
+find x: set (representation occurrence) of int(1..10)
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+find x#occurrence_4: bool
+find x#occurrence_5: bool
+find x#occurrence_6: bool
+find x#occurrence_7: bool
+find x#occurrence_8: bool
+find x#occurrence_9: bool
+find x#occurrence_10: bool
+
+such that
+
+and([FlatWeightedSumLeq([1, 10, 2, 3, 4, 5, 6, 7, 8, 9],[x#occurrence_1, x#occurrence_10, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9],2),FlatWeightedSumGeq([1, 10, 2, 3, 4, 5, 6, 7, 8, 9],[x#occurrence_1, x#occurrence_10, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9],2);int(1..)]),
+and([SumGeq([x#occurrence_1, x#occurrence_10, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9], 0),SumLeq([x#occurrence_1, x#occurrence_10, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9], 10);int(1..)])
+

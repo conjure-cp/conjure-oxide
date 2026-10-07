@@ -4,22 +4,27 @@ version = "0.1.0"
 edition = "2024"
 
 [features]
-default = []
+default = ["sat-cadical", "z3"]
+sat-cadical = ["conjure-cp/sat-cadical"]
+sat-batsat = ["conjure-cp/sat-batsat"]
+z3 = ["conjure-cp/z3"]
 z3-bundled = ["conjure-cp/z3-bundled"]
 extra-rule-checks = []
 
 [dependencies]
-conjure-cp = { path = "../conjure-cp" }
+conjure-cp = { path = "../conjure-cp", default-features = false }
 
-uniplate = { workspace = true }
-linkme = { workspace = true }
-itertools = { workspace = true }
-tracing = { workspace = true }
+defile = { workspace = true }
 git-version = { workspace = true }
-paste = { workspace = true }
+itertools = { workspace = true }
+parking_lot = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+uniplate = { workspace = true }
+ustr = { workspace = true }
 
 [lints]
 workspace = true
 
 [package.metadata.cargo-shear]
-ignored = ["paste", "git-version"]
+ignored = ["git-version", "defile"]

@@ -1,0 +1,46 @@
+Model before rewriting:
+
+letting a be {1,2,3,4}
+find x: int(0..100)
+find y: int(0..100)
+find z: int(0..100)
+
+such that
+
+x = |a|,
+y = min(a),
+z = max(a)
+
+--
+
+x = 4
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x,4)
+
+--
+
+y = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,1)
+
+--
+
+z = 4
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,4)
+
+--
+
+Final model:
+
+letting a be {1,2,3,4}
+find x: int(0..100)
+find y: int(0..100)
+find z: int(0..100)
+
+such that
+
+WatchedLiteral(x,4),
+WatchedLiteral(y,1),
+WatchedLiteral(z,4)
+

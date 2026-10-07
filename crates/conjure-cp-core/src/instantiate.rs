@@ -1,6 +1,6 @@
 use crate::{
     Model,
-    ast::{DeclarationKind, DeclarationPtr, declaration::Declaration, eval_constant},
+    ast::{DeclarationKind, DeclarationPtr, Literal, declaration::Declaration, eval_constant},
 };
 use anyhow::anyhow;
 
@@ -9,7 +9,7 @@ use anyhow::anyhow;
 /// For each `given` declaration in `problem_model`, this looks for a corresponding value `letting`
 /// in `param_model`, checks it is a constant and within the given domain, and replaces the `given`
 /// with a value-letting in the returned model.
-pub fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
+pub fn instantiate_model(mut problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
     let symbol_table = problem_model.symbols_ptr_unchecked().write();
     let param_table = param_model.symbols_ptr_unchecked().write();
     let mut pending_givens = symbol_table
@@ -43,20 +43,25 @@ pub fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Re
             let expr_value = eval_constant(&expr)
                 .ok_or_else(|| anyhow!("Letting expression `{expr}` cannot be evaluated"))?;
 
-            let Some(ground_domain) = domain.resolve() else {
+            let Ok(ground_domain) = domain.resolve() else {
                 next_pending.push(name);
                 continue;
             };
 
-            if !ground_domain.contains(&expr_value).unwrap() {
+            if !ground_domain.contains(&expr_value)? {
                 return Err(anyhow!(
                     "Domain of given statement `{name}` does not contain letting value"
                 ));
             }
 
+            // The given domain is a validity check, but after instantiation the parameter is a
+            // constant. Keep the tighter domain inferred from its value when possible so bounds
+            // derived from instantiated parameters (for example optimisation auxiliaries) stay
+            // finite.
+            let instantiated_domain = expr.domain_of().unwrap_or_else(|| domain.clone());
             let new_decl = Declaration::new(
                 name.clone(),
-                DeclarationKind::ValueLetting(expr.clone(), Some(domain.clone())),
+                DeclarationKind::ValueLetting(expr.clone(), Some(instantiated_domain)),
             );
             drop(domain);
             decl.replace(new_decl);
@@ -80,5 +85,155 @@ pub fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Re
     }
 
     drop(symbol_table);
+    ground_collection_valued_domains(&mut problem_model);
+    validate_instantiation_conditions(&mut problem_model)?;
     Ok(problem_model)
+}
+
+/// Evaluate and remove all top-level `where` conditions after parameter instantiation.
+pub fn validate_instantiation_conditions(model: &mut Model) -> anyhow::Result<()> {
+    for condition in model.take_instantiation_conditions() {
+        match eval_constant(&condition) {
+            Some(Literal::Bool(true)) => {}
+            Some(Literal::Bool(false)) => {
+                return Err(anyhow!(
+                    "invalid instance: where condition `{condition}` evaluated to false"
+                ));
+            }
+            Some(value) => {
+                return Err(anyhow!(
+                    "where condition `{condition}` evaluated to non-boolean value `{value}`"
+                ));
+            }
+            None => {
+                return Err(anyhow!(
+                    "could not evaluate where condition `{condition}` after parameter instantiation"
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{
+        Atom, Domain, Expression, GroundDomain, IntVal, Metadata, Name, Objective,
+        OptimiseDirection, Range, Reference,
+    };
+
+    #[test]
+    fn instantiated_given_uses_the_tighter_value_domain() {
+        let name = Name::user("n");
+        let mut problem = Model::default();
+        problem
+            .add_symbol(DeclarationPtr::new_given(
+                name.clone(),
+                Domain::int(vec![Range::UnboundedR(1)]),
+            ))
+            .unwrap();
+
+        let mut parameters = Model::default();
+        parameters
+            .add_symbol(DeclarationPtr::new_value_letting(
+                name.clone(),
+                crate::ast::Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(7))),
+            ))
+            .unwrap();
+
+        let instantiated = instantiate_model(problem, parameters).unwrap();
+        let declaration = instantiated
+            .symbols()
+            .lookup(&name)
+            .expect("instantiated parameter should exist");
+
+        assert_eq!(
+            declaration.domain().unwrap().resolve().unwrap().as_ref(),
+            &GroundDomain::Int(vec![Range::Single(7)])
+        );
+    }
+
+    #[test]
+    fn instantiation_invalidates_cached_expression_domains() {
+        let parameter_name = Name::user("n");
+        let parameter = DeclarationPtr::new_given(
+            parameter_name.clone(),
+            Domain::int(vec![Range::UnboundedR(1)]),
+        );
+        let variable = DeclarationPtr::new_find(
+            Name::user("x"),
+            Domain::int(vec![Range::Bounded(
+                IntVal::Const(1),
+                IntVal::Reference(Reference::new(parameter.clone())),
+            )]),
+        );
+        let reference = Expression::Atomic(Metadata::new(), Atom::new_ref(variable.clone()));
+
+        let mut problem = Model::default();
+        problem.add_symbol(parameter).unwrap();
+        problem.add_symbol(variable).unwrap();
+        problem.objective = Some(Objective {
+            direction: OptimiseDirection::Minimising,
+            expression: reference,
+        });
+
+        let cached_domain = problem
+            .objective
+            .as_ref()
+            .unwrap()
+            .expression
+            .domain_of()
+            .unwrap();
+        assert!(cached_domain.resolve().is_err());
+
+        let mut parameters = Model::default();
+        parameters
+            .add_symbol(DeclarationPtr::new_value_letting(
+                parameter_name,
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(7))),
+            ))
+            .unwrap();
+
+        let instantiated = instantiate_model(problem, parameters).unwrap();
+        let objective_domain = instantiated
+            .objective
+            .as_ref()
+            .unwrap()
+            .expression
+            .domain_of()
+            .unwrap();
+
+        assert_eq!(
+            objective_domain.resolve().unwrap().as_ref(),
+            &GroundDomain::Int(vec![Range::Bounded(1, 7)])
+        );
+    }
+}
+
+/// Grounds declaration domains that take their values from a collection expression.
+///
+/// `int([i | i <- nums])` stays an expression until the parameters arrive, and resolving it means
+/// evaluating the collection afresh -- which the rewriter would otherwise do on every domain
+/// query, per node per rule attempt. Doing it once here is the difference between a second and
+/// twenty minutes.
+///
+/// Only these domains are grounded. Resolving every domain is not safe to do blindly: a full-width
+/// `int` resolves to an enormous ground domain.
+fn ground_collection_valued_domains(model: &mut Model) {
+    for (_, decl) in model.symbols_mut().iter_local_mut() {
+        // Only decision variables, and reached through `as_find_mut` rather than `domain()`:
+        // the latter computes a domain for every declaration, which for a value letting over a
+        // large expression is itself expensive.
+        let Some(mut var) = decl.as_find_mut() else {
+            continue;
+        };
+        if !crate::ast::domain_has_int_from_values(&var.domain) {
+            continue;
+        }
+        let Ok(ground) = var.domain.resolve() else {
+            continue;
+        };
+        var.domain = ground.into();
+    }
 }

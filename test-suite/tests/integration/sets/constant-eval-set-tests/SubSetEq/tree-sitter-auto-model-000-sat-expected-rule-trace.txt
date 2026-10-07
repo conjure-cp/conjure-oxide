@@ -1,0 +1,72 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+a = ({1,2} subsetEq {1,2,3}),
+b = ({1,2,3} subsetEq {1,2,3}),
+c = ({4} subsetEq {1,2,3})
+
+--
+
+c = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (c \/ __0)
+  (¬c \/ ¬__0)
+
+--
+
+a,
+b,
+__0
+   ~~> remove_single_atom ([("SAT", 8400)])
+b,
+__0
+new clauses:
+  (a)
+
+--
+
+b,
+__0
+   ~~> remove_single_atom ([("SAT", 8400)])
+__0
+new clauses:
+  (b)
+
+--
+
+__0
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__0)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+findAux __0: bool
+
+such that
+
+true
+
+clauses:
+
+(c \/ __0),
+(¬c \/ ¬__0),
+(a),
+(b),
+(__0)
+

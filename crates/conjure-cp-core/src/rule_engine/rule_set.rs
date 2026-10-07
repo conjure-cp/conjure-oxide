@@ -134,7 +134,7 @@ impl<'a> RuleSet<'a> {
                 None => {
                     warn!(
                         "Rule set {} depends on non-existent rule set {}",
-                        &self.name, dep
+                        self.name, dep
                     );
                 }
                 Some(rule_set) => {

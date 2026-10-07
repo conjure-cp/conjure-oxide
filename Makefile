@@ -9,17 +9,14 @@ CARGO_LOCKED ?= --locked
 # Extra feature flags to be passed to Cargo (e.g. --features z3-bundled).
 CARGO_FEATURES ?=
 CARGO_TARGET_DIR ?= target
-DEV_CONTAINER_IMAGE ?= conjure-oxide-dev
-DEV_CONTAINER_FILE ?= Dockerfile.dev
-
-.PHONY: submodules
-## Initialises git submodules needed for builds
-submodules:
-	git submodule update --init --recursive -- crates/minion-sys/vendor
+CARGO_BIN_DIR ?= $(HOME)/.cargo/bin
+CARGO_TEST_WORKSPACE = cargo nextest run --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+CARGO_DOC_TEST_WORKSPACE = cargo test --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --doc
+export PATH := $(CARGO_BIN_DIR):$(PATH)
 
 .PHONY: check
 ## Runs all hygiene checks. These are the same checks that occur in CI for PRs.
-check: submodules
+check:
 	RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --all-targets
 	cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) $(CARGO_FEATURES) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
 	cargo fmt --check
@@ -31,12 +28,12 @@ check-unused-deps: .installed-cargo-extensions.checkpoint
 
 .PHONY: build-release
 ## Builds the release conjure-oxide executable
-build-release: submodules
+build-release:
 	cargo build $(CARGO_LOCKED) $(CARGO_FEATURES) --bin conjure-oxide --release
 
 .PHONY: build-debug
 ## Builds the debug conjure-oxide executable
-build-debug: submodules
+build-debug:
 	cargo build $(CARGO_LOCKED) $(CARGO_FEATURES) --bin conjure-oxide
 
 .PHONY: build
@@ -46,14 +43,15 @@ build: build-release build-debug
 .PHONY: install
 ## Installs release conjure-oxide and debug conjure-oxide-debug to ~/.cargo/bin
 install: build
-	@mkdir -p $$HOME/.cargo/bin
-	@install -m 755 $(CARGO_TARGET_DIR)/release/conjure-oxide $$HOME/.cargo/bin/conjure-oxide
-	@install -m 755 $(CARGO_TARGET_DIR)/debug/conjure-oxide $$HOME/.cargo/bin/conjure-oxide-debug
+	@mkdir -p $(CARGO_BIN_DIR)
+	@install -m 755 $(CARGO_TARGET_DIR)/release/conjure-oxide $(CARGO_BIN_DIR)/conjure-oxide
+	@install -m 755 $(CARGO_TARGET_DIR)/debug/conjure-oxide $(CARGO_BIN_DIR)/conjure-oxide-debug
 
 .PHONY: test
 ## Runs all tests
-test: submodules install
-	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+test: install .installed-cargo-nextest.checkpoint
+	$(CARGO_DOC_TEST_WORKSPACE)
+	$(CARGO_TEST_WORKSPACE)
 
 .PHONY: test-coverage
 ## Runs all tests and produces a coverage report
@@ -61,16 +59,16 @@ test-coverage:
 	./tools/coverage.sh
 
 .PHONY: test-accept
-## Runs all tests in accept mode, then one more time in normal mode
-test-accept: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=true cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
-	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+## Runs all tests in accept mode (also updates expected run times)
+test-accept: install .installed-cargo-nextest.checkpoint
+	ACCEPT=true $(CARGO_DOC_TEST_WORKSPACE)
+	ACCEPT=true $(CARGO_TEST_WORKSPACE)
 
-.PHONY: test-accept-times
-## Runs all tests in accept mode, updates the expected run times, then one more time in normal mode
-test-accept-times: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-times cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
-	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+.PHONY: test-accept-with-max-times
+## Runs all tests in accept mode, only raising expected run times (max of current and observed)
+test-accept-with-max-times: install .installed-cargo-nextest.checkpoint
+	ACCEPT=with-max-times $(CARGO_DOC_TEST_WORKSPACE)
+	ACCEPT=with-max-times $(CARGO_TEST_WORKSPACE)
 
 .PHONY: fix
 ## Tries to auto-fix hygiene issues reported by `make check`. 
@@ -88,25 +86,6 @@ fix-dirty:
 	cargo fix $(CARGO_LOCKED) $(CARGO_FEATURES) --allow-dirty --allow-staged
 	cargo clippy -q $(CARGO_LOCKED) $(CARGO_FEATURES) --fix --allow-dirty --allow-staged
 
-
-.PHONY: build-container
-## Builds the developer container image (Dockerfile.dev)
-build-container:
-	podman build -f $(DEV_CONTAINER_FILE) -t $(DEV_CONTAINER_IMAGE) .
-
-.PHONY: run-in-container
-## Runs a command in the developer container (usage: make run-in-container CMD="make build")
-run-in-container:
-	@test -n "$(CMD)"
-	@podman run --rm -it \
-	  --userns=keep-id \
-	  -e HOME=/tmp \
-	  -e CARGO_HOME=/tmp/cargo \
-	  -v "$$PWD:/work:Z" \
-	  -w /work \
-	  $(DEV_CONTAINER_IMAGE) \
-	  bash -lc 'mkdir -p "$$CARGO_HOME" && exec bash -lc "$(CMD)"'
-
 # install cargo extensions used in this Makefile (cargo-shear)
 .PHONY: install-cargo-extensions
 install-cargo-extensions: .installed-cargo-extensions.checkpoint
@@ -115,10 +94,14 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 	cargo install cargo-shear
 	touch .installed-cargo-extensions.checkpoint
 
+.installed-cargo-nextest.checkpoint: Makefile
+	@if ! command -v cargo-nextest >/dev/null 2>&1; then cargo install cargo-nextest --locked; fi
+	touch .installed-cargo-nextest.checkpoint
+
 test-clean:
-	cd tests-integration/tests/integration/; find -type f -path '**generated**' -delete
-	cd tests-integration/tests/integration/; find -type f -path '**expected**' -delete
-	cd tests-integration/tests/integration/; find -type f -path '**stats**' -delete
+	cd test-suite/tests/integration/; find -type f -path '**generated**' -delete
+	cd test-suite/tests/integration/; find -type f -path '**expected**' -delete
+	cd test-suite/tests/integration/; find -type f -path '**stats**' -delete
 
 .PHONY: help
 ## Shows this help text

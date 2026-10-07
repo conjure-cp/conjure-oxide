@@ -1,0 +1,74 @@
+Model before rewriting:
+
+find i: int(1..2)
+find j: int(1..3)
+
+such that
+
+allDifferent([(product([j,2;int(1..)]) - 1),2,3,(i / 2),6;int(1..5)])
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+new variables:
+  find i#lia_1: int(1..2)
+
+--
+
+j
+   ~~> select_representation ([("ReprGeneral", 10000)])
+j
+new variables:
+  find j#bv_1: int(1..3)
+
+--
+
+i
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+i#lia_1
+
+--
+
+j
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+j#bv_1
+
+--
+
+product([j#bv_1,2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,j#bv_1;int(1..)])
+
+--
+
+(product([2,j#bv_1;int(1..)]) - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([product([2,j#bv_1;int(1..)]),-(1);int(1..)])
+
+--
+
+(i#lia_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(i#lia_1, 2) @ 2 != 0}
+
+--
+
+allDifferent([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)])
+   ~~> unwrap_alldiff ([("Smt", 4000)])
+and([sum([toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[1]) = 0),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[2]) = 0),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[3]) = 0),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[4]) = 0),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[5]) = 0);int(1..)]) <= 1,sum([toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[1]) = 1),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[2]) = 1),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[3]) = 1),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[4]) = 1),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[5]) = 1);int(1..)]) <= 1,sum([toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[1]) = 2),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[2]) = 2),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[3]) = 2),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[4]) = 2),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[5]) = 2);int(1..)]) <= 1,sum([toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[1]) = 3),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[2]) = 3),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[3]) = 3),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[4]) = 3),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[5]) = 3);int(1..)]) <= 1,sum([toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[1]) = 4),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[2]) = 4),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[3]) = 4),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[4]) = 4),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[5]) = 4);int(1..)]) <= 1,sum([toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[1]) = 5),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[2]) = 5),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[3]) = 5),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[4]) = 5),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[5]) = 5);int(1..)]) <= 1,sum([toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[1]) = 6),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[2]) = 6),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[3]) = 6),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[4]) = 6),toInt(SafeIndex([sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#lia_1, 2),6;int(1..5)],[5]) = 6);int(1..)]) <= 1;int(1..)])
+
+--
+
+Final model:
+
+find i: int(1..2)
+find j: int(1..3)
+find i#lia_1: int(1..2)
+find j#bv_1: int(1..3)
+
+such that
+
+and([sum([toInt(sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]) = 0),toInt(SafeDiv(i#lia_1, 2) = 0);int(1..)]) <= 1,sum([toInt(sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]) = 1),toInt(SafeDiv(i#lia_1, 2) = 1);int(1..)]) <= 1,sum([toInt(sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]) = 2),toInt(SafeDiv(i#lia_1, 2) = 2),1;int(1..)]) <= 1,sum([toInt(sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]) = 3),toInt(SafeDiv(i#lia_1, 2) = 3),1;int(1..)]) <= 1,sum([toInt(sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]) = 4),toInt(SafeDiv(i#lia_1, 2) = 4);int(1..)]) <= 1,sum([toInt(sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]) = 5),toInt(SafeDiv(i#lia_1, 2) = 5);int(1..)]) <= 1,sum([toInt(sum([product([2,j#bv_1;int(1..)]),-1;int(1..)]) = 6),toInt(SafeDiv(i#lia_1, 2) = 6),1;int(1..)]) <= 1;int(1..)])
+

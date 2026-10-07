@@ -4,11 +4,7 @@
 ## API Documentation
 
  + [conjure-cp](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp/index.html)
-<!--- This link seems to be dead. Cannot find an equivalent on the docs --->
-<!-- md-dead-link-check: off -->
- + [tree-morph](https://conjure-cp.github.io/conjure-oxide/docs/tree_morph/index.html)
- <!-- md-dead-link-check: on -->
- + [minion-sys](https://conjure-cp.github.io/conjure-oxide/docs/minion_sys/index.html)
+ + [minion-sys](https://docs.rs/minion-sys)
 
 ### Internal crates
 
@@ -27,5 +23,5 @@ Code coverage reports can be found [here](https://conjure-cp.github.io/conjure-o
 
 ## Miscellaneous
 
-+ [Essence feature usage stats](https://conjure-cp.github.io/conjure-oxide/tools/essence-feature-usage-stats/)
++ [Essence feature usage stats](https://conjure-cp.github.io/benchmarking/essence-feature-usage-stats/)
 + [Conjure blocks](https://conjure-cp.github.io/conjure-blocks/)

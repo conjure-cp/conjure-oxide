@@ -1,0 +1,37 @@
+Model before rewriting:
+
+letting A be false
+letting NotA be !(!(!(A)))
+find b: int(1..20)
+
+such that
+
+(NotA) -> (b < 3)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#lia_1: int(1..20)
+
+--
+
+b
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+b#lia_1
+
+--
+
+Final model:
+
+letting A be false
+letting NotA be true
+find b: int(1..20)
+find b#lia_1: int(1..20)
+
+such that
+
+b#lia_1 < 3
+

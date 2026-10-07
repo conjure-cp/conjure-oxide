@@ -54,7 +54,7 @@ The following crates define the `conjure-oxide` system:
   the integration tester.
 - [`conjure-cp-rules`](./crates/conjure-cp-rules) defines the default rewrite
   rules used by `conjure-oxide`.
-- [`tests-integration`](./tests-integration) is an internal crate containing
+- [`test-suite`](./test-suite) is an internal crate containing
   integration tests for `conjure-oxide`.
 - [`conjure-cp-lsp`](./crates/conjure-cp-lsp/) implements the language server
   for use in a VSCode extension (as outlined in Language Server Protocol) for
@@ -65,9 +65,10 @@ The following crates define the `conjure-oxide` system:
 The following crates are related to, or used by, `conjure-oxide`, but can be
 used in isolation from it:
 
-- [`minion-sys`](./crates/minion-sys) defines FFI bindings for the [Minion CP solver](https://github.com/minion/minion).
-- [`tree-morph`](./crates/tree-morph) provides a framework for implementing
-  term-rewriting systems. 
+- [`minion-sys`](https://crates.io/crates/minion-sys) defines FFI bindings for the
+  [Minion CP solver](https://github.com/minion/minion). It is maintained in the
+  [Minion repository](https://github.com/minion/minion/tree/main/minion-sys) and
+  consumed here as a published crate.
 - [`tree-sitter-essence`](./crates/tree-sitter-essence) defines a tree-sitter
   grammar for Essence.
 - [`randicheck`](./crates/randicheck)

@@ -1,0 +1,33 @@
+Model before rewriting:
+
+find x: int(1..4)
+
+such that
+
+x = (false,3)[2]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(1..4)
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+Final model:
+
+find x: int(1..4)
+find x#lia_1: int(1..4)
+
+such that
+
+x#lia_1 = 3
+

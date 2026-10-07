@@ -8,27 +8,37 @@ name: Code Coverage
 on:
   pull_request_target:
     paths:
+    - Cargo.*
+    - rust-toolchain.toml
+    - clippy.toml
     - crates/**
-    - tests-integration/**
+    - test-suite/**
     - tools/coverage.sh
   push:
     branches:
     - main
     paths:
+    - Cargo.*
+    - rust-toolchain.toml
+    - clippy.toml
     - crates/**
-    - tests-integration/**
+    - test-suite/**
     - tools/coverage.sh
     - .github/workflows/code-coverage.yml
     - .github/workflows/doc-coverage.yml
     - .github/workflows/rustdoc.yml
   workflow_dispatch:
 
+concurrency:
+  group: conjure-oxide-reports-deploy
+  cancel-in-progress: false
 
 env:
   os: ubuntu-latest
   rust_release: nightly
   compiler_profile: debug
   CARGO_INCREMENTAL: 0
+  CARGO_FEATURES: --features z3-bundled
 
 permissions:
   contents: read
@@ -43,12 +53,12 @@ jobs:
     steps:
     - name: Checkout PR
       if: ${{ github.event_name == 'pull_request_target' }}
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         # Avoid checkout's default auth header so deploy uses the app token.
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         ref: ${{ github.event.pull_request.head.sha }}
-        submodules: recursive
+        allow-unsafe-pr-checkout: true
         fetch-depth: 0
         persist-credentials: false
 
@@ -60,10 +70,9 @@ jobs:
 
     - name: Checkout repository
       if: ${{ github.event_name != 'pull_request_target' }}
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         # Avoid checkout's default auth header so deploy uses the app token.
-        submodules: recursive
         fetch-depth: 0
         persist-credentials: false
 
@@ -72,7 +81,7 @@ jobs:
 
     - name: Restore cache
       id: restore_cache
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: |
           ~/.cargo/bin/
@@ -99,7 +108,7 @@ jobs:
     - uses: ./.github/actions/install-conjure
       with:
         os_arch: linux
-        version: 2.6.0
+        version: nightly
 
     - name: Generate code coverage reports
       env:
@@ -350,7 +359,7 @@ jobs:
 
     - name: Save cache
       if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
-      uses: actions/cache/save@v5
+      uses: actions/cache/save@v6
       with:
         path: |
           ~/.cargo/bin/

@@ -1,0 +1,40 @@
+Model before rewriting:
+
+find f: function (total) int(1..2) --> int(1) 
+find y: int(1..2)
+
+such that
+
+image(f,y) = 1
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find f#explicit_1: matrix indexed by [int(1..2)] of int(1)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find f#explicit_1#components_1: int(1)
+  find f#explicit_1#components_2: int(1)
+
+--
+
+Final model:
+
+find f: function (total) int(1..2) --> int(1) 
+find y: int(1..2)
+find f#explicit_1: matrix indexed by [int(1..2)] of int(1)
+find f#explicit_1#components_1: int(1)
+find f#explicit_1#components_2: int(1)
+
+such that
+
+true
+

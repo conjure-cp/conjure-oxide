@@ -1,0 +1,271 @@
+Model before rewriting:
+
+letting n be 102
+letting num_entries be 11
+letting values be [15,100,90,60,40,15,10,1,12,12,100;int(1..11)]
+letting weights be [2,20,20,30,40,30,60,10,21,12,2;int(1..11)]
+find x: matrix indexed by [int(1..num_entries)] of bool
+find z: int(0..10000)
+
+such that
+
+z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ]),
+sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= n
+
+--
+
+z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ]),
+sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ]),
+sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102
+new variables:
+  find x#components_1: bool
+  find x#components_10: bool
+  find x#components_11: bool
+  find x#components_2: bool
+  find x#components_3: bool
+  find x#components_4: bool
+  find x#components_5: bool
+  find x#components_6: bool
+  find x#components_7: bool
+  find x#components_8: bool
+  find x#components_9: bool
+
+--
+
+z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ]),
+sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ]),
+sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102
+
+--
+
+sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102
+   ~~> flatten_generic ([("Minion", 4200)])
+__0 <= 102
+new variables:
+  findAux __0: int(0..660)
+new constraints:
+  __0 =aux sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ])
+
+--
+
+__0 <= 102
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__0, 102, 0)
+
+--
+
+[ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(x#components_1),2;int(1..)]),product([toInt(x#components_2),20;int(1..)]),product([toInt(x#components_3),20;int(1..)]),product([toInt(x#components_4),30;int(1..)]),product([toInt(x#components_5),40;int(1..)]),product([toInt(x#components_6),30;int(1..)]),product([toInt(x#components_7),60;int(1..)]),product([toInt(x#components_8),10;int(1..)]),product([toInt(x#components_9),21;int(1..)]),product([toInt(x#components_10),12;int(1..)]),product([toInt(x#components_11),2;int(1..)]);int(1..)]
+
+--
+
+product([toInt(x#components_1),2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(x#components_1);int(1..)])
+
+--
+
+product([toInt(x#components_2),20;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([20,toInt(x#components_2);int(1..)])
+
+--
+
+product([toInt(x#components_3),20;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([20,toInt(x#components_3);int(1..)])
+
+--
+
+product([toInt(x#components_4),30;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([30,toInt(x#components_4);int(1..)])
+
+--
+
+product([toInt(x#components_5),40;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([40,toInt(x#components_5);int(1..)])
+
+--
+
+product([toInt(x#components_6),30;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([30,toInt(x#components_6);int(1..)])
+
+--
+
+product([toInt(x#components_7),60;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([60,toInt(x#components_7);int(1..)])
+
+--
+
+product([toInt(x#components_8),10;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([10,toInt(x#components_8);int(1..)])
+
+--
+
+product([toInt(x#components_9),21;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([21,toInt(x#components_9);int(1..)])
+
+--
+
+product([toInt(x#components_10),12;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([12,toInt(x#components_10);int(1..)])
+
+--
+
+product([toInt(x#components_11),2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(x#components_11);int(1..)])
+
+--
+
+__0 =aux sum([product([2,toInt(x#components_1);int(1..)]),product([20,toInt(x#components_2);int(1..)]),product([20,toInt(x#components_3);int(1..)]),product([30,toInt(x#components_4);int(1..)]),product([40,toInt(x#components_5);int(1..)]),product([30,toInt(x#components_6);int(1..)]),product([60,toInt(x#components_7);int(1..)]),product([10,toInt(x#components_8);int(1..)]),product([21,toInt(x#components_9);int(1..)]),product([12,toInt(x#components_10);int(1..)]),product([2,toInt(x#components_11);int(1..)]);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([2, 12, 2, 20, 20, 30, 40, 30, 60, 10, 21],[x#components_1, x#components_10, x#components_11, x#components_2, x#components_3, x#components_4, x#components_5, x#components_6, x#components_7, x#components_8, x#components_9],__0),FlatWeightedSumGeq([2, 12, 2, 20, 20, 30, 40, 30, 60, 10, 21],[x#components_1, x#components_10, x#components_11, x#components_2, x#components_3, x#components_4, x#components_5, x#components_6, x#components_7, x#components_8, x#components_9],__0);int(1..)])
+
+--
+
+[ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(x#components_1),15;int(1..)]),product([toInt(x#components_2),100;int(1..)]),product([toInt(x#components_3),90;int(1..)]),product([toInt(x#components_4),60;int(1..)]),product([toInt(x#components_5),40;int(1..)]),product([toInt(x#components_6),15;int(1..)]),product([toInt(x#components_7),10;int(1..)]),product([toInt(x#components_8),1;int(1..)]),product([toInt(x#components_9),12;int(1..)]),product([toInt(x#components_10),12;int(1..)]),product([toInt(x#components_11),100;int(1..)]);int(1..)]
+
+--
+
+product([toInt(x#components_1),15;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([15,toInt(x#components_1);int(1..)])
+
+--
+
+product([toInt(x#components_2),100;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([100,toInt(x#components_2);int(1..)])
+
+--
+
+product([toInt(x#components_3),90;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([90,toInt(x#components_3);int(1..)])
+
+--
+
+product([toInt(x#components_4),60;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([60,toInt(x#components_4);int(1..)])
+
+--
+
+product([toInt(x#components_5),40;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([40,toInt(x#components_5);int(1..)])
+
+--
+
+product([toInt(x#components_6),15;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([15,toInt(x#components_6);int(1..)])
+
+--
+
+product([toInt(x#components_7),10;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([10,toInt(x#components_7);int(1..)])
+
+--
+
+product([toInt(x#components_8),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#components_8);int(1..)])
+
+--
+
+product([toInt(x#components_9),12;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([12,toInt(x#components_9);int(1..)])
+
+--
+
+product([toInt(x#components_10),12;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([12,toInt(x#components_10);int(1..)])
+
+--
+
+product([toInt(x#components_11),100;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([100,toInt(x#components_11);int(1..)])
+
+--
+
+product([toInt(x#components_8);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#components_8)
+
+--
+
+z = sum([product([15,toInt(x#components_1);int(1..)]),product([100,toInt(x#components_2);int(1..)]),product([90,toInt(x#components_3);int(1..)]),product([60,toInt(x#components_4);int(1..)]),product([40,toInt(x#components_5);int(1..)]),product([15,toInt(x#components_6);int(1..)]),product([10,toInt(x#components_7);int(1..)]),toInt(x#components_8),product([12,toInt(x#components_9);int(1..)]),product([12,toInt(x#components_10);int(1..)]),product([100,toInt(x#components_11);int(1..)]);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([15, 12, 100, 100, 90, 60, 40, 15, 10, 1, 12],[x#components_1, x#components_10, x#components_11, x#components_2, x#components_3, x#components_4, x#components_5, x#components_6, x#components_7, x#components_8, x#components_9],z),FlatWeightedSumGeq([15, 12, 100, 100, 90, 60, 40, 15, 10, 1, 12],[x#components_1, x#components_10, x#components_11, x#components_2, x#components_3, x#components_4, x#components_5, x#components_6, x#components_7, x#components_8, x#components_9],z);int(1..)])
+
+--
+
+Final model:
+
+letting n be 102
+letting num_entries be 11
+letting values be [15,100,90,60,40,15,10,1,12,12,100;int(1..11)]
+letting weights be [2,20,20,30,40,30,60,10,21,12,2;int(1..11)]
+find x: matrix indexed by [int(1..num_entries)] of bool
+find z: int(0..10000)
+find x#components_1: bool
+find x#components_2: bool
+find x#components_3: bool
+find x#components_4: bool
+find x#components_5: bool
+find x#components_6: bool
+find x#components_7: bool
+find x#components_8: bool
+find x#components_9: bool
+find x#components_10: bool
+find x#components_11: bool
+letting values#components_1 be 15
+letting values#components_2 be 100
+letting values#components_3 be 90
+letting values#components_4 be 60
+letting values#components_5 be 40
+letting values#components_6 be 15
+letting values#components_7 be 10
+letting values#components_8 be 1
+letting values#components_9 be 12
+letting values#components_10 be 12
+letting values#components_11 be 100
+letting weights#components_1 be 2
+letting weights#components_2 be 20
+letting weights#components_3 be 20
+letting weights#components_4 be 30
+letting weights#components_5 be 40
+letting weights#components_6 be 30
+letting weights#components_7 be 60
+letting weights#components_8 be 10
+letting weights#components_9 be 21
+letting weights#components_10 be 12
+letting weights#components_11 be 2
+findAux __0: int(0..660)
+
+such that
+
+and([FlatWeightedSumLeq([15, 12, 100, 100, 90, 60, 40, 15, 10, 1, 12],[x#components_1, x#components_10, x#components_11, x#components_2, x#components_3, x#components_4, x#components_5, x#components_6, x#components_7, x#components_8, x#components_9],z),FlatWeightedSumGeq([15, 12, 100, 100, 90, 60, 40, 15, 10, 1, 12],[x#components_1, x#components_10, x#components_11, x#components_2, x#components_3, x#components_4, x#components_5, x#components_6, x#components_7, x#components_8, x#components_9],z);int(1..)]),
+Ineq(__0, 102, 0),
+and([FlatWeightedSumLeq([2, 12, 2, 20, 20, 30, 40, 30, 60, 10, 21],[x#components_1, x#components_10, x#components_11, x#components_2, x#components_3, x#components_4, x#components_5, x#components_6, x#components_7, x#components_8, x#components_9],__0),FlatWeightedSumGeq([2, 12, 2, 20, 20, 30, 40, 30, 60, 10, 21],[x#components_1, x#components_10, x#components_11, x#components_2, x#components_3, x#components_4, x#components_5, x#components_6, x#components_7, x#components_8, x#components_9],__0);int(1..)])
+

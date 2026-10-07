@@ -1,0 +1,32 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+a = ({1,2,3} supsetEq {2,3}),
+b = ({1,2,3} supsetEq {1,2,3}),
+c = ({1,2,3} supsetEq {4})
+
+--
+
+c = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(c,false)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+a,
+b,
+WatchedLiteral(c,false)
+

@@ -1,0 +1,175 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+find x: int(1..2)
+find y: int(1..2)
+
+such that
+
+x = 1,
+and([ m[x] = x | x : int(1..5), y < 5, x < 4 ])
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(1..2)
+
+--
+
+x = 1,
+and([ m[x] = x | x : int(1..5), y < 5, x < 4 ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+x = 1,
+and([ m[x] = x | x : int(1..5), y < 5, x < 4 ])
+new variables:
+  find m#components_1: int(1..5)
+  find m#components_2: int(1..5)
+  find m#components_3: int(1..5)
+  find m#components_4: int(1..5)
+  find m#components_5: int(1..5)
+  find y#bv_1: int(1..2)
+
+--
+
+x = 1,
+and([ m[x] = x | x : int(1..5), y < 5, x < 4 ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+x = 1,
+and([ m[x] = x | x : int(1..5), y < 5, x < 4 ])
+new variables:
+  find m#components_1#lia_1: int(1..5)
+  find m#components_2#lia_1: int(1..5)
+  find m#components_3#lia_1: int(1..5)
+  find m#components_4#lia_1: int(1..5)
+  find m#components_5#lia_1: int(1..5)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+[ m[x] = x | x : int(1..5), y < 5, x < 4 ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(y < 5) -> (and([m#components_1 = 1;int(1..)])),(y < 5) -> (and([m#components_2 = 2;int(1..)])),(y < 5) -> (and([m#components_3 = 3;int(1..)]));int(1..)]
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+m#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_1
+
+--
+
+m#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_2
+
+--
+
+m#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_3
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+m#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#components_1#lia_1
+
+--
+
+m#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#components_2#lia_1
+
+--
+
+m#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#components_3#lia_1
+
+--
+
+and([m#components_1#lia_1 = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+m#components_1#lia_1 = 1
+
+--
+
+and([m#components_2#lia_1 = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+m#components_2#lia_1 = 2
+
+--
+
+and([m#components_3#lia_1 = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+m#components_3#lia_1 = 3
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+find x: int(1..2)
+find y: int(1..2)
+find x#bv_1: int(1..2)
+find m#components_1: int(1..5)
+find m#components_2: int(1..5)
+find m#components_3: int(1..5)
+find m#components_4: int(1..5)
+find m#components_5: int(1..5)
+find y#bv_1: int(1..2)
+find m#components_1#lia_1: int(1..5)
+find m#components_2#lia_1: int(1..5)
+find m#components_3#lia_1: int(1..5)
+find m#components_4#lia_1: int(1..5)
+find m#components_5#lia_1: int(1..5)
+
+such that
+
+x#bv_1 = 1,
+and([(y#bv_1 < 5) -> (m#components_1#lia_1 = 1),(y#bv_1 < 5) -> (m#components_2#lia_1 = 2),(y#bv_1 < 5) -> (m#components_3#lia_1 = 3);int(1..)])
+

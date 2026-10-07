@@ -1,11 +1,16 @@
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
+use std::time::Duration;
 use ustr::Ustr;
 
 use minion_ast::Model as MinionModel;
 use minion_sys::ast as minion_ast;
-use minion_sys::{RunOptions, ValueOrder, run_minion_with_options};
+use minion_sys::error::{MinionError, RuntimeError};
+use minion_sys::{
+    PropLevel, Propagation, RunOptions, TimeLimit, ValOrder, VarOrder,
+    run_minion_midsearch_with_options,
+};
 
 use crate::Model as ConjureModel;
 use crate::ast::{self as conjure_ast, Expression, Name};
@@ -15,7 +20,7 @@ use crate::solver::SolverMutCallback;
 use crate::stats::SolverStats;
 
 use crate::solver::SearchComplete::{HasSolutions, NoSolutions};
-use crate::solver::SearchIncomplete::UserTerminated;
+use crate::solver::SearchIncomplete::{Timeout, UserTerminated};
 use crate::solver::SearchStatus::{Complete, Incomplete};
 use crate::solver::SolveSuccess;
 use crate::solver::SolverAdaptor;
@@ -24,7 +29,7 @@ use crate::solver::SolverError::OpNotImplemented;
 use crate::solver::private;
 
 use super::dominance_injection::{
-    add_dominance_constraints_for_solution, add_represented_decision_values,
+    MIDSEARCH_AUX_PREFIX, add_dominance_constraints_for_solution, add_represented_decision_values,
     minion_error_to_solver_error,
 };
 use super::parse_model::model_to_minion;
@@ -35,6 +40,9 @@ use super::parse_model::model_to_minion;
 pub struct Minion {
     __non_constructable: private::Internal,
     model: Option<MinionModel>,
+    solver_seed: u32,
+    timeout: Option<Duration>,
+    variable_order: Option<MinionVariableOrder>,
     value_order: Option<MinionValueOrder>,
     dominance_expression: Option<Expression>,
     dominance_model_template: Option<ConjureModel>,
@@ -48,30 +56,73 @@ pub enum MinionValueOrder {
     Random,
 }
 
-impl From<MinionValueOrder> for ValueOrder {
+/// Variable-order override for Minion search.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MinionVariableOrder {
+    Static,
+    SmallestDomainFirst,
+    SmallestRatioFirst,
+    LargestDomainFirst,
+    Random,
+    Conflict,
+    WeightedDegree,
+    DomainOverWeightedDegree,
+}
+
+impl MinionVariableOrder {
+    /// The Minion heuristic, and whether to also shuffle the search order.
+    ///
+    /// `Random` is Minion's `-varorder random`: not a heuristic of its own, but
+    /// the `-randomiseorder` flag applied on top of the default static order.
+    fn to_minion(self) -> (VarOrder, bool) {
+        match self {
+            MinionVariableOrder::Static => (VarOrder::Static, false),
+            MinionVariableOrder::SmallestDomainFirst => (VarOrder::Sdf, false),
+            MinionVariableOrder::SmallestRatioFirst => (VarOrder::Srf, false),
+            MinionVariableOrder::LargestDomainFirst => (VarOrder::Ldf, false),
+            MinionVariableOrder::Random => (VarOrder::Static, true),
+            MinionVariableOrder::Conflict => (VarOrder::Conflict, false),
+            MinionVariableOrder::WeightedDegree => (VarOrder::Wdeg, false),
+            MinionVariableOrder::DomainOverWeightedDegree => (VarOrder::DomOverWdeg, false),
+        }
+    }
+}
+
+impl From<MinionValueOrder> for ValOrder {
     fn from(value: MinionValueOrder) -> Self {
         match value {
-            MinionValueOrder::Ascend => ValueOrder::Ascend,
-            MinionValueOrder::Descend => ValueOrder::Descend,
-            MinionValueOrder::Random => ValueOrder::Random,
+            MinionValueOrder::Ascend => ValOrder::Ascend,
+            MinionValueOrder::Descend => ValOrder::Descend,
+            MinionValueOrder::Random => ValOrder::Random,
         }
+    }
+}
+
+/// Converts a timeout to Minion's wall-clock limit.
+///
+/// Minion's timer has one-second resolution, so a sub-second remainder rounds
+/// up rather than truncating to an immediate timeout.
+fn wall_time_limit(timeout: Duration) -> TimeLimit {
+    let seconds = timeout.as_secs() + u64::from(timeout.subsec_nanos() != 0);
+    TimeLimit {
+        seconds: u32::try_from(seconds).expect("Minion timeout does not fit in u32 seconds"),
+        is_cpu_time: false,
     }
 }
 
 fn parse_name(minion_name: &str) -> Name {
     static MACHINE_NAME_RE: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap());
-    static REPRESENTED_NAME_RE: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"__conjure_represented_name__(.*)__(.*)___(.*)").unwrap());
+    const REPRESENTED_JSON_PREFIX: &str = "__conjure_represented_name_json_";
 
     if let Some(caps) = MACHINE_NAME_RE.captures(minion_name) {
         conjure_ast::Name::Machine(caps[1].parse::<i32>().unwrap())
-    } else if let Some(caps) = REPRESENTED_NAME_RE.captures(minion_name) {
-        conjure_ast::Name::Represented(Box::new((
-            parse_name(&caps[1]),
-            Ustr::from(&caps[2]),
-            Ustr::from(&caps[3]),
-        )))
+    } else if let Some(encoded) = minion_name.strip_prefix(REPRESENTED_JSON_PREFIX) {
+        let bytes = (0..encoded.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&encoded[i..i + 2], 16).unwrap())
+            .collect::<Vec<_>>();
+        serde_json::from_slice(&bytes).unwrap()
     } else {
         conjure_ast::Name::User(Ustr::from(minion_name))
     }
@@ -94,6 +145,30 @@ fn translate_solution(
     conjure_solutions
 }
 
+fn translate_and_add_represented_values(
+    solutions: HashMap<minion_ast::VarName, minion_ast::Constant>,
+    model_template: Option<&ConjureModel>,
+) -> HashMap<conjure_ast::Name, conjure_ast::Literal> {
+    // Variables added mid-search are reported in every subsequent solution.
+    // The dominance aux variables are internal to the injection machinery and
+    // have no Essence counterpart, so drop them before translating.
+    let solutions = solutions
+        .into_iter()
+        .filter(|(name, _)| !name.starts_with(MIDSEARCH_AUX_PREFIX))
+        .collect();
+    let mut conjure_solutions = translate_solution(solutions);
+    if let Some(model_template) = model_template {
+        add_represented_decision_values(&mut conjure_solutions, model_template);
+    }
+    conjure_solutions
+}
+
+fn has_explicit_false_constraint(constraints: &[minion_ast::Constraint]) -> bool {
+    constraints
+        .iter()
+        .any(|constraint| matches!(constraint, minion_ast::Constraint::False))
+}
+
 impl private::Sealed for Minion {}
 
 impl Minion {
@@ -101,6 +176,9 @@ impl Minion {
         Minion {
             __non_constructable: private::Internal,
             model: None,
+            solver_seed: 0,
+            timeout: None,
+            variable_order: None,
             value_order: None,
             dominance_expression: None,
             dominance_model_template: None,
@@ -109,13 +187,36 @@ impl Minion {
 
     /// Creates a Minion adaptor with an optional value-order override.
     pub fn with_value_order(value_order: Option<MinionValueOrder>) -> Minion {
+        Self::with_search_orders(None, value_order)
+    }
+
+    /// Creates a Minion adaptor with optional variable- and value-order overrides.
+    pub fn with_search_orders(
+        variable_order: Option<MinionVariableOrder>,
+        value_order: Option<MinionValueOrder>,
+    ) -> Minion {
         Minion {
             __non_constructable: private::Internal,
             model: None,
+            solver_seed: 0,
+            timeout: None,
+            variable_order,
             value_order,
             dominance_expression: None,
             dominance_model_template: None,
         }
+    }
+
+    /// Sets the seed used by Minion's random search behaviour.
+    pub fn with_solver_seed(mut self, solver_seed: u32) -> Minion {
+        self.solver_seed = solver_seed;
+        self
+    }
+
+    /// Sets a wall-clock limit for the complete solver run.
+    pub fn with_timeout(mut self, timeout: Option<Duration>) -> Minion {
+        self.timeout = timeout;
+        self
     }
 }
 
@@ -137,6 +238,9 @@ impl SolverAdaptor for Minion {
         let dominance_model_template = self.dominance_model_template.clone();
         let mut midsearch_error: Option<SolverError> = None;
         let base_model = self.model.as_ref().expect("STATE MACHINE ERR");
+        let has_no_minion_vars = base_model.named_variables.get_variable_order().is_empty();
+        let has_false_constraint = has_explicit_false_constraint(&base_model.constraints);
+        let model_template = dominance_model_template.as_ref();
         let mut known_var_names = base_model
             .named_variables
             .get_variable_order()
@@ -145,15 +249,32 @@ impl SolverAdaptor for Minion {
         let mut next_midsearch_aux_var_id = 0usize;
         let mut solution_ordinal = 0usize;
 
-        let solver_ctx = run_minion_with_options(
+        let (var_order, randomise_order) = match self.variable_order {
+            Some(order) => order.to_minion(),
+            None => (VarOrder::default(), false),
+        };
+
+        let solver_ctx = match run_minion_midsearch_with_options(
             self.model.clone().expect("STATE MACHINE ERR"),
-            Box::new(|solutions| {
+            RunOptions {
+                seed: Some(self.solver_seed),
+                var_order,
+                randomise_order,
+                val_order: self.value_order.map_or_else(ValOrder::default, Into::into),
+                // SavileRow's default. Minion's own default is no
+                // preprocessing at all, which is much weaker.
+                preprocess: Propagation {
+                    level: PropLevel::SacBounds,
+                    limit: true,
+                },
+                time_limit: self.timeout.map(wall_time_limit),
+                ..Default::default()
+            },
+            Box::new(|midctx, solutions| {
                 any_solutions = true;
                 solution_ordinal += 1;
-                let mut conjure_solutions = translate_solution(solutions);
-                if let Some(model_template) = dominance_model_template.as_ref() {
-                    add_represented_decision_values(&mut conjure_solutions, model_template);
-                }
+                let conjure_solutions =
+                    translate_and_add_represented_values(solutions, model_template);
 
                 let continue_search = callback(conjure_solutions.clone());
                 if !continue_search {
@@ -162,6 +283,7 @@ impl SolverAdaptor for Minion {
                 }
 
                 if let Err(err) = add_dominance_constraints_for_solution(
+                    midctx,
                     dominance_expression.as_ref(),
                     dominance_model_template.as_ref(),
                     &conjure_solutions,
@@ -175,14 +297,28 @@ impl SolverAdaptor for Minion {
 
                 true
             }),
-            RunOptions {
-                value_order: self.value_order.map(Into::into),
-            },
-        )
-        .map_err(minion_error_to_solver_error)?;
+        ) {
+            Ok(solver_ctx) => solver_ctx,
+            Err(MinionError::RuntimeError(RuntimeError::Timeout)) => {
+                return Ok(SolveSuccess {
+                    stats: SolverStats::default(),
+                    status: Incomplete(Timeout),
+                });
+            }
+            Err(err) => return Err(minion_error_to_solver_error(err)),
+        };
 
         if let Some(err) = midsearch_error {
             return Err(err);
+        }
+
+        if !any_solutions && has_no_minion_vars && !has_false_constraint {
+            any_solutions = true;
+            let conjure_solutions =
+                translate_and_add_represented_values(HashMap::new(), model_template);
+            if !callback(conjure_solutions) {
+                user_terminated = true;
+            }
         }
 
         let status = if user_terminated {
@@ -240,5 +376,22 @@ fn get_solver_stats(solver_ctx: &minion_sys::SolverContext) -> SolverStats {
             .get_from_table("Nodes".into())
             .map(|x| x.parse::<u64>().unwrap()),
         ..Default::default()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn zero_timeout_is_reported_as_incomplete_search() {
+        let mut minion = Minion::new().with_timeout(Some(Duration::ZERO));
+        minion.model = Some(MinionModel::new());
+
+        let result = minion
+            .solve(Box::new(|_| true), private::Internal)
+            .expect("a timeout is a non-crashing incomplete search");
+
+        assert_eq!(result.status, Incomplete(Timeout));
     }
 }

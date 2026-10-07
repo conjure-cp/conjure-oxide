@@ -1,0 +1,283 @@
+Model before rewriting:
+
+letting noLetters be 6
+letting word1Length be 3
+letting word1 be [1,2,3;int(1..(sum([ 1 | i : int(1..3) ])))]
+letting word2Length be 4
+letting word2 be [3,4,2,3;int(1..4)]
+letting word3Length be 5
+letting word3 be [2,5,5,6,1;int(1..(((3)! - 1)))]
+find letters: matrix indexed by [int(1..noLetters)] of int(0..9)
+find word1Sum: int(1..((10 ** word1Length)))
+find word2Sum: int(1..((10 ** word2Length)))
+find word3Sum: int(1..((10 ** word3Length)))
+
+such that
+
+letters[word1[1]] != 0,
+letters[word2[1]] != 0,
+letters[word3[1]] != 0,
+word1Sum = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+word2Sum = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+sum([word1Sum,word2Sum;int(1..)]) = word3Sum,
+allDifferent(letters)
+
+--
+
+letters
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters
+new variables:
+  find letters#components_1: int(0..9)
+  find letters#components_2: int(0..9)
+  find letters#components_3: int(0..9)
+  find letters#components_4: int(0..9)
+  find letters#components_5: int(0..9)
+  find letters#components_6: int(0..9)
+
+--
+
+letters
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters
+
+--
+
+letters
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters
+
+--
+
+letters
+   ~~> select_representation ([("ReprGeneral", 10000)])
+letters
+
+--
+
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+word1Sum = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+word2Sum = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+sum([word1Sum,word2Sum;int(1..)]) = word3Sum,
+allDifferent(letters)
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+word1Sum = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+word2Sum = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+sum([word1Sum,word2Sum;int(1..)]) = word3Sum,
+allDifferent(letters)
+
+--
+
+letters[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+letters#components_1
+
+--
+
+letters[3]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+letters#components_3
+
+--
+
+letters[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+letters#components_2
+
+--
+
+sum([word1Sum,word2Sum;int(1..)]) = word3Sum
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([word1Sum, word2Sum], word3Sum),SumGeq([word1Sum, word2Sum], word3Sum);int(1..)])
+
+--
+
+allDifferent(letters)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([letters#components_1,letters#components_2,letters#components_3,letters#components_4,letters#components_5,letters#components_6;int(1..6)])
+
+--
+
+allDifferent([letters#components_1,letters#components_2,letters#components_3,letters#components_4,letters#components_5,letters#components_6;int(1..6)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([letters#components_1, letters#components_2, letters#components_3, letters#components_4, letters#components_5, letters#components_6])
+
+--
+
+[ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([letters#components_3,1000;int(1..)]),product([letters#components_4,100;int(1..)]),product([letters#components_2,10;int(1..)]),product([letters#components_3,1;int(1..)]);int(1..)]
+
+--
+
+product([letters#components_3,1000;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([1000,letters#components_3;int(1..)])
+
+--
+
+product([letters#components_4,100;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([100,letters#components_4;int(1..)])
+
+--
+
+product([letters#components_2,10;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([10,letters#components_2;int(1..)])
+
+--
+
+product([letters#components_3,1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([letters#components_3;int(1..)])
+
+--
+
+product([letters#components_3;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+letters#components_3
+
+--
+
+word2Sum = sum([product([1000,letters#components_3;int(1..)]),product([100,letters#components_4;int(1..)]),product([10,letters#components_2;int(1..)]),letters#components_3;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([10, 1001, 100],[letters#components_2, letters#components_3, letters#components_4],word2Sum),FlatWeightedSumGeq([10, 1001, 100],[letters#components_2, letters#components_3, letters#components_4],word2Sum);int(1..)])
+
+--
+
+[ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([letters#components_2,10000;int(1..)]),product([letters#components_5,1000;int(1..)]),product([letters#components_5,100;int(1..)]),product([letters#components_6,10;int(1..)]),product([letters#components_1,1;int(1..)]);int(1..)]
+
+--
+
+product([letters#components_2,10000;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([10000,letters#components_2;int(1..)])
+
+--
+
+product([letters#components_5,1000;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([1000,letters#components_5;int(1..)])
+
+--
+
+product([letters#components_5,100;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([100,letters#components_5;int(1..)])
+
+--
+
+product([letters#components_6,10;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([10,letters#components_6;int(1..)])
+
+--
+
+product([letters#components_1,1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([letters#components_1;int(1..)])
+
+--
+
+product([letters#components_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+letters#components_1
+
+--
+
+word3Sum = sum([product([10000,letters#components_2;int(1..)]),product([1000,letters#components_5;int(1..)]),product([100,letters#components_5;int(1..)]),product([10,letters#components_6;int(1..)]),letters#components_1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, 10000, 1100, 10],[letters#components_1, letters#components_2, letters#components_5, letters#components_6],word3Sum),FlatWeightedSumGeq([1, 10000, 1100, 10],[letters#components_1, letters#components_2, letters#components_5, letters#components_6],word3Sum);int(1..)])
+
+--
+
+[ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([letters#components_1,100;int(1..)]),product([letters#components_2,10;int(1..)]),product([letters#components_3,1;int(1..)]);int(1..)]
+
+--
+
+product([letters#components_1,100;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([100,letters#components_1;int(1..)])
+
+--
+
+product([letters#components_2,10;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([10,letters#components_2;int(1..)])
+
+--
+
+product([letters#components_3,1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([letters#components_3;int(1..)])
+
+--
+
+product([letters#components_3;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+letters#components_3
+
+--
+
+word1Sum = sum([product([100,letters#components_1;int(1..)]),product([10,letters#components_2;int(1..)]),letters#components_3;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([100, 10, 1],[letters#components_1, letters#components_2, letters#components_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[letters#components_1, letters#components_2, letters#components_3],word1Sum);int(1..)])
+
+--
+
+Final model:
+
+letting noLetters be 6
+letting word1Length be 3
+letting word1 be [1,2,3;int(1..3)]
+letting word2Length be 4
+letting word2 be [3,4,2,3;int(1..4)]
+letting word3Length be 5
+letting word3 be [2,5,5,6,1;int(1..5)]
+find letters: matrix indexed by [int(1..noLetters)] of int(0..9)
+find word1Sum: int(1..((10 ** word1Length)))
+find word2Sum: int(1..((10 ** word2Length)))
+find word3Sum: int(1..((10 ** word3Length)))
+find letters#components_1: int(0..9)
+find letters#components_2: int(0..9)
+find letters#components_3: int(0..9)
+find letters#components_4: int(0..9)
+find letters#components_5: int(0..9)
+find letters#components_6: int(0..9)
+letting word1#components_1 be 1
+letting word1#components_2 be 2
+letting word1#components_3 be 3
+letting word2#components_1 be 3
+letting word2#components_2 be 4
+letting word2#components_3 be 2
+letting word2#components_4 be 3
+letting word3#components_1 be 2
+letting word3#components_2 be 5
+letting word3#components_3 be 5
+letting word3#components_4 be 6
+letting word3#components_5 be 1
+
+such that
+
+letters#components_1 != 0,
+letters#components_3 != 0,
+letters#components_2 != 0,
+and([FlatWeightedSumLeq([100, 10, 1],[letters#components_1, letters#components_2, letters#components_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[letters#components_1, letters#components_2, letters#components_3],word1Sum);int(1..)]),
+and([FlatWeightedSumLeq([10, 1001, 100],[letters#components_2, letters#components_3, letters#components_4],word2Sum),FlatWeightedSumGeq([10, 1001, 100],[letters#components_2, letters#components_3, letters#components_4],word2Sum);int(1..)]),
+and([FlatWeightedSumLeq([1, 10000, 1100, 10],[letters#components_1, letters#components_2, letters#components_5, letters#components_6],word3Sum),FlatWeightedSumGeq([1, 10000, 1100, 10],[letters#components_1, letters#components_2, letters#components_5, letters#components_6],word3Sum);int(1..)]),
+and([SumLeq([word1Sum, word2Sum], word3Sum),SumGeq([word1Sum, word2Sum], word3Sum);int(1..)]),
+__flat_alldiff([letters#components_1, letters#components_2, letters#components_3, letters#components_4, letters#components_5, letters#components_6])
+

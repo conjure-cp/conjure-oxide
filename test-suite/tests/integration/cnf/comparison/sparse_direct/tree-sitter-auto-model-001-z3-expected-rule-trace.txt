@@ -1,0 +1,33 @@
+Model before rewriting:
+
+find x: int(1, 10, 20, 30, 40, 50)
+
+such that
+
+x > 10
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(1, 10, 20, 30, 40, 50)
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+Final model:
+
+find x: int(1, 10, 20, 30, 40, 50)
+find x#lia_1: int(1, 10, 20, 30, 40, 50)
+
+such that
+
+x#lia_1 > 10
+

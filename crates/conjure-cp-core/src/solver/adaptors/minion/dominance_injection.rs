@@ -3,19 +3,27 @@ use std::env;
 use std::fs::OpenOptions;
 use std::io::Write;
 
+use minion_sys::MidSearchContext;
 use minion_sys::ast as minion_ast;
 use minion_sys::error::{MinionError, RuntimeError};
-use minion_sys::{add_aux_var_during_search, add_constraint_during_search};
 use uniplate::Uniplate;
 
 use crate::Model as ConjureModel;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
+use crate::representation::util::try_up;
 use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_configured_rewriter};
 use crate::settings::{SolverFamily, current_rewriter};
 use crate::solver::SolverError;
 use crate::solver::SolverError::{Runtime, RuntimeNotImplemented};
 
 use super::parse_model::model_to_minion;
+
+/// Name prefix for the auxiliary variables this module injects mid-search.
+///
+/// These exist only to carry the dominance constraints; they are Minion-side
+/// machinery with no counterpart in the Essence model, so the adaptor strips
+/// them out of solutions before translating.
+pub(super) const MIDSEARCH_AUX_PREFIX: &str = "__conjure_dominance_midsearch_aux_";
 
 fn sub_in_solution_into_current_refs(
     expr: &Expression,
@@ -76,10 +84,6 @@ pub(super) fn add_represented_decision_values(
         representations.push((name, reprs[0][0].clone()));
     }
 
-    if representations.is_empty() {
-        return;
-    }
-
     let mut solution_btree = solution
         .clone()
         .into_iter()
@@ -90,6 +94,15 @@ pub(super) fn add_represented_decision_values(
         };
         solution.insert(name.clone(), value.clone());
         solution_btree.insert(name, value);
+    }
+
+    for (_, declaration) in symbols.iter_local() {
+        if declaration.reprs().is_empty() {
+            continue;
+        }
+        if let Ok(value) = try_up(declaration.clone(), solution) {
+            solution.insert(declaration.name().clone(), value);
+        }
     }
 }
 
@@ -593,6 +606,7 @@ fn rewrite_dominance_to_block_dominated_futures(
 }
 
 pub(super) fn add_dominance_constraints_for_solution(
+    midctx: &mut MidSearchContext<'_>,
     dominance_expression: Option<&Expression>,
     dominance_model_template: Option<&ConjureModel>,
     solution: &HashMap<Name, Literal>,
@@ -675,13 +689,10 @@ pub(super) fn add_dominance_constraints_for_solution(
                 ))
             })?;
 
-        let fresh_name = format!(
-            "__conjure_dominance_midsearch_aux_{}",
-            *next_midsearch_aux_var_id
-        );
+        let fresh_name = format!("{MIDSEARCH_AUX_PREFIX}{}", *next_midsearch_aux_var_id);
         *next_midsearch_aux_var_id += 1;
 
-        add_aux_var_during_search(fresh_name.clone(), domain).map_err(|e| {
+        midctx.add_var(&fresh_name, domain.clone()).map_err(|e| {
             Runtime(format!(
                 "failed to add Minion dominance aux variable '{fresh_name}' (from '{var_name}', domain={domain:?}): {e:#?}"
             ))
@@ -698,7 +709,7 @@ pub(super) fn add_dominance_constraints_for_solution(
         append_minion_injection_log(&format!(
             "[minion-inject] add_constraint(solution#{solution_ordinal}, idx={constraint_idx}) original={constraint:?} remapped={remapped_constraint:?}"
         ));
-        match add_constraint_during_search(remapped_constraint.clone()) {
+        match midctx.add_constraint(remapped_constraint.clone()) {
             Ok(()) => append_minion_injection_log(&format!(
                 "[minion-inject] add_constraint(solution#{solution_ordinal}, idx={constraint_idx}) => OK"
             )),

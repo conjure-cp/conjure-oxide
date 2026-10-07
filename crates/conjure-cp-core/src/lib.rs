@@ -1,3 +1,12 @@
+#[cfg(not(any(feature = "sat-cadical", feature = "sat-batsat")))]
+compile_error!("Select a SAT backend: enable exactly one of sat-cadical or sat-batsat.");
+#[cfg(all(feature = "sat-cadical", feature = "sat-batsat"))]
+compile_error!(
+    "SAT backends are mutually exclusive; disable default features to select sat-batsat."
+);
+#[cfg(all(target_family = "wasm", not(feature = "sat-batsat")))]
+compile_error!("Wasm requires sat-batsat; use --no-default-features --features sat-batsat.");
+
 #[doc(hidden)]
 pub extern crate self as conjure_cp_core;
 
@@ -8,11 +17,13 @@ pub mod ast;
 
 // NOTE: this module defines the bug! macro, which is exported at the crate level, and has no other
 // contents.
-mod bug;
+pub mod bug;
 
 pub mod context;
+pub mod domain_tightening;
 pub mod error;
 pub mod instantiate;
+pub mod objective;
 pub mod parse;
 pub mod representation;
 pub mod rule_engine;
@@ -21,7 +32,7 @@ pub mod solver;
 pub mod stats;
 
 // Various internal helper functions
-mod utils;
+pub mod utils;
 
 /// Creates a [`Domain::Int`](ast::Domain::Int).
 ///

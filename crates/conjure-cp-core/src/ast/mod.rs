@@ -1,4 +1,3 @@
-pub mod abstract_comprehension;
 pub mod ac_operators;
 pub mod assertions;
 mod atom;
@@ -8,12 +7,14 @@ pub mod comprehension;
 pub mod declaration;
 mod domains;
 pub mod eval;
+mod expression_arena;
 mod expressions;
 mod literals;
 pub mod matrix;
 mod metadata;
 mod model;
 mod name;
+mod objective;
 pub mod pretty;
 pub mod records;
 mod reference;
@@ -22,6 +23,7 @@ pub mod serde;
 mod symbol_table;
 mod types;
 mod variables;
+mod versioned_cache;
 
 mod moo;
 mod partial_eval;
@@ -29,12 +31,19 @@ mod partial_eval;
 pub use atom::Atom;
 pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
+pub use domains::domain_has_int_from_values;
 pub use domains::{
-    BinaryAttr, Domain, DomainOpError, DomainPtr, FieldEntry, FieldEntryGround, FuncAttr,
-    GroundDomain, HasDomain, IntVal, JectivityAttr, MSetAttr, PartialityAttr, PartitionAttr, Range,
-    RelAttr, SequenceAttr, SetAttr, UnresolvedDomain,
+    BinaryAttr, Domain, DomainOpError, DomainPtr, FuncAttr, GroundDomain, HasDomain, IntVal,
+    JectivityAttr, MSetAttr, OXIDE_INT_MAX, OXIDE_INT_MIN, PartialityAttr, PartitionAttr,
+    PermutationAttr, Range, RelAttr, SequenceAttr, SetAttr, UnresolvedDomain,
 };
-pub use eval::eval_constant;
+pub use eval::generator_values_from_expr;
+pub use eval::{
+    eval_constant, eval_constant_local, finish_root_evaluator_normalisation,
+    normalise_evaluator_local, normalise_root_constraint_deep, normalise_root_constraints_deep,
+    normalise_root_constraints_local, normalise_root_selective_deep_expr,
+};
+pub use expression_arena::{ExpressionArena, ExpressionNodeId};
 pub use expressions::{Expression, discriminant_from_value, print_hash_stats};
 pub use literals::AbstractLiteral;
 pub use literals::Literal;
@@ -42,19 +51,155 @@ pub use metadata::Metadata;
 pub use model::*;
 pub use moo::Moo;
 pub use name::Name;
-pub use partial_eval::run_partial_evaluator;
+pub use objective::{Objective, OptimiseDirection};
+pub use partial_eval::{
+    run_partial_evaluator, run_partial_evaluator_local, try_lower_bool_atom_eq_true,
+};
+pub use records::Field;
 pub use reference::Reference;
 pub use sat_encoding::SATIntEncoding;
 pub use symbol_table::{SymbolTable, SymbolTablePtr};
 pub use types::*;
 pub use variables::DecisionVariable;
 
+/// Helper to build a matrix `AbstractLiteral` with given domains
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __matrix_with_domains {
+    // Base case: 1-D list + one domain.
+    ([$($x:expr),* $(,)?]; [$domain:expr $(,)?]) => (
+        $crate::into_matrix![std::vec![$(<_ as ::std::convert::Into<_>>::into($x)),*]; $domain]
+    );
+
+    // Recursive entry: split first domain from remaining domains.
+    ([[$($x:tt)*] $(, [$($xs:tt)*])* $(,)?]; [$domain:expr, $($rest:expr),+ $(,)?]) => (
+        $crate::__matrix_with_domains!(
+            @recurse
+            $domain;
+            [$($rest),+];
+            [$($x)*] $(, [$($xs)*])*
+        )
+    );
+
+    // Recurse with "rest domains" captured as one token tree ($rest:tt).
+    (@recurse $domain:expr; $rest:tt; [$($x:tt)*] $(, [$($xs:tt)*])*) => (
+        $crate::into_matrix![
+            std::vec![
+                <_ as ::std::convert::Into<_>>::into($crate::__matrix_with_domains!([$($x)*]; $rest))
+                $(, <_ as ::std::convert::Into<_>>::into($crate::__matrix_with_domains!([$($xs)*]; $rest)))*
+            ];
+            $domain
+        ]
+    );
+}
+
+/// Helper to build a matrix `Literal` with given domains
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __matrix_lit_with_domains {
+    // Base case: 1-D list + one domain.
+    ([$($x:expr),* $(,)?]; [$domain:expr $(,)?]) => (
+        $crate::ast::Literal::AbstractLiteral(
+            $crate::into_matrix![std::vec![$($crate::ast::Literal::from($x)),*]; $domain]
+        )
+    );
+
+    // Recursive entry: split first domain from remaining domains.
+    ([[$($x:tt)*] $(, [$($xs:tt)*])* $(,)?]; [$domain:expr, $($rest:expr),+ $(,)?]) => (
+        $crate::__matrix_lit_with_domains!(
+            @recurse
+            $domain;
+            [$($rest),+];
+            [$($x)*] $(, [$($xs)*])*
+        )
+    );
+
+    // Recurse with "rest domains" captured as one token tree ($rest:tt).
+    (@recurse $domain:expr; $rest:tt; [$($x:tt)*] $(, [$($xs:tt)*])*) => (
+        $crate::ast::Literal::AbstractLiteral(
+            $crate::into_matrix![
+                std::vec![
+                    $crate::__matrix_lit_with_domains!([$($x)*]; $rest)
+                    $(, $crate::__matrix_lit_with_domains!([$($xs)*]; $rest))*
+                ];
+                $domain
+            ]
+        )
+    );
+}
+
+/// Creates a new matrix [`Literal`] optionally with some index domain.
+///
+///  - `matrix_lit![a,b,c]`
+///  - `matrix_lit![a,b,c;my_domain]`
+///  - `matrix_lit![[a, b, c], [d, e, f]; [domain_1, domain_2]]`
+///
+/// To create one from a (Rust) vector, use [`into_matrix!`].
+#[macro_export]
+macro_rules! matrix_lit {
+    // Empty
+    () => (
+        $crate::ast::Literal::AbstractLiteral($crate::into_matrix![])
+    );
+
+    (;$domain:expr) => (
+        $crate::ast::Literal::AbstractLiteral($crate::into_matrix![;$domain])
+    );
+
+    // Single element
+    ($x:expr) => (
+        $crate::ast::Literal::AbstractLiteral($crate::into_matrix![std::vec![$crate::ast::Literal::from($x)]])
+    );
+
+    ($x:expr;$domain:expr) => (
+        $crate::ast::Literal::AbstractLiteral($crate::into_matrix![std::vec![$crate::ast::Literal::from($x)];$domain])
+    );
+
+    // Multi-dimensional (delegate to matrix! for structural nesting)
+    ([$($x:tt)*] $(, [$($xs:tt)*])* $(,)?) => (
+        $crate::ast::Literal::from(
+            $crate::matrix![
+                $crate::matrix_lit![$($x)*]
+                $(, $crate::matrix_lit![$($xs)*])*
+            ]
+        )
+    );
+
+    ([$($x:tt)*] $(, [$($xs:tt)*])* ; [$domain:expr $(, $domains:expr)+ $(,)?]) => (
+        $crate::__matrix_lit_with_domains!(
+            [[$($x)*] $(, [$($xs)*])*];
+            [$domain $(, $domains)+]
+        )
+    );
+
+    // 1-Dimensional
+    ($($x:expr),*) => (
+        $crate::ast::Literal::AbstractLiteral($crate::into_matrix![std::vec![$($crate::ast::Literal::from($x)),*]])
+    );
+
+    ($($x:expr),*;$domain:expr) => (
+        $crate::ast::Literal::AbstractLiteral($crate::into_matrix![std::vec![$($crate::ast::Literal::from($x)),*];$domain])
+    );
+
+    ($($x:expr,)*) => (
+        $crate::ast::Literal::AbstractLiteral($crate::into_matrix![std::vec![$($crate::ast::Literal::from($x)),*]])
+    );
+
+    ($($x:expr,)*;$domain:expr) => (
+        $crate::ast::Literal::AbstractLiteral($crate::into_matrix![std::vec![$($crate::ast::Literal::from($x)),*];$domain])
+    )
+}
+
 /// Creates a new matrix [`AbstractLiteral`] optionally with some index domain.
 ///
 ///  - `matrix![a,b,c]`
 ///  - `matrix![a,b,c;my_domain]`
+///  - `matrix![[a, b, c], [d, e, f]]`
+///  - `matrix![[a, b, c], [d, e, f]; [domain_1, domain_2]]`
 ///
 /// To create one from a (Rust) vector, use [`into_matrix!`].
+///
+/// To create a matrix [`Literal`] (wrapping elements with `Literal::from`), use [`matrix_lit!`].
 #[macro_export]
 macro_rules! matrix {
     // cases copied from the std vec! macro
@@ -67,27 +212,45 @@ macro_rules! matrix {
     );
 
     ($x:expr) => (
-        $crate::into_matrix![std::vec![$x]]
+        $crate::into_matrix![std::vec![<_ as ::std::convert::Into<_>>::into($x)]]
     );
 
     ($x:expr;$domain:expr) => (
-        $crate::into_matrix![std::vec![$x];$domain]
+        $crate::into_matrix![std::vec![<_ as ::std::convert::Into<_>>::into($x)];$domain]
     );
 
+    // Multi-dimensional
+    ([$($x:tt)*] $(, [$($xs:tt)*])* $(,)?) => (
+        $crate::into_matrix![
+            std::vec![
+                <_ as ::std::convert::Into<_>>::into($crate::matrix![$($x)*])
+                $(, <_ as ::std::convert::Into<_>>::into($crate::matrix![$($xs)*]))*
+            ]
+        ]
+    );
+
+    ([$($x:tt)*] $(, [$($xs:tt)*])* ; [$domain:expr $(, $domains:expr)+ $(,)?]) => (
+        $crate::__matrix_with_domains!(
+            [[$($x)*] $(, [$($xs)*])*];
+            [$domain $(, $domains)+]
+        )
+    );
+
+    // 1-Dimensional
     ($($x:expr),*) => (
-        $crate::into_matrix![std::vec![$($x),*]]
+        $crate::into_matrix![std::vec![$(<_ as ::std::convert::Into<_>>::into($x)),*]]
     );
 
     ($($x:expr),*;$domain:expr) => (
-        $crate::into_matrix![std::vec![$($x),*];$domain]
+        $crate::into_matrix![std::vec![$(<_ as ::std::convert::Into<_>>::into($x)),*];$domain]
     );
 
     ($($x:expr,)*) => (
-        $crate::into_matrix![std::vec![$($x),*]]
+        $crate::into_matrix![std::vec![$(<_ as ::std::convert::Into<_>>::into($x)),*]]
     );
 
     ($($x:expr,)*;$domain:expr) => (
-        $crate::into_matrix![std::vec![$($x),*];$domain]
+        $crate::into_matrix![std::vec![$(<_ as ::std::convert::Into<_>>::into($x)),*];$domain]
     )
 }
 
@@ -122,35 +285,35 @@ macro_rules! into_matrix {
 #[macro_export]
 macro_rules! matrix_expr {
     () => (
-        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::into_matrix![])
     );
 
     (;$domain:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![;$domain])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::into_matrix![;$domain])
     );
 
 
     ($x:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![$x])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::into_matrix![std::vec![$x]])
     );
     ($x:expr;$domain:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![;$domain])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::into_matrix![std::vec![$x];$domain])
     );
 
     ($($x:expr),+) => (
-        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![$($x),+])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::into_matrix![std::vec![$($x),+]])
     );
 
     ($($x:expr),+;$domain:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![$($x),+;$domain])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::into_matrix![std::vec![$($x),+];$domain])
     );
 
     ($($x:expr,)+) => (
-        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![$($x),+])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::into_matrix![std::vec![$($x),+]])
     );
 
     ($($x:expr,)+;$domain:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![$($x),+;$domain])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::into_matrix![std::vec![$($x),+];$domain])
     )
 }
 

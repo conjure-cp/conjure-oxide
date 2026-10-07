@@ -1,0 +1,33 @@
+Model before rewriting:
+
+find x: int(6, 1)
+
+such that
+
+x = 1
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(6, 1)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+Final model:
+
+find x: int(6, 1)
+find x#bv_1: int(6, 1)
+
+such that
+
+x#bv_1 = 1
+
