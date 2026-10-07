@@ -1,6 +1,7 @@
 //! Generate solver clauses directly from semantic Boolean encoding decisions.
 mod alldifferent;
 mod amo;
+mod boolean;
 mod cardinality;
 mod element;
 mod pseudo_boolean;
@@ -69,15 +70,15 @@ pub(super) fn compile_decisions_with_cache(
         let SatEncodingDecision::Assert(expression) = decision else {
             continue;
         };
-        let input = match expression {
-            Expression::Not(_, input) => input.as_ref(),
-            input => input,
-        };
-        if matches!(input, Expression::Atomic(_, Atom::Reference(_)))
-            && let Term::Literal(literal) = compiler.encode(expression)?
-        {
-            asserted.insert(literal);
-        }
+        compiler.collect_asserted_literals(expression, true, &mut asserted)?;
+    }
+    // Retain the physical units before using them as constants in later gates/bounds.
+    // This also constrains literals allocated or used by earlier incremental batches.
+    let mut units: Vec<_> = asserted.iter().copied().collect();
+    units.sort_unstable();
+    for literal in units {
+        compiler.assert(Term::Literal(literal));
+        compiler.retain_boolean_alias(Term::Literal(literal), Term::Constant(true));
     }
     for decision in decisions {
         match decision {
@@ -286,8 +287,7 @@ pub(super) fn compile_decisions_with_cache(
                 compiler.asserted_amo(algorithm, terms)?;
             }
             SatEncodingDecision::Assert(expression) => {
-                let term = compiler.encode(expression)?;
-                compiler.assert(term);
+                compiler.assert_expression(expression, true)?;
             }
             SatEncodingDecision::Boolean { output, expression } => {
                 let output = compiler.encode(output)?;
@@ -398,6 +398,8 @@ pub(super) struct EncodingCache {
     weighted: HashMap<WeightedKey, WeightedEncoder>,
     weighted_thresholds: HashMap<WeightedThresholdKey, Lit>,
     gates: HashMap<(bool, Vec<Lit>), Lit>,
+    // Assertion witnesses encode only output -> formula until equivalence is required.
+    implied_gates: HashMap<(bool, Vec<Lit>), Lit>,
     aliases: HashMap<Lit, Term>,
 }
 
@@ -487,50 +489,33 @@ impl Compiler<'_> {
     }
 
     fn combine(&mut self, and: bool, terms: Vec<Term>) -> Term {
-        let mut literals = Vec::new();
-        for term in terms {
-            match self.resolve_alias(term) {
-                Term::Constant(value) if value != and => return Term::Constant(value),
-                Term::Constant(_) => (),
-                Term::Literal(lit) => literals.push(lit),
-            }
+        let literals = match self.boolean_literals(and, terms) {
+            Ok(literals) => literals,
+            Err(value) => return value,
+        };
+        let key = (and, literals.clone());
+        let existing = self
+            .counters
+            .as_ref()
+            .and_then(|cache| cache.gates.get(&key))
+            .copied();
+        tracing::debug!(reused = existing.is_some(), "compiling shared Boolean gate");
+        if let Some(output) = existing {
+            return self.resolve_alias(Term::Literal(output));
         }
-        match literals.as_slice() {
-            [] => Term::Constant(and),
-            [lit] => Term::Literal(*lit),
-            _ => {
-                // Gate inputs are commutative; aliases join independently rebuilt projections.
-                literals.sort_unstable();
-                let key = (and, literals.clone());
-                let existing = self
-                    .counters
-                    .as_ref()
-                    .and_then(|cache| cache.gates.get(&key))
-                    .copied();
-                tracing::debug!(reused = existing.is_some(), "compiling shared Boolean gate");
-                if let Some(output) = existing {
-                    return self.resolve_alias(Term::Literal(output));
-                }
-                let output = self.instance.new_lit();
-                if and {
-                    for clause in atomics::lit_impl_cube(output, &literals) {
-                        self.instance.add_clause(clause);
-                    }
-                    self.instance
-                        .add_clause(atomics::cube_impl_lit(&literals, output));
-                } else {
-                    for clause in atomics::clause_impl_lit(&literals, output) {
-                        self.instance.add_clause(clause);
-                    }
-                    self.instance
-                        .add_clause(atomics::lit_impl_clause(output, &literals));
-                }
-                if let Some(cache) = self.counters.as_mut() {
-                    cache.gates.insert(key, output);
-                }
-                Term::Literal(output)
-            }
+        let implied = self
+            .counters
+            .as_mut()
+            .and_then(|cache| cache.implied_gates.remove(&key));
+        let output = implied.unwrap_or_else(|| self.instance.new_lit());
+        if implied.is_none() {
+            self.emit_gate_implication(and, output, &literals);
         }
+        self.emit_gate_reverse(and, output, &literals);
+        if let Some(cache) = self.counters.as_mut() {
+            cache.gates.insert(key, output);
+        }
+        Term::Literal(output)
     }
     fn encode(&mut self, expression: &Expression) -> Result<Term, SolverError> {
         Ok(match expression {
@@ -567,12 +552,19 @@ impl Compiler<'_> {
                 let right = self.encode(right)?;
                 self.combine(false, vec![left, right])
             }
-            Expression::Iff(_, left, right) => {
+            Expression::Iff(_, left, right)
+            | Expression::Eq(_, left, right)
+            | Expression::Neq(_, left, right) => {
                 let left = self.encode(left)?;
                 let right = self.encode(right)?;
                 let forward = self.combine(false, vec![left.negated(), right]);
                 let backward = self.combine(false, vec![right.negated(), left]);
-                self.combine(true, vec![forward, backward])
+                let equal = self.combine(true, vec![forward, backward]);
+                if matches!(expression, Expression::Neq(..)) {
+                    equal.negated()
+                } else {
+                    equal
+                }
             }
             _ => {
                 return Err(SolverError::ModelInvalid(format!(

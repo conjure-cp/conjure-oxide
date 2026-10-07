@@ -1,5 +1,3 @@
-use conjure_cp::essence_expr;
-
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Atom, Expression as Expr, Moo, SatEncodingDecision};
 use conjure_cp::rule_engine::{
@@ -186,40 +184,29 @@ fn gate(
     output
 }
 
-/// Move a top-level Boolean assertion into the SAT decision payload.
-#[register_rule("SAT", 8400, [Root])]
-fn remove_single_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    // The single atom must not be within another expression
-    let Expr::Root(_, children) = expr else {
-        return Err(RuleNotApplicable);
-    };
+/// Preserve ready assertions before the ordinary equivalence-gate rules consume them.
+#[register_rule("SAT", 18000, [Root])]
+fn select_asserted_boolean(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    super::asserted::select_asserted(expr, symbols, |child| {
+        (child != &true.into() && ready_boolean(child))
+            .then(|| SatEncodingDecision::Assert(child.clone()))
+    })
+}
 
-    // Find the position of the first reference atom with boolean domain
-    let Some(pos) = children.iter().position(
-        |e| matches!(e, Expr::Atomic(_, Atom::Reference(x)) if x.domain().is_some_and(|d| d.is_bool())),
-    ) else {
-        return Err(RuleNotApplicable);
-    };
-
-    // Clone the children since expr is borrowed immutably
-    let mut new_children = children.clone();
-
-    let removed = new_children.remove(pos);
-
-    let new_sat_decisions = vec![SatEncodingDecision::Assert(removed)];
-
-    // If now empty, replace with `true`
-    if new_children.is_empty() {
-        new_children.push(essence_expr!(true));
+fn ready_boolean(expr: &Expr) -> bool {
+    match expr {
+        Expr::Atomic(..) => is_literal(expr),
+        Expr::Not(_, input) => ready_boolean(input),
+        Expr::And(_, inputs) | Expr::Or(_, inputs) => {
+            matches!(inputs.as_ref(), Expr::AbstractLiteral(_, Matrix(entries, _))
+                if entries.iter().all(ready_boolean))
+        }
+        Expr::Imply(_, left, right)
+        | Expr::Iff(_, left, right)
+        | Expr::Eq(_, left, right)
+        | Expr::Neq(_, left, right) => ready_boolean(left) && ready_boolean(right),
+        _ => false,
     }
-
-    let new_expr = Expr::Root(Metadata::new(), new_children);
-
-    Ok(RuleEffect::sat(
-        new_expr,
-        new_sat_decisions,
-        symbols.clone(),
-    ))
 }
 
 /// Lower the Boolean operation to a semantic SAT gate decision.
@@ -428,6 +415,37 @@ fn select_cardinality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 #[cfg(test)]
 mod amo_lowering_tests {
     use super::*;
+    #[test]
+    fn assertions_keep_boolean_structure_and_wait_for_numeric_refinement() {
+        let symbols = SymbolTable::new();
+        let a: Expr =
+            conjure_cp::ast::Reference::new(symbols.clone().gen_find(&Domain::bool())).into();
+        let b: Expr =
+            conjure_cp::ast::Reference::new(symbols.clone().gen_find(&Domain::bool())).into();
+        let assertion = Expr::Imply(Metadata::new(), Moo::new(a), Moo::new(b));
+        let effect = select_asserted_boolean(
+            &Expr::Root(Metadata::new(), vec![assertion.clone()]),
+            &symbols,
+        )
+        .unwrap();
+        assert!(
+            matches!(&effect.new_sat_decisions[0], SatEncodingDecision::Assert(expression) if expression == &assertion)
+        );
+        assert_eq!(
+            effect.symbols.iter_local().count(),
+            symbols.iter_local().count()
+        );
+        let comparison = Expr::Eq(Metadata::new(), Moo::new(1.into()), Moo::new(2.into()));
+        assert!(
+            select_asserted_boolean(&Expr::Root(Metadata::new(), vec![comparison]), &symbols)
+                .is_err()
+        );
+        assert!(
+            select_asserted_boolean(&Expr::Root(Metadata::new(), vec![true.into()]), &symbols)
+                .is_err()
+        );
+    }
+
     #[test]
     fn boolean_order_matches_all_truth_assignments_and_declines_integers() {
         for left in [false, true] {
