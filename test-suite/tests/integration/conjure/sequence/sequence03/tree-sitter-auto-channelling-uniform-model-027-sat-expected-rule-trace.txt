@@ -53,6 +53,19 @@ new SAT encoding decisions:
 
 --
 
+true,
+or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
+new SAT encoding decisions:
+  assert(or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])) using tseitin
+
+--
+
 x#explicit_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#explicit_2
@@ -86,13 +99,11 @@ new SAT encoding decisions:
 
 true,
 or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])
+or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true,
 or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])
+or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
 new variables:
   find x#explicit_1#components_1#direct_1: bool
   find x#explicit_1#components_1#direct_2: bool
@@ -111,7 +122,6 @@ new constraints:
 true,
 or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
 or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)]),
 sum([toInt(x#explicit_1#components_1#direct_1),toInt(x#explicit_1#components_1#direct_2),toInt(x#explicit_1#components_1#direct_3);int(1..)]) <= 1,
 or([x#explicit_1#components_1#direct_1,x#explicit_1#components_1#direct_2,x#explicit_1#components_1#direct_3;int(1..)]),
 sum([toInt(x#explicit_1#components_2#direct_1),toInt(x#explicit_1#components_2#direct_2),toInt(x#explicit_1#components_2#direct_3);int(1..)]) <= 1,
@@ -120,7 +130,6 @@ or([x#explicit_1#components_2#direct_1,x#explicit_1#components_2#direct_2,x#expl
 true,
 or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
 or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)]),
 or([x#explicit_1#components_1#direct_1,x#explicit_1#components_1#direct_2,x#explicit_1#components_1#direct_3;int(1..)]),
 sum([toInt(x#explicit_1#components_2#direct_1),toInt(x#explicit_1#components_2#direct_2),toInt(x#explicit_1#components_2#direct_3);int(1..)]) <= 1,
 or([x#explicit_1#components_2#direct_1,x#explicit_1#components_2#direct_2,x#explicit_1#components_2#direct_3;int(1..)])
@@ -132,7 +141,6 @@ new SAT encoding decisions:
 true,
 or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
 or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)]),
 or([x#explicit_1#components_1#direct_1,x#explicit_1#components_1#direct_2,x#explicit_1#components_1#direct_3;int(1..)]),
 sum([toInt(x#explicit_1#components_2#direct_1),toInt(x#explicit_1#components_2#direct_2),toInt(x#explicit_1#components_2#direct_3);int(1..)]) <= 1,
 or([x#explicit_1#components_2#direct_1,x#explicit_1#components_2#direct_2,x#explicit_1#components_2#direct_3;int(1..)])
@@ -140,7 +148,6 @@ or([x#explicit_1#components_2#direct_1,x#explicit_1#components_2#direct_2,x#expl
 true,
 or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
 or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)]),
 or([x#explicit_1#components_1#direct_1,x#explicit_1#components_1#direct_2,x#explicit_1#components_1#direct_3;int(1..)]),
 or([x#explicit_1#components_2#direct_1,x#explicit_1#components_2#direct_2,x#explicit_1#components_2#direct_3;int(1..)])
 new SAT encoding decisions:
@@ -148,78 +155,31 @@ new SAT encoding decisions:
 
 --
 
-or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])) using tseitin
-
---
-
-or([x#explicit_1#components_1#direct_1,x#explicit_1#components_1#direct_2,x#explicit_1#components_1#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> or([x#explicit_1#components_1#direct_1,x#explicit_1#components_1#direct_2,x#explicit_1#components_1#direct_3;int(1..)])) using tseitin
-
---
-
+true,
+or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([x#explicit_1#components_1#direct_1,x#explicit_1#components_1#direct_2,x#explicit_1#components_1#direct_3;int(1..)]),
 or([x#explicit_1#components_2#direct_1,x#explicit_1#components_2#direct_2,x#explicit_1#components_2#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([x#explicit_1#components_2#direct_1,x#explicit_1#components_2#direct_2,x#explicit_1#components_2#direct_3;int(1..)])
 new SAT encoding decisions:
-  define(__4 <-> or([x#explicit_1#components_2#direct_1,x#explicit_1#components_2#direct_2,x#explicit_1#components_2#direct_3;int(1..)])) using tseitin
+  assert(or([x#explicit_1#components_1#direct_1,x#explicit_1#components_1#direct_2,x#explicit_1#components_1#direct_3;int(1..)])) using tseitin
 
 --
 
 true,
 or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
 or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-__2,
-__3,
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-__3,
-__4
-new SAT encoding decisions:
-  assert(__2) using tseitin
-
---
-
-true,
-or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-__3,
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-__4
-new SAT encoding decisions:
-  assert(__3) using tseitin
-
---
-
-true,
-or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
-or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([x#explicit_1#components_2#direct_1,x#explicit_1#components_2#direct_2,x#explicit_1#components_2#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 or([__0,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
 or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
 new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert(or([x#explicit_1#components_2#direct_1,x#explicit_1#components_2#direct_2,x#explicit_1#components_2#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -237,32 +197,22 @@ x#explicit_1#components_1
 
 x#explicit_1#components_1 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__5
+__2
 new variables:
-  findAux __5: bool
+  findAux __2: bool
 new SAT encoding decisions:
-  define(__5 <-> integer-weighted(1*x#explicit_1#components_1#direct_1, 2*x#explicit_1#components_1#direct_2, 3*x#explicit_1#components_1#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
-
---
-
-or([__0,__5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> or([__0,__5;int(1..)])) using tseitin
+  define(__2 <-> integer-weighted(1*x#explicit_1#components_1#direct_1, 2*x#explicit_1#components_1#direct_2, 3*x#explicit_1#components_1#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
 
 --
 
 true,
-__6,
+or([__0,__2;int(1..)]),
 or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 or([__1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
 new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert(or([__0,__2;int(1..)])) using tseitin
 
 --
 
@@ -280,30 +230,20 @@ x#explicit_1#components_2
 
 x#explicit_1#components_2 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__7
+__3
 new variables:
-  findAux __7: bool
+  findAux __3: bool
 new SAT encoding decisions:
-  define(__7 <-> integer-weighted(1*x#explicit_1#components_2#direct_1, 2*x#explicit_1#components_2#direct_2, 3*x#explicit_1#components_2#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
-
---
-
-or([__1,__7;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> or([__1,__7;int(1..)])) using tseitin
+  define(__3 <-> integer-weighted(1*x#explicit_1#components_2#direct_1, 2*x#explicit_1#components_2#direct_2, 3*x#explicit_1#components_2#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
 
 --
 
 true,
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([__1,__3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__8) using tseitin
+  assert(or([__1,__3;int(1..)])) using tseitin
 
 --
 
@@ -326,11 +266,6 @@ find x#explicit_1#components_2#direct_2: bool
 find x#explicit_1#components_2#direct_3: bool
 findAux __2: bool
 findAux __3: bool
-findAux __4: bool
-findAux __5: bool
-findAux __6: bool
-findAux __7: bool
-findAux __8: bool
 
 such that
 
@@ -340,19 +275,14 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(-1*x#explicit_2#direct_1, -2*x#explicit_2#direct_2) LessEqual -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 at-most-one(x#explicit_2#direct_1, x#explicit_2#direct_2) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+assert(or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])) using tseitin,
 define(__1 <-> integer-weighted(-1*x#explicit_2#direct_1, -2*x#explicit_2#direct_2) LessEqual -2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 at-most-one(x#explicit_1#components_1#direct_1, x#explicit_1#components_1#direct_2, x#explicit_1#components_1#direct_3) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
 at-most-one(x#explicit_1#components_2#direct_1, x#explicit_1#components_2#direct_2, x#explicit_1#components_2#direct_3) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-define(__2 <-> or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])) using tseitin,
-define(__3 <-> or([x#explicit_1#components_1#direct_1,x#explicit_1#components_1#direct_2,x#explicit_1#components_1#direct_3;int(1..)])) using tseitin,
-define(__4 <-> or([x#explicit_1#components_2#direct_1,x#explicit_1#components_2#direct_2,x#explicit_1#components_2#direct_3;int(1..)])) using tseitin,
-assert(__2) using tseitin,
-assert(__3) using tseitin,
-assert(__4) using tseitin,
-define(__5 <-> integer-weighted(1*x#explicit_1#components_1#direct_1, 2*x#explicit_1#components_1#direct_2, 3*x#explicit_1#components_1#direct_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
-define(__6 <-> or([__0,__5;int(1..)])) using tseitin,
-assert(__6) using tseitin,
-define(__7 <-> integer-weighted(1*x#explicit_1#components_2#direct_1, 2*x#explicit_1#components_2#direct_2, 3*x#explicit_1#components_2#direct_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
-define(__8 <-> or([__1,__7;int(1..)])) using tseitin,
-assert(__8) using tseitin
+assert(or([x#explicit_1#components_1#direct_1,x#explicit_1#components_1#direct_2,x#explicit_1#components_1#direct_3;int(1..)])) using tseitin,
+assert(or([x#explicit_1#components_2#direct_1,x#explicit_1#components_2#direct_2,x#explicit_1#components_2#direct_3;int(1..)])) using tseitin,
+define(__2 <-> integer-weighted(1*x#explicit_1#components_1#direct_1, 2*x#explicit_1#components_1#direct_2, 3*x#explicit_1#components_1#direct_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+assert(or([__0,__2;int(1..)])) using tseitin,
+define(__3 <-> integer-weighted(1*x#explicit_1#components_2#direct_1, 2*x#explicit_1#components_2#direct_2, 3*x#explicit_1#components_2#direct_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+assert(or([__1,__3;int(1..)])) using tseitin
 

@@ -27,18 +27,12 @@ new SAT encoding decisions:
 
 --
 
-or([__0;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__0
-
---
-
 true,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([__0;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(or([__0;int(1..)])) using tseitin
 
 --
 
@@ -58,5 +52,5 @@ true
 sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 3, upper: 3 } }],
-assert(__0) using tseitin
+assert(or([__0;int(1..)])) using tseitin
 

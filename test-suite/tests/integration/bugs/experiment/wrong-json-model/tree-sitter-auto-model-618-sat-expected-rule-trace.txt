@@ -28,6 +28,120 @@ new constraints:
 
 --
 
+8 <= c
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(-1*c#sign_magnitude_1, 2*and([c#sign_magnitude_5,c#sign_magnitude_1;int(1..)]), -2*c#sign_magnitude_2, 4*and([c#sign_magnitude_5,c#sign_magnitude_2;int(1..)]), -4*c#sign_magnitude_3, 8*and([c#sign_magnitude_5,c#sign_magnitude_3;int(1..)]), -8*c#sign_magnitude_4, 16*and([c#sign_magnitude_5,c#sign_magnitude_4;int(1..)])) LessEqual -8) using None with []
+
+--
+
+SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*c#sign_magnitude_1, -2*and([c#sign_magnitude_5,c#sign_magnitude_1;int(1..)]), 2*c#sign_magnitude_2, -4*and([c#sign_magnitude_5,c#sign_magnitude_2;int(1..)]), 4*c#sign_magnitude_3, -8*and([c#sign_magnitude_5,c#sign_magnitude_3;int(1..)]), 8*c#sign_magnitude_4, -16*and([c#sign_magnitude_5,c#sign_magnitude_4;int(1..)])) GreaterEqual 7) using None with []
+
+--
+
+SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= 10
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*c#sign_magnitude_1, -2*and([c#sign_magnitude_5,c#sign_magnitude_1;int(1..)]), 2*c#sign_magnitude_2, -4*and([c#sign_magnitude_5,c#sign_magnitude_2;int(1..)]), 4*c#sign_magnitude_3, -8*and([c#sign_magnitude_5,c#sign_magnitude_3;int(1..)]), 8*c#sign_magnitude_4, -16*and([c#sign_magnitude_5,c#sign_magnitude_4;int(1..)])) LessEqual 10) using None with []
+
+--
+
+sum([5,a;int(1..)]) <= 10,
+__0,
+or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+!(c#sign_magnitude_5),
+(!(c#sign_magnitude_5)) -> (or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)])),
+(c#sign_magnitude_5) -> (or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)])),
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([5,a;int(1..)]) <= 10,
+or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+!(c#sign_magnitude_5),
+(!(c#sign_magnitude_5)) -> (or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)])),
+(c#sign_magnitude_5) -> (or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)])),
+or([and([__1,__2;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+sum([5,a;int(1..)]) <= 10,
+or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+!(c#sign_magnitude_5),
+(!(c#sign_magnitude_5)) -> (or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)])),
+(c#sign_magnitude_5) -> (or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)])),
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([5,a;int(1..)]) <= 10,
+!(c#sign_magnitude_5),
+(!(c#sign_magnitude_5)) -> (or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)])),
+(c#sign_magnitude_5) -> (or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)])),
+or([and([__1,__2;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)])) using tseitin
+
+--
+
+sum([5,a;int(1..)]) <= 10,
+!(c#sign_magnitude_5),
+(!(c#sign_magnitude_5)) -> (or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)])),
+(c#sign_magnitude_5) -> (or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)])),
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([5,a;int(1..)]) <= 10,
+(!(c#sign_magnitude_5)) -> (or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)])),
+(c#sign_magnitude_5) -> (or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)])),
+or([and([__1,__2;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(!(c#sign_magnitude_5)) using tseitin
+
+--
+
+sum([5,a;int(1..)]) <= 10,
+(!(c#sign_magnitude_5)) -> (or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)])),
+(c#sign_magnitude_5) -> (or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)])),
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([5,a;int(1..)]) <= 10,
+(c#sign_magnitude_5) -> (or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)])),
+or([and([__1,__2;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert((!(c#sign_magnitude_5)) -> (or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)]))) using tseitin
+
+--
+
+sum([5,a;int(1..)]) <= 10,
+(c#sign_magnitude_5) -> (or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)])),
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([5,a;int(1..)]) <= 10,
+or([and([__1,__2;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert((c#sign_magnitude_5) -> (or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)]))) using tseitin
+
+--
+
+sum([5,a;int(1..)]) <= 10,
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([5,a;int(1..)]) <= 10
+new SAT encoding decisions:
+  assert(or([and([__1,__2;int(1..)]);int(1..)])) using tseitin
+
+--
+
 a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
@@ -45,905 +159,89 @@ new constraints:
 
 --
 
-c
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10])
-
---
-
-a
-   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
-SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7])
-
---
-
-8 <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10])
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10])
-
---
-
-sum([5,SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)])
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)])
-
---
-
-SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= 1
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1])
-
---
-
-SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= 7
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7])
-
---
-
-SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= 7
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7])
-
---
-
-SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= 10
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10])
-
---
-
-!(c#sign_magnitude_5)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> !(c#sign_magnitude_5)) using tseitin
-
---
-
-!(a#sign_magnitude_4)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> !(a#sign_magnitude_4)) using tseitin
-
---
-
-!(c#sign_magnitude_5)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> !(c#sign_magnitude_5)) using tseitin
-
---
-
-!(c#sign_magnitude_4)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
+sum([5,a;int(1..)]) <= 10
+   ~~> select_integer_relation ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> !(c#sign_magnitude_4)) using tseitin
+  define(__3 <-> integer-weighted(1*a#sign_magnitude_1, -2*and([a#sign_magnitude_4,a#sign_magnitude_1;int(1..)]), 2*a#sign_magnitude_2, -4*and([a#sign_magnitude_4,a#sign_magnitude_2;int(1..)]), 4*a#sign_magnitude_3, -8*and([a#sign_magnitude_4,a#sign_magnitude_3;int(1..)])) LessEqual 5) using None with []
 
 --
 
-!(c#sign_magnitude_4)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
+SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> !(c#sign_magnitude_4)) using tseitin
+  define(__4 <-> integer-weighted(1*a#sign_magnitude_1, -2*and([a#sign_magnitude_4,a#sign_magnitude_1;int(1..)]), 2*a#sign_magnitude_2, -4*and([a#sign_magnitude_4,a#sign_magnitude_2;int(1..)]), 4*a#sign_magnitude_3, -8*and([a#sign_magnitude_4,a#sign_magnitude_3;int(1..)])) GreaterEqual 1) using None with []
 
 --
 
-!(c#sign_magnitude_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
+SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= 7
+   ~~> select_integer_relation ([("SAT", 18500)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> !(c#sign_magnitude_3)) using tseitin
+  define(__5 <-> integer-weighted(1*a#sign_magnitude_1, -2*and([a#sign_magnitude_4,a#sign_magnitude_1;int(1..)]), 2*a#sign_magnitude_2, -4*and([a#sign_magnitude_4,a#sign_magnitude_2;int(1..)]), 4*a#sign_magnitude_3, -8*and([a#sign_magnitude_4,a#sign_magnitude_3;int(1..)])) LessEqual 7) using None with []
 
 --
 
-!(c#sign_magnitude_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> !(c#sign_magnitude_3)) using tseitin
-
---
-
-!(c#sign_magnitude_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> !(c#sign_magnitude_2)) using tseitin
-
---
-
-!(c#sign_magnitude_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> !(c#sign_magnitude_2)) using tseitin
-
---
-
-!(c#sign_magnitude_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> !(c#sign_magnitude_1)) using tseitin
-
---
-
-!(c#sign_magnitude_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> !(c#sign_magnitude_1)) using tseitin
-
---
-
-or([and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-
---
-
-or([and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)])
-
---
-
-and([__9;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__9
-
---
-
-and([__10;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__10
-
---
-
-or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)])) using tseitin
-
---
-
-(c#sign_magnitude_5) -> (__11)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__12
-new variables:
-  findAux __12: bool
-new SAT encoding decisions:
-  define(__12 <-> (c#sign_magnitude_5) -> (__11)) using tseitin
-
---
-
-or([a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> or([a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3;int(1..)])) using tseitin
-
---
-
-(a#sign_magnitude_4) -> (__13)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> (a#sign_magnitude_4) -> (__13)) using tseitin
-
---
-
-or([__7,__9;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__15
-new variables:
-  findAux __15: bool
-new SAT encoding decisions:
-  define(__15 <-> or([__7,__9;int(1..)])) using tseitin
-
---
-
-and([__5,__15;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__16
-new variables:
-  findAux __16: bool
-new SAT encoding decisions:
-  define(__16 <-> and([__5,__15;int(1..)])) using tseitin
-
---
-
-or([__3,__16;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__17
-new variables:
-  findAux __17: bool
-new SAT encoding decisions:
-  define(__17 <-> or([__3,__16;int(1..)])) using tseitin
-
---
-
-or([__8,__10;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__18
-new variables:
-  findAux __18: bool
-new SAT encoding decisions:
-  define(__18 <-> or([__8,__10;int(1..)])) using tseitin
-
---
-
-and([__6,__18;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__19
-new variables:
-  findAux __19: bool
-new SAT encoding decisions:
-  define(__19 <-> and([__6,__18;int(1..)])) using tseitin
-
---
-
-or([__4,__19;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__20
-new variables:
-  findAux __20: bool
-new SAT encoding decisions:
-  define(__20 <-> or([__4,__19;int(1..)])) using tseitin
-
---
-
-(__2) -> (__20)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__21
-new variables:
-  findAux __21: bool
-new SAT encoding decisions:
-  define(__21 <-> (__2) -> (__20)) using tseitin
-
---
-
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]),
-__17,
-__0,
-__21,
-__12,
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
+__3,
 true,
-__1,
+!(a#sign_magnitude_4),
 true,
-__14,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-   ~~> remove_single_atom ([("SAT", 8400)])
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]),
-__0,
-__21,
-__12,
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
+(a#sign_magnitude_4) -> (or([a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3;int(1..)])),
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
-__1,
+!(a#sign_magnitude_4),
 true,
-__14,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
+(a#sign_magnitude_4) -> (or([a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3;int(1..)])),
+or([and([__4,__5;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__17) using tseitin
+  assert(__3) using tseitin
 
 --
 
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]),
-__0,
-__21,
-__12,
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
 true,
-__1,
+!(a#sign_magnitude_4),
 true,
-__14,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-   ~~> remove_single_atom ([("SAT", 8400)])
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]),
-__21,
-__12,
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
-true,
-__1,
-true,
-__14,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]),
-__21,
-__12,
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
-true,
-__1,
-true,
-__14,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-   ~~> remove_single_atom ([("SAT", 8400)])
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]),
-__12,
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
-true,
-__1,
-true,
-__14,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-new SAT encoding decisions:
-  assert(__21) using tseitin
-
---
-
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]),
-__12,
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
-true,
-__1,
-true,
-__14,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-   ~~> remove_single_atom ([("SAT", 8400)])
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]),
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
-true,
-__1,
-true,
-__14,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-new SAT encoding decisions:
-  assert(__12) using tseitin
-
---
-
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]),
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
-true,
-__1,
-true,
-__14,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-   ~~> remove_single_atom ([("SAT", 8400)])
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]),
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
+(a#sign_magnitude_4) -> (or([a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3;int(1..)])),
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
-__14,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
+(a#sign_magnitude_4) -> (or([a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3;int(1..)])),
+or([and([__4,__5;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__1) using tseitin
-
---
-
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]),
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
-true,
-true,
-__14,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-   ~~> remove_single_atom ([("SAT", 8400)])
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]),
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
-true,
-true,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-new SAT encoding decisions:
-  assert(__14) using tseitin
-
---
-
-SATInt(SignMagnitude, [false,false,false,true,false;int(1..)] [8, 8]) <= SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__23,__26,__29,__32,__34;int(1..)] [8, 8]) <= SATInt(Log, [__37,__40,__43,__46,__48;int(1..)] [7, 10])
-new variables:
-  findAux __22: bool
-  findAux __23: bool
-  findAux __24: bool
-  findAux __25: bool
-  findAux __26: bool
-  findAux __27: bool
-  findAux __28: bool
-  findAux __29: bool
-  findAux __30: bool
-  findAux __31: bool
-  findAux __32: bool
-  findAux __33: bool
-  findAux __34: bool
-  findAux __35: bool
-  findAux __36: bool
-  findAux __37: bool
-  findAux __38: bool
-  findAux __39: bool
-  findAux __40: bool
-  findAux __41: bool
-  findAux __42: bool
-  findAux __43: bool
-  findAux __44: bool
-  findAux __45: bool
-  findAux __46: bool
-  findAux __47: bool
-  findAux __48: bool
-  findAux __49: bool
-new SAT encoding decisions:
-  define(__22 <-> !((false) <-> (false))) using tseitin
-  define(__23 <-> !((__22) <-> (false))) using tseitin
-  define(__24 <-> and([__22,false;int(1..)])) using tseitin
-  define(__25 <-> !((false) <-> (false))) using tseitin
-  define(__26 <-> !((__25) <-> (__24))) using tseitin
-  define(__27 <-> and([__25,__24;int(1..)])) using tseitin
-  define(__28 <-> !((false) <-> (false))) using tseitin
-  define(__29 <-> !((__28) <-> (__27))) using tseitin
-  define(__30 <-> and([__28,__27;int(1..)])) using tseitin
-  define(__31 <-> !((true) <-> (false))) using tseitin
-  define(__32 <-> !((__31) <-> (__30))) using tseitin
-  define(__33 <-> and([__31,__30;int(1..)])) using tseitin
-  define(__34 <-> !((false) <-> (__33))) using tseitin
-  define(__35 <-> and([false,__33;int(1..)])) using tseitin
-  define(__36 <-> !((c#sign_magnitude_1) <-> (c#sign_magnitude_5))) using tseitin
-  define(__37 <-> !((__36) <-> (c#sign_magnitude_5))) using tseitin
-  define(__38 <-> and([__36,c#sign_magnitude_5;int(1..)])) using tseitin
-  define(__39 <-> !((c#sign_magnitude_2) <-> (c#sign_magnitude_5))) using tseitin
-  define(__40 <-> !((__39) <-> (__38))) using tseitin
-  define(__41 <-> and([__39,__38;int(1..)])) using tseitin
-  define(__42 <-> !((c#sign_magnitude_3) <-> (c#sign_magnitude_5))) using tseitin
-  define(__43 <-> !((__42) <-> (__41))) using tseitin
-  define(__44 <-> and([__42,__41;int(1..)])) using tseitin
-  define(__45 <-> !((c#sign_magnitude_4) <-> (c#sign_magnitude_5))) using tseitin
-  define(__46 <-> !((__45) <-> (__44))) using tseitin
-  define(__47 <-> and([__45,__44;int(1..)])) using tseitin
-  define(__48 <-> !((c#sign_magnitude_5) <-> (__47))) using tseitin
-  define(__49 <-> and([c#sign_magnitude_5,__47;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__23,__26,__29,__32,__34;int(1..)] [8, 8]) <= SATInt(Log, [__37,__40,__43,__46,__48;int(1..)] [7, 10])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__50
-new variables:
-  findAux __50: bool
-new SAT encoding decisions:
-  define(__50 <-> integer-weighted(1*__23, 2*__26, 4*__29, 8*__32, -16*__34, -1*__37, -2*__40, -4*__43, -8*__46, 16*__48) LessEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 8, upper: 8 } }, PbTermGroup { start: 5, end: 10, structure: BoundedBinary { lower: -10, upper: -7 } }]
-
---
-
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-__50,
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
-true,
-true,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-   ~~> remove_single_atom ([("SAT", 8400)])
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)]) <= 10,
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
-true,
-true,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-new SAT encoding decisions:
-  assert(__50) using tseitin
-
---
-
-sum([SATInt(SignMagnitude, [true,false,true,false;int(1..)] [5, 5]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]);int(1..)])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-sum([SATInt(Log, [__52,__55,__58,__60;int(1..)] [5, 5]),SATInt(Log, [__63,__66,__69,__71;int(1..)] [1, 7]);int(1..)])
-new variables:
-  findAux __51: bool
-  findAux __52: bool
-  findAux __53: bool
-  findAux __54: bool
-  findAux __55: bool
-  findAux __56: bool
-  findAux __57: bool
-  findAux __58: bool
-  findAux __59: bool
-  findAux __60: bool
-  findAux __61: bool
-  findAux __62: bool
-  findAux __63: bool
-  findAux __64: bool
-  findAux __65: bool
-  findAux __66: bool
-  findAux __67: bool
-  findAux __68: bool
-  findAux __69: bool
-  findAux __70: bool
-  findAux __71: bool
-  findAux __72: bool
-new SAT encoding decisions:
-  define(__51 <-> !((true) <-> (false))) using tseitin
-  define(__52 <-> !((__51) <-> (false))) using tseitin
-  define(__53 <-> and([__51,false;int(1..)])) using tseitin
-  define(__54 <-> !((false) <-> (false))) using tseitin
-  define(__55 <-> !((__54) <-> (__53))) using tseitin
-  define(__56 <-> and([__54,__53;int(1..)])) using tseitin
-  define(__57 <-> !((true) <-> (false))) using tseitin
-  define(__58 <-> !((__57) <-> (__56))) using tseitin
-  define(__59 <-> and([__57,__56;int(1..)])) using tseitin
-  define(__60 <-> !((false) <-> (__59))) using tseitin
-  define(__61 <-> and([false,__59;int(1..)])) using tseitin
-  define(__62 <-> !((a#sign_magnitude_1) <-> (a#sign_magnitude_4))) using tseitin
-  define(__63 <-> !((__62) <-> (a#sign_magnitude_4))) using tseitin
-  define(__64 <-> and([__62,a#sign_magnitude_4;int(1..)])) using tseitin
-  define(__65 <-> !((a#sign_magnitude_2) <-> (a#sign_magnitude_4))) using tseitin
-  define(__66 <-> !((__65) <-> (__64))) using tseitin
-  define(__67 <-> and([__65,__64;int(1..)])) using tseitin
-  define(__68 <-> !((a#sign_magnitude_3) <-> (a#sign_magnitude_4))) using tseitin
-  define(__69 <-> !((__68) <-> (__67))) using tseitin
-  define(__70 <-> and([__68,__67;int(1..)])) using tseitin
-  define(__71 <-> !((a#sign_magnitude_4) <-> (__70))) using tseitin
-  define(__72 <-> and([a#sign_magnitude_4,__70;int(1..)])) using tseitin
-
---
-
-sum([SATInt(Log, [__52,__55,__58,__60;int(1..)] [5, 5]),SATInt(Log, [__63,__66,__69,__71;int(1..)] [1, 7]);int(1..)]) <= 10
-   ~~> select_integer_relation ([("SAT", 18500)])
-__73
-new variables:
-  findAux __73: bool
-new SAT encoding decisions:
-  define(__73 <-> integer-weighted(1*__52, 2*__55, 4*__58, -8*__60, 1*__63, 2*__66, 4*__69, -8*__71) LessEqual 10) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 5, upper: 5 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 1, upper: 7 } }]
-
---
-
-__73,
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
-true,
-true,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]),SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
-true,
-true,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-new SAT encoding decisions:
-  assert(__73) using tseitin
-
---
-
-SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) >= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__75,__78,__81,__84,__86;int(1..)] [7, 10]) >= SATInt(Log, [__89,__92,__95,__97;int(1..)] [7, 7])
-new variables:
-  findAux __74: bool
-  findAux __75: bool
-  findAux __76: bool
-  findAux __77: bool
-  findAux __78: bool
-  findAux __79: bool
-  findAux __80: bool
-  findAux __81: bool
-  findAux __82: bool
-  findAux __83: bool
-  findAux __84: bool
-  findAux __85: bool
-  findAux __86: bool
-  findAux __87: bool
-  findAux __88: bool
-  findAux __89: bool
-  findAux __90: bool
-  findAux __91: bool
-  findAux __92: bool
-  findAux __93: bool
-  findAux __94: bool
-  findAux __95: bool
-  findAux __96: bool
-  findAux __97: bool
-  findAux __98: bool
-new SAT encoding decisions:
-  define(__74 <-> !((c#sign_magnitude_1) <-> (c#sign_magnitude_5))) using tseitin
-  define(__75 <-> !((__74) <-> (c#sign_magnitude_5))) using tseitin
-  define(__76 <-> and([__74,c#sign_magnitude_5;int(1..)])) using tseitin
-  define(__77 <-> !((c#sign_magnitude_2) <-> (c#sign_magnitude_5))) using tseitin
-  define(__78 <-> !((__77) <-> (__76))) using tseitin
-  define(__79 <-> and([__77,__76;int(1..)])) using tseitin
-  define(__80 <-> !((c#sign_magnitude_3) <-> (c#sign_magnitude_5))) using tseitin
-  define(__81 <-> !((__80) <-> (__79))) using tseitin
-  define(__82 <-> and([__80,__79;int(1..)])) using tseitin
-  define(__83 <-> !((c#sign_magnitude_4) <-> (c#sign_magnitude_5))) using tseitin
-  define(__84 <-> !((__83) <-> (__82))) using tseitin
-  define(__85 <-> and([__83,__82;int(1..)])) using tseitin
-  define(__86 <-> !((c#sign_magnitude_5) <-> (__85))) using tseitin
-  define(__87 <-> and([c#sign_magnitude_5,__85;int(1..)])) using tseitin
-  define(__88 <-> !((true) <-> (false))) using tseitin
-  define(__89 <-> !((__88) <-> (false))) using tseitin
-  define(__90 <-> and([__88,false;int(1..)])) using tseitin
-  define(__91 <-> !((true) <-> (false))) using tseitin
-  define(__92 <-> !((__91) <-> (__90))) using tseitin
-  define(__93 <-> and([__91,__90;int(1..)])) using tseitin
-  define(__94 <-> !((true) <-> (false))) using tseitin
-  define(__95 <-> !((__94) <-> (__93))) using tseitin
-  define(__96 <-> and([__94,__93;int(1..)])) using tseitin
-  define(__97 <-> !((false) <-> (__96))) using tseitin
-  define(__98 <-> and([false,__96;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__75,__78,__81,__84,__86;int(1..)] [7, 10]) >= SATInt(Log, [__89,__92,__95,__97;int(1..)] [7, 7])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__99
-new variables:
-  findAux __99: bool
-new SAT encoding decisions:
-  define(__99 <-> integer-weighted(1*__75, 2*__78, 4*__81, 8*__84, -16*__86, -1*__89, -2*__92, -4*__95, 8*__97) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 7, upper: 10 } }, PbTermGroup { start: 5, end: 9, structure: BoundedBinary { lower: -7, upper: -7 } }]
-
---
-
-SATInt(SignMagnitude, [c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4,c#sign_magnitude_5;int(1..)] [7, 10]) <= SATInt(SignMagnitude, [false,true,false,true,false;int(1..)] [10, 10])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__101,__104,__107,__110,__112;int(1..)] [7, 10]) <= SATInt(Log, [__115,__118,__121,__124,__126;int(1..)] [10, 10])
-new variables:
-  findAux __100: bool
-  findAux __101: bool
-  findAux __102: bool
-  findAux __103: bool
-  findAux __104: bool
-  findAux __105: bool
-  findAux __106: bool
-  findAux __107: bool
-  findAux __108: bool
-  findAux __109: bool
-  findAux __110: bool
-  findAux __111: bool
-  findAux __112: bool
-  findAux __113: bool
-  findAux __114: bool
-  findAux __115: bool
-  findAux __116: bool
-  findAux __117: bool
-  findAux __118: bool
-  findAux __119: bool
-  findAux __120: bool
-  findAux __121: bool
-  findAux __122: bool
-  findAux __123: bool
-  findAux __124: bool
-  findAux __125: bool
-  findAux __126: bool
-  findAux __127: bool
-new SAT encoding decisions:
-  define(__100 <-> !((c#sign_magnitude_1) <-> (c#sign_magnitude_5))) using tseitin
-  define(__101 <-> !((__100) <-> (c#sign_magnitude_5))) using tseitin
-  define(__102 <-> and([__100,c#sign_magnitude_5;int(1..)])) using tseitin
-  define(__103 <-> !((c#sign_magnitude_2) <-> (c#sign_magnitude_5))) using tseitin
-  define(__104 <-> !((__103) <-> (__102))) using tseitin
-  define(__105 <-> and([__103,__102;int(1..)])) using tseitin
-  define(__106 <-> !((c#sign_magnitude_3) <-> (c#sign_magnitude_5))) using tseitin
-  define(__107 <-> !((__106) <-> (__105))) using tseitin
-  define(__108 <-> and([__106,__105;int(1..)])) using tseitin
-  define(__109 <-> !((c#sign_magnitude_4) <-> (c#sign_magnitude_5))) using tseitin
-  define(__110 <-> !((__109) <-> (__108))) using tseitin
-  define(__111 <-> and([__109,__108;int(1..)])) using tseitin
-  define(__112 <-> !((c#sign_magnitude_5) <-> (__111))) using tseitin
-  define(__113 <-> and([c#sign_magnitude_5,__111;int(1..)])) using tseitin
-  define(__114 <-> !((false) <-> (false))) using tseitin
-  define(__115 <-> !((__114) <-> (false))) using tseitin
-  define(__116 <-> and([__114,false;int(1..)])) using tseitin
-  define(__117 <-> !((true) <-> (false))) using tseitin
-  define(__118 <-> !((__117) <-> (__116))) using tseitin
-  define(__119 <-> and([__117,__116;int(1..)])) using tseitin
-  define(__120 <-> !((false) <-> (false))) using tseitin
-  define(__121 <-> !((__120) <-> (__119))) using tseitin
-  define(__122 <-> and([__120,__119;int(1..)])) using tseitin
-  define(__123 <-> !((true) <-> (false))) using tseitin
-  define(__124 <-> !((__123) <-> (__122))) using tseitin
-  define(__125 <-> and([__123,__122;int(1..)])) using tseitin
-  define(__126 <-> !((false) <-> (__125))) using tseitin
-  define(__127 <-> and([false,__125;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__101,__104,__107,__110,__112;int(1..)] [7, 10]) <= SATInt(Log, [__115,__118,__121,__124,__126;int(1..)] [10, 10])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__128
-new variables:
-  findAux __128: bool
-new SAT encoding decisions:
-  define(__128 <-> integer-weighted(1*__101, 2*__104, 4*__107, 8*__110, -16*__112, -1*__115, -2*__118, -4*__121, -8*__124, 16*__126) LessEqual 0) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 7, upper: 10 } }, PbTermGroup { start: 5, end: 10, structure: BoundedBinary { lower: -10, upper: -10 } }]
-
---
-
-and([__99,__128;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__129
-new variables:
-  findAux __129: bool
-new SAT encoding decisions:
-  define(__129 <-> and([__99,__128;int(1..)])) using tseitin
-
---
-
-__129,
-true,
-true,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-and([SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1]),SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7]);int(1..)])
-new SAT encoding decisions:
-  assert(__129) using tseitin
-
---
-
-SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) >= SATInt(SignMagnitude, [true,false;int(1..)] [1, 1])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__131,__134,__137,__139;int(1..)] [1, 7]) >= SATInt(Log, [__142,__144;int(1..)] [1, 1])
-new variables:
-  findAux __130: bool
-  findAux __131: bool
-  findAux __132: bool
-  findAux __133: bool
-  findAux __134: bool
-  findAux __135: bool
-  findAux __136: bool
-  findAux __137: bool
-  findAux __138: bool
-  findAux __139: bool
-  findAux __140: bool
-  findAux __141: bool
-  findAux __142: bool
-  findAux __143: bool
-  findAux __144: bool
-  findAux __145: bool
-new SAT encoding decisions:
-  define(__130 <-> !((a#sign_magnitude_1) <-> (a#sign_magnitude_4))) using tseitin
-  define(__131 <-> !((__130) <-> (a#sign_magnitude_4))) using tseitin
-  define(__132 <-> and([__130,a#sign_magnitude_4;int(1..)])) using tseitin
-  define(__133 <-> !((a#sign_magnitude_2) <-> (a#sign_magnitude_4))) using tseitin
-  define(__134 <-> !((__133) <-> (__132))) using tseitin
-  define(__135 <-> and([__133,__132;int(1..)])) using tseitin
-  define(__136 <-> !((a#sign_magnitude_3) <-> (a#sign_magnitude_4))) using tseitin
-  define(__137 <-> !((__136) <-> (__135))) using tseitin
-  define(__138 <-> and([__136,__135;int(1..)])) using tseitin
-  define(__139 <-> !((a#sign_magnitude_4) <-> (__138))) using tseitin
-  define(__140 <-> and([a#sign_magnitude_4,__138;int(1..)])) using tseitin
-  define(__141 <-> !((true) <-> (false))) using tseitin
-  define(__142 <-> !((__141) <-> (false))) using tseitin
-  define(__143 <-> and([__141,false;int(1..)])) using tseitin
-  define(__144 <-> !((false) <-> (__143))) using tseitin
-  define(__145 <-> and([false,__143;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__131,__134,__137,__139;int(1..)] [1, 7]) >= SATInt(Log, [__142,__144;int(1..)] [1, 1])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__146
-new variables:
-  findAux __146: bool
-new SAT encoding decisions:
-  define(__146 <-> integer-weighted(1*__131, 2*__134, 4*__137, -8*__139, -1*__142, 2*__144) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 7 } }, PbTermGroup { start: 4, end: 6, structure: BoundedBinary { lower: -1, upper: -1 } }]
-
---
-
-SATInt(SignMagnitude, [a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3,a#sign_magnitude_4;int(1..)] [1, 7]) <= SATInt(SignMagnitude, [true,true,true,false;int(1..)] [7, 7])
-   ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__148,__151,__154,__156;int(1..)] [1, 7]) <= SATInt(Log, [__159,__162,__165,__167;int(1..)] [7, 7])
-new variables:
-  findAux __147: bool
-  findAux __148: bool
-  findAux __149: bool
-  findAux __150: bool
-  findAux __151: bool
-  findAux __152: bool
-  findAux __153: bool
-  findAux __154: bool
-  findAux __155: bool
-  findAux __156: bool
-  findAux __157: bool
-  findAux __158: bool
-  findAux __159: bool
-  findAux __160: bool
-  findAux __161: bool
-  findAux __162: bool
-  findAux __163: bool
-  findAux __164: bool
-  findAux __165: bool
-  findAux __166: bool
-  findAux __167: bool
-  findAux __168: bool
-new SAT encoding decisions:
-  define(__147 <-> !((a#sign_magnitude_1) <-> (a#sign_magnitude_4))) using tseitin
-  define(__148 <-> !((__147) <-> (a#sign_magnitude_4))) using tseitin
-  define(__149 <-> and([__147,a#sign_magnitude_4;int(1..)])) using tseitin
-  define(__150 <-> !((a#sign_magnitude_2) <-> (a#sign_magnitude_4))) using tseitin
-  define(__151 <-> !((__150) <-> (__149))) using tseitin
-  define(__152 <-> and([__150,__149;int(1..)])) using tseitin
-  define(__153 <-> !((a#sign_magnitude_3) <-> (a#sign_magnitude_4))) using tseitin
-  define(__154 <-> !((__153) <-> (__152))) using tseitin
-  define(__155 <-> and([__153,__152;int(1..)])) using tseitin
-  define(__156 <-> !((a#sign_magnitude_4) <-> (__155))) using tseitin
-  define(__157 <-> and([a#sign_magnitude_4,__155;int(1..)])) using tseitin
-  define(__158 <-> !((true) <-> (false))) using tseitin
-  define(__159 <-> !((__158) <-> (false))) using tseitin
-  define(__160 <-> and([__158,false;int(1..)])) using tseitin
-  define(__161 <-> !((true) <-> (false))) using tseitin
-  define(__162 <-> !((__161) <-> (__160))) using tseitin
-  define(__163 <-> and([__161,__160;int(1..)])) using tseitin
-  define(__164 <-> !((true) <-> (false))) using tseitin
-  define(__165 <-> !((__164) <-> (__163))) using tseitin
-  define(__166 <-> and([__164,__163;int(1..)])) using tseitin
-  define(__167 <-> !((false) <-> (__166))) using tseitin
-  define(__168 <-> and([false,__166;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [__148,__151,__154,__156;int(1..)] [1, 7]) <= SATInt(Log, [__159,__162,__165,__167;int(1..)] [7, 7])
-   ~~> select_integer_relation ([("SAT", 18500)])
-__169
-new variables:
-  findAux __169: bool
-new SAT encoding decisions:
-  define(__169 <-> integer-weighted(1*__148, 2*__151, 4*__154, -8*__156, -1*__159, -2*__162, -4*__165, 8*__167) LessEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 7 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -7, upper: -7 } }]
-
---
-
-and([__146,__169;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__170
-new variables:
-  findAux __170: bool
-new SAT encoding decisions:
-  define(__170 <-> and([__146,__169;int(1..)])) using tseitin
+  assert(!(a#sign_magnitude_4)) using tseitin
 
 --
 
 true,
 true,
-__170
-   ~~> remove_single_atom ([("SAT", 8400)])
+(a#sign_magnitude_4) -> (or([a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3;int(1..)])),
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+true,
+or([and([__4,__5;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert((a#sign_magnitude_4) -> (or([a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3;int(1..)]))) using tseitin
+
+--
+
+true,
+true,
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true
 new SAT encoding decisions:
-  assert(__170) using tseitin
+  assert(or([and([__4,__5;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -956,181 +254,16 @@ find c#sign_magnitude_2: bool
 find c#sign_magnitude_3: bool
 find c#sign_magnitude_4: bool
 find c#sign_magnitude_5: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
 find a#sign_magnitude_1: bool
 find a#sign_magnitude_2: bool
 find a#sign_magnitude_3: bool
 find a#sign_magnitude_4: bool
-findAux __0: bool
-findAux __1: bool
-findAux __2: bool
 findAux __3: bool
 findAux __4: bool
 findAux __5: bool
-findAux __6: bool
-findAux __7: bool
-findAux __8: bool
-findAux __9: bool
-findAux __10: bool
-findAux __11: bool
-findAux __12: bool
-findAux __13: bool
-findAux __14: bool
-findAux __15: bool
-findAux __16: bool
-findAux __17: bool
-findAux __18: bool
-findAux __19: bool
-findAux __20: bool
-findAux __21: bool
-findAux __22: bool
-findAux __23: bool
-findAux __24: bool
-findAux __25: bool
-findAux __26: bool
-findAux __27: bool
-findAux __28: bool
-findAux __29: bool
-findAux __30: bool
-findAux __31: bool
-findAux __32: bool
-findAux __33: bool
-findAux __34: bool
-findAux __35: bool
-findAux __36: bool
-findAux __37: bool
-findAux __38: bool
-findAux __39: bool
-findAux __40: bool
-findAux __41: bool
-findAux __42: bool
-findAux __43: bool
-findAux __44: bool
-findAux __45: bool
-findAux __46: bool
-findAux __47: bool
-findAux __48: bool
-findAux __49: bool
-findAux __50: bool
-findAux __51: bool
-findAux __52: bool
-findAux __53: bool
-findAux __54: bool
-findAux __55: bool
-findAux __56: bool
-findAux __57: bool
-findAux __58: bool
-findAux __59: bool
-findAux __60: bool
-findAux __61: bool
-findAux __62: bool
-findAux __63: bool
-findAux __64: bool
-findAux __65: bool
-findAux __66: bool
-findAux __67: bool
-findAux __68: bool
-findAux __69: bool
-findAux __70: bool
-findAux __71: bool
-findAux __72: bool
-findAux __73: bool
-findAux __74: bool
-findAux __75: bool
-findAux __76: bool
-findAux __77: bool
-findAux __78: bool
-findAux __79: bool
-findAux __80: bool
-findAux __81: bool
-findAux __82: bool
-findAux __83: bool
-findAux __84: bool
-findAux __85: bool
-findAux __86: bool
-findAux __87: bool
-findAux __88: bool
-findAux __89: bool
-findAux __90: bool
-findAux __91: bool
-findAux __92: bool
-findAux __93: bool
-findAux __94: bool
-findAux __95: bool
-findAux __96: bool
-findAux __97: bool
-findAux __98: bool
-findAux __99: bool
-findAux __100: bool
-findAux __101: bool
-findAux __102: bool
-findAux __103: bool
-findAux __104: bool
-findAux __105: bool
-findAux __106: bool
-findAux __107: bool
-findAux __108: bool
-findAux __109: bool
-findAux __110: bool
-findAux __111: bool
-findAux __112: bool
-findAux __113: bool
-findAux __114: bool
-findAux __115: bool
-findAux __116: bool
-findAux __117: bool
-findAux __118: bool
-findAux __119: bool
-findAux __120: bool
-findAux __121: bool
-findAux __122: bool
-findAux __123: bool
-findAux __124: bool
-findAux __125: bool
-findAux __126: bool
-findAux __127: bool
-findAux __128: bool
-findAux __129: bool
-findAux __130: bool
-findAux __131: bool
-findAux __132: bool
-findAux __133: bool
-findAux __134: bool
-findAux __135: bool
-findAux __136: bool
-findAux __137: bool
-findAux __138: bool
-findAux __139: bool
-findAux __140: bool
-findAux __141: bool
-findAux __142: bool
-findAux __143: bool
-findAux __144: bool
-findAux __145: bool
-findAux __146: bool
-findAux __147: bool
-findAux __148: bool
-findAux __149: bool
-findAux __150: bool
-findAux __151: bool
-findAux __152: bool
-findAux __153: bool
-findAux __154: bool
-findAux __155: bool
-findAux __156: bool
-findAux __157: bool
-findAux __158: bool
-findAux __159: bool
-findAux __160: bool
-findAux __161: bool
-findAux __162: bool
-findAux __163: bool
-findAux __164: bool
-findAux __165: bool
-findAux __166: bool
-findAux __167: bool
-findAux __168: bool
-findAux __169: bool
-findAux __170: bool
 
 such that
 
@@ -1139,185 +272,20 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !(c#sign_magnitude_5)) using tseitin,
-define(__1 <-> !(a#sign_magnitude_4)) using tseitin,
-define(__2 <-> !(c#sign_magnitude_5)) using tseitin,
-define(__3 <-> !(c#sign_magnitude_4)) using tseitin,
-define(__4 <-> !(c#sign_magnitude_4)) using tseitin,
-define(__5 <-> !(c#sign_magnitude_3)) using tseitin,
-define(__6 <-> !(c#sign_magnitude_3)) using tseitin,
-define(__7 <-> !(c#sign_magnitude_2)) using tseitin,
-define(__8 <-> !(c#sign_magnitude_2)) using tseitin,
-define(__9 <-> !(c#sign_magnitude_1)) using tseitin,
-define(__10 <-> !(c#sign_magnitude_1)) using tseitin,
-define(__11 <-> or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)])) using tseitin,
-define(__12 <-> (c#sign_magnitude_5) -> (__11)) using tseitin,
-define(__13 <-> or([a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3;int(1..)])) using tseitin,
-define(__14 <-> (a#sign_magnitude_4) -> (__13)) using tseitin,
-define(__15 <-> or([__7,__9;int(1..)])) using tseitin,
-define(__16 <-> and([__5,__15;int(1..)])) using tseitin,
-define(__17 <-> or([__3,__16;int(1..)])) using tseitin,
-define(__18 <-> or([__8,__10;int(1..)])) using tseitin,
-define(__19 <-> and([__6,__18;int(1..)])) using tseitin,
-define(__20 <-> or([__4,__19;int(1..)])) using tseitin,
-define(__21 <-> (__2) -> (__20)) using tseitin,
-assert(__17) using tseitin,
+define(__0 <-> integer-weighted(-1*c#sign_magnitude_1, 2*and([c#sign_magnitude_5,c#sign_magnitude_1;int(1..)]), -2*c#sign_magnitude_2, 4*and([c#sign_magnitude_5,c#sign_magnitude_2;int(1..)]), -4*c#sign_magnitude_3, 8*and([c#sign_magnitude_5,c#sign_magnitude_3;int(1..)]), -8*c#sign_magnitude_4, 16*and([c#sign_magnitude_5,c#sign_magnitude_4;int(1..)])) LessEqual -8) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [],
+define(__1 <-> integer-weighted(1*c#sign_magnitude_1, -2*and([c#sign_magnitude_5,c#sign_magnitude_1;int(1..)]), 2*c#sign_magnitude_2, -4*and([c#sign_magnitude_5,c#sign_magnitude_2;int(1..)]), 4*c#sign_magnitude_3, -8*and([c#sign_magnitude_5,c#sign_magnitude_3;int(1..)]), 8*c#sign_magnitude_4, -16*and([c#sign_magnitude_5,c#sign_magnitude_4;int(1..)])) GreaterEqual 7) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [],
+define(__2 <-> integer-weighted(1*c#sign_magnitude_1, -2*and([c#sign_magnitude_5,c#sign_magnitude_1;int(1..)]), 2*c#sign_magnitude_2, -4*and([c#sign_magnitude_5,c#sign_magnitude_2;int(1..)]), 4*c#sign_magnitude_3, -8*and([c#sign_magnitude_5,c#sign_magnitude_3;int(1..)]), 8*c#sign_magnitude_4, -16*and([c#sign_magnitude_5,c#sign_magnitude_4;int(1..)])) LessEqual 10) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [],
 assert(__0) using tseitin,
-assert(__21) using tseitin,
-assert(__12) using tseitin,
-assert(__1) using tseitin,
-assert(__14) using tseitin,
-define(__22 <-> !((false) <-> (false))) using tseitin,
-define(__23 <-> !((__22) <-> (false))) using tseitin,
-define(__24 <-> and([__22,false;int(1..)])) using tseitin,
-define(__25 <-> !((false) <-> (false))) using tseitin,
-define(__26 <-> !((__25) <-> (__24))) using tseitin,
-define(__27 <-> and([__25,__24;int(1..)])) using tseitin,
-define(__28 <-> !((false) <-> (false))) using tseitin,
-define(__29 <-> !((__28) <-> (__27))) using tseitin,
-define(__30 <-> and([__28,__27;int(1..)])) using tseitin,
-define(__31 <-> !((true) <-> (false))) using tseitin,
-define(__32 <-> !((__31) <-> (__30))) using tseitin,
-define(__33 <-> and([__31,__30;int(1..)])) using tseitin,
-define(__34 <-> !((false) <-> (__33))) using tseitin,
-define(__35 <-> and([false,__33;int(1..)])) using tseitin,
-define(__36 <-> !((c#sign_magnitude_1) <-> (c#sign_magnitude_5))) using tseitin,
-define(__37 <-> !((__36) <-> (c#sign_magnitude_5))) using tseitin,
-define(__38 <-> and([__36,c#sign_magnitude_5;int(1..)])) using tseitin,
-define(__39 <-> !((c#sign_magnitude_2) <-> (c#sign_magnitude_5))) using tseitin,
-define(__40 <-> !((__39) <-> (__38))) using tseitin,
-define(__41 <-> and([__39,__38;int(1..)])) using tseitin,
-define(__42 <-> !((c#sign_magnitude_3) <-> (c#sign_magnitude_5))) using tseitin,
-define(__43 <-> !((__42) <-> (__41))) using tseitin,
-define(__44 <-> and([__42,__41;int(1..)])) using tseitin,
-define(__45 <-> !((c#sign_magnitude_4) <-> (c#sign_magnitude_5))) using tseitin,
-define(__46 <-> !((__45) <-> (__44))) using tseitin,
-define(__47 <-> and([__45,__44;int(1..)])) using tseitin,
-define(__48 <-> !((c#sign_magnitude_5) <-> (__47))) using tseitin,
-define(__49 <-> and([c#sign_magnitude_5,__47;int(1..)])) using tseitin,
-define(__50 <-> integer-weighted(1*__23, 2*__26, 4*__29, 8*__32, -16*__34, -1*__37, -2*__40, -4*__43, -8*__46, 16*__48) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 8, upper: 8 } }, PbTermGroup { start: 5, end: 10, structure: BoundedBinary { lower: -10, upper: -7 } }],
-assert(__50) using tseitin,
-define(__51 <-> !((true) <-> (false))) using tseitin,
-define(__52 <-> !((__51) <-> (false))) using tseitin,
-define(__53 <-> and([__51,false;int(1..)])) using tseitin,
-define(__54 <-> !((false) <-> (false))) using tseitin,
-define(__55 <-> !((__54) <-> (__53))) using tseitin,
-define(__56 <-> and([__54,__53;int(1..)])) using tseitin,
-define(__57 <-> !((true) <-> (false))) using tseitin,
-define(__58 <-> !((__57) <-> (__56))) using tseitin,
-define(__59 <-> and([__57,__56;int(1..)])) using tseitin,
-define(__60 <-> !((false) <-> (__59))) using tseitin,
-define(__61 <-> and([false,__59;int(1..)])) using tseitin,
-define(__62 <-> !((a#sign_magnitude_1) <-> (a#sign_magnitude_4))) using tseitin,
-define(__63 <-> !((__62) <-> (a#sign_magnitude_4))) using tseitin,
-define(__64 <-> and([__62,a#sign_magnitude_4;int(1..)])) using tseitin,
-define(__65 <-> !((a#sign_magnitude_2) <-> (a#sign_magnitude_4))) using tseitin,
-define(__66 <-> !((__65) <-> (__64))) using tseitin,
-define(__67 <-> and([__65,__64;int(1..)])) using tseitin,
-define(__68 <-> !((a#sign_magnitude_3) <-> (a#sign_magnitude_4))) using tseitin,
-define(__69 <-> !((__68) <-> (__67))) using tseitin,
-define(__70 <-> and([__68,__67;int(1..)])) using tseitin,
-define(__71 <-> !((a#sign_magnitude_4) <-> (__70))) using tseitin,
-define(__72 <-> and([a#sign_magnitude_4,__70;int(1..)])) using tseitin,
-define(__73 <-> integer-weighted(1*__52, 2*__55, 4*__58, -8*__60, 1*__63, 2*__66, 4*__69, -8*__71) LessEqual 10) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 5, upper: 5 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: 1, upper: 7 } }],
-assert(__73) using tseitin,
-define(__74 <-> !((c#sign_magnitude_1) <-> (c#sign_magnitude_5))) using tseitin,
-define(__75 <-> !((__74) <-> (c#sign_magnitude_5))) using tseitin,
-define(__76 <-> and([__74,c#sign_magnitude_5;int(1..)])) using tseitin,
-define(__77 <-> !((c#sign_magnitude_2) <-> (c#sign_magnitude_5))) using tseitin,
-define(__78 <-> !((__77) <-> (__76))) using tseitin,
-define(__79 <-> and([__77,__76;int(1..)])) using tseitin,
-define(__80 <-> !((c#sign_magnitude_3) <-> (c#sign_magnitude_5))) using tseitin,
-define(__81 <-> !((__80) <-> (__79))) using tseitin,
-define(__82 <-> and([__80,__79;int(1..)])) using tseitin,
-define(__83 <-> !((c#sign_magnitude_4) <-> (c#sign_magnitude_5))) using tseitin,
-define(__84 <-> !((__83) <-> (__82))) using tseitin,
-define(__85 <-> and([__83,__82;int(1..)])) using tseitin,
-define(__86 <-> !((c#sign_magnitude_5) <-> (__85))) using tseitin,
-define(__87 <-> and([c#sign_magnitude_5,__85;int(1..)])) using tseitin,
-define(__88 <-> !((true) <-> (false))) using tseitin,
-define(__89 <-> !((__88) <-> (false))) using tseitin,
-define(__90 <-> and([__88,false;int(1..)])) using tseitin,
-define(__91 <-> !((true) <-> (false))) using tseitin,
-define(__92 <-> !((__91) <-> (__90))) using tseitin,
-define(__93 <-> and([__91,__90;int(1..)])) using tseitin,
-define(__94 <-> !((true) <-> (false))) using tseitin,
-define(__95 <-> !((__94) <-> (__93))) using tseitin,
-define(__96 <-> and([__94,__93;int(1..)])) using tseitin,
-define(__97 <-> !((false) <-> (__96))) using tseitin,
-define(__98 <-> and([false,__96;int(1..)])) using tseitin,
-define(__99 <-> integer-weighted(1*__75, 2*__78, 4*__81, 8*__84, -16*__86, -1*__89, -2*__92, -4*__95, 8*__97) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 7, upper: 10 } }, PbTermGroup { start: 5, end: 9, structure: BoundedBinary { lower: -7, upper: -7 } }],
-define(__100 <-> !((c#sign_magnitude_1) <-> (c#sign_magnitude_5))) using tseitin,
-define(__101 <-> !((__100) <-> (c#sign_magnitude_5))) using tseitin,
-define(__102 <-> and([__100,c#sign_magnitude_5;int(1..)])) using tseitin,
-define(__103 <-> !((c#sign_magnitude_2) <-> (c#sign_magnitude_5))) using tseitin,
-define(__104 <-> !((__103) <-> (__102))) using tseitin,
-define(__105 <-> and([__103,__102;int(1..)])) using tseitin,
-define(__106 <-> !((c#sign_magnitude_3) <-> (c#sign_magnitude_5))) using tseitin,
-define(__107 <-> !((__106) <-> (__105))) using tseitin,
-define(__108 <-> and([__106,__105;int(1..)])) using tseitin,
-define(__109 <-> !((c#sign_magnitude_4) <-> (c#sign_magnitude_5))) using tseitin,
-define(__110 <-> !((__109) <-> (__108))) using tseitin,
-define(__111 <-> and([__109,__108;int(1..)])) using tseitin,
-define(__112 <-> !((c#sign_magnitude_5) <-> (__111))) using tseitin,
-define(__113 <-> and([c#sign_magnitude_5,__111;int(1..)])) using tseitin,
-define(__114 <-> !((false) <-> (false))) using tseitin,
-define(__115 <-> !((__114) <-> (false))) using tseitin,
-define(__116 <-> and([__114,false;int(1..)])) using tseitin,
-define(__117 <-> !((true) <-> (false))) using tseitin,
-define(__118 <-> !((__117) <-> (__116))) using tseitin,
-define(__119 <-> and([__117,__116;int(1..)])) using tseitin,
-define(__120 <-> !((false) <-> (false))) using tseitin,
-define(__121 <-> !((__120) <-> (__119))) using tseitin,
-define(__122 <-> and([__120,__119;int(1..)])) using tseitin,
-define(__123 <-> !((true) <-> (false))) using tseitin,
-define(__124 <-> !((__123) <-> (__122))) using tseitin,
-define(__125 <-> and([__123,__122;int(1..)])) using tseitin,
-define(__126 <-> !((false) <-> (__125))) using tseitin,
-define(__127 <-> and([false,__125;int(1..)])) using tseitin,
-define(__128 <-> integer-weighted(1*__101, 2*__104, 4*__107, 8*__110, -16*__112, -1*__115, -2*__118, -4*__121, -8*__124, 16*__126) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 7, upper: 10 } }, PbTermGroup { start: 5, end: 10, structure: BoundedBinary { lower: -10, upper: -10 } }],
-define(__129 <-> and([__99,__128;int(1..)])) using tseitin,
-assert(__129) using tseitin,
-define(__130 <-> !((a#sign_magnitude_1) <-> (a#sign_magnitude_4))) using tseitin,
-define(__131 <-> !((__130) <-> (a#sign_magnitude_4))) using tseitin,
-define(__132 <-> and([__130,a#sign_magnitude_4;int(1..)])) using tseitin,
-define(__133 <-> !((a#sign_magnitude_2) <-> (a#sign_magnitude_4))) using tseitin,
-define(__134 <-> !((__133) <-> (__132))) using tseitin,
-define(__135 <-> and([__133,__132;int(1..)])) using tseitin,
-define(__136 <-> !((a#sign_magnitude_3) <-> (a#sign_magnitude_4))) using tseitin,
-define(__137 <-> !((__136) <-> (__135))) using tseitin,
-define(__138 <-> and([__136,__135;int(1..)])) using tseitin,
-define(__139 <-> !((a#sign_magnitude_4) <-> (__138))) using tseitin,
-define(__140 <-> and([a#sign_magnitude_4,__138;int(1..)])) using tseitin,
-define(__141 <-> !((true) <-> (false))) using tseitin,
-define(__142 <-> !((__141) <-> (false))) using tseitin,
-define(__143 <-> and([__141,false;int(1..)])) using tseitin,
-define(__144 <-> !((false) <-> (__143))) using tseitin,
-define(__145 <-> and([false,__143;int(1..)])) using tseitin,
-define(__146 <-> integer-weighted(1*__131, 2*__134, 4*__137, -8*__139, -1*__142, 2*__144) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 7 } }, PbTermGroup { start: 4, end: 6, structure: BoundedBinary { lower: -1, upper: -1 } }],
-define(__147 <-> !((a#sign_magnitude_1) <-> (a#sign_magnitude_4))) using tseitin,
-define(__148 <-> !((__147) <-> (a#sign_magnitude_4))) using tseitin,
-define(__149 <-> and([__147,a#sign_magnitude_4;int(1..)])) using tseitin,
-define(__150 <-> !((a#sign_magnitude_2) <-> (a#sign_magnitude_4))) using tseitin,
-define(__151 <-> !((__150) <-> (__149))) using tseitin,
-define(__152 <-> and([__150,__149;int(1..)])) using tseitin,
-define(__153 <-> !((a#sign_magnitude_3) <-> (a#sign_magnitude_4))) using tseitin,
-define(__154 <-> !((__153) <-> (__152))) using tseitin,
-define(__155 <-> and([__153,__152;int(1..)])) using tseitin,
-define(__156 <-> !((a#sign_magnitude_4) <-> (__155))) using tseitin,
-define(__157 <-> and([a#sign_magnitude_4,__155;int(1..)])) using tseitin,
-define(__158 <-> !((true) <-> (false))) using tseitin,
-define(__159 <-> !((__158) <-> (false))) using tseitin,
-define(__160 <-> and([__158,false;int(1..)])) using tseitin,
-define(__161 <-> !((true) <-> (false))) using tseitin,
-define(__162 <-> !((__161) <-> (__160))) using tseitin,
-define(__163 <-> and([__161,__160;int(1..)])) using tseitin,
-define(__164 <-> !((true) <-> (false))) using tseitin,
-define(__165 <-> !((__164) <-> (__163))) using tseitin,
-define(__166 <-> and([__164,__163;int(1..)])) using tseitin,
-define(__167 <-> !((false) <-> (__166))) using tseitin,
-define(__168 <-> and([false,__166;int(1..)])) using tseitin,
-define(__169 <-> integer-weighted(1*__148, 2*__151, 4*__154, -8*__156, -1*__159, -2*__162, -4*__165, 8*__167) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 7 } }, PbTermGroup { start: 4, end: 8, structure: BoundedBinary { lower: -7, upper: -7 } }],
-define(__170 <-> and([__146,__169;int(1..)])) using tseitin,
-assert(__170) using tseitin
+assert(or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)])) using tseitin,
+assert(!(c#sign_magnitude_5)) using tseitin,
+assert((!(c#sign_magnitude_5)) -> (or([!(c#sign_magnitude_4),and([!(c#sign_magnitude_3),or([!(c#sign_magnitude_2),and([!(c#sign_magnitude_1);int(1..)]);int(1..)]);int(1..)]);int(1..)]))) using tseitin,
+assert((c#sign_magnitude_5) -> (or([c#sign_magnitude_1,c#sign_magnitude_2,c#sign_magnitude_3,c#sign_magnitude_4;int(1..)]))) using tseitin,
+assert(or([and([__1,__2;int(1..)]);int(1..)])) using tseitin,
+define(__3 <-> integer-weighted(1*a#sign_magnitude_1, -2*and([a#sign_magnitude_4,a#sign_magnitude_1;int(1..)]), 2*a#sign_magnitude_2, -4*and([a#sign_magnitude_4,a#sign_magnitude_2;int(1..)]), 4*a#sign_magnitude_3, -8*and([a#sign_magnitude_4,a#sign_magnitude_3;int(1..)])) LessEqual 5) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [],
+define(__4 <-> integer-weighted(1*a#sign_magnitude_1, -2*and([a#sign_magnitude_4,a#sign_magnitude_1;int(1..)]), 2*a#sign_magnitude_2, -4*and([a#sign_magnitude_4,a#sign_magnitude_2;int(1..)]), 4*a#sign_magnitude_3, -8*and([a#sign_magnitude_4,a#sign_magnitude_3;int(1..)])) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [],
+define(__5 <-> integer-weighted(1*a#sign_magnitude_1, -2*and([a#sign_magnitude_4,a#sign_magnitude_1;int(1..)]), 2*a#sign_magnitude_2, -4*and([a#sign_magnitude_4,a#sign_magnitude_2;int(1..)]), 4*a#sign_magnitude_3, -8*and([a#sign_magnitude_4,a#sign_magnitude_3;int(1..)])) LessEqual 7) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [],
+assert(__3) using tseitin,
+assert(!(a#sign_magnitude_4)) using tseitin,
+assert((a#sign_magnitude_4) -> (or([a#sign_magnitude_1,a#sign_magnitude_2,a#sign_magnitude_3;int(1..)]))) using tseitin,
+assert(or([and([__4,__5;int(1..)]);int(1..)])) using tseitin
 

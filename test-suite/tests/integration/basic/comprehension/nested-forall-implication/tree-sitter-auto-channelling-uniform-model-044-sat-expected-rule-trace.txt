@@ -35,28 +35,18 @@ new SAT encoding decisions:
 
 --
 
+and([ and([ (i <= j) -> (x <= (j - i)) | j : int(1..2) ]) | i : int(1..2) ]),
+or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([ and([ (i <= j) -> (x <= (j - i)) | j : int(1..2) ]) | i : int(1..2) ])
+new SAT encoding decisions:
+  assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])) using tseitin
+
+--
+
 and([ and([ (i <= j) -> (x <= (j - i)) | j : int(1..2) ]) | i : int(1..2) ])
    ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
 and([ (i <= j) -> (x <= (j - i)) | i : int(1..2), j : int(1..2) ])
-
---
-
-or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])) using tseitin
-
---
-
-and([ (i <= j) -> (x <= (j - i)) | i : int(1..2), j : int(1..2) ]),
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([ (i <= j) -> (x <= (j - i)) | i : int(1..2), j : int(1..2) ])
-new SAT encoding decisions:
-  assert(__0) using tseitin
 
 --
 
@@ -74,25 +64,19 @@ x
 
 x <= 0
    ~~> select_integer_relation ([("SAT", 18500)])
-__1
+__0
 new variables:
-  findAux __1: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(0*x#direct_1, 1*x#direct_2, 2*x#direct_3, 3*x#direct_4, 4*x#direct_5, 5*x#direct_6) LessEqual 0) using None with [PbTermGroup { start: 0, end: 6, structure: Choice }]
+  define(__0 <-> integer-weighted(0*x#direct_1, 1*x#direct_2, 2*x#direct_3, 3*x#direct_4, 4*x#direct_5, 5*x#direct_6) LessEqual 0) using None with [PbTermGroup { start: 0, end: 6, structure: Choice }]
 
 --
 
-and([__1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__1
+and([__0;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(and([__0;int(1..)])) using tseitin
 
 --
 
@@ -106,7 +90,6 @@ find x#direct_4: bool
 find x#direct_5: bool
 find x#direct_6: bool
 findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -115,8 +98,7 @@ true
 sat encoding decisions:
 
 at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
-define(__0 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-define(__1 <-> integer-weighted(0*x#direct_1, 1*x#direct_2, 2*x#direct_3, 3*x#direct_4, 4*x#direct_5, 5*x#direct_6) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Choice }],
-assert(__1) using tseitin
+assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(0*x#direct_1, 1*x#direct_2, 2*x#direct_3, 3*x#direct_4, 4*x#direct_5, 5*x#direct_6) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Choice }],
+assert(and([__0;int(1..)])) using tseitin
 

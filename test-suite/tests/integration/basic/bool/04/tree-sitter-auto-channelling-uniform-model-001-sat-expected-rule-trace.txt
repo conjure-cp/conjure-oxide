@@ -13,9 +13,24 @@ y != false
 
 x,
 y != false
-   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-x,
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 y != false
+new SAT encoding decisions:
+  assert(x) using tseitin
+
+--
+
+y != false
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(y != false) using tseitin
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
 new variables:
   find z#direct_1: bool
 new constraints:
@@ -24,60 +39,23 @@ new constraints:
 
 --
 
-x,
-y != false,
+true,
 sum([toInt(z#direct_1);int(1..)]) <= 1,
 or([z#direct_1;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-x,
-y != false,
+true,
 or([z#direct_1;int(1..)])
 new SAT encoding decisions:
   at-most-one(z#direct_1) using None
 
 --
 
+true,
 or([z#direct_1;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-z#direct_1
-
---
-
-y != false
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> !((y) <-> (false))) using tseitin
-
---
-
-x,
-__0,
-z#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
-__0,
-z#direct_1
-new SAT encoding decisions:
-  assert(x) using tseitin
-
---
-
-__0,
-z#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
-z#direct_1
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-z#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(z#direct_1) using tseitin
+  assert(or([z#direct_1;int(1..)])) using tseitin
 
 --
 
@@ -87,7 +65,6 @@ find x: bool
 find y: bool
 find z: int(42)
 find z#direct_1: bool
-findAux __0: bool
 
 such that
 
@@ -95,9 +72,8 @@ true
 
 sat encoding decisions:
 
-at-most-one(z#direct_1) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
-define(__0 <-> !((y) <-> (false))) using tseitin,
 assert(x) using tseitin,
-assert(__0) using tseitin,
-assert(z#direct_1) using tseitin
+assert(y != false) using tseitin,
+at-most-one(z#direct_1) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+assert(or([z#direct_1;int(1..)])) using tseitin
 

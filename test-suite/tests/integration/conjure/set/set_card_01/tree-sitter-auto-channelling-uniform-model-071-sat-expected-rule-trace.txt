@@ -69,16 +69,10 @@ new SAT encoding decisions:
 --
 
 and([s#occurrence_1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-s#occurrence_1
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-s#occurrence_1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
 new SAT encoding decisions:
-  assert(s#occurrence_1) using tseitin
+  assert(and([s#occurrence_1;int(1..)])) using tseitin
 
 --
 
@@ -97,5 +91,5 @@ sat encoding decisions:
 count(s#occurrence_1, s#occurrence_2) Exactly 1 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
 count(s#occurrence_1, s#occurrence_2) AtLeast 1 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
 count(s#occurrence_1, s#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
-assert(s#occurrence_1) using tseitin
+assert(and([s#occurrence_1;int(1..)])) using tseitin
 

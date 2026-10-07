@@ -39,6 +39,26 @@ new constraints:
 
 --
 
+!(m[sum([i,j;int(1..)])]),
+and([!(i#rank_1);int(1..)]),
+and([!(j#rank_1);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(m[sum([i,j;int(1..)])]),
+and([!(j#rank_1);int(1..)])
+new SAT encoding decisions:
+  assert(and([!(i#rank_1);int(1..)])) using tseitin
+
+--
+
+!(m[sum([i,j;int(1..)])]),
+and([!(j#rank_1);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(m[sum([i,j;int(1..)])])
+new SAT encoding decisions:
+  assert(and([!(j#rank_1);int(1..)])) using tseitin
+
+--
+
 i
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
 SATInt(Rank([(1, 1)]), [i#rank_1;int(1..)] [1, 1])
@@ -48,58 +68,6 @@ SATInt(Rank([(1, 1)]), [i#rank_1;int(1..)] [1, 1])
 j
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
 SATInt(Rank([(1, 1)]), [j#rank_1;int(1..)] [1, 1])
-
---
-
-!(i#rank_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> !(i#rank_1)) using tseitin
-
---
-
-!(j#rank_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> !(j#rank_1)) using tseitin
-
---
-
-and([__1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__1
-
---
-
-and([__0;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__0
-
---
-
-!(m[sum([SATInt(Rank([(1, 1)]), [i#rank_1;int(1..)] [1, 1]),SATInt(Rank([(1, 1)]), [j#rank_1;int(1..)] [1, 1]);int(1..)])]),
-__0,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-!(m[sum([SATInt(Rank([(1, 1)]), [i#rank_1;int(1..)] [1, 1]),SATInt(Rank([(1, 1)]), [j#rank_1;int(1..)] [1, 1]);int(1..)])]),
-__1
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-!(m[sum([SATInt(Rank([(1, 1)]), [i#rank_1;int(1..)] [1, 1]),SATInt(Rank([(1, 1)]), [j#rank_1;int(1..)] [1, 1]);int(1..)])]),
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-!(m[sum([SATInt(Rank([(1, 1)]), [i#rank_1;int(1..)] [1, 1]),SATInt(Rank([(1, 1)]), [j#rank_1;int(1..)] [1, 1]);int(1..)])])
-new SAT encoding decisions:
-  assert(__1) using tseitin
 
 --
 
@@ -124,8 +92,6 @@ find m#components_1: bool
 find m#components_2: bool
 find i#rank_1: bool
 find j#rank_1: bool
-findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -133,8 +99,6 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !(i#rank_1)) using tseitin,
-define(__1 <-> !(j#rank_1)) using tseitin,
-assert(__0) using tseitin,
-assert(__1) using tseitin
+assert(and([!(i#rank_1);int(1..)])) using tseitin,
+assert(and([!(j#rank_1);int(1..)])) using tseitin
 

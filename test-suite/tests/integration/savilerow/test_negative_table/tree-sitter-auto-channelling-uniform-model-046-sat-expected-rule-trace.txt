@@ -94,71 +94,37 @@ new SAT encoding decisions:
 
 --
 
-!(__0)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> !(__0)) using tseitin
-
---
-
-__1,
+!(__0),
 or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10;int(1..)]),
 or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5,y#direct_6,y#direct_7,y#direct_8,y#direct_9,y#direct_10;int(1..)])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-__1,
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10;int(1..)]),
 or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5,y#direct_6,y#direct_7,y#direct_8,y#direct_9,y#direct_10;int(1..)])
+new SAT encoding decisions:
+  assert(!(__0)) using tseitin
 
 --
 
-or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
+or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10;int(1..)]),
+or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5,y#direct_6,y#direct_7,y#direct_8,y#direct_9,y#direct_10;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5,y#direct_6,y#direct_7,y#direct_8,y#direct_9,y#direct_10;int(1..)])
 new SAT encoding decisions:
-  define(__2 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10;int(1..)])) using tseitin
+  assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10;int(1..)])) using tseitin
 
 --
 
 or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5,y#direct_6,y#direct_7,y#direct_8,y#direct_9,y#direct_10;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__3 <-> or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5,y#direct_6,y#direct_7,y#direct_8,y#direct_9,y#direct_10;int(1..)])) using tseitin
+  assert(or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5,y#direct_6,y#direct_7,y#direct_8,y#direct_9,y#direct_10;int(1..)])) using tseitin
 
 --
 
-__1,
-__2,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-__2,
-__3
-new SAT encoding decisions:
-  assert(__1) using tseitin
-
---
-
-__2,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-__3
-new SAT encoding decisions:
-  assert(__2) using tseitin
-
---
-
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
 true
-new SAT encoding decisions:
-  assert(__3) using tseitin
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+true
 
 --
 
@@ -188,7 +154,6 @@ find y#direct_8: bool
 find y#direct_9: bool
 find y#direct_10: bool
 findAux __0: bool
-findAux __1: bool
 letting tab#components_1 be 1
 letting tab#components_2 be 1
 letting tab#components_3 be 2
@@ -209,8 +174,6 @@ letting tab#components_17 be 9
 letting tab#components_18 be 9
 letting tab#components_19 be 10
 letting tab#components_20 be 10
-findAux __2: bool
-findAux __3: bool
 
 such that
 
@@ -221,10 +184,7 @@ sat encoding decisions:
 define(__0 <-> table(0+weighted(1*x#direct_1, 2*x#direct_2, 3*x#direct_3, 4*x#direct_4, 5*x#direct_5, 6*x#direct_6, 7*x#direct_7, 8*x#direct_8, 9*x#direct_9, 10*x#direct_10) with [PbTermGroup { start: 0, end: 10, structure: Choice }] choices(1:x#direct_1, 2:x#direct_2, 3:x#direct_3, 4:x#direct_4, 5:x#direct_5, 6:x#direct_6, 7:x#direct_7, 8:x#direct_8, 9:x#direct_9, 10:x#direct_10), 0+weighted(1*y#direct_1, 2*y#direct_2, 3*y#direct_3, 4*y#direct_4, 5*y#direct_5, 6*y#direct_6, 7*y#direct_7, 8*y#direct_8, 9*y#direct_9, 10*y#direct_10) with [PbTermGroup { start: 0, end: 10, structure: Choice }] choices(1:y#direct_1, 2:y#direct_2, 3:y#direct_3, 4:y#direct_4, 5:y#direct_5, 6:y#direct_6, 7:y#direct_7, 8:y#direct_8, 9:y#direct_9, 10:y#direct_10), [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7], [8, 8], [9, 9], [10, 10]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
 at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6, x#direct_7, x#direct_8, x#direct_9, x#direct_10) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
 at-most-one(y#direct_1, y#direct_2, y#direct_3, y#direct_4, y#direct_5, y#direct_6, y#direct_7, y#direct_8, y#direct_9, y#direct_10) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
-define(__1 <-> !(__0)) using tseitin,
-define(__2 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10;int(1..)])) using tseitin,
-define(__3 <-> or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5,y#direct_6,y#direct_7,y#direct_8,y#direct_9,y#direct_10;int(1..)])) using tseitin,
-assert(__1) using tseitin,
-assert(__2) using tseitin,
-assert(__3) using tseitin
+assert(!(__0)) using tseitin,
+assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10;int(1..)])) using tseitin,
+assert(or([y#direct_1,y#direct_2,y#direct_3,y#direct_4,y#direct_5,y#direct_6,y#direct_7,y#direct_8,y#direct_9,y#direct_10;int(1..)])) using tseitin
 

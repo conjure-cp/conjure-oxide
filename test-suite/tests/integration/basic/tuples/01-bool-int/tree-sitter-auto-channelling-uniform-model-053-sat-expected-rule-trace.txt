@@ -58,32 +58,16 @@ new SAT encoding decisions:
 
 --
 
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
 x[1] = false,
 x[2] = 2,
 true,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 x[1] = false,
 x[2] = 2,
 true
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -99,24 +83,14 @@ x#components_1
 
 --
 
-x#components_1 = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> (x#components_1) <-> (false)) using tseitin
-
---
-
-__3,
+x#components_1 = false,
 x[2] = 2,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 x[2] = 2,
 true
 new SAT encoding decisions:
-  assert(__3) using tseitin
+  assert(x#components_1 = false) using tseitin
 
 --
 
@@ -140,20 +114,20 @@ x#components_2
 
 x#components_2 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__4
+__2
 new variables:
-  findAux __4: bool
+  findAux __2: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(1*x#components_2#offset_1, 2*x#components_2#offset_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+  define(__2 <-> integer-weighted(1*x#components_2#offset_1, 2*x#components_2#offset_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
 
 --
 
-__4,
+__2,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert(__2) using tseitin
 
 --
 
@@ -167,8 +141,6 @@ find x#components_2#offset_2: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
-findAux __3: bool
-findAux __4: bool
 
 such that
 
@@ -178,10 +150,8 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*x#components_2#offset_1, 2*x#components_2#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
 define(__1 <-> integer-weighted(1*x#components_2#offset_1, 2*x#components_2#offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
-assert(__2) using tseitin,
-define(__3 <-> (x#components_1) <-> (false)) using tseitin,
-assert(__3) using tseitin,
-define(__4 <-> integer-weighted(1*x#components_2#offset_1, 2*x#components_2#offset_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
-assert(__4) using tseitin
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
+assert(x#components_1 = false) using tseitin,
+define(__2 <-> integer-weighted(1*x#components_2#offset_1, 2*x#components_2#offset_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+assert(__2) using tseitin
 

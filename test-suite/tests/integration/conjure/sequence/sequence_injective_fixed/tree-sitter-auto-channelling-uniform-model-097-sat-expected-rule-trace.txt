@@ -87,107 +87,24 @@ new SAT encoding decisions:
 
 --
 
-!(x#explicit_1#components_1#offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> !(x#explicit_1#components_1#offset_2)) using tseitin
-
---
-
-!(x#explicit_1#components_2#offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> !(x#explicit_1#components_2#offset_2)) using tseitin
-
---
-
-!(x#explicit_1#components_1#offset_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> !(x#explicit_1#components_1#offset_1)) using tseitin
-
---
-
-!(x#explicit_1#components_2#offset_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> !(x#explicit_1#components_2#offset_1)) using tseitin
-
---
-
+true,
+true,
+true,
+allDifferent(x#explicit_1),
+or([!(x#explicit_1#components_1#offset_2),and([!(x#explicit_1#components_1#offset_1);int(1..)]);int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)]),
+or([!(x#explicit_1#components_2#offset_2),and([!(x#explicit_1#components_2#offset_1);int(1..)]);int(1..)]),
 or([and([__2,__3;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__2,__3;int(1..)])
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__6;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__6
-
---
-
-and([__7;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__7
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+true,
+true,
+allDifferent(x#explicit_1),
+or([and([__0,__1;int(1..)]);int(1..)]),
+or([!(x#explicit_1#components_2#offset_2),and([!(x#explicit_1#components_2#offset_1);int(1..)]);int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  define(__8 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-or([__4,__6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> or([__4,__6;int(1..)])) using tseitin
-
---
-
-or([__5,__7;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> or([__5,__7;int(1..)])) using tseitin
+  assert(or([!(x#explicit_1#components_1#offset_2),and([!(x#explicit_1#components_1#offset_1);int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -195,20 +112,18 @@ true,
 true,
 true,
 allDifferent(x#explicit_1),
-__10,
-__8,
-__11,
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([and([__0,__1;int(1..)]);int(1..)]),
+or([!(x#explicit_1#components_2#offset_2),and([!(x#explicit_1#components_2#offset_1);int(1..)]);int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true,
 allDifferent(x#explicit_1),
-__8,
-__11,
-__9
+or([!(x#explicit_1#components_2#offset_2),and([!(x#explicit_1#components_2#offset_1);int(1..)]);int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__10) using tseitin
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -216,18 +131,16 @@ true,
 true,
 true,
 allDifferent(x#explicit_1),
-__8,
-__11,
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([!(x#explicit_1#components_2#offset_2),and([!(x#explicit_1#components_2#offset_1);int(1..)]);int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true,
 allDifferent(x#explicit_1),
-__11,
-__9
+or([and([__2,__3;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__8) using tseitin
+  assert(or([!(x#explicit_1#components_2#offset_2),and([!(x#explicit_1#components_2#offset_1);int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -235,31 +148,14 @@ true,
 true,
 true,
 allDifferent(x#explicit_1),
-__11,
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-allDifferent(x#explicit_1),
-__9
-new SAT encoding decisions:
-  assert(__11) using tseitin
-
---
-
-true,
-true,
-true,
-allDifferent(x#explicit_1),
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true,
 allDifferent(x#explicit_1)
 new SAT encoding decisions:
-  assert(__9) using tseitin
+  assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -283,24 +179,24 @@ x#explicit_1#components_2
 
 allDifferent([x#explicit_1#components_1,x#explicit_1#components_2;int(1..2)])
    ~~> select_alldifferent ([("SAT", 18500)])
-__12
+__4
 new variables:
-  findAux __12: bool
+  findAux __4: bool
 new SAT encoding decisions:
-  define(__12 <-> allDifferent(1+weighted(1*x#explicit_1#components_1#offset_1, 2*x#explicit_1#components_1#offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], 1+weighted(1*x#explicit_1#components_2#offset_1, 2*x#explicit_1#components_2#offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }])) using None, AMO None, PB None
+  define(__4 <-> allDifferent(1+weighted(1*x#explicit_1#components_1#offset_1, 2*x#explicit_1#components_1#offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], 1+weighted(1*x#explicit_1#components_2#offset_1, 2*x#explicit_1#components_2#offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }])) using None, AMO None, PB None
 
 --
 
 true,
 true,
 true,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
+__4
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true
 new SAT encoding decisions:
-  assert(__12) using tseitin
+  assert(__4) using tseitin
 
 --
 
@@ -319,14 +215,6 @@ findAux __1: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
-findAux __5: bool
-findAux __6: bool
-findAux __7: bool
-findAux __8: bool
-findAux __9: bool
-findAux __10: bool
-findAux __11: bool
-findAux __12: bool
 
 such that
 
@@ -340,18 +228,10 @@ define(__0 <-> integer-weighted(1*x#explicit_1#components_1#offset_1, 2*x#explic
 define(__1 <-> integer-weighted(1*x#explicit_1#components_1#offset_1, 2*x#explicit_1#components_1#offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
 define(__2 <-> integer-weighted(1*x#explicit_1#components_2#offset_1, 2*x#explicit_1#components_2#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
 define(__3 <-> integer-weighted(1*x#explicit_1#components_2#offset_1, 2*x#explicit_1#components_2#offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__4 <-> !(x#explicit_1#components_1#offset_2)) using tseitin,
-define(__5 <-> !(x#explicit_1#components_2#offset_2)) using tseitin,
-define(__6 <-> !(x#explicit_1#components_1#offset_1)) using tseitin,
-define(__7 <-> !(x#explicit_1#components_2#offset_1)) using tseitin,
-define(__8 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__9 <-> and([__2,__3;int(1..)])) using tseitin,
-define(__10 <-> or([__4,__6;int(1..)])) using tseitin,
-define(__11 <-> or([__5,__7;int(1..)])) using tseitin,
-assert(__10) using tseitin,
-assert(__8) using tseitin,
-assert(__11) using tseitin,
-assert(__9) using tseitin,
-define(__12 <-> allDifferent(1+weighted(1*x#explicit_1#components_1#offset_1, 2*x#explicit_1#components_1#offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], 1+weighted(1*x#explicit_1#components_2#offset_1, 2*x#explicit_1#components_2#offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
-assert(__12) using tseitin
+assert(or([!(x#explicit_1#components_1#offset_2),and([!(x#explicit_1#components_1#offset_1);int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
+assert(or([!(x#explicit_1#components_2#offset_2),and([!(x#explicit_1#components_2#offset_1);int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin,
+define(__4 <-> allDifferent(1+weighted(1*x#explicit_1#components_1#offset_1, 2*x#explicit_1#components_1#offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], 1+weighted(1*x#explicit_1#components_2#offset_1, 2*x#explicit_1#components_2#offset_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+assert(__4) using tseitin
 

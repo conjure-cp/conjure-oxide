@@ -118,12 +118,36 @@ total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
 total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ]),
 or([total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)]),
 or([total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])
-   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
 total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
 total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-or([total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)]),
 or([total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])
+new SAT encoding decisions:
+  assert(or([total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)])) using tseitin
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+or([total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
+new SAT encoding decisions:
+  assert(or([total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])) using tseitin
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
 new variables:
   find selected#components_1: bool
   find selected#components_2: bool
@@ -146,99 +170,47 @@ SATInt(Direct, [total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_
 
 sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
 SATInt(Direct, [total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
-SATInt(Direct, [total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-or([total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)]),
-or([total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])
+SATInt(Direct, [total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ])
    ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
 sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
 SATInt(Direct, [total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
-SATInt(Direct, [total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-or([total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)]),
-or([total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])
-
---
-
-or([total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)])) using tseitin
-
---
-
-or([total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])) using tseitin
-
---
-
-sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
-SATInt(Direct, [total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
-SATInt(Direct, [total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-__0,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
-SATInt(Direct, [total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
-SATInt(Direct, [total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-__1
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
-SATInt(Direct, [total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
-SATInt(Direct, [total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
-SATInt(Direct, [total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
 SATInt(Direct, [total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ])
-new SAT encoding decisions:
-  assert(__1) using tseitin
 
 --
 
 SATInt(Direct, [total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ])
+SATInt(Log, [__0,__1,__2,__3,__4,false;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ])
 new variables:
+  findAux __0: bool
+  findAux __1: bool
   findAux __2: bool
   findAux __3: bool
   findAux __4: bool
-  findAux __5: bool
-  findAux __6: bool
 new SAT encoding decisions:
-  define(__2 <-> or([total_cost#direct_2,total_cost#direct_4,total_cost#direct_6,total_cost#direct_8,total_cost#direct_10,total_cost#direct_12,total_cost#direct_14,total_cost#direct_16,total_cost#direct_18,total_cost#direct_20;int(1..)])) using tseitin
-  define(__3 <-> or([total_cost#direct_3,total_cost#direct_4,total_cost#direct_7,total_cost#direct_8,total_cost#direct_11,total_cost#direct_12,total_cost#direct_15,total_cost#direct_16,total_cost#direct_19,total_cost#direct_20;int(1..)])) using tseitin
-  define(__4 <-> or([total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_21;int(1..)])) using tseitin
-  define(__5 <-> or([total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16;int(1..)])) using tseitin
-  define(__6 <-> or([total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)])) using tseitin
+  define(__0 <-> or([total_cost#direct_2,total_cost#direct_4,total_cost#direct_6,total_cost#direct_8,total_cost#direct_10,total_cost#direct_12,total_cost#direct_14,total_cost#direct_16,total_cost#direct_18,total_cost#direct_20;int(1..)])) using tseitin
+  define(__1 <-> or([total_cost#direct_3,total_cost#direct_4,total_cost#direct_7,total_cost#direct_8,total_cost#direct_11,total_cost#direct_12,total_cost#direct_15,total_cost#direct_16,total_cost#direct_19,total_cost#direct_20;int(1..)])) using tseitin
+  define(__2 <-> or([total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_21;int(1..)])) using tseitin
+  define(__3 <-> or([total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16;int(1..)])) using tseitin
+  define(__4 <-> or([total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)])) using tseitin
 
 --
 
 SATInt(Direct, [total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-SATInt(Log, [__7,__8,__9,__10,__11,false;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ])
+SATInt(Log, [__5,__6,__7,__8,__9,false;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ])
 new variables:
+  findAux __5: bool
+  findAux __6: bool
   findAux __7: bool
   findAux __8: bool
   findAux __9: bool
-  findAux __10: bool
-  findAux __11: bool
 new SAT encoding decisions:
-  define(__7 <-> or([total_carbon#direct_2,total_carbon#direct_4,total_carbon#direct_6,total_carbon#direct_8,total_carbon#direct_10,total_carbon#direct_12,total_carbon#direct_14,total_carbon#direct_16,total_carbon#direct_18,total_carbon#direct_20;int(1..)])) using tseitin
-  define(__8 <-> or([total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_19,total_carbon#direct_20;int(1..)])) using tseitin
-  define(__9 <-> or([total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_21;int(1..)])) using tseitin
-  define(__10 <-> or([total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16;int(1..)])) using tseitin
-  define(__11 <-> or([total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])) using tseitin
+  define(__5 <-> or([total_carbon#direct_2,total_carbon#direct_4,total_carbon#direct_6,total_carbon#direct_8,total_carbon#direct_10,total_carbon#direct_12,total_carbon#direct_14,total_carbon#direct_16,total_carbon#direct_18,total_carbon#direct_20;int(1..)])) using tseitin
+  define(__6 <-> or([total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_19,total_carbon#direct_20;int(1..)])) using tseitin
+  define(__7 <-> or([total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_21;int(1..)])) using tseitin
+  define(__8 <-> or([total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16;int(1..)])) using tseitin
+  define(__9 <-> or([total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])) using tseitin
 
 --
 
@@ -279,13 +251,13 @@ selected#components_1
 --
 
 sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
-SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
-SATInt(Log, [__7,__8,__9,__10,__11,false;int(1..)] [0, 20]) = sum([toInt(selected#components_1),product([4,toInt(selected#components_2);int(1..)]),product([2,toInt(selected#components_3);int(1..)]),product([5,toInt(selected#components_4);int(1..)]);int(1..)])
+SATInt(Log, [__0,__1,__2,__3,__4,false;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Log, [__5,__6,__7,__8,__9,false;int(1..)] [0, 20]) = sum([toInt(selected#components_1),product([4,toInt(selected#components_2);int(1..)]),product([2,toInt(selected#components_3);int(1..)]),product([5,toInt(selected#components_4);int(1..)]);int(1..)])
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
-SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ])
+SATInt(Log, [__0,__1,__2,__3,__4,false;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ])
 new SAT encoding decisions:
-  weighted(1*__7, 2*__8, 4*__9, 8*__10, 16*__11, -32*false, -1*selected#components_1, -4*selected#components_2, -2*selected#components_3, -5*selected#components_4) Exactly 0 using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]
+  weighted(1*__5, 2*__6, 4*__7, 8*__8, 16*__9, -32*false, -1*selected#components_1, -4*selected#components_2, -2*selected#components_3, -5*selected#components_4) Exactly 0 using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]
 
 --
 
@@ -326,19 +298,19 @@ product([6,toInt(selected#components_4);int(1..)])
 --
 
 sum([toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4);int(1..)]) = 1,
-SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([product([3,toInt(selected#components_1);int(1..)]),product([2,toInt(selected#components_2);int(1..)]),product([4,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]);int(1..)])
+SATInt(Log, [__0,__1,__2,__3,__4,false;int(1..)] [0, 20]) = sum([product([3,toInt(selected#components_1);int(1..)]),product([2,toInt(selected#components_2);int(1..)]),product([4,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]);int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([product([3,toInt(selected#components_1);int(1..)]),product([2,toInt(selected#components_2);int(1..)]),product([4,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]);int(1..)])
+SATInt(Log, [__0,__1,__2,__3,__4,false;int(1..)] [0, 20]) = sum([product([3,toInt(selected#components_1);int(1..)]),product([2,toInt(selected#components_2);int(1..)]),product([4,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]);int(1..)])
 new SAT encoding decisions:
   count(selected#components_1, selected#components_2, selected#components_3, selected#components_4) Exactly 1 using None
 
 --
 
-SATInt(Log, [__2,__3,__4,__5,__6,false;int(1..)] [0, 20]) = sum([product([3,toInt(selected#components_1);int(1..)]),product([2,toInt(selected#components_2);int(1..)]),product([4,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]);int(1..)])
+SATInt(Log, [__0,__1,__2,__3,__4,false;int(1..)] [0, 20]) = sum([product([3,toInt(selected#components_1);int(1..)]),product([2,toInt(selected#components_2);int(1..)]),product([4,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]);int(1..)])
    ~~> select_pseudo_boolean ([("SAT", 19000)])
 
 new SAT encoding decisions:
-  weighted(1*__2, 2*__3, 4*__4, 8*__5, 16*__6, -32*false, -3*selected#components_1, -2*selected#components_2, -4*selected#components_3, -6*selected#components_4) Exactly 0 using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]
+  weighted(1*__0, 2*__1, 4*__2, 8*__3, 16*__4, -32*false, -3*selected#components_1, -2*selected#components_2, -4*selected#components_3, -6*selected#components_4) Exactly 0 using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]
 
 --
 
@@ -414,8 +386,6 @@ findAux __6: bool
 findAux __7: bool
 findAux __8: bool
 findAux __9: bool
-findAux __10: bool
-findAux __11: bool
 
 such that
 
@@ -425,21 +395,19 @@ sat encoding decisions:
 
 at-most-one(total_cost#direct_1, total_cost#direct_2, total_cost#direct_3, total_cost#direct_4, total_cost#direct_5, total_cost#direct_6, total_cost#direct_7, total_cost#direct_8, total_cost#direct_9, total_cost#direct_10, total_cost#direct_11, total_cost#direct_12, total_cost#direct_13, total_cost#direct_14, total_cost#direct_15, total_cost#direct_16, total_cost#direct_17, total_cost#direct_18, total_cost#direct_19, total_cost#direct_20, total_cost#direct_21) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
 at-most-one(total_carbon#direct_1, total_carbon#direct_2, total_carbon#direct_3, total_carbon#direct_4, total_carbon#direct_5, total_carbon#direct_6, total_carbon#direct_7, total_carbon#direct_8, total_carbon#direct_9, total_carbon#direct_10, total_carbon#direct_11, total_carbon#direct_12, total_carbon#direct_13, total_carbon#direct_14, total_carbon#direct_15, total_carbon#direct_16, total_carbon#direct_17, total_carbon#direct_18, total_carbon#direct_19, total_carbon#direct_20, total_carbon#direct_21) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
-define(__0 <-> or([total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)])) using tseitin,
-define(__1 <-> or([total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-assert(__1) using tseitin,
-define(__2 <-> or([total_cost#direct_2,total_cost#direct_4,total_cost#direct_6,total_cost#direct_8,total_cost#direct_10,total_cost#direct_12,total_cost#direct_14,total_cost#direct_16,total_cost#direct_18,total_cost#direct_20;int(1..)])) using tseitin,
-define(__3 <-> or([total_cost#direct_3,total_cost#direct_4,total_cost#direct_7,total_cost#direct_8,total_cost#direct_11,total_cost#direct_12,total_cost#direct_15,total_cost#direct_16,total_cost#direct_19,total_cost#direct_20;int(1..)])) using tseitin,
-define(__4 <-> or([total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_21;int(1..)])) using tseitin,
-define(__5 <-> or([total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16;int(1..)])) using tseitin,
-define(__6 <-> or([total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)])) using tseitin,
-define(__7 <-> or([total_carbon#direct_2,total_carbon#direct_4,total_carbon#direct_6,total_carbon#direct_8,total_carbon#direct_10,total_carbon#direct_12,total_carbon#direct_14,total_carbon#direct_16,total_carbon#direct_18,total_carbon#direct_20;int(1..)])) using tseitin,
-define(__8 <-> or([total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_19,total_carbon#direct_20;int(1..)])) using tseitin,
-define(__9 <-> or([total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_21;int(1..)])) using tseitin,
-define(__10 <-> or([total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16;int(1..)])) using tseitin,
-define(__11 <-> or([total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])) using tseitin,
-weighted(1*__7, 2*__8, 4*__9, 8*__10, 16*__11, -32*false, -1*selected#components_1, -4*selected#components_2, -2*selected#components_3, -5*selected#components_4) Exactly 0 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }],
+assert(or([total_cost#direct_1,total_cost#direct_2,total_cost#direct_3,total_cost#direct_4,total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)])) using tseitin,
+assert(or([total_carbon#direct_1,total_carbon#direct_2,total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])) using tseitin,
+define(__0 <-> or([total_cost#direct_2,total_cost#direct_4,total_cost#direct_6,total_cost#direct_8,total_cost#direct_10,total_cost#direct_12,total_cost#direct_14,total_cost#direct_16,total_cost#direct_18,total_cost#direct_20;int(1..)])) using tseitin,
+define(__1 <-> or([total_cost#direct_3,total_cost#direct_4,total_cost#direct_7,total_cost#direct_8,total_cost#direct_11,total_cost#direct_12,total_cost#direct_15,total_cost#direct_16,total_cost#direct_19,total_cost#direct_20;int(1..)])) using tseitin,
+define(__2 <-> or([total_cost#direct_5,total_cost#direct_6,total_cost#direct_7,total_cost#direct_8,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16,total_cost#direct_21;int(1..)])) using tseitin,
+define(__3 <-> or([total_cost#direct_9,total_cost#direct_10,total_cost#direct_11,total_cost#direct_12,total_cost#direct_13,total_cost#direct_14,total_cost#direct_15,total_cost#direct_16;int(1..)])) using tseitin,
+define(__4 <-> or([total_cost#direct_17,total_cost#direct_18,total_cost#direct_19,total_cost#direct_20,total_cost#direct_21;int(1..)])) using tseitin,
+define(__5 <-> or([total_carbon#direct_2,total_carbon#direct_4,total_carbon#direct_6,total_carbon#direct_8,total_carbon#direct_10,total_carbon#direct_12,total_carbon#direct_14,total_carbon#direct_16,total_carbon#direct_18,total_carbon#direct_20;int(1..)])) using tseitin,
+define(__6 <-> or([total_carbon#direct_3,total_carbon#direct_4,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_19,total_carbon#direct_20;int(1..)])) using tseitin,
+define(__7 <-> or([total_carbon#direct_5,total_carbon#direct_6,total_carbon#direct_7,total_carbon#direct_8,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16,total_carbon#direct_21;int(1..)])) using tseitin,
+define(__8 <-> or([total_carbon#direct_9,total_carbon#direct_10,total_carbon#direct_11,total_carbon#direct_12,total_carbon#direct_13,total_carbon#direct_14,total_carbon#direct_15,total_carbon#direct_16;int(1..)])) using tseitin,
+define(__9 <-> or([total_carbon#direct_17,total_carbon#direct_18,total_carbon#direct_19,total_carbon#direct_20,total_carbon#direct_21;int(1..)])) using tseitin,
+weighted(1*__5, 2*__6, 4*__7, 8*__8, 16*__9, -32*false, -1*selected#components_1, -4*selected#components_2, -2*selected#components_3, -5*selected#components_4) Exactly 0 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }],
 count(selected#components_1, selected#components_2, selected#components_3, selected#components_4) Exactly 1 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
-weighted(1*__2, 2*__3, 4*__4, 8*__5, 16*__6, -32*false, -3*selected#components_1, -2*selected#components_2, -4*selected#components_3, -6*selected#components_4) Exactly 0 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]
+weighted(1*__0, 2*__1, 4*__2, 8*__3, 16*__4, -32*false, -3*selected#components_1, -2*selected#components_2, -4*selected#components_3, -6*selected#components_4) Exactly 0 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]
 

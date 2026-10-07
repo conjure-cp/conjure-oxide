@@ -43,11 +43,22 @@ true,
 true,
 true,
 or([y#direct_1,y#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(or([y#direct_1,y#direct_2;int(1..)])) using tseitin
+
+--
+
+true,
+true,
+true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true,
 true,
-true,
-or([y#direct_1,y#direct_2;int(1..)])
+true
 new variables:
   find x#explicit_1#components_1: int(1)
   find x#explicit_1#components_2: int(1)
@@ -56,13 +67,11 @@ new variables:
 
 true,
 true,
-true,
-or([y#direct_1,y#direct_2;int(1..)])
+true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true,
 true,
-true,
-or([y#direct_1,y#direct_2;int(1..)])
+true
 new variables:
   find x#explicit_1#components_1#direct_1: bool
   find x#explicit_1#components_2#direct_1: bool
@@ -77,7 +86,6 @@ new constraints:
 true,
 true,
 true,
-or([y#direct_1,y#direct_2;int(1..)]),
 sum([toInt(x#explicit_1#components_1#direct_1);int(1..)]) <= 1,
 or([x#explicit_1#components_1#direct_1;int(1..)]),
 sum([toInt(x#explicit_1#components_2#direct_1);int(1..)]) <= 1,
@@ -86,7 +94,6 @@ or([x#explicit_1#components_2#direct_1;int(1..)])
 true,
 true,
 true,
-or([y#direct_1,y#direct_2;int(1..)]),
 or([x#explicit_1#components_1#direct_1;int(1..)]),
 sum([toInt(x#explicit_1#components_2#direct_1);int(1..)]) <= 1,
 or([x#explicit_1#components_2#direct_1;int(1..)])
@@ -98,7 +105,6 @@ new SAT encoding decisions:
 true,
 true,
 true,
-or([y#direct_1,y#direct_2;int(1..)]),
 or([x#explicit_1#components_1#direct_1;int(1..)]),
 sum([toInt(x#explicit_1#components_2#direct_1);int(1..)]) <= 1,
 or([x#explicit_1#components_2#direct_1;int(1..)])
@@ -106,7 +112,6 @@ or([x#explicit_1#components_2#direct_1;int(1..)])
 true,
 true,
 true,
-or([y#direct_1,y#direct_2;int(1..)]),
 or([x#explicit_1#components_1#direct_1;int(1..)]),
 or([x#explicit_1#components_2#direct_1;int(1..)])
 new SAT encoding decisions:
@@ -114,70 +119,31 @@ new SAT encoding decisions:
 
 --
 
-or([x#explicit_1#components_1#direct_1;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-x#explicit_1#components_1#direct_1
-
---
-
+true,
+true,
+true,
+or([x#explicit_1#components_1#direct_1;int(1..)]),
 or([x#explicit_1#components_2#direct_1;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-x#explicit_1#components_2#direct_1
-
---
-
-or([y#direct_1,y#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+true,
+true,
+or([x#explicit_1#components_2#direct_1;int(1..)])
 new SAT encoding decisions:
-  define(__0 <-> or([y#direct_1,y#direct_2;int(1..)])) using tseitin
+  assert(or([x#explicit_1#components_1#direct_1;int(1..)])) using tseitin
 
 --
 
 true,
 true,
 true,
-__0,
-x#explicit_1#components_1#direct_1,
-x#explicit_1#components_2#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-x#explicit_1#components_1#direct_1,
-x#explicit_1#components_2#direct_1
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-true,
-true,
-true,
-x#explicit_1#components_1#direct_1,
-x#explicit_1#components_2#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-x#explicit_1#components_2#direct_1
-new SAT encoding decisions:
-  assert(x#explicit_1#components_1#direct_1) using tseitin
-
---
-
-true,
-true,
-true,
-x#explicit_1#components_2#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([x#explicit_1#components_2#direct_1;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true
 new SAT encoding decisions:
-  assert(x#explicit_1#components_2#direct_1) using tseitin
+  assert(or([x#explicit_1#components_2#direct_1;int(1..)])) using tseitin
 
 --
 
@@ -192,7 +158,6 @@ find x#explicit_1#components_1: int(1)
 find x#explicit_1#components_2: int(1)
 find x#explicit_1#components_1#direct_1: bool
 find x#explicit_1#components_2#direct_1: bool
-findAux __0: bool
 
 such that
 
@@ -203,10 +168,9 @@ true
 sat encoding decisions:
 
 at-most-one(y#direct_1, y#direct_2) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
+assert(or([y#direct_1,y#direct_2;int(1..)])) using tseitin,
 at-most-one(x#explicit_1#components_1#direct_1) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
 at-most-one(x#explicit_1#components_2#direct_1) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
-define(__0 <-> or([y#direct_1,y#direct_2;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-assert(x#explicit_1#components_1#direct_1) using tseitin,
-assert(x#explicit_1#components_2#direct_1) using tseitin
+assert(or([x#explicit_1#components_1#direct_1;int(1..)])) using tseitin,
+assert(or([x#explicit_1#components_2#direct_1;int(1..)])) using tseitin
 

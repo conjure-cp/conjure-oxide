@@ -50,6 +50,19 @@ new SAT encoding decisions:
 
 --
 
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ]),
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
+new SAT encoding decisions:
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
+
+--
+
 total_carbon
    ~~> select_representation ([("ReprGeneral", 10000)])
 total_carbon
@@ -88,14 +101,23 @@ new SAT encoding decisions:
 sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
 total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
 total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-or([and([__0,__1;int(1..)]);int(1..)]),
 or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
+new SAT encoding decisions:
+  assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
 total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
-total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-or([and([__0,__1;int(1..)]);int(1..)]),
-or([and([__2,__3;int(1..)]);int(1..)])
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
 new variables:
   find selected#components_1: bool
   find selected#components_2: bool
@@ -116,77 +138,13 @@ SATInt(Log, [total_carbon#twos_complement_1,total_carbon#twos_complement_2,total
 
 --
 
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-or([and([__2,__3;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__2,__3;int(1..)])
-
---
-
-sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
-SATInt(Log, [total_cost#twos_complement_1,total_cost#twos_complement_2,total_cost#twos_complement_3,total_cost#twos_complement_4,total_cost#twos_complement_5,total_cost#twos_complement_6;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
-SATInt(Log, [total_carbon#twos_complement_1,total_carbon#twos_complement_2,total_carbon#twos_complement_3,total_carbon#twos_complement_4,total_carbon#twos_complement_5,total_carbon#twos_complement_6;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-and([__0,__1;int(1..)]),
-and([__2,__3;int(1..)])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
-SATInt(Log, [total_cost#twos_complement_1,total_cost#twos_complement_2,total_cost#twos_complement_3,total_cost#twos_complement_4,total_cost#twos_complement_5,total_cost#twos_complement_6;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
-SATInt(Log, [total_carbon#twos_complement_1,total_carbon#twos_complement_2,total_carbon#twos_complement_3,total_carbon#twos_complement_4,total_carbon#twos_complement_5,total_carbon#twos_complement_6;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-and([__0,__1;int(1..)]),
-and([__2,__3;int(1..)])
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
-SATInt(Log, [total_cost#twos_complement_1,total_cost#twos_complement_2,total_cost#twos_complement_3,total_cost#twos_complement_4,total_cost#twos_complement_5,total_cost#twos_complement_6;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
-SATInt(Log, [total_carbon#twos_complement_1,total_carbon#twos_complement_2,total_carbon#twos_complement_3,total_carbon#twos_complement_4,total_carbon#twos_complement_5,total_carbon#twos_complement_6;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-__4,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
-SATInt(Log, [total_cost#twos_complement_1,total_cost#twos_complement_2,total_cost#twos_complement_3,total_cost#twos_complement_4,total_cost#twos_complement_5,total_cost#twos_complement_6;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
-SATInt(Log, [total_carbon#twos_complement_1,total_carbon#twos_complement_2,total_carbon#twos_complement_3,total_carbon#twos_complement_4,total_carbon#twos_complement_5,total_carbon#twos_complement_6;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-__5
-new SAT encoding decisions:
-  assert(__4) using tseitin
-
---
-
-sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
-SATInt(Log, [total_cost#twos_complement_1,total_cost#twos_complement_2,total_cost#twos_complement_3,total_cost#twos_complement_4,total_cost#twos_complement_5,total_cost#twos_complement_6;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
-SATInt(Log, [total_carbon#twos_complement_1,total_carbon#twos_complement_2,total_carbon#twos_complement_3,total_carbon#twos_complement_4,total_carbon#twos_complement_5,total_carbon#twos_complement_6;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
 sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
 SATInt(Log, [total_cost#twos_complement_1,total_cost#twos_complement_2,total_cost#twos_complement_3,total_cost#twos_complement_4,total_cost#twos_complement_5,total_cost#twos_complement_6;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
 SATInt(Log, [total_carbon#twos_complement_1,total_carbon#twos_complement_2,total_carbon#twos_complement_3,total_carbon#twos_complement_4,total_carbon#twos_complement_5,total_carbon#twos_complement_6;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ])
-new SAT encoding decisions:
-  assert(__5) using tseitin
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+SATInt(Log, [total_cost#twos_complement_1,total_cost#twos_complement_2,total_cost#twos_complement_3,total_cost#twos_complement_4,total_cost#twos_complement_5,total_cost#twos_complement_6;int(1..)] [0, 20]) = sum([ cost[i] | i : int(1..n), selected[i] ]),
+SATInt(Log, [total_carbon#twos_complement_1,total_carbon#twos_complement_2,total_carbon#twos_complement_3,total_carbon#twos_complement_4,total_carbon#twos_complement_5,total_carbon#twos_complement_6;int(1..)] [0, 20]) = sum([ carbon[i] | i : int(1..n), selected[i] ])
 
 --
 
@@ -326,8 +284,6 @@ letting carbon#components_1 be 1
 letting carbon#components_2 be 4
 letting carbon#components_3 be 2
 letting carbon#components_4 be 5
-findAux __4: bool
-findAux __5: bool
 
 such that
 
@@ -337,12 +293,10 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*total_cost#twos_complement_1, 2*total_cost#twos_complement_2, 4*total_cost#twos_complement_3, 8*total_cost#twos_complement_4, 16*total_cost#twos_complement_5, -32*total_cost#twos_complement_6) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }],
 define(__1 <-> integer-weighted(1*total_cost#twos_complement_1, 2*total_cost#twos_complement_2, 4*total_cost#twos_complement_3, 8*total_cost#twos_complement_4, 16*total_cost#twos_complement_5, -32*total_cost#twos_complement_6) LessEqual 20) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }],
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
 define(__2 <-> integer-weighted(1*total_carbon#twos_complement_1, 2*total_carbon#twos_complement_2, 4*total_carbon#twos_complement_3, 8*total_carbon#twos_complement_4, 16*total_carbon#twos_complement_5, -32*total_carbon#twos_complement_6) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }],
 define(__3 <-> integer-weighted(1*total_carbon#twos_complement_1, 2*total_carbon#twos_complement_2, 4*total_carbon#twos_complement_3, 8*total_carbon#twos_complement_4, 16*total_carbon#twos_complement_5, -32*total_carbon#twos_complement_6) LessEqual 20) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }],
-define(__4 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__5 <-> and([__2,__3;int(1..)])) using tseitin,
-assert(__4) using tseitin,
-assert(__5) using tseitin,
+assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin,
 count(selected#components_1, selected#components_2, selected#components_3, selected#components_4) Exactly 1 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
 weighted(1*total_cost#twos_complement_1, 2*total_cost#twos_complement_2, 4*total_cost#twos_complement_3, 8*total_cost#twos_complement_4, 16*total_cost#twos_complement_5, -32*total_cost#twos_complement_6, -3*selected#components_1, -2*selected#components_2, -4*selected#components_3, -6*selected#components_4) Exactly 0 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }],
 weighted(1*total_carbon#twos_complement_1, 2*total_carbon#twos_complement_2, 4*total_carbon#twos_complement_3, 8*total_carbon#twos_complement_4, 16*total_carbon#twos_complement_5, -32*total_carbon#twos_complement_6, -1*selected#components_1, -4*selected#components_2, -2*selected#components_3, -5*selected#components_4) Exactly 0 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]

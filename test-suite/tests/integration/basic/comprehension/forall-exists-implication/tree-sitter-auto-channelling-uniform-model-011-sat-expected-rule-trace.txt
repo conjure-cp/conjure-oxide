@@ -41,28 +41,12 @@ new SAT encoding decisions:
 
 --
 
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
 and([ or([ (i = j) -> (x = 0) | j : int(1..2) ]) | i : int(1..2) ]),
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ or([ (i = j) -> (x = 0) | j : int(1..2) ]) | i : int(1..2) ])
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -81,7 +65,6 @@ find x#twos_complement_3: bool
 find x#twos_complement_4: bool
 findAux __0: bool
 findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -91,6 +74,5 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, -8*x#twos_complement_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 5 } }],
 define(__1 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, -8*x#twos_complement_4) LessEqual 5) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 5 } }],
-define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
-assert(__2) using tseitin
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
 

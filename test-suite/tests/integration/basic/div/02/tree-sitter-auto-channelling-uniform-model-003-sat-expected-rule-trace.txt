@@ -43,30 +43,20 @@ new SAT encoding decisions:
 
 --
 
-or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])) using tseitin
-
---
-
 __0,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1
+or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])) using tseitin
 
 --
 
@@ -78,7 +68,6 @@ find a#direct_2: bool
 find a#direct_3: bool
 find a#direct_4: bool
 findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -88,7 +77,6 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(0*a#direct_1, 1*a#direct_2, 2*a#direct_3, 3*a#direct_4) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
 at-most-one(a#direct_1, a#direct_2, a#direct_3, a#direct_4) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
-define(__1 <-> or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__1) using tseitin
+assert(or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])) using tseitin
 

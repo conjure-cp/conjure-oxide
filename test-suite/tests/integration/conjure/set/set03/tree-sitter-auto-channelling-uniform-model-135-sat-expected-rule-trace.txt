@@ -1640,7 +1640,7 @@ new SAT encoding decisions:
 __709,
 and([sum([SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2),SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])),2);int(1..)]) >= 0,sum([SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2),SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])),2);int(1..)]) <= 2;int(1..)]),
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([sum([SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2),SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])),2);int(1..)]) >= 0,sum([SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2),SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])),2);int(1..)]) <= 2;int(1..)]),
 true
 new SAT encoding decisions:
@@ -4558,6 +4558,22 @@ new SAT encoding decisions:
 
 --
 
+and([__2130,sum([SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2),SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])),2);int(1..)]) <= 2;int(1..)]),
+true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([true,sum([SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2),SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])),2);int(1..)]) <= 2;int(1..)]),
+true
+new SAT encoding decisions:
+  assert(__2130) using tseitin
+
+--
+
+and([sum([SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2),SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])),2);int(1..)]) <= 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+sum([SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2),SafeMod(SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])),2);int(1..)]) <= 2
+
+--
+
 SafeDiv(SATInt(Rank([(0, 3)]), [x#packed_1#rank_1,x#packed_1#rank_2;int(1..)] [0, 3]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeDiv(SATInt(Log, [__2131,__2133,__2135;int(1..)] [0, 3]), SATInt(Log, [__2138,__2140;int(1..)] [1, 1]))
@@ -7468,22 +7484,12 @@ new SAT encoding decisions:
 
 --
 
-and([__2130,__3551;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3552
-new variables:
-  findAux __3552: bool
-new SAT encoding decisions:
-  define(__3552 <-> and([__2130,__3551;int(1..)])) using tseitin
-
---
-
-__3552,
+__3551,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__3552) using tseitin
+  assert(__3551) using tseitin
 
 --
 
@@ -11045,7 +11051,6 @@ findAux __3548: bool
 findAux __3549: bool
 findAux __3550: bool
 findAux __3551: bool
-findAux __3552: bool
 
 such that
 
@@ -13185,6 +13190,7 @@ define(__2127 <-> or([and([__2124,__2121;int(1..)]),and([!(__2124),false;int(1..
 define(__2128 <-> or([and([__2124,__2122;int(1..)]),and([!(__2124),false;int(1..)]);int(1..)])) using tseitin,
 define(__2129 <-> or([and([__2124,__2123;int(1..)]),and([!(__2124),false;int(1..)]);int(1..)])) using tseitin,
 define(__2130 <-> integer-weighted(1*__1414, 2*__1415, 4*__1416, 8*__1417, -16*__1418, 1*__2125, 2*__2126, 4*__2127, 8*__2128, -16*__2129) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 5, end: 10, structure: BoundedBinary { lower: 0, upper: 1 } }],
+assert(__2130) using tseitin,
 define(__2131 <-> !((x#packed_1#rank_1) <-> (false))) using tseitin,
 define(__2132 <-> and([x#packed_1#rank_1,false;int(1..)])) using tseitin,
 define(__2133 <-> !((x#packed_1#rank_2) <-> (__2132))) using tseitin,
@@ -14606,6 +14612,5 @@ define(__3548 <-> or([and([__3545,__3542;int(1..)]),and([!(__3545),false;int(1..
 define(__3549 <-> or([and([__3545,__3543;int(1..)]),and([!(__3545),false;int(1..)]);int(1..)])) using tseitin,
 define(__3550 <-> or([and([__3545,__3544;int(1..)]),and([!(__3545),false;int(1..)]);int(1..)])) using tseitin,
 define(__3551 <-> integer-weighted(1*__2835, 2*__2836, 4*__2837, 8*__2838, -16*__2839, 1*__3546, 2*__3547, 4*__3548, 8*__3549, -16*__3550) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 5, end: 10, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__3552 <-> and([__2130,__3551;int(1..)])) using tseitin,
-assert(__3552) using tseitin
+assert(__3551) using tseitin
 

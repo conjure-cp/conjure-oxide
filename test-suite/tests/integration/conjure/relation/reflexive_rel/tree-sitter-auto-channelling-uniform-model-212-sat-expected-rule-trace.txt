@@ -73,24 +73,14 @@ r#occurrence_1#components_4
 
 --
 
-and([r#occurrence_1#components_1,r#occurrence_1#components_4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> and([r#occurrence_1#components_1,r#occurrence_1#components_4;int(1..)])) using tseitin
-
---
-
 true,
 and([sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1])) | i0 : int(1..2), i1 : int(1..2) ]) >= 0,sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1])) | i0 : int(1..2), i1 : int(1..2) ]) <= 4;int(1..)]),
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
+and([r#occurrence_1#components_1,r#occurrence_1#components_4;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 and([sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1])) | i0 : int(1..2), i1 : int(1..2) ]) >= 0,sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1])) | i0 : int(1..2), i1 : int(1..2) ]) <= 4;int(1..)])
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(and([r#occurrence_1#components_1,r#occurrence_1#components_4;int(1..)])) using tseitin
 
 --
 
@@ -235,7 +225,6 @@ find r#occurrence_1#components_1: bool
 find r#occurrence_1#components_2: bool
 find r#occurrence_1#components_3: bool
 find r#occurrence_1#components_4: bool
-findAux __0: bool
 
 such that
 
@@ -243,8 +232,7 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> and([r#occurrence_1#components_1,r#occurrence_1#components_4;int(1..)])) using tseitin,
-assert(__0) using tseitin,
+assert(and([r#occurrence_1#components_1,r#occurrence_1#components_4;int(1..)])) using tseitin,
 count(r#occurrence_1#components_1, r#occurrence_1#components_2, r#occurrence_1#components_3, r#occurrence_1#components_4) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
 count(r#occurrence_1#components_1, r#occurrence_1#components_2, r#occurrence_1#components_3, r#occurrence_1#components_4) AtMost 4 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic })
 

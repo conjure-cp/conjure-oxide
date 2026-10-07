@@ -12,41 +12,31 @@ c = ({4} subsetEq {1,2,3})
 
 --
 
-c = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> (c) <-> (false)) using tseitin
-
---
-
 a,
 b,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
+c = false
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 b,
-__0
+c = false
 new SAT encoding decisions:
   assert(a) using tseitin
 
 --
 
 b,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
-__0
+c = false
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+c = false
 new SAT encoding decisions:
   assert(b) using tseitin
 
 --
 
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+c = false
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(c = false) using tseitin
 
 --
 
@@ -55,7 +45,6 @@ Final model:
 find a: bool
 find b: bool
 find c: bool
-findAux __0: bool
 
 such that
 
@@ -63,8 +52,7 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> (c) <-> (false)) using tseitin,
 assert(a) using tseitin,
 assert(b) using tseitin,
-assert(__0) using tseitin
+assert(c = false) using tseitin
 

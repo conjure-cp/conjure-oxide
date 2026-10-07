@@ -90,36 +90,16 @@ a#components_4
 
 --
 
-!(a#components_4)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> !(a#components_4)) using tseitin
-
---
-
-a#components_5 = __0
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> (a#components_5) <-> (__0)) using tseitin
-
---
-
 a#components_1,
 a#components_2,
 a#components_3,
 a#components_4,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
+a#components_5 = !(a#components_4)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 a#components_2,
 a#components_3,
 a#components_4,
-__1
+a#components_5 = !(a#components_4)
 new SAT encoding decisions:
   assert(a#components_1) using tseitin
 
@@ -128,11 +108,11 @@ new SAT encoding decisions:
 a#components_2,
 a#components_3,
 a#components_4,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
+a#components_5 = !(a#components_4)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 a#components_3,
 a#components_4,
-__1
+a#components_5 = !(a#components_4)
 new SAT encoding decisions:
   assert(a#components_2) using tseitin
 
@@ -140,29 +120,29 @@ new SAT encoding decisions:
 
 a#components_3,
 a#components_4,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
+a#components_5 = !(a#components_4)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 a#components_4,
-__1
+a#components_5 = !(a#components_4)
 new SAT encoding decisions:
   assert(a#components_3) using tseitin
 
 --
 
 a#components_4,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1
+a#components_5 = !(a#components_4)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+a#components_5 = !(a#components_4)
 new SAT encoding decisions:
   assert(a#components_4) using tseitin
 
 --
 
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+a#components_5 = !(a#components_4)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(a#components_5 = !(a#components_4)) using tseitin
 
 --
 
@@ -174,8 +154,6 @@ find a#components_2: bool
 find a#components_3: bool
 find a#components_4: bool
 find a#components_5: bool
-findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -183,11 +161,9 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !(a#components_4)) using tseitin,
-define(__1 <-> (a#components_5) <-> (__0)) using tseitin,
 assert(a#components_1) using tseitin,
 assert(a#components_2) using tseitin,
 assert(a#components_3) using tseitin,
 assert(a#components_4) using tseitin,
-assert(__1) using tseitin
+assert(a#components_5 = !(a#components_4)) using tseitin
 

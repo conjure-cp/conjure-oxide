@@ -11,61 +11,11 @@ and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])
 
 --
 
-!(b)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__0
-new variables:
-  findAux __0: bool
+and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__0 <-> !(b)) using tseitin
-
---
-
-!(b)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> !(b)) using tseitin
-
---
-
-or([a,a;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> or([a,a;int(1..)])) using tseitin
-
---
-
-or([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> or([__0,__1;int(1..)])) using tseitin
-
---
-
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert(and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -75,11 +25,6 @@ find a: bool
 find b: bool
 find c: bool
 find d: bool
-findAux __0: bool
-findAux __1: bool
-findAux __2: bool
-findAux __3: bool
-findAux __4: bool
 
 such that
 
@@ -87,10 +32,5 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !(b)) using tseitin,
-define(__1 <-> !(b)) using tseitin,
-define(__2 <-> or([a,a;int(1..)])) using tseitin,
-define(__3 <-> or([__0,__1;int(1..)])) using tseitin,
-define(__4 <-> and([__2,__3;int(1..)])) using tseitin,
-assert(__4) using tseitin
+assert(and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])) using tseitin
 

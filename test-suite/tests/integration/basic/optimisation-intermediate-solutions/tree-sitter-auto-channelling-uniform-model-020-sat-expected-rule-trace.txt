@@ -46,24 +46,14 @@ new SAT encoding decisions:
 
 --
 
+true,
+true,
 or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])) using tseitin
-
---
-
-true,
-true,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])) using tseitin
 
 --
 
@@ -76,7 +66,6 @@ find x#direct_3: bool
 find x#direct_4: bool
 find x#direct_5: bool
 find x#direct_6: bool
-findAux __0: bool
 
 such that
 
@@ -87,6 +76,5 @@ sat encoding decisions:
 
 optimise(minimise=false, value=0+weighted(0*x#direct_1, 1*x#direct_2, 2*x#direct_3, 3*x#direct_4, 4*x#direct_5, 5*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(0:x#direct_1, 1:x#direct_2, 2:x#direct_3, 3:x#direct_4, 4:x#direct_5, 5:x#direct_6)) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
 at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
-define(__0 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])) using tseitin,
-assert(__0) using tseitin
+assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])) using tseitin
 

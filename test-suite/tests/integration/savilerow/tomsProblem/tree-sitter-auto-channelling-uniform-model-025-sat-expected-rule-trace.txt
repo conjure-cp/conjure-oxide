@@ -91,14 +91,31 @@ and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
 or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2],
+true
+new SAT encoding decisions:
+  assert(or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)])) using tseitin
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2],
+true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
-true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)])
+true
 new variables:
   find M#components_1: int(1..3)
   find M#components_2: int(1..3)
@@ -152,7 +169,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
 sum([toInt(occurrences#components_1#direct_1),toInt(occurrences#components_1#direct_2),toInt(occurrences#components_1#direct_3),toInt(occurrences#components_1#direct_4),toInt(occurrences#components_1#direct_5),toInt(occurrences#components_1#direct_6),toInt(occurrences#components_1#direct_7),toInt(occurrences#components_1#direct_8),toInt(occurrences#components_1#direct_9);int(1..)]) <= 1,
 or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
 sum([toInt(occurrences#components_2#direct_1),toInt(occurrences#components_2#direct_2),toInt(occurrences#components_2#direct_3),toInt(occurrences#components_2#direct_4),toInt(occurrences#components_2#direct_5),toInt(occurrences#components_2#direct_6),toInt(occurrences#components_2#direct_7),toInt(occurrences#components_2#direct_8),toInt(occurrences#components_2#direct_9);int(1..)]) <= 1,
@@ -166,7 +182,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
 or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
 sum([toInt(occurrences#components_2#direct_1),toInt(occurrences#components_2#direct_2),toInt(occurrences#components_2#direct_3),toInt(occurrences#components_2#direct_4),toInt(occurrences#components_2#direct_5),toInt(occurrences#components_2#direct_6),toInt(occurrences#components_2#direct_7),toInt(occurrences#components_2#direct_8),toInt(occurrences#components_2#direct_9);int(1..)]) <= 1,
 or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
@@ -183,7 +198,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
 or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
 sum([toInt(occurrences#components_2#direct_1),toInt(occurrences#components_2#direct_2),toInt(occurrences#components_2#direct_3),toInt(occurrences#components_2#direct_4),toInt(occurrences#components_2#direct_5),toInt(occurrences#components_2#direct_6),toInt(occurrences#components_2#direct_7),toInt(occurrences#components_2#direct_8),toInt(occurrences#components_2#direct_9);int(1..)]) <= 1,
 or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
@@ -196,7 +210,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
 or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
 or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
 sum([toInt(occurrences#components_3#direct_1),toInt(occurrences#components_3#direct_2),toInt(occurrences#components_3#direct_3),toInt(occurrences#components_3#direct_4),toInt(occurrences#components_3#direct_5),toInt(occurrences#components_3#direct_6),toInt(occurrences#components_3#direct_7),toInt(occurrences#components_3#direct_8),toInt(occurrences#components_3#direct_9);int(1..)]) <= 1,
@@ -212,7 +225,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
 or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
 or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
 sum([toInt(occurrences#components_3#direct_1),toInt(occurrences#components_3#direct_2),toInt(occurrences#components_3#direct_3),toInt(occurrences#components_3#direct_4),toInt(occurrences#components_3#direct_5),toInt(occurrences#components_3#direct_6),toInt(occurrences#components_3#direct_7),toInt(occurrences#components_3#direct_8),toInt(occurrences#components_3#direct_9);int(1..)]) <= 1,
@@ -224,7 +236,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
 or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
 or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
 or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)])
@@ -239,21 +250,76 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
 or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
 or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
 or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)])
-   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
 or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
 or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)])
+new SAT encoding decisions:
+  assert(or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)])) using tseitin
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2],
+true,
+or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
+or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2],
+true,
+or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)])
+new SAT encoding decisions:
+  assert(or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)])) using tseitin
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2],
+true,
+or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2],
+true
+new SAT encoding decisions:
+  assert(or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)])) using tseitin
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2],
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2],
+true
 new variables:
   find M#components_1#direct_1: bool
   find M#components_1#direct_2: bool
@@ -310,10 +376,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 sum([toInt(M#components_1#direct_1),toInt(M#components_1#direct_2),toInt(M#components_1#direct_3);int(1..)]) <= 1,
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 sum([toInt(M#components_2#direct_1),toInt(M#components_2#direct_2),toInt(M#components_2#direct_3);int(1..)]) <= 1,
@@ -339,10 +401,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 sum([toInt(M#components_2#direct_1),toInt(M#components_2#direct_2),toInt(M#components_2#direct_3);int(1..)]) <= 1,
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
@@ -371,10 +429,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 sum([toInt(M#components_2#direct_1),toInt(M#components_2#direct_2),toInt(M#components_2#direct_3);int(1..)]) <= 1,
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
@@ -399,10 +453,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 sum([toInt(M#components_3#direct_1),toInt(M#components_3#direct_2),toInt(M#components_3#direct_3);int(1..)]) <= 1,
@@ -430,10 +480,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 sum([toInt(M#components_3#direct_1),toInt(M#components_3#direct_2),toInt(M#components_3#direct_3);int(1..)]) <= 1,
@@ -457,10 +503,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -487,10 +529,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -513,10 +551,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -542,10 +576,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -567,10 +597,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -595,10 +621,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -619,10 +641,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -646,10 +664,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -669,10 +683,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -695,10 +705,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -717,10 +723,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -742,10 +744,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -763,10 +761,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -787,10 +781,6 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
 or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
@@ -800,18 +790,13 @@ or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(
 or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
 or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
 or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)]),
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)]),
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)]),
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)]),
-or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)]),
 or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
 or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
 or([M#components_4#direct_1,M#components_4#direct_2,M#components_4#direct_3;int(1..)]),
@@ -820,136 +805,41 @@ or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(
 or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
 or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
 or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
-
---
-
-or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
 new SAT encoding decisions:
-  define(__1 <-> or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)])) using tseitin
+  assert(or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)])) using tseitin
 
 --
 
-or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)])) using tseitin
-
---
-
-or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)])) using tseitin
-
---
-
-or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)])) using tseitin
-
---
-
-or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)])) using tseitin
-
---
-
-or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)])) using tseitin
-
---
-
-or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)])) using tseitin
-
---
-
-or([M#components_4#direct_1,M#components_4#direct_2,M#components_4#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> or([M#components_4#direct_1,M#components_4#direct_2,M#components_4#direct_3;int(1..)])) using tseitin
-
---
-
-or([M#components_5#direct_1,M#components_5#direct_2,M#components_5#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> or([M#components_5#direct_1,M#components_5#direct_2,M#components_5#direct_3;int(1..)])) using tseitin
-
---
-
-or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)])) using tseitin
-
---
-
-or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)])) using tseitin
-
---
-
-or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__12
-new variables:
-  findAux __12: bool
-new SAT encoding decisions:
-  define(__12 <-> or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)])) using tseitin
-
---
-
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2],
+true,
+or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)]),
+or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
+or([M#components_4#direct_1,M#components_4#direct_2,M#components_4#direct_3;int(1..)]),
+or([M#components_5#direct_1,M#components_5#direct_2,M#components_5#direct_3;int(1..)]),
+or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)]),
+or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
 or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
-new variables:
-  findAux __13: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2],
+true,
+or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
+or([M#components_4#direct_1,M#components_4#direct_2,M#components_4#direct_3;int(1..)]),
+or([M#components_5#direct_1,M#components_5#direct_2,M#components_5#direct_3;int(1..)]),
+or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)]),
+or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
 new SAT encoding decisions:
-  define(__13 <-> or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])) using tseitin
+  assert(or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -959,40 +849,28 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__1,
-__2,
-__3,
-__4,
-__5,
-__6,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)]),
+or([M#components_4#direct_1,M#components_4#direct_2,M#components_4#direct_3;int(1..)]),
+or([M#components_5#direct_1,M#components_5#direct_2,M#components_5#direct_3;int(1..)]),
+or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)]),
+or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__2,
-__3,
-__4,
-__5,
-__6,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
+or([M#components_4#direct_1,M#components_4#direct_2,M#components_4#direct_3;int(1..)]),
+or([M#components_5#direct_1,M#components_5#direct_2,M#components_5#direct_3;int(1..)]),
+or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)]),
+or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -1002,38 +880,26 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__2,
-__3,
-__4,
-__5,
-__6,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([M#components_4#direct_1,M#components_4#direct_2,M#components_4#direct_3;int(1..)]),
+or([M#components_5#direct_1,M#components_5#direct_2,M#components_5#direct_3;int(1..)]),
+or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)]),
+or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__3,
-__4,
-__5,
-__6,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
+or([M#components_5#direct_1,M#components_5#direct_2,M#components_5#direct_3;int(1..)]),
+or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)]),
+or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(or([M#components_4#direct_1,M#components_4#direct_2,M#components_4#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -1043,36 +909,24 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__3,
-__4,
-__5,
-__6,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([M#components_5#direct_1,M#components_5#direct_2,M#components_5#direct_3;int(1..)]),
+or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)]),
+or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__4,
-__5,
-__6,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
+or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)]),
+or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
 new SAT encoding decisions:
-  assert(__3) using tseitin
+  assert(or([M#components_5#direct_1,M#components_5#direct_2,M#components_5#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -1082,34 +936,22 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__4,
-__5,
-__6,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)]),
+or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__5,
-__6,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
+or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
 new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert(or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -1119,32 +961,20 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__5,
-__6,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)]),
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__6,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
 new SAT encoding decisions:
-  assert(__5) using tseitin
+  assert(or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -1154,30 +984,18 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__6,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)]),
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
 new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert(or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -1187,164 +1005,8 @@ and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([ M[i, i] = diagonal[i] | i : D ]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2],
-true,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
-new SAT encoding decisions:
-  assert(__7) using tseitin
-
---
-
-and([ M[i, i] = diagonal[i] | i : D ]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2],
-true,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([ M[i, i] = diagonal[i] | i : D ]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2],
-true,
-__9,
-__10,
-__11,
-__12,
-__13
-new SAT encoding decisions:
-  assert(__8) using tseitin
-
---
-
-and([ M[i, i] = diagonal[i] | i : D ]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2],
-true,
-__9,
-__10,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([ M[i, i] = diagonal[i] | i : D ]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2],
-true,
-__10,
-__11,
-__12,
-__13
-new SAT encoding decisions:
-  assert(__9) using tseitin
-
---
-
-and([ M[i, i] = diagonal[i] | i : D ]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2],
-true,
-__10,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([ M[i, i] = diagonal[i] | i : D ]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2],
-true,
-__11,
-__12,
-__13
-new SAT encoding decisions:
-  assert(__10) using tseitin
-
---
-
-and([ M[i, i] = diagonal[i] | i : D ]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2],
-true,
-__11,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([ M[i, i] = diagonal[i] | i : D ]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2],
-true,
-__12,
-__13
-new SAT encoding decisions:
-  assert(__11) using tseitin
-
---
-
-and([ M[i, i] = diagonal[i] | i : D ]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2],
-true,
-__12,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([ M[i, i] = diagonal[i] | i : D ]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2],
-true,
-__13
-new SAT encoding decisions:
-  assert(__12) using tseitin
-
---
-
-and([ M[i, i] = diagonal[i] | i : D ]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences[2],
-true,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
@@ -1352,7 +1014,23 @@ and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 __0 =aux occurrences[2],
 true
 new SAT encoding decisions:
-  assert(__13) using tseitin
+  assert(or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])) using tseitin
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2],
+true
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2],
+true
 
 --
 
@@ -1382,11 +1060,11 @@ __0 = SATInt(Direct, [occurrences#components_2#direct_1,occurrences#components_2
 
 __0 = SATInt(Direct, [occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)] [1, 9])
    ~~> select_integer_relation ([("SAT", 18500)])
-__14
+__1
 new variables:
-  findAux __14: bool
+  findAux __1: bool
 new SAT encoding decisions:
-  define(__14 <-> integer-weighted(1*__0#direct_1, 2*__0#direct_2, 3*__0#direct_3, 4*__0#direct_4, 5*__0#direct_5, 6*__0#direct_6, 7*__0#direct_7, 8*__0#direct_8, 9*__0#direct_9, -1*occurrences#components_2#direct_1, -2*occurrences#components_2#direct_2, -3*occurrences#components_2#direct_3, -4*occurrences#components_2#direct_4, -5*occurrences#components_2#direct_5, -6*occurrences#components_2#direct_6, -7*occurrences#components_2#direct_7, -8*occurrences#components_2#direct_8, -9*occurrences#components_2#direct_9) Equal 0) using None with [PbTermGroup { start: 0, end: 9, structure: Choice }, PbTermGroup { start: 9, end: 18, structure: Choice }]
+  define(__1 <-> integer-weighted(1*__0#direct_1, 2*__0#direct_2, 3*__0#direct_3, 4*__0#direct_4, 5*__0#direct_5, 6*__0#direct_6, 7*__0#direct_7, 8*__0#direct_8, 9*__0#direct_9, -1*occurrences#components_2#direct_1, -2*occurrences#components_2#direct_2, -3*occurrences#components_2#direct_3, -4*occurrences#components_2#direct_4, -5*occurrences#components_2#direct_5, -6*occurrences#components_2#direct_6, -7*occurrences#components_2#direct_7, -8*occurrences#components_2#direct_8, -9*occurrences#components_2#direct_9) Equal 0) using None with [PbTermGroup { start: 0, end: 9, structure: Choice }, PbTermGroup { start: 9, end: 18, structure: Choice }]
 
 --
 
@@ -1394,16 +1072,16 @@ and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__14,
+__1,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ M[i, i] = diagonal[i] | i : D ]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 true
 new SAT encoding decisions:
-  assert(__14) using tseitin
+  assert(__1) using tseitin
 
 --
 
@@ -1433,56 +1111,46 @@ M#components_9
 
 M#components_1 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__15
+__2
 new variables:
-  findAux __15: bool
+  findAux __2: bool
 new SAT encoding decisions:
-  define(__15 <-> integer-weighted(1*M#components_1#direct_1, 2*M#components_1#direct_2, 3*M#components_1#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+  define(__2 <-> integer-weighted(1*M#components_1#direct_1, 2*M#components_1#direct_2, 3*M#components_1#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
 
 --
 
 M#components_5 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__16
+__3
 new variables:
-  findAux __16: bool
+  findAux __3: bool
 new SAT encoding decisions:
-  define(__16 <-> integer-weighted(1*M#components_5#direct_1, 2*M#components_5#direct_2, 3*M#components_5#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+  define(__3 <-> integer-weighted(1*M#components_5#direct_1, 2*M#components_5#direct_2, 3*M#components_5#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
 
 --
 
 M#components_9 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__17
+__4
 new variables:
-  findAux __17: bool
+  findAux __4: bool
 new SAT encoding decisions:
-  define(__17 <-> integer-weighted(1*M#components_9#direct_1, 2*M#components_9#direct_2, 3*M#components_9#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+  define(__4 <-> integer-weighted(1*M#components_9#direct_1, 2*M#components_9#direct_2, 3*M#components_9#direct_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
 
 --
 
-and([__15,__16,__17;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__18
-new variables:
-  findAux __18: bool
-new SAT encoding decisions:
-  define(__18 <-> and([__15,__16,__17;int(1..)])) using tseitin
-
---
-
-__18,
+and([__2,__3,__4;int(1..)]),
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
 and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
 and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
 true
 new SAT encoding decisions:
-  assert(__18) using tseitin
+  assert(and([__2,__3,__4;int(1..)])) using tseitin
 
 --
 
@@ -2280,84 +1948,85 @@ M#components_6
 
 M#components_2 = M#components_4
    ~~> select_integer_relation ([("SAT", 18500)])
-__19
+__5
 new variables:
-  findAux __19: bool
+  findAux __5: bool
 new SAT encoding decisions:
-  define(__19 <-> integer-weighted(1*M#components_2#direct_1, 2*M#components_2#direct_2, 3*M#components_2#direct_3, -1*M#components_4#direct_1, -2*M#components_4#direct_2, -3*M#components_4#direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
+  define(__5 <-> integer-weighted(1*M#components_2#direct_1, 2*M#components_2#direct_2, 3*M#components_2#direct_3, -1*M#components_4#direct_1, -2*M#components_4#direct_2, -3*M#components_4#direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
 
 --
 
 M#components_3 = M#components_7
    ~~> select_integer_relation ([("SAT", 18500)])
-__20
+__6
 new variables:
-  findAux __20: bool
+  findAux __6: bool
 new SAT encoding decisions:
-  define(__20 <-> integer-weighted(1*M#components_3#direct_1, 2*M#components_3#direct_2, 3*M#components_3#direct_3, -1*M#components_7#direct_1, -2*M#components_7#direct_2, -3*M#components_7#direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
+  define(__6 <-> integer-weighted(1*M#components_3#direct_1, 2*M#components_3#direct_2, 3*M#components_3#direct_3, -1*M#components_7#direct_1, -2*M#components_7#direct_2, -3*M#components_7#direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
 
 --
 
 M#components_4 = M#components_2
    ~~> select_integer_relation ([("SAT", 18500)])
-__21
+__7
 new variables:
-  findAux __21: bool
+  findAux __7: bool
 new SAT encoding decisions:
-  define(__21 <-> integer-weighted(1*M#components_4#direct_1, 2*M#components_4#direct_2, 3*M#components_4#direct_3, -1*M#components_2#direct_1, -2*M#components_2#direct_2, -3*M#components_2#direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
+  define(__7 <-> integer-weighted(1*M#components_4#direct_1, 2*M#components_4#direct_2, 3*M#components_4#direct_3, -1*M#components_2#direct_1, -2*M#components_2#direct_2, -3*M#components_2#direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
 
 --
 
 M#components_6 = M#components_8
    ~~> select_integer_relation ([("SAT", 18500)])
-__22
+__8
 new variables:
-  findAux __22: bool
+  findAux __8: bool
 new SAT encoding decisions:
-  define(__22 <-> integer-weighted(1*M#components_6#direct_1, 2*M#components_6#direct_2, 3*M#components_6#direct_3, -1*M#components_8#direct_1, -2*M#components_8#direct_2, -3*M#components_8#direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
+  define(__8 <-> integer-weighted(1*M#components_6#direct_1, 2*M#components_6#direct_2, 3*M#components_6#direct_3, -1*M#components_8#direct_1, -2*M#components_8#direct_2, -3*M#components_8#direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
 
 --
 
 M#components_7 = M#components_3
    ~~> select_integer_relation ([("SAT", 18500)])
-__23
+__9
 new variables:
-  findAux __23: bool
+  findAux __9: bool
 new SAT encoding decisions:
-  define(__23 <-> integer-weighted(1*M#components_7#direct_1, 2*M#components_7#direct_2, 3*M#components_7#direct_3, -1*M#components_3#direct_1, -2*M#components_3#direct_2, -3*M#components_3#direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
+  define(__9 <-> integer-weighted(1*M#components_7#direct_1, 2*M#components_7#direct_2, 3*M#components_7#direct_3, -1*M#components_3#direct_1, -2*M#components_3#direct_2, -3*M#components_3#direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
 
 --
 
 M#components_8 = M#components_6
    ~~> select_integer_relation ([("SAT", 18500)])
-__24
+__10
 new variables:
-  findAux __24: bool
+  findAux __10: bool
 new SAT encoding decisions:
-  define(__24 <-> integer-weighted(1*M#components_8#direct_1, 2*M#components_8#direct_2, 3*M#components_8#direct_3, -1*M#components_6#direct_1, -2*M#components_6#direct_2, -3*M#components_6#direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
-
---
-
-and([__19,__20,__21,__22,__23,__24;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__25
-new variables:
-  findAux __25: bool
-new SAT encoding decisions:
-  define(__25 <-> and([__19,__20,__21,__22,__23,__24;int(1..)])) using tseitin
+  define(__10 <-> integer-weighted(1*M#components_8#direct_1, 2*M#components_8#direct_2, 3*M#components_8#direct_3, -1*M#components_6#direct_1, -2*M#components_6#direct_2, -3*M#components_6#direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
 
 --
 
 true,
 false,
-__25,
+and([__5,__6,__7,__8,__9,__10;int(1..)]),
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
-false,
+and([__5,__6,__7,__8,__9,__10;int(1..)]),
 true
 new SAT encoding decisions:
-  assert(__25) using tseitin
+  assert(false) using tseitin
+
+--
+
+true,
+and([__5,__6,__7,__8,__9,__10;int(1..)]),
+true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+true
+new SAT encoding decisions:
+  assert(and([__5,__6,__7,__8,__9,__10;int(1..)])) using tseitin
 
 --
 
@@ -2459,35 +2128,23 @@ findAux __7: bool
 findAux __8: bool
 findAux __9: bool
 findAux __10: bool
-findAux __11: bool
-findAux __12: bool
-findAux __13: bool
-findAux __14: bool
-findAux __15: bool
-findAux __16: bool
-findAux __17: bool
-findAux __18: bool
-findAux __19: bool
-findAux __20: bool
-findAux __21: bool
-findAux __22: bool
-findAux __23: bool
-findAux __24: bool
-findAux __25: bool
 
 such that
 
 true,
-false,
 true
 
 sat encoding decisions:
 
 at-most-one(__0#direct_1, __0#direct_2, __0#direct_3, __0#direct_4, __0#direct_5, __0#direct_6, __0#direct_7, __0#direct_8, __0#direct_9) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
 optimise(minimise=false, value=0+weighted(1*__0#direct_1, 2*__0#direct_2, 3*__0#direct_3, 4*__0#direct_4, 5*__0#direct_5, 6*__0#direct_6, 7*__0#direct_7, 8*__0#direct_8, 9*__0#direct_9) with [PbTermGroup { start: 0, end: 9, structure: Choice }] choices(1:__0#direct_1, 2:__0#direct_2, 3:__0#direct_3, 4:__0#direct_4, 5:__0#direct_5, 6:__0#direct_6, 7:__0#direct_7, 8:__0#direct_8, 9:__0#direct_9)) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+assert(or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)])) using tseitin,
 at-most-one(occurrences#components_1#direct_1, occurrences#components_1#direct_2, occurrences#components_1#direct_3, occurrences#components_1#direct_4, occurrences#components_1#direct_5, occurrences#components_1#direct_6, occurrences#components_1#direct_7, occurrences#components_1#direct_8, occurrences#components_1#direct_9) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
 at-most-one(occurrences#components_2#direct_1, occurrences#components_2#direct_2, occurrences#components_2#direct_3, occurrences#components_2#direct_4, occurrences#components_2#direct_5, occurrences#components_2#direct_6, occurrences#components_2#direct_7, occurrences#components_2#direct_8, occurrences#components_2#direct_9) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
 at-most-one(occurrences#components_3#direct_1, occurrences#components_3#direct_2, occurrences#components_3#direct_3, occurrences#components_3#direct_4, occurrences#components_3#direct_5, occurrences#components_3#direct_6, occurrences#components_3#direct_7, occurrences#components_3#direct_8, occurrences#components_3#direct_9) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
+assert(or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)])) using tseitin,
+assert(or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)])) using tseitin,
+assert(or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)])) using tseitin,
 at-most-one(M#components_1#direct_1, M#components_1#direct_2, M#components_1#direct_3) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
 at-most-one(M#components_2#direct_1, M#components_2#direct_2, M#components_2#direct_3) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
 at-most-one(M#components_3#direct_1, M#components_3#direct_2, M#components_3#direct_3) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
@@ -2497,39 +2154,21 @@ at-most-one(M#components_6#direct_1, M#components_6#direct_2, M#components_6#dir
 at-most-one(M#components_7#direct_1, M#components_7#direct_2, M#components_7#direct_3) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
 at-most-one(M#components_8#direct_1, M#components_8#direct_2, M#components_8#direct_3) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
 at-most-one(M#components_9#direct_1, M#components_9#direct_2, M#components_9#direct_3) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
-define(__1 <-> or([__0#direct_1,__0#direct_2,__0#direct_3,__0#direct_4,__0#direct_5,__0#direct_6,__0#direct_7,__0#direct_8,__0#direct_9;int(1..)])) using tseitin,
-define(__2 <-> or([occurrences#components_1#direct_1,occurrences#components_1#direct_2,occurrences#components_1#direct_3,occurrences#components_1#direct_4,occurrences#components_1#direct_5,occurrences#components_1#direct_6,occurrences#components_1#direct_7,occurrences#components_1#direct_8,occurrences#components_1#direct_9;int(1..)])) using tseitin,
-define(__3 <-> or([occurrences#components_2#direct_1,occurrences#components_2#direct_2,occurrences#components_2#direct_3,occurrences#components_2#direct_4,occurrences#components_2#direct_5,occurrences#components_2#direct_6,occurrences#components_2#direct_7,occurrences#components_2#direct_8,occurrences#components_2#direct_9;int(1..)])) using tseitin,
-define(__4 <-> or([occurrences#components_3#direct_1,occurrences#components_3#direct_2,occurrences#components_3#direct_3,occurrences#components_3#direct_4,occurrences#components_3#direct_5,occurrences#components_3#direct_6,occurrences#components_3#direct_7,occurrences#components_3#direct_8,occurrences#components_3#direct_9;int(1..)])) using tseitin,
-define(__5 <-> or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)])) using tseitin,
-define(__6 <-> or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)])) using tseitin,
-define(__7 <-> or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)])) using tseitin,
-define(__8 <-> or([M#components_4#direct_1,M#components_4#direct_2,M#components_4#direct_3;int(1..)])) using tseitin,
-define(__9 <-> or([M#components_5#direct_1,M#components_5#direct_2,M#components_5#direct_3;int(1..)])) using tseitin,
-define(__10 <-> or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)])) using tseitin,
-define(__11 <-> or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)])) using tseitin,
-define(__12 <-> or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)])) using tseitin,
-define(__13 <-> or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])) using tseitin,
+assert(or([M#components_1#direct_1,M#components_1#direct_2,M#components_1#direct_3;int(1..)])) using tseitin,
+assert(or([M#components_2#direct_1,M#components_2#direct_2,M#components_2#direct_3;int(1..)])) using tseitin,
+assert(or([M#components_3#direct_1,M#components_3#direct_2,M#components_3#direct_3;int(1..)])) using tseitin,
+assert(or([M#components_4#direct_1,M#components_4#direct_2,M#components_4#direct_3;int(1..)])) using tseitin,
+assert(or([M#components_5#direct_1,M#components_5#direct_2,M#components_5#direct_3;int(1..)])) using tseitin,
+assert(or([M#components_6#direct_1,M#components_6#direct_2,M#components_6#direct_3;int(1..)])) using tseitin,
+assert(or([M#components_7#direct_1,M#components_7#direct_2,M#components_7#direct_3;int(1..)])) using tseitin,
+assert(or([M#components_8#direct_1,M#components_8#direct_2,M#components_8#direct_3;int(1..)])) using tseitin,
+assert(or([M#components_9#direct_1,M#components_9#direct_2,M#components_9#direct_3;int(1..)])) using tseitin,
+define(__1 <-> integer-weighted(1*__0#direct_1, 2*__0#direct_2, 3*__0#direct_3, 4*__0#direct_4, 5*__0#direct_5, 6*__0#direct_6, 7*__0#direct_7, 8*__0#direct_8, 9*__0#direct_9, -1*occurrences#components_2#direct_1, -2*occurrences#components_2#direct_2, -3*occurrences#components_2#direct_3, -4*occurrences#components_2#direct_4, -5*occurrences#components_2#direct_5, -6*occurrences#components_2#direct_6, -7*occurrences#components_2#direct_7, -8*occurrences#components_2#direct_8, -9*occurrences#components_2#direct_9) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 9, structure: Choice }, PbTermGroup { start: 9, end: 18, structure: Choice }],
 assert(__1) using tseitin,
-assert(__2) using tseitin,
-assert(__3) using tseitin,
-assert(__4) using tseitin,
-assert(__5) using tseitin,
-assert(__6) using tseitin,
-assert(__7) using tseitin,
-assert(__8) using tseitin,
-assert(__9) using tseitin,
-assert(__10) using tseitin,
-assert(__11) using tseitin,
-assert(__12) using tseitin,
-assert(__13) using tseitin,
-define(__14 <-> integer-weighted(1*__0#direct_1, 2*__0#direct_2, 3*__0#direct_3, 4*__0#direct_4, 5*__0#direct_5, 6*__0#direct_6, 7*__0#direct_7, 8*__0#direct_8, 9*__0#direct_9, -1*occurrences#components_2#direct_1, -2*occurrences#components_2#direct_2, -3*occurrences#components_2#direct_3, -4*occurrences#components_2#direct_4, -5*occurrences#components_2#direct_5, -6*occurrences#components_2#direct_6, -7*occurrences#components_2#direct_7, -8*occurrences#components_2#direct_8, -9*occurrences#components_2#direct_9) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 9, structure: Choice }, PbTermGroup { start: 9, end: 18, structure: Choice }],
-assert(__14) using tseitin,
-define(__15 <-> integer-weighted(1*M#components_1#direct_1, 2*M#components_1#direct_2, 3*M#components_1#direct_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
-define(__16 <-> integer-weighted(1*M#components_5#direct_1, 2*M#components_5#direct_2, 3*M#components_5#direct_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
-define(__17 <-> integer-weighted(1*M#components_9#direct_1, 2*M#components_9#direct_2, 3*M#components_9#direct_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
-define(__18 <-> and([__15,__16,__17;int(1..)])) using tseitin,
-assert(__18) using tseitin,
+define(__2 <-> integer-weighted(1*M#components_1#direct_1, 2*M#components_1#direct_2, 3*M#components_1#direct_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+define(__3 <-> integer-weighted(1*M#components_5#direct_1, 2*M#components_5#direct_2, 3*M#components_5#direct_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+define(__4 <-> integer-weighted(1*M#components_9#direct_1, 2*M#components_9#direct_2, 3*M#components_9#direct_3) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+assert(and([__2,__3,__4;int(1..)])) using tseitin,
 weighted(1*M#components_1#direct_1, 2*M#components_1#direct_2, 3*M#components_1#direct_3, -1*M#components_1#direct_1, -2*M#components_1#direct_2, -3*M#components_1#direct_3) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
 weighted(2*M#components_1#direct_1, 4*M#components_1#direct_2, 6*M#components_1#direct_3, -1*M#components_2#direct_1, -2*M#components_2#direct_2, -3*M#components_2#direct_3) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
 weighted(3*M#components_1#direct_1, 6*M#components_1#direct_2, 9*M#components_1#direct_3, -1*M#components_3#direct_1, -2*M#components_3#direct_2, -3*M#components_3#direct_3) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
@@ -2557,12 +2196,12 @@ weighted(3*M#components_8#direct_1, 6*M#components_8#direct_2, 9*M#components_8#
 weighted(1*M#components_9#direct_1, 2*M#components_9#direct_2, 3*M#components_9#direct_3, -3*M#components_7#direct_1, -6*M#components_7#direct_2, -9*M#components_7#direct_3) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
 weighted(2*M#components_9#direct_1, 4*M#components_9#direct_2, 6*M#components_9#direct_3, -3*M#components_8#direct_1, -6*M#components_8#direct_2, -9*M#components_8#direct_3) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
 weighted(3*M#components_9#direct_1, 6*M#components_9#direct_2, 9*M#components_9#direct_3, -3*M#components_9#direct_1, -6*M#components_9#direct_2, -9*M#components_9#direct_3) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
-define(__19 <-> integer-weighted(1*M#components_2#direct_1, 2*M#components_2#direct_2, 3*M#components_2#direct_3, -1*M#components_4#direct_1, -2*M#components_4#direct_2, -3*M#components_4#direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
-define(__20 <-> integer-weighted(1*M#components_3#direct_1, 2*M#components_3#direct_2, 3*M#components_3#direct_3, -1*M#components_7#direct_1, -2*M#components_7#direct_2, -3*M#components_7#direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
-define(__21 <-> integer-weighted(1*M#components_4#direct_1, 2*M#components_4#direct_2, 3*M#components_4#direct_3, -1*M#components_2#direct_1, -2*M#components_2#direct_2, -3*M#components_2#direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
-define(__22 <-> integer-weighted(1*M#components_6#direct_1, 2*M#components_6#direct_2, 3*M#components_6#direct_3, -1*M#components_8#direct_1, -2*M#components_8#direct_2, -3*M#components_8#direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
-define(__23 <-> integer-weighted(1*M#components_7#direct_1, 2*M#components_7#direct_2, 3*M#components_7#direct_3, -1*M#components_3#direct_1, -2*M#components_3#direct_2, -3*M#components_3#direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
-define(__24 <-> integer-weighted(1*M#components_8#direct_1, 2*M#components_8#direct_2, 3*M#components_8#direct_3, -1*M#components_6#direct_1, -2*M#components_6#direct_2, -3*M#components_6#direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
-define(__25 <-> and([__19,__20,__21,__22,__23,__24;int(1..)])) using tseitin,
-assert(__25) using tseitin
+define(__5 <-> integer-weighted(1*M#components_2#direct_1, 2*M#components_2#direct_2, 3*M#components_2#direct_3, -1*M#components_4#direct_1, -2*M#components_4#direct_2, -3*M#components_4#direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
+define(__6 <-> integer-weighted(1*M#components_3#direct_1, 2*M#components_3#direct_2, 3*M#components_3#direct_3, -1*M#components_7#direct_1, -2*M#components_7#direct_2, -3*M#components_7#direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
+define(__7 <-> integer-weighted(1*M#components_4#direct_1, 2*M#components_4#direct_2, 3*M#components_4#direct_3, -1*M#components_2#direct_1, -2*M#components_2#direct_2, -3*M#components_2#direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
+define(__8 <-> integer-weighted(1*M#components_6#direct_1, 2*M#components_6#direct_2, 3*M#components_6#direct_3, -1*M#components_8#direct_1, -2*M#components_8#direct_2, -3*M#components_8#direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
+define(__9 <-> integer-weighted(1*M#components_7#direct_1, 2*M#components_7#direct_2, 3*M#components_7#direct_3, -1*M#components_3#direct_1, -2*M#components_3#direct_2, -3*M#components_3#direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
+define(__10 <-> integer-weighted(1*M#components_8#direct_1, 2*M#components_8#direct_2, 3*M#components_8#direct_3, -1*M#components_6#direct_1, -2*M#components_6#direct_2, -3*M#components_6#direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
+assert(false) using tseitin,
+assert(and([__5,__6,__7,__8,__9,__10;int(1..)])) using tseitin
 

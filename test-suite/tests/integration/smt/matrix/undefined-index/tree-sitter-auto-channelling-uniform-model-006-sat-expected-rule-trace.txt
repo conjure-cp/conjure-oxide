@@ -89,66 +89,36 @@ new SAT encoding decisions:
 
 --
 
-or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])) using tseitin
-
---
-
-or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])) using tseitin
-
---
-
+!(m[4] = 0),
+or([m#components_1#direct_1,m#components_1#direct_2;int(1..)]),
+or([m#components_2#direct_1,m#components_2#direct_2;int(1..)]),
 or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(m[4] = 0),
+or([m#components_2#direct_1,m#components_2#direct_2;int(1..)]),
+or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
 new SAT encoding decisions:
-  define(__2 <-> or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])) using tseitin
+  assert(or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])) using tseitin
 
 --
 
 !(m[4] = 0),
-__0,
-__1,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([m#components_2#direct_1,m#components_2#direct_2;int(1..)]),
+or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 !(m[4] = 0),
-__1,
-__2
+or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])) using tseitin
 
 --
 
 !(m[4] = 0),
-__1,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-!(m[4] = 0),
-__2
-new SAT encoding decisions:
-  assert(__1) using tseitin
-
---
-
-!(m[4] = 0),
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 !(m[4] = 0)
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])) using tseitin
 
 --
 
@@ -182,9 +152,6 @@ find m#components_2#direct_1: bool
 find m#components_2#direct_2: bool
 find m#components_3#direct_1: bool
 find m#components_3#direct_2: bool
-findAux __0: bool
-findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -195,10 +162,7 @@ sat encoding decisions:
 at-most-one(m#components_1#direct_1, m#components_1#direct_2) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
 at-most-one(m#components_2#direct_1, m#components_2#direct_2) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
 at-most-one(m#components_3#direct_1, m#components_3#direct_2) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
-define(__0 <-> or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])) using tseitin,
-define(__1 <-> or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])) using tseitin,
-define(__2 <-> or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-assert(__1) using tseitin,
-assert(__2) using tseitin
+assert(or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])) using tseitin,
+assert(or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])) using tseitin,
+assert(or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])) using tseitin
 

@@ -6217,7 +6217,7 @@ new SAT encoding decisions:
 and([ i in x | i : int(1..2) ]),
 __3000,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ i in x | i : int(1..2) ]),
 true
 new SAT encoding decisions:
@@ -8355,6 +8355,22 @@ new SAT encoding decisions:
 
 --
 
+and([SafeMod(SafeDiv(SATInt(Rank([(0, 7)]), [x#packed_1#rank_1,x#packed_1#rank_2,x#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2) = 1,__4001;int(1..)]),
+true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([SafeMod(SafeDiv(SATInt(Rank([(0, 7)]), [x#packed_1#rank_1,x#packed_1#rank_2,x#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2) = 1,true;int(1..)]),
+true
+new SAT encoding decisions:
+  assert(__4001) using tseitin
+
+--
+
+and([SafeMod(SafeDiv(SATInt(Rank([(0, 7)]), [x#packed_1#rank_1,x#packed_1#rank_2,x#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2) = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeMod(SafeDiv(SATInt(Rank([(0, 7)]), [x#packed_1#rank_1,x#packed_1#rank_2,x#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2) = 1
+
+--
+
 SafeDiv(SATInt(Rank([(0, 7)]), [x#packed_1#rank_1,x#packed_1#rank_2,x#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeDiv(SATInt(Log, [__4002,__4004,__4006,__4008;int(1..)] [0, 7]), SATInt(Log, [__4011,__4013;int(1..)] [1, 1]))
@@ -10391,22 +10407,12 @@ new SAT encoding decisions:
 
 --
 
-and([__5000,__4001;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5001
-new variables:
-  findAux __5001: bool
-new SAT encoding decisions:
-  define(__5001 <-> and([__5000,__4001;int(1..)])) using tseitin
-
---
-
-__5001,
+__5000,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__5001) using tseitin
+  assert(__5000) using tseitin
 
 --
 
@@ -15418,7 +15424,6 @@ findAux __4997: bool
 findAux __4998: bool
 findAux __4999: bool
 findAux __5000: bool
-findAux __5001: bool
 
 such that
 
@@ -19429,6 +19434,7 @@ define(__3998 <-> or([and([__3994,__3991;int(1..)]),and([!(__3994),false;int(1..
 define(__3999 <-> or([and([__3994,__3992;int(1..)]),and([!(__3994),false;int(1..)]);int(1..)])) using tseitin,
 define(__4000 <-> or([and([__3994,__3993;int(1..)]),and([!(__3994),false;int(1..)]);int(1..)])) using tseitin,
 define(__4001 <-> integer-weighted(1*__3995, 2*__3996, 4*__3997, 8*__3998, 16*__3999, -32*__4000) Equal 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 1 } }],
+assert(__4001) using tseitin,
 define(__4002 <-> !((x#packed_1#rank_1) <-> (false))) using tseitin,
 define(__4003 <-> and([x#packed_1#rank_1,false;int(1..)])) using tseitin,
 define(__4004 <-> !((x#packed_1#rank_2) <-> (__4003))) using tseitin,
@@ -20428,6 +20434,5 @@ define(__4997 <-> or([and([__4993,__4990;int(1..)]),and([!(__4993),false;int(1..
 define(__4998 <-> or([and([__4993,__4991;int(1..)]),and([!(__4993),false;int(1..)]);int(1..)])) using tseitin,
 define(__4999 <-> or([and([__4993,__4992;int(1..)]),and([!(__4993),false;int(1..)]);int(1..)])) using tseitin,
 define(__5000 <-> integer-weighted(1*__4994, 2*__4995, 4*__4996, 8*__4997, 16*__4998, -32*__4999) Equal 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__5001 <-> and([__5000,__4001;int(1..)])) using tseitin,
-assert(__5001) using tseitin
+assert(__5000) using tseitin
 

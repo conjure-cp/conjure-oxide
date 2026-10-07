@@ -35,20 +35,10 @@ new SAT encoding decisions:
 --
 
 (small_a) <-> (__0)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> (small_a) <-> (__0)) using tseitin
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert((small_a) <-> (__0)) using tseitin
 
 --
 
@@ -62,7 +52,6 @@ find b2: bool
 find b3: bool
 find small_a: bool
 findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -72,6 +61,5 @@ sat encoding decisions:
 
 weighted(1*a1, 1*a2, 1*a3, 1*b1, 1*b2, 1*b3) AtLeast 3 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
 define(__0 <-> count(a1, a2, a3) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
-define(__1 <-> (small_a) <-> (__0)) using tseitin,
-assert(__1) using tseitin
+assert((small_a) <-> (__0)) using tseitin
 

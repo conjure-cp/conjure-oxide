@@ -97,64 +97,14 @@ b#occurrence_2
 
 --
 
-!(a#occurrence_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> !(a#occurrence_1)) using tseitin
-
---
-
-!(a#occurrence_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> !(a#occurrence_2)) using tseitin
-
---
-
-or([__0,b#occurrence_1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> or([__0,b#occurrence_1;int(1..)])) using tseitin
-
---
-
-or([__1,b#occurrence_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> or([__1,b#occurrence_2;int(1..)])) using tseitin
-
---
-
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-__4,
+and([or([!(a#occurrence_1),b#occurrence_1;int(1..)]),or([!(a#occurrence_2),b#occurrence_2;int(1..)]);int(1..)]),
 true,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true
 new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert(and([or([!(a#occurrence_1),b#occurrence_1;int(1..)]),or([!(a#occurrence_2),b#occurrence_2;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -166,11 +116,6 @@ find a#occurrence_1: bool
 find a#occurrence_2: bool
 find b#occurrence_1: bool
 find b#occurrence_2: bool
-findAux __0: bool
-findAux __1: bool
-findAux __2: bool
-findAux __3: bool
-findAux __4: bool
 
 such that
 
@@ -183,10 +128,5 @@ count(a#occurrence_1, a#occurrence_2) AtLeast 0 using Some(EncodingSelection { a
 count(a#occurrence_1, a#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
 count(b#occurrence_1, b#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
 count(b#occurrence_1, b#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
-define(__0 <-> !(a#occurrence_1)) using tseitin,
-define(__1 <-> !(a#occurrence_2)) using tseitin,
-define(__2 <-> or([__0,b#occurrence_1;int(1..)])) using tseitin,
-define(__3 <-> or([__1,b#occurrence_2;int(1..)])) using tseitin,
-define(__4 <-> and([__2,__3;int(1..)])) using tseitin,
-assert(__4) using tseitin
+assert(and([or([!(a#occurrence_1),b#occurrence_1;int(1..)]),or([!(a#occurrence_2),b#occurrence_2;int(1..)]);int(1..)])) using tseitin
 

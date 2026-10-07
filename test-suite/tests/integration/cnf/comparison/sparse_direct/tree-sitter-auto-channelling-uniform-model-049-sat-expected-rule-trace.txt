@@ -94,30 +94,20 @@ new SAT encoding decisions:
 
 --
 
-or([__1,__2,__3,__4,__5,__6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> or([__1,__2,__3,__4,__5,__6;int(1..)])) using tseitin
-
---
-
 __0,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
-__7
+or([__1,__2,__3,__4,__5,__6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([__1,__2,__3,__4,__5,__6;int(1..)])
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+or([__1,__2,__3,__4,__5,__6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__7) using tseitin
+  assert(or([__1,__2,__3,__4,__5,__6;int(1..)])) using tseitin
 
 --
 
@@ -138,7 +128,6 @@ findAux __3: bool
 findAux __4: bool
 findAux __5: bool
 findAux __6: bool
-findAux __7: bool
 
 such that
 
@@ -153,7 +142,6 @@ define(__3 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*
 define(__4 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, 8*x#twos_complement_4, 16*x#twos_complement_5, 32*x#twos_complement_6, -64*x#twos_complement_7) Equal 30) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: BoundedBinary { lower: 1, upper: 50 } }],
 define(__5 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, 8*x#twos_complement_4, 16*x#twos_complement_5, 32*x#twos_complement_6, -64*x#twos_complement_7) Equal 40) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: BoundedBinary { lower: 1, upper: 50 } }],
 define(__6 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, 8*x#twos_complement_4, 16*x#twos_complement_5, 32*x#twos_complement_6, -64*x#twos_complement_7) Equal 50) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: BoundedBinary { lower: 1, upper: 50 } }],
-define(__7 <-> or([__1,__2,__3,__4,__5,__6;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__7) using tseitin
+assert(or([__1,__2,__3,__4,__5,__6;int(1..)])) using tseitin
 

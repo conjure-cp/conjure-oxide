@@ -70,62 +70,12 @@ and([r#as_set_1#occurrence_1 = false,r#as_set_1#occurrence_2 = true,r#as_set_1#o
 
 --
 
-r#as_set_1#occurrence_1 = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> (r#as_set_1#occurrence_1) <-> (false)) using tseitin
-
---
-
-r#as_set_1#occurrence_3 = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> (r#as_set_1#occurrence_3) <-> (false)) using tseitin
-
---
-
-r#as_set_1#occurrence_4 = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> (r#as_set_1#occurrence_4) <-> (false)) using tseitin
-
---
-
-r#as_set_1#occurrence_6 = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> (r#as_set_1#occurrence_6) <-> (false)) using tseitin
-
---
-
-and([__0,r#as_set_1#occurrence_2,__1,__2,r#as_set_1#occurrence_5,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> and([__0,r#as_set_1#occurrence_2,__1,__2,r#as_set_1#occurrence_5,__3;int(1..)])) using tseitin
-
---
-
-__4,
+and([r#as_set_1#occurrence_1 = false,r#as_set_1#occurrence_2,r#as_set_1#occurrence_3 = false,r#as_set_1#occurrence_4 = false,r#as_set_1#occurrence_5,r#as_set_1#occurrence_6 = false;int(1..)]),
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert(and([r#as_set_1#occurrence_1 = false,r#as_set_1#occurrence_2,r#as_set_1#occurrence_3 = false,r#as_set_1#occurrence_4 = false,r#as_set_1#occurrence_5,r#as_set_1#occurrence_6 = false;int(1..)])) using tseitin
 
 --
 
@@ -140,11 +90,6 @@ find r#as_set_1#occurrence_3: bool
 find r#as_set_1#occurrence_4: bool
 find r#as_set_1#occurrence_5: bool
 find r#as_set_1#occurrence_6: bool
-findAux __0: bool
-findAux __1: bool
-findAux __2: bool
-findAux __3: bool
-findAux __4: bool
 
 such that
 
@@ -154,10 +99,5 @@ sat encoding decisions:
 
 count(r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4, r#as_set_1#occurrence_5, r#as_set_1#occurrence_6) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
 count(r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4, r#as_set_1#occurrence_5, r#as_set_1#occurrence_6) AtMost 6 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
-define(__0 <-> (r#as_set_1#occurrence_1) <-> (false)) using tseitin,
-define(__1 <-> (r#as_set_1#occurrence_3) <-> (false)) using tseitin,
-define(__2 <-> (r#as_set_1#occurrence_4) <-> (false)) using tseitin,
-define(__3 <-> (r#as_set_1#occurrence_6) <-> (false)) using tseitin,
-define(__4 <-> and([__0,r#as_set_1#occurrence_2,__1,__2,r#as_set_1#occurrence_5,__3;int(1..)])) using tseitin,
-assert(__4) using tseitin
+assert(and([r#as_set_1#occurrence_1 = false,r#as_set_1#occurrence_2,r#as_set_1#occurrence_3 = false,r#as_set_1#occurrence_4 = false,r#as_set_1#occurrence_5,r#as_set_1#occurrence_6 = false;int(1..)])) using tseitin
 

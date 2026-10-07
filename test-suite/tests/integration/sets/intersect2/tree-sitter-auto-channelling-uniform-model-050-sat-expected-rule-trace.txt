@@ -64,6 +64,30 @@ new SAT encoding decisions:
 
 --
 
+c = {2},
+true,
+or([!(c#explicit_1#components_1#offset_2),and([!(c#explicit_1#components_1#offset_1);int(1..)]);int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+c = {2},
+true,
+or([and([__0,__1;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(or([!(c#explicit_1#components_1#offset_2),and([!(c#explicit_1#components_1#offset_1);int(1..)]);int(1..)])) using tseitin
+
+--
+
+c = {2},
+true,
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+c = {2},
+true
+new SAT encoding decisions:
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
+
+--
+
 c = {2}
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(c#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
@@ -73,32 +97,6 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(c#explicit_1,[1]) = 2;int(1..)]);int(1..)])
 c#explicit_1
    ~~> select_representation ([("ReprGeneral", 10000)])
 c#explicit_1
-
---
-
-!(c#explicit_1#components_1#offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> !(c#explicit_1#components_1#offset_2)) using tseitin
-
---
-
-!(c#explicit_1#components_1#offset_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> !(c#explicit_1#components_1#offset_1)) using tseitin
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
 
 --
 
@@ -120,56 +118,6 @@ SafeIndex(c#explicit_1,[1]) = 2
 
 --
 
-and([__3;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__3
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-or([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> or([__2,__3;int(1..)])) using tseitin
-
---
-
-SafeIndex(c#explicit_1,[1]) = 2,
-true,
-__5,
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
-SafeIndex(c#explicit_1,[1]) = 2,
-true,
-__4
-new SAT encoding decisions:
-  assert(__5) using tseitin
-
---
-
-SafeIndex(c#explicit_1,[1]) = 2,
-true,
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
-SafeIndex(c#explicit_1,[1]) = 2,
-true
-new SAT encoding decisions:
-  assert(__4) using tseitin
-
---
-
 SafeIndex(c#explicit_1,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 c#explicit_1#components_1
@@ -184,20 +132,20 @@ c#explicit_1#components_1
 
 c#explicit_1#components_1 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__6
+__2
 new variables:
-  findAux __6: bool
+  findAux __2: bool
 new SAT encoding decisions:
-  define(__6 <-> integer-weighted(1*c#explicit_1#components_1#offset_1, 2*c#explicit_1#components_1#offset_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+  define(__2 <-> integer-weighted(1*c#explicit_1#components_1#offset_1, 2*c#explicit_1#components_1#offset_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
 
 --
 
-__6,
+__2,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert(__2) using tseitin
 
 --
 
@@ -213,10 +161,6 @@ find c#explicit_1#components_1#offset_2: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
-findAux __3: bool
-findAux __4: bool
-findAux __5: bool
-findAux __6: bool
 
 such that
 
@@ -226,12 +170,8 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*c#explicit_1#components_1#offset_1, 2*c#explicit_1#components_1#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
 define(__1 <-> integer-weighted(1*c#explicit_1#components_1#offset_1, 2*c#explicit_1#components_1#offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-define(__2 <-> !(c#explicit_1#components_1#offset_2)) using tseitin,
-define(__3 <-> !(c#explicit_1#components_1#offset_1)) using tseitin,
-define(__4 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__5 <-> or([__2,__3;int(1..)])) using tseitin,
-assert(__5) using tseitin,
-assert(__4) using tseitin,
-define(__6 <-> integer-weighted(1*c#explicit_1#components_1#offset_1, 2*c#explicit_1#components_1#offset_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
-assert(__6) using tseitin
+assert(or([!(c#explicit_1#components_1#offset_2),and([!(c#explicit_1#components_1#offset_1);int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
+define(__2 <-> integer-weighted(1*c#explicit_1#components_1#offset_1, 2*c#explicit_1#components_1#offset_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+assert(__2) using tseitin
 

@@ -163,21 +163,45 @@ new SAT encoding decisions:
 
 --
 
+(r) <-> (image(f,(a,-1))),
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+or([([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
+true,
+true,
+or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1;int(1..)]),
+or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(r) <-> (image(f,(a,-1))),
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+or([([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
+true,
+true,
+or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1;int(1..)])
+new SAT encoding decisions:
+  assert(or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1;int(1..)])) using tseitin
+
+--
+
+(r) <-> (image(f,(a,-1))),
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+or([([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
+true,
+true,
+or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(r) <-> (image(f,(a,-1))),
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+or([([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
+true,
+true
+new SAT encoding decisions:
+  assert(or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1;int(1..)])) using tseitin
+
+--
+
 or([([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
 ([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)])
-
---
-
-or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1
-
---
-
-or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1
 
 --
 
@@ -205,42 +229,6 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direc
 
 --
 
-(r) <-> (image(f,(a,-1))),
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (tuple (bool, int(-1)), bool), i in f#as_relation_1#as_set_1, j : tuple (tuple (bool, int(-1)), bool), j in f#as_relation_1#as_set_1 ]),
-([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
-true,
-true,
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1,
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
-(r) <-> (image(f,(a,-1))),
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (tuple (bool, int(-1)), bool), i in f#as_relation_1#as_set_1, j : tuple (tuple (bool, int(-1)), bool), j in f#as_relation_1#as_set_1 ]),
-([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
-true,
-true,
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1
-new SAT encoding decisions:
-  assert(f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1) using tseitin
-
---
-
-(r) <-> (image(f,(a,-1))),
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (tuple (bool, int(-1)), bool), i in f#as_relation_1#as_set_1, j : tuple (tuple (bool, int(-1)), bool), j in f#as_relation_1#as_set_1 ]),
-([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
-true,
-true,
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
-(r) <-> (image(f,(a,-1))),
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (tuple (bool, int(-1)), bool), i in f#as_relation_1#as_set_1, j : tuple (tuple (bool, int(-1)), bool), j in f#as_relation_1#as_set_1 ]),
-([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
-true,
-true
-new SAT encoding decisions:
-  assert(f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1) using tseitin
-
---
-
 image(f,(a,-1))
    ~~> image_function_as_relation ([("Base", 8400)])
 {__0 @ __1}
@@ -262,6 +250,25 @@ f#as_relation_1
 {__0 @ __1}
    ~~> expand_bubble ([("Bubble", 8900)])
 and([__0,__1;int(1..)])
+
+--
+
+(r) <-> (and([__0,__1;int(1..)])),
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (tuple (bool, int(-1)), bool), i in f#as_relation_1#as_set_1, j : tuple (tuple (bool, int(-1)), bool), j in f#as_relation_1#as_set_1 ]),
+([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
+true,
+true,
+(__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e <- f#as_relation_1 ])),
+(__1) -> (((a,-1),__0) in f#as_relation_1)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (tuple (bool, int(-1)), bool), i in f#as_relation_1#as_set_1, j : tuple (tuple (bool, int(-1)), bool), j in f#as_relation_1#as_set_1 ]),
+([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
+true,
+true,
+(__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e <- f#as_relation_1 ])),
+(__1) -> (((a,-1),__0) in f#as_relation_1)
+new SAT encoding decisions:
+  assert((r) <-> (and([__0,__1;int(1..)]))) using tseitin
 
 --
 
@@ -316,45 +323,6 @@ SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((a,-1),__0)
 [ SafeIndex(e,[1]) = (a,-1) | e <- f#as_relation_1#as_set_1 ]
    ~~> lower_set_expression_generator ([("Base", 8600)])
 [ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ]
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-(r) <-> (__2)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> (r) <-> (__2)) using tseitin
-
---
-
-__3,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (tuple (bool, int(-1)), bool), i in f#as_relation_1#as_set_1, j : tuple (tuple (bool, int(-1)), bool), j in f#as_relation_1#as_set_1 ]),
-([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
-true,
-true,
-(__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ])),
-(__1) -> (or([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = ((a,-1),__0),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((a,-1),__0);int(1..)]))
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (tuple (bool, int(-1)), bool), i in f#as_relation_1#as_set_1, j : tuple (tuple (bool, int(-1)), bool), j in f#as_relation_1#as_set_1 ]),
-([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
-true,
-true,
-(__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ])),
-(__1) -> (or([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = ((a,-1),__0),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((a,-1),__0);int(1..)]))
-new SAT encoding decisions:
-  assert(__3) using tseitin
 
 --
 
@@ -450,11 +418,11 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2 < f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2
    ~~> select_integer_relation ([("SAT", 18500)])
-__4
+__2
 new variables:
-  findAux __4: bool
+  findAux __2: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(-1*f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1, 1*f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1) Less 0) using None with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }]
+  define(__2 <-> integer-weighted(-1*f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1, 1*f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1) Less 0) using None with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }]
 
 --
 
@@ -478,138 +446,28 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2
    ~~> select_integer_relation ([("SAT", 18500)])
-__5
+__3
 new variables:
-  findAux __5: bool
+  findAux __3: bool
 new SAT encoding decisions:
-  define(__5 <-> integer-weighted(-1*f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1, 1*f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }]
-
---
-
-!(f#as_relation_1#as_set_1#explicit_1#components_1#components_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> !(f#as_relation_1#as_set_1#explicit_1#components_1#components_2)) using tseitin
-
---
-
-!(f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> !(f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1)) using tseitin
-
---
-
-and([and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__5;int(1..)]),and([__6,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__5,__6,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])
-
---
-
-and([and([__7,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([__7,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)])
-
---
-
-and([or([and([__7,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)]),and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,or([__4;int(1..)]);int(1..)]);int(1..)]);int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-or([and([__7,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)]),and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,or([__4;int(1..)]);int(1..)]);int(1..)])
-
---
-
-or([__4;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__4
-
---
-
-or([or([and([__7,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)]),and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__4;int(1..)]);int(1..)]),and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__5,__6,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-or([and([__7,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)]),and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__4;int(1..)]),and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__5,__6,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)]);int(1..)])
-
---
-
-and([__7,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> and([__7,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)])) using tseitin
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1)) using tseitin
-
---
-
-and([__9,__4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> and([__9,__4;int(1..)])) using tseitin
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1)) using tseitin
-
---
-
-and([__11,__5,__6,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__12
-new variables:
-  findAux __12: bool
-new SAT encoding decisions:
-  define(__12 <-> and([__11,__5,__6,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin
-
---
-
-or([__8,__10,__12;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> or([__8,__10,__12;int(1..)])) using tseitin
+  define(__3 <-> integer-weighted(-1*f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1, 1*f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }]
 
 --
 
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (tuple (bool, int(-1)), bool), i in f#as_relation_1#as_set_1, j : tuple (tuple (bool, int(-1)), bool), j in f#as_relation_1#as_set_1 ]),
-__13,
+or([and([or([and([and([!(f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1),f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)]);int(1..)]),and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,or([__2;int(1..)]);int(1..)]);int(1..)]);int(1..)]),and([and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__3;int(1..)]),and([!(f#as_relation_1#as_set_1#explicit_1#components_1#components_2),f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)]);int(1..)]);int(1..)]),
 true,
 true,
 (__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ])),
 (__1) -> (or([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = ((a,-1),__0),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((a,-1),__0);int(1..)]))
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (tuple (bool, int(-1)), bool), i in f#as_relation_1#as_set_1, j : tuple (tuple (bool, int(-1)), bool), j in f#as_relation_1#as_set_1 ]),
 true,
 true,
 (__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ])),
 (__1) -> (or([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = ((a,-1),__0),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((a,-1),__0);int(1..)]))
 new SAT encoding decisions:
-  assert(__13) using tseitin
+  assert(or([and([or([and([and([!(f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1),f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)]);int(1..)]),and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,or([__2;int(1..)]);int(1..)]);int(1..)]);int(1..)]),and([and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__3;int(1..)]),and([!(f#as_relation_1#as_set_1#explicit_1#components_1#components_2),f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)]);int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -651,31 +509,31 @@ f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = a
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = a
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__14
+__4
 new variables:
-  findAux __14: bool
+  findAux __4: bool
 new SAT encoding decisions:
-  define(__14 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (a)) using tseitin
+  define(__4 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (a)) using tseitin
 
 --
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = __0
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__15
+__5
 new variables:
-  findAux __15: bool
+  findAux __5: bool
 new SAT encoding decisions:
-  define(__15 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (__0)) using tseitin
+  define(__5 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (__0)) using tseitin
 
 --
 
-and([__14,__15;int(1..)])
+and([__4,__5;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__16
+__6
 new variables:
-  findAux __16: bool
+  findAux __6: bool
 new SAT encoding decisions:
-  define(__16 <-> and([__14,__15;int(1..)])) using tseitin
+  define(__6 <-> and([__4,__5;int(1..)])) using tseitin
 
 --
 
@@ -709,74 +567,18 @@ and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 
 
 --
 
-and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = a;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = a
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = a
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__17
-new variables:
-  findAux __17: bool
-new SAT encoding decisions:
-  define(__17 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (a)) using tseitin
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = __0
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__18
-new variables:
-  findAux __18: bool
-new SAT encoding decisions:
-  define(__18 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (__0)) using tseitin
-
---
-
-and([__17,__18;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__19
-new variables:
-  findAux __19: bool
-new SAT encoding decisions:
-  define(__19 <-> and([__17,__18;int(1..)])) using tseitin
-
---
-
-or([__16,__19;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__20
-new variables:
-  findAux __20: bool
-new SAT encoding decisions:
-  define(__20 <-> or([__16,__19;int(1..)])) using tseitin
-
---
-
-(__1) -> (__20)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__21
-new variables:
-  findAux __21: bool
-new SAT encoding decisions:
-  define(__21 <-> (__1) -> (__20)) using tseitin
-
---
-
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (tuple (bool, int(-1)), bool), i in f#as_relation_1#as_set_1, j : tuple (tuple (bool, int(-1)), bool), j in f#as_relation_1#as_set_1 ]),
 true,
 true,
 (__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ])),
-__21
-   ~~> remove_single_atom ([("SAT", 8400)])
+(__1) -> (or([__6,and([and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = a;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = __0;int(1..)]);int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (tuple (bool, int(-1)), bool), i in f#as_relation_1#as_set_1, j : tuple (tuple (bool, int(-1)), bool), j in f#as_relation_1#as_set_1 ]),
 true,
 true,
 (__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ]))
 new SAT encoding decisions:
-  assert(__21) using tseitin
+  assert((__1) -> (or([__6,and([and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = a;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = __0;int(1..)]);int(1..)]))) using tseitin
 
 --
 
@@ -1208,31 +1010,31 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = fal
 
 f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__22
+__7
 new variables:
-  findAux __22: bool
+  findAux __7: bool
 new SAT encoding decisions:
-  define(__22 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin
+  define(__7 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin
 
 --
 
 f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__23
+__8
 new variables:
-  findAux __23: bool
+  findAux __8: bool
 new SAT encoding decisions:
-  define(__23 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin
+  define(__8 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin
 
 --
 
-and([__22,__23;int(1..)])
+and([__7,__8;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__24
+__9
 new variables:
-  findAux __24: bool
+  findAux __9: bool
 new SAT encoding decisions:
-  define(__24 <-> and([__22,__23;int(1..)])) using tseitin
+  define(__9 <-> and([__7,__8;int(1..)])) using tseitin
 
 --
 
@@ -1274,21 +1076,21 @@ f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = fal
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__25
+__10
 new variables:
-  findAux __25: bool
+  findAux __10: bool
 new SAT encoding decisions:
-  define(__25 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin
+  define(__10 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin
 
 --
 
-and([__25,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])
+and([__10,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__26
+__11
 new variables:
-  findAux __26: bool
+  findAux __11: bool
 new SAT encoding decisions:
-  define(__26 <-> and([__25,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin
+  define(__11 <-> and([__10,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin
 
 --
 
@@ -1330,31 +1132,31 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = fal
 
 f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__27
+__12
 new variables:
-  findAux __27: bool
+  findAux __12: bool
 new SAT encoding decisions:
-  define(__27 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin
+  define(__12 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin
 
 --
 
-and([__27,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])
+and([__12,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__28
+__13
 new variables:
-  findAux __28: bool
+  findAux __13: bool
 new SAT encoding decisions:
-  define(__28 <-> and([__27,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin
+  define(__13 <-> and([__12,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin
 
 --
 
-or([__26,__28;int(1..)])
+or([__11,__13;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__29
+__14
 new variables:
-  findAux __29: bool
+  findAux __14: bool
 new SAT encoding decisions:
-  define(__29 <-> or([__26,__28;int(1..)])) using tseitin
+  define(__14 <-> or([__11,__13;int(1..)])) using tseitin
 
 --
 
@@ -1396,21 +1198,21 @@ f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__30
+__15
 new variables:
-  findAux __30: bool
+  findAux __15: bool
 new SAT encoding decisions:
-  define(__30 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin
+  define(__15 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin
 
 --
 
-and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,__30;int(1..)])
+and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,__15;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__31
+__16
 new variables:
-  findAux __31: bool
+  findAux __16: bool
 new SAT encoding decisions:
-  define(__31 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,__30;int(1..)])) using tseitin
+  define(__16 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,__15;int(1..)])) using tseitin
 
 --
 
@@ -1452,11 +1254,11 @@ f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1
 
 and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__32
+__17
 new variables:
-  findAux __32: bool
+  findAux __17: bool
 new SAT encoding decisions:
-  define(__32 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin
+  define(__17 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin
 
 --
 
@@ -1498,41 +1300,41 @@ f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = fal
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__33
+__18
 new variables:
-  findAux __33: bool
+  findAux __18: bool
 new SAT encoding decisions:
-  define(__33 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin
+  define(__18 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin
 
 --
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__34
+__19
 new variables:
-  findAux __34: bool
+  findAux __19: bool
 new SAT encoding decisions:
-  define(__34 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin
+  define(__19 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin
 
 --
 
-and([__33,__34;int(1..)])
+and([__18,__19;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__35
+__20
 new variables:
-  findAux __35: bool
+  findAux __20: bool
 new SAT encoding decisions:
-  define(__35 <-> and([__33,__34;int(1..)])) using tseitin
+  define(__20 <-> and([__18,__19;int(1..)])) using tseitin
 
 --
 
-or([__35,__24;int(1..)])
+or([__20,__9;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__36
+__21
 new variables:
-  findAux __36: bool
+  findAux __21: bool
 new SAT encoding decisions:
-  define(__36 <-> or([__35,__24;int(1..)])) using tseitin
+  define(__21 <-> or([__20,__9;int(1..)])) using tseitin
 
 --
 
@@ -1574,31 +1376,31 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != fa
 
 f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != false
    ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__37
+__22
 new variables:
-  findAux __37: bool
+  findAux __22: bool
 new SAT encoding decisions:
-  define(__37 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false))) using tseitin
+  define(__22 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false))) using tseitin
 
 --
 
 f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != true
    ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__38
+__23
 new variables:
-  findAux __38: bool
+  findAux __23: bool
 new SAT encoding decisions:
-  define(__38 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (true))) using tseitin
+  define(__23 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (true))) using tseitin
 
 --
 
-or([__37,__38;int(1..)])
+or([__22,__23;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__39
+__24
 new variables:
-  findAux __39: bool
+  findAux __24: bool
 new SAT encoding decisions:
-  define(__39 <-> or([__37,__38;int(1..)])) using tseitin
+  define(__24 <-> or([__22,__23;int(1..)])) using tseitin
 
 --
 
@@ -1632,59 +1434,17 @@ or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 !
 
 --
 
-or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != false;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != false
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != false
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__40
-new variables:
-  findAux __40: bool
+and([(__21) -> (and([or([or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != false;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != true;int(1..)]),__24;int(1..)])),(__14) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((false,-1),false),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) != ((false,-1),false);int(1..)])),(or([__16,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((true,-1),false);int(1..)])) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((true,-1),true),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) != ((true,-1),true);int(1..)])),(or([__17,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((true,-1),true);int(1..)])) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((true,-1),false),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) != ((true,-1),false);int(1..)]));int(1..)]),
+true,
+true,
+(__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([true,(__14) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((false,-1),false),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) != ((false,-1),false);int(1..)])),(or([__16,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((true,-1),false);int(1..)])) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((true,-1),true),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) != ((true,-1),true);int(1..)])),(or([__17,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((true,-1),true);int(1..)])) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((true,-1),false),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) != ((true,-1),false);int(1..)]));int(1..)]),
+true,
+true,
+(__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ]))
 new SAT encoding decisions:
-  define(__40 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false))) using tseitin
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != true
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__41
-new variables:
-  findAux __41: bool
-new SAT encoding decisions:
-  define(__41 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (true))) using tseitin
-
---
-
-or([__40,__41;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__42
-new variables:
-  findAux __42: bool
-new SAT encoding decisions:
-  define(__42 <-> or([__40,__41;int(1..)])) using tseitin
-
---
-
-and([__42,__39;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__43
-new variables:
-  findAux __43: bool
-new SAT encoding decisions:
-  define(__43 <-> and([__42,__39;int(1..)])) using tseitin
-
---
-
-(__36) -> (__43)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__44
-new variables:
-  findAux __44: bool
-new SAT encoding decisions:
-  define(__44 <-> (__36) -> (__43)) using tseitin
+  assert((__21) -> (and([or([or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != false;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != true;int(1..)]),__24;int(1..)]))) using tseitin
 
 --
 
@@ -1726,31 +1486,31 @@ f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != fa
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != false
    ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__45
+__25
 new variables:
-  findAux __45: bool
+  findAux __25: bool
 new SAT encoding decisions:
-  define(__45 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false))) using tseitin
+  define(__25 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false))) using tseitin
 
 --
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != false
    ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__46
+__26
 new variables:
-  findAux __46: bool
+  findAux __26: bool
 new SAT encoding decisions:
-  define(__46 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false))) using tseitin
+  define(__26 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false))) using tseitin
 
 --
 
-or([__45,__46;int(1..)])
+or([__25,__26;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__47
+__27
 new variables:
-  findAux __47: bool
+  findAux __27: bool
 new SAT encoding decisions:
-  define(__47 <-> or([__45,__46;int(1..)])) using tseitin
+  define(__27 <-> or([__25,__26;int(1..)])) using tseitin
 
 --
 
@@ -1766,9 +1526,9 @@ f#as_relation_1#as_set_1#explicit_1#components_2
 
 --
 
-f#as_relation_1#as_set_1#explicit_1#components_2 != ((true,-1),true)
+f#as_relation_1#as_set_1#explicit_1#components_2 != ((false,-1),false)
    ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 != (true,-1),f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != true;int(1..)])
+or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 != (false,-1),f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != false;int(1..)])
 
 --
 
@@ -1778,263 +1538,23 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1
 
 --
 
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1 != (true,-1)
+f#as_relation_1#as_set_1#explicit_1#components_2#components_1 != (false,-1)
    ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2 != -1;int(1..)])
+or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != false,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2 != -1;int(1..)])
 
 --
 
-or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__48
-new variables:
-  findAux __48: bool
+and([(__14) -> (and([__27,or([or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != false;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != false;int(1..)]);int(1..)])),(or([__16,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((true,-1),false);int(1..)])) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((true,-1),true),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) != ((true,-1),true);int(1..)])),(or([__17,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((true,-1),true);int(1..)])) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((true,-1),false),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) != ((true,-1),false);int(1..)]));int(1..)]),
+true,
+true,
+(__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([true,(or([__16,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((true,-1),false);int(1..)])) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((true,-1),true),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) != ((true,-1),true);int(1..)])),(or([__17,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = ((true,-1),true);int(1..)])) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((true,-1),false),SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) != ((true,-1),false);int(1..)]));int(1..)]),
+true,
+true,
+(__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ]))
 new SAT encoding decisions:
-  define(__48 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (true))) using tseitin
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != true
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__49
-new variables:
-  findAux __49: bool
-new SAT encoding decisions:
-  define(__49 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (true))) using tseitin
-
---
-
-or([__48,__49;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__50
-new variables:
-  findAux __50: bool
-new SAT encoding decisions:
-  define(__50 <-> or([__48,__49;int(1..)])) using tseitin
-
---
-
-SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-f#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1 != ((true,-1),true)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 != (true,-1),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != true;int(1..)])
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1 != (true,-1)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true,f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2 != -1;int(1..)])
-
---
-
-or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__51
-new variables:
-  findAux __51: bool
-new SAT encoding decisions:
-  define(__51 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (true))) using tseitin
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != true
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__52
-new variables:
-  findAux __52: bool
-new SAT encoding decisions:
-  define(__52 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (true))) using tseitin
-
---
-
-or([__51,__52;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__53
-new variables:
-  findAux __53: bool
-new SAT encoding decisions:
-  define(__53 <-> or([__51,__52;int(1..)])) using tseitin
-
---
-
-and([__53,__50;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__54
-new variables:
-  findAux __54: bool
-new SAT encoding decisions:
-  define(__54 <-> and([__53,__50;int(1..)])) using tseitin
-
---
-
-SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#as_relation_1#as_set_1#explicit_1#components_2
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-f#as_relation_1#as_set_1#explicit_1#components_2
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_2 != ((true,-1),false)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 != (true,-1),f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != false;int(1..)])
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1 != (true,-1)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2 != -1;int(1..)])
-
---
-
-or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__55
-new variables:
-  findAux __55: bool
-new SAT encoding decisions:
-  define(__55 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (true))) using tseitin
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != false
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__56
-new variables:
-  findAux __56: bool
-new SAT encoding decisions:
-  define(__56 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false))) using tseitin
-
---
-
-or([__55,__56;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__57
-new variables:
-  findAux __57: bool
-new SAT encoding decisions:
-  define(__57 <-> or([__55,__56;int(1..)])) using tseitin
-
---
-
-SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-f#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1 != ((true,-1),false)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 != (true,-1),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != false;int(1..)])
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1 != (true,-1)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true,f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2 != -1;int(1..)])
-
---
-
-or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__58
-new variables:
-  findAux __58: bool
-new SAT encoding decisions:
-  define(__58 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (true))) using tseitin
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != false
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__59
-new variables:
-  findAux __59: bool
-new SAT encoding decisions:
-  define(__59 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false))) using tseitin
-
---
-
-or([__58,__59;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__60
-new variables:
-  findAux __60: bool
-new SAT encoding decisions:
-  define(__60 <-> or([__58,__59;int(1..)])) using tseitin
-
---
-
-and([__60,__57;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__61
-new variables:
-  findAux __61: bool
-new SAT encoding decisions:
-  define(__61 <-> and([__60,__57;int(1..)])) using tseitin
+  assert((__14) -> (and([__27,or([or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != false;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != false;int(1..)]);int(1..)]))) using tseitin
 
 --
 
@@ -2076,41 +1596,97 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1
 
 f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__62
+__28
 new variables:
-  findAux __62: bool
+  findAux __28: bool
 new SAT encoding decisions:
-  define(__62 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin
+  define(__28 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin
 
 --
 
-and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__62;int(1..)])
+and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__28;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__63
+__29
 new variables:
-  findAux __63: bool
+  findAux __29: bool
 new SAT encoding decisions:
-  define(__63 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__62;int(1..)])) using tseitin
+  define(__29 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__28;int(1..)])) using tseitin
 
 --
 
-or([__31,__63;int(1..)])
+or([__16,__29;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__64
+__30
 new variables:
-  findAux __64: bool
+  findAux __30: bool
 new SAT encoding decisions:
-  define(__64 <-> or([__31,__63;int(1..)])) using tseitin
+  define(__30 <-> or([__16,__29;int(1..)])) using tseitin
 
 --
 
-(__64) -> (__54)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__65
+SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#as_set_1#explicit_1#components_2
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2 != ((true,-1),true)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 != (true,-1),f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != true;int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_1 != (true,-1)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2 != -1;int(1..)])
+
+--
+
+or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
+__31
 new variables:
-  findAux __65: bool
+  findAux __31: bool
 new SAT encoding decisions:
-  define(__65 <-> (__64) -> (__54)) using tseitin
+  define(__31 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (true))) using tseitin
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != true
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
+__32
+new variables:
+  findAux __32: bool
+new SAT encoding decisions:
+  define(__32 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (true))) using tseitin
+
+--
+
+or([__31,__32;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__33
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> or([__31,__32;int(1..)])) using tseitin
 
 --
 
@@ -2152,31 +1728,21 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1
 
 and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__66
+__34
 new variables:
-  findAux __66: bool
+  findAux __34: bool
 new SAT encoding decisions:
-  define(__66 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin
+  define(__34 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin
 
 --
 
-or([__32,__66;int(1..)])
+or([__17,__34;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__67
+__35
 new variables:
-  findAux __67: bool
+  findAux __35: bool
 new SAT encoding decisions:
-  define(__67 <-> or([__32,__66;int(1..)])) using tseitin
-
---
-
-(__67) -> (__61)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__68
-new variables:
-  findAux __68: bool
-new SAT encoding decisions:
-  define(__68 <-> (__67) -> (__61)) using tseitin
+  define(__35 <-> or([__17,__34;int(1..)])) using tseitin
 
 --
 
@@ -2192,9 +1758,9 @@ f#as_relation_1#as_set_1#explicit_1#components_2
 
 --
 
-f#as_relation_1#as_set_1#explicit_1#components_2 != ((false,-1),false)
+f#as_relation_1#as_set_1#explicit_1#components_2 != ((true,-1),false)
    ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 != (false,-1),f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != false;int(1..)])
+or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 != (true,-1),f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != false;int(1..)])
 
 --
 
@@ -2204,88 +1770,138 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1
 
 --
 
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1 != (false,-1)
+f#as_relation_1#as_set_1#explicit_1#components_2#components_1 != (true,-1)
    ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != false,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2 != -1;int(1..)])
+or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2 != -1;int(1..)])
 
 --
 
-or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != false;int(1..)])
+or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != false
+f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true
 
 --
 
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != false
+f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != true
    ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__69
+__36
 new variables:
-  findAux __69: bool
+  findAux __36: bool
 new SAT encoding decisions:
-  define(__69 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false))) using tseitin
+  define(__36 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (true))) using tseitin
 
 --
 
 f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != false
    ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__70
+__37
 new variables:
-  findAux __70: bool
+  findAux __37: bool
 new SAT encoding decisions:
-  define(__70 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false))) using tseitin
+  define(__37 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false))) using tseitin
 
 --
 
-or([__69,__70;int(1..)])
+or([__36,__37;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__71
+__38
 new variables:
-  findAux __71: bool
+  findAux __38: bool
 new SAT encoding decisions:
-  define(__71 <-> or([__69,__70;int(1..)])) using tseitin
+  define(__38 <-> or([__36,__37;int(1..)])) using tseitin
 
 --
 
-and([__47,__71;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__72
-new variables:
-  findAux __72: bool
-new SAT encoding decisions:
-  define(__72 <-> and([__47,__71;int(1..)])) using tseitin
+SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
 
 --
 
-(__29) -> (__72)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__73
-new variables:
-  findAux __73: bool
-new SAT encoding decisions:
-  define(__73 <-> (__29) -> (__72)) using tseitin
+f#as_relation_1#as_set_1#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
 
 --
 
-and([__44,__73,__65,__68;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__74
-new variables:
-  findAux __74: bool
-new SAT encoding decisions:
-  define(__74 <-> and([__44,__73,__65,__68;int(1..)])) using tseitin
+f#as_relation_1#as_set_1#explicit_1#components_1 != ((true,-1),true)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 != (true,-1),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != true;int(1..)])
 
 --
 
-__74,
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1 != (true,-1)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true,f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2 != -1;int(1..)])
+
+--
+
+and([(__30) -> (and([or([or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != true;int(1..)]),__33;int(1..)])),(__35) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((true,-1),false),__38;int(1..)]));int(1..)]),
 true,
 true,
 (__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ]))
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([true,(__35) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((true,-1),false),__38;int(1..)]));int(1..)]),
 true,
 true,
 (__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ]))
 new SAT encoding decisions:
-  assert(__74) using tseitin
+  assert((__30) -> (and([or([or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != true;int(1..)]),__33;int(1..)]))) using tseitin
+
+--
+
+and([(__35) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((true,-1),false),__38;int(1..)]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+(__35) -> (and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) != ((true,-1),false),__38;int(1..)]))
+
+--
+
+SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1 != ((true,-1),false)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 != (true,-1),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != false;int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1 != (true,-1)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true,f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2 != -1;int(1..)])
+
+--
+
+(__35) -> (and([or([or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != false;int(1..)]),__38;int(1..)])),
+true,
+true,
+(__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+true,
+(__1) <-> (or([ SafeIndex(e,[1]) = (a,-1) | e : tuple (tuple (bool, int(-1)), bool), e in f#as_relation_1#as_set_1 ]))
+new SAT encoding decisions:
+  assert((__35) -> (and([or([or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != false;int(1..)]),__38;int(1..)]))) using tseitin
 
 --
 
@@ -2513,21 +2129,21 @@ false = a
 
 false = a
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__75
+__39
 new variables:
-  findAux __75: bool
+  findAux __39: bool
 new SAT encoding decisions:
-  define(__75 <-> (false) <-> (a)) using tseitin
+  define(__39 <-> (false) <-> (a)) using tseitin
 
 --
 
 false = a
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__76
+__40
 new variables:
-  findAux __76: bool
+  findAux __40: bool
 new SAT encoding decisions:
-  define(__76 <-> (false) <-> (a)) using tseitin
+  define(__40 <-> (false) <-> (a)) using tseitin
 
 --
 
@@ -2569,31 +2185,31 @@ f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = fal
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__77
+__41
 new variables:
-  findAux __77: bool
+  findAux __41: bool
 new SAT encoding decisions:
-  define(__77 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin
+  define(__41 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin
 
 --
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__78
+__42
 new variables:
-  findAux __78: bool
+  findAux __42: bool
 new SAT encoding decisions:
-  define(__78 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin
+  define(__42 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin
 
 --
 
-and([__77,__78;int(1..)])
+and([__41,__42;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__79
+__43
 new variables:
-  findAux __79: bool
+  findAux __43: bool
 new SAT encoding decisions:
-  define(__79 <-> and([__77,__78;int(1..)])) using tseitin
+  define(__43 <-> and([__41,__42;int(1..)])) using tseitin
 
 --
 
@@ -2635,51 +2251,51 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = fal
 
 f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__80
+__44
 new variables:
-  findAux __80: bool
+  findAux __44: bool
 new SAT encoding decisions:
-  define(__80 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin
+  define(__44 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin
 
 --
 
 f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__81
+__45
 new variables:
-  findAux __81: bool
+  findAux __45: bool
 new SAT encoding decisions:
-  define(__81 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin
+  define(__45 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin
 
 --
 
-and([__80,__81;int(1..)])
+and([__44,__45;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__82
+__46
 new variables:
-  findAux __82: bool
+  findAux __46: bool
 new SAT encoding decisions:
-  define(__82 <-> and([__80,__81;int(1..)])) using tseitin
+  define(__46 <-> and([__44,__45;int(1..)])) using tseitin
 
 --
 
-or([__79,__82;int(1..)])
+or([__43,__46;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__83
+__47
 new variables:
-  findAux __83: bool
+  findAux __47: bool
 new SAT encoding decisions:
-  define(__83 <-> or([__79,__82;int(1..)])) using tseitin
+  define(__47 <-> or([__43,__46;int(1..)])) using tseitin
 
 --
 
-and([__83,__76;int(1..)])
+and([__47,__40;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__84
+__48
 new variables:
-  findAux __84: bool
+  findAux __48: bool
 new SAT encoding decisions:
-  define(__84 <-> and([__83,__76;int(1..)])) using tseitin
+  define(__48 <-> and([__47,__40;int(1..)])) using tseitin
 
 --
 
@@ -2721,21 +2337,21 @@ f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = fal
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__85
+__49
 new variables:
-  findAux __85: bool
+  findAux __49: bool
 new SAT encoding decisions:
-  define(__85 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin
+  define(__49 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin
 
 --
 
-and([__85,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])
+and([__49,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__86
+__50
 new variables:
-  findAux __86: bool
+  findAux __50: bool
 new SAT encoding decisions:
-  define(__86 <-> and([__85,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin
+  define(__50 <-> and([__49,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin
 
 --
 
@@ -2777,41 +2393,41 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = fal
 
 f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__87
+__51
 new variables:
-  findAux __87: bool
+  findAux __51: bool
 new SAT encoding decisions:
-  define(__87 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin
+  define(__51 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin
 
 --
 
-and([__87,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])
+and([__51,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__88
+__52
 new variables:
-  findAux __88: bool
+  findAux __52: bool
 new SAT encoding decisions:
-  define(__88 <-> and([__87,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin
+  define(__52 <-> and([__51,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin
 
 --
 
-or([__86,__88;int(1..)])
+or([__50,__52;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__89
+__53
 new variables:
-  findAux __89: bool
+  findAux __53: bool
 new SAT encoding decisions:
-  define(__89 <-> or([__86,__88;int(1..)])) using tseitin
+  define(__53 <-> or([__50,__52;int(1..)])) using tseitin
 
 --
 
-and([__89,__75;int(1..)])
+and([__53,__39;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__90
+__54
 new variables:
-  findAux __90: bool
+  findAux __54: bool
 new SAT encoding decisions:
-  define(__90 <-> and([__89,__75;int(1..)])) using tseitin
+  define(__54 <-> and([__53,__39;int(1..)])) using tseitin
 
 --
 
@@ -2853,21 +2469,21 @@ f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1
 
 f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__91
+__55
 new variables:
-  findAux __91: bool
+  findAux __55: bool
 new SAT encoding decisions:
-  define(__91 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin
+  define(__55 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin
 
 --
 
-and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,__91;int(1..)])
+and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,__55;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__92
+__56
 new variables:
-  findAux __92: bool
+  findAux __56: bool
 new SAT encoding decisions:
-  define(__92 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,__91;int(1..)])) using tseitin
+  define(__56 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,__55;int(1..)])) using tseitin
 
 --
 
@@ -2909,11 +2525,11 @@ f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1
 
 and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__93
+__57
 new variables:
-  findAux __93: bool
+  findAux __57: bool
 new SAT encoding decisions:
-  define(__93 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin
+  define(__57 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin
 
 --
 
@@ -2955,41 +2571,41 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1
 
 f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__94
+__58
 new variables:
-  findAux __94: bool
+  findAux __58: bool
 new SAT encoding decisions:
-  define(__94 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin
+  define(__58 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin
 
 --
 
-and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__94;int(1..)])
+and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__58;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__95
+__59
 new variables:
-  findAux __95: bool
+  findAux __59: bool
 new SAT encoding decisions:
-  define(__95 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__94;int(1..)])) using tseitin
+  define(__59 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__58;int(1..)])) using tseitin
 
 --
 
-or([__92,__95;int(1..)])
+or([__56,__59;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__96
+__60
 new variables:
-  findAux __96: bool
+  findAux __60: bool
 new SAT encoding decisions:
-  define(__96 <-> or([__92,__95;int(1..)])) using tseitin
+  define(__60 <-> or([__56,__59;int(1..)])) using tseitin
 
 --
 
-and([__96,a;int(1..)])
+and([__60,a;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__97
+__61
 new variables:
-  findAux __97: bool
+  findAux __61: bool
 new SAT encoding decisions:
-  define(__97 <-> and([__96,a;int(1..)])) using tseitin
+  define(__61 <-> and([__60,a;int(1..)])) using tseitin
 
 --
 
@@ -3023,70 +2639,14 @@ and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 
 
 --
 
-and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1
-
---
-
-and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__98
-new variables:
-  findAux __98: bool
-new SAT encoding decisions:
-  define(__98 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin
-
---
-
-or([__93,__98;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__99
-new variables:
-  findAux __99: bool
-new SAT encoding decisions:
-  define(__99 <-> or([__93,__98;int(1..)])) using tseitin
-
---
-
-and([__99,a;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__100
-new variables:
-  findAux __100: bool
-new SAT encoding decisions:
-  define(__100 <-> and([__99,a;int(1..)])) using tseitin
-
---
-
-or([__84,__90,__97,__100;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__101
-new variables:
-  findAux __101: bool
-new SAT encoding decisions:
-  define(__101 <-> or([__84,__90,__97,__100;int(1..)])) using tseitin
-
---
-
-(__1) <-> (__101)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__102
-new variables:
-  findAux __102: bool
-new SAT encoding decisions:
-  define(__102 <-> (__1) <-> (__101)) using tseitin
-
---
-
 true,
 true,
-__102
-   ~~> remove_single_atom ([("SAT", 8400)])
+(__1) <-> (or([__48,__54,__61,and([or([__57,and([and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)]);int(1..)]),a;int(1..)]);int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true
 new SAT encoding decisions:
-  assert(__102) using tseitin
+  assert((__1) <-> (or([__48,__54,__61,and([or([__57,and([and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)]);int(1..)]),a;int(1..)]);int(1..)]))) using tseitin
 
 --
 
@@ -3172,47 +2732,6 @@ findAux __58: bool
 findAux __59: bool
 findAux __60: bool
 findAux __61: bool
-findAux __62: bool
-findAux __63: bool
-findAux __64: bool
-findAux __65: bool
-findAux __66: bool
-findAux __67: bool
-findAux __68: bool
-findAux __69: bool
-findAux __70: bool
-findAux __71: bool
-findAux __72: bool
-findAux __73: bool
-findAux __74: bool
-findAux __75: bool
-findAux __76: bool
-findAux __77: bool
-findAux __78: bool
-findAux __79: bool
-findAux __80: bool
-findAux __81: bool
-findAux __82: bool
-findAux __83: bool
-findAux __84: bool
-findAux __85: bool
-findAux __86: bool
-findAux __87: bool
-findAux __88: bool
-findAux __89: bool
-findAux __90: bool
-findAux __91: bool
-findAux __92: bool
-findAux __93: bool
-findAux __94: bool
-findAux __95: bool
-findAux __96: bool
-findAux __97: bool
-findAux __98: bool
-findAux __99: bool
-findAux __100: bool
-findAux __101: bool
-findAux __102: bool
 
 such that
 
@@ -3223,112 +2742,74 @@ sat encoding decisions:
 
 at-most-one(f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
 at-most-one(f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
-assert(f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1) using tseitin,
-assert(f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1) using tseitin,
-define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__3 <-> (r) <-> (__2)) using tseitin,
-assert(__3) using tseitin,
-define(__4 <-> integer-weighted(-1*f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1, 1*f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1) Less 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }],
-define(__5 <-> integer-weighted(-1*f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1, 1*f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }],
-define(__6 <-> !(f#as_relation_1#as_set_1#explicit_1#components_1#components_2)) using tseitin,
-define(__7 <-> !(f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1)) using tseitin,
-define(__8 <-> and([__7,f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)])) using tseitin,
-define(__9 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1)) using tseitin,
-define(__10 <-> and([__9,__4;int(1..)])) using tseitin,
-define(__11 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1)) using tseitin,
-define(__12 <-> and([__11,__5,__6,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin,
-define(__13 <-> or([__8,__10,__12;int(1..)])) using tseitin,
-assert(__13) using tseitin,
-define(__14 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (a)) using tseitin,
-define(__15 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (__0)) using tseitin,
-define(__16 <-> and([__14,__15;int(1..)])) using tseitin,
-define(__17 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (a)) using tseitin,
-define(__18 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (__0)) using tseitin,
-define(__19 <-> and([__17,__18;int(1..)])) using tseitin,
-define(__20 <-> or([__16,__19;int(1..)])) using tseitin,
-define(__21 <-> (__1) -> (__20)) using tseitin,
-assert(__21) using tseitin,
-define(__22 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin,
-define(__23 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin,
-define(__24 <-> and([__22,__23;int(1..)])) using tseitin,
-define(__25 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin,
-define(__26 <-> and([__25,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin,
-define(__27 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin,
-define(__28 <-> and([__27,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin,
-define(__29 <-> or([__26,__28;int(1..)])) using tseitin,
-define(__30 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin,
-define(__31 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,__30;int(1..)])) using tseitin,
-define(__32 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin,
-define(__33 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin,
-define(__34 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin,
-define(__35 <-> and([__33,__34;int(1..)])) using tseitin,
-define(__36 <-> or([__35,__24;int(1..)])) using tseitin,
-define(__37 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false))) using tseitin,
-define(__38 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (true))) using tseitin,
-define(__39 <-> or([__37,__38;int(1..)])) using tseitin,
-define(__40 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false))) using tseitin,
-define(__41 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (true))) using tseitin,
-define(__42 <-> or([__40,__41;int(1..)])) using tseitin,
-define(__43 <-> and([__42,__39;int(1..)])) using tseitin,
-define(__44 <-> (__36) -> (__43)) using tseitin,
-define(__45 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false))) using tseitin,
-define(__46 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false))) using tseitin,
-define(__47 <-> or([__45,__46;int(1..)])) using tseitin,
-define(__48 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (true))) using tseitin,
-define(__49 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (true))) using tseitin,
-define(__50 <-> or([__48,__49;int(1..)])) using tseitin,
-define(__51 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (true))) using tseitin,
-define(__52 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (true))) using tseitin,
-define(__53 <-> or([__51,__52;int(1..)])) using tseitin,
-define(__54 <-> and([__53,__50;int(1..)])) using tseitin,
-define(__55 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (true))) using tseitin,
-define(__56 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false))) using tseitin,
-define(__57 <-> or([__55,__56;int(1..)])) using tseitin,
-define(__58 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (true))) using tseitin,
-define(__59 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false))) using tseitin,
-define(__60 <-> or([__58,__59;int(1..)])) using tseitin,
-define(__61 <-> and([__60,__57;int(1..)])) using tseitin,
-define(__62 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin,
-define(__63 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__62;int(1..)])) using tseitin,
-define(__64 <-> or([__31,__63;int(1..)])) using tseitin,
-define(__65 <-> (__64) -> (__54)) using tseitin,
-define(__66 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin,
-define(__67 <-> or([__32,__66;int(1..)])) using tseitin,
-define(__68 <-> (__67) -> (__61)) using tseitin,
-define(__69 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false))) using tseitin,
-define(__70 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false))) using tseitin,
-define(__71 <-> or([__69,__70;int(1..)])) using tseitin,
-define(__72 <-> and([__47,__71;int(1..)])) using tseitin,
-define(__73 <-> (__29) -> (__72)) using tseitin,
-define(__74 <-> and([__44,__73,__65,__68;int(1..)])) using tseitin,
-assert(__74) using tseitin,
-define(__75 <-> (false) <-> (a)) using tseitin,
-define(__76 <-> (false) <-> (a)) using tseitin,
-define(__77 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin,
-define(__78 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin,
-define(__79 <-> and([__77,__78;int(1..)])) using tseitin,
-define(__80 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin,
-define(__81 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin,
-define(__82 <-> and([__80,__81;int(1..)])) using tseitin,
-define(__83 <-> or([__79,__82;int(1..)])) using tseitin,
-define(__84 <-> and([__83,__76;int(1..)])) using tseitin,
-define(__85 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin,
-define(__86 <-> and([__85,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin,
-define(__87 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin,
-define(__88 <-> and([__87,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin,
-define(__89 <-> or([__86,__88;int(1..)])) using tseitin,
-define(__90 <-> and([__89,__75;int(1..)])) using tseitin,
-define(__91 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin,
-define(__92 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,__91;int(1..)])) using tseitin,
-define(__93 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin,
-define(__94 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin,
-define(__95 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__94;int(1..)])) using tseitin,
-define(__96 <-> or([__92,__95;int(1..)])) using tseitin,
-define(__97 <-> and([__96,a;int(1..)])) using tseitin,
-define(__98 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin,
-define(__99 <-> or([__93,__98;int(1..)])) using tseitin,
-define(__100 <-> and([__99,a;int(1..)])) using tseitin,
-define(__101 <-> or([__84,__90,__97,__100;int(1..)])) using tseitin,
-define(__102 <-> (__1) <-> (__101)) using tseitin,
-assert(__102) using tseitin
+assert(or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1;int(1..)])) using tseitin,
+assert(or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1;int(1..)])) using tseitin,
+assert((r) <-> (and([__0,__1;int(1..)]))) using tseitin,
+define(__2 <-> integer-weighted(-1*f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1, 1*f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1) Less 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }],
+define(__3 <-> integer-weighted(-1*f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_2#direct_1, 1*f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_2#direct_1) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }],
+assert(or([and([or([and([and([!(f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1),f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)]);int(1..)]),and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,or([__2;int(1..)]);int(1..)]);int(1..)]);int(1..)]),and([and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 = f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__3;int(1..)]),and([!(f#as_relation_1#as_set_1#explicit_1#components_1#components_2),f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)]);int(1..)]);int(1..)])) using tseitin,
+define(__4 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (a)) using tseitin,
+define(__5 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (__0)) using tseitin,
+define(__6 <-> and([__4,__5;int(1..)])) using tseitin,
+assert((__1) -> (or([__6,and([and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 = a;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = __0;int(1..)]);int(1..)]))) using tseitin,
+define(__7 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin,
+define(__8 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin,
+define(__9 <-> and([__7,__8;int(1..)])) using tseitin,
+define(__10 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin,
+define(__11 <-> and([__10,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin,
+define(__12 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin,
+define(__13 <-> and([__12,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin,
+define(__14 <-> or([__11,__13;int(1..)])) using tseitin,
+define(__15 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin,
+define(__16 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,__15;int(1..)])) using tseitin,
+define(__17 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin,
+define(__18 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin,
+define(__19 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin,
+define(__20 <-> and([__18,__19;int(1..)])) using tseitin,
+define(__21 <-> or([__20,__9;int(1..)])) using tseitin,
+define(__22 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false))) using tseitin,
+define(__23 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (true))) using tseitin,
+define(__24 <-> or([__22,__23;int(1..)])) using tseitin,
+assert((__21) -> (and([or([or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != false;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != true;int(1..)]),__24;int(1..)]))) using tseitin,
+define(__25 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false))) using tseitin,
+define(__26 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false))) using tseitin,
+define(__27 <-> or([__25,__26;int(1..)])) using tseitin,
+assert((__14) -> (and([__27,or([or([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1 != false;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != false;int(1..)]);int(1..)]))) using tseitin,
+define(__28 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin,
+define(__29 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__28;int(1..)])) using tseitin,
+define(__30 <-> or([__16,__29;int(1..)])) using tseitin,
+define(__31 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (true))) using tseitin,
+define(__32 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (true))) using tseitin,
+define(__33 <-> or([__31,__32;int(1..)])) using tseitin,
+define(__34 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin,
+define(__35 <-> or([__17,__34;int(1..)])) using tseitin,
+define(__36 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (true))) using tseitin,
+define(__37 <-> !((f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false))) using tseitin,
+define(__38 <-> or([__36,__37;int(1..)])) using tseitin,
+assert((__30) -> (and([or([or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != true;int(1..)]),__33;int(1..)]))) using tseitin,
+assert((__35) -> (and([or([or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1 != true;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 != false;int(1..)]),__38;int(1..)]))) using tseitin,
+define(__39 <-> (false) <-> (a)) using tseitin,
+define(__40 <-> (false) <-> (a)) using tseitin,
+define(__41 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin,
+define(__42 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin,
+define(__43 <-> and([__41,__42;int(1..)])) using tseitin,
+define(__44 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin,
+define(__45 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin,
+define(__46 <-> and([__44,__45;int(1..)])) using tseitin,
+define(__47 <-> or([__43,__46;int(1..)])) using tseitin,
+define(__48 <-> and([__47,__40;int(1..)])) using tseitin,
+define(__49 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1) <-> (false)) using tseitin,
+define(__50 <-> and([__49,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin,
+define(__51 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1) <-> (false)) using tseitin,
+define(__52 <-> and([__51,f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])) using tseitin,
+define(__53 <-> or([__50,__52;int(1..)])) using tseitin,
+define(__54 <-> and([__53,__39;int(1..)])) using tseitin,
+define(__55 <-> (f#as_relation_1#as_set_1#explicit_1#components_1#components_2) <-> (false)) using tseitin,
+define(__56 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,__55;int(1..)])) using tseitin,
+define(__57 <-> and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#components_1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)])) using tseitin,
+define(__58 <-> (f#as_relation_1#as_set_1#explicit_1#components_2#components_2) <-> (false)) using tseitin,
+define(__59 <-> and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1,__58;int(1..)])) using tseitin,
+define(__60 <-> or([__56,__59;int(1..)])) using tseitin,
+define(__61 <-> and([__60,a;int(1..)])) using tseitin,
+assert((__1) <-> (or([__48,__54,__61,and([or([__57,and([and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1#components_1;int(1..)]),f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)]);int(1..)]),a;int(1..)]);int(1..)]))) using tseitin
 

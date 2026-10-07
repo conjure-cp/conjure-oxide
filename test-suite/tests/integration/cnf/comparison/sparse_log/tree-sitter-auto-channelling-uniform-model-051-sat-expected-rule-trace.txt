@@ -94,123 +94,31 @@ new SAT encoding decisions:
 
 --
 
-!(x#offset_6)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> !(x#offset_6)) using tseitin
-
---
-
-!(x#offset_5)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> !(x#offset_5)) using tseitin
-
---
-
-!(x#offset_4)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> !(x#offset_4)) using tseitin
-
---
-
-!(x#offset_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> !(x#offset_3)) using tseitin
-
---
-
-!(x#offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> !(x#offset_2)) using tseitin
-
---
-
-or([__7,or([__8,and([__9,and([__10,and([__11;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-or([__7,__8,and([__9,and([__10,and([__11;int(1..)]);int(1..)]);int(1..)]);int(1..)])
-
---
-
-and([__9,and([__10,and([__11;int(1..)]);int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([__9,__10,__11;int(1..)])
-
---
-
-or([__1,__2,__3,__4,__5,__6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__12
-new variables:
-  findAux __12: bool
-new SAT encoding decisions:
-  define(__12 <-> or([__1,__2,__3,__4,__5,__6;int(1..)])) using tseitin
-
---
-
-and([__9,__10,__11;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> and([__9,__10,__11;int(1..)])) using tseitin
-
---
-
-or([__7,__8,__13;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> or([__7,__8,__13;int(1..)])) using tseitin
-
---
-
 __0,
-__14,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-__14,
-__12
+or([!(x#offset_6),or([!(x#offset_5),and([!(x#offset_4),and([!(x#offset_3),and([!(x#offset_2);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([__1,__2,__3,__4,__5,__6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([!(x#offset_6),or([!(x#offset_5),and([!(x#offset_4),and([!(x#offset_3),and([!(x#offset_2);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([__1,__2,__3,__4,__5,__6;int(1..)])
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
-__14,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-__12
+or([!(x#offset_6),or([!(x#offset_5),and([!(x#offset_4),and([!(x#offset_3),and([!(x#offset_2);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+or([__1,__2,__3,__4,__5,__6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([__1,__2,__3,__4,__5,__6;int(1..)])
 new SAT encoding decisions:
-  assert(__14) using tseitin
+  assert(or([!(x#offset_6),or([!(x#offset_5),and([!(x#offset_4),and([!(x#offset_3),and([!(x#offset_2);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])) using tseitin
 
 --
 
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+or([__1,__2,__3,__4,__5,__6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__12) using tseitin
+  assert(or([__1,__2,__3,__4,__5,__6;int(1..)])) using tseitin
 
 --
 
@@ -230,14 +138,6 @@ findAux __3: bool
 findAux __4: bool
 findAux __5: bool
 findAux __6: bool
-findAux __7: bool
-findAux __8: bool
-findAux __9: bool
-findAux __10: bool
-findAux __11: bool
-findAux __12: bool
-findAux __13: bool
-findAux __14: bool
 
 such that
 
@@ -252,15 +152,7 @@ define(__3 <-> integer-weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3, 8*x#of
 define(__4 <-> integer-weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3, 8*x#offset_4, 16*x#offset_5, 32*x#offset_6) Equal 29) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 49 } }],
 define(__5 <-> integer-weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3, 8*x#offset_4, 16*x#offset_5, 32*x#offset_6) Equal 39) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 49 } }],
 define(__6 <-> integer-weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3, 8*x#offset_4, 16*x#offset_5, 32*x#offset_6) Equal 49) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 49 } }],
-define(__7 <-> !(x#offset_6)) using tseitin,
-define(__8 <-> !(x#offset_5)) using tseitin,
-define(__9 <-> !(x#offset_4)) using tseitin,
-define(__10 <-> !(x#offset_3)) using tseitin,
-define(__11 <-> !(x#offset_2)) using tseitin,
-define(__12 <-> or([__1,__2,__3,__4,__5,__6;int(1..)])) using tseitin,
-define(__13 <-> and([__9,__10,__11;int(1..)])) using tseitin,
-define(__14 <-> or([__7,__8,__13;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__14) using tseitin,
-assert(__12) using tseitin
+assert(or([!(x#offset_6),or([!(x#offset_5),and([!(x#offset_4),and([!(x#offset_3),and([!(x#offset_2);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])) using tseitin,
+assert(or([__1,__2,__3,__4,__5,__6;int(1..)])) using tseitin
 

@@ -37,22 +37,12 @@ new SAT encoding decisions:
 
 --
 
-or([x#packed_1#direct_1,x#packed_1#direct_2,x#packed_1#direct_3,x#packed_1#direct_4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([x#packed_1#direct_1,x#packed_1#direct_2,x#packed_1#direct_3,x#packed_1#direct_4;int(1..)])) using tseitin
-
---
-
 true,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([x#packed_1#direct_1,x#packed_1#direct_2,x#packed_1#direct_3,x#packed_1#direct_4;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(or([x#packed_1#direct_1,x#packed_1#direct_2,x#packed_1#direct_3,x#packed_1#direct_4;int(1..)])) using tseitin
 
 --
 
@@ -64,7 +54,6 @@ find x#packed_1#direct_1: bool
 find x#packed_1#direct_2: bool
 find x#packed_1#direct_3: bool
 find x#packed_1#direct_4: bool
-findAux __0: bool
 
 such that
 
@@ -73,6 +62,5 @@ true
 sat encoding decisions:
 
 at-most-one(x#packed_1#direct_1, x#packed_1#direct_2, x#packed_1#direct_3, x#packed_1#direct_4) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
-define(__0 <-> or([x#packed_1#direct_1,x#packed_1#direct_2,x#packed_1#direct_3,x#packed_1#direct_4;int(1..)])) using tseitin,
-assert(__0) using tseitin
+assert(or([x#packed_1#direct_1,x#packed_1#direct_2,x#packed_1#direct_3,x#packed_1#direct_4;int(1..)])) using tseitin
 

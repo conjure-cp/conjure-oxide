@@ -13,9 +13,24 @@ y != false
 
 x,
 y != false
-   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-x,
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 y != false
+new SAT encoding decisions:
+  assert(x) using tseitin
+
+--
+
+y != false
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(y != false) using tseitin
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
 new variables:
   find z#twos_complement_1: bool
   find z#twos_complement_2: bool
@@ -39,47 +54,12 @@ new SAT encoding decisions:
 
 --
 
+true,
 or([__0;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__0
-
---
-
-y != false
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> !((y) <-> (false))) using tseitin
-
---
-
-x,
-__1,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1,
-__0
-new SAT encoding decisions:
-  assert(x) using tseitin
-
---
-
-__1,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
-__0
-new SAT encoding decisions:
-  assert(__1) using tseitin
-
---
-
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(or([__0;int(1..)])) using tseitin
 
 --
 
@@ -96,7 +76,6 @@ find z#twos_complement_5: bool
 find z#twos_complement_6: bool
 find z#twos_complement_7: bool
 findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -104,9 +83,8 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> integer-weighted(1*z#twos_complement_1, 2*z#twos_complement_2, 4*z#twos_complement_3, 8*z#twos_complement_4, 16*z#twos_complement_5, 32*z#twos_complement_6, -64*z#twos_complement_7) Equal 42) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: BoundedBinary { lower: 42, upper: 42 } }],
-define(__1 <-> !((y) <-> (false))) using tseitin,
 assert(x) using tseitin,
-assert(__1) using tseitin,
-assert(__0) using tseitin
+assert(y != false) using tseitin,
+define(__0 <-> integer-weighted(1*z#twos_complement_1, 2*z#twos_complement_2, 4*z#twos_complement_3, 8*z#twos_complement_4, 16*z#twos_complement_5, 32*z#twos_complement_6, -64*z#twos_complement_7) Equal 42) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: BoundedBinary { lower: 42, upper: 42 } }],
+assert(or([__0;int(1..)])) using tseitin
 

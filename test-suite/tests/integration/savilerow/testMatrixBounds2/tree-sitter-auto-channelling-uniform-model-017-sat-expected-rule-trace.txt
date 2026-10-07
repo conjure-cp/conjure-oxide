@@ -40,6 +40,26 @@ new SAT encoding decisions:
 
 --
 
+!(m[sum([i,j;int(1..)])]),
+and([!(i#offset_1);int(1..)]),
+or([__0;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(m[sum([i,j;int(1..)])]),
+or([__0;int(1..)])
+new SAT encoding decisions:
+  assert(and([!(i#offset_1);int(1..)])) using tseitin
+
+--
+
+!(m[sum([i,j;int(1..)])]),
+or([__0;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(m[sum([i,j;int(1..)])])
+new SAT encoding decisions:
+  assert(or([__0;int(1..)])) using tseitin
+
+--
+
 j
    ~~> select_representation ([("ReprGeneral", 10000)])
 j
@@ -61,6 +81,26 @@ new SAT encoding decisions:
 
 --
 
+!(m[sum([i,j;int(1..)])]),
+and([!(j#offset_1);int(1..)]),
+or([__1;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(m[sum([i,j;int(1..)])]),
+or([__1;int(1..)])
+new SAT encoding decisions:
+  assert(and([!(j#offset_1);int(1..)])) using tseitin
+
+--
+
+!(m[sum([i,j;int(1..)])]),
+or([__1;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(m[sum([i,j;int(1..)])])
+new SAT encoding decisions:
+  assert(or([__1;int(1..)])) using tseitin
+
+--
+
 i
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
 SATInt(Offset, [i#offset_1;int(1..)] [1, 1])
@@ -70,98 +110,6 @@ SATInt(Offset, [i#offset_1;int(1..)] [1, 1])
 j
    ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
 SATInt(Offset, [j#offset_1;int(1..)] [1, 1])
-
---
-
-!(j#offset_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> !(j#offset_1)) using tseitin
-
---
-
-!(i#offset_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> !(i#offset_1)) using tseitin
-
---
-
-or([__1;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__1
-
---
-
-or([__0;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__0
-
---
-
-and([__2;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__2
-
---
-
-and([__3;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__3
-
---
-
-!(m[sum([SATInt(Offset, [i#offset_1;int(1..)] [1, 1]),SATInt(Offset, [j#offset_1;int(1..)] [1, 1]);int(1..)])]),
-__3,
-__0,
-__2,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-!(m[sum([SATInt(Offset, [i#offset_1;int(1..)] [1, 1]),SATInt(Offset, [j#offset_1;int(1..)] [1, 1]);int(1..)])]),
-__0,
-__2,
-__1
-new SAT encoding decisions:
-  assert(__3) using tseitin
-
---
-
-!(m[sum([SATInt(Offset, [i#offset_1;int(1..)] [1, 1]),SATInt(Offset, [j#offset_1;int(1..)] [1, 1]);int(1..)])]),
-__0,
-__2,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-!(m[sum([SATInt(Offset, [i#offset_1;int(1..)] [1, 1]),SATInt(Offset, [j#offset_1;int(1..)] [1, 1]);int(1..)])]),
-__2,
-__1
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-!(m[sum([SATInt(Offset, [i#offset_1;int(1..)] [1, 1]),SATInt(Offset, [j#offset_1;int(1..)] [1, 1]);int(1..)])]),
-__2,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-!(m[sum([SATInt(Offset, [i#offset_1;int(1..)] [1, 1]),SATInt(Offset, [j#offset_1;int(1..)] [1, 1]);int(1..)])]),
-__1
-new SAT encoding decisions:
-  assert(__2) using tseitin
-
---
-
-!(m[sum([SATInt(Offset, [i#offset_1;int(1..)] [1, 1]),SATInt(Offset, [j#offset_1;int(1..)] [1, 1]);int(1..)])]),
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-!(m[sum([SATInt(Offset, [i#offset_1;int(1..)] [1, 1]),SATInt(Offset, [j#offset_1;int(1..)] [1, 1]);int(1..)])])
-new SAT encoding decisions:
-  assert(__1) using tseitin
 
 --
 
@@ -188,8 +136,6 @@ find i#offset_1: bool
 findAux __0: bool
 find j#offset_1: bool
 findAux __1: bool
-findAux __2: bool
-findAux __3: bool
 
 such that
 
@@ -198,11 +144,9 @@ true
 sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*i#offset_1) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }],
+assert(and([!(i#offset_1);int(1..)])) using tseitin,
+assert(or([__0;int(1..)])) using tseitin,
 define(__1 <-> integer-weighted(1*j#offset_1) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }],
-define(__2 <-> !(j#offset_1)) using tseitin,
-define(__3 <-> !(i#offset_1)) using tseitin,
-assert(__3) using tseitin,
-assert(__0) using tseitin,
-assert(__2) using tseitin,
-assert(__1) using tseitin
+assert(and([!(j#offset_1);int(1..)])) using tseitin,
+assert(or([__1;int(1..)])) using tseitin
 

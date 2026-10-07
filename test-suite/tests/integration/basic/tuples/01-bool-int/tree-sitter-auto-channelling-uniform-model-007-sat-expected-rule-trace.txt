@@ -53,24 +53,14 @@ new SAT encoding decisions:
 
 --
 
-or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4;int(1..)])) using tseitin
-
---
-
 x[1] = false,
 x[2] = 2,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 x[1] = false,
 x[2] = 2
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4;int(1..)])) using tseitin
 
 --
 
@@ -86,22 +76,12 @@ x#components_1
 
 --
 
-x#components_1 = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> (x#components_1) <-> (false)) using tseitin
-
---
-
-__1,
+x#components_1 = false,
 x[2] = 2
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 x[2] = 2
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(x#components_1 = false) using tseitin
 
 --
 
@@ -125,19 +105,19 @@ x#components_2
 
 x#components_2 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__2
+__0
 new variables:
-  findAux __2: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*x#components_2#direct_1, 2*x#components_2#direct_2, 3*x#components_2#direct_3, 4*x#components_2#direct_4) Equal 2) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+  define(__0 <-> integer-weighted(1*x#components_2#direct_1, 2*x#components_2#direct_2, 3*x#components_2#direct_3, 4*x#components_2#direct_4) Equal 2) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
 
 --
 
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+__0
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(__0) using tseitin
 
 --
 
@@ -151,8 +131,6 @@ find x#components_2#direct_2: bool
 find x#components_2#direct_3: bool
 find x#components_2#direct_4: bool
 findAux __0: bool
-findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -161,10 +139,8 @@ true
 sat encoding decisions:
 
 at-most-one(x#components_2#direct_1, x#components_2#direct_2, x#components_2#direct_3, x#components_2#direct_4) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
-define(__0 <-> or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-define(__1 <-> (x#components_1) <-> (false)) using tseitin,
-assert(__1) using tseitin,
-define(__2 <-> integer-weighted(1*x#components_2#direct_1, 2*x#components_2#direct_2, 3*x#components_2#direct_3, 4*x#components_2#direct_4) Equal 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
-assert(__2) using tseitin
+assert(or([x#components_2#direct_1,x#components_2#direct_2,x#components_2#direct_3,x#components_2#direct_4;int(1..)])) using tseitin,
+assert(x#components_1 = false) using tseitin,
+define(__0 <-> integer-weighted(1*x#components_2#direct_1, 2*x#components_2#direct_2, 3*x#components_2#direct_3, 4*x#components_2#direct_4) Equal 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+assert(__0) using tseitin
 

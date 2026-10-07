@@ -8,39 +8,17 @@ such that
 
 --
 
-!(a)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__0
-new variables:
-  findAux __0: bool
+!(!(a))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__0 <-> !(a)) using tseitin
-
---
-
-!(__0)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> !(__0)) using tseitin
-
---
-
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(!(!(a))) using tseitin
 
 --
 
 Final model:
 
 find a: bool
-findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -48,7 +26,5 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !(a)) using tseitin,
-define(__1 <-> !(__0)) using tseitin,
-assert(__1) using tseitin
+assert(!(!(a))) using tseitin
 

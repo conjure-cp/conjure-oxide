@@ -51,30 +51,20 @@ new SAT encoding decisions:
 
 --
 
-or([i#direct_1,i#direct_2,i#direct_3,i#direct_4,i#direct_5,i#direct_6,i#direct_7,i#direct_8,i#direct_9,i#direct_10,i#direct_11;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([i#direct_1,i#direct_2,i#direct_3,i#direct_4,i#direct_5,i#direct_6,i#direct_7,i#direct_8,i#direct_9,i#direct_10,i#direct_11;int(1..)])) using tseitin
-
---
-
 __0,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1
+or([i#direct_1,i#direct_2,i#direct_3,i#direct_4,i#direct_5,i#direct_6,i#direct_7,i#direct_8,i#direct_9,i#direct_10,i#direct_11;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([i#direct_1,i#direct_2,i#direct_3,i#direct_4,i#direct_5,i#direct_6,i#direct_7,i#direct_8,i#direct_9,i#direct_10,i#direct_11;int(1..)])
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+or([i#direct_1,i#direct_2,i#direct_3,i#direct_4,i#direct_5,i#direct_6,i#direct_7,i#direct_8,i#direct_9,i#direct_10,i#direct_11;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(or([i#direct_1,i#direct_2,i#direct_3,i#direct_4,i#direct_5,i#direct_6,i#direct_7,i#direct_8,i#direct_9,i#direct_10,i#direct_11;int(1..)])) using tseitin
 
 --
 
@@ -94,7 +84,6 @@ find i#direct_9: bool
 find i#direct_10: bool
 find i#direct_11: bool
 findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -104,7 +93,6 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(0*i#direct_1, 1*i#direct_2, 2*i#direct_3, 3*i#direct_4, 4*i#direct_5, 5*i#direct_6, 6*i#direct_7, 7*i#direct_8, 8*i#direct_9, 9*i#direct_10, 10*i#direct_11) Equal 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 11, structure: Choice }],
 at-most-one(i#direct_1, i#direct_2, i#direct_3, i#direct_4, i#direct_5, i#direct_6, i#direct_7, i#direct_8, i#direct_9, i#direct_10, i#direct_11) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
-define(__1 <-> or([i#direct_1,i#direct_2,i#direct_3,i#direct_4,i#direct_5,i#direct_6,i#direct_7,i#direct_8,i#direct_9,i#direct_10,i#direct_11;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__1) using tseitin
+assert(or([i#direct_1,i#direct_2,i#direct_3,i#direct_4,i#direct_5,i#direct_6,i#direct_7,i#direct_8,i#direct_9,i#direct_10,i#direct_11;int(1..)])) using tseitin
 

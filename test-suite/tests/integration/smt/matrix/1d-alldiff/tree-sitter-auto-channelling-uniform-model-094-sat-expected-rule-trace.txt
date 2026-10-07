@@ -137,51 +137,22 @@ new SAT encoding decisions:
 
 --
 
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-or([and([__2,__3;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__2,__3;int(1..)])
-
---
-
+allDifferent(a),
+allDifferent(a[..]),
+a[1] <= a[2],
+a[2] <= a[3],
+or([and([__0,__1;int(1..)]);int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)]),
 or([and([__4,__5;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__4,__5;int(1..)])
-
---
-
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+allDifferent(a),
+allDifferent(a[..]),
+a[1] <= a[2],
+a[2] <= a[3],
+or([and([__2,__3;int(1..)]);int(1..)]),
+or([and([__4,__5;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  define(__6 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-and([__4,__5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> and([__4,__5;int(1..)])) using tseitin
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> and([__0,__1;int(1..)])) using tseitin
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -189,18 +160,16 @@ allDifferent(a),
 allDifferent(a[..]),
 a[1] <= a[2],
 a[2] <= a[3],
-__8,
-__6,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([and([__2,__3;int(1..)]);int(1..)]),
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 allDifferent(a),
 allDifferent(a[..]),
 a[1] <= a[2],
 a[2] <= a[3],
-__6,
-__7
+or([and([__4,__5;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__8) using tseitin
+  assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -208,31 +177,14 @@ allDifferent(a),
 allDifferent(a[..]),
 a[1] <= a[2],
 a[2] <= a[3],
-__6,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent(a),
-allDifferent(a[..]),
-a[1] <= a[2],
-a[2] <= a[3],
-__7
-new SAT encoding decisions:
-  assert(__6) using tseitin
-
---
-
-allDifferent(a),
-allDifferent(a[..]),
-a[1] <= a[2],
-a[2] <= a[3],
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 allDifferent(a),
 allDifferent(a[..]),
 a[1] <= a[2],
 a[2] <= a[3]
 new SAT encoding decisions:
-  assert(__7) using tseitin
+  assert(or([and([__4,__5;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -268,24 +220,24 @@ a#components_2
 
 SATInt(Log, [a#components_1#twos_complement_1,a#components_1#twos_complement_2,a#components_1#twos_complement_3;int(1..)] [1, 3]) <= a#components_2
    ~~> select_integer_relation ([("SAT", 18500)])
-__9
+__6
 new variables:
-  findAux __9: bool
+  findAux __6: bool
 new SAT encoding decisions:
-  define(__9 <-> integer-weighted(1*a#components_1#twos_complement_1, 2*a#components_1#twos_complement_2, -4*a#components_1#twos_complement_3, -1*a#components_2#twos_complement_1, -2*a#components_2#twos_complement_2, 4*a#components_2#twos_complement_3) LessEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+  define(__6 <-> integer-weighted(1*a#components_1#twos_complement_1, 2*a#components_1#twos_complement_2, -4*a#components_1#twos_complement_3, -1*a#components_2#twos_complement_1, -2*a#components_2#twos_complement_2, 4*a#components_2#twos_complement_3) LessEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
 
 --
 
 allDifferent(a),
 allDifferent(a[..]),
-__9,
+__6,
 a[2] <= a[3]
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 allDifferent(a),
 allDifferent(a[..]),
 a[2] <= a[3]
 new SAT encoding decisions:
-  assert(__9) using tseitin
+  assert(__6) using tseitin
 
 --
 
@@ -321,22 +273,22 @@ a#components_3
 
 SATInt(Log, [a#components_2#twos_complement_1,a#components_2#twos_complement_2,a#components_2#twos_complement_3;int(1..)] [1, 3]) <= a#components_3
    ~~> select_integer_relation ([("SAT", 18500)])
-__10
+__7
 new variables:
-  findAux __10: bool
+  findAux __7: bool
 new SAT encoding decisions:
-  define(__10 <-> integer-weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3, -1*a#components_3#twos_complement_1, -2*a#components_3#twos_complement_2, 4*a#components_3#twos_complement_3) LessEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
+  define(__7 <-> integer-weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3, -1*a#components_3#twos_complement_1, -2*a#components_3#twos_complement_2, 4*a#components_3#twos_complement_3) LessEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }]
 
 --
 
 allDifferent(a),
 allDifferent(a[..]),
-__10
-   ~~> remove_single_atom ([("SAT", 8400)])
+__7
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 allDifferent(a),
 allDifferent(a[..])
 new SAT encoding decisions:
-  assert(__10) using tseitin
+  assert(__7) using tseitin
 
 --
 
@@ -372,20 +324,20 @@ a#components_3
 
 allDifferent([a#components_1,a#components_2,a#components_3;int(1..)])
    ~~> select_alldifferent ([("SAT", 18500)])
-__11
+__8
 new variables:
-  findAux __11: bool
+  findAux __8: bool
 new SAT encoding decisions:
-  define(__11 <-> allDifferent(0+weighted(1*a#components_1#twos_complement_1, 2*a#components_1#twos_complement_2, -4*a#components_1#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_3#twos_complement_1, 2*a#components_3#twos_complement_2, -4*a#components_3#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using None, AMO None, PB None
+  define(__8 <-> allDifferent(0+weighted(1*a#components_1#twos_complement_1, 2*a#components_1#twos_complement_2, -4*a#components_1#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_3#twos_complement_1, 2*a#components_3#twos_complement_2, -4*a#components_3#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using None, AMO None, PB None
 
 --
 
 allDifferent(a),
-__11
-   ~~> remove_single_atom ([("SAT", 8400)])
+__8
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 allDifferent(a)
 new SAT encoding decisions:
-  assert(__11) using tseitin
+  assert(__8) using tseitin
 
 --
 
@@ -415,19 +367,19 @@ a#components_3
 
 allDifferent([a#components_1,a#components_2,a#components_3;int(1..3)])
    ~~> select_alldifferent ([("SAT", 18500)])
-__12
+__9
 new variables:
-  findAux __12: bool
+  findAux __9: bool
 new SAT encoding decisions:
-  define(__12 <-> allDifferent(0+weighted(1*a#components_1#twos_complement_1, 2*a#components_1#twos_complement_2, -4*a#components_1#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_3#twos_complement_1, 2*a#components_3#twos_complement_2, -4*a#components_3#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using None, AMO None, PB None
+  define(__9 <-> allDifferent(0+weighted(1*a#components_1#twos_complement_1, 2*a#components_1#twos_complement_2, -4*a#components_1#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_3#twos_complement_1, 2*a#components_3#twos_complement_2, -4*a#components_3#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using None, AMO None, PB None
 
 --
 
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+__9
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__12) using tseitin
+  assert(__9) using tseitin
 
 --
 
@@ -456,9 +408,6 @@ findAux __6: bool
 findAux __7: bool
 findAux __8: bool
 findAux __9: bool
-findAux __10: bool
-findAux __11: bool
-findAux __12: bool
 
 such that
 
@@ -472,18 +421,15 @@ define(__2 <-> integer-weighted(1*a#components_2#twos_complement_1, 2*a#componen
 define(__3 <-> integer-weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
 define(__4 <-> integer-weighted(1*a#components_3#twos_complement_1, 2*a#components_3#twos_complement_2, -4*a#components_3#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
 define(__5 <-> integer-weighted(1*a#components_3#twos_complement_1, 2*a#components_3#twos_complement_2, -4*a#components_3#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__6 <-> and([__2,__3;int(1..)])) using tseitin,
-define(__7 <-> and([__4,__5;int(1..)])) using tseitin,
-define(__8 <-> and([__0,__1;int(1..)])) using tseitin,
-assert(__8) using tseitin,
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__4,__5;int(1..)]);int(1..)])) using tseitin,
+define(__6 <-> integer-weighted(1*a#components_1#twos_complement_1, 2*a#components_1#twos_complement_2, -4*a#components_1#twos_complement_3, -1*a#components_2#twos_complement_1, -2*a#components_2#twos_complement_2, 4*a#components_2#twos_complement_3) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
 assert(__6) using tseitin,
+define(__7 <-> integer-weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3, -1*a#components_3#twos_complement_1, -2*a#components_3#twos_complement_2, 4*a#components_3#twos_complement_3) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
 assert(__7) using tseitin,
-define(__9 <-> integer-weighted(1*a#components_1#twos_complement_1, 2*a#components_1#twos_complement_2, -4*a#components_1#twos_complement_3, -1*a#components_2#twos_complement_1, -2*a#components_2#twos_complement_2, 4*a#components_2#twos_complement_3) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
-assert(__9) using tseitin,
-define(__10 <-> integer-weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3, -1*a#components_3#twos_complement_1, -2*a#components_3#twos_complement_2, 4*a#components_3#twos_complement_3) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -3, upper: -1 } }],
-assert(__10) using tseitin,
-define(__11 <-> allDifferent(0+weighted(1*a#components_1#twos_complement_1, 2*a#components_1#twos_complement_2, -4*a#components_1#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_3#twos_complement_1, 2*a#components_3#twos_complement_2, -4*a#components_3#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
-assert(__11) using tseitin,
-define(__12 <-> allDifferent(0+weighted(1*a#components_1#twos_complement_1, 2*a#components_1#twos_complement_2, -4*a#components_1#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_3#twos_complement_1, 2*a#components_3#twos_complement_2, -4*a#components_3#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
-assert(__12) using tseitin
+define(__8 <-> allDifferent(0+weighted(1*a#components_1#twos_complement_1, 2*a#components_1#twos_complement_2, -4*a#components_1#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_3#twos_complement_1, 2*a#components_3#twos_complement_2, -4*a#components_3#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+assert(__8) using tseitin,
+define(__9 <-> allDifferent(0+weighted(1*a#components_1#twos_complement_1, 2*a#components_1#twos_complement_2, -4*a#components_1#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_2#twos_complement_1, 2*a#components_2#twos_complement_2, -4*a#components_2#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*a#components_3#twos_complement_1, 2*a#components_3#twos_complement_2, -4*a#components_3#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
+assert(__9) using tseitin
 

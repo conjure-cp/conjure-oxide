@@ -9,27 +9,11 @@ and([(x) <-> (x),(false) <-> (y);int(1..)])
 
 --
 
-!(y)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__0
-new variables:
-  findAux __0: bool
+and([!(y);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__0 <-> !(y)) using tseitin
-
---
-
-and([__0;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__0
-
---
-
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(and([!(y);int(1..)])) using tseitin
 
 --
 
@@ -37,7 +21,6 @@ Final model:
 
 find x: bool
 find y: bool
-findAux __0: bool
 
 such that
 
@@ -45,6 +28,5 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !(y)) using tseitin,
-assert(__0) using tseitin
+assert(and([!(y);int(1..)])) using tseitin
 

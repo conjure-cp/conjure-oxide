@@ -190,6 +190,78 @@ new SAT encoding decisions:
 
 --
 
+__0,
+(allowed) <-> (allDifferentExcept([x,y,z;int(1..3)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+(negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
+or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)]),
+or([exception#direct_1,exception#direct_3,exception#direct_6,exception#direct_45;int(1..)]),
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(allowed) <-> (allDifferentExcept([x,y,z;int(1..3)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+(negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
+or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)]),
+or([exception#direct_1,exception#direct_3,exception#direct_6,exception#direct_45;int(1..)]),
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+(allowed) <-> (allDifferentExcept([x,y,z;int(1..3)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+(negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
+or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)]),
+or([exception#direct_1,exception#direct_3,exception#direct_6,exception#direct_45;int(1..)]),
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(allowed) <-> (allDifferentExcept([x,y,z;int(1..3)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+(negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
+or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)]),
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+new SAT encoding decisions:
+  assert(or([exception#direct_1,exception#direct_3,exception#direct_6,exception#direct_45;int(1..)])) using tseitin
+
+--
+
+(allowed) <-> (allDifferentExcept([x,y,z;int(1..3)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+(negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
+or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)]),
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(allowed) <-> (allDifferentExcept([x,y,z;int(1..3)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+(negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
+or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)]),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+new SAT encoding decisions:
+  assert(or([x#direct_1,x#direct_3,x#direct_6;int(1..)])) using tseitin
+
+--
+
+(allowed) <-> (allDifferentExcept([x,y,z;int(1..3)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+(negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
+or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)]),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(allowed) <-> (allDifferentExcept([x,y,z;int(1..3)], exception)),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+(negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
+or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)])
+new SAT encoding decisions:
+  assert(or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin
+
+--
+
 exception
    ~~> select_representation ([("ReprGeneral", 10000)])
 exception
@@ -240,28 +312,48 @@ new SAT encoding decisions:
 
 --
 
-__0,
 (allowed) <-> (__1),
 (repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
 (negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
 or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)]),
-or([exception#direct_1,exception#direct_3,exception#direct_6,exception#direct_45;int(1..)]),
-or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
-or([y#direct_1,y#direct_3,y#direct_6;int(1..)]),
 sum([toInt(z#direct_1),toInt(z#direct_2),toInt(z#direct_3),toInt(z#direct_4),toInt(z#direct_5),toInt(z#direct_6);int(1..)]) <= 1,
 or([z#direct_1,z#direct_3,z#direct_6;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-__0,
 (allowed) <-> (__1),
 (repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
 (negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
 or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)]),
-or([exception#direct_1,exception#direct_3,exception#direct_6,exception#direct_45;int(1..)]),
-or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
-or([y#direct_1,y#direct_3,y#direct_6;int(1..)]),
 or([z#direct_1,z#direct_3,z#direct_6;int(1..)])
 new SAT encoding decisions:
   at-most-one(z#direct_1, z#direct_2, z#direct_3, z#direct_4, z#direct_5, z#direct_6) using None
+
+--
+
+(allowed) <-> (__1),
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+(negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
+or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)]),
+or([z#direct_1,z#direct_3,z#direct_6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+(negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
+or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)]),
+or([z#direct_1,z#direct_3,z#direct_6;int(1..)])
+new SAT encoding decisions:
+  assert((allowed) <-> (__1)) using tseitin
+
+--
+
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+(negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
+or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)]),
+or([z#direct_1,z#direct_3,z#direct_6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(repeated) <-> (allDifferentExcept([x,x,y;int(1..3)], exception)),
+(negative) <-> (!(allDifferentExcept([x,y,-2;int(1..3)], exception))),
+or([allDifferentExcept([x,y,z;int(1..3)], exception),x = y;int(1..)])
+new SAT encoding decisions:
+  assert(or([z#direct_1,z#direct_3,z#direct_6;int(1..)])) using tseitin
 
 --
 
@@ -377,229 +469,31 @@ new SAT encoding decisions:
 
 --
 
-!(__3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__6
-new variables:
-  findAux __6: bool
+(repeated) <-> (__2),
+(negative) <-> (!(__3)),
+or([__4,__5;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(negative) <-> (!(__3)),
+or([__4,__5;int(1..)])
 new SAT encoding decisions:
-  define(__6 <-> !(__3)) using tseitin
+  assert((repeated) <-> (__2)) using tseitin
 
 --
 
-(allowed) <-> (__1)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
+(negative) <-> (!(__3)),
+or([__4,__5;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([__4,__5;int(1..)])
 new SAT encoding decisions:
-  define(__7 <-> (allowed) <-> (__1)) using tseitin
-
---
-
-(repeated) <-> (__2)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> (repeated) <-> (__2)) using tseitin
-
---
-
-(negative) <-> (__6)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> (negative) <-> (__6)) using tseitin
+  assert((negative) <-> (!(__3))) using tseitin
 
 --
 
 or([__4,__5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__10
-new variables:
-  findAux __10: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__10 <-> or([__4,__5;int(1..)])) using tseitin
-
---
-
-or([exception#direct_1,exception#direct_3,exception#direct_6,exception#direct_45;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> or([exception#direct_1,exception#direct_3,exception#direct_6,exception#direct_45;int(1..)])) using tseitin
-
---
-
-or([x#direct_1,x#direct_3,x#direct_6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__12
-new variables:
-  findAux __12: bool
-new SAT encoding decisions:
-  define(__12 <-> or([x#direct_1,x#direct_3,x#direct_6;int(1..)])) using tseitin
-
---
-
-or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin
-
---
-
-or([z#direct_1,z#direct_3,z#direct_6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> or([z#direct_1,z#direct_3,z#direct_6;int(1..)])) using tseitin
-
---
-
-__0,
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13,
-__14
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-__7,
-__8,
-__9,
-__10,
-__11,
-__12,
-__13,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__8,
-__9,
-__10,
-__11,
-__12,
-__13,
-__14
-new SAT encoding decisions:
-  assert(__7) using tseitin
-
---
-
-__8,
-__9,
-__10,
-__11,
-__12,
-__13,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__9,
-__10,
-__11,
-__12,
-__13,
-__14
-new SAT encoding decisions:
-  assert(__8) using tseitin
-
---
-
-__9,
-__10,
-__11,
-__12,
-__13,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__10,
-__11,
-__12,
-__13,
-__14
-new SAT encoding decisions:
-  assert(__9) using tseitin
-
---
-
-__10,
-__11,
-__12,
-__13,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__11,
-__12,
-__13,
-__14
-new SAT encoding decisions:
-  assert(__10) using tseitin
-
---
-
-__11,
-__12,
-__13,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__12,
-__13,
-__14
-new SAT encoding decisions:
-  assert(__11) using tseitin
-
---
-
-__12,
-__13,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__13,
-__14
-new SAT encoding decisions:
-  assert(__12) using tseitin
-
---
-
-__13,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__14
-new SAT encoding decisions:
-  assert(__13) using tseitin
-
---
-
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__14) using tseitin
+  assert(or([__4,__5;int(1..)])) using tseitin
 
 --
 
@@ -681,15 +575,6 @@ findAux __2: bool
 findAux __3: bool
 findAux __4: bool
 findAux __5: bool
-findAux __6: bool
-findAux __7: bool
-findAux __8: bool
-findAux __9: bool
-findAux __10: bool
-findAux __11: bool
-findAux __12: bool
-findAux __13: bool
-findAux __14: bool
 
 such that
 
@@ -701,28 +586,19 @@ define(__0 <-> allDifferentExcept(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#d
 at-most-one(exception#direct_1, exception#direct_2, exception#direct_3, exception#direct_4, exception#direct_5, exception#direct_6, exception#direct_7, exception#direct_8, exception#direct_9, exception#direct_10, exception#direct_11, exception#direct_12, exception#direct_13, exception#direct_14, exception#direct_15, exception#direct_16, exception#direct_17, exception#direct_18, exception#direct_19, exception#direct_20, exception#direct_21, exception#direct_22, exception#direct_23, exception#direct_24, exception#direct_25, exception#direct_26, exception#direct_27, exception#direct_28, exception#direct_29, exception#direct_30, exception#direct_31, exception#direct_32, exception#direct_33, exception#direct_34, exception#direct_35, exception#direct_36, exception#direct_37, exception#direct_38, exception#direct_39, exception#direct_40, exception#direct_41, exception#direct_42, exception#direct_43, exception#direct_44, exception#direct_45) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
 at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
 at-most-one(y#direct_1, y#direct_2, y#direct_3, y#direct_4, y#direct_5, y#direct_6) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+assert(__0) using tseitin,
+assert(or([exception#direct_1,exception#direct_3,exception#direct_6,exception#direct_45;int(1..)])) using tseitin,
+assert(or([x#direct_1,x#direct_3,x#direct_6;int(1..)])) using tseitin,
+assert(or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin,
 define(__1 <-> allDifferentExcept(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), 0+weighted(-2*z#direct_1, -1*z#direct_2, 0*z#direct_3, 1*z#direct_4, 2*z#direct_5, 3*z#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:z#direct_1, -1:z#direct_2, 0:z#direct_3, 1:z#direct_4, 2:z#direct_5, 3:z#direct_6), 0+weighted(-2*exception#direct_1, -1*exception#direct_2, 0*exception#direct_3, 1*exception#direct_4, 2*exception#direct_5, 3*exception#direct_6, 4*exception#direct_7, 5*exception#direct_8, 6*exception#direct_9, 7*exception#direct_10, 8*exception#direct_11, 9*exception#direct_12, 10*exception#direct_13, 11*exception#direct_14, 12*exception#direct_15, 13*exception#direct_16, 14*exception#direct_17, 15*exception#direct_18, 16*exception#direct_19, 17*exception#direct_20, 18*exception#direct_21, 19*exception#direct_22, 20*exception#direct_23, 21*exception#direct_24, 22*exception#direct_25, 23*exception#direct_26, 24*exception#direct_27, 25*exception#direct_28, 26*exception#direct_29, 27*exception#direct_30, 28*exception#direct_31, 29*exception#direct_32, 30*exception#direct_33, 31*exception#direct_34, 32*exception#direct_35, 33*exception#direct_36, 34*exception#direct_37, 35*exception#direct_38, 36*exception#direct_39, 37*exception#direct_40, 38*exception#direct_41, 39*exception#direct_42, 40*exception#direct_43, 41*exception#direct_44, 42*exception#direct_45) with [PbTermGroup { start: 0, end: 45, structure: Choice }] choices(-2:exception#direct_1, -1:exception#direct_2, 0:exception#direct_3, 1:exception#direct_4, 2:exception#direct_5, 3:exception#direct_6, 4:exception#direct_7, 5:exception#direct_8, 6:exception#direct_9, 7:exception#direct_10, 8:exception#direct_11, 9:exception#direct_12, 10:exception#direct_13, 11:exception#direct_14, 12:exception#direct_15, 13:exception#direct_16, 14:exception#direct_17, 15:exception#direct_18, 16:exception#direct_19, 17:exception#direct_20, 18:exception#direct_21, 19:exception#direct_22, 20:exception#direct_23, 21:exception#direct_24, 22:exception#direct_25, 23:exception#direct_26, 24:exception#direct_27, 25:exception#direct_28, 26:exception#direct_29, 27:exception#direct_30, 28:exception#direct_31, 29:exception#direct_32, 30:exception#direct_33, 31:exception#direct_34, 32:exception#direct_35, 33:exception#direct_36, 34:exception#direct_37, 35:exception#direct_38, 36:exception#direct_39, 37:exception#direct_40, 38:exception#direct_41, 39:exception#direct_42, 40:exception#direct_43, 41:exception#direct_44, 42:exception#direct_45))) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
 at-most-one(z#direct_1, z#direct_2, z#direct_3, z#direct_4, z#direct_5, z#direct_6) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+assert((allowed) <-> (__1)) using tseitin,
+assert(or([z#direct_1,z#direct_3,z#direct_6;int(1..)])) using tseitin,
 define(__2 <-> allDifferentExcept(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), 0+weighted(-2*exception#direct_1, -1*exception#direct_2, 0*exception#direct_3, 1*exception#direct_4, 2*exception#direct_5, 3*exception#direct_6, 4*exception#direct_7, 5*exception#direct_8, 6*exception#direct_9, 7*exception#direct_10, 8*exception#direct_11, 9*exception#direct_12, 10*exception#direct_13, 11*exception#direct_14, 12*exception#direct_15, 13*exception#direct_16, 14*exception#direct_17, 15*exception#direct_18, 16*exception#direct_19, 17*exception#direct_20, 18*exception#direct_21, 19*exception#direct_22, 20*exception#direct_23, 21*exception#direct_24, 22*exception#direct_25, 23*exception#direct_26, 24*exception#direct_27, 25*exception#direct_28, 26*exception#direct_29, 27*exception#direct_30, 28*exception#direct_31, 29*exception#direct_32, 30*exception#direct_33, 31*exception#direct_34, 32*exception#direct_35, 33*exception#direct_36, 34*exception#direct_37, 35*exception#direct_38, 36*exception#direct_39, 37*exception#direct_40, 38*exception#direct_41, 39*exception#direct_42, 40*exception#direct_43, 41*exception#direct_44, 42*exception#direct_45) with [PbTermGroup { start: 0, end: 45, structure: Choice }] choices(-2:exception#direct_1, -1:exception#direct_2, 0:exception#direct_3, 1:exception#direct_4, 2:exception#direct_5, 3:exception#direct_6, 4:exception#direct_7, 5:exception#direct_8, 6:exception#direct_9, 7:exception#direct_10, 8:exception#direct_11, 9:exception#direct_12, 10:exception#direct_13, 11:exception#direct_14, 12:exception#direct_15, 13:exception#direct_16, 14:exception#direct_17, 15:exception#direct_18, 16:exception#direct_19, 17:exception#direct_20, 18:exception#direct_21, 19:exception#direct_22, 20:exception#direct_23, 21:exception#direct_24, 22:exception#direct_25, 23:exception#direct_26, 24:exception#direct_27, 25:exception#direct_28, 26:exception#direct_29, 27:exception#direct_30, 28:exception#direct_31, 29:exception#direct_32, 30:exception#direct_33, 31:exception#direct_34, 32:exception#direct_35, 33:exception#direct_36, 34:exception#direct_37, 35:exception#direct_38, 36:exception#direct_39, 37:exception#direct_40, 38:exception#direct_41, 39:exception#direct_42, 40:exception#direct_43, 41:exception#direct_44, 42:exception#direct_45))) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
 define(__3 <-> allDifferentExcept(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), -2+weighted() with [] choices(-2:true), 0+weighted(-2*exception#direct_1, -1*exception#direct_2, 0*exception#direct_3, 1*exception#direct_4, 2*exception#direct_5, 3*exception#direct_6, 4*exception#direct_7, 5*exception#direct_8, 6*exception#direct_9, 7*exception#direct_10, 8*exception#direct_11, 9*exception#direct_12, 10*exception#direct_13, 11*exception#direct_14, 12*exception#direct_15, 13*exception#direct_16, 14*exception#direct_17, 15*exception#direct_18, 16*exception#direct_19, 17*exception#direct_20, 18*exception#direct_21, 19*exception#direct_22, 20*exception#direct_23, 21*exception#direct_24, 22*exception#direct_25, 23*exception#direct_26, 24*exception#direct_27, 25*exception#direct_28, 26*exception#direct_29, 27*exception#direct_30, 28*exception#direct_31, 29*exception#direct_32, 30*exception#direct_33, 31*exception#direct_34, 32*exception#direct_35, 33*exception#direct_36, 34*exception#direct_37, 35*exception#direct_38, 36*exception#direct_39, 37*exception#direct_40, 38*exception#direct_41, 39*exception#direct_42, 40*exception#direct_43, 41*exception#direct_44, 42*exception#direct_45) with [PbTermGroup { start: 0, end: 45, structure: Choice }] choices(-2:exception#direct_1, -1:exception#direct_2, 0:exception#direct_3, 1:exception#direct_4, 2:exception#direct_5, 3:exception#direct_6, 4:exception#direct_7, 5:exception#direct_8, 6:exception#direct_9, 7:exception#direct_10, 8:exception#direct_11, 9:exception#direct_12, 10:exception#direct_13, 11:exception#direct_14, 12:exception#direct_15, 13:exception#direct_16, 14:exception#direct_17, 15:exception#direct_18, 16:exception#direct_19, 17:exception#direct_20, 18:exception#direct_21, 19:exception#direct_22, 20:exception#direct_23, 21:exception#direct_24, 22:exception#direct_25, 23:exception#direct_26, 24:exception#direct_27, 25:exception#direct_28, 26:exception#direct_29, 27:exception#direct_30, 28:exception#direct_31, 29:exception#direct_32, 30:exception#direct_33, 31:exception#direct_34, 32:exception#direct_35, 33:exception#direct_36, 34:exception#direct_37, 35:exception#direct_38, 36:exception#direct_39, 37:exception#direct_40, 38:exception#direct_41, 39:exception#direct_42, 40:exception#direct_43, 41:exception#direct_44, 42:exception#direct_45))) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
 define(__4 <-> allDifferentExcept(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), 0+weighted(-2*z#direct_1, -1*z#direct_2, 0*z#direct_3, 1*z#direct_4, 2*z#direct_5, 3*z#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:z#direct_1, -1:z#direct_2, 0:z#direct_3, 1:z#direct_4, 2:z#direct_5, 3:z#direct_6), 0+weighted(-2*exception#direct_1, -1*exception#direct_2, 0*exception#direct_3, 1*exception#direct_4, 2*exception#direct_5, 3*exception#direct_6, 4*exception#direct_7, 5*exception#direct_8, 6*exception#direct_9, 7*exception#direct_10, 8*exception#direct_11, 9*exception#direct_12, 10*exception#direct_13, 11*exception#direct_14, 12*exception#direct_15, 13*exception#direct_16, 14*exception#direct_17, 15*exception#direct_18, 16*exception#direct_19, 17*exception#direct_20, 18*exception#direct_21, 19*exception#direct_22, 20*exception#direct_23, 21*exception#direct_24, 22*exception#direct_25, 23*exception#direct_26, 24*exception#direct_27, 25*exception#direct_28, 26*exception#direct_29, 27*exception#direct_30, 28*exception#direct_31, 29*exception#direct_32, 30*exception#direct_33, 31*exception#direct_34, 32*exception#direct_35, 33*exception#direct_36, 34*exception#direct_37, 35*exception#direct_38, 36*exception#direct_39, 37*exception#direct_40, 38*exception#direct_41, 39*exception#direct_42, 40*exception#direct_43, 41*exception#direct_44, 42*exception#direct_45) with [PbTermGroup { start: 0, end: 45, structure: Choice }] choices(-2:exception#direct_1, -1:exception#direct_2, 0:exception#direct_3, 1:exception#direct_4, 2:exception#direct_5, 3:exception#direct_6, 4:exception#direct_7, 5:exception#direct_8, 6:exception#direct_9, 7:exception#direct_10, 8:exception#direct_11, 9:exception#direct_12, 10:exception#direct_13, 11:exception#direct_14, 12:exception#direct_15, 13:exception#direct_16, 14:exception#direct_17, 15:exception#direct_18, 16:exception#direct_19, 17:exception#direct_20, 18:exception#direct_21, 19:exception#direct_22, 20:exception#direct_23, 21:exception#direct_24, 22:exception#direct_25, 23:exception#direct_26, 24:exception#direct_27, 25:exception#direct_28, 26:exception#direct_29, 27:exception#direct_30, 28:exception#direct_31, 29:exception#direct_32, 30:exception#direct_33, 31:exception#direct_34, 32:exception#direct_35, 33:exception#direct_36, 34:exception#direct_37, 35:exception#direct_38, 36:exception#direct_39, 37:exception#direct_40, 38:exception#direct_41, 39:exception#direct_42, 40:exception#direct_43, 41:exception#direct_44, 42:exception#direct_45))) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
 define(__5 <-> integer-weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6, 2*y#direct_1, 1*y#direct_2, 0*y#direct_3, -1*y#direct_4, -2*y#direct_5, -3*y#direct_6) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Choice }, PbTermGroup { start: 6, end: 12, structure: Choice }],
-define(__6 <-> !(__3)) using tseitin,
-define(__7 <-> (allowed) <-> (__1)) using tseitin,
-define(__8 <-> (repeated) <-> (__2)) using tseitin,
-define(__9 <-> (negative) <-> (__6)) using tseitin,
-define(__10 <-> or([__4,__5;int(1..)])) using tseitin,
-define(__11 <-> or([exception#direct_1,exception#direct_3,exception#direct_6,exception#direct_45;int(1..)])) using tseitin,
-define(__12 <-> or([x#direct_1,x#direct_3,x#direct_6;int(1..)])) using tseitin,
-define(__13 <-> or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin,
-define(__14 <-> or([z#direct_1,z#direct_3,z#direct_6;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-assert(__7) using tseitin,
-assert(__8) using tseitin,
-assert(__9) using tseitin,
-assert(__10) using tseitin,
-assert(__11) using tseitin,
-assert(__12) using tseitin,
-assert(__13) using tseitin,
-assert(__14) using tseitin
+assert((repeated) <-> (__2)) using tseitin,
+assert((negative) <-> (!(__3))) using tseitin,
+assert(or([__4,__5;int(1..)])) using tseitin
 

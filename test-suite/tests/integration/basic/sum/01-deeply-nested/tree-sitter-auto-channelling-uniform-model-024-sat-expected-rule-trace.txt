@@ -30,148 +30,68 @@ new constraints:
 
 --
 
-!(b#rank_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__0
-new variables:
-  findAux __0: bool
+true,
+and([!(a#rank_1);int(1..)]),
+and([!(b#rank_1);int(1..)]),
+and([!(c#rank_1);int(1..)]),
+and([!(d#rank_1);int(1..)]),
+and([!(e#rank_1);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+and([!(b#rank_1);int(1..)]),
+and([!(c#rank_1);int(1..)]),
+and([!(d#rank_1);int(1..)]),
+and([!(e#rank_1);int(1..)])
 new SAT encoding decisions:
-  define(__0 <-> !(b#rank_1)) using tseitin
-
---
-
-!(c#rank_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> !(c#rank_1)) using tseitin
-
---
-
-!(d#rank_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> !(d#rank_1)) using tseitin
-
---
-
-!(e#rank_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> !(e#rank_1)) using tseitin
-
---
-
-!(a#rank_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> !(a#rank_1)) using tseitin
-
---
-
-and([__1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__1
-
---
-
-and([__2;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__2
-
---
-
-and([__3;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__3
-
---
-
-and([__4;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__4
-
---
-
-and([__0;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__0
+  assert(and([!(a#rank_1);int(1..)])) using tseitin
 
 --
 
 true,
-__4,
-__0,
-__1,
-__2,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
+and([!(b#rank_1);int(1..)]),
+and([!(c#rank_1);int(1..)]),
+and([!(d#rank_1);int(1..)]),
+and([!(e#rank_1);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
-__0,
-__1,
-__2,
-__3
+and([!(c#rank_1);int(1..)]),
+and([!(d#rank_1);int(1..)]),
+and([!(e#rank_1);int(1..)])
 new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert(and([!(b#rank_1);int(1..)])) using tseitin
 
 --
 
 true,
-__0,
-__1,
-__2,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
+and([!(c#rank_1);int(1..)]),
+and([!(d#rank_1);int(1..)]),
+and([!(e#rank_1);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
-__1,
-__2,
-__3
+and([!(d#rank_1);int(1..)]),
+and([!(e#rank_1);int(1..)])
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(and([!(c#rank_1);int(1..)])) using tseitin
 
 --
 
 true,
-__1,
-__2,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
+and([!(d#rank_1);int(1..)]),
+and([!(e#rank_1);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
-__2,
-__3
+and([!(e#rank_1);int(1..)])
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(and([!(d#rank_1);int(1..)])) using tseitin
 
 --
 
 true,
-__2,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__3
-new SAT encoding decisions:
-  assert(__2) using tseitin
-
---
-
-true,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
+and([!(e#rank_1);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__3) using tseitin
+  assert(and([!(e#rank_1);int(1..)])) using tseitin
 
 --
 
@@ -187,11 +107,6 @@ find b#rank_1: bool
 find c#rank_1: bool
 find d#rank_1: bool
 find e#rank_1: bool
-findAux __0: bool
-findAux __1: bool
-findAux __2: bool
-findAux __3: bool
-findAux __4: bool
 
 such that
 
@@ -199,14 +114,9 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !(b#rank_1)) using tseitin,
-define(__1 <-> !(c#rank_1)) using tseitin,
-define(__2 <-> !(d#rank_1)) using tseitin,
-define(__3 <-> !(e#rank_1)) using tseitin,
-define(__4 <-> !(a#rank_1)) using tseitin,
-assert(__4) using tseitin,
-assert(__0) using tseitin,
-assert(__1) using tseitin,
-assert(__2) using tseitin,
-assert(__3) using tseitin
+assert(and([!(a#rank_1);int(1..)])) using tseitin,
+assert(and([!(b#rank_1);int(1..)])) using tseitin,
+assert(and([!(c#rank_1);int(1..)])) using tseitin,
+assert(and([!(d#rank_1);int(1..)])) using tseitin,
+assert(and([!(e#rank_1);int(1..)])) using tseitin
 

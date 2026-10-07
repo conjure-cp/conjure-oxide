@@ -52,30 +52,20 @@ new SAT encoding decisions:
 
 --
 
-or([j#direct_1,j#direct_2,j#direct_3,j#direct_4,j#direct_5,j#direct_6,j#direct_7,j#direct_8,j#direct_9,j#direct_10,j#direct_11;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([j#direct_1,j#direct_2,j#direct_3,j#direct_4,j#direct_5,j#direct_6,j#direct_7,j#direct_8,j#direct_9,j#direct_10,j#direct_11;int(1..)])) using tseitin
-
---
-
 __0,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1
+or([j#direct_1,j#direct_2,j#direct_3,j#direct_4,j#direct_5,j#direct_6,j#direct_7,j#direct_8,j#direct_9,j#direct_10,j#direct_11;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([j#direct_1,j#direct_2,j#direct_3,j#direct_4,j#direct_5,j#direct_6,j#direct_7,j#direct_8,j#direct_9,j#direct_10,j#direct_11;int(1..)])
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+or([j#direct_1,j#direct_2,j#direct_3,j#direct_4,j#direct_5,j#direct_6,j#direct_7,j#direct_8,j#direct_9,j#direct_10,j#direct_11;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(or([j#direct_1,j#direct_2,j#direct_3,j#direct_4,j#direct_5,j#direct_6,j#direct_7,j#direct_8,j#direct_9,j#direct_10,j#direct_11;int(1..)])) using tseitin
 
 --
 
@@ -96,7 +86,6 @@ find j#direct_9: bool
 find j#direct_10: bool
 find j#direct_11: bool
 findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -106,7 +95,6 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(0*j#direct_1, 1*j#direct_2, 2*j#direct_3, 3*j#direct_4, 4*j#direct_5, 5*j#direct_6, 6*j#direct_7, 7*j#direct_8, 8*j#direct_9, 9*j#direct_10, 10*j#direct_11) Equal 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 11, structure: Choice }],
 at-most-one(j#direct_1, j#direct_2, j#direct_3, j#direct_4, j#direct_5, j#direct_6, j#direct_7, j#direct_8, j#direct_9, j#direct_10, j#direct_11) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
-define(__1 <-> or([j#direct_1,j#direct_2,j#direct_3,j#direct_4,j#direct_5,j#direct_6,j#direct_7,j#direct_8,j#direct_9,j#direct_10,j#direct_11;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__1) using tseitin
+assert(or([j#direct_1,j#direct_2,j#direct_3,j#direct_4,j#direct_5,j#direct_6,j#direct_7,j#direct_8,j#direct_9,j#direct_10,j#direct_11;int(1..)])) using tseitin
 

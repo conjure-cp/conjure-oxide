@@ -12,36 +12,10 @@ or([or([t,z = x;int(1..)]),y;int(1..)])
 --
 
 or([or([t,z = x;int(1..)]),y;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-or([t,z = x,y;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-z = x
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
 new SAT encoding decisions:
-  define(__0 <-> (z) <-> (x)) using tseitin
-
---
-
-or([t,__0,y;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([t,__0,y;int(1..)])) using tseitin
-
---
-
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(or([or([t,z = x;int(1..)]),y;int(1..)])) using tseitin
 
 --
 
@@ -51,8 +25,6 @@ find t: bool
 find x: bool
 find y: bool
 find z: bool
-findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -60,7 +32,5 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> (z) <-> (x)) using tseitin,
-define(__1 <-> or([t,__0,y;int(1..)])) using tseitin,
-assert(__1) using tseitin
+assert(or([or([t,z = x;int(1..)]),y;int(1..)])) using tseitin
 

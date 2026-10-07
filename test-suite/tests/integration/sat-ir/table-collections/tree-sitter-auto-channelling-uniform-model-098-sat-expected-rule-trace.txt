@@ -83,6 +83,33 @@ new SAT encoding decisions:
 
 --
 
+table(sequence(x,y), {sequence(1,2),sequence(2,1),sequence(3,3)}),
+negativeTable(sequence(x,y), {sequence(3,3)}),
+table(sequence(x,y), {sequence(1,y),sequence(x,1)}),
+!(table(sequence(x), {})),
+negativeTable(sequence(x), {}),
+table(sequence(x), {sequence(x)}),
+!(table(sequence(x), {})),
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+table(sequence(x,y), {sequence(1,2),sequence(2,1),sequence(3,3)}),
+negativeTable(sequence(x,y), {sequence(3,3)}),
+table(sequence(x,y), {sequence(1,y),sequence(x,1)}),
+!(table(sequence(x), {})),
+negativeTable(sequence(x), {}),
+table(sequence(x), {sequence(x)}),
+!(table(sequence(x), {}))
+new SAT encoding decisions:
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
 y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
@@ -95,99 +122,133 @@ new constraints:
 
 --
 
-SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [1, 3]) >= 1
-   ~~> select_integer_relation ([("SAT", 18500)])
+table(sequence(x,y), {sequence(1,2),sequence(2,1),sequence(3,3)})
+   ~~> select_table ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  define(__2 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[1, 2], [2, 1], [3, 3]], negative=false)) using None, PB None
 
 --
 
-SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [1, 3]) <= 3
+SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [1, 3]) >= 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  define(__3 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-y
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-y
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-y
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-table(sequence(x,y), {sequence(1,2),sequence(2,1),sequence(3,3)})
-   ~~> select_table ([("SAT", 18500)])
+SATInt(Log, [y#twos_complement_1,y#twos_complement_2,y#twos_complement_3;int(1..)] [1, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
 __4
 new variables:
   findAux __4: bool
 new SAT encoding decisions:
-  define(__4 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[1, 2], [2, 1], [3, 3]], negative=false)) using None, PB None
+  define(__4 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+
+--
+
+__2,
+negativeTable(sequence(x,y), {sequence(3,3)}),
+table(sequence(x,y), {sequence(1,y),sequence(x,1)}),
+!(table(sequence(x), {})),
+negativeTable(sequence(x), {}),
+table(sequence(x), {sequence(x)}),
+!(table(sequence(x), {})),
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+negativeTable(sequence(x,y), {sequence(3,3)}),
+table(sequence(x,y), {sequence(1,y),sequence(x,1)}),
+!(table(sequence(x), {})),
+negativeTable(sequence(x), {}),
+table(sequence(x), {sequence(x)}),
+!(table(sequence(x), {})),
+or([and([__3,__4;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+negativeTable(sequence(x,y), {sequence(3,3)}),
+table(sequence(x,y), {sequence(1,y),sequence(x,1)}),
+!(table(sequence(x), {})),
+negativeTable(sequence(x), {}),
+table(sequence(x), {sequence(x)}),
+!(table(sequence(x), {})),
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+negativeTable(sequence(x,y), {sequence(3,3)}),
+table(sequence(x,y), {sequence(1,y),sequence(x,1)}),
+!(table(sequence(x), {})),
+negativeTable(sequence(x), {}),
+table(sequence(x), {sequence(x)}),
+!(table(sequence(x), {}))
+new SAT encoding decisions:
+  assert(or([and([__3,__4;int(1..)]);int(1..)])) using tseitin
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
 
 --
 
@@ -207,7 +268,7 @@ __6
 new variables:
   findAux __6: bool
 new SAT encoding decisions:
-  define(__6 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[SatIntegerView { constant: 1, terms: [], groups: [], choices: Some([(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Literal(Bool(true))))]) }, SatIntegerView { constant: 0, terms: [(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10914 }, value: RwLock { data: Declaration { name: Represented((User(u!("y")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10817 }, value: RwLock { data: Declaration { name: User(u!("y")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (2, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10915 }, value: RwLock { data: Declaration { name: Represented((User(u!("y")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10817 }, value: RwLock { data: Declaration { name: User(u!("y")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (-4, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10916 }, value: RwLock { data: Declaration { name: Represented((User(u!("y")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("3"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10817 }, value: RwLock { data: Declaration { name: User(u!("y")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], choices: None }], [SatIntegerView { constant: 0, terms: [(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10870 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10816 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (2, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10871 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10816 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (-4, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10872 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("3"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10816 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], choices: None }, SatIntegerView { constant: 1, terms: [], groups: [], choices: Some([(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Literal(Bool(true))))]) }]], negative=false)) using None, PB None
+  define(__6 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[SatIntegerView { constant: 1, terms: [], groups: [], choices: Some([(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Literal(Bool(true))))]) }, SatIntegerView { constant: 0, terms: [(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10522 }, value: RwLock { data: Declaration { name: Represented((User(u!("y")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10425 }, value: RwLock { data: Declaration { name: User(u!("y")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (2, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10523 }, value: RwLock { data: Declaration { name: Represented((User(u!("y")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10425 }, value: RwLock { data: Declaration { name: User(u!("y")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (-4, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10524 }, value: RwLock { data: Declaration { name: Represented((User(u!("y")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("3"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10425 }, value: RwLock { data: Declaration { name: User(u!("y")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], choices: None }], [SatIntegerView { constant: 0, terms: [(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10478 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10424 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (2, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10479 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10424 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (-4, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10480 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("3"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10424 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], choices: None }, SatIntegerView { constant: 1, terms: [], groups: [], choices: Some([(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Literal(Bool(true))))]) }]], negative=false)) using None, PB None
 
 --
 
@@ -227,7 +288,7 @@ __8
 new variables:
   findAux __8: bool
 new SAT encoding decisions:
-  define(__8 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[SatIntegerView { constant: 0, terms: [(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10870 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10816 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (2, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10871 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10816 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (-4, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10872 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("3"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10816 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], choices: None }]], negative=false)) using None, PB None
+  define(__8 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[SatIntegerView { constant: 0, terms: [(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10478 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10424 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (2, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10479 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10424 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (-4, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10480 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("3"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10424 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], choices: None }]], negative=false)) using None, PB None
 
 --
 
@@ -251,191 +312,76 @@ new SAT encoding decisions:
 
 --
 
-!(__9)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> !(__9)) using tseitin
-
---
-
+__5,
+__6,
+!(__9),
+__7,
+__8,
 !(__10)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__12
-new variables:
-  findAux __12: bool
-new SAT encoding decisions:
-  define(__12 <-> !(__10)) using tseitin
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-or([and([__2,__3;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__2,__3;int(1..)])
-
---
-
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-__4,
-__5,
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 __6,
-__11,
+!(__9),
 __7,
 __8,
-__12,
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__5,
-__6,
-__11,
-__7,
-__8,
-__12,
-__14,
-__13
-new SAT encoding decisions:
-  assert(__4) using tseitin
-
---
-
-__5,
-__6,
-__11,
-__7,
-__8,
-__12,
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__6,
-__11,
-__7,
-__8,
-__12,
-__14,
-__13
+!(__10)
 new SAT encoding decisions:
   assert(__5) using tseitin
 
 --
 
 __6,
-__11,
+!(__9),
 __7,
 __8,
-__12,
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__11,
+!(__10)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(__9),
 __7,
 __8,
-__12,
-__14,
-__13
+!(__10)
 new SAT encoding decisions:
   assert(__6) using tseitin
 
 --
 
-__11,
+!(__9),
 __7,
 __8,
-__12,
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
+!(__10)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 __7,
 __8,
-__12,
-__14,
-__13
+!(__10)
 new SAT encoding decisions:
-  assert(__11) using tseitin
+  assert(!(__9)) using tseitin
 
 --
 
 __7,
 __8,
-__12,
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
+!(__10)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 __8,
-__12,
-__14,
-__13
+!(__10)
 new SAT encoding decisions:
   assert(__7) using tseitin
 
 --
 
 __8,
-__12,
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__12,
-__14,
-__13
+!(__10)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(__10)
 new SAT encoding decisions:
   assert(__8) using tseitin
 
 --
 
-__12,
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__14,
-__13
+!(__10)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__12) using tseitin
-
---
-
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__13
-new SAT encoding decisions:
-  assert(__14) using tseitin
-
---
-
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__13) using tseitin
+  assert(!(__10)) using tseitin
 
 --
 
@@ -460,10 +406,6 @@ findAux __7: bool
 findAux __8: bool
 findAux __9: bool
 findAux __10: bool
-findAux __11: bool
-findAux __12: bool
-findAux __13: bool
-findAux __14: bool
 
 such that
 
@@ -473,26 +415,22 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
 define(__1 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__2 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__3 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__4 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[1, 2], [2, 1], [3, 3]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
+define(__2 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[1, 2], [2, 1], [3, 3]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__3 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__4 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+assert(__2) using tseitin,
+assert(or([and([__3,__4;int(1..)]);int(1..)])) using tseitin,
 define(__5 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[3, 3]], negative=true)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__6 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[SatIntegerView { constant: 1, terms: [], groups: [], choices: Some([(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Literal(Bool(true))))]) }, SatIntegerView { constant: 0, terms: [(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10914 }, value: RwLock { data: Declaration { name: Represented((User(u!("y")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10817 }, value: RwLock { data: Declaration { name: User(u!("y")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (2, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10915 }, value: RwLock { data: Declaration { name: Represented((User(u!("y")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10817 }, value: RwLock { data: Declaration { name: User(u!("y")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (-4, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10916 }, value: RwLock { data: Declaration { name: Represented((User(u!("y")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("3"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10817 }, value: RwLock { data: Declaration { name: User(u!("y")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], choices: None }], [SatIntegerView { constant: 0, terms: [(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10870 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10816 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (2, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10871 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10816 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (-4, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10872 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("3"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10816 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], choices: None }, SatIntegerView { constant: 1, terms: [], groups: [], choices: Some([(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Literal(Bool(true))))]) }]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__6 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[SatIntegerView { constant: 1, terms: [], groups: [], choices: Some([(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Literal(Bool(true))))]) }, SatIntegerView { constant: 0, terms: [(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10522 }, value: RwLock { data: Declaration { name: Represented((User(u!("y")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10425 }, value: RwLock { data: Declaration { name: User(u!("y")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (2, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10523 }, value: RwLock { data: Declaration { name: Represented((User(u!("y")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10425 }, value: RwLock { data: Declaration { name: User(u!("y")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (-4, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10524 }, value: RwLock { data: Declaration { name: Represented((User(u!("y")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("3"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10425 }, value: RwLock { data: Declaration { name: User(u!("y")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], choices: None }], [SatIntegerView { constant: 0, terms: [(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10478 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10424 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (2, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10479 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10424 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (-4, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10480 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("3"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10424 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], choices: None }, SatIntegerView { constant: 1, terms: [], groups: [], choices: Some([(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Literal(Bool(true))))]) }]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
 define(__7 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [], negative=true)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__8 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[SatIntegerView { constant: 0, terms: [(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10870 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10816 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (2, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10871 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10816 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (-4, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10872 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("3"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10816 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], choices: None }]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__8 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [[SatIntegerView { constant: 0, terms: [(1, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10478 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("1"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10424 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (2, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10479 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("2"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10424 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None }))), (-4, Atomic(Metadata { etype: None, span_id: None, cached_content_hash: 0, domain: VersionedCache { value: Mutex { data: None, poisoned: false, .. } } }, Reference(Reference { ptr: DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10480 }, value: RwLock { data: Declaration { name: Represented((User(u!("x")), ReprId { name: "IntLog", short_name: "twos_complement" }, u!("3"))), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Bool }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: Some(DeclarationPtr { inner: DeclarationPtrInner { id: ObjId { type_name: u!("DeclarationPtrInner"), object_id: 10424 }, value: RwLock { data: Declaration { name: User(u!("x")), kind: Find(DecisionVariable { domain: Moo { inner: Ground(Moo { inner: Int([Bounded(1, 3)], None) }) }, element_domains: None, representations: [] }) } }, representations: RwLock { data: ReprStore }, source: RwLock { data: None } } }) } } }, repr: None })))], groups: [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], choices: None }]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
 define(__9 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
 define(__10 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], [], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__11 <-> !(__9)) using tseitin,
-define(__12 <-> !(__10)) using tseitin,
-define(__13 <-> and([__2,__3;int(1..)])) using tseitin,
-define(__14 <-> and([__0,__1;int(1..)])) using tseitin,
-assert(__4) using tseitin,
 assert(__5) using tseitin,
 assert(__6) using tseitin,
-assert(__11) using tseitin,
+assert(!(__9)) using tseitin,
 assert(__7) using tseitin,
 assert(__8) using tseitin,
-assert(__12) using tseitin,
-assert(__14) using tseitin,
-assert(__13) using tseitin
+assert(!(__10)) using tseitin
 

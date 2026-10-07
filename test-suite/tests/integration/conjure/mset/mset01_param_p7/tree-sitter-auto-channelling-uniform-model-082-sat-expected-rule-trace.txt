@@ -88,27 +88,61 @@ new SAT encoding decisions:
 
 --
 
-x#occurrence_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#occurrence_1
-
---
-
-x#occurrence_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#occurrence_2
-
---
-
 mset(2,2) = x,
 and([__0,sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)]),
 or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)]),
 or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
-   ~~> select_pseudo_boolean ([("SAT", 19000)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 mset(2,2) = x,
-and([__0,true;int(1..)]),
+and([true,sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)]),
 or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)]),
 or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+mset(2,2) = x,
+and([sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)]),
+or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)]),
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+mset(2,2) = x,
+and([sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)]),
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
+new SAT encoding decisions:
+  assert(or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])) using tseitin
+
+--
+
+mset(2,2) = x,
+and([sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)]),
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+mset(2,2) = x,
+and([sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)])
+new SAT encoding decisions:
+  assert(or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])) using tseitin
+
+--
+
+x#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#occurrence_1
+
+--
+
+x#occurrence_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#occurrence_2
+
+--
+
+mset(2,2) = x,
+and([sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)])
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+mset(2,2) = x,
+and([true;int(1..)])
 new SAT encoding decisions:
   weighted(0*x#occurrence_1#direct_1, 1*x#occurrence_1#direct_2, 2*x#occurrence_1#direct_3, 0*x#occurrence_2#direct_1, 1*x#occurrence_2#direct_2, 2*x#occurrence_2#direct_3) AtMost 4 using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
 
@@ -152,80 +186,12 @@ new SAT encoding decisions:
 
 --
 
-and([__0;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__0
-
---
-
-and([__1,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> and([__1,__2;int(1..)])) using tseitin
-
---
-
-or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])) using tseitin
-
---
-
-or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])) using tseitin
-
---
-
-__3,
-__0,
-__4,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-__0,
-__4,
-__5
-new SAT encoding decisions:
-  assert(__3) using tseitin
-
---
-
-__0,
-__4,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-__4,
-__5
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-__4,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-__5
-new SAT encoding decisions:
-  assert(__4) using tseitin
-
---
-
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
+and([__1,__2;int(1..)]),
+true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__5) using tseitin
+  assert(and([__1,__2;int(1..)])) using tseitin
 
 --
 
@@ -244,9 +210,6 @@ find x#occurrence_2#direct_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
-findAux __3: bool
-findAux __4: bool
-findAux __5: bool
 
 such that
 
@@ -257,14 +220,11 @@ sat encoding decisions:
 define(__0 <-> integer-weighted(0*x#occurrence_1#direct_1, 1*x#occurrence_1#direct_2, 2*x#occurrence_1#direct_3, 0*x#occurrence_2#direct_1, 1*x#occurrence_2#direct_2, 2*x#occurrence_2#direct_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
 at-most-one(x#occurrence_1#direct_1, x#occurrence_1#direct_2, x#occurrence_1#direct_3) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
 at-most-one(x#occurrence_2#direct_1, x#occurrence_2#direct_2, x#occurrence_2#direct_3) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+assert(__0) using tseitin,
+assert(or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])) using tseitin,
+assert(or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])) using tseitin,
 weighted(0*x#occurrence_1#direct_1, 1*x#occurrence_1#direct_2, 2*x#occurrence_1#direct_3, 0*x#occurrence_2#direct_1, 1*x#occurrence_2#direct_2, 2*x#occurrence_2#direct_3) AtMost 4 using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
 define(__1 <-> integer-weighted(0*x#occurrence_1#direct_1, 1*x#occurrence_1#direct_2, 2*x#occurrence_1#direct_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
 define(__2 <-> integer-weighted(0*x#occurrence_2#direct_1, 1*x#occurrence_2#direct_2, 2*x#occurrence_2#direct_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
-define(__3 <-> and([__1,__2;int(1..)])) using tseitin,
-define(__4 <-> or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])) using tseitin,
-define(__5 <-> or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])) using tseitin,
-assert(__3) using tseitin,
-assert(__0) using tseitin,
-assert(__4) using tseitin,
-assert(__5) using tseitin
+assert(and([__1,__2;int(1..)])) using tseitin
 

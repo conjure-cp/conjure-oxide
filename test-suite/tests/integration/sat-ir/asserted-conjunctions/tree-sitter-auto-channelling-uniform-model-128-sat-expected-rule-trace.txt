@@ -71,6 +71,19 @@ new SAT encoding decisions:
 
 --
 
+true,
+__0,
+(y <= 1) <-> (p),
+true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+(y <= 1) <-> (p),
+true
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
 y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
@@ -87,37 +100,14 @@ new SAT encoding decisions:
 
 --
 
-(__1) <-> (p)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> (__1) <-> (p)) using tseitin
-
---
-
 true,
-__0,
-__2,
+(__1) <-> (p),
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__2,
-true
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-true,
-__2,
-true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert((__1) <-> (p)) using tseitin
 
 --
 
@@ -132,7 +122,6 @@ find y#rank_1: bool
 find y#rank_2: bool
 findAux __0: bool
 findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -145,8 +134,7 @@ count(a, b, c) AtLeast 1 using Some(EncodingSelection { algorithm: RustsatTotali
 count(a, b, c) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
 weighted(2*a, 3*b, 1*c) AtMost 4 using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }),
 define(__0 <-> integer-weighted(1*y#rank_1, 2*y#rank_2, -1*a, -1*b, -1*c) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__1 <-> integer-weighted(1*y#rank_1, 2*y#rank_2) LessEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__2 <-> (__1) <-> (p)) using tseitin,
 assert(__0) using tseitin,
-assert(__2) using tseitin
+define(__1 <-> integer-weighted(1*y#rank_1, 2*y#rank_2) LessEqual 1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+assert((__1) <-> (p)) using tseitin
 

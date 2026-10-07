@@ -251,6 +251,47 @@ new SAT encoding decisions:
 
 --
 
+sat-allDifferent-comparisons([or([x != y,__0;int(1..)]),or([x != sequence(false),__0;int(1..)]),or([y != sequence(false),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([x != y;int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([x != y,__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([or([__3;int(1..)]),or([x != y,__3;int(1..)]),or([x != y,__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([x != y;int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([x != y,__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([x != y;int(1..)]));int(1..)]),
+(__0) <-> (x = exception),
+(__1) <-> (y = exception),
+(__2) <-> (x = exception),
+(__3) <-> (x = exception),
+(__4) <-> (x = exception),
+(__5) <-> (x = sequence(false)),
+(__6) <-> (x = exception),
+or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
+or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
+or([1 <= y#explicit_2,SafeIndex(y#explicit_1,[1]) = false;int(1..)]),
+or([exception#explicit_2#direct_1,exception#explicit_2#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([x != y,__0;int(1..)]),or([x != sequence(false),__0;int(1..)]),or([y != sequence(false),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([x != y;int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([x != y,__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([or([__3;int(1..)]),or([x != y,__3;int(1..)]),or([x != y,__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([x != y;int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([x != y,__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([x != y;int(1..)]));int(1..)]),
+(__0) <-> (x = exception),
+(__1) <-> (y = exception),
+(__2) <-> (x = exception),
+(__3) <-> (x = exception),
+(__4) <-> (x = exception),
+(__5) <-> (x = sequence(false)),
+(__6) <-> (x = exception),
+or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
+or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
+or([1 <= y#explicit_2,SafeIndex(y#explicit_1,[1]) = false;int(1..)])
+new SAT encoding decisions:
+  assert(or([exception#explicit_2#direct_1,exception#explicit_2#direct_2;int(1..)])) using tseitin
+
+--
+
 x#explicit_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#explicit_2
@@ -290,7 +331,6 @@ or([sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)]),!(sat-all
 or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
 or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
 or([1 <= y#explicit_2,SafeIndex(y#explicit_1,[1]) = false;int(1..)]),
-or([exception#explicit_2#direct_1,exception#explicit_2#direct_2;int(1..)]),
 sum([toInt(x#explicit_2#direct_1),toInt(x#explicit_2#direct_2);int(1..)]) <= 1,
 or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
@@ -311,10 +351,50 @@ or([sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)]),!(sat-all
 or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
 or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
 or([1 <= y#explicit_2,SafeIndex(y#explicit_1,[1]) = false;int(1..)]),
-or([exception#explicit_2#direct_1,exception#explicit_2#direct_2;int(1..)]),
 or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])
 new SAT encoding decisions:
   at-most-one(x#explicit_2#direct_1, x#explicit_2#direct_2) using None
+
+--
+
+sat-allDifferent-comparisons([or([x != y,__0;int(1..)]),or([x != sequence(false),__0;int(1..)]),or([y != sequence(false),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([x != y;int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([x != y,__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([or([__3;int(1..)]),or([x != y,__3;int(1..)]),or([x != y,__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([x != y;int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([x != y,__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([x != y;int(1..)]));int(1..)]),
+(__0) <-> (x = exception),
+(__1) <-> (y = exception),
+(__2) <-> (x = exception),
+(__3) <-> (x = exception),
+(__4) <-> (x = exception),
+(__5) <-> (x = sequence(false)),
+(__6) <-> (x = exception),
+or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
+or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
+or([1 <= y#explicit_2,SafeIndex(y#explicit_1,[1]) = false;int(1..)]),
+or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([x != y,__0;int(1..)]),or([x != sequence(false),__0;int(1..)]),or([y != sequence(false),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([x != y;int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([x != y,__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([or([__3;int(1..)]),or([x != y,__3;int(1..)]),or([x != y,__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([x != y;int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([x != y,__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([x != y;int(1..)]));int(1..)]),
+(__0) <-> (x = exception),
+(__1) <-> (y = exception),
+(__2) <-> (x = exception),
+(__3) <-> (x = exception),
+(__4) <-> (x = exception),
+(__5) <-> (x = sequence(false)),
+(__6) <-> (x = exception),
+or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
+or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
+or([1 <= y#explicit_2,SafeIndex(y#explicit_1,[1]) = false;int(1..)])
+new SAT encoding decisions:
+  assert(or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])) using tseitin
 
 --
 
@@ -357,8 +437,6 @@ or([sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)]),!(sat-all
 or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
 or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
 or([__9,SafeIndex(y#explicit_1,[1]) = false;int(1..)]),
-or([exception#explicit_2#direct_1,exception#explicit_2#direct_2;int(1..)]),
-or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)]),
 sum([toInt(y#explicit_2#direct_1),toInt(y#explicit_2#direct_2);int(1..)]) <= 1,
 or([y#explicit_2#direct_1,y#explicit_2#direct_2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
@@ -379,11 +457,50 @@ or([sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)]),!(sat-all
 or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
 or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
 or([__9,SafeIndex(y#explicit_1,[1]) = false;int(1..)]),
-or([exception#explicit_2#direct_1,exception#explicit_2#direct_2;int(1..)]),
-or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)]),
 or([y#explicit_2#direct_1,y#explicit_2#direct_2;int(1..)])
 new SAT encoding decisions:
   at-most-one(y#explicit_2#direct_1, y#explicit_2#direct_2) using None
+
+--
+
+sat-allDifferent-comparisons([or([x != y,__0;int(1..)]),or([x != sequence(false),__0;int(1..)]),or([y != sequence(false),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([x != y;int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([x != y,__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([or([__3;int(1..)]),or([x != y,__3;int(1..)]),or([x != y,__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([x != y;int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([x != y,__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([x != y;int(1..)]));int(1..)]),
+(__0) <-> (x = exception),
+(__1) <-> (y = exception),
+(__2) <-> (x = exception),
+(__3) <-> (x = exception),
+(__4) <-> (x = exception),
+(__5) <-> (x = sequence(false)),
+(__6) <-> (x = exception),
+or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
+or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
+or([__9,SafeIndex(y#explicit_1,[1]) = false;int(1..)]),
+or([y#explicit_2#direct_1,y#explicit_2#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([x != y,__0;int(1..)]),or([x != sequence(false),__0;int(1..)]),or([y != sequence(false),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([x != y;int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([x != y,__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([or([__3;int(1..)]),or([x != y,__3;int(1..)]),or([x != y,__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([x != y;int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([x != y,__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([x != y,__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([x != y;int(1..)]));int(1..)]),
+(__0) <-> (x = exception),
+(__1) <-> (y = exception),
+(__2) <-> (x = exception),
+(__3) <-> (x = exception),
+(__4) <-> (x = exception),
+(__5) <-> (x = sequence(false)),
+(__6) <-> (x = exception),
+or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
+or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
+or([__9,SafeIndex(y#explicit_1,[1]) = false;int(1..)])
+new SAT encoding decisions:
+  assert(or([y#explicit_2#direct_1,y#explicit_2#direct_2;int(1..)])) using tseitin
 
 --
 
@@ -1509,165 +1626,6 @@ __3
 
 --
 
-or([exception#explicit_2#direct_1,exception#explicit_2#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__46
-new variables:
-  findAux __46: bool
-new SAT encoding decisions:
-  define(__46 <-> or([exception#explicit_2#direct_1,exception#explicit_2#direct_2;int(1..)])) using tseitin
-
---
-
-or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__47
-new variables:
-  findAux __47: bool
-new SAT encoding decisions:
-  define(__47 <-> or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])) using tseitin
-
---
-
-or([y#explicit_2#direct_1,y#explicit_2#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__48
-new variables:
-  findAux __48: bool
-new SAT encoding decisions:
-  define(__48 <-> or([y#explicit_2#direct_1,y#explicit_2#direct_2;int(1..)])) using tseitin
-
---
-
-sat-allDifferent-comparisons([or([!(and([__26,or([__27,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__0;int(1..)]),or([!(and([__28,or([__29,SafeIndex(x#explicit_1,[1]) = false;int(1..)]);int(1..)])),__0;int(1..)]),or([!(and([__30,or([__31,SafeIndex(y#explicit_1,[1]) = false;int(1..)]);int(1..)])),__1;int(1..)]);int(1..)]),
-(ordinary) <-> (sat-allDifferent-comparisons([!(and([__24,or([__25,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)])),
-(allowed) <-> (sat-allDifferent-comparisons([or([!(and([__34,or([__35,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__2;int(1..)]);int(1..)])),
-(repeated) <-> (sat-allDifferent-comparisons([__3,or([!(and([__36,or([__37,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__3;int(1..)]),or([!(and([__38,or([__39,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__4;int(1..)]);int(1..)])),
-(negative) <-> (!(sat-allDifferent-comparisons([!(and([__32,or([__33,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)]))),
-(fixed) <-> (sat-allDifferent-comparisons([or([!(and([__40,or([__41,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__5;int(1..)]);int(1..)])),
-or([sat-allDifferent-comparisons([or([!(and([__44,or([__45,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([!(and([__42,or([__43,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)]));int(1..)]),
-(__0) <-> (and([__10,or([__11,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__1) <-> (and([__12,or([__13,SafeIndex(y#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__2) <-> (and([__14,or([__15,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__3) <-> (and([__16,or([__17,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__4) <-> (and([__18,or([__19,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__5) <-> (and([__20,or([__21,SafeIndex(x#explicit_1,[1]) = false;int(1..)]);int(1..)])),
-(__6) <-> (and([__22,or([__23,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
-or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
-or([__9,SafeIndex(y#explicit_1,[1]) = false;int(1..)]),
-__46,
-__47,
-__48
-   ~~> remove_single_atom ([("SAT", 8400)])
-sat-allDifferent-comparisons([or([!(and([__26,or([__27,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__0;int(1..)]),or([!(and([__28,or([__29,SafeIndex(x#explicit_1,[1]) = false;int(1..)]);int(1..)])),__0;int(1..)]),or([!(and([__30,or([__31,SafeIndex(y#explicit_1,[1]) = false;int(1..)]);int(1..)])),__1;int(1..)]);int(1..)]),
-(ordinary) <-> (sat-allDifferent-comparisons([!(and([__24,or([__25,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)])),
-(allowed) <-> (sat-allDifferent-comparisons([or([!(and([__34,or([__35,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__2;int(1..)]);int(1..)])),
-(repeated) <-> (sat-allDifferent-comparisons([__3,or([!(and([__36,or([__37,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__3;int(1..)]),or([!(and([__38,or([__39,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__4;int(1..)]);int(1..)])),
-(negative) <-> (!(sat-allDifferent-comparisons([!(and([__32,or([__33,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)]))),
-(fixed) <-> (sat-allDifferent-comparisons([or([!(and([__40,or([__41,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__5;int(1..)]);int(1..)])),
-or([sat-allDifferent-comparisons([or([!(and([__44,or([__45,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([!(and([__42,or([__43,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)]));int(1..)]),
-(__0) <-> (and([__10,or([__11,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__1) <-> (and([__12,or([__13,SafeIndex(y#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__2) <-> (and([__14,or([__15,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__3) <-> (and([__16,or([__17,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__4) <-> (and([__18,or([__19,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__5) <-> (and([__20,or([__21,SafeIndex(x#explicit_1,[1]) = false;int(1..)]);int(1..)])),
-(__6) <-> (and([__22,or([__23,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
-or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
-or([__9,SafeIndex(y#explicit_1,[1]) = false;int(1..)]),
-__47,
-__48
-new SAT encoding decisions:
-  assert(__46) using tseitin
-
---
-
-sat-allDifferent-comparisons([or([!(and([__26,or([__27,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__0;int(1..)]),or([!(and([__28,or([__29,SafeIndex(x#explicit_1,[1]) = false;int(1..)]);int(1..)])),__0;int(1..)]),or([!(and([__30,or([__31,SafeIndex(y#explicit_1,[1]) = false;int(1..)]);int(1..)])),__1;int(1..)]);int(1..)]),
-(ordinary) <-> (sat-allDifferent-comparisons([!(and([__24,or([__25,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)])),
-(allowed) <-> (sat-allDifferent-comparisons([or([!(and([__34,or([__35,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__2;int(1..)]);int(1..)])),
-(repeated) <-> (sat-allDifferent-comparisons([__3,or([!(and([__36,or([__37,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__3;int(1..)]),or([!(and([__38,or([__39,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__4;int(1..)]);int(1..)])),
-(negative) <-> (!(sat-allDifferent-comparisons([!(and([__32,or([__33,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)]))),
-(fixed) <-> (sat-allDifferent-comparisons([or([!(and([__40,or([__41,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__5;int(1..)]);int(1..)])),
-or([sat-allDifferent-comparisons([or([!(and([__44,or([__45,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([!(and([__42,or([__43,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)]));int(1..)]),
-(__0) <-> (and([__10,or([__11,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__1) <-> (and([__12,or([__13,SafeIndex(y#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__2) <-> (and([__14,or([__15,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__3) <-> (and([__16,or([__17,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__4) <-> (and([__18,or([__19,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__5) <-> (and([__20,or([__21,SafeIndex(x#explicit_1,[1]) = false;int(1..)]);int(1..)])),
-(__6) <-> (and([__22,or([__23,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
-or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
-or([__9,SafeIndex(y#explicit_1,[1]) = false;int(1..)]),
-__47,
-__48
-   ~~> remove_single_atom ([("SAT", 8400)])
-sat-allDifferent-comparisons([or([!(and([__26,or([__27,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__0;int(1..)]),or([!(and([__28,or([__29,SafeIndex(x#explicit_1,[1]) = false;int(1..)]);int(1..)])),__0;int(1..)]),or([!(and([__30,or([__31,SafeIndex(y#explicit_1,[1]) = false;int(1..)]);int(1..)])),__1;int(1..)]);int(1..)]),
-(ordinary) <-> (sat-allDifferent-comparisons([!(and([__24,or([__25,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)])),
-(allowed) <-> (sat-allDifferent-comparisons([or([!(and([__34,or([__35,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__2;int(1..)]);int(1..)])),
-(repeated) <-> (sat-allDifferent-comparisons([__3,or([!(and([__36,or([__37,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__3;int(1..)]),or([!(and([__38,or([__39,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__4;int(1..)]);int(1..)])),
-(negative) <-> (!(sat-allDifferent-comparisons([!(and([__32,or([__33,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)]))),
-(fixed) <-> (sat-allDifferent-comparisons([or([!(and([__40,or([__41,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__5;int(1..)]);int(1..)])),
-or([sat-allDifferent-comparisons([or([!(and([__44,or([__45,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([!(and([__42,or([__43,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)]));int(1..)]),
-(__0) <-> (and([__10,or([__11,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__1) <-> (and([__12,or([__13,SafeIndex(y#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__2) <-> (and([__14,or([__15,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__3) <-> (and([__16,or([__17,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__4) <-> (and([__18,or([__19,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__5) <-> (and([__20,or([__21,SafeIndex(x#explicit_1,[1]) = false;int(1..)]);int(1..)])),
-(__6) <-> (and([__22,or([__23,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
-or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
-or([__9,SafeIndex(y#explicit_1,[1]) = false;int(1..)]),
-__48
-new SAT encoding decisions:
-  assert(__47) using tseitin
-
---
-
-sat-allDifferent-comparisons([or([!(and([__26,or([__27,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__0;int(1..)]),or([!(and([__28,or([__29,SafeIndex(x#explicit_1,[1]) = false;int(1..)]);int(1..)])),__0;int(1..)]),or([!(and([__30,or([__31,SafeIndex(y#explicit_1,[1]) = false;int(1..)]);int(1..)])),__1;int(1..)]);int(1..)]),
-(ordinary) <-> (sat-allDifferent-comparisons([!(and([__24,or([__25,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)])),
-(allowed) <-> (sat-allDifferent-comparisons([or([!(and([__34,or([__35,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__2;int(1..)]);int(1..)])),
-(repeated) <-> (sat-allDifferent-comparisons([__3,or([!(and([__36,or([__37,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__3;int(1..)]),or([!(and([__38,or([__39,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__4;int(1..)]);int(1..)])),
-(negative) <-> (!(sat-allDifferent-comparisons([!(and([__32,or([__33,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)]))),
-(fixed) <-> (sat-allDifferent-comparisons([or([!(and([__40,or([__41,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__5;int(1..)]);int(1..)])),
-or([sat-allDifferent-comparisons([or([!(and([__44,or([__45,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([!(and([__42,or([__43,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)]));int(1..)]),
-(__0) <-> (and([__10,or([__11,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__1) <-> (and([__12,or([__13,SafeIndex(y#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__2) <-> (and([__14,or([__15,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__3) <-> (and([__16,or([__17,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__4) <-> (and([__18,or([__19,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__5) <-> (and([__20,or([__21,SafeIndex(x#explicit_1,[1]) = false;int(1..)]);int(1..)])),
-(__6) <-> (and([__22,or([__23,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
-or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
-or([__9,SafeIndex(y#explicit_1,[1]) = false;int(1..)]),
-__48
-   ~~> remove_single_atom ([("SAT", 8400)])
-sat-allDifferent-comparisons([or([!(and([__26,or([__27,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__0;int(1..)]),or([!(and([__28,or([__29,SafeIndex(x#explicit_1,[1]) = false;int(1..)]);int(1..)])),__0;int(1..)]),or([!(and([__30,or([__31,SafeIndex(y#explicit_1,[1]) = false;int(1..)]);int(1..)])),__1;int(1..)]);int(1..)]),
-(ordinary) <-> (sat-allDifferent-comparisons([!(and([__24,or([__25,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)])),
-(allowed) <-> (sat-allDifferent-comparisons([or([!(and([__34,or([__35,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__2;int(1..)]);int(1..)])),
-(repeated) <-> (sat-allDifferent-comparisons([__3,or([!(and([__36,or([__37,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__3;int(1..)]),or([!(and([__38,or([__39,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__4;int(1..)]);int(1..)])),
-(negative) <-> (!(sat-allDifferent-comparisons([!(and([__32,or([__33,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)]))),
-(fixed) <-> (sat-allDifferent-comparisons([or([!(and([__40,or([__41,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__5;int(1..)]);int(1..)])),
-or([sat-allDifferent-comparisons([or([!(and([__44,or([__45,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([!(and([__42,or([__43,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]));int(1..)]));int(1..)]),
-(__0) <-> (and([__10,or([__11,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__1) <-> (and([__12,or([__13,SafeIndex(y#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__2) <-> (and([__14,or([__15,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__3) <-> (and([__16,or([__17,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__4) <-> (and([__18,or([__19,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-(__5) <-> (and([__20,or([__21,SafeIndex(x#explicit_1,[1]) = false;int(1..)]);int(1..)])),
-(__6) <-> (and([__22,or([__23,SafeIndex(x#explicit_1,[1]) = SafeIndex(exception#explicit_1,[1]);int(1..)]);int(1..)])),
-or([__8,SafeIndex(x#explicit_1,[1]) = false;int(1..)]),
-or([__7,SafeIndex(exception#explicit_1,[1]) = false;int(1..)]),
-or([__9,SafeIndex(y#explicit_1,[1]) = false;int(1..)])
-new SAT encoding decisions:
-  assert(__48) using tseitin
-
---
-
 !(and([__24,or([__25,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)]))
    ~~> distribute_not_over_and ([("Base", 8400)])
 or([!(__24),!(or([__25,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)])
@@ -1676,11 +1634,11 @@ or([!(__24),!(or([__25,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1])
 
 !(__24)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__49
+__46
 new variables:
-  findAux __49: bool
+  findAux __46: bool
 new SAT encoding decisions:
-  define(__49 <-> !(__24)) using tseitin
+  define(__46 <-> !(__24)) using tseitin
 
 --
 
@@ -1692,17 +1650,17 @@ or([!(__26),!(or([__27,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1])
 
 !(__26)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__50
+__47
 new variables:
-  findAux __50: bool
+  findAux __47: bool
 new SAT encoding decisions:
-  define(__50 <-> !(__26)) using tseitin
+  define(__47 <-> !(__26)) using tseitin
 
 --
 
-or([or([__50,!(or([__27,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)]),__0;int(1..)])
+or([or([__47,!(or([__27,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)]),__0;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-or([__50,!(or([__27,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)])),__0;int(1..)])
+or([__47,!(or([__27,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)])),__0;int(1..)])
 
 --
 
@@ -1714,17 +1672,17 @@ or([!(__28),!(or([__29,SafeIndex(x#explicit_1,[1]) = false;int(1..)]));int(1..)]
 
 !(__28)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__51
+__48
 new variables:
-  findAux __51: bool
+  findAux __48: bool
 new SAT encoding decisions:
-  define(__51 <-> !(__28)) using tseitin
+  define(__48 <-> !(__28)) using tseitin
 
 --
 
-or([or([__51,!(or([__29,SafeIndex(x#explicit_1,[1]) = false;int(1..)]));int(1..)]),__0;int(1..)])
+or([or([__48,!(or([__29,SafeIndex(x#explicit_1,[1]) = false;int(1..)]));int(1..)]),__0;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-or([__51,!(or([__29,SafeIndex(x#explicit_1,[1]) = false;int(1..)])),__0;int(1..)])
+or([__48,!(or([__29,SafeIndex(x#explicit_1,[1]) = false;int(1..)])),__0;int(1..)])
 
 --
 
@@ -1736,17 +1694,17 @@ or([!(__30),!(or([__31,SafeIndex(y#explicit_1,[1]) = false;int(1..)]));int(1..)]
 
 !(__30)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__52
+__49
 new variables:
-  findAux __52: bool
+  findAux __49: bool
 new SAT encoding decisions:
-  define(__52 <-> !(__30)) using tseitin
+  define(__49 <-> !(__30)) using tseitin
 
 --
 
-or([or([__52,!(or([__31,SafeIndex(y#explicit_1,[1]) = false;int(1..)]));int(1..)]),__1;int(1..)])
+or([or([__49,!(or([__31,SafeIndex(y#explicit_1,[1]) = false;int(1..)]));int(1..)]),__1;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-or([__52,!(or([__31,SafeIndex(y#explicit_1,[1]) = false;int(1..)])),__1;int(1..)])
+or([__49,!(or([__31,SafeIndex(y#explicit_1,[1]) = false;int(1..)])),__1;int(1..)])
 
 --
 
@@ -1758,11 +1716,11 @@ or([!(__32),!(or([__33,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1])
 
 !(__32)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__53
+__50
 new variables:
-  findAux __53: bool
+  findAux __50: bool
 new SAT encoding decisions:
-  define(__53 <-> !(__32)) using tseitin
+  define(__50 <-> !(__32)) using tseitin
 
 --
 
@@ -1774,11 +1732,11 @@ and([!(__27),!(SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]));int(1.
 
 !(__27)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__54
+__51
 new variables:
-  findAux __54: bool
+  findAux __51: bool
 new SAT encoding decisions:
-  define(__54 <-> !(__27)) using tseitin
+  define(__51 <-> !(__27)) using tseitin
 
 --
 
@@ -1796,11 +1754,11 @@ and([!(__29),!(SafeIndex(x#explicit_1,[1]) = false);int(1..)])
 
 !(__29)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__55
+__52
 new variables:
-  findAux __55: bool
+  findAux __52: bool
 new SAT encoding decisions:
-  define(__55 <-> !(__29)) using tseitin
+  define(__52 <-> !(__29)) using tseitin
 
 --
 
@@ -1818,11 +1776,11 @@ and([!(__31),!(SafeIndex(y#explicit_1,[1]) = false);int(1..)])
 
 !(__31)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__56
+__53
 new variables:
-  findAux __56: bool
+  findAux __53: bool
 new SAT encoding decisions:
-  define(__56 <-> !(__31)) using tseitin
+  define(__53 <-> !(__31)) using tseitin
 
 --
 
@@ -1840,17 +1798,17 @@ or([!(__34),!(or([__35,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1])
 
 !(__34)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__57
+__54
 new variables:
-  findAux __57: bool
+  findAux __54: bool
 new SAT encoding decisions:
-  define(__57 <-> !(__34)) using tseitin
+  define(__54 <-> !(__34)) using tseitin
 
 --
 
-or([or([__57,!(or([__35,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)]),__2;int(1..)])
+or([or([__54,!(or([__35,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)]),__2;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-or([__57,!(or([__35,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)])),__2;int(1..)])
+or([__54,!(or([__35,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)])),__2;int(1..)])
 
 --
 
@@ -1862,17 +1820,17 @@ or([!(__36),!(or([__37,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1])
 
 !(__36)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__58
+__55
 new variables:
-  findAux __58: bool
+  findAux __55: bool
 new SAT encoding decisions:
-  define(__58 <-> !(__36)) using tseitin
+  define(__55 <-> !(__36)) using tseitin
 
 --
 
-or([or([__58,!(or([__37,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)]),__3;int(1..)])
+or([or([__55,!(or([__37,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)]),__3;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-or([__58,!(or([__37,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)])),__3;int(1..)])
+or([__55,!(or([__37,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)])),__3;int(1..)])
 
 --
 
@@ -1884,17 +1842,17 @@ or([!(__38),!(or([__39,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1])
 
 !(__38)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__59
+__56
 new variables:
-  findAux __59: bool
+  findAux __56: bool
 new SAT encoding decisions:
-  define(__59 <-> !(__38)) using tseitin
+  define(__56 <-> !(__38)) using tseitin
 
 --
 
-or([or([__59,!(or([__39,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)]),__4;int(1..)])
+or([or([__56,!(or([__39,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)]),__4;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-or([__59,!(or([__39,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)])),__4;int(1..)])
+or([__56,!(or([__39,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)])),__4;int(1..)])
 
 --
 
@@ -1906,17 +1864,17 @@ or([!(__40),!(or([__41,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1])
 
 !(__40)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__60
+__57
 new variables:
-  findAux __60: bool
+  findAux __57: bool
 new SAT encoding decisions:
-  define(__60 <-> !(__40)) using tseitin
+  define(__57 <-> !(__40)) using tseitin
 
 --
 
-or([or([__60,!(or([__41,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)]),__5;int(1..)])
+or([or([__57,!(or([__41,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)]),__5;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-or([__60,!(or([__41,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)])),__5;int(1..)])
+or([__57,!(or([__41,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)])),__5;int(1..)])
 
 --
 
@@ -1928,11 +1886,11 @@ or([!(__42),!(or([__43,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1])
 
 !(__42)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__61
+__58
 new variables:
-  findAux __61: bool
+  findAux __58: bool
 new SAT encoding decisions:
-  define(__61 <-> !(__42)) using tseitin
+  define(__58 <-> !(__42)) using tseitin
 
 --
 
@@ -1944,11 +1902,11 @@ and([!(__25),!(SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]));int(1.
 
 !(__25)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__62
+__59
 new variables:
-  findAux __62: bool
+  findAux __59: bool
 new SAT encoding decisions:
-  define(__62 <-> !(__25)) using tseitin
+  define(__59 <-> !(__25)) using tseitin
 
 --
 
@@ -1958,19 +1916,19 @@ SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1])
 
 --
 
-or([__49,and([__62,SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])
+or([__46,and([__59,SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])
    ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([__49,__62;int(1..)]),or([__49,SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])
+and([or([__46,__59;int(1..)]),or([__46,SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])
 
 --
 
-or([__49,__62;int(1..)])
+or([__46,__59;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__63
+__60
 new variables:
-  findAux __63: bool
+  findAux __60: bool
 new SAT encoding decisions:
-  define(__63 <-> or([__49,__62;int(1..)])) using tseitin
+  define(__60 <-> or([__46,__59;int(1..)])) using tseitin
 
 --
 
@@ -1982,11 +1940,11 @@ and([!(__35),!(SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]));int(1.
 
 !(__35)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__64
+__61
 new variables:
-  findAux __64: bool
+  findAux __61: bool
 new SAT encoding decisions:
-  define(__64 <-> !(__35)) using tseitin
+  define(__61 <-> !(__35)) using tseitin
 
 --
 
@@ -2004,11 +1962,11 @@ and([!(__37),!(SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]));int(1.
 
 !(__37)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__65
+__62
 new variables:
-  findAux __65: bool
+  findAux __62: bool
 new SAT encoding decisions:
-  define(__65 <-> !(__37)) using tseitin
+  define(__62 <-> !(__37)) using tseitin
 
 --
 
@@ -2026,11 +1984,11 @@ and([!(__39),!(SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]));int(1.
 
 !(__39)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__66
+__63
 new variables:
-  findAux __66: bool
+  findAux __63: bool
 new SAT encoding decisions:
-  define(__66 <-> !(__39)) using tseitin
+  define(__63 <-> !(__39)) using tseitin
 
 --
 
@@ -2048,11 +2006,11 @@ and([!(__41),!(SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]));int(1.
 
 !(__41)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__67
+__64
 new variables:
-  findAux __67: bool
+  findAux __64: bool
 new SAT encoding decisions:
-  define(__67 <-> !(__41)) using tseitin
+  define(__64 <-> !(__41)) using tseitin
 
 --
 
@@ -2070,17 +2028,17 @@ or([!(__44),!(or([__45,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1])
 
 !(__44)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__68
+__65
 new variables:
-  findAux __68: bool
+  findAux __65: bool
 new SAT encoding decisions:
-  define(__68 <-> !(__44)) using tseitin
+  define(__65 <-> !(__44)) using tseitin
 
 --
 
-or([or([__68,!(or([__45,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)]),__6;int(1..)])
+or([or([__65,!(or([__45,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)]));int(1..)]),__6;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-or([__68,!(or([__45,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)])),__6;int(1..)])
+or([__65,!(or([__45,SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]);int(1..)])),__6;int(1..)])
 
 --
 
@@ -2092,11 +2050,11 @@ and([!(__33),!(SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]));int(1.
 
 !(__33)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__69
+__66
 new variables:
-  findAux __69: bool
+  findAux __66: bool
 new SAT encoding decisions:
-  define(__69 <-> !(__33)) using tseitin
+  define(__66 <-> !(__33)) using tseitin
 
 --
 
@@ -2106,19 +2064,19 @@ SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1])
 
 --
 
-or([__53,and([__69,SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])
+or([__50,and([__66,SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])
    ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([__53,__69;int(1..)]),or([__53,SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])
+and([or([__50,__66;int(1..)]),or([__50,SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])
 
 --
 
-or([__53,__69;int(1..)])
+or([__50,__66;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__70
+__67
 new variables:
-  findAux __70: bool
+  findAux __67: bool
 new SAT encoding decisions:
-  define(__70 <-> or([__53,__69;int(1..)])) using tseitin
+  define(__67 <-> or([__50,__66;int(1..)])) using tseitin
 
 --
 
@@ -2130,11 +2088,11 @@ and([!(__45),!(SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]));int(1.
 
 !(__45)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__71
+__68
 new variables:
-  findAux __71: bool
+  findAux __68: bool
 new SAT encoding decisions:
-  define(__71 <-> !(__45)) using tseitin
+  define(__68 <-> !(__45)) using tseitin
 
 --
 
@@ -2152,11 +2110,11 @@ and([!(__43),!(SafeIndex(x#explicit_1,[1]) = SafeIndex(y#explicit_1,[1]));int(1.
 
 !(__43)
    ~~> apply_tseytin_not ([("SAT", 9005)])
-__72
+__69
 new variables:
-  findAux __72: bool
+  findAux __69: bool
 new SAT encoding decisions:
-  define(__72 <-> !(__43)) using tseitin
+  define(__69 <-> !(__43)) using tseitin
 
 --
 
@@ -2166,575 +2124,989 @@ SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1])
 
 --
 
-or([__61,and([__72,SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])
+or([__58,and([__69,SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])
    ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([__61,__72;int(1..)]),or([__61,SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])
+and([or([__58,__69;int(1..)]),or([__58,SafeIndex(x#explicit_1,[1]) != SafeIndex(y#explicit_1,[1]);int(1..)]);int(1..)])
 
 --
 
-or([__61,__72;int(1..)])
+or([__58,__69;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__70
+new variables:
+  findAux __70: bool
+new SAT encoding decisions:
+  define(__70 <-> or([__58,__69;int(1..)])) using tseitin
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(exception#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+exception#explicit_1#components_1
+
+--
+
+SafeIndex(y#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#explicit_1#components_1
+
+--
+
+SafeIndex(y#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#explicit_1#components_1
+
+--
+
+SafeIndex(exception#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+exception#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(exception#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+exception#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(exception#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+exception#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(exception#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+exception#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(exception#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+exception#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(exception#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+exception#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(y#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(y#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(y#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(y#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(y#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(y#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(y#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(y#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(y#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(y#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#explicit_1#components_1
+
+--
+
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__0) <-> (and([__10,or([__11,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__1) <-> (and([__12,or([__13,y#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__2) <-> (and([__14,or([__15,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__3) <-> (and([__16,or([__17,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__4) <-> (and([__18,or([__19,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)])),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__1) <-> (and([__12,or([__13,y#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__2) <-> (and([__14,or([__15,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__3) <-> (and([__16,or([__17,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__4) <-> (and([__18,or([__19,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)])),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+new SAT encoding decisions:
+  assert((__0) <-> (and([__10,or([__11,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)]))) using tseitin
+
+--
+
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__1) <-> (and([__12,or([__13,y#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__2) <-> (and([__14,or([__15,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__3) <-> (and([__16,or([__17,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__4) <-> (and([__18,or([__19,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)])),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__2) <-> (and([__14,or([__15,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__3) <-> (and([__16,or([__17,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__4) <-> (and([__18,or([__19,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)])),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+new SAT encoding decisions:
+  assert((__1) <-> (and([__12,or([__13,y#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)]))) using tseitin
+
+--
+
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__2) <-> (and([__14,or([__15,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__3) <-> (and([__16,or([__17,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__4) <-> (and([__18,or([__19,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)])),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__3) <-> (and([__16,or([__17,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__4) <-> (and([__18,or([__19,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)])),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+new SAT encoding decisions:
+  assert((__2) <-> (and([__14,or([__15,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)]))) using tseitin
+
+--
+
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__3) <-> (and([__16,or([__17,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__4) <-> (and([__18,or([__19,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)])),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__4) <-> (and([__18,or([__19,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)])),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+new SAT encoding decisions:
+  assert((__3) <-> (and([__16,or([__17,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)]))) using tseitin
+
+--
+
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__4) <-> (and([__18,or([__19,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+(__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)])),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)])),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+new SAT encoding decisions:
+  assert((__4) <-> (and([__18,or([__19,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)]))) using tseitin
+
+--
+
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)])),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+new SAT encoding decisions:
+  assert((__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)]))) using tseitin
+
+--
+
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+(__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)])),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+new SAT encoding decisions:
+  assert((__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)]))) using tseitin
+
+--
+
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+or([__8,x#explicit_1#components_1 = false;int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+new SAT encoding decisions:
+  assert(or([__8,x#explicit_1#components_1 = false;int(1..)])) using tseitin
+
+--
+
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+or([__7,exception#explicit_1#components_1 = false;int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+new SAT encoding decisions:
+  assert(or([__7,exception#explicit_1#components_1 = false;int(1..)])) using tseitin
+
+--
+
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)]),
+or([__9,y#explicit_1#components_1 = false;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sat-allDifferent-comparisons([or([__47,and([__51,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__0;int(1..)]),or([__48,and([__52,x#explicit_1#components_1 != false;int(1..)]),__0;int(1..)]),or([__49,and([__53,y#explicit_1#components_1 != false;int(1..)]),__1;int(1..)]);int(1..)]),
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+new SAT encoding decisions:
+  assert(or([__9,y#explicit_1#components_1 = false;int(1..)])) using tseitin
+
+--
+
+x#explicit_1#components_1 != y#explicit_1#components_1
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
+__71
+new variables:
+  findAux __71: bool
+new SAT encoding decisions:
+  define(__71 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
+
+--
+
+and([__51,__71;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__72
+new variables:
+  findAux __72: bool
+new SAT encoding decisions:
+  define(__72 <-> and([__51,__71;int(1..)])) using tseitin
+
+--
+
+or([__47,__72,__0;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __73
 new variables:
   findAux __73: bool
 new SAT encoding decisions:
-  define(__73 <-> or([__61,__72;int(1..)])) using tseitin
+  define(__73 <-> or([__47,__72,__0;int(1..)])) using tseitin
 
 --
 
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(exception#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-exception#explicit_1#components_1
-
---
-
-SafeIndex(y#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-y#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(exception#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-exception#explicit_1#components_1
-
---
-
-SafeIndex(y#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-y#explicit_1#components_1
-
---
-
-SafeIndex(exception#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-exception#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(exception#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-exception#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(exception#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-exception#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(exception#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-exception#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(exception#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-exception#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(y#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-y#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(y#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-y#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(y#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-y#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(y#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-y#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(y#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-y#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(y#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-y#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(y#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-y#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(y#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-y#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(y#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-y#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(y#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-y#explicit_1#components_1
-
---
-
-x#explicit_1#components_1 = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+x#explicit_1#components_1 != false
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
 __74
 new variables:
   findAux __74: bool
 new SAT encoding decisions:
-  define(__74 <-> (x#explicit_1#components_1) <-> (false)) using tseitin
+  define(__74 <-> !((x#explicit_1#components_1) <-> (false))) using tseitin
 
 --
 
-or([__8,__74;int(1..)])
+and([__52,__74;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __75
 new variables:
   findAux __75: bool
 new SAT encoding decisions:
-  define(__75 <-> or([__8,__74;int(1..)])) using tseitin
+  define(__75 <-> and([__52,__74;int(1..)])) using tseitin
 
 --
 
-exception#explicit_1#components_1 = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+or([__48,__75,__0;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __76
 new variables:
   findAux __76: bool
 new SAT encoding decisions:
-  define(__76 <-> (exception#explicit_1#components_1) <-> (false)) using tseitin
+  define(__76 <-> or([__48,__75,__0;int(1..)])) using tseitin
 
 --
 
-or([__7,__76;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+y#explicit_1#components_1 != false
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
 __77
 new variables:
   findAux __77: bool
 new SAT encoding decisions:
-  define(__77 <-> or([__7,__76;int(1..)])) using tseitin
+  define(__77 <-> !((y#explicit_1#components_1) <-> (false))) using tseitin
 
 --
 
-y#explicit_1#components_1 = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+and([__53,__77;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __78
 new variables:
   findAux __78: bool
 new SAT encoding decisions:
-  define(__78 <-> (y#explicit_1#components_1) <-> (false)) using tseitin
+  define(__78 <-> and([__53,__77;int(1..)])) using tseitin
 
 --
 
-or([__9,__78;int(1..)])
+or([__49,__78,__1;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __79
 new variables:
   findAux __79: bool
 new SAT encoding decisions:
-  define(__79 <-> or([__9,__78;int(1..)])) using tseitin
+  define(__79 <-> or([__49,__78,__1;int(1..)])) using tseitin
 
 --
 
-x#explicit_1#components_1 = exception#explicit_1#components_1
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+sat-allDifferent-comparisons([__73,__76,__79;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __80
 new variables:
   findAux __80: bool
 new SAT encoding decisions:
-  define(__80 <-> (x#explicit_1#components_1) <-> (exception#explicit_1#components_1)) using tseitin
+  define(__80 <-> allDifferentComparisons(__73, __76, __79)) using None, AMO None, PB None
 
 --
 
-or([__11,__80;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__80,
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(ordinary) <-> (sat-allDifferent-comparisons([and([__60,or([__46,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)])),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+new SAT encoding decisions:
+  assert(__80) using tseitin
+
+--
+
+x#explicit_1#components_1 != y#explicit_1#components_1
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
 __81
 new variables:
   findAux __81: bool
 new SAT encoding decisions:
-  define(__81 <-> or([__11,__80;int(1..)])) using tseitin
+  define(__81 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
 
 --
 
-and([__10,__81;int(1..)])
+or([__46,__81;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __82
 new variables:
   findAux __82: bool
 new SAT encoding decisions:
-  define(__82 <-> and([__10,__81;int(1..)])) using tseitin
+  define(__82 <-> or([__46,__81;int(1..)])) using tseitin
 
 --
 
-(__0) <-> (__82)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+and([__60,__82;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __83
 new variables:
   findAux __83: bool
 new SAT encoding decisions:
-  define(__83 <-> (__0) <-> (__82)) using tseitin
+  define(__83 <-> and([__60,__82;int(1..)])) using tseitin
 
 --
 
-y#explicit_1#components_1 = exception#explicit_1#components_1
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+sat-allDifferent-comparisons([__83;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __84
 new variables:
   findAux __84: bool
 new SAT encoding decisions:
-  define(__84 <-> (y#explicit_1#components_1) <-> (exception#explicit_1#components_1)) using tseitin
+  define(__84 <-> allDifferentComparisons(__83)) using None, AMO None, PB None
 
 --
 
-or([__13,__84;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+(ordinary) <-> (__84),
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(allowed) <-> (sat-allDifferent-comparisons([or([__54,and([__61,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__2;int(1..)]);int(1..)])),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+new SAT encoding decisions:
+  assert((ordinary) <-> (__84)) using tseitin
+
+--
+
+x#explicit_1#components_1 != y#explicit_1#components_1
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
 __85
 new variables:
   findAux __85: bool
 new SAT encoding decisions:
-  define(__85 <-> or([__13,__84;int(1..)])) using tseitin
+  define(__85 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
 
 --
 
-and([__12,__85;int(1..)])
+and([__61,__85;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __86
 new variables:
   findAux __86: bool
 new SAT encoding decisions:
-  define(__86 <-> and([__12,__85;int(1..)])) using tseitin
+  define(__86 <-> and([__61,__85;int(1..)])) using tseitin
 
 --
 
-(__1) <-> (__86)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+or([__54,__86,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __87
 new variables:
   findAux __87: bool
 new SAT encoding decisions:
-  define(__87 <-> (__1) <-> (__86)) using tseitin
+  define(__87 <-> or([__54,__86,__2;int(1..)])) using tseitin
 
 --
 
-x#explicit_1#components_1 = exception#explicit_1#components_1
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+sat-allDifferent-comparisons([__87;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __88
 new variables:
   findAux __88: bool
 new SAT encoding decisions:
-  define(__88 <-> (x#explicit_1#components_1) <-> (exception#explicit_1#components_1)) using tseitin
+  define(__88 <-> allDifferentComparisons(__87)) using None, AMO None, PB None
 
 --
 
-or([__15,__88;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+(allowed) <-> (__88),
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(repeated) <-> (sat-allDifferent-comparisons([__3,or([__55,and([__62,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__3;int(1..)]),or([__56,and([__63,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__4;int(1..)]);int(1..)])),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+new SAT encoding decisions:
+  assert((allowed) <-> (__88)) using tseitin
+
+--
+
+x#explicit_1#components_1 != y#explicit_1#components_1
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
 __89
 new variables:
   findAux __89: bool
 new SAT encoding decisions:
-  define(__89 <-> or([__15,__88;int(1..)])) using tseitin
+  define(__89 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
 
 --
 
-and([__14,__89;int(1..)])
+and([__62,__89;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __90
 new variables:
   findAux __90: bool
 new SAT encoding decisions:
-  define(__90 <-> and([__14,__89;int(1..)])) using tseitin
+  define(__90 <-> and([__62,__89;int(1..)])) using tseitin
 
 --
 
-(__2) <-> (__90)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+or([__55,__90,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __91
 new variables:
   findAux __91: bool
 new SAT encoding decisions:
-  define(__91 <-> (__2) <-> (__90)) using tseitin
+  define(__91 <-> or([__55,__90,__3;int(1..)])) using tseitin
 
 --
 
-x#explicit_1#components_1 = exception#explicit_1#components_1
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+x#explicit_1#components_1 != y#explicit_1#components_1
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
 __92
 new variables:
   findAux __92: bool
 new SAT encoding decisions:
-  define(__92 <-> (x#explicit_1#components_1) <-> (exception#explicit_1#components_1)) using tseitin
+  define(__92 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
 
 --
 
-or([__17,__92;int(1..)])
+and([__63,__92;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __93
 new variables:
   findAux __93: bool
 new SAT encoding decisions:
-  define(__93 <-> or([__17,__92;int(1..)])) using tseitin
+  define(__93 <-> and([__63,__92;int(1..)])) using tseitin
 
 --
 
-and([__16,__93;int(1..)])
+or([__56,__93,__4;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __94
 new variables:
   findAux __94: bool
 new SAT encoding decisions:
-  define(__94 <-> and([__16,__93;int(1..)])) using tseitin
+  define(__94 <-> or([__56,__93,__4;int(1..)])) using tseitin
 
 --
 
-(__3) <-> (__94)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+sat-allDifferent-comparisons([__3,__91,__94;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __95
 new variables:
   findAux __95: bool
 new SAT encoding decisions:
-  define(__95 <-> (__3) <-> (__94)) using tseitin
+  define(__95 <-> allDifferentComparisons(__3, __91, __94)) using None, AMO None, PB None
 
 --
 
-x#explicit_1#components_1 = exception#explicit_1#components_1
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+(repeated) <-> (__95),
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (sat-allDifferent-comparisons([or([__57,and([__64,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__5;int(1..)]);int(1..)])),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+new SAT encoding decisions:
+  assert((repeated) <-> (__95)) using tseitin
+
+--
+
+x#explicit_1#components_1 != y#explicit_1#components_1
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
 __96
 new variables:
   findAux __96: bool
 new SAT encoding decisions:
-  define(__96 <-> (x#explicit_1#components_1) <-> (exception#explicit_1#components_1)) using tseitin
+  define(__96 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
 
 --
 
-or([__19,__96;int(1..)])
+and([__64,__96;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __97
 new variables:
   findAux __97: bool
 new SAT encoding decisions:
-  define(__97 <-> or([__19,__96;int(1..)])) using tseitin
+  define(__97 <-> and([__64,__96;int(1..)])) using tseitin
 
 --
 
-and([__18,__97;int(1..)])
+or([__57,__97,__5;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __98
 new variables:
   findAux __98: bool
 new SAT encoding decisions:
-  define(__98 <-> and([__18,__97;int(1..)])) using tseitin
+  define(__98 <-> or([__57,__97,__5;int(1..)])) using tseitin
 
 --
 
-(__4) <-> (__98)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+sat-allDifferent-comparisons([__98;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __99
 new variables:
   findAux __99: bool
 new SAT encoding decisions:
-  define(__99 <-> (__4) <-> (__98)) using tseitin
+  define(__99 <-> allDifferentComparisons(__98)) using None, AMO None, PB None
 
 --
 
-x#explicit_1#components_1 = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+(fixed) <-> (__99),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(negative) <-> (!(sat-allDifferent-comparisons([and([__67,or([__50,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]))),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+new SAT encoding decisions:
+  assert((fixed) <-> (__99)) using tseitin
+
+--
+
+x#explicit_1#components_1 != y#explicit_1#components_1
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
 __100
 new variables:
   findAux __100: bool
 new SAT encoding decisions:
-  define(__100 <-> (x#explicit_1#components_1) <-> (false)) using tseitin
+  define(__100 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
 
 --
 
-or([__21,__100;int(1..)])
+or([__50,__100;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __101
 new variables:
   findAux __101: bool
 new SAT encoding decisions:
-  define(__101 <-> or([__21,__100;int(1..)])) using tseitin
+  define(__101 <-> or([__50,__100;int(1..)])) using tseitin
 
 --
 
-and([__20,__101;int(1..)])
+and([__67,__101;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __102
 new variables:
   findAux __102: bool
 new SAT encoding decisions:
-  define(__102 <-> and([__20,__101;int(1..)])) using tseitin
+  define(__102 <-> and([__67,__101;int(1..)])) using tseitin
 
 --
 
-(__5) <-> (__102)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+sat-allDifferent-comparisons([__102;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __103
 new variables:
   findAux __103: bool
 new SAT encoding decisions:
-  define(__103 <-> (__5) <-> (__102)) using tseitin
+  define(__103 <-> allDifferentComparisons(__102)) using None, AMO None, PB None
 
 --
 
-x#explicit_1#components_1 = exception#explicit_1#components_1
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+(negative) <-> (!(__103)),
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([sat-allDifferent-comparisons([or([__65,and([__68,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]),__6;int(1..)]);int(1..)]),!(sat-allDifferent-comparisons([and([__70,or([__58,x#explicit_1#components_1 != y#explicit_1#components_1;int(1..)]);int(1..)]);int(1..)]));int(1..)])
+new SAT encoding decisions:
+  assert((negative) <-> (!(__103))) using tseitin
+
+--
+
+x#explicit_1#components_1 != y#explicit_1#components_1
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
 __104
 new variables:
   findAux __104: bool
 new SAT encoding decisions:
-  define(__104 <-> (x#explicit_1#components_1) <-> (exception#explicit_1#components_1)) using tseitin
+  define(__104 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
 
 --
 
-or([__23,__104;int(1..)])
+and([__68,__104;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __105
 new variables:
   findAux __105: bool
 new SAT encoding decisions:
-  define(__105 <-> or([__23,__104;int(1..)])) using tseitin
+  define(__105 <-> and([__68,__104;int(1..)])) using tseitin
 
 --
 
-and([__22,__105;int(1..)])
+or([__65,__105,__6;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __106
 new variables:
   findAux __106: bool
 new SAT encoding decisions:
-  define(__106 <-> and([__22,__105;int(1..)])) using tseitin
+  define(__106 <-> or([__65,__105,__6;int(1..)])) using tseitin
 
 --
 
-(__6) <-> (__106)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+sat-allDifferent-comparisons([__106;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __107
 new variables:
   findAux __107: bool
 new SAT encoding decisions:
-  define(__107 <-> (__6) <-> (__106)) using tseitin
+  define(__107 <-> allDifferentComparisons(__106)) using None, AMO None, PB None
 
 --
 
@@ -2748,875 +3120,41 @@ new SAT encoding decisions:
 
 --
 
-and([__54,__108;int(1..)])
+or([__58,__108;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __109
 new variables:
   findAux __109: bool
 new SAT encoding decisions:
-  define(__109 <-> and([__54,__108;int(1..)])) using tseitin
+  define(__109 <-> or([__58,__108;int(1..)])) using tseitin
 
 --
 
-or([__50,__109,__0;int(1..)])
+and([__70,__109;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __110
 new variables:
   findAux __110: bool
 new SAT encoding decisions:
-  define(__110 <-> or([__50,__109,__0;int(1..)])) using tseitin
+  define(__110 <-> and([__70,__109;int(1..)])) using tseitin
 
 --
 
-x#explicit_1#components_1 != false
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
+sat-allDifferent-comparisons([__110;int(1..)])
+   ~~> select_compound_alldifferent ([("SAT", 18500)])
 __111
 new variables:
   findAux __111: bool
 new SAT encoding decisions:
-  define(__111 <-> !((x#explicit_1#components_1) <-> (false))) using tseitin
+  define(__111 <-> allDifferentComparisons(__110)) using None, AMO None, PB None
 
 --
 
-and([__55,__111;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__112
-new variables:
-  findAux __112: bool
+or([__107,!(__111);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__112 <-> and([__55,__111;int(1..)])) using tseitin
-
---
-
-or([__51,__112,__0;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__113
-new variables:
-  findAux __113: bool
-new SAT encoding decisions:
-  define(__113 <-> or([__51,__112,__0;int(1..)])) using tseitin
-
---
-
-y#explicit_1#components_1 != false
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__114
-new variables:
-  findAux __114: bool
-new SAT encoding decisions:
-  define(__114 <-> !((y#explicit_1#components_1) <-> (false))) using tseitin
-
---
-
-and([__56,__114;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__115
-new variables:
-  findAux __115: bool
-new SAT encoding decisions:
-  define(__115 <-> and([__56,__114;int(1..)])) using tseitin
-
---
-
-or([__52,__115,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__116
-new variables:
-  findAux __116: bool
-new SAT encoding decisions:
-  define(__116 <-> or([__52,__115,__1;int(1..)])) using tseitin
-
---
-
-sat-allDifferent-comparisons([__110,__113,__116;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
-__117
-new variables:
-  findAux __117: bool
-new SAT encoding decisions:
-  define(__117 <-> allDifferentComparisons(__110, __113, __116)) using None, AMO None, PB None
-
---
-
-x#explicit_1#components_1 != y#explicit_1#components_1
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__118
-new variables:
-  findAux __118: bool
-new SAT encoding decisions:
-  define(__118 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
-
---
-
-or([__49,__118;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__119
-new variables:
-  findAux __119: bool
-new SAT encoding decisions:
-  define(__119 <-> or([__49,__118;int(1..)])) using tseitin
-
---
-
-and([__63,__119;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__120
-new variables:
-  findAux __120: bool
-new SAT encoding decisions:
-  define(__120 <-> and([__63,__119;int(1..)])) using tseitin
-
---
-
-sat-allDifferent-comparisons([__120;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
-__121
-new variables:
-  findAux __121: bool
-new SAT encoding decisions:
-  define(__121 <-> allDifferentComparisons(__120)) using None, AMO None, PB None
-
---
-
-(ordinary) <-> (__121)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__122
-new variables:
-  findAux __122: bool
-new SAT encoding decisions:
-  define(__122 <-> (ordinary) <-> (__121)) using tseitin
-
---
-
-x#explicit_1#components_1 != y#explicit_1#components_1
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__123
-new variables:
-  findAux __123: bool
-new SAT encoding decisions:
-  define(__123 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
-
---
-
-and([__64,__123;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__124
-new variables:
-  findAux __124: bool
-new SAT encoding decisions:
-  define(__124 <-> and([__64,__123;int(1..)])) using tseitin
-
---
-
-or([__57,__124,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__125
-new variables:
-  findAux __125: bool
-new SAT encoding decisions:
-  define(__125 <-> or([__57,__124,__2;int(1..)])) using tseitin
-
---
-
-sat-allDifferent-comparisons([__125;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
-__126
-new variables:
-  findAux __126: bool
-new SAT encoding decisions:
-  define(__126 <-> allDifferentComparisons(__125)) using None, AMO None, PB None
-
---
-
-(allowed) <-> (__126)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__127
-new variables:
-  findAux __127: bool
-new SAT encoding decisions:
-  define(__127 <-> (allowed) <-> (__126)) using tseitin
-
---
-
-x#explicit_1#components_1 != y#explicit_1#components_1
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__128
-new variables:
-  findAux __128: bool
-new SAT encoding decisions:
-  define(__128 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
-
---
-
-and([__65,__128;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__129
-new variables:
-  findAux __129: bool
-new SAT encoding decisions:
-  define(__129 <-> and([__65,__128;int(1..)])) using tseitin
-
---
-
-or([__58,__129,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__130
-new variables:
-  findAux __130: bool
-new SAT encoding decisions:
-  define(__130 <-> or([__58,__129,__3;int(1..)])) using tseitin
-
---
-
-x#explicit_1#components_1 != y#explicit_1#components_1
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__131
-new variables:
-  findAux __131: bool
-new SAT encoding decisions:
-  define(__131 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
-
---
-
-and([__66,__131;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__132
-new variables:
-  findAux __132: bool
-new SAT encoding decisions:
-  define(__132 <-> and([__66,__131;int(1..)])) using tseitin
-
---
-
-or([__59,__132,__4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__133
-new variables:
-  findAux __133: bool
-new SAT encoding decisions:
-  define(__133 <-> or([__59,__132,__4;int(1..)])) using tseitin
-
---
-
-sat-allDifferent-comparisons([__3,__130,__133;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
-__134
-new variables:
-  findAux __134: bool
-new SAT encoding decisions:
-  define(__134 <-> allDifferentComparisons(__3, __130, __133)) using None, AMO None, PB None
-
---
-
-(repeated) <-> (__134)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__135
-new variables:
-  findAux __135: bool
-new SAT encoding decisions:
-  define(__135 <-> (repeated) <-> (__134)) using tseitin
-
---
-
-x#explicit_1#components_1 != y#explicit_1#components_1
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__136
-new variables:
-  findAux __136: bool
-new SAT encoding decisions:
-  define(__136 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
-
---
-
-and([__67,__136;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__137
-new variables:
-  findAux __137: bool
-new SAT encoding decisions:
-  define(__137 <-> and([__67,__136;int(1..)])) using tseitin
-
---
-
-or([__60,__137,__5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__138
-new variables:
-  findAux __138: bool
-new SAT encoding decisions:
-  define(__138 <-> or([__60,__137,__5;int(1..)])) using tseitin
-
---
-
-sat-allDifferent-comparisons([__138;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
-__139
-new variables:
-  findAux __139: bool
-new SAT encoding decisions:
-  define(__139 <-> allDifferentComparisons(__138)) using None, AMO None, PB None
-
---
-
-(fixed) <-> (__139)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__140
-new variables:
-  findAux __140: bool
-new SAT encoding decisions:
-  define(__140 <-> (fixed) <-> (__139)) using tseitin
-
---
-
-x#explicit_1#components_1 != y#explicit_1#components_1
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__141
-new variables:
-  findAux __141: bool
-new SAT encoding decisions:
-  define(__141 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
-
---
-
-or([__53,__141;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__142
-new variables:
-  findAux __142: bool
-new SAT encoding decisions:
-  define(__142 <-> or([__53,__141;int(1..)])) using tseitin
-
---
-
-and([__70,__142;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__143
-new variables:
-  findAux __143: bool
-new SAT encoding decisions:
-  define(__143 <-> and([__70,__142;int(1..)])) using tseitin
-
---
-
-sat-allDifferent-comparisons([__143;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
-__144
-new variables:
-  findAux __144: bool
-new SAT encoding decisions:
-  define(__144 <-> allDifferentComparisons(__143)) using None, AMO None, PB None
-
---
-
-!(__144)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__145
-new variables:
-  findAux __145: bool
-new SAT encoding decisions:
-  define(__145 <-> !(__144)) using tseitin
-
---
-
-(negative) <-> (__145)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__146
-new variables:
-  findAux __146: bool
-new SAT encoding decisions:
-  define(__146 <-> (negative) <-> (__145)) using tseitin
-
---
-
-x#explicit_1#components_1 != y#explicit_1#components_1
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__147
-new variables:
-  findAux __147: bool
-new SAT encoding decisions:
-  define(__147 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
-
---
-
-and([__71,__147;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__148
-new variables:
-  findAux __148: bool
-new SAT encoding decisions:
-  define(__148 <-> and([__71,__147;int(1..)])) using tseitin
-
---
-
-or([__68,__148,__6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__149
-new variables:
-  findAux __149: bool
-new SAT encoding decisions:
-  define(__149 <-> or([__68,__148,__6;int(1..)])) using tseitin
-
---
-
-sat-allDifferent-comparisons([__149;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
-__150
-new variables:
-  findAux __150: bool
-new SAT encoding decisions:
-  define(__150 <-> allDifferentComparisons(__149)) using None, AMO None, PB None
-
---
-
-x#explicit_1#components_1 != y#explicit_1#components_1
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__151
-new variables:
-  findAux __151: bool
-new SAT encoding decisions:
-  define(__151 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin
-
---
-
-or([__61,__151;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__152
-new variables:
-  findAux __152: bool
-new SAT encoding decisions:
-  define(__152 <-> or([__61,__151;int(1..)])) using tseitin
-
---
-
-and([__73,__152;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__153
-new variables:
-  findAux __153: bool
-new SAT encoding decisions:
-  define(__153 <-> and([__73,__152;int(1..)])) using tseitin
-
---
-
-sat-allDifferent-comparisons([__153;int(1..)])
-   ~~> select_compound_alldifferent ([("SAT", 18500)])
-__154
-new variables:
-  findAux __154: bool
-new SAT encoding decisions:
-  define(__154 <-> allDifferentComparisons(__153)) using None, AMO None, PB None
-
---
-
-!(__154)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__155
-new variables:
-  findAux __155: bool
-new SAT encoding decisions:
-  define(__155 <-> !(__154)) using tseitin
-
---
-
-or([__150,__155;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__156
-new variables:
-  findAux __156: bool
-new SAT encoding decisions:
-  define(__156 <-> or([__150,__155;int(1..)])) using tseitin
-
---
-
-__117,
-__122,
-__127,
-__135,
-__146,
-__140,
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__122,
-__127,
-__135,
-__146,
-__140,
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__117) using tseitin
-
---
-
-__122,
-__127,
-__135,
-__146,
-__140,
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__127,
-__135,
-__146,
-__140,
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__122) using tseitin
-
---
-
-__127,
-__135,
-__146,
-__140,
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__135,
-__146,
-__140,
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__127) using tseitin
-
---
-
-__135,
-__146,
-__140,
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__146,
-__140,
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__135) using tseitin
-
---
-
-__146,
-__140,
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__140,
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__146) using tseitin
-
---
-
-__140,
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__140) using tseitin
-
---
-
-__156,
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__156) using tseitin
-
---
-
-__83,
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__83) using tseitin
-
---
-
-__87,
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__87) using tseitin
-
---
-
-__91,
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__91) using tseitin
-
---
-
-__95,
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__95) using tseitin
-
---
-
-__99,
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__103,
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__99) using tseitin
-
---
-
-__103,
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__107,
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__103) using tseitin
-
---
-
-__107,
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__75,
-__77,
-__79
-new SAT encoding decisions:
-  assert(__107) using tseitin
-
---
-
-__75,
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__77,
-__79
-new SAT encoding decisions:
-  assert(__75) using tseitin
-
---
-
-__77,
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-__79
-new SAT encoding decisions:
-  assert(__77) using tseitin
-
---
-
-__79
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__79) using tseitin
+  assert(or([__107,!(__111);int(1..)])) using tseitin
 
 --
 
@@ -3757,51 +3295,6 @@ findAux __108: bool
 findAux __109: bool
 findAux __110: bool
 findAux __111: bool
-findAux __112: bool
-findAux __113: bool
-findAux __114: bool
-findAux __115: bool
-findAux __116: bool
-findAux __117: bool
-findAux __118: bool
-findAux __119: bool
-findAux __120: bool
-findAux __121: bool
-findAux __122: bool
-findAux __123: bool
-findAux __124: bool
-findAux __125: bool
-findAux __126: bool
-findAux __127: bool
-findAux __128: bool
-findAux __129: bool
-findAux __130: bool
-findAux __131: bool
-findAux __132: bool
-findAux __133: bool
-findAux __134: bool
-findAux __135: bool
-findAux __136: bool
-findAux __137: bool
-findAux __138: bool
-findAux __139: bool
-findAux __140: bool
-findAux __141: bool
-findAux __142: bool
-findAux __143: bool
-findAux __144: bool
-findAux __145: bool
-findAux __146: bool
-findAux __147: bool
-findAux __148: bool
-findAux __149: bool
-findAux __150: bool
-findAux __151: bool
-findAux __152: bool
-findAux __153: bool
-findAux __154: bool
-findAux __155: bool
-findAux __156: bool
 
 such that
 
@@ -3811,10 +3304,13 @@ sat encoding decisions:
 
 define(__7 <-> integer-weighted(0*exception#explicit_2#direct_1, -1*exception#explicit_2#direct_2) LessEqual -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 at-most-one(exception#explicit_2#direct_1, exception#explicit_2#direct_2) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+assert(or([exception#explicit_2#direct_1,exception#explicit_2#direct_2;int(1..)])) using tseitin,
 define(__8 <-> integer-weighted(0*x#explicit_2#direct_1, -1*x#explicit_2#direct_2) LessEqual -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 at-most-one(x#explicit_2#direct_1, x#explicit_2#direct_2) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+assert(or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])) using tseitin,
 define(__9 <-> integer-weighted(0*y#explicit_2#direct_1, -1*y#explicit_2#direct_2) LessEqual -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 at-most-one(y#explicit_2#direct_1, y#explicit_2#direct_2) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
+assert(or([y#explicit_2#direct_1,y#explicit_2#direct_2;int(1..)])) using tseitin,
 define(__10 <-> integer-weighted(0*x#explicit_2#direct_1, 1*x#explicit_2#direct_2, 0*exception#explicit_2#direct_1, -1*exception#explicit_2#direct_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
 define(__11 <-> integer-weighted(0*x#explicit_2#direct_1, -1*x#explicit_2#direct_2) Greater -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 define(__12 <-> integer-weighted(0*y#explicit_2#direct_1, 1*y#explicit_2#direct_2, 0*exception#explicit_2#direct_1, -1*exception#explicit_2#direct_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
@@ -3851,135 +3347,87 @@ define(__42 <-> integer-weighted(0*x#explicit_2#direct_1, 1*x#explicit_2#direct_
 define(__43 <-> integer-weighted(0*x#explicit_2#direct_1, -1*x#explicit_2#direct_2) Greater -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 define(__44 <-> integer-weighted(0*x#explicit_2#direct_1, 1*x#explicit_2#direct_2, 0*y#explicit_2#direct_1, -1*y#explicit_2#direct_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
 define(__45 <-> integer-weighted(0*x#explicit_2#direct_1, -1*x#explicit_2#direct_2) Greater -1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
-define(__46 <-> or([exception#explicit_2#direct_1,exception#explicit_2#direct_2;int(1..)])) using tseitin,
-define(__47 <-> or([x#explicit_2#direct_1,x#explicit_2#direct_2;int(1..)])) using tseitin,
-define(__48 <-> or([y#explicit_2#direct_1,y#explicit_2#direct_2;int(1..)])) using tseitin,
-assert(__46) using tseitin,
-assert(__47) using tseitin,
-assert(__48) using tseitin,
-define(__49 <-> !(__24)) using tseitin,
-define(__50 <-> !(__26)) using tseitin,
-define(__51 <-> !(__28)) using tseitin,
-define(__52 <-> !(__30)) using tseitin,
-define(__53 <-> !(__32)) using tseitin,
-define(__54 <-> !(__27)) using tseitin,
-define(__55 <-> !(__29)) using tseitin,
-define(__56 <-> !(__31)) using tseitin,
-define(__57 <-> !(__34)) using tseitin,
-define(__58 <-> !(__36)) using tseitin,
-define(__59 <-> !(__38)) using tseitin,
-define(__60 <-> !(__40)) using tseitin,
-define(__61 <-> !(__42)) using tseitin,
-define(__62 <-> !(__25)) using tseitin,
-define(__63 <-> or([__49,__62;int(1..)])) using tseitin,
-define(__64 <-> !(__35)) using tseitin,
-define(__65 <-> !(__37)) using tseitin,
-define(__66 <-> !(__39)) using tseitin,
-define(__67 <-> !(__41)) using tseitin,
-define(__68 <-> !(__44)) using tseitin,
-define(__69 <-> !(__33)) using tseitin,
-define(__70 <-> or([__53,__69;int(1..)])) using tseitin,
-define(__71 <-> !(__45)) using tseitin,
-define(__72 <-> !(__43)) using tseitin,
-define(__73 <-> or([__61,__72;int(1..)])) using tseitin,
-define(__74 <-> (x#explicit_1#components_1) <-> (false)) using tseitin,
-define(__75 <-> or([__8,__74;int(1..)])) using tseitin,
-define(__76 <-> (exception#explicit_1#components_1) <-> (false)) using tseitin,
-define(__77 <-> or([__7,__76;int(1..)])) using tseitin,
-define(__78 <-> (y#explicit_1#components_1) <-> (false)) using tseitin,
-define(__79 <-> or([__9,__78;int(1..)])) using tseitin,
-define(__80 <-> (x#explicit_1#components_1) <-> (exception#explicit_1#components_1)) using tseitin,
-define(__81 <-> or([__11,__80;int(1..)])) using tseitin,
-define(__82 <-> and([__10,__81;int(1..)])) using tseitin,
-define(__83 <-> (__0) <-> (__82)) using tseitin,
-define(__84 <-> (y#explicit_1#components_1) <-> (exception#explicit_1#components_1)) using tseitin,
-define(__85 <-> or([__13,__84;int(1..)])) using tseitin,
-define(__86 <-> and([__12,__85;int(1..)])) using tseitin,
-define(__87 <-> (__1) <-> (__86)) using tseitin,
-define(__88 <-> (x#explicit_1#components_1) <-> (exception#explicit_1#components_1)) using tseitin,
-define(__89 <-> or([__15,__88;int(1..)])) using tseitin,
-define(__90 <-> and([__14,__89;int(1..)])) using tseitin,
-define(__91 <-> (__2) <-> (__90)) using tseitin,
-define(__92 <-> (x#explicit_1#components_1) <-> (exception#explicit_1#components_1)) using tseitin,
-define(__93 <-> or([__17,__92;int(1..)])) using tseitin,
-define(__94 <-> and([__16,__93;int(1..)])) using tseitin,
-define(__95 <-> (__3) <-> (__94)) using tseitin,
-define(__96 <-> (x#explicit_1#components_1) <-> (exception#explicit_1#components_1)) using tseitin,
-define(__97 <-> or([__19,__96;int(1..)])) using tseitin,
-define(__98 <-> and([__18,__97;int(1..)])) using tseitin,
-define(__99 <-> (__4) <-> (__98)) using tseitin,
-define(__100 <-> (x#explicit_1#components_1) <-> (false)) using tseitin,
-define(__101 <-> or([__21,__100;int(1..)])) using tseitin,
-define(__102 <-> and([__20,__101;int(1..)])) using tseitin,
-define(__103 <-> (__5) <-> (__102)) using tseitin,
-define(__104 <-> (x#explicit_1#components_1) <-> (exception#explicit_1#components_1)) using tseitin,
-define(__105 <-> or([__23,__104;int(1..)])) using tseitin,
-define(__106 <-> and([__22,__105;int(1..)])) using tseitin,
-define(__107 <-> (__6) <-> (__106)) using tseitin,
+define(__46 <-> !(__24)) using tseitin,
+define(__47 <-> !(__26)) using tseitin,
+define(__48 <-> !(__28)) using tseitin,
+define(__49 <-> !(__30)) using tseitin,
+define(__50 <-> !(__32)) using tseitin,
+define(__51 <-> !(__27)) using tseitin,
+define(__52 <-> !(__29)) using tseitin,
+define(__53 <-> !(__31)) using tseitin,
+define(__54 <-> !(__34)) using tseitin,
+define(__55 <-> !(__36)) using tseitin,
+define(__56 <-> !(__38)) using tseitin,
+define(__57 <-> !(__40)) using tseitin,
+define(__58 <-> !(__42)) using tseitin,
+define(__59 <-> !(__25)) using tseitin,
+define(__60 <-> or([__46,__59;int(1..)])) using tseitin,
+define(__61 <-> !(__35)) using tseitin,
+define(__62 <-> !(__37)) using tseitin,
+define(__63 <-> !(__39)) using tseitin,
+define(__64 <-> !(__41)) using tseitin,
+define(__65 <-> !(__44)) using tseitin,
+define(__66 <-> !(__33)) using tseitin,
+define(__67 <-> or([__50,__66;int(1..)])) using tseitin,
+define(__68 <-> !(__45)) using tseitin,
+define(__69 <-> !(__43)) using tseitin,
+define(__70 <-> or([__58,__69;int(1..)])) using tseitin,
+assert((__0) <-> (and([__10,or([__11,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)]))) using tseitin,
+assert((__1) <-> (and([__12,or([__13,y#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)]))) using tseitin,
+assert((__2) <-> (and([__14,or([__15,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)]))) using tseitin,
+assert((__3) <-> (and([__16,or([__17,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)]))) using tseitin,
+assert((__4) <-> (and([__18,or([__19,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)]))) using tseitin,
+assert((__5) <-> (and([__20,or([__21,x#explicit_1#components_1 = false;int(1..)]);int(1..)]))) using tseitin,
+assert((__6) <-> (and([__22,or([__23,x#explicit_1#components_1 = exception#explicit_1#components_1;int(1..)]);int(1..)]))) using tseitin,
+assert(or([__8,x#explicit_1#components_1 = false;int(1..)])) using tseitin,
+assert(or([__7,exception#explicit_1#components_1 = false;int(1..)])) using tseitin,
+assert(or([__9,y#explicit_1#components_1 = false;int(1..)])) using tseitin,
+define(__71 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
+define(__72 <-> and([__51,__71;int(1..)])) using tseitin,
+define(__73 <-> or([__47,__72,__0;int(1..)])) using tseitin,
+define(__74 <-> !((x#explicit_1#components_1) <-> (false))) using tseitin,
+define(__75 <-> and([__52,__74;int(1..)])) using tseitin,
+define(__76 <-> or([__48,__75,__0;int(1..)])) using tseitin,
+define(__77 <-> !((y#explicit_1#components_1) <-> (false))) using tseitin,
+define(__78 <-> and([__53,__77;int(1..)])) using tseitin,
+define(__79 <-> or([__49,__78,__1;int(1..)])) using tseitin,
+define(__80 <-> allDifferentComparisons(__73, __76, __79)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+assert(__80) using tseitin,
+define(__81 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
+define(__82 <-> or([__46,__81;int(1..)])) using tseitin,
+define(__83 <-> and([__60,__82;int(1..)])) using tseitin,
+define(__84 <-> allDifferentComparisons(__83)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+assert((ordinary) <-> (__84)) using tseitin,
+define(__85 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
+define(__86 <-> and([__61,__85;int(1..)])) using tseitin,
+define(__87 <-> or([__54,__86,__2;int(1..)])) using tseitin,
+define(__88 <-> allDifferentComparisons(__87)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+assert((allowed) <-> (__88)) using tseitin,
+define(__89 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
+define(__90 <-> and([__62,__89;int(1..)])) using tseitin,
+define(__91 <-> or([__55,__90,__3;int(1..)])) using tseitin,
+define(__92 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
+define(__93 <-> and([__63,__92;int(1..)])) using tseitin,
+define(__94 <-> or([__56,__93,__4;int(1..)])) using tseitin,
+define(__95 <-> allDifferentComparisons(__3, __91, __94)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+assert((repeated) <-> (__95)) using tseitin,
+define(__96 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
+define(__97 <-> and([__64,__96;int(1..)])) using tseitin,
+define(__98 <-> or([__57,__97,__5;int(1..)])) using tseitin,
+define(__99 <-> allDifferentComparisons(__98)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+assert((fixed) <-> (__99)) using tseitin,
+define(__100 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
+define(__101 <-> or([__50,__100;int(1..)])) using tseitin,
+define(__102 <-> and([__67,__101;int(1..)])) using tseitin,
+define(__103 <-> allDifferentComparisons(__102)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+assert((negative) <-> (!(__103))) using tseitin,
+define(__104 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
+define(__105 <-> and([__68,__104;int(1..)])) using tseitin,
+define(__106 <-> or([__65,__105,__6;int(1..)])) using tseitin,
+define(__107 <-> allDifferentComparisons(__106)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
 define(__108 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
-define(__109 <-> and([__54,__108;int(1..)])) using tseitin,
-define(__110 <-> or([__50,__109,__0;int(1..)])) using tseitin,
-define(__111 <-> !((x#explicit_1#components_1) <-> (false))) using tseitin,
-define(__112 <-> and([__55,__111;int(1..)])) using tseitin,
-define(__113 <-> or([__51,__112,__0;int(1..)])) using tseitin,
-define(__114 <-> !((y#explicit_1#components_1) <-> (false))) using tseitin,
-define(__115 <-> and([__56,__114;int(1..)])) using tseitin,
-define(__116 <-> or([__52,__115,__1;int(1..)])) using tseitin,
-define(__117 <-> allDifferentComparisons(__110, __113, __116)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__118 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
-define(__119 <-> or([__49,__118;int(1..)])) using tseitin,
-define(__120 <-> and([__63,__119;int(1..)])) using tseitin,
-define(__121 <-> allDifferentComparisons(__120)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__122 <-> (ordinary) <-> (__121)) using tseitin,
-define(__123 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
-define(__124 <-> and([__64,__123;int(1..)])) using tseitin,
-define(__125 <-> or([__57,__124,__2;int(1..)])) using tseitin,
-define(__126 <-> allDifferentComparisons(__125)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__127 <-> (allowed) <-> (__126)) using tseitin,
-define(__128 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
-define(__129 <-> and([__65,__128;int(1..)])) using tseitin,
-define(__130 <-> or([__58,__129,__3;int(1..)])) using tseitin,
-define(__131 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
-define(__132 <-> and([__66,__131;int(1..)])) using tseitin,
-define(__133 <-> or([__59,__132,__4;int(1..)])) using tseitin,
-define(__134 <-> allDifferentComparisons(__3, __130, __133)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__135 <-> (repeated) <-> (__134)) using tseitin,
-define(__136 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
-define(__137 <-> and([__67,__136;int(1..)])) using tseitin,
-define(__138 <-> or([__60,__137,__5;int(1..)])) using tseitin,
-define(__139 <-> allDifferentComparisons(__138)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__140 <-> (fixed) <-> (__139)) using tseitin,
-define(__141 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
-define(__142 <-> or([__53,__141;int(1..)])) using tseitin,
-define(__143 <-> and([__70,__142;int(1..)])) using tseitin,
-define(__144 <-> allDifferentComparisons(__143)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__145 <-> !(__144)) using tseitin,
-define(__146 <-> (negative) <-> (__145)) using tseitin,
-define(__147 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
-define(__148 <-> and([__71,__147;int(1..)])) using tseitin,
-define(__149 <-> or([__68,__148,__6;int(1..)])) using tseitin,
-define(__150 <-> allDifferentComparisons(__149)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__151 <-> !((x#explicit_1#components_1) <-> (y#explicit_1#components_1))) using tseitin,
-define(__152 <-> or([__61,__151;int(1..)])) using tseitin,
-define(__153 <-> and([__73,__152;int(1..)])) using tseitin,
-define(__154 <-> allDifferentComparisons(__153)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__155 <-> !(__154)) using tseitin,
-define(__156 <-> or([__150,__155;int(1..)])) using tseitin,
-assert(__117) using tseitin,
-assert(__122) using tseitin,
-assert(__127) using tseitin,
-assert(__135) using tseitin,
-assert(__146) using tseitin,
-assert(__140) using tseitin,
-assert(__156) using tseitin,
-assert(__83) using tseitin,
-assert(__87) using tseitin,
-assert(__91) using tseitin,
-assert(__95) using tseitin,
-assert(__99) using tseitin,
-assert(__103) using tseitin,
-assert(__107) using tseitin,
-assert(__75) using tseitin,
-assert(__77) using tseitin,
-assert(__79) using tseitin
+define(__109 <-> or([__58,__108;int(1..)])) using tseitin,
+define(__110 <-> and([__70,__109;int(1..)])) using tseitin,
+define(__111 <-> allDifferentComparisons(__110)) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+assert(or([__107,!(__111);int(1..)])) using tseitin
 

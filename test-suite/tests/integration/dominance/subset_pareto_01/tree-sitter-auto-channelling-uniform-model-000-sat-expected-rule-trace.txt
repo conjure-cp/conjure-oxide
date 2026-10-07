@@ -16,135 +16,59 @@ or([c,e;int(1..)]),
 
 --
 
-or([or([a,b;int(1..)]),c;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-or([a,b,c;int(1..)])
+or([or([a,b;int(1..)]),c;int(1..)]),
+or([b,d;int(1..)]),
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([b,d;int(1..)]),
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+new SAT encoding decisions:
+  assert(or([or([a,b;int(1..)]),c;int(1..)])) using tseitin
 
 --
 
-or([a,b,c;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
+or([b,d;int(1..)]),
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
 new SAT encoding decisions:
-  define(__0 <-> or([a,b,c;int(1..)])) using tseitin
+  assert(or([b,d;int(1..)])) using tseitin
 
 --
 
-or([b,d;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
 new SAT encoding decisions:
-  define(__1 <-> or([b,d;int(1..)])) using tseitin
+  assert(or([c,e;int(1..)])) using tseitin
 
 --
 
-or([c,e;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(and([b,e;int(1..)]))
 new SAT encoding decisions:
-  define(__2 <-> or([c,e;int(1..)])) using tseitin
+  assert(!(and([a,d;int(1..)]))) using tseitin
 
 --
 
-and([a,d;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
+!(and([b,e;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__3 <-> and([a,d;int(1..)])) using tseitin
-
---
-
-!(__3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> !(__3)) using tseitin
-
---
-
-and([b,e;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> and([b,e;int(1..)])) using tseitin
-
---
-
-!(__5)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> !(__5)) using tseitin
-
---
-
-__0,
-__1,
-__2,
-__4,
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1,
-__2,
-__4,
-__6
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-__1,
-__2,
-__4,
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-__2,
-__4,
-__6
-new SAT encoding decisions:
-  assert(__1) using tseitin
-
---
-
-__2,
-__4,
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-__4,
-__6
-new SAT encoding decisions:
-  assert(__2) using tseitin
-
---
-
-__4,
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-__6
-new SAT encoding decisions:
-  assert(__4) using tseitin
-
---
-
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert(!(and([b,e;int(1..)]))) using tseitin
 
 --
 
@@ -155,13 +79,6 @@ find b: bool
 find c: bool
 find d: bool
 find e: bool
-findAux __0: bool
-findAux __1: bool
-findAux __2: bool
-findAux __3: bool
-findAux __4: bool
-findAux __5: bool
-findAux __6: bool
 
 such that
 
@@ -169,16 +86,9 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> or([a,b,c;int(1..)])) using tseitin,
-define(__1 <-> or([b,d;int(1..)])) using tseitin,
-define(__2 <-> or([c,e;int(1..)])) using tseitin,
-define(__3 <-> and([a,d;int(1..)])) using tseitin,
-define(__4 <-> !(__3)) using tseitin,
-define(__5 <-> and([b,e;int(1..)])) using tseitin,
-define(__6 <-> !(__5)) using tseitin,
-assert(__0) using tseitin,
-assert(__1) using tseitin,
-assert(__2) using tseitin,
-assert(__4) using tseitin,
-assert(__6) using tseitin
+assert(or([or([a,b;int(1..)]),c;int(1..)])) using tseitin,
+assert(or([b,d;int(1..)])) using tseitin,
+assert(or([c,e;int(1..)])) using tseitin,
+assert(!(and([a,d;int(1..)]))) using tseitin,
+assert(!(and([b,e;int(1..)]))) using tseitin
 

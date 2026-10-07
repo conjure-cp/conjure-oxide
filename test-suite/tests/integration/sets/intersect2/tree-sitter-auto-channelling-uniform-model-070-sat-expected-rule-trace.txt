@@ -37,41 +37,11 @@ and([c#occurrence_1 = false,c#occurrence_2 = true,c#occurrence_3 = false;int(1..
 
 --
 
-c#occurrence_1 = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
+and([c#occurrence_1 = false,c#occurrence_2,c#occurrence_3 = false;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__0 <-> (c#occurrence_1) <-> (false)) using tseitin
-
---
-
-c#occurrence_3 = false
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> (c#occurrence_3) <-> (false)) using tseitin
-
---
-
-and([__0,c#occurrence_2,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> and([__0,c#occurrence_2,__1;int(1..)])) using tseitin
-
---
-
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(and([c#occurrence_1 = false,c#occurrence_2,c#occurrence_3 = false;int(1..)])) using tseitin
 
 --
 
@@ -83,9 +53,6 @@ find c: set (representation occurrence, size 1) of int(1..3)
 find c#occurrence_1: bool
 find c#occurrence_2: bool
 find c#occurrence_3: bool
-findAux __0: bool
-findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -94,8 +61,5 @@ true
 sat encoding decisions:
 
 count(c#occurrence_1, c#occurrence_2, c#occurrence_3) Exactly 1 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
-define(__0 <-> (c#occurrence_1) <-> (false)) using tseitin,
-define(__1 <-> (c#occurrence_3) <-> (false)) using tseitin,
-define(__2 <-> and([__0,c#occurrence_2,__1;int(1..)])) using tseitin,
-assert(__2) using tseitin
+assert(and([c#occurrence_1 = false,c#occurrence_2,c#occurrence_3 = false;int(1..)])) using tseitin
 

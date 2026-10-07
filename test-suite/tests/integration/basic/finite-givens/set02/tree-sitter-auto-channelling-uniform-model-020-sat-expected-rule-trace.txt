@@ -26,29 +26,23 @@ new SAT encoding decisions:
 
 --
 
-or([__0;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__0
-
---
-
 true,
 x#order_1,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([__0;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
-__0
+or([__0;int(1..)])
 new SAT encoding decisions:
   assert(x#order_1) using tseitin
 
 --
 
 true,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([__0;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(or([__0;int(1..)])) using tseitin
 
 --
 
@@ -67,5 +61,5 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [],
 assert(x#order_1) using tseitin,
-assert(__0) using tseitin
+assert(or([__0;int(1..)])) using tseitin
 

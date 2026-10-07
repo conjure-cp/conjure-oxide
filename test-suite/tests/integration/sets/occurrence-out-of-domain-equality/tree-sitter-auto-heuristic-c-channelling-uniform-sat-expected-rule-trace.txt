@@ -9,8 +9,16 @@ x = {3}
 --
 
 false
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(false) using tseitin
+
+--
+
+true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-false
+true
 new variables:
   find x#occurrence_1: bool
   find x#occurrence_2: bool
@@ -19,20 +27,20 @@ new constraints:
 
 --
 
-false,
+true,
 and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) >= 0,sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) <= 2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-false,
+true,
 and([true,sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) <= 2;int(1..)])
 new SAT encoding decisions:
   count(x#occurrence_1, x#occurrence_2) AtLeast 0 using None
 
 --
 
-false,
+true,
 and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) <= 2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-false,
+true,
 and([true;int(1..)])
 new SAT encoding decisions:
   count(x#occurrence_1, x#occurrence_2) AtMost 2 using None
@@ -47,11 +55,12 @@ find x#occurrence_2: bool
 
 such that
 
-false,
+true,
 true
 
 sat encoding decisions:
 
+assert(false) using tseitin,
 count(x#occurrence_1, x#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
 count(x#occurrence_1, x#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic })
 

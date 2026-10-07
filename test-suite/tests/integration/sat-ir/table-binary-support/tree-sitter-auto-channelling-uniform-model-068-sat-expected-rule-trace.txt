@@ -98,6 +98,39 @@ new SAT encoding decisions:
 
 --
 
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (__0),
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+new SAT encoding decisions:
+  assert((negative) <-> (__0)) using tseitin
+
+--
+
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+or([x#direct_1,x#direct_3,x#direct_6;int(1..)]),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+new SAT encoding decisions:
+  assert(or([x#direct_1,x#direct_3,x#direct_6;int(1..)])) using tseitin
+
+--
+
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)}))
+new SAT encoding decisions:
+  assert(or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin
+
+--
+
 x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
@@ -121,83 +154,10 @@ new SAT encoding decisions:
 --
 
 (positive) <-> (__1)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__2 <-> (positive) <-> (__1)) using tseitin
-
---
-
-(negative) <-> (__0)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> (negative) <-> (__0)) using tseitin
-
---
-
-or([x#direct_1,x#direct_3,x#direct_6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> or([x#direct_1,x#direct_3,x#direct_6;int(1..)])) using tseitin
-
---
-
-or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin
-
---
-
-__2,
-__3,
-__4,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-__3,
-__4,
-__5
-new SAT encoding decisions:
-  assert(__2) using tseitin
-
---
-
-__3,
-__4,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-__4,
-__5
-new SAT encoding decisions:
-  assert(__3) using tseitin
-
---
-
-__4,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-__5
-new SAT encoding decisions:
-  assert(__4) using tseitin
-
---
-
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__5) using tseitin
+  assert((positive) <-> (__1)) using tseitin
 
 --
 
@@ -221,10 +181,6 @@ find y#direct_5: bool
 find y#direct_6: bool
 findAux __0: bool
 findAux __1: bool
-findAux __2: bool
-findAux __3: bool
-findAux __4: bool
-findAux __5: bool
 
 such that
 
@@ -235,13 +191,9 @@ sat encoding decisions:
 define(__0 <-> table(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), [[0, 0], [3, 3]], negative=true)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
 at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
 at-most-one(y#direct_1, y#direct_2, y#direct_3, y#direct_4, y#direct_5, y#direct_6) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
+assert((negative) <-> (__0)) using tseitin,
+assert(or([x#direct_1,x#direct_3,x#direct_6;int(1..)])) using tseitin,
+assert(or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin,
 define(__1 <-> table(0+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 3*x#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:x#direct_1, -1:x#direct_2, 0:x#direct_3, 1:x#direct_4, 2:x#direct_5, 3:x#direct_6), 0+weighted(-2*y#direct_1, -1*y#direct_2, 0*y#direct_3, 1*y#direct_4, 2*y#direct_5, 3*y#direct_6) with [PbTermGroup { start: 0, end: 6, structure: Choice }] choices(-2:y#direct_1, -1:y#direct_2, 0:y#direct_3, 1:y#direct_4, 2:y#direct_5, 3:y#direct_6), [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
-define(__2 <-> (positive) <-> (__1)) using tseitin,
-define(__3 <-> (negative) <-> (__0)) using tseitin,
-define(__4 <-> or([x#direct_1,x#direct_3,x#direct_6;int(1..)])) using tseitin,
-define(__5 <-> or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin,
-assert(__2) using tseitin,
-assert(__3) using tseitin,
-assert(__4) using tseitin,
-assert(__5) using tseitin
+assert((positive) <-> (__1)) using tseitin
 

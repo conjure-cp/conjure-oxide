@@ -122,101 +122,71 @@ new SAT encoding decisions:
 
 --
 
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-z
-   ~~> select_representation ([("ReprGeneral", 10000)])
-z
-
---
-
 sum([x,z;int(1..)]) = y,
 __0,
 or([y#direct_1,y#direct_3,y#direct_6;int(1..)]),
 or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)]),
 or([z#direct_1,z#direct_2,z#direct_3;int(1..)])
-   ~~> select_pseudo_boolean ([("SAT", 19000)])
-__0,
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([x,z;int(1..)]) = y,
 or([y#direct_1,y#direct_3,y#direct_6;int(1..)]),
 or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)]),
 or([z#direct_1,z#direct_2,z#direct_3;int(1..)])
-new SAT encoding decisions:
-  weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 1*z#direct_1, 2*z#direct_2, 3*z#direct_3, 0*y#direct_1, -1*y#direct_2, -2*y#direct_3, -3*y#direct_4, -4*y#direct_5, -5*y#direct_6) Exactly 0 using None with [PbTermGroup { start: 0, end: 5, structure: Choice }, PbTermGroup { start: 5, end: 8, structure: Choice }, PbTermGroup { start: 8, end: 14, structure: Choice }]
-
---
-
-or([y#direct_1,y#direct_3,y#direct_6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin
-
---
-
-or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])) using tseitin
-
---
-
-or([z#direct_1,z#direct_2,z#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> or([z#direct_1,z#direct_2,z#direct_3;int(1..)])) using tseitin
-
---
-
-__0,
-__1,
-__2,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1,
-__2,
-__3
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
-__1,
-__2,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-__2,
-__3
+sum([x,z;int(1..)]) = y,
+or([y#direct_1,y#direct_3,y#direct_6;int(1..)]),
+or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)]),
+or([z#direct_1,z#direct_2,z#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([x,z;int(1..)]) = y,
+or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)]),
+or([z#direct_1,z#direct_2,z#direct_3;int(1..)])
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin
 
 --
 
-__2,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-__3
+sum([x,z;int(1..)]) = y,
+or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)]),
+or([z#direct_1,z#direct_2,z#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([x,z;int(1..)]) = y,
+or([z#direct_1,z#direct_2,z#direct_3;int(1..)])
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])) using tseitin
 
 --
 
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+sum([x,z;int(1..)]) = y,
+or([z#direct_1,z#direct_2,z#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([x,z;int(1..)]) = y
 new SAT encoding decisions:
-  assert(__3) using tseitin
+  assert(or([z#direct_1,z#direct_2,z#direct_3;int(1..)])) using tseitin
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+
+--
+
+sum([x,z;int(1..)]) = y
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+
+new SAT encoding decisions:
+  weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 1*z#direct_1, 2*z#direct_2, 3*z#direct_3, 0*y#direct_1, -1*y#direct_2, -2*y#direct_3, -3*y#direct_4, -4*y#direct_5, -5*y#direct_6) Exactly 0 using None with [PbTermGroup { start: 0, end: 5, structure: Choice }, PbTermGroup { start: 5, end: 8, structure: Choice }, PbTermGroup { start: 8, end: 14, structure: Choice }]
 
 --
 
@@ -240,9 +210,6 @@ find z#direct_1: bool
 find z#direct_2: bool
 find z#direct_3: bool
 findAux __0: bool
-findAux __1: bool
-findAux __2: bool
-findAux __3: bool
 
 such that
 
@@ -254,12 +221,9 @@ define(__0 <-> integer-weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#
 at-most-one(y#direct_1, y#direct_2, y#direct_3, y#direct_4, y#direct_5, y#direct_6) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
 at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
 at-most-one(z#direct_1, z#direct_2, z#direct_3) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
-weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 1*z#direct_1, 2*z#direct_2, 3*z#direct_3, 0*y#direct_1, -1*y#direct_2, -2*y#direct_3, -3*y#direct_4, -4*y#direct_5, -5*y#direct_6) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }, PbTermGroup { start: 5, end: 8, structure: Choice }, PbTermGroup { start: 8, end: 14, structure: Choice }],
-define(__1 <-> or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin,
-define(__2 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])) using tseitin,
-define(__3 <-> or([z#direct_1,z#direct_2,z#direct_3;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__1) using tseitin,
-assert(__2) using tseitin,
-assert(__3) using tseitin
+assert(or([y#direct_1,y#direct_3,y#direct_6;int(1..)])) using tseitin,
+assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])) using tseitin,
+assert(or([z#direct_1,z#direct_2,z#direct_3;int(1..)])) using tseitin,
+weighted(-2*x#direct_1, -1*x#direct_2, 0*x#direct_3, 1*x#direct_4, 2*x#direct_5, 1*z#direct_1, 2*z#direct_2, 3*z#direct_3, 0*y#direct_1, -1*y#direct_2, -2*y#direct_3, -3*y#direct_4, -4*y#direct_5, -5*y#direct_6) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }, PbTermGroup { start: 5, end: 8, structure: Choice }, PbTermGroup { start: 8, end: 14, structure: Choice }]
 

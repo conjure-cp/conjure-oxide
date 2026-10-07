@@ -60,6 +60,30 @@ new SAT encoding decisions:
 
 --
 
+__0,
+y = 2,
+z = 7,
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+y = 2,
+z = 7,
+or([and([__1,__2;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+y = 2,
+z = 7,
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+y = 2,
+z = 7
+new SAT encoding decisions:
+  assert(or([and([__1,__2;int(1..)]);int(1..)])) using tseitin
+
+--
+
 y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
@@ -104,6 +128,26 @@ new variables:
   findAux __5: bool
 new SAT encoding decisions:
   define(__5 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, 4*y#twos_complement_3, 8*y#twos_complement_4, 16*y#twos_complement_5, 32*y#twos_complement_6, 64*y#twos_complement_7, -128*y#twos_complement_8) LessEqual 100) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }]
+
+--
+
+__3,
+z = 7,
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+z = 7,
+or([and([__4,__5;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(__3) using tseitin
+
+--
+
+z = 7,
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+z = 7
+new SAT encoding decisions:
+  assert(or([and([__4,__5;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -154,124 +198,20 @@ new SAT encoding decisions:
 
 --
 
-or([and([__1,__2;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__1,__2;int(1..)])
-
---
-
-or([and([__4,__5;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__4,__5;int(1..)])
-
---
-
+__6,
 or([and([__7,__8;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__7,__8;int(1..)])
-
---
-
-and([__4,__5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> and([__4,__5;int(1..)])) using tseitin
-
---
-
-and([__7,__8;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> and([__7,__8;int(1..)])) using tseitin
-
---
-
-and([__1,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> and([__1,__2;int(1..)])) using tseitin
-
---
-
-__0,
-__3,
-__6,
-__11,
-__9,
-__10
-   ~~> remove_single_atom ([("SAT", 8400)])
-__3,
-__6,
-__11,
-__9,
-__10
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-__3,
-__6,
-__11,
-__9,
-__10
-   ~~> remove_single_atom ([("SAT", 8400)])
-__6,
-__11,
-__9,
-__10
-new SAT encoding decisions:
-  assert(__3) using tseitin
-
---
-
-__6,
-__11,
-__9,
-__10
-   ~~> remove_single_atom ([("SAT", 8400)])
-__11,
-__9,
-__10
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([and([__7,__8;int(1..)]);int(1..)])
 new SAT encoding decisions:
   assert(__6) using tseitin
 
 --
 
-__11,
-__9,
-__10
-   ~~> remove_single_atom ([("SAT", 8400)])
-__9,
-__10
+or([and([__7,__8;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__11) using tseitin
-
---
-
-__9,
-__10
-   ~~> remove_single_atom ([("SAT", 8400)])
-__10
-new SAT encoding decisions:
-  assert(__9) using tseitin
-
---
-
-__10
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__10) using tseitin
+  assert(or([and([__7,__8;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -314,9 +254,6 @@ find z#twos_complement_8: bool
 findAux __6: bool
 findAux __7: bool
 findAux __8: bool
-findAux __9: bool
-findAux __10: bool
-findAux __11: bool
 
 such that
 
@@ -327,19 +264,16 @@ sat encoding decisions:
 define(__0 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, 8*x#twos_complement_4, 16*x#twos_complement_5, 32*x#twos_complement_6, 64*x#twos_complement_7, -128*x#twos_complement_8) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
 define(__1 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, 8*x#twos_complement_4, 16*x#twos_complement_5, 32*x#twos_complement_6, 64*x#twos_complement_7, -128*x#twos_complement_8) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
 define(__2 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, 8*x#twos_complement_4, 16*x#twos_complement_5, 32*x#twos_complement_6, 64*x#twos_complement_7, -128*x#twos_complement_8) LessEqual 100) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
+assert(__0) using tseitin,
+assert(or([and([__1,__2;int(1..)]);int(1..)])) using tseitin,
 define(__3 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, 4*y#twos_complement_3, 8*y#twos_complement_4, 16*y#twos_complement_5, 32*y#twos_complement_6, 64*y#twos_complement_7, -128*y#twos_complement_8) Equal 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
 define(__4 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, 4*y#twos_complement_3, 8*y#twos_complement_4, 16*y#twos_complement_5, 32*y#twos_complement_6, 64*y#twos_complement_7, -128*y#twos_complement_8) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
 define(__5 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, 4*y#twos_complement_3, 8*y#twos_complement_4, 16*y#twos_complement_5, 32*y#twos_complement_6, 64*y#twos_complement_7, -128*y#twos_complement_8) LessEqual 100) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
+assert(__3) using tseitin,
+assert(or([and([__4,__5;int(1..)]);int(1..)])) using tseitin,
 define(__6 <-> integer-weighted(1*z#twos_complement_1, 2*z#twos_complement_2, 4*z#twos_complement_3, 8*z#twos_complement_4, 16*z#twos_complement_5, 32*z#twos_complement_6, 64*z#twos_complement_7, -128*z#twos_complement_8) Equal 7) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
 define(__7 <-> integer-weighted(1*z#twos_complement_1, 2*z#twos_complement_2, 4*z#twos_complement_3, 8*z#twos_complement_4, 16*z#twos_complement_5, 32*z#twos_complement_6, 64*z#twos_complement_7, -128*z#twos_complement_8) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
 define(__8 <-> integer-weighted(1*z#twos_complement_1, 2*z#twos_complement_2, 4*z#twos_complement_3, 8*z#twos_complement_4, 16*z#twos_complement_5, 32*z#twos_complement_6, 64*z#twos_complement_7, -128*z#twos_complement_8) LessEqual 100) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
-define(__9 <-> and([__4,__5;int(1..)])) using tseitin,
-define(__10 <-> and([__7,__8;int(1..)])) using tseitin,
-define(__11 <-> and([__1,__2;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-assert(__3) using tseitin,
 assert(__6) using tseitin,
-assert(__11) using tseitin,
-assert(__9) using tseitin,
-assert(__10) using tseitin
+assert(or([and([__7,__8;int(1..)]);int(1..)])) using tseitin
 

@@ -11,6 +11,15 @@ such that
 
 --
 
+(member) <-> (x in s),
+!(member)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(member) <-> (x in s)
+new SAT encoding decisions:
+  assert(!(member)) using tseitin
+
+--
+
 x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
@@ -39,13 +48,11 @@ new constraints:
 --
 
 (member) <-> (x in s),
-!(member),
 sum([toInt(x#direct_1),toInt(x#direct_2),toInt(x#direct_3),toInt(x#direct_4),toInt(x#direct_5);int(1..)]) <= 1,
 or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)]),
 and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) >= 0,sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 (member) <-> (x in s),
-!(member),
 or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)]),
 and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) >= 0,sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3;int(1..)])
 new SAT encoding decisions:
@@ -54,12 +61,10 @@ new SAT encoding decisions:
 --
 
 (member) <-> (x in s),
-!(member),
 or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)]),
 and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) >= 0,sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 (member) <-> (x in s),
-!(member),
 or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)]),
 and([true,sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3;int(1..)])
 new SAT encoding decisions:
@@ -68,16 +73,25 @@ new SAT encoding decisions:
 --
 
 (member) <-> (x in s),
-!(member),
 or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)]),
 and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 (member) <-> (x in s),
-!(member),
 or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)]),
 and([true;int(1..)])
 new SAT encoding decisions:
   count(s#occurrence_1, s#occurrence_2, s#occurrence_3) AtMost 3 using None
+
+--
+
+(member) <-> (x in s),
+or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)]),
+true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(member) <-> (x in s),
+true
+new SAT encoding decisions:
+  assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])) using tseitin
 
 --
 
@@ -125,82 +139,14 @@ new SAT encoding decisions:
 
 --
 
-!(member)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> !(member)) using tseitin
-
---
-
-or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])) using tseitin
-
---
-
-and([__0,__1,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> and([__0,__1,__2;int(1..)])) using tseitin
-
---
-
-(member) <-> (__5)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> (member) <-> (__5)) using tseitin
-
---
-
-__6,
-__3,
-__4,
+(member) <-> (and([__0,__1,__2;int(1..)])),
 true,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
-__3,
-__4,
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true
 new SAT encoding decisions:
-  assert(__6) using tseitin
-
---
-
-__3,
-__4,
-true,
-true
-   ~~> remove_single_atom ([("SAT", 8400)])
-__4,
-true,
-true
-new SAT encoding decisions:
-  assert(__3) using tseitin
-
---
-
-__4,
-true,
-true
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true
-new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert((member) <-> (and([__0,__1,__2;int(1..)]))) using tseitin
 
 --
 
@@ -220,10 +166,6 @@ find s#occurrence_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
-findAux __3: bool
-findAux __4: bool
-findAux __5: bool
-findAux __6: bool
 
 such that
 
@@ -232,17 +174,13 @@ true
 
 sat encoding decisions:
 
+assert(!(member)) using tseitin,
 at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
 count(s#occurrence_1, s#occurrence_2, s#occurrence_3) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
 count(s#occurrence_1, s#occurrence_2, s#occurrence_3) AtMost 3 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])) using tseitin,
 define(__0 <-> integer-weighted(0*x#direct_1, 1*x#direct_2, 2*x#direct_3, 3*x#direct_4, 4*x#direct_5) GreaterEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }],
 define(__1 <-> integer-weighted(0*x#direct_1, 1*x#direct_2, 2*x#direct_3, 3*x#direct_4, 4*x#direct_5) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }],
 element(index=0+weighted(0*x#direct_1, 1*x#direct_2, 2*x#direct_3, 3*x#direct_4, 4*x#direct_5) with [PbTermGroup { start: 0, end: 5, structure: Choice }] choices(0:x#direct_1, 1:x#direct_2, 2:x#direct_3, 3:x#direct_4, 4:x#direct_5), value=0+weighted(1*__2) with [] choices(0:!(__2), 1:__2), entries=[1: 0+weighted(1*s#occurrence_1) with [] choices(0:!(s#occurrence_1), 1:s#occurrence_1), 2: 0+weighted(1*s#occurrence_2) with [] choices(0:!(s#occurrence_2), 1:s#occurrence_2), 3: 0+weighted(1*s#occurrence_3) with [] choices(0:!(s#occurrence_3), 1:s#occurrence_3)]) using Some(EncodingSelection { algorithm: Support, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
-define(__3 <-> !(member)) using tseitin,
-define(__4 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5;int(1..)])) using tseitin,
-define(__5 <-> and([__0,__1,__2;int(1..)])) using tseitin,
-define(__6 <-> (member) <-> (__5)) using tseitin,
-assert(__6) using tseitin,
-assert(__3) using tseitin,
-assert(__4) using tseitin
+assert((member) <-> (and([__0,__1,__2;int(1..)]))) using tseitin
 

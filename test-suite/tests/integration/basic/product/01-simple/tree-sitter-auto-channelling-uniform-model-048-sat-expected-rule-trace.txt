@@ -43,6 +43,15 @@ new SAT encoding decisions:
 
 --
 
+product([product([x,y;int(1..)]),z;int(1..)]) < 15,
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+product([product([x,y;int(1..)]),z;int(1..)]) < 15
+new SAT encoding decisions:
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
+
+--
+
 x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
@@ -76,6 +85,15 @@ new SAT encoding decisions:
 
 --
 
+product([product([x,y;int(1..)]),z;int(1..)]) < 15,
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+product([product([x,y;int(1..)]),z;int(1..)]) < 15
+new SAT encoding decisions:
+  assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin
+
+--
+
 y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
@@ -106,6 +124,15 @@ new variables:
   findAux __5: bool
 new SAT encoding decisions:
   define(__5 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, 4*y#twos_complement_3, -8*y#twos_complement_4) LessEqual 4) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 2, upper: 4 } }]
+
+--
+
+product([product([x,y;int(1..)]),z;int(1..)]) < 15,
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+product([product([x,y;int(1..)]),z;int(1..)]) < 15
+new SAT encoding decisions:
+  assert(or([and([__4,__5;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -3129,92 +3156,11 @@ new SAT encoding decisions:
 
 --
 
-or([and([__2,__3;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__2,__3;int(1..)])
+__1494
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-or([and([__4,__5;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__4,__5;int(1..)])
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__4,__5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1495
-new variables:
-  findAux __1495: bool
-new SAT encoding decisions:
-  define(__1495 <-> and([__4,__5;int(1..)])) using tseitin
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1496
-new variables:
-  findAux __1496: bool
-new SAT encoding decisions:
-  define(__1496 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1497
-new variables:
-  findAux __1497: bool
-new SAT encoding decisions:
-  define(__1497 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-__1494,
-__1496,
-__1497,
-__1495
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1496,
-__1497,
-__1495
 new SAT encoding decisions:
   assert(__1494) using tseitin
-
---
-
-__1496,
-__1497,
-__1495
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1497,
-__1495
-new SAT encoding decisions:
-  assert(__1496) using tseitin
-
---
-
-__1497,
-__1495
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1495
-new SAT encoding decisions:
-  assert(__1497) using tseitin
-
---
-
-__1495
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__1495) using tseitin
 
 --
 
@@ -4730,9 +4676,6 @@ findAux __1491: bool
 findAux __1492: bool
 findAux __1493: bool
 findAux __1494: bool
-findAux __1495: bool
-findAux __1496: bool
-findAux __1497: bool
 
 such that
 
@@ -4742,10 +4685,13 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*z#twos_complement_1, 2*z#twos_complement_2, 4*z#twos_complement_3, -8*z#twos_complement_4) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 2, upper: 4 } }],
 define(__1 <-> integer-weighted(1*z#twos_complement_1, 2*z#twos_complement_2, 4*z#twos_complement_3, -8*z#twos_complement_4) LessEqual 4) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 2, upper: 4 } }],
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
 define(__2 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, -8*x#twos_complement_4) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 2, upper: 4 } }],
 define(__3 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, -8*x#twos_complement_4) LessEqual 4) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 2, upper: 4 } }],
+assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin,
 define(__4 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, 4*y#twos_complement_3, -8*y#twos_complement_4) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 2, upper: 4 } }],
 define(__5 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, 4*y#twos_complement_3, -8*y#twos_complement_4) LessEqual 4) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 2, upper: 4 } }],
+assert(or([and([__4,__5;int(1..)]);int(1..)])) using tseitin,
 define(__6 <-> and([x#twos_complement_1,y#twos_complement_1;int(1..)])) using tseitin,
 define(__7 <-> and([x#twos_complement_1,y#twos_complement_2;int(1..)])) using tseitin,
 define(__8 <-> and([x#twos_complement_1,y#twos_complement_3;int(1..)])) using tseitin,
@@ -6235,11 +6181,5 @@ define(__1491 <-> and([__441,__1453;int(1..)])) using tseitin,
 define(__1492 <-> and([__1457,__1399;int(1..)])) using tseitin,
 define(__1493 <-> or([__1491,__1492;int(1..)])) using tseitin,
 define(__1494 <-> integer-weighted(1*__1460, 2*__1463, 4*__1466, 8*__1469, 16*__1472, 32*__1475, 64*__1478, -128*__1481) Less 15) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 8, upper: 64 } }],
-define(__1495 <-> and([__4,__5;int(1..)])) using tseitin,
-define(__1496 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__1497 <-> and([__2,__3;int(1..)])) using tseitin,
-assert(__1494) using tseitin,
-assert(__1496) using tseitin,
-assert(__1497) using tseitin,
-assert(__1495) using tseitin
+assert(__1494) using tseitin
 

@@ -42,103 +42,31 @@ new SAT encoding decisions:
 
 --
 
-!(x#rank_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> !(x#rank_2)) using tseitin
-
---
-
-!(y#rank_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> !(y#rank_2)) using tseitin
-
---
-
-!(x#rank_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> !(x#rank_1)) using tseitin
-
---
-
-!(y#rank_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> !(y#rank_1)) using tseitin
-
---
-
-and([__4;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__4
-
---
-
-and([__3;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__3
-
---
-
-or([__2,__4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> or([__2,__4;int(1..)])) using tseitin
-
---
-
-or([__1,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> or([__1,__3;int(1..)])) using tseitin
-
---
-
 __0,
-__6,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-__6,
-__5
+or([!(x#rank_2),and([!(x#rank_1);int(1..)]);int(1..)]),
+or([!(y#rank_2),and([!(y#rank_1);int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([!(x#rank_2),and([!(x#rank_1);int(1..)]);int(1..)]),
+or([!(y#rank_2),and([!(y#rank_1);int(1..)]);int(1..)])
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
-__6,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-__5
+or([!(x#rank_2),and([!(x#rank_1);int(1..)]);int(1..)]),
+or([!(y#rank_2),and([!(y#rank_1);int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([!(y#rank_2),and([!(y#rank_1);int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert(or([!(x#rank_2),and([!(x#rank_1);int(1..)]);int(1..)])) using tseitin
 
 --
 
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+or([!(y#rank_2),and([!(y#rank_1);int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__5) using tseitin
+  assert(or([!(y#rank_2),and([!(y#rank_1);int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -152,12 +80,6 @@ find x#rank_2: bool
 find y#rank_1: bool
 find y#rank_2: bool
 findAux __0: bool
-findAux __1: bool
-findAux __2: bool
-findAux __3: bool
-findAux __4: bool
-findAux __5: bool
-findAux __6: bool
 
 such that
 
@@ -166,13 +88,7 @@ true
 sat encoding decisions:
 
 define(__0 <-> table(0+weighted(1*x#rank_1, 2*x#rank_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], 0+weighted(1*y#rank_1, 2*y#rank_2) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }], [[0, 0], [1, 1], [2, 2]], negative=true)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__1 <-> !(x#rank_2)) using tseitin,
-define(__2 <-> !(y#rank_2)) using tseitin,
-define(__3 <-> !(x#rank_1)) using tseitin,
-define(__4 <-> !(y#rank_1)) using tseitin,
-define(__5 <-> or([__2,__4;int(1..)])) using tseitin,
-define(__6 <-> or([__1,__3;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__6) using tseitin,
-assert(__5) using tseitin
+assert(or([!(x#rank_2),and([!(x#rank_1);int(1..)]);int(1..)])) using tseitin,
+assert(or([!(y#rank_2),and([!(y#rank_1);int(1..)]);int(1..)])) using tseitin
 

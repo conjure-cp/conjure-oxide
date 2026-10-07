@@ -51,13 +51,52 @@ true,
 y#order_1,
 or([!(y#order_2),y#order_1;int(1..)]),
 or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+true,
+true,
+or([!(y#order_2),y#order_1;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(y#order_1) using tseitin
+
+--
+
+true,
+true,
+true,
+or([!(y#order_2),y#order_1;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+true,
+true,
+or([and([__0,__1;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(or([!(y#order_2),y#order_1;int(1..)])) using tseitin
+
+--
+
+true,
+true,
+true,
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
+
+--
+
+true,
+true,
+true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true,
 true,
-true,
-y#order_1,
-or([!(y#order_2),y#order_1;int(1..)]),
-or([and([__0,__1;int(1..)]);int(1..)])
+true
 new variables:
   find x#explicit_1#components_1: int(1)
   find x#explicit_1#components_2: int(1)
@@ -66,17 +105,11 @@ new variables:
 
 true,
 true,
-true,
-y#order_1,
-or([!(y#order_2),y#order_1;int(1..)]),
-or([and([__0,__1;int(1..)]);int(1..)])
+true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true,
 true,
-true,
-y#order_1,
-or([!(y#order_2),y#order_1;int(1..)]),
-or([and([__0,__1;int(1..)]);int(1..)])
+true
 new variables:
   find x#explicit_1#components_1#order_1: bool
   find x#explicit_1#components_2#order_1: bool
@@ -108,137 +141,20 @@ new SAT encoding decisions:
 
 --
 
-!(y#order_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> !(y#order_2)) using tseitin
-
---
-
+true,
+true,
+true,
+x#explicit_1#components_1#order_1,
+or([__2;int(1..)]),
+x#explicit_1#components_2#order_1,
 or([__3;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__3
-
---
-
-or([__2;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__2
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-or([__4,y#order_1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> or([__4,y#order_1;int(1..)])) using tseitin
-
---
-
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true,
-y#order_1,
-__6,
-__5,
-x#explicit_1#components_1#order_1,
-__2,
+or([__2;int(1..)]),
 x#explicit_1#components_2#order_1,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-__6,
-__5,
-x#explicit_1#components_1#order_1,
-__2,
-x#explicit_1#components_2#order_1,
-__3
-new SAT encoding decisions:
-  assert(y#order_1) using tseitin
-
---
-
-true,
-true,
-true,
-__6,
-__5,
-x#explicit_1#components_1#order_1,
-__2,
-x#explicit_1#components_2#order_1,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-__5,
-x#explicit_1#components_1#order_1,
-__2,
-x#explicit_1#components_2#order_1,
-__3
-new SAT encoding decisions:
-  assert(__6) using tseitin
-
---
-
-true,
-true,
-true,
-__5,
-x#explicit_1#components_1#order_1,
-__2,
-x#explicit_1#components_2#order_1,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-x#explicit_1#components_1#order_1,
-__2,
-x#explicit_1#components_2#order_1,
-__3
-new SAT encoding decisions:
-  assert(__5) using tseitin
-
---
-
-true,
-true,
-true,
-x#explicit_1#components_1#order_1,
-__2,
-x#explicit_1#components_2#order_1,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-__2,
-x#explicit_1#components_2#order_1,
-__3
+or([__3;int(1..)])
 new SAT encoding decisions:
   assert(x#explicit_1#components_1#order_1) using tseitin
 
@@ -247,17 +163,17 @@ new SAT encoding decisions:
 true,
 true,
 true,
-__2,
+or([__2;int(1..)]),
 x#explicit_1#components_2#order_1,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([__3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true,
 x#explicit_1#components_2#order_1,
-__3
+or([__3;int(1..)])
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(or([__2;int(1..)])) using tseitin
 
 --
 
@@ -265,12 +181,12 @@ true,
 true,
 true,
 x#explicit_1#components_2#order_1,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([__3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true,
-__3
+or([__3;int(1..)])
 new SAT encoding decisions:
   assert(x#explicit_1#components_2#order_1) using tseitin
 
@@ -279,13 +195,13 @@ new SAT encoding decisions:
 true,
 true,
 true,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([__3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true
 new SAT encoding decisions:
-  assert(__3) using tseitin
+  assert(or([__3;int(1..)])) using tseitin
 
 --
 
@@ -304,9 +220,6 @@ find x#explicit_1#components_1#order_1: bool
 find x#explicit_1#components_2#order_1: bool
 findAux __2: bool
 findAux __3: bool
-findAux __4: bool
-findAux __5: bool
-findAux __6: bool
 
 such that
 
@@ -318,16 +231,13 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*y#order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
 define(__1 <-> integer-weighted(1*y#order_2) LessEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+assert(y#order_1) using tseitin,
+assert(or([!(y#order_2),y#order_1;int(1..)])) using tseitin,
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
 define(__2 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [],
 define(__3 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [],
-define(__4 <-> !(y#order_2)) using tseitin,
-define(__5 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__6 <-> or([__4,y#order_1;int(1..)])) using tseitin,
-assert(y#order_1) using tseitin,
-assert(__6) using tseitin,
-assert(__5) using tseitin,
 assert(x#explicit_1#components_1#order_1) using tseitin,
-assert(__2) using tseitin,
+assert(or([__2;int(1..)])) using tseitin,
 assert(x#explicit_1#components_2#order_1) using tseitin,
-assert(__3) using tseitin
+assert(or([__3;int(1..)])) using tseitin
 

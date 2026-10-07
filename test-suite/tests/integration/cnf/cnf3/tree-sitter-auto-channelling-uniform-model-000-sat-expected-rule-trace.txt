@@ -8,50 +8,17 @@ and([or([x,x;int(1..)]),or([x,x;int(1..)]);int(1..)])
 
 --
 
-or([x,x;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
+and([or([x,x;int(1..)]),or([x,x;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__0 <-> or([x,x;int(1..)])) using tseitin
-
---
-
-or([x,x;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([x,x;int(1..)])) using tseitin
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(and([or([x,x;int(1..)]),or([x,x;int(1..)]);int(1..)])) using tseitin
 
 --
 
 Final model:
 
 find x: bool
-findAux __0: bool
-findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -59,8 +26,5 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> or([x,x;int(1..)])) using tseitin,
-define(__1 <-> or([x,x;int(1..)])) using tseitin,
-define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
-assert(__2) using tseitin
+assert(and([or([x,x;int(1..)]),or([x,x;int(1..)]);int(1..)])) using tseitin
 

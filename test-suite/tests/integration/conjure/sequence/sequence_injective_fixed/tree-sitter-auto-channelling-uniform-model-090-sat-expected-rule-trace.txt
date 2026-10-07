@@ -87,35 +87,20 @@ new SAT encoding decisions:
 
 --
 
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
+true,
+true,
+true,
+allDifferent(x#explicit_1),
+or([and([__0,__1;int(1..)]);int(1..)]),
 or([and([__2,__3;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__2,__3;int(1..)])
-
---
-
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+true,
+true,
+allDifferent(x#explicit_1),
+or([and([__2,__3;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  define(__4 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> and([__0,__1;int(1..)])) using tseitin
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -123,31 +108,14 @@ true,
 true,
 true,
 allDifferent(x#explicit_1),
-__5,
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-allDifferent(x#explicit_1),
-__4
-new SAT encoding decisions:
-  assert(__5) using tseitin
-
---
-
-true,
-true,
-true,
-allDifferent(x#explicit_1),
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true,
 allDifferent(x#explicit_1)
 new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -171,24 +139,24 @@ x#explicit_1#components_2
 
 allDifferent([x#explicit_1#components_1,x#explicit_1#components_2;int(1..2)])
    ~~> select_alldifferent ([("SAT", 18500)])
-__6
+__4
 new variables:
-  findAux __6: bool
+  findAux __4: bool
 new SAT encoding decisions:
-  define(__6 <-> allDifferent(0+weighted(1*x#explicit_1#components_1#twos_complement_1, 2*x#explicit_1#components_1#twos_complement_2, -4*x#explicit_1#components_1#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*x#explicit_1#components_2#twos_complement_1, 2*x#explicit_1#components_2#twos_complement_2, -4*x#explicit_1#components_2#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using None, AMO None, PB None
+  define(__4 <-> allDifferent(0+weighted(1*x#explicit_1#components_1#twos_complement_1, 2*x#explicit_1#components_1#twos_complement_2, -4*x#explicit_1#components_1#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*x#explicit_1#components_2#twos_complement_1, 2*x#explicit_1#components_2#twos_complement_2, -4*x#explicit_1#components_2#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using None, AMO None, PB None
 
 --
 
 true,
 true,
 true,
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
+__4
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true
 new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert(__4) using tseitin
 
 --
 
@@ -209,8 +177,6 @@ findAux __1: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
-findAux __5: bool
-findAux __6: bool
 
 such that
 
@@ -224,10 +190,8 @@ define(__0 <-> integer-weighted(1*x#explicit_1#components_1#twos_complement_1, 2
 define(__1 <-> integer-weighted(1*x#explicit_1#components_1#twos_complement_1, 2*x#explicit_1#components_1#twos_complement_2, -4*x#explicit_1#components_1#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
 define(__2 <-> integer-weighted(1*x#explicit_1#components_2#twos_complement_1, 2*x#explicit_1#components_2#twos_complement_2, -4*x#explicit_1#components_2#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
 define(__3 <-> integer-weighted(1*x#explicit_1#components_2#twos_complement_1, 2*x#explicit_1#components_2#twos_complement_2, -4*x#explicit_1#components_2#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__4 <-> and([__2,__3;int(1..)])) using tseitin,
-define(__5 <-> and([__0,__1;int(1..)])) using tseitin,
-assert(__5) using tseitin,
-assert(__4) using tseitin,
-define(__6 <-> allDifferent(0+weighted(1*x#explicit_1#components_1#twos_complement_1, 2*x#explicit_1#components_1#twos_complement_2, -4*x#explicit_1#components_1#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*x#explicit_1#components_2#twos_complement_1, 2*x#explicit_1#components_2#twos_complement_2, -4*x#explicit_1#components_2#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
-assert(__6) using tseitin
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin,
+define(__4 <-> allDifferent(0+weighted(1*x#explicit_1#components_1#twos_complement_1, 2*x#explicit_1#components_1#twos_complement_2, -4*x#explicit_1#components_1#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }], 0+weighted(1*x#explicit_1#components_2#twos_complement_1, 2*x#explicit_1#components_2#twos_complement_2, -4*x#explicit_1#components_2#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }])) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
+assert(__4) using tseitin
 

@@ -44,9 +44,16 @@ new SAT encoding decisions:
 
 true,
 or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true
+new SAT encoding decisions:
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
+
+--
+
+true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-true,
-or([and([__0,__1;int(1..)]);int(1..)])
+true
 new variables:
   find x#packed_1#twos_complement_1: bool
 new constraints:
@@ -64,45 +71,12 @@ new SAT encoding decisions:
 
 --
 
+true,
 or([__2;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__2
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-true,
-__3,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__2
-new SAT encoding decisions:
-  assert(__3) using tseitin
-
---
-
-true,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(or([__2;int(1..)])) using tseitin
 
 --
 
@@ -118,7 +92,6 @@ findAux __0: bool
 findAux __1: bool
 find x#packed_1#twos_complement_1: bool
 findAux __2: bool
-findAux __3: bool
 
 such that
 
@@ -128,8 +101,7 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
 define(__1 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
 define(__2 <-> integer-weighted(-1*x#packed_1#twos_complement_1) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }],
-define(__3 <-> and([__0,__1;int(1..)])) using tseitin,
-assert(__3) using tseitin,
-assert(__2) using tseitin
+assert(or([__2;int(1..)])) using tseitin
 

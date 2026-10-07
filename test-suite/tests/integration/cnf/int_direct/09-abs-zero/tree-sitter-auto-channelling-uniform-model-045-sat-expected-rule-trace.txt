@@ -29,6 +29,15 @@ new SAT encoding decisions:
 
 --
 
+b = |a|,
+or([__0;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+b = |a|
+new SAT encoding decisions:
+  assert(or([__0;int(1..)])) using tseitin
+
+--
+
 a
    ~~> select_representation ([("ReprGeneral", 10000)])
 a
@@ -49,6 +58,15 @@ new SAT encoding decisions:
 
 --
 
+b = |a|,
+or([__1;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+b = |a|
+new SAT encoding decisions:
+  assert(or([__1;int(1..)])) using tseitin
+
+--
+
 b
    ~~> integer_decision_representation_log ([("SAT", 9500)])
 SATInt(Log, [b#twos_complement_1;int(1..)] [0, 0])
@@ -58,38 +76,6 @@ SATInt(Log, [b#twos_complement_1;int(1..)] [0, 0])
 a
    ~~> integer_decision_representation_log ([("SAT", 9500)])
 SATInt(Log, [a#twos_complement_1;int(1..)] [0, 0])
-
---
-
-or([__1;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__1
-
---
-
-or([__0;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__0
-
---
-
-SATInt(Log, [b#twos_complement_1;int(1..)] [0, 0]) = |SATInt(Log, [a#twos_complement_1;int(1..)] [0, 0])|,
-__0,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-SATInt(Log, [b#twos_complement_1;int(1..)] [0, 0]) = |SATInt(Log, [a#twos_complement_1;int(1..)] [0, 0])|,
-__1
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-SATInt(Log, [b#twos_complement_1;int(1..)] [0, 0]) = |SATInt(Log, [a#twos_complement_1;int(1..)] [0, 0])|,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-SATInt(Log, [b#twos_complement_1;int(1..)] [0, 0]) = |SATInt(Log, [a#twos_complement_1;int(1..)] [0, 0])|
-new SAT encoding decisions:
-  assert(__1) using tseitin
 
 --
 
@@ -118,8 +104,8 @@ new SAT encoding decisions:
 --
 
 __5
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
   assert(__5) using tseitin
 
@@ -145,9 +131,9 @@ true
 sat encoding decisions:
 
 define(__0 <-> integer-weighted(-1*b#twos_complement_1) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }],
+assert(or([__0;int(1..)])) using tseitin,
 define(__1 <-> integer-weighted(-1*a#twos_complement_1) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }],
-assert(__0) using tseitin,
-assert(__1) using tseitin,
+assert(or([__1;int(1..)])) using tseitin,
 define(__2 <-> !(a#twos_complement_1)) using tseitin,
 define(__3 <-> !(__2)) using tseitin,
 define(__4 <-> or([and([a#twos_complement_1,__3;int(1..)]),and([!(a#twos_complement_1),a#twos_complement_1;int(1..)]);int(1..)])) using tseitin,

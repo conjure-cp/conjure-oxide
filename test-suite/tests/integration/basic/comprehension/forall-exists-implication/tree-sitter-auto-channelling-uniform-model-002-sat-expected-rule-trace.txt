@@ -35,22 +35,12 @@ new SAT encoding decisions:
 
 --
 
-or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])) using tseitin
-
---
-
 and([ or([ (i = j) -> (x = 0) | j : int(1..2) ]) | i : int(1..2) ]),
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ or([ (i = j) -> (x = 0) | j : int(1..2) ]) | i : int(1..2) ])
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])) using tseitin
 
 --
 
@@ -69,7 +59,6 @@ find x#direct_3: bool
 find x#direct_4: bool
 find x#direct_5: bool
 find x#direct_6: bool
-findAux __0: bool
 
 such that
 
@@ -78,6 +67,5 @@ true
 sat encoding decisions:
 
 at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
-define(__0 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])) using tseitin,
-assert(__0) using tseitin
+assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6;int(1..)])) using tseitin
 

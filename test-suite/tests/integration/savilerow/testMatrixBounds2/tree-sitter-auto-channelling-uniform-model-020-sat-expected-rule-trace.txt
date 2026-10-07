@@ -40,6 +40,26 @@ new SAT encoding decisions:
 
 --
 
+!(m[sum([i,j;int(1..)])]),
+i#order_1,
+or([__0;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(m[sum([i,j;int(1..)])]),
+or([__0;int(1..)])
+new SAT encoding decisions:
+  assert(i#order_1) using tseitin
+
+--
+
+!(m[sum([i,j;int(1..)])]),
+or([__0;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(m[sum([i,j;int(1..)])])
+new SAT encoding decisions:
+  assert(or([__0;int(1..)])) using tseitin
+
+--
+
 j
    ~~> select_representation ([("ReprGeneral", 10000)])
 j
@@ -61,6 +81,26 @@ new SAT encoding decisions:
 
 --
 
+!(m[sum([i,j;int(1..)])]),
+j#order_1,
+or([__1;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(m[sum([i,j;int(1..)])]),
+or([__1;int(1..)])
+new SAT encoding decisions:
+  assert(j#order_1) using tseitin
+
+--
+
+!(m[sum([i,j;int(1..)])]),
+or([__1;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(m[sum([i,j;int(1..)])])
+new SAT encoding decisions:
+  assert(or([__1;int(1..)])) using tseitin
+
+--
+
 i
    ~~> integer_decision_representation_order ([("SAT", 9500)])
 SATInt(Order, [i#order_1;int(1..)] [1, 1])
@@ -70,66 +110,6 @@ SATInt(Order, [i#order_1;int(1..)] [1, 1])
 j
    ~~> integer_decision_representation_order ([("SAT", 9500)])
 SATInt(Order, [j#order_1;int(1..)] [1, 1])
-
---
-
-or([__1;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__1
-
---
-
-or([__0;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__0
-
---
-
-!(m[sum([SATInt(Order, [i#order_1;int(1..)] [1, 1]),SATInt(Order, [j#order_1;int(1..)] [1, 1]);int(1..)])]),
-i#order_1,
-__0,
-j#order_1,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-!(m[sum([SATInt(Order, [i#order_1;int(1..)] [1, 1]),SATInt(Order, [j#order_1;int(1..)] [1, 1]);int(1..)])]),
-__0,
-j#order_1,
-__1
-new SAT encoding decisions:
-  assert(i#order_1) using tseitin
-
---
-
-!(m[sum([SATInt(Order, [i#order_1;int(1..)] [1, 1]),SATInt(Order, [j#order_1;int(1..)] [1, 1]);int(1..)])]),
-__0,
-j#order_1,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-!(m[sum([SATInt(Order, [i#order_1;int(1..)] [1, 1]),SATInt(Order, [j#order_1;int(1..)] [1, 1]);int(1..)])]),
-j#order_1,
-__1
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-!(m[sum([SATInt(Order, [i#order_1;int(1..)] [1, 1]),SATInt(Order, [j#order_1;int(1..)] [1, 1]);int(1..)])]),
-j#order_1,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-!(m[sum([SATInt(Order, [i#order_1;int(1..)] [1, 1]),SATInt(Order, [j#order_1;int(1..)] [1, 1]);int(1..)])]),
-__1
-new SAT encoding decisions:
-  assert(j#order_1) using tseitin
-
---
-
-!(m[sum([SATInt(Order, [i#order_1;int(1..)] [1, 1]),SATInt(Order, [j#order_1;int(1..)] [1, 1]);int(1..)])]),
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-!(m[sum([SATInt(Order, [i#order_1;int(1..)] [1, 1]),SATInt(Order, [j#order_1;int(1..)] [1, 1]);int(1..)])])
-new SAT encoding decisions:
-  assert(__1) using tseitin
 
 --
 
@@ -164,9 +144,9 @@ true
 sat encoding decisions:
 
 define(__0 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [],
-define(__1 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [],
 assert(i#order_1) using tseitin,
-assert(__0) using tseitin,
+assert(or([__0;int(1..)])) using tseitin,
+define(__1 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [],
 assert(j#order_1) using tseitin,
-assert(__1) using tseitin
+assert(or([__1;int(1..)])) using tseitin
 

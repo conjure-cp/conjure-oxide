@@ -42,6 +42,15 @@ new SAT encoding decisions:
 
 --
 
+product([x,y;int(1..)]) = -4,
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+product([x,y;int(1..)]) = -4
+new SAT encoding decisions:
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
+
+--
+
 y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
@@ -72,6 +81,15 @@ new variables:
   findAux __3: bool
 new SAT encoding decisions:
   define(__3 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, 4*y#twos_complement_3, -8*y#twos_complement_4) LessEqual 4) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -4, upper: 4 } }]
+
+--
+
+product([x,y;int(1..)]) = -4,
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+product([x,y;int(1..)]) = -4
+new SAT encoding decisions:
+  assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -989,63 +1007,11 @@ new SAT encoding decisions:
 
 --
 
-or([and([__2,__3;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__2,__3;int(1..)])
+__446
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__447
-new variables:
-  findAux __447: bool
-new SAT encoding decisions:
-  define(__447 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__448
-new variables:
-  findAux __448: bool
-new SAT encoding decisions:
-  define(__448 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-__446,
-__447,
-__448
-   ~~> remove_single_atom ([("SAT", 8400)])
-__447,
-__448
 new SAT encoding decisions:
   assert(__446) using tseitin
-
---
-
-__447,
-__448
-   ~~> remove_single_atom ([("SAT", 8400)])
-__448
-new SAT encoding decisions:
-  assert(__447) using tseitin
-
---
-
-__448
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__448) using tseitin
 
 --
 
@@ -1508,8 +1474,6 @@ findAux __443: bool
 findAux __444: bool
 findAux __445: bool
 findAux __446: bool
-findAux __447: bool
-findAux __448: bool
 
 such that
 
@@ -1519,8 +1483,10 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, -8*x#twos_complement_4) GreaterEqual -4) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -4, upper: 4 } }],
 define(__1 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, -8*x#twos_complement_4) LessEqual 4) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -4, upper: 4 } }],
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
 define(__2 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, 4*y#twos_complement_3, -8*y#twos_complement_4) GreaterEqual -4) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -4, upper: 4 } }],
 define(__3 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, 4*y#twos_complement_3, -8*y#twos_complement_4) LessEqual 4) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -4, upper: 4 } }],
+assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin,
 define(__4 <-> and([x#twos_complement_1,y#twos_complement_1;int(1..)])) using tseitin,
 define(__5 <-> and([x#twos_complement_1,y#twos_complement_2;int(1..)])) using tseitin,
 define(__6 <-> and([x#twos_complement_1,y#twos_complement_3;int(1..)])) using tseitin,
@@ -1964,9 +1930,5 @@ define(__443 <-> and([x#twos_complement_4,__417;int(1..)])) using tseitin,
 define(__444 <-> and([__421,__383;int(1..)])) using tseitin,
 define(__445 <-> or([__443,__444;int(1..)])) using tseitin,
 define(__446 <-> integer-weighted(1*__424, 2*__427, 4*__430, 8*__433, 16*__436, -32*__439) Equal -4) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: -16, upper: 16 } }],
-define(__447 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__448 <-> and([__2,__3;int(1..)])) using tseitin,
-assert(__446) using tseitin,
-assert(__447) using tseitin,
-assert(__448) using tseitin
+assert(__446) using tseitin
 

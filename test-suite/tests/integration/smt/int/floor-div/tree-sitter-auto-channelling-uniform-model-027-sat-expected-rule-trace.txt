@@ -61,6 +61,26 @@ new SAT encoding decisions:
 
 --
 
+(a / b) = 1,
+or([a#direct_1,a#direct_2;int(1..)]),
+or([b#direct_1,b#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(a / b) = 1,
+or([b#direct_1,b#direct_2;int(1..)])
+new SAT encoding decisions:
+  assert(or([a#direct_1,a#direct_2;int(1..)])) using tseitin
+
+--
+
+(a / b) = 1,
+or([b#direct_1,b#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(a / b) = 1
+new SAT encoding decisions:
+  assert(or([b#direct_1,b#direct_2;int(1..)])) using tseitin
+
+--
+
 a
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
 SATInt(Direct, [a#direct_1,a#direct_2;int(1..)] [3, 4])
@@ -73,46 +93,6 @@ SATInt(Direct, [b#direct_1,b#direct_2;int(1..)] [1, 2])
 
 --
 
-or([a#direct_1,a#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([a#direct_1,a#direct_2;int(1..)])) using tseitin
-
---
-
-or([b#direct_1,b#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([b#direct_1,b#direct_2;int(1..)])) using tseitin
-
---
-
-(SATInt(Direct, [a#direct_1,a#direct_2;int(1..)] [3, 4]) / SATInt(Direct, [b#direct_1,b#direct_2;int(1..)] [1, 2])) = 1,
-__0,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-(SATInt(Direct, [a#direct_1,a#direct_2;int(1..)] [3, 4]) / SATInt(Direct, [b#direct_1,b#direct_2;int(1..)] [1, 2])) = 1,
-__1
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-(SATInt(Direct, [a#direct_1,a#direct_2;int(1..)] [3, 4]) / SATInt(Direct, [b#direct_1,b#direct_2;int(1..)] [1, 2])) = 1,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-(SATInt(Direct, [a#direct_1,a#direct_2;int(1..)] [3, 4]) / SATInt(Direct, [b#direct_1,b#direct_2;int(1..)] [1, 2])) = 1
-new SAT encoding decisions:
-  assert(__1) using tseitin
-
---
-
 (SATInt(Direct, [a#direct_1,a#direct_2;int(1..)] [3, 4]) / SATInt(Direct, [b#direct_1,b#direct_2;int(1..)] [1, 2]))
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(SATInt(Direct, [a#direct_1,a#direct_2;int(1..)] [3, 4]), SATInt(Direct, [b#direct_1,b#direct_2;int(1..)] [1, 2])) @ SATInt(Direct, [b#direct_1,b#direct_2;int(1..)] [1, 2]) != 0}
@@ -121,68 +101,58 @@ new SAT encoding decisions:
 
 SATInt(Direct, [b#direct_1,b#direct_2;int(1..)] [1, 2]) != 0
    ~~> select_integer_relation ([("SAT", 18500)])
-__2
+__0
 new variables:
-  findAux __2: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(1*b#direct_1, 2*b#direct_2) NotEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+  define(__0 <-> integer-weighted(1*b#direct_1, 2*b#direct_2) NotEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
 SafeDiv(SATInt(Direct, [a#direct_1,a#direct_2;int(1..)] [3, 4]), SATInt(Direct, [b#direct_1,b#direct_2;int(1..)] [1, 2]))
    ~~> safediv_sat_direct ([("SAT", 9100)])
-SATInt(Direct, [__3,__4,__5,__6;int(1..)] [1, 4])
+SATInt(Direct, [__1,__2,__3,__4;int(1..)] [1, 4])
 new variables:
+  findAux __1: bool
+  findAux __2: bool
   findAux __3: bool
   findAux __4: bool
-  findAux __5: bool
-  findAux __6: bool
 new SAT encoding decisions:
-  assert((and([a#direct_1,b#direct_1;int(1..)])) -> (__5)) using tseitin
-  assert((and([a#direct_1,b#direct_2;int(1..)])) -> (__3)) using tseitin
-  assert((and([a#direct_2,b#direct_1;int(1..)])) -> (__6)) using tseitin
-  assert((and([a#direct_2,b#direct_2;int(1..)])) -> (__4)) using tseitin
-  at-most-one(__3, __4, __5, __6) using None
+  assert((and([a#direct_1,b#direct_1;int(1..)])) -> (__3)) using tseitin
+  assert((and([a#direct_1,b#direct_2;int(1..)])) -> (__1)) using tseitin
+  assert((and([a#direct_2,b#direct_1;int(1..)])) -> (__4)) using tseitin
+  assert((and([a#direct_2,b#direct_2;int(1..)])) -> (__2)) using tseitin
+  at-most-one(__1, __2, __3, __4) using None
 
 --
 
-{SATInt(Direct, [__3,__4,__5,__6;int(1..)] [1, 4]) @ __2} = 1
+{SATInt(Direct, [__1,__2,__3,__4;int(1..)] [1, 4]) @ __0} = 1
    ~~> bubble_up ([("Bubble", 8800)])
-{SATInt(Direct, [__3,__4,__5,__6;int(1..)] [1, 4]) = 1 @ __2}
+{SATInt(Direct, [__1,__2,__3,__4;int(1..)] [1, 4]) = 1 @ __0}
 
 --
 
-SATInt(Direct, [__3,__4,__5,__6;int(1..)] [1, 4]) = 1
+SATInt(Direct, [__1,__2,__3,__4;int(1..)] [1, 4]) = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__7
+__5
 new variables:
-  findAux __7: bool
+  findAux __5: bool
 new SAT encoding decisions:
-  define(__7 <-> integer-weighted(1*__3, 2*__4, 3*__5, 4*__6) Equal 1) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
+  define(__5 <-> integer-weighted(1*__1, 2*__2, 3*__3, 4*__4) Equal 1) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }]
 
 --
 
-{__7 @ __2}
+{__5 @ __0}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([__7,__2;int(1..)])
+and([__5,__0;int(1..)])
 
 --
 
-and([__7,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> and([__7,__2;int(1..)])) using tseitin
+and([__5,__0;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
 new SAT encoding decisions:
-  assert(__8) using tseitin
+  assert(and([__5,__0;int(1..)])) using tseitin
 
 --
 
@@ -200,9 +170,6 @@ findAux __2: bool
 findAux __3: bool
 findAux __4: bool
 findAux __5: bool
-findAux __6: bool
-findAux __7: bool
-findAux __8: bool
 
 such that
 
@@ -212,17 +179,14 @@ sat encoding decisions:
 
 at-most-one(a#direct_1, a#direct_2) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
 at-most-one(b#direct_1, b#direct_2) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-define(__0 <-> or([a#direct_1,a#direct_2;int(1..)])) using tseitin,
-define(__1 <-> or([b#direct_1,b#direct_2;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-assert(__1) using tseitin,
-define(__2 <-> integer-weighted(1*b#direct_1, 2*b#direct_2) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
-assert((and([a#direct_1,b#direct_1;int(1..)])) -> (__5)) using tseitin,
-assert((and([a#direct_1,b#direct_2;int(1..)])) -> (__3)) using tseitin,
-assert((and([a#direct_2,b#direct_1;int(1..)])) -> (__6)) using tseitin,
-assert((and([a#direct_2,b#direct_2;int(1..)])) -> (__4)) using tseitin,
-at-most-one(__3, __4, __5, __6) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-define(__7 <-> integer-weighted(1*__3, 2*__4, 3*__5, 4*__6) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
-define(__8 <-> and([__7,__2;int(1..)])) using tseitin,
-assert(__8) using tseitin
+assert(or([a#direct_1,a#direct_2;int(1..)])) using tseitin,
+assert(or([b#direct_1,b#direct_2;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(1*b#direct_1, 2*b#direct_2) NotEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+assert((and([a#direct_1,b#direct_1;int(1..)])) -> (__3)) using tseitin,
+assert((and([a#direct_1,b#direct_2;int(1..)])) -> (__1)) using tseitin,
+assert((and([a#direct_2,b#direct_1;int(1..)])) -> (__4)) using tseitin,
+assert((and([a#direct_2,b#direct_2;int(1..)])) -> (__2)) using tseitin,
+at-most-one(__1, __2, __3, __4) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__5 <-> integer-weighted(1*__1, 2*__2, 3*__3, 4*__4) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+assert(and([__5,__0;int(1..)])) using tseitin
 

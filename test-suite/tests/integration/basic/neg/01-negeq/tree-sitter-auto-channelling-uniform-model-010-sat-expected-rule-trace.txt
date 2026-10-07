@@ -72,51 +72,31 @@ new SAT encoding decisions:
 
 --
 
-or([x#direct_1,x#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([x#direct_1,x#direct_2;int(1..)])) using tseitin
-
---
-
-or([y#direct_1,y#direct_2,y#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> or([y#direct_1,y#direct_2,y#direct_3;int(1..)])) using tseitin
-
---
-
 __0,
-__1,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1,
-__2
+or([x#direct_1,x#direct_2;int(1..)]),
+or([y#direct_1,y#direct_2,y#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([x#direct_1,x#direct_2;int(1..)]),
+or([y#direct_1,y#direct_2,y#direct_3;int(1..)])
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
-__1,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-__2
+or([x#direct_1,x#direct_2;int(1..)]),
+or([y#direct_1,y#direct_2,y#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([y#direct_1,y#direct_2,y#direct_3;int(1..)])
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(or([x#direct_1,x#direct_2;int(1..)])) using tseitin
 
 --
 
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+or([y#direct_1,y#direct_2,y#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(or([y#direct_1,y#direct_2,y#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -130,8 +110,6 @@ find y#direct_1: bool
 find y#direct_2: bool
 find y#direct_3: bool
 findAux __0: bool
-findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -142,9 +120,7 @@ sat encoding decisions:
 define(__0 <-> integer-weighted(1*x#direct_1, 2*x#direct_2, -1*y#direct_1, 0*y#direct_2, 1*y#direct_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 5, structure: Choice }],
 at-most-one(x#direct_1, x#direct_2) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
 at-most-one(y#direct_1, y#direct_2, y#direct_3) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
-define(__1 <-> or([x#direct_1,x#direct_2;int(1..)])) using tseitin,
-define(__2 <-> or([y#direct_1,y#direct_2,y#direct_3;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__1) using tseitin,
-assert(__2) using tseitin
+assert(or([x#direct_1,x#direct_2;int(1..)])) using tseitin,
+assert(or([y#direct_1,y#direct_2,y#direct_3;int(1..)])) using tseitin
 

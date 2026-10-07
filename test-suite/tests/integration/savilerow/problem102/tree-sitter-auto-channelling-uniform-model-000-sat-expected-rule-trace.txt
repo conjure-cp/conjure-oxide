@@ -26,7 +26,7 @@ new constraints:
 
 __0,
 satElement([false,false;int(1..2)], 5 % 1 % 0, __0)
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 satElement([false,false;int(1..2)], 5 % 1 % 0, __0)
 new SAT encoding decisions:
   assert(__0) using tseitin
@@ -57,6 +57,14 @@ and([satElement([false,false;int(1..2)], 5 % SafeMod(1,0), __0),false;int(1..)])
 
 --
 
+false
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(false) using tseitin
+
+--
+
 Final model:
 
 find unused: bool
@@ -64,9 +72,10 @@ findAux __0: bool
 
 such that
 
-false
+true
 
 sat encoding decisions:
 
-assert(__0) using tseitin
+assert(__0) using tseitin,
+assert(false) using tseitin
 

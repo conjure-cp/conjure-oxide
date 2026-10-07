@@ -52,36 +52,24 @@ new SAT encoding decisions:
 
 __0,
 or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5,b#direct_6,b#direct_7,b#direct_8,b#direct_9,b#direct_10;int(1..)])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-__0,
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5,b#direct_6,b#direct_7,b#direct_8,b#direct_9,b#direct_10;int(1..)])
-
---
-
-or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5,b#direct_6,b#direct_7,b#direct_8,b#direct_9,b#direct_10;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5,b#direct_6,b#direct_7,b#direct_8,b#direct_9,b#direct_10;int(1..)])) using tseitin
-
---
-
-__0,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5,b#direct_6,b#direct_7,b#direct_8,b#direct_9,b#direct_10;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5,b#direct_6,b#direct_7,b#direct_8,b#direct_9,b#direct_10;int(1..)])) using tseitin
+
+--
+
+true
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+true
 
 --
 
@@ -109,7 +97,6 @@ letting a#components_6 be 6
 letting a#components_7 be 7
 letting a#components_8 be 8
 letting a#components_9 be 9
-findAux __1: bool
 
 such that
 
@@ -119,7 +106,6 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*b#direct_1, 2*b#direct_2, 3*b#direct_3, 4*b#direct_4, 5*b#direct_5, 6*b#direct_6, 7*b#direct_7, 8*b#direct_8, 9*b#direct_9, 10*b#direct_10) Greater 9) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 10, structure: Choice }],
 at-most-one(b#direct_1, b#direct_2, b#direct_3, b#direct_4, b#direct_5, b#direct_6, b#direct_7, b#direct_8, b#direct_9, b#direct_10) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
-define(__1 <-> or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5,b#direct_6,b#direct_7,b#direct_8,b#direct_9,b#direct_10;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__1) using tseitin
+assert(or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5,b#direct_6,b#direct_7,b#direct_8,b#direct_9,b#direct_10;int(1..)])) using tseitin
 

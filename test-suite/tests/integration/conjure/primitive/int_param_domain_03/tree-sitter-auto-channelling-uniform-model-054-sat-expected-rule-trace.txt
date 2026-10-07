@@ -53,103 +53,31 @@ new SAT encoding decisions:
 
 --
 
-!(x#offset_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> !(x#offset_3)) using tseitin
-
---
-
-!(x#offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> !(x#offset_2)) using tseitin
-
---
-
-!(x#offset_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> !(x#offset_1)) using tseitin
-
---
-
-or([and([__1,__2;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__1,__2;int(1..)])
-
---
-
-and([__5;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__5
-
---
-
-and([__1,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> and([__1,__2;int(1..)])) using tseitin
-
---
-
-and([__4,__5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> and([__4,__5;int(1..)])) using tseitin
-
---
-
-or([__3,__7;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> or([__3,__7;int(1..)])) using tseitin
-
---
-
 __0,
-__8,
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-__8,
-__6
+or([!(x#offset_3),and([!(x#offset_2),and([!(x#offset_1);int(1..)]);int(1..)]);int(1..)]),
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([!(x#offset_3),and([!(x#offset_2),and([!(x#offset_1);int(1..)]);int(1..)]);int(1..)]),
+or([and([__1,__2;int(1..)]);int(1..)])
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
-__8,
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-__6
+or([!(x#offset_3),and([!(x#offset_2),and([!(x#offset_1);int(1..)]);int(1..)]);int(1..)]),
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([and([__1,__2;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__8) using tseitin
+  assert(or([!(x#offset_3),and([!(x#offset_2),and([!(x#offset_1);int(1..)]);int(1..)]);int(1..)])) using tseitin
 
 --
 
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert(or([and([__1,__2;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -164,12 +92,6 @@ find x#offset_3: bool
 findAux __0: bool
 findAux __1: bool
 findAux __2: bool
-findAux __3: bool
-findAux __4: bool
-findAux __5: bool
-findAux __6: bool
-findAux __7: bool
-findAux __8: bool
 
 such that
 
@@ -180,13 +102,7 @@ sat encoding decisions:
 define(__0 <-> integer-weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) Equal 2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 4 } }],
 define(__1 <-> integer-weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 4 } }],
 define(__2 <-> integer-weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) LessEqual 4) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 4 } }],
-define(__3 <-> !(x#offset_3)) using tseitin,
-define(__4 <-> !(x#offset_2)) using tseitin,
-define(__5 <-> !(x#offset_1)) using tseitin,
-define(__6 <-> and([__1,__2;int(1..)])) using tseitin,
-define(__7 <-> and([__4,__5;int(1..)])) using tseitin,
-define(__8 <-> or([__3,__7;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__8) using tseitin,
-assert(__6) using tseitin
+assert(or([!(x#offset_3),and([!(x#offset_2),and([!(x#offset_1);int(1..)]);int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__1,__2;int(1..)]);int(1..)])) using tseitin
 

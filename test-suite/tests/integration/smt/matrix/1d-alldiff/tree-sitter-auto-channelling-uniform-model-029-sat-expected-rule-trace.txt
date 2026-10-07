@@ -149,33 +149,22 @@ new SAT encoding decisions:
 
 --
 
-or([a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)])) using tseitin
-
---
-
-or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)])) using tseitin
-
---
-
+allDifferent(a),
+allDifferent(a[..]),
+a[1] <= a[2],
+a[2] <= a[3],
+or([a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)]),
+or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)]),
 or([a#components_3#direct_1,a#components_3#direct_2,a#components_3#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+allDifferent(a),
+allDifferent(a[..]),
+a[1] <= a[2],
+a[2] <= a[3],
+or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)]),
+or([a#components_3#direct_1,a#components_3#direct_2,a#components_3#direct_3;int(1..)])
 new SAT encoding decisions:
-  define(__2 <-> or([a#components_3#direct_1,a#components_3#direct_2,a#components_3#direct_3;int(1..)])) using tseitin
+  assert(or([a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -183,18 +172,16 @@ allDifferent(a),
 allDifferent(a[..]),
 a[1] <= a[2],
 a[2] <= a[3],
-__0,
-__1,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)]),
+or([a#components_3#direct_1,a#components_3#direct_2,a#components_3#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 allDifferent(a),
 allDifferent(a[..]),
 a[1] <= a[2],
 a[2] <= a[3],
-__1,
-__2
+or([a#components_3#direct_1,a#components_3#direct_2,a#components_3#direct_3;int(1..)])
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -202,31 +189,14 @@ allDifferent(a),
 allDifferent(a[..]),
 a[1] <= a[2],
 a[2] <= a[3],
-__1,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-allDifferent(a),
-allDifferent(a[..]),
-a[1] <= a[2],
-a[2] <= a[3],
-__2
-new SAT encoding decisions:
-  assert(__1) using tseitin
-
---
-
-allDifferent(a),
-allDifferent(a[..]),
-a[1] <= a[2],
-a[2] <= a[3],
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([a#components_3#direct_1,a#components_3#direct_2,a#components_3#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 allDifferent(a),
 allDifferent(a[..]),
 a[1] <= a[2],
 a[2] <= a[3]
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(or([a#components_3#direct_1,a#components_3#direct_2,a#components_3#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -262,24 +232,24 @@ a#components_2
 
 SATInt(Direct, [a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)] [1, 3]) <= a#components_2
    ~~> select_integer_relation ([("SAT", 18500)])
-__3
+__0
 new variables:
-  findAux __3: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__3 <-> integer-weighted(1*a#components_1#direct_1, 2*a#components_1#direct_2, 3*a#components_1#direct_3, -1*a#components_2#direct_1, -2*a#components_2#direct_2, -3*a#components_2#direct_3) LessEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
+  define(__0 <-> integer-weighted(1*a#components_1#direct_1, 2*a#components_1#direct_2, 3*a#components_1#direct_3, -1*a#components_2#direct_1, -2*a#components_2#direct_2, -3*a#components_2#direct_3) LessEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
 
 --
 
 allDifferent(a),
 allDifferent(a[..]),
-__3,
+__0,
 a[2] <= a[3]
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 allDifferent(a),
 allDifferent(a[..]),
 a[2] <= a[3]
 new SAT encoding decisions:
-  assert(__3) using tseitin
+  assert(__0) using tseitin
 
 --
 
@@ -315,22 +285,22 @@ a#components_3
 
 SATInt(Direct, [a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)] [1, 3]) <= a#components_3
    ~~> select_integer_relation ([("SAT", 18500)])
-__4
+__1
 new variables:
-  findAux __4: bool
+  findAux __1: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(1*a#components_2#direct_1, 2*a#components_2#direct_2, 3*a#components_2#direct_3, -1*a#components_3#direct_1, -2*a#components_3#direct_2, -3*a#components_3#direct_3) LessEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
+  define(__1 <-> integer-weighted(1*a#components_2#direct_1, 2*a#components_2#direct_2, 3*a#components_2#direct_3, -1*a#components_3#direct_1, -2*a#components_3#direct_2, -3*a#components_3#direct_3) LessEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
 
 --
 
 allDifferent(a),
 allDifferent(a[..]),
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
+__1
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 allDifferent(a),
 allDifferent(a[..])
 new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert(__1) using tseitin
 
 --
 
@@ -366,20 +336,20 @@ a#components_3
 
 allDifferent([a#components_1,a#components_2,a#components_3;int(1..)])
    ~~> select_alldifferent ([("SAT", 18500)])
-__5
+__2
 new variables:
-  findAux __5: bool
+  findAux __2: bool
 new SAT encoding decisions:
-  define(__5 <-> allDifferent(0+weighted(1*a#components_1#direct_1, 2*a#components_1#direct_2, 3*a#components_1#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_1#direct_1, 2:a#components_1#direct_2, 3:a#components_1#direct_3), 0+weighted(1*a#components_2#direct_1, 2*a#components_2#direct_2, 3*a#components_2#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_2#direct_1, 2:a#components_2#direct_2, 3:a#components_2#direct_3), 0+weighted(1*a#components_3#direct_1, 2*a#components_3#direct_2, 3*a#components_3#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_3#direct_1, 2:a#components_3#direct_2, 3:a#components_3#direct_3))) using None, AMO None, PB None
+  define(__2 <-> allDifferent(0+weighted(1*a#components_1#direct_1, 2*a#components_1#direct_2, 3*a#components_1#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_1#direct_1, 2:a#components_1#direct_2, 3:a#components_1#direct_3), 0+weighted(1*a#components_2#direct_1, 2*a#components_2#direct_2, 3*a#components_2#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_2#direct_1, 2:a#components_2#direct_2, 3:a#components_2#direct_3), 0+weighted(1*a#components_3#direct_1, 2*a#components_3#direct_2, 3*a#components_3#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_3#direct_1, 2:a#components_3#direct_2, 3:a#components_3#direct_3))) using None, AMO None, PB None
 
 --
 
 allDifferent(a),
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
+__2
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 allDifferent(a)
 new SAT encoding decisions:
-  assert(__5) using tseitin
+  assert(__2) using tseitin
 
 --
 
@@ -409,19 +379,19 @@ a#components_3
 
 allDifferent([a#components_1,a#components_2,a#components_3;int(1..3)])
    ~~> select_alldifferent ([("SAT", 18500)])
-__6
+__3
 new variables:
-  findAux __6: bool
+  findAux __3: bool
 new SAT encoding decisions:
-  define(__6 <-> allDifferent(0+weighted(1*a#components_1#direct_1, 2*a#components_1#direct_2, 3*a#components_1#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_1#direct_1, 2:a#components_1#direct_2, 3:a#components_1#direct_3), 0+weighted(1*a#components_2#direct_1, 2*a#components_2#direct_2, 3*a#components_2#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_2#direct_1, 2:a#components_2#direct_2, 3:a#components_2#direct_3), 0+weighted(1*a#components_3#direct_1, 2*a#components_3#direct_2, 3*a#components_3#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_3#direct_1, 2:a#components_3#direct_2, 3:a#components_3#direct_3))) using None, AMO None, PB None
+  define(__3 <-> allDifferent(0+weighted(1*a#components_1#direct_1, 2*a#components_1#direct_2, 3*a#components_1#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_1#direct_1, 2:a#components_1#direct_2, 3:a#components_1#direct_3), 0+weighted(1*a#components_2#direct_1, 2*a#components_2#direct_2, 3*a#components_2#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_2#direct_1, 2:a#components_2#direct_2, 3:a#components_2#direct_3), 0+weighted(1*a#components_3#direct_1, 2*a#components_3#direct_2, 3*a#components_3#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_3#direct_1, 2:a#components_3#direct_2, 3:a#components_3#direct_3))) using None, AMO None, PB None
 
 --
 
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+__3
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert(__3) using tseitin
 
 --
 
@@ -444,9 +414,6 @@ findAux __0: bool
 findAux __1: bool
 findAux __2: bool
 findAux __3: bool
-findAux __4: bool
-findAux __5: bool
-findAux __6: bool
 
 such that
 
@@ -457,18 +424,15 @@ sat encoding decisions:
 at-most-one(a#components_1#direct_1, a#components_1#direct_2, a#components_1#direct_3) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
 at-most-one(a#components_2#direct_1, a#components_2#direct_2, a#components_2#direct_3) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
 at-most-one(a#components_3#direct_1, a#components_3#direct_2, a#components_3#direct_3) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
-define(__0 <-> or([a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)])) using tseitin,
-define(__1 <-> or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)])) using tseitin,
-define(__2 <-> or([a#components_3#direct_1,a#components_3#direct_2,a#components_3#direct_3;int(1..)])) using tseitin,
+assert(or([a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)])) using tseitin,
+assert(or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)])) using tseitin,
+assert(or([a#components_3#direct_1,a#components_3#direct_2,a#components_3#direct_3;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(1*a#components_1#direct_1, 2*a#components_1#direct_2, 3*a#components_1#direct_3, -1*a#components_2#direct_1, -2*a#components_2#direct_2, -3*a#components_2#direct_3) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
 assert(__0) using tseitin,
+define(__1 <-> integer-weighted(1*a#components_2#direct_1, 2*a#components_2#direct_2, 3*a#components_2#direct_3, -1*a#components_3#direct_1, -2*a#components_3#direct_2, -3*a#components_3#direct_3) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
 assert(__1) using tseitin,
+define(__2 <-> allDifferent(0+weighted(1*a#components_1#direct_1, 2*a#components_1#direct_2, 3*a#components_1#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_1#direct_1, 2:a#components_1#direct_2, 3:a#components_1#direct_3), 0+weighted(1*a#components_2#direct_1, 2*a#components_2#direct_2, 3*a#components_2#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_2#direct_1, 2:a#components_2#direct_2, 3:a#components_2#direct_3), 0+weighted(1*a#components_3#direct_1, 2*a#components_3#direct_2, 3*a#components_3#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_3#direct_1, 2:a#components_3#direct_2, 3:a#components_3#direct_3))) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
 assert(__2) using tseitin,
-define(__3 <-> integer-weighted(1*a#components_1#direct_1, 2*a#components_1#direct_2, 3*a#components_1#direct_3, -1*a#components_2#direct_1, -2*a#components_2#direct_2, -3*a#components_2#direct_3) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
-assert(__3) using tseitin,
-define(__4 <-> integer-weighted(1*a#components_2#direct_1, 2*a#components_2#direct_2, 3*a#components_2#direct_3, -1*a#components_3#direct_1, -2*a#components_3#direct_2, -3*a#components_3#direct_3) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
-assert(__4) using tseitin,
-define(__5 <-> allDifferent(0+weighted(1*a#components_1#direct_1, 2*a#components_1#direct_2, 3*a#components_1#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_1#direct_1, 2:a#components_1#direct_2, 3:a#components_1#direct_3), 0+weighted(1*a#components_2#direct_1, 2*a#components_2#direct_2, 3*a#components_2#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_2#direct_1, 2:a#components_2#direct_2, 3:a#components_2#direct_3), 0+weighted(1*a#components_3#direct_1, 2*a#components_3#direct_2, 3*a#components_3#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_3#direct_1, 2:a#components_3#direct_2, 3:a#components_3#direct_3))) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-assert(__5) using tseitin,
-define(__6 <-> allDifferent(0+weighted(1*a#components_1#direct_1, 2*a#components_1#direct_2, 3*a#components_1#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_1#direct_1, 2:a#components_1#direct_2, 3:a#components_1#direct_3), 0+weighted(1*a#components_2#direct_1, 2*a#components_2#direct_2, 3*a#components_2#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_2#direct_1, 2:a#components_2#direct_2, 3:a#components_2#direct_3), 0+weighted(1*a#components_3#direct_1, 2*a#components_3#direct_2, 3*a#components_3#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_3#direct_1, 2:a#components_3#direct_2, 3:a#components_3#direct_3))) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-assert(__6) using tseitin
+define(__3 <-> allDifferent(0+weighted(1*a#components_1#direct_1, 2*a#components_1#direct_2, 3*a#components_1#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_1#direct_1, 2:a#components_1#direct_2, 3:a#components_1#direct_3), 0+weighted(1*a#components_2#direct_1, 2*a#components_2#direct_2, 3*a#components_2#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_2#direct_1, 2:a#components_2#direct_2, 3:a#components_2#direct_3), 0+weighted(1*a#components_3#direct_1, 2*a#components_3#direct_2, 3*a#components_3#direct_3) with [PbTermGroup { start: 0, end: 3, structure: Choice }] choices(1:a#components_3#direct_1, 2:a#components_3#direct_2, 3:a#components_3#direct_3))) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }), AMO None, PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+assert(__3) using tseitin
 

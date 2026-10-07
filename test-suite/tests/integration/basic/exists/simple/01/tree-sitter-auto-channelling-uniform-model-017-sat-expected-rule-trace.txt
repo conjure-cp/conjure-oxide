@@ -30,18 +30,12 @@ new SAT encoding decisions:
 
 --
 
-or([x#direct_1;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-x#direct_1
-
---
-
 or([ x = i | i : int(1..3) ]),
-x#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([x#direct_1;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 or([ x = i | i : int(1..3) ])
 new SAT encoding decisions:
-  assert(x#direct_1) using tseitin
+  assert(or([x#direct_1;int(1..)])) using tseitin
 
 --
 
@@ -93,30 +87,20 @@ new SAT encoding decisions:
 
 --
 
-or([__0#direct_1,__0#direct_2,__0#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> or([__0#direct_1,__0#direct_2,__0#direct_3;int(1..)])) using tseitin
-
---
-
 __1,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-__2
+or([__0#direct_1,__0#direct_2,__0#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([__0#direct_1,__0#direct_2,__0#direct_3;int(1..)])
 new SAT encoding decisions:
   assert(__1) using tseitin
 
 --
 
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
+or([__0#direct_1,__0#direct_2,__0#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(or([__0#direct_1,__0#direct_2,__0#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -129,7 +113,6 @@ findAux __0#direct_1: bool
 findAux __0#direct_2: bool
 findAux __0#direct_3: bool
 findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -138,10 +121,9 @@ true
 sat encoding decisions:
 
 at-most-one(x#direct_1) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
-assert(x#direct_1) using tseitin,
+assert(or([x#direct_1;int(1..)])) using tseitin,
 define(__1 <-> integer-weighted(1*x#direct_1, -1*__0#direct_1, -2*__0#direct_2, -3*__0#direct_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 4, structure: Choice }],
 at-most-one(__0#direct_1, __0#direct_2, __0#direct_3) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
-define(__2 <-> or([__0#direct_1,__0#direct_2,__0#direct_3;int(1..)])) using tseitin,
 assert(__1) using tseitin,
-assert(__2) using tseitin
+assert(or([__0#direct_1,__0#direct_2,__0#direct_3;int(1..)])) using tseitin
 

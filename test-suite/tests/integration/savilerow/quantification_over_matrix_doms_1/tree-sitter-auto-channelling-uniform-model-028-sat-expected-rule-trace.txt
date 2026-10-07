@@ -49,22 +49,12 @@ new SAT encoding decisions:
 
 --
 
-or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10,x#direct_11,x#direct_12,x#direct_13,x#direct_14,x#direct_15,x#direct_16,x#direct_17,x#direct_18,x#direct_19,x#direct_20;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10,x#direct_11,x#direct_12,x#direct_13,x#direct_14,x#direct_15,x#direct_16,x#direct_17,x#direct_18,x#direct_19,x#direct_20;int(1..)])) using tseitin
-
---
-
 and([ (i[1] < i[2]) -> (x > (i[2] - i[1])) | i : matrix indexed by [int(1..2)] of int(0..9) ]),
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10,x#direct_11,x#direct_12,x#direct_13,x#direct_14,x#direct_15,x#direct_16,x#direct_17,x#direct_18,x#direct_19,x#direct_20;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ (i[1] < i[2]) -> (x > (i[2] - i[1])) | i : matrix indexed by [int(1..2)] of int(0..9) ])
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10,x#direct_11,x#direct_12,x#direct_13,x#direct_14,x#direct_15,x#direct_16,x#direct_17,x#direct_18,x#direct_19,x#direct_20;int(1..)])) using tseitin
 
 --
 
@@ -82,25 +72,19 @@ x
 
 x > 9
    ~~> select_integer_relation ([("SAT", 18500)])
-__1
+__0
 new variables:
-  findAux __1: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*x#direct_1, 2*x#direct_2, 3*x#direct_3, 4*x#direct_4, 5*x#direct_5, 6*x#direct_6, 7*x#direct_7, 8*x#direct_8, 9*x#direct_9, 10*x#direct_10, 11*x#direct_11, 12*x#direct_12, 13*x#direct_13, 14*x#direct_14, 15*x#direct_15, 16*x#direct_16, 17*x#direct_17, 18*x#direct_18, 19*x#direct_19, 20*x#direct_20) Greater 9) using None with [PbTermGroup { start: 0, end: 20, structure: Choice }]
+  define(__0 <-> integer-weighted(1*x#direct_1, 2*x#direct_2, 3*x#direct_3, 4*x#direct_4, 5*x#direct_5, 6*x#direct_6, 7*x#direct_7, 8*x#direct_8, 9*x#direct_9, 10*x#direct_10, 11*x#direct_11, 12*x#direct_12, 13*x#direct_13, 14*x#direct_14, 15*x#direct_15, 16*x#direct_16, 17*x#direct_17, 18*x#direct_18, 19*x#direct_19, 20*x#direct_20) Greater 9) using None with [PbTermGroup { start: 0, end: 20, structure: Choice }]
 
 --
 
-and([__1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__1
+and([__0;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(and([__0;int(1..)])) using tseitin
 
 --
 
@@ -128,7 +112,6 @@ find x#direct_18: bool
 find x#direct_19: bool
 find x#direct_20: bool
 findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -137,8 +120,7 @@ true
 sat encoding decisions:
 
 at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6, x#direct_7, x#direct_8, x#direct_9, x#direct_10, x#direct_11, x#direct_12, x#direct_13, x#direct_14, x#direct_15, x#direct_16, x#direct_17, x#direct_18, x#direct_19, x#direct_20) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
-define(__0 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10,x#direct_11,x#direct_12,x#direct_13,x#direct_14,x#direct_15,x#direct_16,x#direct_17,x#direct_18,x#direct_19,x#direct_20;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-define(__1 <-> integer-weighted(1*x#direct_1, 2*x#direct_2, 3*x#direct_3, 4*x#direct_4, 5*x#direct_5, 6*x#direct_6, 7*x#direct_7, 8*x#direct_8, 9*x#direct_9, 10*x#direct_10, 11*x#direct_11, 12*x#direct_12, 13*x#direct_13, 14*x#direct_14, 15*x#direct_15, 16*x#direct_16, 17*x#direct_17, 18*x#direct_18, 19*x#direct_19, 20*x#direct_20) Greater 9) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 20, structure: Choice }],
-assert(__1) using tseitin
+assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7,x#direct_8,x#direct_9,x#direct_10,x#direct_11,x#direct_12,x#direct_13,x#direct_14,x#direct_15,x#direct_16,x#direct_17,x#direct_18,x#direct_19,x#direct_20;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(1*x#direct_1, 2*x#direct_2, 3*x#direct_3, 4*x#direct_4, 5*x#direct_5, 6*x#direct_6, 7*x#direct_7, 8*x#direct_8, 9*x#direct_9, 10*x#direct_10, 11*x#direct_11, 12*x#direct_12, 13*x#direct_13, 14*x#direct_14, 15*x#direct_15, 16*x#direct_16, 17*x#direct_17, 18*x#direct_18, 19*x#direct_19, 20*x#direct_20) Greater 9) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 20, structure: Choice }],
+assert(and([__0;int(1..)])) using tseitin
 

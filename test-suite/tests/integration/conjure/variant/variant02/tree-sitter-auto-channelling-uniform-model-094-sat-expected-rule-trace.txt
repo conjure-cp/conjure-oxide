@@ -87,6 +87,17 @@ new SAT encoding decisions:
 
 --
 
+(active(x, a)) -> (or([and([__0;int(1..)]);int(1..)])),
+(active(x, b)) -> (x[b] = 0),
+or([x#packed_1#direct_1,x#packed_1#direct_2,x#packed_1#direct_3,x#packed_1#direct_4;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(active(x, a)) -> (or([and([__0;int(1..)]);int(1..)])),
+(active(x, b)) -> (x[b] = 0)
+new SAT encoding decisions:
+  assert(or([x#packed_1#direct_1,x#packed_1#direct_2,x#packed_1#direct_3,x#packed_1#direct_4;int(1..)])) using tseitin
+
+--
+
 x[b] = 0
    ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
 or([and([x#packed_1 = 2,0 = 0;int(1..)]),and([x#packed_1 = 3,0 = 4;int(1..)]);int(1..)])
@@ -147,6 +158,15 @@ new SAT encoding decisions:
 
 --
 
+(and([__2,__3;int(1..)])) -> (or([and([__0;int(1..)]);int(1..)])),
+(active(x, b)) -> (or([and([__1;int(1..)]);int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(active(x, b)) -> (or([and([__1;int(1..)]);int(1..)]))
+new SAT encoding decisions:
+  assert((and([__2,__3;int(1..)])) -> (or([and([__0;int(1..)]);int(1..)]))) using tseitin
+
+--
+
 active(x, b)
    ~~> variant_packed_active ([("ReprVariantPacked", 9800)])
 and([x#packed_1 >= 2,x#packed_1 < 4;int(1..)])
@@ -185,105 +205,11 @@ new SAT encoding decisions:
 
 --
 
-or([and([__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__1;int(1..)])
+(and([__4,__5;int(1..)])) -> (or([and([__1;int(1..)]);int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-or([and([__0;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0;int(1..)])
-
---
-
-and([__1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__1
-
---
-
-and([__0;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__0
-
---
-
-or([x#packed_1#direct_1,x#packed_1#direct_2,x#packed_1#direct_3,x#packed_1#direct_4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
 new SAT encoding decisions:
-  define(__6 <-> or([x#packed_1#direct_1,x#packed_1#direct_2,x#packed_1#direct_3,x#packed_1#direct_4;int(1..)])) using tseitin
-
---
-
-and([__4,__5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> and([__4,__5;int(1..)])) using tseitin
-
---
-
-(__7) -> (__1)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> (__7) -> (__1)) using tseitin
-
---
-
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-(__9) -> (__0)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> (__9) -> (__0)) using tseitin
-
---
-
-__10,
-__8,
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-__8,
-__6
-new SAT encoding decisions:
-  assert(__10) using tseitin
-
---
-
-__8,
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-__6
-new SAT encoding decisions:
-  assert(__8) using tseitin
-
---
-
-__6
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert((and([__4,__5;int(1..)])) -> (or([and([__1;int(1..)]);int(1..)]))) using tseitin
 
 --
 
@@ -302,11 +228,6 @@ findAux __2: bool
 findAux __3: bool
 findAux __4: bool
 findAux __5: bool
-findAux __6: bool
-findAux __7: bool
-findAux __8: bool
-findAux __9: bool
-findAux __10: bool
 
 such that
 
@@ -316,17 +237,12 @@ sat encoding decisions:
 
 at-most-one(x#packed_1#direct_1, x#packed_1#direct_2, x#packed_1#direct_3, x#packed_1#direct_4) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
 define(__0 <-> integer-weighted(0*x#packed_1#direct_1, 1*x#packed_1#direct_2, 2*x#packed_1#direct_3, 3*x#packed_1#direct_4) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+assert(or([x#packed_1#direct_1,x#packed_1#direct_2,x#packed_1#direct_3,x#packed_1#direct_4;int(1..)])) using tseitin,
 define(__1 <-> integer-weighted(0*x#packed_1#direct_1, 1*x#packed_1#direct_2, 2*x#packed_1#direct_3, 3*x#packed_1#direct_4) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
 define(__2 <-> integer-weighted(0*x#packed_1#direct_1, 1*x#packed_1#direct_2, 2*x#packed_1#direct_3, 3*x#packed_1#direct_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
 define(__3 <-> integer-weighted(0*x#packed_1#direct_1, 1*x#packed_1#direct_2, 2*x#packed_1#direct_3, 3*x#packed_1#direct_4) Less 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
+assert((and([__2,__3;int(1..)])) -> (or([and([__0;int(1..)]);int(1..)]))) using tseitin,
 define(__4 <-> integer-weighted(0*x#packed_1#direct_1, 1*x#packed_1#direct_2, 2*x#packed_1#direct_3, 3*x#packed_1#direct_4) GreaterEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
 define(__5 <-> integer-weighted(0*x#packed_1#direct_1, 1*x#packed_1#direct_2, 2*x#packed_1#direct_3, 3*x#packed_1#direct_4) Less 4) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }],
-define(__6 <-> or([x#packed_1#direct_1,x#packed_1#direct_2,x#packed_1#direct_3,x#packed_1#direct_4;int(1..)])) using tseitin,
-define(__7 <-> and([__4,__5;int(1..)])) using tseitin,
-define(__8 <-> (__7) -> (__1)) using tseitin,
-define(__9 <-> and([__2,__3;int(1..)])) using tseitin,
-define(__10 <-> (__9) -> (__0)) using tseitin,
-assert(__10) using tseitin,
-assert(__8) using tseitin,
-assert(__6) using tseitin
+assert((and([__4,__5;int(1..)])) -> (or([and([__1;int(1..)]);int(1..)]))) using tseitin
 

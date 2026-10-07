@@ -29,45 +29,23 @@ new SAT encoding decisions:
 
 --
 
-!(x#offset_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> !(x#offset_1)) using tseitin
-
---
-
+true,
+and([!(x#offset_1);int(1..)]),
 or([__0;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__0
-
---
-
-and([__1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__1
-
---
-
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
-__1,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__0
+or([__0;int(1..)])
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(and([!(x#offset_1);int(1..)])) using tseitin
 
 --
 
 true,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([__0;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__0) using tseitin
+  assert(or([__0;int(1..)])) using tseitin
 
 --
 
@@ -76,7 +54,6 @@ Final model:
 find x: int(120)
 find x#offset_1: bool
 findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -85,7 +62,6 @@ true
 sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*x#offset_1) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }],
-define(__1 <-> !(x#offset_1)) using tseitin,
-assert(__1) using tseitin,
-assert(__0) using tseitin
+assert(and([!(x#offset_1);int(1..)])) using tseitin,
+assert(or([__0;int(1..)])) using tseitin
 

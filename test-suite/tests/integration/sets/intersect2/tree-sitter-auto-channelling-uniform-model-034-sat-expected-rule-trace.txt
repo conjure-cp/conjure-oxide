@@ -58,6 +58,17 @@ new SAT encoding decisions:
 
 --
 
+c = {2},
+true,
+or([c#explicit_1#components_1#direct_1,c#explicit_1#components_1#direct_2,c#explicit_1#components_1#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+c = {2},
+true
+new SAT encoding decisions:
+  assert(or([c#explicit_1#components_1#direct_1,c#explicit_1#components_1#direct_2,c#explicit_1#components_1#direct_3;int(1..)])) using tseitin
+
+--
+
 c = {2}
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(c#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
@@ -88,27 +99,6 @@ SafeIndex(c#explicit_1,[1]) = 2
 
 --
 
-or([c#explicit_1#components_1#direct_1,c#explicit_1#components_1#direct_2,c#explicit_1#components_1#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([c#explicit_1#components_1#direct_1,c#explicit_1#components_1#direct_2,c#explicit_1#components_1#direct_3;int(1..)])) using tseitin
-
---
-
-SafeIndex(c#explicit_1,[1]) = 2,
-true,
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
-SafeIndex(c#explicit_1,[1]) = 2,
-true
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
 SafeIndex(c#explicit_1,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 c#explicit_1#components_1
@@ -123,20 +113,20 @@ c#explicit_1#components_1
 
 c#explicit_1#components_1 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__1
+__0
 new variables:
-  findAux __1: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(1*c#explicit_1#components_1#direct_1, 2*c#explicit_1#components_1#direct_2, 3*c#explicit_1#components_1#direct_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+  define(__0 <-> integer-weighted(1*c#explicit_1#components_1#direct_1, 2*c#explicit_1#components_1#direct_2, 3*c#explicit_1#components_1#direct_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
 
 --
 
-__1,
+__0,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(__0) using tseitin
 
 --
 
@@ -151,7 +141,6 @@ find c#explicit_1#components_1#direct_1: bool
 find c#explicit_1#components_1#direct_2: bool
 find c#explicit_1#components_1#direct_3: bool
 findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -160,8 +149,7 @@ true
 sat encoding decisions:
 
 at-most-one(c#explicit_1#components_1#direct_1, c#explicit_1#components_1#direct_2, c#explicit_1#components_1#direct_3) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
-define(__0 <-> or([c#explicit_1#components_1#direct_1,c#explicit_1#components_1#direct_2,c#explicit_1#components_1#direct_3;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-define(__1 <-> integer-weighted(1*c#explicit_1#components_1#direct_1, 2*c#explicit_1#components_1#direct_2, 3*c#explicit_1#components_1#direct_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
-assert(__1) using tseitin
+assert(or([c#explicit_1#components_1#direct_1,c#explicit_1#components_1#direct_2,c#explicit_1#components_1#direct_3;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(1*c#explicit_1#components_1#direct_1, 2*c#explicit_1#components_1#direct_2, 3*c#explicit_1#components_1#direct_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+assert(__0) using tseitin
 

@@ -57,43 +57,23 @@ new SAT encoding decisions:
 
 --
 
-or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])) using tseitin
-
---
-
+true,
+or([m#components_1#direct_1,m#components_1#direct_2;int(1..)]),
 or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])
 new SAT encoding decisions:
-  define(__1 <-> or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])) using tseitin
+  assert(or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])) using tseitin
 
 --
 
 true,
-__0,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__1
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-true,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])) using tseitin
 
 --
 
@@ -106,8 +86,6 @@ find m#components_1#direct_1: bool
 find m#components_1#direct_2: bool
 find m#components_2#direct_1: bool
 find m#components_2#direct_2: bool
-findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -117,8 +95,6 @@ sat encoding decisions:
 
 at-most-one(m#components_1#direct_1, m#components_1#direct_2) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
 at-most-one(m#components_2#direct_1, m#components_2#direct_2) using Some(EncodingSelection { algorithm: PindakaasLadder, provenance: Heuristic }),
-define(__0 <-> or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])) using tseitin,
-define(__1 <-> or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-assert(__1) using tseitin
+assert(or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])) using tseitin,
+assert(or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])) using tseitin
 

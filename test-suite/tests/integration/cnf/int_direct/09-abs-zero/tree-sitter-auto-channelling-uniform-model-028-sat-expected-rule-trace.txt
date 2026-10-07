@@ -59,6 +59,26 @@ new SAT encoding decisions:
 
 --
 
+b = |a|,
+or([b#direct_1;int(1..)]),
+or([a#direct_1;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+b = |a|,
+or([a#direct_1;int(1..)])
+new SAT encoding decisions:
+  assert(or([b#direct_1;int(1..)])) using tseitin
+
+--
+
+b = |a|,
+or([a#direct_1;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+b = |a|
+new SAT encoding decisions:
+  assert(or([a#direct_1;int(1..)])) using tseitin
+
+--
+
 b
    ~~> integer_decision_representation_direct ([("SAT", 9500)])
 SATInt(Direct, [b#direct_1;int(1..)] [0, 0])
@@ -87,43 +107,11 @@ new SAT encoding decisions:
 
 --
 
-or([b#direct_1;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-b#direct_1
+__0
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-or([a#direct_1;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-a#direct_1
-
---
-
-__0,
-b#direct_1,
-a#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
-b#direct_1,
-a#direct_1
 new SAT encoding decisions:
   assert(__0) using tseitin
-
---
-
-b#direct_1,
-a#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
-a#direct_1
-new SAT encoding decisions:
-  assert(b#direct_1) using tseitin
-
---
-
-a#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(a#direct_1) using tseitin
 
 --
 
@@ -143,8 +131,8 @@ sat encoding decisions:
 
 at-most-one(b#direct_1) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
 at-most-one(a#direct_1) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+assert(or([b#direct_1;int(1..)])) using tseitin,
+assert(or([a#direct_1;int(1..)])) using tseitin,
 define(__0 <-> integer-weighted(0*b#direct_1, 0*a#direct_1) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 2, structure: Choice }],
-assert(__0) using tseitin,
-assert(b#direct_1) using tseitin,
-assert(a#direct_1) using tseitin
+assert(__0) using tseitin
 

@@ -81,57 +81,31 @@ new SAT encoding decisions:
 
 --
 
-and([__0;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__0
+and([__0;int(1..)]),
+or([c#direct_1,c#direct_2,c#direct_3,c#direct_4,c#direct_5,c#direct_6,c#direct_7;int(1..)]),
+or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([c#direct_1,c#direct_2,c#direct_3,c#direct_4,c#direct_5,c#direct_6,c#direct_7;int(1..)]),
+or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])
+new SAT encoding decisions:
+  assert(and([__0;int(1..)])) using tseitin
 
 --
 
-or([c#direct_1,c#direct_2,c#direct_3,c#direct_4,c#direct_5,c#direct_6,c#direct_7;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
+or([c#direct_1,c#direct_2,c#direct_3,c#direct_4,c#direct_5,c#direct_6,c#direct_7;int(1..)]),
+or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])
 new SAT encoding decisions:
-  define(__1 <-> or([c#direct_1,c#direct_2,c#direct_3,c#direct_4,c#direct_5,c#direct_6,c#direct_7;int(1..)])) using tseitin
+  assert(or([c#direct_1,c#direct_2,c#direct_3,c#direct_4,c#direct_5,c#direct_6,c#direct_7;int(1..)])) using tseitin
 
 --
 
 or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__2 <-> or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])) using tseitin
-
---
-
-__0,
-__1,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-__1,
-__2
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-__1,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-__2
-new SAT encoding decisions:
-  assert(__1) using tseitin
-
---
-
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])) using tseitin
 
 --
 
@@ -154,8 +128,6 @@ find a#direct_5: bool
 find a#direct_6: bool
 find a#direct_7: bool
 findAux __0: bool
-findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -166,9 +138,7 @@ sat encoding decisions:
 define(__0 <-> integer-weighted(-3*a#direct_1, -2*a#direct_2, -1*a#direct_3, 0*a#direct_4, 1*a#direct_5, 2*a#direct_6, 3*a#direct_7, 1*c#direct_1, 0*c#direct_2, -1*c#direct_3, -2*c#direct_4, -3*c#direct_5, -4*c#direct_6, -5*c#direct_7) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 14, structure: Choice }],
 at-most-one(c#direct_1, c#direct_2, c#direct_3, c#direct_4, c#direct_5, c#direct_6, c#direct_7) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
 at-most-one(a#direct_1, a#direct_2, a#direct_3, a#direct_4, a#direct_5, a#direct_6, a#direct_7) using Some(EncodingSelection { algorithm: PindakaasPairwise, provenance: Heuristic }),
-define(__1 <-> or([c#direct_1,c#direct_2,c#direct_3,c#direct_4,c#direct_5,c#direct_6,c#direct_7;int(1..)])) using tseitin,
-define(__2 <-> or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-assert(__1) using tseitin,
-assert(__2) using tseitin
+assert(and([__0;int(1..)])) using tseitin,
+assert(or([c#direct_1,c#direct_2,c#direct_3,c#direct_4,c#direct_5,c#direct_6,c#direct_7;int(1..)])) using tseitin,
+assert(or([a#direct_1,a#direct_2,a#direct_3,a#direct_4,a#direct_5,a#direct_6,a#direct_7;int(1..)])) using tseitin
 

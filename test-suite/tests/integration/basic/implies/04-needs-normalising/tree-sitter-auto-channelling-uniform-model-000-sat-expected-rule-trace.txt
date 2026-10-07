@@ -20,166 +20,44 @@ such that
 
 --
 
-!(a)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__0
-new variables:
-  findAux __0: bool
+!((!(x)) -> (!(y))),
+(!(a)) -> (!(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(!(a)) -> (!(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
 new SAT encoding decisions:
-  define(__0 <-> !(a)) using tseitin
+  assert(!((!(x)) -> (!(y)))) using tseitin
 
 --
 
-!(b)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__1
-new variables:
-  findAux __1: bool
+(!(a)) -> (!(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
 new SAT encoding decisions:
-  define(__1 <-> !(b)) using tseitin
+  assert((!(a)) -> (!(b))) using tseitin
 
 --
 
-!(x)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__2
-new variables:
-  findAux __2: bool
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+((h) -> (f)) -> ((h) -> (g))
 new SAT encoding decisions:
-  define(__2 <-> !(x)) using tseitin
-
---
-
-!(y)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> !(y)) using tseitin
-
---
-
-!((__2) -> (__3))
-   ~~> normalise_implies_negation ([("Base", 8800)])
-and([__2,!(__3);int(1..)])
-
---
-
-!(__3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> !(__3)) using tseitin
+  assert((c) -> ((d) -> (e))) using tseitin
 
 --
 
 ((h) -> (f)) -> ((h) -> (g))
-   ~~> normalise_implies_left_distributivity ([("Base", 8800)])
-(h) -> ((f) -> (g))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-and([__2,__4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> and([__2,__4;int(1..)])) using tseitin
-
---
-
-(__0) -> (__1)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> (__0) -> (__1)) using tseitin
-
---
-
-(f) -> (g)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> (f) -> (g)) using tseitin
-
---
-
-(h) -> (__7)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> (h) -> (__7)) using tseitin
-
---
-
-(d) -> (e)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> (d) -> (e)) using tseitin
-
---
-
-(c) -> (__9)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> (c) -> (__9)) using tseitin
-
---
-
-__5,
-__6,
-__10,
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-__6,
-__10,
-__8
-new SAT encoding decisions:
-  assert(__5) using tseitin
-
---
-
-__6,
-__10,
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-__10,
-__8
-new SAT encoding decisions:
-  assert(__6) using tseitin
-
---
-
-__10,
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-__8
-new SAT encoding decisions:
-  assert(__10) using tseitin
-
---
-
-__8
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__8) using tseitin
+  assert(((h) -> (f)) -> ((h) -> (g))) using tseitin
 
 --
 
@@ -195,17 +73,6 @@ find g: bool
 find h: bool
 find x: bool
 find y: bool
-findAux __0: bool
-findAux __1: bool
-findAux __2: bool
-findAux __3: bool
-findAux __4: bool
-findAux __5: bool
-findAux __6: bool
-findAux __7: bool
-findAux __8: bool
-findAux __9: bool
-findAux __10: bool
 
 such that
 
@@ -213,19 +80,8 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> !(a)) using tseitin,
-define(__1 <-> !(b)) using tseitin,
-define(__2 <-> !(x)) using tseitin,
-define(__3 <-> !(y)) using tseitin,
-define(__4 <-> !(__3)) using tseitin,
-define(__5 <-> and([__2,__4;int(1..)])) using tseitin,
-define(__6 <-> (__0) -> (__1)) using tseitin,
-define(__7 <-> (f) -> (g)) using tseitin,
-define(__8 <-> (h) -> (__7)) using tseitin,
-define(__9 <-> (d) -> (e)) using tseitin,
-define(__10 <-> (c) -> (__9)) using tseitin,
-assert(__5) using tseitin,
-assert(__6) using tseitin,
-assert(__10) using tseitin,
-assert(__8) using tseitin
+assert(!((!(x)) -> (!(y)))) using tseitin,
+assert((!(a)) -> (!(b))) using tseitin,
+assert((c) -> ((d) -> (e))) using tseitin,
+assert(((h) -> (f)) -> ((h) -> (g))) using tseitin
 

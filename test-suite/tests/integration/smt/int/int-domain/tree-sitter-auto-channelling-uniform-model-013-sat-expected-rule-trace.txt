@@ -67,42 +67,12 @@ new SAT encoding decisions:
 
 --
 
-and([__1,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> and([__1,__2;int(1..)])) using tseitin
-
---
-
-and([__3,__4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> and([__3,__4;int(1..)])) using tseitin
-
---
-
-or([__0,__5,__6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> or([__0,__5,__6;int(1..)])) using tseitin
-
---
-
 true,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([__0,and([__1,__2;int(1..)]),and([__3,__4;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__7) using tseitin
+  assert(or([__0,and([__1,__2;int(1..)]),and([__3,__4;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -118,9 +88,6 @@ findAux __1: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
-findAux __5: bool
-findAux __6: bool
-findAux __7: bool
 
 such that
 
@@ -133,8 +100,5 @@ define(__1 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*
 define(__2 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, -8*x#twos_complement_4) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 7 } }],
 define(__3 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, -8*x#twos_complement_4) GreaterEqual 5) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 7 } }],
 define(__4 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, 4*x#twos_complement_3, -8*x#twos_complement_4) LessEqual 7) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 7 } }],
-define(__5 <-> and([__1,__2;int(1..)])) using tseitin,
-define(__6 <-> and([__3,__4;int(1..)])) using tseitin,
-define(__7 <-> or([__0,__5,__6;int(1..)])) using tseitin,
-assert(__7) using tseitin
+assert(or([__0,and([__1,__2;int(1..)]),and([__3,__4;int(1..)]);int(1..)])) using tseitin
 

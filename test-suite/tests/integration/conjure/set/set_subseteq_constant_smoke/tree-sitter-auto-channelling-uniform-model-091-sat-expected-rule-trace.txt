@@ -77,8 +77,15 @@ y#occurrence_2
 
 and([y#occurrence_1,y#occurrence_2;int(1..)]),
 true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true
+new SAT encoding decisions:
+  assert(and([y#occurrence_1,y#occurrence_2;int(1..)])) using tseitin
+
+--
+
+true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-and([y#occurrence_1,y#occurrence_2;int(1..)]),
 true
 new variables:
   findAux __0#twos_complement_1: bool
@@ -112,58 +119,23 @@ new SAT encoding decisions:
 
 --
 
+true,
+or([__2;int(1..)]),
 or([__3;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__3
-
---
-
-or([__2;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__2
-
---
-
-and([y#occurrence_1,y#occurrence_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+or([__3;int(1..)])
 new SAT encoding decisions:
-  define(__4 <-> and([y#occurrence_1,y#occurrence_2;int(1..)])) using tseitin
-
---
-
-__4,
-true,
-__2,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__2,
-__3
-new SAT encoding decisions:
-  assert(__4) using tseitin
+  assert(or([__2;int(1..)])) using tseitin
 
 --
 
 true,
-__2,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__3
-new SAT encoding decisions:
-  assert(__2) using tseitin
-
---
-
-true,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([__3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__3) using tseitin
+  assert(or([__3;int(1..)])) using tseitin
 
 --
 
@@ -184,7 +156,6 @@ findAux __1#twos_complement_2: bool
 findAux __1#twos_complement_3: bool
 findAux __2: bool
 findAux __3: bool
-findAux __4: bool
 
 such that
 
@@ -194,10 +165,9 @@ sat encoding decisions:
 
 count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5) AtLeast 0 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
 count(y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5) AtMost 5 using Some(EncodingSelection { algorithm: PindakaasSortingNetwork, provenance: Heuristic }),
+assert(and([y#occurrence_1,y#occurrence_2;int(1..)])) using tseitin,
 define(__2 <-> integer-weighted(1*__0#twos_complement_1, -2*__0#twos_complement_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }],
 define(__3 <-> integer-weighted(1*__1#twos_complement_1, 2*__1#twos_complement_2, -4*__1#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 2 } }],
-define(__4 <-> and([y#occurrence_1,y#occurrence_2;int(1..)])) using tseitin,
-assert(__4) using tseitin,
-assert(__2) using tseitin,
-assert(__3) using tseitin
+assert(or([__2;int(1..)])) using tseitin,
+assert(or([__3;int(1..)])) using tseitin
 

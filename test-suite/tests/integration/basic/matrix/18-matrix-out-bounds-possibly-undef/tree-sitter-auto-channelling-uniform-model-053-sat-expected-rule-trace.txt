@@ -145,13 +145,52 @@ m[1] = 1,
 or([c#direct_1,c#direct_2;int(1..)]),
 or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)]),
 or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)])
-   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 (z) <-> (m[sum([a,b;int(1..)])] = c),
 m[0] = 1,
 m[1] = 1,
-or([c#direct_1,c#direct_2;int(1..)]),
 or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)]),
 or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)])
+new SAT encoding decisions:
+  assert(or([c#direct_1,c#direct_2;int(1..)])) using tseitin
+
+--
+
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1,
+or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)]),
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1,
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)])
+new SAT encoding decisions:
+  assert(or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])) using tseitin
+
+--
+
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1,
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1
+new SAT encoding decisions:
+  assert(or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)])) using tseitin
+
+--
+
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1
 new variables:
   find m#components_1#direct_1: bool
   find m#components_1#direct_2: bool
@@ -172,9 +211,6 @@ new constraints:
 (z) <-> (m[sum([a,b;int(1..)])] = c),
 m[0] = 1,
 m[1] = 1,
-or([c#direct_1,c#direct_2;int(1..)]),
-or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)]),
-or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)]),
 sum([toInt(m#components_1#direct_1),toInt(m#components_1#direct_2);int(1..)]) <= 1,
 or([m#components_1#direct_1,m#components_1#direct_2;int(1..)]),
 sum([toInt(m#components_2#direct_1),toInt(m#components_2#direct_2);int(1..)]) <= 1,
@@ -185,9 +221,6 @@ or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
 (z) <-> (m[sum([a,b;int(1..)])] = c),
 m[0] = 1,
 m[1] = 1,
-or([c#direct_1,c#direct_2;int(1..)]),
-or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)]),
-or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)]),
 or([m#components_1#direct_1,m#components_1#direct_2;int(1..)]),
 sum([toInt(m#components_2#direct_1),toInt(m#components_2#direct_2);int(1..)]) <= 1,
 or([m#components_2#direct_1,m#components_2#direct_2;int(1..)]),
@@ -201,9 +234,6 @@ new SAT encoding decisions:
 (z) <-> (m[sum([a,b;int(1..)])] = c),
 m[0] = 1,
 m[1] = 1,
-or([c#direct_1,c#direct_2;int(1..)]),
-or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)]),
-or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)]),
 or([m#components_1#direct_1,m#components_1#direct_2;int(1..)]),
 sum([toInt(m#components_2#direct_1),toInt(m#components_2#direct_2);int(1..)]) <= 1,
 or([m#components_2#direct_1,m#components_2#direct_2;int(1..)]),
@@ -213,9 +243,6 @@ or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
 (z) <-> (m[sum([a,b;int(1..)])] = c),
 m[0] = 1,
 m[1] = 1,
-or([c#direct_1,c#direct_2;int(1..)]),
-or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)]),
-or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)]),
 or([m#components_1#direct_1,m#components_1#direct_2;int(1..)]),
 or([m#components_2#direct_1,m#components_2#direct_2;int(1..)]),
 sum([toInt(m#components_3#direct_1),toInt(m#components_3#direct_2);int(1..)]) <= 1,
@@ -228,9 +255,6 @@ new SAT encoding decisions:
 (z) <-> (m[sum([a,b;int(1..)])] = c),
 m[0] = 1,
 m[1] = 1,
-or([c#direct_1,c#direct_2;int(1..)]),
-or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)]),
-or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)]),
 or([m#components_1#direct_1,m#components_1#direct_2;int(1..)]),
 or([m#components_2#direct_1,m#components_2#direct_2;int(1..)]),
 sum([toInt(m#components_3#direct_1),toInt(m#components_3#direct_2);int(1..)]) <= 1,
@@ -239,14 +263,56 @@ or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
 (z) <-> (m[sum([a,b;int(1..)])] = c),
 m[0] = 1,
 m[1] = 1,
-or([c#direct_1,c#direct_2;int(1..)]),
-or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)]),
-or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)]),
 or([m#components_1#direct_1,m#components_1#direct_2;int(1..)]),
 or([m#components_2#direct_1,m#components_2#direct_2;int(1..)]),
 or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
 new SAT encoding decisions:
   at-most-one(m#components_3#direct_1, m#components_3#direct_2) using None
+
+--
+
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1,
+or([m#components_1#direct_1,m#components_1#direct_2;int(1..)]),
+or([m#components_2#direct_1,m#components_2#direct_2;int(1..)]),
+or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1,
+or([m#components_2#direct_1,m#components_2#direct_2;int(1..)]),
+or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
+new SAT encoding decisions:
+  assert(or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])) using tseitin
+
+--
+
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1,
+or([m#components_2#direct_1,m#components_2#direct_2;int(1..)]),
+or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1,
+or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
+new SAT encoding decisions:
+  assert(or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])) using tseitin
+
+--
+
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1,
+or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1
+new SAT encoding decisions:
+  assert(or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])) using tseitin
 
 --
 
@@ -268,174 +334,6 @@ SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2])
 
 --
 
-or([c#direct_1,c#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([c#direct_1,c#direct_2;int(1..)])) using tseitin
-
---
-
-or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])) using tseitin
-
---
-
-or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)])) using tseitin
-
---
-
-or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])) using tseitin
-
---
-
-or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])) using tseitin
-
---
-
-or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])) using tseitin
-
---
-
-(z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-m[0] = 1,
-m[1] = 1,
-__0,
-__1,
-__2,
-__3,
-__4,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-(z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-m[0] = 1,
-m[1] = 1,
-__1,
-__2,
-__3,
-__4,
-__5
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-(z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-m[0] = 1,
-m[1] = 1,
-__1,
-__2,
-__3,
-__4,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-(z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-m[0] = 1,
-m[1] = 1,
-__2,
-__3,
-__4,
-__5
-new SAT encoding decisions:
-  assert(__1) using tseitin
-
---
-
-(z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-m[0] = 1,
-m[1] = 1,
-__2,
-__3,
-__4,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-(z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-m[0] = 1,
-m[1] = 1,
-__3,
-__4,
-__5
-new SAT encoding decisions:
-  assert(__2) using tseitin
-
---
-
-(z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-m[0] = 1,
-m[1] = 1,
-__3,
-__4,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-(z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-m[0] = 1,
-m[1] = 1,
-__4,
-__5
-new SAT encoding decisions:
-  assert(__3) using tseitin
-
---
-
-(z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-m[0] = 1,
-m[1] = 1,
-__4,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-(z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-m[0] = 1,
-m[1] = 1,
-__5
-new SAT encoding decisions:
-  assert(__4) using tseitin
-
---
-
-(z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-m[0] = 1,
-m[1] = 1,
-__5
-   ~~> remove_single_atom ([("SAT", 8400)])
-(z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-m[0] = 1,
-m[1] = 1
-new SAT encoding decisions:
-  assert(__5) using tseitin
-
---
-
 m[0]
    ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
 m#components_2
@@ -450,22 +348,22 @@ m#components_2
 
 m#components_2 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__6
+__0
 new variables:
-  findAux __6: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__6 <-> integer-weighted(1*m#components_2#direct_1, 2*m#components_2#direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+  define(__0 <-> integer-weighted(1*m#components_2#direct_1, 2*m#components_2#direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
 (z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-__6,
+__0,
 m[1] = 1
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 (z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
 m[1] = 1
 new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert(__0) using tseitin
 
 --
 
@@ -483,20 +381,20 @@ m#components_3
 
 m#components_3 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__7
+__1
 new variables:
-  findAux __7: bool
+  findAux __1: bool
 new SAT encoding decisions:
-  define(__7 <-> integer-weighted(1*m#components_3#direct_1, 2*m#components_3#direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+  define(__1 <-> integer-weighted(1*m#components_3#direct_1, 2*m#components_3#direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
 (z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])),
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
+__1
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 (z) <-> (m[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])] = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]))
 new SAT encoding decisions:
-  assert(__7) using tseitin
+  assert(__1) using tseitin
 
 --
 
@@ -514,94 +412,94 @@ or([and([sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1.
 
 sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]) >= -1
    ~~> select_integer_relation ([("SAT", 18500)])
-__8
+__2
 new variables:
-  findAux __8: bool
+  findAux __2: bool
 new SAT encoding decisions:
-  define(__8 <-> integer-weighted(-1*a#direct_1, 0*a#direct_2, 1*a#direct_3, 2*a#direct_4, -1*b#direct_1, 0*b#direct_2, 1*b#direct_3, 2*b#direct_4) GreaterEqual -1) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }, PbTermGroup { start: 4, end: 8, structure: Choice }]
+  define(__2 <-> integer-weighted(-1*a#direct_1, 0*a#direct_2, 1*a#direct_3, 2*a#direct_4, -1*b#direct_1, 0*b#direct_2, 1*b#direct_3, 2*b#direct_4) GreaterEqual -1) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }, PbTermGroup { start: 4, end: 8, structure: Choice }]
 
 --
 
 sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]) <= 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__9
+__3
 new variables:
-  findAux __9: bool
+  findAux __3: bool
 new SAT encoding decisions:
-  define(__9 <-> integer-weighted(-1*a#direct_1, 0*a#direct_2, 1*a#direct_3, 2*a#direct_4, -1*b#direct_1, 0*b#direct_2, 1*b#direct_3, 2*b#direct_4) LessEqual 1) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }, PbTermGroup { start: 4, end: 8, structure: Choice }]
+  define(__3 <-> integer-weighted(-1*a#direct_1, 0*a#direct_2, 1*a#direct_3, 2*a#direct_4, -1*b#direct_1, 0*b#direct_2, 1*b#direct_3, 2*b#direct_4) LessEqual 1) using None with [PbTermGroup { start: 0, end: 4, structure: Choice }, PbTermGroup { start: 4, end: 8, structure: Choice }]
 
 --
 
-{SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])]) @ or([and([__8,__9;int(1..)]);int(1..)])} = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])
+{SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])]) @ or([and([__2,__3;int(1..)]);int(1..)])} = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])
    ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])]) = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]) @ or([and([__8,__9;int(1..)]);int(1..)])}
+{SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])]) = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]) @ or([and([__2,__3;int(1..)]);int(1..)])}
 
 --
 
-{SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])]) = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]) @ or([and([__8,__9;int(1..)]);int(1..)])}
+{SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])]) = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]) @ or([and([__2,__3;int(1..)]);int(1..)])}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])]) = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),or([and([__8,__9;int(1..)]);int(1..)]);int(1..)])
+and([SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])]) = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),or([and([__2,__3;int(1..)]);int(1..)]);int(1..)])
 
 --
 
-or([and([__8,__9;int(1..)]);int(1..)])
+or([and([__2,__3;int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__8,__9;int(1..)])
+and([__2,__3;int(1..)])
 
 --
 
-and([SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])]) = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),and([__8,__9;int(1..)]);int(1..)])
+and([SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])]) = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),and([__2,__3;int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])]) = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),__8,__9;int(1..)])
+and([SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])]) = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),__2,__3;int(1..)])
 
 --
 
 SafeIndex(m,[sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([m#components_1,m#components_2,m#components_3;int(1..)],[sum([product([1,(__10 - -1);int(1..)]),1;int(1..)])])
+SafeIndex([m#components_1,m#components_2,m#components_3;int(1..)],[sum([product([1,(__4 - -1);int(1..)]),1;int(1..)])])
 new variables:
-  findAux __10: int(-2..4)
+  findAux __4: int(-2..4)
 new constraints:
-  __10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])
+  __4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])
 
 --
 
-SafeIndex([m#components_1,m#components_2,m#components_3;int(1..)],[sum([product([1,(__10 - -1);int(1..)]),1;int(1..)])])
+SafeIndex([m#components_1,m#components_2,m#components_3;int(1..)],[sum([product([1,(__4 - -1);int(1..)]),1;int(1..)])])
    ~~> introduce_element ([("SAT", 18400)])
-__11
+__5
 new variables:
-  findAux __11: int(1..2)
+  findAux __5: int(1..2)
 new constraints:
-  satElement([m#components_1,m#components_2,m#components_3;int(1..)], sum([product([1,(__10 - -1);int(1..)]),1;int(1..)]), __11)
+  satElement([m#components_1,m#components_2,m#components_3;int(1..)], sum([product([1,(__4 - -1);int(1..)]),1;int(1..)]), __5)
 
 --
 
-__10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])
+__4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])
    ~~> select_aux_declaration_representation ([("ReprGeneral", 10000)])
-__10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])
+__4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])
 new variables:
-  findAux __10#direct_1: bool
-  findAux __10#direct_2: bool
-  findAux __10#direct_3: bool
-  findAux __10#direct_4: bool
-  findAux __10#direct_5: bool
-  findAux __10#direct_6: bool
-  findAux __10#direct_7: bool
+  findAux __4#direct_1: bool
+  findAux __4#direct_2: bool
+  findAux __4#direct_3: bool
+  findAux __4#direct_4: bool
+  findAux __4#direct_5: bool
+  findAux __4#direct_6: bool
+  findAux __4#direct_7: bool
 new constraints:
-  sum([toInt(__10#direct_1),toInt(__10#direct_2),toInt(__10#direct_3),toInt(__10#direct_4),toInt(__10#direct_5),toInt(__10#direct_6),toInt(__10#direct_7);int(1..)]) <= 1
-  or([__10#direct_1,__10#direct_2,__10#direct_3,__10#direct_4,__10#direct_5,__10#direct_6,__10#direct_7;int(1..)])
+  sum([toInt(__4#direct_1),toInt(__4#direct_2),toInt(__4#direct_3),toInt(__4#direct_4),toInt(__4#direct_5),toInt(__4#direct_6),toInt(__4#direct_7);int(1..)]) <= 1
+  or([__4#direct_1,__4#direct_2,__4#direct_3,__4#direct_4,__4#direct_5,__4#direct_6,__4#direct_7;int(1..)])
 
 --
 
-__11
+__5
    ~~> select_representation ([("ReprGeneral", 10000)])
-__11
+__5
 new variables:
-  findAux __11#direct_1: bool
-  findAux __11#direct_2: bool
+  findAux __5#direct_1: bool
+  findAux __5#direct_2: bool
 new constraints:
-  sum([toInt(__11#direct_1),toInt(__11#direct_2);int(1..)]) <= 1
-  or([__11#direct_1,__11#direct_2;int(1..)])
+  sum([toInt(__5#direct_1),toInt(__5#direct_2);int(1..)]) <= 1
+  or([__5#direct_1,__5#direct_2;int(1..)])
 
 --
 
@@ -623,189 +521,149 @@ m#components_3
 
 --
 
-__11
+__5
    ~~> select_representation ([("ReprGeneral", 10000)])
-__11
+__5
 
 --
 
-__10
+__4
    ~~> select_representation ([("ReprGeneral", 10000)])
-__10
+__4
 
 --
 
-(z) <-> (and([__11 = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),__8,__9;int(1..)])),
-__10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
-satElement([m#components_1,m#components_2,m#components_3;int(1..)], sum([product([1,(__10 - -1);int(1..)]),1;int(1..)]), __11),
-sum([toInt(__10#direct_1),toInt(__10#direct_2),toInt(__10#direct_3),toInt(__10#direct_4),toInt(__10#direct_5),toInt(__10#direct_6),toInt(__10#direct_7);int(1..)]) <= 1,
-or([__10#direct_1,__10#direct_2,__10#direct_3,__10#direct_4,__10#direct_5,__10#direct_6,__10#direct_7;int(1..)]),
-sum([toInt(__11#direct_1),toInt(__11#direct_2);int(1..)]) <= 1,
-or([__11#direct_1,__11#direct_2;int(1..)])
+(z) <-> (and([__5 = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),__2,__3;int(1..)])),
+__4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
+satElement([m#components_1,m#components_2,m#components_3;int(1..)], sum([product([1,(__4 - -1);int(1..)]),1;int(1..)]), __5),
+sum([toInt(__4#direct_1),toInt(__4#direct_2),toInt(__4#direct_3),toInt(__4#direct_4),toInt(__4#direct_5),toInt(__4#direct_6),toInt(__4#direct_7);int(1..)]) <= 1,
+or([__4#direct_1,__4#direct_2,__4#direct_3,__4#direct_4,__4#direct_5,__4#direct_6,__4#direct_7;int(1..)]),
+sum([toInt(__5#direct_1),toInt(__5#direct_2);int(1..)]) <= 1,
+or([__5#direct_1,__5#direct_2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-(z) <-> (and([__11 = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),__8,__9;int(1..)])),
-__10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
-satElement([m#components_1,m#components_2,m#components_3;int(1..)], sum([product([1,(__10 - -1);int(1..)]),1;int(1..)]), __11),
-or([__10#direct_1,__10#direct_2,__10#direct_3,__10#direct_4,__10#direct_5,__10#direct_6,__10#direct_7;int(1..)]),
-sum([toInt(__11#direct_1),toInt(__11#direct_2);int(1..)]) <= 1,
-or([__11#direct_1,__11#direct_2;int(1..)])
+(z) <-> (and([__5 = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),__2,__3;int(1..)])),
+__4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
+satElement([m#components_1,m#components_2,m#components_3;int(1..)], sum([product([1,(__4 - -1);int(1..)]),1;int(1..)]), __5),
+or([__4#direct_1,__4#direct_2,__4#direct_3,__4#direct_4,__4#direct_5,__4#direct_6,__4#direct_7;int(1..)]),
+sum([toInt(__5#direct_1),toInt(__5#direct_2);int(1..)]) <= 1,
+or([__5#direct_1,__5#direct_2;int(1..)])
 new SAT encoding decisions:
-  at-most-one(__10#direct_1, __10#direct_2, __10#direct_3, __10#direct_4, __10#direct_5, __10#direct_6, __10#direct_7) using None
+  at-most-one(__4#direct_1, __4#direct_2, __4#direct_3, __4#direct_4, __4#direct_5, __4#direct_6, __4#direct_7) using None
 
 --
 
-(z) <-> (and([__11 = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),__8,__9;int(1..)])),
-__10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
-satElement([m#components_1,m#components_2,m#components_3;int(1..)], sum([product([1,(__10 - -1);int(1..)]),1;int(1..)]), __11),
-or([__10#direct_1,__10#direct_2,__10#direct_3,__10#direct_4,__10#direct_5,__10#direct_6,__10#direct_7;int(1..)]),
-sum([toInt(__11#direct_1),toInt(__11#direct_2);int(1..)]) <= 1,
-or([__11#direct_1,__11#direct_2;int(1..)])
+(z) <-> (and([__5 = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),__2,__3;int(1..)])),
+__4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
+satElement([m#components_1,m#components_2,m#components_3;int(1..)], sum([product([1,(__4 - -1);int(1..)]),1;int(1..)]), __5),
+or([__4#direct_1,__4#direct_2,__4#direct_3,__4#direct_4,__4#direct_5,__4#direct_6,__4#direct_7;int(1..)]),
+sum([toInt(__5#direct_1),toInt(__5#direct_2);int(1..)]) <= 1,
+or([__5#direct_1,__5#direct_2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-(z) <-> (and([__11 = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),__8,__9;int(1..)])),
-__10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
-satElement([m#components_1,m#components_2,m#components_3;int(1..)], sum([product([1,(__10 - -1);int(1..)]),1;int(1..)]), __11),
-or([__10#direct_1,__10#direct_2,__10#direct_3,__10#direct_4,__10#direct_5,__10#direct_6,__10#direct_7;int(1..)]),
-or([__11#direct_1,__11#direct_2;int(1..)])
+(z) <-> (and([__5 = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2]),__2,__3;int(1..)])),
+__4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
+satElement([m#components_1,m#components_2,m#components_3;int(1..)], sum([product([1,(__4 - -1);int(1..)]),1;int(1..)]), __5),
+or([__4#direct_1,__4#direct_2,__4#direct_3,__4#direct_4,__4#direct_5,__4#direct_6,__4#direct_7;int(1..)]),
+or([__5#direct_1,__5#direct_2;int(1..)])
 new SAT encoding decisions:
-  at-most-one(__11#direct_1, __11#direct_2) using None
+  at-most-one(__5#direct_1, __5#direct_2) using None
 
 --
 
-satElement([m#components_1,m#components_2,m#components_3;int(1..)], sum([product([1,(__10 - -1);int(1..)]),1;int(1..)]), __11)
+satElement([m#components_1,m#components_2,m#components_3;int(1..)], sum([product([1,(__4 - -1);int(1..)]),1;int(1..)]), __5)
    ~~> select_element ([("SAT", 18500)])
 true
 new SAT encoding decisions:
-  element(index=2+weighted(-2*__10#direct_1, -1*__10#direct_2, 0*__10#direct_3, 1*__10#direct_4, 2*__10#direct_5, 3*__10#direct_6, 4*__10#direct_7) with [PbTermGroup { start: 0, end: 7, structure: Choice }] choices(0:__10#direct_1, 1:__10#direct_2, 2:__10#direct_3, 3:__10#direct_4, 4:__10#direct_5, 5:__10#direct_6, 6:__10#direct_7), value=0+weighted(1*__11#direct_1, 2*__11#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:__11#direct_1, 2:__11#direct_2), entries=[1: 0+weighted(1*m#components_1#direct_1, 2*m#components_1#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:m#components_1#direct_1, 2:m#components_1#direct_2), 2: 0+weighted(1*m#components_2#direct_1, 2*m#components_2#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:m#components_2#direct_1, 2:m#components_2#direct_2), 3: 0+weighted(1*m#components_3#direct_1, 2*m#components_3#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:m#components_3#direct_1, 2:m#components_3#direct_2)]) using None, PB None
+  element(index=2+weighted(-2*__4#direct_1, -1*__4#direct_2, 0*__4#direct_3, 1*__4#direct_4, 2*__4#direct_5, 3*__4#direct_6, 4*__4#direct_7) with [PbTermGroup { start: 0, end: 7, structure: Choice }] choices(0:__4#direct_1, 1:__4#direct_2, 2:__4#direct_3, 3:__4#direct_4, 4:__4#direct_5, 5:__4#direct_6, 6:__4#direct_7), value=0+weighted(1*__5#direct_1, 2*__5#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:__5#direct_1, 2:__5#direct_2), entries=[1: 0+weighted(1*m#components_1#direct_1, 2*m#components_1#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:m#components_1#direct_1, 2:m#components_1#direct_2), 2: 0+weighted(1*m#components_2#direct_1, 2*m#components_2#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:m#components_2#direct_1, 2:m#components_2#direct_2), 3: 0+weighted(1*m#components_3#direct_1, 2*m#components_3#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:m#components_3#direct_1, 2:m#components_3#direct_2)]) using None, PB None
 
 --
 
-__11 = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])
+__5 = SATInt(Direct, [c#direct_1,c#direct_2;int(1..)] [1, 2])
    ~~> select_integer_relation ([("SAT", 18500)])
-__12
+__6
 new variables:
-  findAux __12: bool
+  findAux __6: bool
 new SAT encoding decisions:
-  define(__12 <-> integer-weighted(1*__11#direct_1, 2*__11#direct_2, -1*c#direct_1, -2*c#direct_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }]
+  define(__6 <-> integer-weighted(1*__5#direct_1, 2*__5#direct_2, -1*c#direct_1, -2*c#direct_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }]
 
 --
 
-or([__10#direct_1,__10#direct_2,__10#direct_3,__10#direct_4,__10#direct_5,__10#direct_6,__10#direct_7;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> or([__10#direct_1,__10#direct_2,__10#direct_3,__10#direct_4,__10#direct_5,__10#direct_6,__10#direct_7;int(1..)])) using tseitin
-
---
-
-or([__11#direct_1,__11#direct_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> or([__11#direct_1,__11#direct_2;int(1..)])) using tseitin
-
---
-
-and([__12,__8,__9;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__15
-new variables:
-  findAux __15: bool
-new SAT encoding decisions:
-  define(__15 <-> and([__12,__8,__9;int(1..)])) using tseitin
-
---
-
-(z) <-> (__15)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__16
-new variables:
-  findAux __16: bool
-new SAT encoding decisions:
-  define(__16 <-> (z) <-> (__15)) using tseitin
-
---
-
-__16,
-__10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
+(z) <-> (and([__6,__2,__3;int(1..)])),
+__4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
 true,
-__13,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
+or([__4#direct_1,__4#direct_2,__4#direct_3,__4#direct_4,__4#direct_5,__4#direct_6,__4#direct_7;int(1..)]),
+or([__5#direct_1,__5#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+__4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
 true,
-__13,
-__14
+or([__4#direct_1,__4#direct_2,__4#direct_3,__4#direct_4,__4#direct_5,__4#direct_6,__4#direct_7;int(1..)]),
+or([__5#direct_1,__5#direct_2;int(1..)])
 new SAT encoding decisions:
-  assert(__16) using tseitin
+  assert((z) <-> (and([__6,__2,__3;int(1..)]))) using tseitin
 
 --
 
-__10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
+__4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
 true,
-__13,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
+or([__4#direct_1,__4#direct_2,__4#direct_3,__4#direct_4,__4#direct_5,__4#direct_6,__4#direct_7;int(1..)]),
+or([__5#direct_1,__5#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+__4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
 true,
-__14
+or([__5#direct_1,__5#direct_2;int(1..)])
 new SAT encoding decisions:
-  assert(__13) using tseitin
+  assert(or([__4#direct_1,__4#direct_2,__4#direct_3,__4#direct_4,__4#direct_5,__4#direct_6,__4#direct_7;int(1..)])) using tseitin
 
 --
 
-__10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
+__4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
 true,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__10 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
+or([__5#direct_1,__5#direct_2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+__4 =aux sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)]),
 true
 new SAT encoding decisions:
-  assert(__14) using tseitin
+  assert(or([__5#direct_1,__5#direct_2;int(1..)])) using tseitin
 
 --
 
 sum([SATInt(Direct, [a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)] [-1, 2]),SATInt(Direct, [b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)] [-1, 2]);int(1..)])
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
-sum([SATInt(Log, [__17,__18,a#direct_1;int(1..)] [-1, 2]),SATInt(Log, [__19,__20,b#direct_1;int(1..)] [-1, 2]);int(1..)])
+sum([SATInt(Log, [__7,__8,a#direct_1;int(1..)] [-1, 2]),SATInt(Log, [__9,__10,b#direct_1;int(1..)] [-1, 2]);int(1..)])
 new variables:
-  findAux __17: bool
-  findAux __18: bool
-  findAux __19: bool
-  findAux __20: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
 new SAT encoding decisions:
-  define(__17 <-> or([a#direct_1,a#direct_3;int(1..)])) using tseitin
-  define(__18 <-> or([a#direct_1,a#direct_4;int(1..)])) using tseitin
-  define(__19 <-> or([b#direct_1,b#direct_3;int(1..)])) using tseitin
-  define(__20 <-> or([b#direct_1,b#direct_4;int(1..)])) using tseitin
+  define(__7 <-> or([a#direct_1,a#direct_3;int(1..)])) using tseitin
+  define(__8 <-> or([a#direct_1,a#direct_4;int(1..)])) using tseitin
+  define(__9 <-> or([b#direct_1,b#direct_3;int(1..)])) using tseitin
+  define(__10 <-> or([b#direct_1,b#direct_4;int(1..)])) using tseitin
 
 --
 
-__10 =aux sum([SATInt(Log, [__17,__18,a#direct_1;int(1..)] [-1, 2]),SATInt(Log, [__19,__20,b#direct_1;int(1..)] [-1, 2]);int(1..)])
+__4 =aux sum([SATInt(Log, [__7,__8,a#direct_1;int(1..)] [-1, 2]),SATInt(Log, [__9,__10,b#direct_1;int(1..)] [-1, 2]);int(1..)])
    ~~> aux_declaration_is_equality ([("SAT", 2000)])
-__10 = sum([SATInt(Log, [__17,__18,a#direct_1;int(1..)] [-1, 2]),SATInt(Log, [__19,__20,b#direct_1;int(1..)] [-1, 2]);int(1..)])
+__4 = sum([SATInt(Log, [__7,__8,a#direct_1;int(1..)] [-1, 2]),SATInt(Log, [__9,__10,b#direct_1;int(1..)] [-1, 2]);int(1..)])
 
 --
 
-__10 = sum([SATInt(Log, [__17,__18,a#direct_1;int(1..)] [-1, 2]),SATInt(Log, [__19,__20,b#direct_1;int(1..)] [-1, 2]);int(1..)])
+__4 = sum([SATInt(Log, [__7,__8,a#direct_1;int(1..)] [-1, 2]),SATInt(Log, [__9,__10,b#direct_1;int(1..)] [-1, 2]);int(1..)])
    ~~> select_integer_relation ([("SAT", 18500)])
-__21
+__11
 new variables:
-  findAux __21: bool
+  findAux __11: bool
 new SAT encoding decisions:
-  define(__21 <-> integer-weighted(-2*__10#direct_1, -1*__10#direct_2, 0*__10#direct_3, 1*__10#direct_4, 2*__10#direct_5, 3*__10#direct_6, 4*__10#direct_7, -1*__17, -2*__18, 4*a#direct_1, -1*__19, -2*__20, 4*b#direct_1) Equal 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 10, structure: BoundedBinary { lower: -2, upper: 1 } }, PbTermGroup { start: 10, end: 13, structure: BoundedBinary { lower: -2, upper: 1 } }]
+  define(__11 <-> integer-weighted(-2*__4#direct_1, -1*__4#direct_2, 0*__4#direct_3, 1*__4#direct_4, 2*__4#direct_5, 3*__4#direct_6, 4*__4#direct_7, -1*__7, -2*__8, 4*a#direct_1, -1*__9, -2*__10, 4*b#direct_1) Equal 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 10, structure: BoundedBinary { lower: -2, upper: 1 } }, PbTermGroup { start: 10, end: 13, structure: BoundedBinary { lower: -2, upper: 1 } }]
 
 --
 
-__21,
+__11,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__21) using tseitin
+  assert(__11) using tseitin
 
 --
 
@@ -839,33 +697,23 @@ findAux __0: bool
 findAux __1: bool
 findAux __2: bool
 findAux __3: bool
-findAux __4: bool
-findAux __5: bool
+findAux __4: int(-2..4)
+findAux __5: int(1..2)
+findAux __4#direct_1: bool
+findAux __4#direct_2: bool
+findAux __4#direct_3: bool
+findAux __4#direct_4: bool
+findAux __4#direct_5: bool
+findAux __4#direct_6: bool
+findAux __4#direct_7: bool
+findAux __5#direct_1: bool
+findAux __5#direct_2: bool
 findAux __6: bool
 findAux __7: bool
 findAux __8: bool
 findAux __9: bool
-findAux __10: int(-2..4)
-findAux __11: int(1..2)
-findAux __10#direct_1: bool
-findAux __10#direct_2: bool
-findAux __10#direct_3: bool
-findAux __10#direct_4: bool
-findAux __10#direct_5: bool
-findAux __10#direct_6: bool
-findAux __10#direct_7: bool
-findAux __11#direct_1: bool
-findAux __11#direct_2: bool
-findAux __12: bool
-findAux __13: bool
-findAux __14: bool
-findAux __15: bool
-findAux __16: bool
-findAux __17: bool
-findAux __18: bool
-findAux __19: bool
-findAux __20: bool
-findAux __21: bool
+findAux __10: bool
+findAux __11: bool
 
 such that
 
@@ -876,42 +724,32 @@ sat encoding decisions:
 at-most-one(c#direct_1, c#direct_2) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
 at-most-one(a#direct_1, a#direct_2, a#direct_3, a#direct_4) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
 at-most-one(b#direct_1, b#direct_2, b#direct_3, b#direct_4) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
+assert(or([c#direct_1,c#direct_2;int(1..)])) using tseitin,
+assert(or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])) using tseitin,
+assert(or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)])) using tseitin,
 at-most-one(m#components_1#direct_1, m#components_1#direct_2) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
 at-most-one(m#components_2#direct_1, m#components_2#direct_2) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
 at-most-one(m#components_3#direct_1, m#components_3#direct_2) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
-define(__0 <-> or([c#direct_1,c#direct_2;int(1..)])) using tseitin,
-define(__1 <-> or([a#direct_1,a#direct_2,a#direct_3,a#direct_4;int(1..)])) using tseitin,
-define(__2 <-> or([b#direct_1,b#direct_2,b#direct_3,b#direct_4;int(1..)])) using tseitin,
-define(__3 <-> or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])) using tseitin,
-define(__4 <-> or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])) using tseitin,
-define(__5 <-> or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])) using tseitin,
+assert(or([m#components_1#direct_1,m#components_1#direct_2;int(1..)])) using tseitin,
+assert(or([m#components_2#direct_1,m#components_2#direct_2;int(1..)])) using tseitin,
+assert(or([m#components_3#direct_1,m#components_3#direct_2;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(1*m#components_2#direct_1, 2*m#components_2#direct_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 assert(__0) using tseitin,
+define(__1 <-> integer-weighted(1*m#components_3#direct_1, 2*m#components_3#direct_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
 assert(__1) using tseitin,
-assert(__2) using tseitin,
-assert(__3) using tseitin,
-assert(__4) using tseitin,
-assert(__5) using tseitin,
-define(__6 <-> integer-weighted(1*m#components_2#direct_1, 2*m#components_2#direct_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
-assert(__6) using tseitin,
-define(__7 <-> integer-weighted(1*m#components_3#direct_1, 2*m#components_3#direct_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
-assert(__7) using tseitin,
-define(__8 <-> integer-weighted(-1*a#direct_1, 0*a#direct_2, 1*a#direct_3, 2*a#direct_4, -1*b#direct_1, 0*b#direct_2, 1*b#direct_3, 2*b#direct_4) GreaterEqual -1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }, PbTermGroup { start: 4, end: 8, structure: Choice }],
-define(__9 <-> integer-weighted(-1*a#direct_1, 0*a#direct_2, 1*a#direct_3, 2*a#direct_4, -1*b#direct_1, 0*b#direct_2, 1*b#direct_3, 2*b#direct_4) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }, PbTermGroup { start: 4, end: 8, structure: Choice }],
-at-most-one(__10#direct_1, __10#direct_2, __10#direct_3, __10#direct_4, __10#direct_5, __10#direct_6, __10#direct_7) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
-at-most-one(__11#direct_1, __11#direct_2) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
-element(index=2+weighted(-2*__10#direct_1, -1*__10#direct_2, 0*__10#direct_3, 1*__10#direct_4, 2*__10#direct_5, 3*__10#direct_6, 4*__10#direct_7) with [PbTermGroup { start: 0, end: 7, structure: Choice }] choices(0:__10#direct_1, 1:__10#direct_2, 2:__10#direct_3, 3:__10#direct_4, 4:__10#direct_5, 5:__10#direct_6, 6:__10#direct_7), value=0+weighted(1*__11#direct_1, 2*__11#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:__11#direct_1, 2:__11#direct_2), entries=[1: 0+weighted(1*m#components_1#direct_1, 2*m#components_1#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:m#components_1#direct_1, 2:m#components_1#direct_2), 2: 0+weighted(1*m#components_2#direct_1, 2*m#components_2#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:m#components_2#direct_1, 2:m#components_2#direct_2), 3: 0+weighted(1*m#components_3#direct_1, 2*m#components_3#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:m#components_3#direct_1, 2:m#components_3#direct_2)]) using Some(EncodingSelection { algorithm: Support, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
-define(__12 <-> integer-weighted(1*__11#direct_1, 2*__11#direct_2, -1*c#direct_1, -2*c#direct_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
-define(__13 <-> or([__10#direct_1,__10#direct_2,__10#direct_3,__10#direct_4,__10#direct_5,__10#direct_6,__10#direct_7;int(1..)])) using tseitin,
-define(__14 <-> or([__11#direct_1,__11#direct_2;int(1..)])) using tseitin,
-define(__15 <-> and([__12,__8,__9;int(1..)])) using tseitin,
-define(__16 <-> (z) <-> (__15)) using tseitin,
-assert(__16) using tseitin,
-assert(__13) using tseitin,
-assert(__14) using tseitin,
-define(__17 <-> or([a#direct_1,a#direct_3;int(1..)])) using tseitin,
-define(__18 <-> or([a#direct_1,a#direct_4;int(1..)])) using tseitin,
-define(__19 <-> or([b#direct_1,b#direct_3;int(1..)])) using tseitin,
-define(__20 <-> or([b#direct_1,b#direct_4;int(1..)])) using tseitin,
-define(__21 <-> integer-weighted(-2*__10#direct_1, -1*__10#direct_2, 0*__10#direct_3, 1*__10#direct_4, 2*__10#direct_5, 3*__10#direct_6, 4*__10#direct_7, -1*__17, -2*__18, 4*a#direct_1, -1*__19, -2*__20, 4*b#direct_1) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 10, structure: BoundedBinary { lower: -2, upper: 1 } }, PbTermGroup { start: 10, end: 13, structure: BoundedBinary { lower: -2, upper: 1 } }],
-assert(__21) using tseitin
+define(__2 <-> integer-weighted(-1*a#direct_1, 0*a#direct_2, 1*a#direct_3, 2*a#direct_4, -1*b#direct_1, 0*b#direct_2, 1*b#direct_3, 2*b#direct_4) GreaterEqual -1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }, PbTermGroup { start: 4, end: 8, structure: Choice }],
+define(__3 <-> integer-weighted(-1*a#direct_1, 0*a#direct_2, 1*a#direct_3, 2*a#direct_4, -1*b#direct_1, 0*b#direct_2, 1*b#direct_3, 2*b#direct_4) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Choice }, PbTermGroup { start: 4, end: 8, structure: Choice }],
+at-most-one(__4#direct_1, __4#direct_2, __4#direct_3, __4#direct_4, __4#direct_5, __4#direct_6, __4#direct_7) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
+at-most-one(__5#direct_1, __5#direct_2) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
+element(index=2+weighted(-2*__4#direct_1, -1*__4#direct_2, 0*__4#direct_3, 1*__4#direct_4, 2*__4#direct_5, 3*__4#direct_6, 4*__4#direct_7) with [PbTermGroup { start: 0, end: 7, structure: Choice }] choices(0:__4#direct_1, 1:__4#direct_2, 2:__4#direct_3, 3:__4#direct_4, 4:__4#direct_5, 5:__4#direct_6, 6:__4#direct_7), value=0+weighted(1*__5#direct_1, 2*__5#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:__5#direct_1, 2:__5#direct_2), entries=[1: 0+weighted(1*m#components_1#direct_1, 2*m#components_1#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:m#components_1#direct_1, 2:m#components_1#direct_2), 2: 0+weighted(1*m#components_2#direct_1, 2*m#components_2#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:m#components_2#direct_1, 2:m#components_2#direct_2), 3: 0+weighted(1*m#components_3#direct_1, 2*m#components_3#direct_2) with [PbTermGroup { start: 0, end: 2, structure: Choice }] choices(1:m#components_3#direct_1, 2:m#components_3#direct_2)]) using Some(EncodingSelection { algorithm: Support, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
+define(__6 <-> integer-weighted(1*__5#direct_1, 2*__5#direct_2, -1*c#direct_1, -2*c#direct_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }, PbTermGroup { start: 2, end: 4, structure: Choice }],
+assert((z) <-> (and([__6,__2,__3;int(1..)]))) using tseitin,
+assert(or([__4#direct_1,__4#direct_2,__4#direct_3,__4#direct_4,__4#direct_5,__4#direct_6,__4#direct_7;int(1..)])) using tseitin,
+assert(or([__5#direct_1,__5#direct_2;int(1..)])) using tseitin,
+define(__7 <-> or([a#direct_1,a#direct_3;int(1..)])) using tseitin,
+define(__8 <-> or([a#direct_1,a#direct_4;int(1..)])) using tseitin,
+define(__9 <-> or([b#direct_1,b#direct_3;int(1..)])) using tseitin,
+define(__10 <-> or([b#direct_1,b#direct_4;int(1..)])) using tseitin,
+define(__11 <-> integer-weighted(-2*__4#direct_1, -1*__4#direct_2, 0*__4#direct_3, 1*__4#direct_4, 2*__4#direct_5, 3*__4#direct_6, 4*__4#direct_7, -1*__7, -2*__8, 4*a#direct_1, -1*__9, -2*__10, 4*b#direct_1) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }, PbTermGroup { start: 7, end: 10, structure: BoundedBinary { lower: -2, upper: 1 } }, PbTermGroup { start: 10, end: 13, structure: BoundedBinary { lower: -2, upper: 1 } }],
+assert(__11) using tseitin
 

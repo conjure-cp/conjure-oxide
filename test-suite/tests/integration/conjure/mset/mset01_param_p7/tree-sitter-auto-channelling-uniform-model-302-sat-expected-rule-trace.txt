@@ -89,6 +89,33 @@ new SAT encoding decisions:
 
 --
 
+mset(2,2) = x,
+or([x#repetition_2 < 2,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([x#repetition_2 < 3,or([SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]);int(1..)]),
+or([x#repetition_2 < 4,or([SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]);int(1..)]),
+or([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+mset(2,2) = x,
+or([x#repetition_2 < 2,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([x#repetition_2 < 3,or([SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]);int(1..)]),
+or([x#repetition_2 < 4,or([SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]);int(1..)]),
+or([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+new SAT encoding decisions:
+  assert(or([and([__1,__2;int(1..)]);int(1..)])) using tseitin
+
+--
+
 x#repetition_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#repetition_2
@@ -471,8 +498,7 @@ or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
 or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
 or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
 sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
-or([and([__1,__2;int(1..)]);int(1..)])
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 mset(2,2) = x,
 or([__3,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
@@ -483,8 +509,7 @@ or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
 or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
 or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
 sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
-or([and([__1,__2;int(1..)]);int(1..)])
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
 new variables:
   find x#repetition_1#components_1#twos_complement_1: bool
   find x#repetition_1#components_1#twos_complement_2: bool
@@ -583,6 +608,126 @@ new variables:
   findAux __24: bool
 new SAT encoding decisions:
   define(__24 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) LessEqual 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+
+--
+
+mset(2,2) = x,
+or([__3,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([__4,or([SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]);int(1..)]),
+or([__5,or([SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]);int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
+or([and([__17,__18;int(1..)]);int(1..)]),
+or([and([__19,__20;int(1..)]);int(1..)]),
+or([and([__21,__22;int(1..)]);int(1..)]),
+or([and([__23,__24;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+mset(2,2) = x,
+or([__3,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([__4,or([SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]);int(1..)]),
+or([__5,or([SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]);int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
+or([and([__19,__20;int(1..)]);int(1..)]),
+or([and([__21,__22;int(1..)]);int(1..)]),
+or([and([__23,__24;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(or([and([__17,__18;int(1..)]);int(1..)])) using tseitin
+
+--
+
+mset(2,2) = x,
+or([__3,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([__4,or([SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]);int(1..)]),
+or([__5,or([SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]);int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
+or([and([__19,__20;int(1..)]);int(1..)]),
+or([and([__21,__22;int(1..)]);int(1..)]),
+or([and([__23,__24;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+mset(2,2) = x,
+or([__3,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([__4,or([SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]);int(1..)]),
+or([__5,or([SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]);int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
+or([and([__21,__22;int(1..)]);int(1..)]),
+or([and([__23,__24;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(or([and([__19,__20;int(1..)]);int(1..)])) using tseitin
+
+--
+
+mset(2,2) = x,
+or([__3,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([__4,or([SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]);int(1..)]),
+or([__5,or([SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]);int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
+or([and([__21,__22;int(1..)]);int(1..)]),
+or([and([__23,__24;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+mset(2,2) = x,
+or([__3,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([__4,or([SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]);int(1..)]),
+or([__5,or([SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]);int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
+or([and([__23,__24;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(or([and([__21,__22;int(1..)]);int(1..)])) using tseitin
+
+--
+
+mset(2,2) = x,
+or([__3,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([__4,or([SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]);int(1..)]),
+or([__5,or([SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]);int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
+or([and([__23,__24;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+mset(2,2) = x,
+or([__3,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([__4,or([SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]);int(1..)]),
+or([__5,or([SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]);int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+new SAT encoding decisions:
+  assert(or([and([__23,__24;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -784,6 +929,32 @@ new SAT encoding decisions:
 
 --
 
+and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__3,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([__4,or([SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]);int(1..)]),
+or([__5,or([SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]);int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([true,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__3,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([__4,or([SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]);int(1..)]),
+or([__5,or([SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]);int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+new SAT encoding decisions:
+  assert(__25) using tseitin
+
+--
+
 or([__3,or([SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)])
@@ -802,42 +973,6 @@ or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),and([SafeI
 
 --
 
-or([and([__19,__20;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__19,__20;int(1..)])
-
---
-
-or([and([__21,__22;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__21,__22;int(1..)])
-
---
-
-or([and([__23,__24;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__23,__24;int(1..)])
-
---
-
-or([and([__17,__18;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__17,__18;int(1..)])
-
---
-
-or([and([__1,__2;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__1,__2;int(1..)])
-
---
-
-and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2])
-
---
-
 and([SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3])
@@ -850,476 +985,9 @@ SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4])
 
 --
 
-and([__19,__20;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__34
-new variables:
-  findAux __34: bool
-new SAT encoding decisions:
-  define(__34 <-> and([__19,__20;int(1..)])) using tseitin
-
---
-
-and([__21,__22;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__35
-new variables:
-  findAux __35: bool
-new SAT encoding decisions:
-  define(__35 <-> and([__21,__22;int(1..)])) using tseitin
-
---
-
-and([__23,__24;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__36
-new variables:
-  findAux __36: bool
-new SAT encoding decisions:
-  define(__36 <-> and([__23,__24;int(1..)])) using tseitin
-
---
-
-and([__17,__18;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__37
-new variables:
-  findAux __37: bool
-new SAT encoding decisions:
-  define(__37 <-> and([__17,__18;int(1..)])) using tseitin
-
---
-
-and([__1,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__38
-new variables:
-  findAux __38: bool
-new SAT encoding decisions:
-  define(__38 <-> and([__1,__2;int(1..)])) using tseitin
-
---
-
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-or([__4,SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
-__38,
-__37,
-__34,
-__35,
-__36
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-or([__4,SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
-__37,
-__34,
-__35,
-__36
-new SAT encoding decisions:
-  assert(__38) using tseitin
-
---
-
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-or([__4,SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
-__37,
-__34,
-__35,
-__36
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-or([__4,SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
-__34,
-__35,
-__36
-new SAT encoding decisions:
-  assert(__37) using tseitin
-
---
-
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-or([__4,SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
-__34,
-__35,
-__36
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-or([__4,SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
-__35,
-__36
-new SAT encoding decisions:
-  assert(__34) using tseitin
-
---
-
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-or([__4,SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
-__35,
-__36
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-or([__4,SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
-__36
-new SAT encoding decisions:
-  assert(__35) using tseitin
-
---
-
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-or([__4,SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2,
-__36
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)]),
-or([__4,SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-new SAT encoding decisions:
-  assert(__36) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_1
-
---
-
-x#repetition_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_1
-
---
-
-x#repetition_1#components_1
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 2])
-
---
-
-SafeIndex(x#repetition_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_2
-
---
-
-x#repetition_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_2
-
---
-
-SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 2]) < x#repetition_1#components_2
-   ~~> select_integer_relation ([("SAT", 18500)])
-__39
-new variables:
-  findAux __39: bool
-new SAT encoding decisions:
-  define(__39 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3, -1*x#repetition_1#components_2#twos_complement_1, -2*x#repetition_1#components_2#twos_complement_2, 4*x#repetition_1#components_2#twos_complement_3) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
-
---
-
-SafeIndex(x#repetition_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_1
-
---
-
-x#repetition_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_1
-
---
-
-x#repetition_1#components_1
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 2])
-
---
-
-SafeIndex(x#repetition_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_2
-
---
-
-x#repetition_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_2
-
---
-
-SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 2]) = x#repetition_1#components_2
-   ~~> select_integer_relation ([("SAT", 18500)])
-__40
-new variables:
-  findAux __40: bool
-new SAT encoding decisions:
-  define(__40 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3, -1*x#repetition_1#components_2#twos_complement_1, -2*x#repetition_1#components_2#twos_complement_2, 4*x#repetition_1#components_2#twos_complement_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
-
---
-
-or([__3,__39,__40;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__41
-new variables:
-  findAux __41: bool
-new SAT encoding decisions:
-  define(__41 <-> or([__3,__39,__40;int(1..)])) using tseitin
-
---
-
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-__41,
-or([__4,SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__4,SafeIndex(x#repetition_1,[2]) < SafeIndex(x#repetition_1,[3]),SafeIndex(x#repetition_1,[2]) = SafeIndex(x#repetition_1,[3]);int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-new SAT encoding decisions:
-  assert(__41) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_2
-
---
-
-x#repetition_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_2
-
---
-
-x#repetition_1#components_2
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [x#repetition_1#components_2#twos_complement_1,x#repetition_1#components_2#twos_complement_2,x#repetition_1#components_2#twos_complement_3;int(1..)] [1, 2])
-
---
-
-SafeIndex(x#repetition_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_3
-
---
-
-x#repetition_1#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_3
-
---
-
-SATInt(Log, [x#repetition_1#components_2#twos_complement_1,x#repetition_1#components_2#twos_complement_2,x#repetition_1#components_2#twos_complement_3;int(1..)] [1, 2]) < x#repetition_1#components_3
-   ~~> select_integer_relation ([("SAT", 18500)])
-__42
-new variables:
-  findAux __42: bool
-new SAT encoding decisions:
-  define(__42 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3, -1*x#repetition_1#components_3#twos_complement_1, -2*x#repetition_1#components_3#twos_complement_2, 4*x#repetition_1#components_3#twos_complement_3) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
-
---
-
-SafeIndex(x#repetition_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_2
-
---
-
-x#repetition_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_2
-
---
-
-x#repetition_1#components_2
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [x#repetition_1#components_2#twos_complement_1,x#repetition_1#components_2#twos_complement_2,x#repetition_1#components_2#twos_complement_3;int(1..)] [1, 2])
-
---
-
-SafeIndex(x#repetition_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_3
-
---
-
-x#repetition_1#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_3
-
---
-
-SATInt(Log, [x#repetition_1#components_2#twos_complement_1,x#repetition_1#components_2#twos_complement_2,x#repetition_1#components_2#twos_complement_3;int(1..)] [1, 2]) = x#repetition_1#components_3
-   ~~> select_integer_relation ([("SAT", 18500)])
-__43
-new variables:
-  findAux __43: bool
-new SAT encoding decisions:
-  define(__43 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3, -1*x#repetition_1#components_3#twos_complement_1, -2*x#repetition_1#components_3#twos_complement_2, 4*x#repetition_1#components_3#twos_complement_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
-
---
-
-or([__4,__42,__43;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__44
-new variables:
-  findAux __44: bool
-new SAT encoding decisions:
-  define(__44 <-> or([__4,__42,__43;int(1..)])) using tseitin
-
---
-
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-__44,
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),SafeIndex(x#repetition_1,[3]) = SafeIndex(x#repetition_1,[4]);int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-new SAT encoding decisions:
-  assert(__44) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_3
-
---
-
-x#repetition_1#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_3
-
---
-
-x#repetition_1#components_3
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [x#repetition_1#components_3#twos_complement_1,x#repetition_1#components_3#twos_complement_2,x#repetition_1#components_3#twos_complement_3;int(1..)] [1, 2])
-
---
-
-SafeIndex(x#repetition_1,[4])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_4
-
---
-
-x#repetition_1#components_4
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_4
-
---
-
-SATInt(Log, [x#repetition_1#components_3#twos_complement_1,x#repetition_1#components_3#twos_complement_2,x#repetition_1#components_3#twos_complement_3;int(1..)] [1, 2]) < x#repetition_1#components_4
-   ~~> select_integer_relation ([("SAT", 18500)])
-__45
-new variables:
-  findAux __45: bool
-new SAT encoding decisions:
-  define(__45 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3, -1*x#repetition_1#components_4#twos_complement_1, -2*x#repetition_1#components_4#twos_complement_2, 4*x#repetition_1#components_4#twos_complement_3) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
+and([SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#repetition_1,[1]) = SafeIndex(x#repetition_1,[2])
 
 --
 
@@ -1355,469 +1023,667 @@ x#repetition_1#components_4
 
 SATInt(Log, [x#repetition_1#components_3#twos_complement_1,x#repetition_1#components_3#twos_complement_2,x#repetition_1#components_3#twos_complement_3;int(1..)] [1, 2]) = x#repetition_1#components_4
    ~~> select_integer_relation ([("SAT", 18500)])
+__34
+new variables:
+  findAux __34: bool
+new SAT encoding decisions:
+  define(__34 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3, -1*x#repetition_1#components_4#twos_complement_1, -2*x#repetition_1#components_4#twos_complement_2, 4*x#repetition_1#components_4#twos_complement_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+x#repetition_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_1
+
+--
+
+x#repetition_1#components_1
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 2])
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+x#repetition_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_2
+
+--
+
+SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 2]) = x#repetition_1#components_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__35
+new variables:
+  findAux __35: bool
+new SAT encoding decisions:
+  define(__35 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3, -1*x#repetition_1#components_2#twos_complement_1, -2*x#repetition_1#components_2#twos_complement_2, 4*x#repetition_1#components_2#twos_complement_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+x#repetition_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_2
+
+--
+
+x#repetition_1#components_2
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [x#repetition_1#components_2#twos_complement_1,x#repetition_1#components_2#twos_complement_2,x#repetition_1#components_2#twos_complement_3;int(1..)] [1, 2])
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+x#repetition_1#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_3
+
+--
+
+SATInt(Log, [x#repetition_1#components_2#twos_complement_1,x#repetition_1#components_2#twos_complement_2,x#repetition_1#components_2#twos_complement_3;int(1..)] [1, 2]) = x#repetition_1#components_3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__36
+new variables:
+  findAux __36: bool
+new SAT encoding decisions:
+  define(__36 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3, -1*x#repetition_1#components_3#twos_complement_1, -2*x#repetition_1#components_3#twos_complement_2, 4*x#repetition_1#components_3#twos_complement_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+x#repetition_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_2
+
+--
+
+x#repetition_1#components_2
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [x#repetition_1#components_2#twos_complement_1,x#repetition_1#components_2#twos_complement_2,x#repetition_1#components_2#twos_complement_3;int(1..)] [1, 2])
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+x#repetition_1#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_3
+
+--
+
+SATInt(Log, [x#repetition_1#components_2#twos_complement_1,x#repetition_1#components_2#twos_complement_2,x#repetition_1#components_2#twos_complement_3;int(1..)] [1, 2]) < x#repetition_1#components_3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__37
+new variables:
+  findAux __37: bool
+new SAT encoding decisions:
+  define(__37 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3, -1*x#repetition_1#components_3#twos_complement_1, -2*x#repetition_1#components_3#twos_complement_2, 4*x#repetition_1#components_3#twos_complement_3) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
+
+--
+
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),__35;int(1..)]),
+or([__4,__37,__36;int(1..)]),
+or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),__34;int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__3,SafeIndex(x#repetition_1,[1]) < SafeIndex(x#repetition_1,[2]),__35;int(1..)]),
+or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),__34;int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+new SAT encoding decisions:
+  assert(or([__4,__37,__36;int(1..)])) using tseitin
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+x#repetition_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_1
+
+--
+
+x#repetition_1#components_1
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 2])
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+x#repetition_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_2
+
+--
+
+SATInt(Log, [x#repetition_1#components_1#twos_complement_1,x#repetition_1#components_1#twos_complement_2,x#repetition_1#components_1#twos_complement_3;int(1..)] [1, 2]) < x#repetition_1#components_2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__38
+new variables:
+  findAux __38: bool
+new SAT encoding decisions:
+  define(__38 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3, -1*x#repetition_1#components_2#twos_complement_1, -2*x#repetition_1#components_2#twos_complement_2, 4*x#repetition_1#components_2#twos_complement_3) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
+
+--
+
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__3,__38,__35;int(1..)]),
+or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),__34;int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__5,SafeIndex(x#repetition_1,[3]) < SafeIndex(x#repetition_1,[4]),__34;int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+new SAT encoding decisions:
+  assert(or([__3,__38,__35;int(1..)])) using tseitin
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+x#repetition_1#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_3
+
+--
+
+x#repetition_1#components_3
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [x#repetition_1#components_3#twos_complement_1,x#repetition_1#components_3#twos_complement_2,x#repetition_1#components_3#twos_complement_3;int(1..)] [1, 2])
+
+--
+
+SafeIndex(x#repetition_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_4
+
+--
+
+x#repetition_1#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_4
+
+--
+
+SATInt(Log, [x#repetition_1#components_3#twos_complement_1,x#repetition_1#components_3#twos_complement_2,x#repetition_1#components_3#twos_complement_3;int(1..)] [1, 2]) < x#repetition_1#components_4
+   ~~> select_integer_relation ([("SAT", 18500)])
+__39
+new variables:
+  findAux __39: bool
+new SAT encoding decisions:
+  define(__39 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3, -1*x#repetition_1#components_4#twos_complement_1, -2*x#repetition_1#components_4#twos_complement_2, 4*x#repetition_1#components_4#twos_complement_3) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
+
+--
+
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__5,__39,__34;int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+new SAT encoding decisions:
+  assert(or([__5,__39,__34;int(1..)])) using tseitin
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+x#repetition_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_1
+
+--
+
+x#repetition_1#components_1 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__40
+new variables:
+  findAux __40: bool
+new SAT encoding decisions:
+  define(__40 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+
+--
+
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__6,__40;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+new SAT encoding decisions:
+  assert(or([__6,__40;int(1..)])) using tseitin
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+x#repetition_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_2
+
+--
+
+x#repetition_1#components_2 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__41
+new variables:
+  findAux __41: bool
+new SAT encoding decisions:
+  define(__41 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+
+--
+
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__0,__41;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+new SAT encoding decisions:
+  assert(or([__0,__41;int(1..)])) using tseitin
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+x#repetition_1#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_3
+
+--
+
+x#repetition_1#components_3 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__42
+new variables:
+  findAux __42: bool
+new SAT encoding decisions:
+  define(__42 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+
+--
+
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__7,__42;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+new SAT encoding decisions:
+  assert(or([__7,__42;int(1..)])) using tseitin
+
+--
+
+SafeIndex(x#repetition_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_4
+
+--
+
+x#repetition_1#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_4
+
+--
+
+x#repetition_1#components_4 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__43
+new variables:
+  findAux __43: bool
+new SAT encoding decisions:
+  define(__43 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+
+--
+
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+or([__8,__43;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
+new SAT encoding decisions:
+  assert(or([__8,__43;int(1..)])) using tseitin
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+x#repetition_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_1
+
+--
+
+x#repetition_1#components_1 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__44
+new variables:
+  findAux __44: bool
+new SAT encoding decisions:
+  define(__44 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+
+--
+
+and([__9,__44;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__45
+new variables:
+  findAux __45: bool
+new SAT encoding decisions:
+  define(__45 <-> and([__9,__44;int(1..)])) using tseitin
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+x#repetition_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#repetition_1#components_2
+
+--
+
+x#repetition_1#components_2 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
 __46
 new variables:
   findAux __46: bool
 new SAT encoding decisions:
-  define(__46 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3, -1*x#repetition_1#components_4#twos_complement_1, -2*x#repetition_1#components_4#twos_complement_2, 4*x#repetition_1#components_4#twos_complement_3) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
+  define(__46 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-or([__5,__45,__46;int(1..)])
+and([__10,__46;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __47
 new variables:
   findAux __47: bool
 new SAT encoding decisions:
-  define(__47 <-> or([__5,__45,__46;int(1..)])) using tseitin
+  define(__47 <-> and([__10,__46;int(1..)])) using tseitin
 
 --
 
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-__47,
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__6,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-new SAT encoding decisions:
-  assert(__47) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[1])
+SafeIndex(x#repetition_1,[3])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_1
+x#repetition_1#components_3
 
 --
 
-x#repetition_1#components_1
+x#repetition_1#components_3
    ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_1
+x#repetition_1#components_3
 
 --
 
-x#repetition_1#components_1 = 1
+x#repetition_1#components_3 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __48
 new variables:
   findAux __48: bool
 new SAT encoding decisions:
-  define(__48 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__48 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-or([__6,__48;int(1..)])
+and([__11,__48;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __49
 new variables:
   findAux __49: bool
 new SAT encoding decisions:
-  define(__49 <-> or([__6,__48;int(1..)])) using tseitin
+  define(__49 <-> and([__11,__48;int(1..)])) using tseitin
 
 --
 
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-__49,
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__0,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-new SAT encoding decisions:
-  assert(__49) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[2])
+SafeIndex(x#repetition_1,[4])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_2
+x#repetition_1#components_4
 
 --
 
-x#repetition_1#components_2
+x#repetition_1#components_4
    ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_2
+x#repetition_1#components_4
 
 --
 
-x#repetition_1#components_2 = 1
+x#repetition_1#components_4 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
 __50
 new variables:
   findAux __50: bool
 new SAT encoding decisions:
-  define(__50 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__50 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-or([__0,__50;int(1..)])
+and([__12,__50;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __51
 new variables:
   findAux __51: bool
 new SAT encoding decisions:
-  define(__51 <-> or([__0,__50;int(1..)])) using tseitin
+  define(__51 <-> and([__12,__50;int(1..)])) using tseitin
 
 --
 
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-__51,
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+sum([toInt(__45),toInt(__47),toInt(__49),toInt(__51);int(1..)]) <= 2,
 sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__7,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
+   ~~> select_cardinality ([("SAT", 20000)])
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
 sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
 new SAT encoding decisions:
-  assert(__51) using tseitin
+  count(__45, __47, __49, __51) AtMost 2 using None
 
 --
 
-SafeIndex(x#repetition_1,[3])
+SafeIndex(x#repetition_1,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_3
+x#repetition_1#components_1
 
 --
 
-x#repetition_1#components_3
+x#repetition_1#components_1
    ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_3
+x#repetition_1#components_1
 
 --
 
-x#repetition_1#components_3 = 1
+x#repetition_1#components_1 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
 __52
 new variables:
   findAux __52: bool
 new SAT encoding decisions:
-  define(__52 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__52 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-or([__7,__52;int(1..)])
+and([__13,__52;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __53
 new variables:
   findAux __53: bool
 new SAT encoding decisions:
-  define(__53 <-> or([__7,__52;int(1..)])) using tseitin
+  define(__53 <-> and([__13,__52;int(1..)])) using tseitin
 
 --
 
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-__53,
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-or([__8,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-new SAT encoding decisions:
-  assert(__53) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[4])
+SafeIndex(x#repetition_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_4
+x#repetition_1#components_2
 
 --
 
-x#repetition_1#components_4
+x#repetition_1#components_2
    ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_4
+x#repetition_1#components_2
 
 --
 
-x#repetition_1#components_4 = 1
+x#repetition_1#components_2 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
 __54
 new variables:
   findAux __54: bool
 new SAT encoding decisions:
-  define(__54 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__54 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-or([__8,__54;int(1..)])
+and([__14,__54;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __55
 new variables:
   findAux __55: bool
 new SAT encoding decisions:
-  define(__55 <-> or([__8,__54;int(1..)])) using tseitin
+  define(__55 <-> and([__14,__54;int(1..)])) using tseitin
 
 --
 
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-__55,
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-sum([toInt(and([__9,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__10,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__11,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__12,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-new SAT encoding decisions:
-  assert(__55) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[1])
+SafeIndex(x#repetition_1,[3])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_1
+x#repetition_1#components_3
 
 --
 
-x#repetition_1#components_1
+x#repetition_1#components_3
    ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_1
+x#repetition_1#components_3
 
 --
 
-x#repetition_1#components_1 = 1
+x#repetition_1#components_3 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
 __56
 new variables:
   findAux __56: bool
 new SAT encoding decisions:
-  define(__56 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__56 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-and([__9,__56;int(1..)])
+and([__15,__56;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __57
 new variables:
   findAux __57: bool
 new SAT encoding decisions:
-  define(__57 <-> and([__9,__56;int(1..)])) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_2
-
---
-
-x#repetition_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_2
-
---
-
-x#repetition_1#components_2 = 1
-   ~~> select_integer_relation ([("SAT", 18500)])
-__58
-new variables:
-  findAux __58: bool
-new SAT encoding decisions:
-  define(__58 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
-
---
-
-and([__10,__58;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__59
-new variables:
-  findAux __59: bool
-new SAT encoding decisions:
-  define(__59 <-> and([__10,__58;int(1..)])) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_3
-
---
-
-x#repetition_1#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_3
-
---
-
-x#repetition_1#components_3 = 1
-   ~~> select_integer_relation ([("SAT", 18500)])
-__60
-new variables:
-  findAux __60: bool
-new SAT encoding decisions:
-  define(__60 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
-
---
-
-and([__11,__60;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__61
-new variables:
-  findAux __61: bool
-new SAT encoding decisions:
-  define(__61 <-> and([__11,__60;int(1..)])) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[4])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_4
-
---
-
-x#repetition_1#components_4
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_4
-
---
-
-x#repetition_1#components_4 = 1
-   ~~> select_integer_relation ([("SAT", 18500)])
-__62
-new variables:
-  findAux __62: bool
-new SAT encoding decisions:
-  define(__62 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
-
---
-
-and([__12,__62;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__63
-new variables:
-  findAux __63: bool
-new SAT encoding decisions:
-  define(__63 <-> and([__12,__62;int(1..)])) using tseitin
-
---
-
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-sum([toInt(__57),toInt(__59),toInt(__61),toInt(__63);int(1..)]) <= 2,
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-   ~~> select_cardinality ([("SAT", 20000)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-sum([toInt(and([__13,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__14,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__15,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__16,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) <= 2
-new SAT encoding decisions:
-  count(__57, __59, __61, __63) AtMost 2 using None
-
---
-
-SafeIndex(x#repetition_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_1
-
---
-
-x#repetition_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_1
-
---
-
-x#repetition_1#components_1 = 2
-   ~~> select_integer_relation ([("SAT", 18500)])
-__64
-new variables:
-  findAux __64: bool
-new SAT encoding decisions:
-  define(__64 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
-
---
-
-and([__13,__64;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__65
-new variables:
-  findAux __65: bool
-new SAT encoding decisions:
-  define(__65 <-> and([__13,__64;int(1..)])) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_2
-
---
-
-x#repetition_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_2
-
---
-
-x#repetition_1#components_2 = 2
-   ~~> select_integer_relation ([("SAT", 18500)])
-__66
-new variables:
-  findAux __66: bool
-new SAT encoding decisions:
-  define(__66 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
-
---
-
-and([__14,__66;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__67
-new variables:
-  findAux __67: bool
-new SAT encoding decisions:
-  define(__67 <-> and([__14,__66;int(1..)])) using tseitin
-
---
-
-SafeIndex(x#repetition_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_3
-
---
-
-x#repetition_1#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#repetition_1#components_3
-
---
-
-x#repetition_1#components_3 = 2
-   ~~> select_integer_relation ([("SAT", 18500)])
-__68
-new variables:
-  findAux __68: bool
-new SAT encoding decisions:
-  define(__68 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
-
---
-
-and([__15,__68;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__69
-new variables:
-  findAux __69: bool
-new SAT encoding decisions:
-  define(__69 <-> and([__15,__68;int(1..)])) using tseitin
+  define(__57 <-> and([__15,__56;int(1..)])) using tseitin
 
 --
 
@@ -1835,30 +1701,30 @@ x#repetition_1#components_4
 
 x#repetition_1#components_4 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__70
+__58
 new variables:
-  findAux __70: bool
+  findAux __58: bool
 new SAT encoding decisions:
-  define(__70 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__58 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-and([__16,__70;int(1..)])
+and([__16,__58;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__71
+__59
 new variables:
-  findAux __71: bool
+  findAux __59: bool
 new SAT encoding decisions:
-  define(__71 <-> and([__16,__70;int(1..)])) using tseitin
+  define(__59 <-> and([__16,__58;int(1..)])) using tseitin
 
 --
 
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
-sum([toInt(__65),toInt(__67),toInt(__69),toInt(__71);int(1..)]) <= 2
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)]),
+sum([toInt(__53),toInt(__55),toInt(__57),toInt(__59);int(1..)]) <= 2
    ~~> select_cardinality ([("SAT", 20000)])
-and([__25,sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)])
+and([sum([toInt(and([__26,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([__27,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([__28,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([__29,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)])
 new SAT encoding decisions:
-  count(__65, __67, __69, __71) AtMost 2 using None
+  count(__53, __55, __57, __59) AtMost 2 using None
 
 --
 
@@ -1876,21 +1742,21 @@ x#repetition_1#components_1
 
 x#repetition_1#components_1 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__72
+__60
 new variables:
-  findAux __72: bool
+  findAux __60: bool
 new SAT encoding decisions:
-  define(__72 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__60 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-and([__26,__72;int(1..)])
+and([__26,__60;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__73
+__61
 new variables:
-  findAux __73: bool
+  findAux __61: bool
 new SAT encoding decisions:
-  define(__73 <-> and([__26,__72;int(1..)])) using tseitin
+  define(__61 <-> and([__26,__60;int(1..)])) using tseitin
 
 --
 
@@ -1908,21 +1774,21 @@ x#repetition_1#components_2
 
 x#repetition_1#components_2 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__74
+__62
 new variables:
-  findAux __74: bool
+  findAux __62: bool
 new SAT encoding decisions:
-  define(__74 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__62 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-and([__27,__74;int(1..)])
+and([__27,__62;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__75
+__63
 new variables:
-  findAux __75: bool
+  findAux __63: bool
 new SAT encoding decisions:
-  define(__75 <-> and([__27,__74;int(1..)])) using tseitin
+  define(__63 <-> and([__27,__62;int(1..)])) using tseitin
 
 --
 
@@ -1940,21 +1806,21 @@ x#repetition_1#components_3
 
 x#repetition_1#components_3 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__76
+__64
 new variables:
-  findAux __76: bool
+  findAux __64: bool
 new SAT encoding decisions:
-  define(__76 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__64 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-and([__28,__76;int(1..)])
+and([__28,__64;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__77
+__65
 new variables:
-  findAux __77: bool
+  findAux __65: bool
 new SAT encoding decisions:
-  define(__77 <-> and([__28,__76;int(1..)])) using tseitin
+  define(__65 <-> and([__28,__64;int(1..)])) using tseitin
 
 --
 
@@ -1972,29 +1838,35 @@ x#repetition_1#components_4
 
 x#repetition_1#components_4 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__78
+__66
 new variables:
-  findAux __78: bool
+  findAux __66: bool
 new SAT encoding decisions:
-  define(__78 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__66 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-and([__29,__78;int(1..)])
+and([__29,__66;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__79
+__67
 new variables:
-  findAux __79: bool
+  findAux __67: bool
 new SAT encoding decisions:
-  define(__79 <-> and([__29,__78;int(1..)])) using tseitin
+  define(__67 <-> and([__29,__66;int(1..)])) using tseitin
 
 --
 
-and([__25,sum([toInt(__73),toInt(__75),toInt(__77),toInt(__79);int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)])
+and([sum([toInt(__61),toInt(__63),toInt(__65),toInt(__67);int(1..)]) = 0,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
-and([__25,true,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)])
+and([true,sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)])
 new SAT encoding decisions:
-  count(__73, __75, __77, __79) Exactly 0 using None
+  count(__61, __63, __65, __67) Exactly 0 using None
+
+--
+
+and([sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+sum([toInt(and([__30,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([__31,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([__32,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([__33,SafeIndex(x#repetition_1,[4]) = 2;int(1..)]));int(1..)]) = 2
 
 --
 
@@ -2012,21 +1884,21 @@ x#repetition_1#components_1
 
 x#repetition_1#components_1 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__80
+__68
 new variables:
-  findAux __80: bool
+  findAux __68: bool
 new SAT encoding decisions:
-  define(__80 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__68 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-and([__30,__80;int(1..)])
+and([__30,__68;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__81
+__69
 new variables:
-  findAux __81: bool
+  findAux __69: bool
 new SAT encoding decisions:
-  define(__81 <-> and([__30,__80;int(1..)])) using tseitin
+  define(__69 <-> and([__30,__68;int(1..)])) using tseitin
 
 --
 
@@ -2044,21 +1916,21 @@ x#repetition_1#components_2
 
 x#repetition_1#components_2 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__82
+__70
 new variables:
-  findAux __82: bool
+  findAux __70: bool
 new SAT encoding decisions:
-  define(__82 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__70 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-and([__31,__82;int(1..)])
+and([__31,__70;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__83
+__71
 new variables:
-  findAux __83: bool
+  findAux __71: bool
 new SAT encoding decisions:
-  define(__83 <-> and([__31,__82;int(1..)])) using tseitin
+  define(__71 <-> and([__31,__70;int(1..)])) using tseitin
 
 --
 
@@ -2076,21 +1948,21 @@ x#repetition_1#components_3
 
 x#repetition_1#components_3 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__84
+__72
 new variables:
-  findAux __84: bool
+  findAux __72: bool
 new SAT encoding decisions:
-  define(__84 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__72 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-and([__32,__84;int(1..)])
+and([__32,__72;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__85
+__73
 new variables:
-  findAux __85: bool
+  findAux __73: bool
 new SAT encoding decisions:
-  define(__85 <-> and([__32,__84;int(1..)])) using tseitin
+  define(__73 <-> and([__32,__72;int(1..)])) using tseitin
 
 --
 
@@ -2108,43 +1980,29 @@ x#repetition_1#components_4
 
 x#repetition_1#components_4 = 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__86
+__74
 new variables:
-  findAux __86: bool
+  findAux __74: bool
 new SAT encoding decisions:
-  define(__86 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
+  define(__74 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 2) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }]
 
 --
 
-and([__33,__86;int(1..)])
+and([__33,__74;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__87
+__75
 new variables:
-  findAux __87: bool
+  findAux __75: bool
 new SAT encoding decisions:
-  define(__87 <-> and([__33,__86;int(1..)])) using tseitin
+  define(__75 <-> and([__33,__74;int(1..)])) using tseitin
 
 --
 
-and([__25,sum([toInt(__81),toInt(__83),toInt(__85),toInt(__87);int(1..)]) = 2;int(1..)])
+sum([toInt(__69),toInt(__71),toInt(__73),toInt(__75);int(1..)]) = 2
    ~~> select_cardinality ([("SAT", 20000)])
-and([__25,true;int(1..)])
+
 new SAT encoding decisions:
-  count(__81, __83, __85, __87) Exactly 2 using None
-
---
-
-and([__25;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__25
-
---
-
-__25
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__25) using tseitin
+  count(__69, __71, __73, __75) Exactly 2 using None
 
 --
 
@@ -2250,18 +2108,6 @@ findAux __72: bool
 findAux __73: bool
 findAux __74: bool
 findAux __75: bool
-findAux __76: bool
-findAux __77: bool
-findAux __78: bool
-findAux __79: bool
-findAux __80: bool
-findAux __81: bool
-findAux __82: bool
-findAux __83: bool
-findAux __84: bool
-findAux __85: bool
-findAux __86: bool
-findAux __87: bool
 
 such that
 
@@ -2272,6 +2118,7 @@ sat encoding decisions:
 define(__0 <-> integer-weighted(-1*x#repetition_2#twos_complement_1, -2*x#repetition_2#twos_complement_2, -4*x#repetition_2#twos_complement_3, 8*x#repetition_2#twos_complement_4) LessEqual -2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -4, upper: 0 } }],
 define(__1 <-> integer-weighted(1*x#repetition_2#twos_complement_1, 2*x#repetition_2#twos_complement_2, 4*x#repetition_2#twos_complement_3, -8*x#repetition_2#twos_complement_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 4 } }],
 define(__2 <-> integer-weighted(1*x#repetition_2#twos_complement_1, 2*x#repetition_2#twos_complement_2, 4*x#repetition_2#twos_complement_3, -8*x#repetition_2#twos_complement_4) LessEqual 4) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 4 } }],
+assert(or([and([__1,__2;int(1..)]);int(1..)])) using tseitin,
 define(__3 <-> integer-weighted(1*x#repetition_2#twos_complement_1, 2*x#repetition_2#twos_complement_2, 4*x#repetition_2#twos_complement_3, -8*x#repetition_2#twos_complement_4) Less 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 4 } }],
 define(__4 <-> integer-weighted(1*x#repetition_2#twos_complement_1, 2*x#repetition_2#twos_complement_2, 4*x#repetition_2#twos_complement_3, -8*x#repetition_2#twos_complement_4) Less 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 4 } }],
 define(__5 <-> integer-weighted(1*x#repetition_2#twos_complement_1, 2*x#repetition_2#twos_complement_2, 4*x#repetition_2#twos_complement_3, -8*x#repetition_2#twos_complement_4) Less 4) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 4 } }],
@@ -2294,6 +2141,10 @@ define(__21 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1
 define(__22 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
 define(__23 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
 define(__24 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+assert(or([and([__17,__18;int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__19,__20;int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__21,__22;int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__23,__24;int(1..)]);int(1..)])) using tseitin,
 define(__25 <-> integer-weighted(1*x#repetition_2#twos_complement_1, 2*x#repetition_2#twos_complement_2, 4*x#repetition_2#twos_complement_3, -8*x#repetition_2#twos_complement_4) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 4 } }],
 define(__26 <-> integer-weighted(-1*x#repetition_2#twos_complement_1, -2*x#repetition_2#twos_complement_2, -4*x#repetition_2#twos_complement_3, 8*x#repetition_2#twos_complement_4) LessEqual -1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -4, upper: 0 } }],
 define(__27 <-> integer-weighted(-1*x#repetition_2#twos_complement_1, -2*x#repetition_2#twos_complement_2, -4*x#repetition_2#twos_complement_3, 8*x#repetition_2#twos_complement_4) LessEqual -2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -4, upper: 0 } }],
@@ -2303,75 +2154,58 @@ define(__30 <-> integer-weighted(-1*x#repetition_2#twos_complement_1, -2*x#repet
 define(__31 <-> integer-weighted(-1*x#repetition_2#twos_complement_1, -2*x#repetition_2#twos_complement_2, -4*x#repetition_2#twos_complement_3, 8*x#repetition_2#twos_complement_4) LessEqual -2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -4, upper: 0 } }],
 define(__32 <-> integer-weighted(-1*x#repetition_2#twos_complement_1, -2*x#repetition_2#twos_complement_2, -4*x#repetition_2#twos_complement_3, 8*x#repetition_2#twos_complement_4) LessEqual -3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -4, upper: 0 } }],
 define(__33 <-> integer-weighted(-1*x#repetition_2#twos_complement_1, -2*x#repetition_2#twos_complement_2, -4*x#repetition_2#twos_complement_3, 8*x#repetition_2#twos_complement_4) LessEqual -4) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: -4, upper: 0 } }],
-define(__34 <-> and([__19,__20;int(1..)])) using tseitin,
-define(__35 <-> and([__21,__22;int(1..)])) using tseitin,
-define(__36 <-> and([__23,__24;int(1..)])) using tseitin,
-define(__37 <-> and([__17,__18;int(1..)])) using tseitin,
-define(__38 <-> and([__1,__2;int(1..)])) using tseitin,
-assert(__38) using tseitin,
-assert(__37) using tseitin,
-assert(__34) using tseitin,
-assert(__35) using tseitin,
-assert(__36) using tseitin,
-define(__39 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3, -1*x#repetition_1#components_2#twos_complement_1, -2*x#repetition_1#components_2#twos_complement_2, 4*x#repetition_1#components_2#twos_complement_3) Less 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
-define(__40 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3, -1*x#repetition_1#components_2#twos_complement_1, -2*x#repetition_1#components_2#twos_complement_2, 4*x#repetition_1#components_2#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
-define(__41 <-> or([__3,__39,__40;int(1..)])) using tseitin,
-assert(__41) using tseitin,
-define(__42 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3, -1*x#repetition_1#components_3#twos_complement_1, -2*x#repetition_1#components_3#twos_complement_2, 4*x#repetition_1#components_3#twos_complement_3) Less 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
-define(__43 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3, -1*x#repetition_1#components_3#twos_complement_1, -2*x#repetition_1#components_3#twos_complement_2, 4*x#repetition_1#components_3#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
-define(__44 <-> or([__4,__42,__43;int(1..)])) using tseitin,
-assert(__44) using tseitin,
-define(__45 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3, -1*x#repetition_1#components_4#twos_complement_1, -2*x#repetition_1#components_4#twos_complement_2, 4*x#repetition_1#components_4#twos_complement_3) Less 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
-define(__46 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3, -1*x#repetition_1#components_4#twos_complement_1, -2*x#repetition_1#components_4#twos_complement_2, 4*x#repetition_1#components_4#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
-define(__47 <-> or([__5,__45,__46;int(1..)])) using tseitin,
-assert(__47) using tseitin,
-define(__48 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__49 <-> or([__6,__48;int(1..)])) using tseitin,
-assert(__49) using tseitin,
-define(__50 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__51 <-> or([__0,__50;int(1..)])) using tseitin,
-assert(__51) using tseitin,
-define(__52 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__53 <-> or([__7,__52;int(1..)])) using tseitin,
-assert(__53) using tseitin,
-define(__54 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__55 <-> or([__8,__54;int(1..)])) using tseitin,
-assert(__55) using tseitin,
-define(__56 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__57 <-> and([__9,__56;int(1..)])) using tseitin,
-define(__58 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__59 <-> and([__10,__58;int(1..)])) using tseitin,
-define(__60 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__61 <-> and([__11,__60;int(1..)])) using tseitin,
-define(__62 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__63 <-> and([__12,__62;int(1..)])) using tseitin,
-count(__57, __59, __61, __63) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
-define(__64 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__65 <-> and([__13,__64;int(1..)])) using tseitin,
-define(__66 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__67 <-> and([__14,__66;int(1..)])) using tseitin,
-define(__68 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__69 <-> and([__15,__68;int(1..)])) using tseitin,
-define(__70 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__71 <-> and([__16,__70;int(1..)])) using tseitin,
-count(__65, __67, __69, __71) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
-define(__72 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__73 <-> and([__26,__72;int(1..)])) using tseitin,
-define(__74 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__75 <-> and([__27,__74;int(1..)])) using tseitin,
-define(__76 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__77 <-> and([__28,__76;int(1..)])) using tseitin,
-define(__78 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__79 <-> and([__29,__78;int(1..)])) using tseitin,
-count(__73, __75, __77, __79) Exactly 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
-define(__80 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__81 <-> and([__30,__80;int(1..)])) using tseitin,
-define(__82 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__83 <-> and([__31,__82;int(1..)])) using tseitin,
-define(__84 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__85 <-> and([__32,__84;int(1..)])) using tseitin,
-define(__86 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
-define(__87 <-> and([__33,__86;int(1..)])) using tseitin,
-count(__81, __83, __85, __87) Exactly 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
-assert(__25) using tseitin
+assert(__25) using tseitin,
+define(__34 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3, -1*x#repetition_1#components_4#twos_complement_1, -2*x#repetition_1#components_4#twos_complement_2, 4*x#repetition_1#components_4#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
+define(__35 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3, -1*x#repetition_1#components_2#twos_complement_1, -2*x#repetition_1#components_2#twos_complement_2, 4*x#repetition_1#components_2#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
+define(__36 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3, -1*x#repetition_1#components_3#twos_complement_1, -2*x#repetition_1#components_3#twos_complement_2, 4*x#repetition_1#components_3#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
+define(__37 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3, -1*x#repetition_1#components_3#twos_complement_1, -2*x#repetition_1#components_3#twos_complement_2, 4*x#repetition_1#components_3#twos_complement_3) Less 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
+assert(or([__4,__37,__36;int(1..)])) using tseitin,
+define(__38 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3, -1*x#repetition_1#components_2#twos_complement_1, -2*x#repetition_1#components_2#twos_complement_2, 4*x#repetition_1#components_2#twos_complement_3) Less 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
+assert(or([__3,__38,__35;int(1..)])) using tseitin,
+define(__39 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3, -1*x#repetition_1#components_4#twos_complement_1, -2*x#repetition_1#components_4#twos_complement_2, 4*x#repetition_1#components_4#twos_complement_3) Less 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
+assert(or([__5,__39,__34;int(1..)])) using tseitin,
+define(__40 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+assert(or([__6,__40;int(1..)])) using tseitin,
+define(__41 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+assert(or([__0,__41;int(1..)])) using tseitin,
+define(__42 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+assert(or([__7,__42;int(1..)])) using tseitin,
+define(__43 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+assert(or([__8,__43;int(1..)])) using tseitin,
+define(__44 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__45 <-> and([__9,__44;int(1..)])) using tseitin,
+define(__46 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__47 <-> and([__10,__46;int(1..)])) using tseitin,
+define(__48 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__49 <-> and([__11,__48;int(1..)])) using tseitin,
+define(__50 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__51 <-> and([__12,__50;int(1..)])) using tseitin,
+count(__45, __47, __49, __51) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__52 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__53 <-> and([__13,__52;int(1..)])) using tseitin,
+define(__54 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__55 <-> and([__14,__54;int(1..)])) using tseitin,
+define(__56 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__57 <-> and([__15,__56;int(1..)])) using tseitin,
+define(__58 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__59 <-> and([__16,__58;int(1..)])) using tseitin,
+count(__53, __55, __57, __59) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__60 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__61 <-> and([__26,__60;int(1..)])) using tseitin,
+define(__62 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__63 <-> and([__27,__62;int(1..)])) using tseitin,
+define(__64 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__65 <-> and([__28,__64;int(1..)])) using tseitin,
+define(__66 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__67 <-> and([__29,__66;int(1..)])) using tseitin,
+count(__61, __63, __65, __67) Exactly 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__68 <-> integer-weighted(1*x#repetition_1#components_1#twos_complement_1, 2*x#repetition_1#components_1#twos_complement_2, -4*x#repetition_1#components_1#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__69 <-> and([__30,__68;int(1..)])) using tseitin,
+define(__70 <-> integer-weighted(1*x#repetition_1#components_2#twos_complement_1, 2*x#repetition_1#components_2#twos_complement_2, -4*x#repetition_1#components_2#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__71 <-> and([__31,__70;int(1..)])) using tseitin,
+define(__72 <-> integer-weighted(1*x#repetition_1#components_3#twos_complement_1, 2*x#repetition_1#components_3#twos_complement_2, -4*x#repetition_1#components_3#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__73 <-> and([__32,__72;int(1..)])) using tseitin,
+define(__74 <-> integer-weighted(1*x#repetition_1#components_4#twos_complement_1, 2*x#repetition_1#components_4#twos_complement_2, -4*x#repetition_1#components_4#twos_complement_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }],
+define(__75 <-> and([__33,__74;int(1..)])) using tseitin,
+count(__69, __71, __73, __75) Exactly 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic })
 

@@ -70,6 +70,63 @@ new SAT encoding decisions:
 
 --
 
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+true,
+(x#sign_magnitude_3) -> (or([!(x#sign_magnitude_2),and([!(x#sign_magnitude_1);int(1..)]);int(1..)])),
+true,
+(x#sign_magnitude_3) -> (or([x#sign_magnitude_1,x#sign_magnitude_2;int(1..)])),
+or([__0,__1,__2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+true,
+true,
+(x#sign_magnitude_3) -> (or([x#sign_magnitude_1,x#sign_magnitude_2;int(1..)])),
+or([__0,__1,__2;int(1..)])
+new SAT encoding decisions:
+  assert((x#sign_magnitude_3) -> (or([!(x#sign_magnitude_2),and([!(x#sign_magnitude_1);int(1..)]);int(1..)]))) using tseitin
+
+--
+
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+true,
+true,
+(x#sign_magnitude_3) -> (or([x#sign_magnitude_1,x#sign_magnitude_2;int(1..)])),
+or([__0,__1,__2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+true,
+true,
+or([__0,__1,__2;int(1..)])
+new SAT encoding decisions:
+  assert((x#sign_magnitude_3) -> (or([x#sign_magnitude_1,x#sign_magnitude_2;int(1..)]))) using tseitin
+
+--
+
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+true,
+true,
+or([__0,__1,__2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+true,
+true
+new SAT encoding decisions:
+  assert(or([__0,__1,__2;int(1..)])) using tseitin
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
 y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
@@ -86,13 +143,13 @@ new constraints:
 
 --
 
-negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})
+table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})
    ~~> select_table ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> table(0+weighted(1*x#sign_magnitude_1, -2*and([x#sign_magnitude_3,x#sign_magnitude_1;int(1..)]), 2*x#sign_magnitude_2, -4*and([x#sign_magnitude_3,x#sign_magnitude_2;int(1..)])) with [], 0+weighted(1*y#sign_magnitude_1, -2*and([y#sign_magnitude_3,y#sign_magnitude_1;int(1..)]), 2*y#sign_magnitude_2, -4*and([y#sign_magnitude_3,y#sign_magnitude_2;int(1..)])) with [], [[0, 0], [3, 3]], negative=true)) using None, PB None
+  define(__3 <-> table(0+weighted(1*x#sign_magnitude_1, -2*and([x#sign_magnitude_3,x#sign_magnitude_1;int(1..)]), 2*x#sign_magnitude_2, -4*and([x#sign_magnitude_3,x#sign_magnitude_2;int(1..)])) with [], 0+weighted(1*y#sign_magnitude_1, -2*and([y#sign_magnitude_3,y#sign_magnitude_1;int(1..)]), 2*y#sign_magnitude_2, -4*and([y#sign_magnitude_3,y#sign_magnitude_2;int(1..)])) with [], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using None, PB None
 
 --
 
@@ -126,373 +183,114 @@ new SAT encoding decisions:
 
 --
 
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-y
-   ~~> select_representation ([("ReprGeneral", 10000)])
-y
-
---
-
-table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})
-   ~~> select_table ([("SAT", 18500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> table(0+weighted(1*x#sign_magnitude_1, -2*and([x#sign_magnitude_3,x#sign_magnitude_1;int(1..)]), 2*x#sign_magnitude_2, -4*and([x#sign_magnitude_3,x#sign_magnitude_2;int(1..)])) with [], 0+weighted(1*y#sign_magnitude_1, -2*and([y#sign_magnitude_3,y#sign_magnitude_1;int(1..)]), 2*y#sign_magnitude_2, -4*and([y#sign_magnitude_3,y#sign_magnitude_2;int(1..)])) with [], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using None, PB None
-
---
-
-!(x#sign_magnitude_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> !(x#sign_magnitude_2)) using tseitin
-
---
-
-!(y#sign_magnitude_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> !(y#sign_magnitude_2)) using tseitin
-
---
-
-!(x#sign_magnitude_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> !(x#sign_magnitude_1)) using tseitin
-
---
-
-!(y#sign_magnitude_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> !(y#sign_magnitude_1)) using tseitin
-
---
-
-and([__10;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__10
-
---
-
-and([__11;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__11
-
---
-
+(positive) <-> (__3),
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+true,
+true,
+true,
+(y#sign_magnitude_3) -> (or([!(y#sign_magnitude_2),and([!(y#sign_magnitude_1);int(1..)]);int(1..)])),
+true,
+(y#sign_magnitude_3) -> (or([y#sign_magnitude_1,y#sign_magnitude_2;int(1..)])),
 or([__4,__5,__6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__12
-new variables:
-  findAux __12: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+true,
+true,
+true,
+(y#sign_magnitude_3) -> (or([!(y#sign_magnitude_2),and([!(y#sign_magnitude_1);int(1..)]);int(1..)])),
+true,
+(y#sign_magnitude_3) -> (or([y#sign_magnitude_1,y#sign_magnitude_2;int(1..)])),
+or([__4,__5,__6;int(1..)])
 new SAT encoding decisions:
-  define(__12 <-> or([__4,__5,__6;int(1..)])) using tseitin
+  assert((positive) <-> (__3)) using tseitin
 
 --
 
-or([__0,__1,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
-new variables:
-  findAux __13: bool
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+true,
+true,
+true,
+(y#sign_magnitude_3) -> (or([!(y#sign_magnitude_2),and([!(y#sign_magnitude_1);int(1..)]);int(1..)])),
+true,
+(y#sign_magnitude_3) -> (or([y#sign_magnitude_1,y#sign_magnitude_2;int(1..)])),
+or([__4,__5,__6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+true,
+true,
+true,
+true,
+(y#sign_magnitude_3) -> (or([y#sign_magnitude_1,y#sign_magnitude_2;int(1..)])),
+or([__4,__5,__6;int(1..)])
 new SAT encoding decisions:
-  define(__13 <-> or([__0,__1,__2;int(1..)])) using tseitin
+  assert((y#sign_magnitude_3) -> (or([!(y#sign_magnitude_2),and([!(y#sign_magnitude_1);int(1..)]);int(1..)]))) using tseitin
 
 --
 
-(positive) <-> (__7)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+true,
+true,
+true,
+true,
+(y#sign_magnitude_3) -> (or([y#sign_magnitude_1,y#sign_magnitude_2;int(1..)])),
+or([__4,__5,__6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+true,
+true,
+true,
+true,
+or([__4,__5,__6;int(1..)])
 new SAT encoding decisions:
-  define(__14 <-> (positive) <-> (__7)) using tseitin
+  assert((y#sign_magnitude_3) -> (or([y#sign_magnitude_1,y#sign_magnitude_2;int(1..)]))) using tseitin
 
 --
 
-(negative) <-> (__3)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__15
-new variables:
-  findAux __15: bool
-new SAT encoding decisions:
-  define(__15 <-> (negative) <-> (__3)) using tseitin
-
---
-
-or([x#sign_magnitude_1,x#sign_magnitude_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__16
-new variables:
-  findAux __16: bool
-new SAT encoding decisions:
-  define(__16 <-> or([x#sign_magnitude_1,x#sign_magnitude_2;int(1..)])) using tseitin
-
---
-
-(x#sign_magnitude_3) -> (__16)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__17
-new variables:
-  findAux __17: bool
-new SAT encoding decisions:
-  define(__17 <-> (x#sign_magnitude_3) -> (__16)) using tseitin
-
---
-
-or([y#sign_magnitude_1,y#sign_magnitude_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__18
-new variables:
-  findAux __18: bool
-new SAT encoding decisions:
-  define(__18 <-> or([y#sign_magnitude_1,y#sign_magnitude_2;int(1..)])) using tseitin
-
---
-
-(y#sign_magnitude_3) -> (__18)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__19
-new variables:
-  findAux __19: bool
-new SAT encoding decisions:
-  define(__19 <-> (y#sign_magnitude_3) -> (__18)) using tseitin
-
---
-
-or([__8,__10;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__20
-new variables:
-  findAux __20: bool
-new SAT encoding decisions:
-  define(__20 <-> or([__8,__10;int(1..)])) using tseitin
-
---
-
-(x#sign_magnitude_3) -> (__20)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__21
-new variables:
-  findAux __21: bool
-new SAT encoding decisions:
-  define(__21 <-> (x#sign_magnitude_3) -> (__20)) using tseitin
-
---
-
-or([__9,__11;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__22
-new variables:
-  findAux __22: bool
-new SAT encoding decisions:
-  define(__22 <-> or([__9,__11;int(1..)])) using tseitin
-
---
-
-(y#sign_magnitude_3) -> (__22)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__23
-new variables:
-  findAux __23: bool
-new SAT encoding decisions:
-  define(__23 <-> (y#sign_magnitude_3) -> (__22)) using tseitin
-
---
-
-__14,
-__15,
-true,
-__21,
-true,
-__17,
-__13,
-true,
-__23,
-true,
-__19,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-__15,
-true,
-__21,
-true,
-__17,
-__13,
-true,
-__23,
-true,
-__19,
-__12
-new SAT encoding decisions:
-  assert(__14) using tseitin
-
---
-
-__15,
-true,
-__21,
-true,
-__17,
-__13,
-true,
-__23,
-true,
-__19,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__21,
-true,
-__17,
-__13,
-true,
-__23,
-true,
-__19,
-__12
-new SAT encoding decisions:
-  assert(__15) using tseitin
-
---
-
-true,
-__21,
-true,
-__17,
-__13,
-true,
-__23,
-true,
-__19,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-__17,
-__13,
-true,
-__23,
-true,
-__19,
-__12
-new SAT encoding decisions:
-  assert(__21) using tseitin
-
---
-
-true,
-true,
-__17,
-__13,
-true,
-__23,
-true,
-__19,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-__13,
-true,
-__23,
-true,
-__19,
-__12
-new SAT encoding decisions:
-  assert(__17) using tseitin
-
---
-
-true,
-true,
-__13,
-true,
-__23,
-true,
-__19,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-__23,
-true,
-__19,
-__12
-new SAT encoding decisions:
-  assert(__13) using tseitin
-
---
-
-true,
-true,
-true,
-__23,
-true,
-__19,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
 true,
 true,
 true,
 true,
-__19,
-__12
-new SAT encoding decisions:
-  assert(__23) using tseitin
-
---
-
-true,
-true,
-true,
-true,
-__19,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-true,
-true,
-true,
-__12
-new SAT encoding decisions:
-  assert(__19) using tseitin
-
---
-
-true,
-true,
-true,
-true,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([__4,__5,__6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
 true,
 true,
 true,
 true
 new SAT encoding decisions:
-  assert(__12) using tseitin
+  assert(or([__4,__5,__6;int(1..)])) using tseitin
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})
+   ~~> select_table ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> table(0+weighted(1*x#sign_magnitude_1, -2*and([x#sign_magnitude_3,x#sign_magnitude_1;int(1..)]), 2*x#sign_magnitude_2, -4*and([x#sign_magnitude_3,x#sign_magnitude_2;int(1..)])) with [], 0+weighted(1*y#sign_magnitude_1, -2*and([y#sign_magnitude_3,y#sign_magnitude_1;int(1..)]), 2*y#sign_magnitude_2, -4*and([y#sign_magnitude_3,y#sign_magnitude_2;int(1..)])) with [], [[0, 0], [3, 3]], negative=true)) using None, PB None
+
+--
+
+(negative) <-> (__7),
+true,
+true,
+true,
+true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert((negative) <-> (__7)) using tseitin
 
 --
 
@@ -516,22 +314,6 @@ findAux __4: bool
 findAux __5: bool
 findAux __6: bool
 findAux __7: bool
-findAux __8: bool
-findAux __9: bool
-findAux __10: bool
-findAux __11: bool
-findAux __12: bool
-findAux __13: bool
-findAux __14: bool
-findAux __15: bool
-findAux __16: bool
-findAux __17: bool
-findAux __18: bool
-findAux __19: bool
-findAux __20: bool
-findAux __21: bool
-findAux __22: bool
-findAux __23: bool
 
 such that
 
@@ -545,33 +327,17 @@ sat encoding decisions:
 define(__0 <-> integer-weighted(1*x#sign_magnitude_1, -2*and([x#sign_magnitude_3,x#sign_magnitude_1;int(1..)]), 2*x#sign_magnitude_2, -4*and([x#sign_magnitude_3,x#sign_magnitude_2;int(1..)])) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [],
 define(__1 <-> integer-weighted(1*x#sign_magnitude_1, -2*and([x#sign_magnitude_3,x#sign_magnitude_1;int(1..)]), 2*x#sign_magnitude_2, -4*and([x#sign_magnitude_3,x#sign_magnitude_2;int(1..)])) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [],
 define(__2 <-> integer-weighted(1*x#sign_magnitude_1, -2*and([x#sign_magnitude_3,x#sign_magnitude_1;int(1..)]), 2*x#sign_magnitude_2, -4*and([x#sign_magnitude_3,x#sign_magnitude_2;int(1..)])) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [],
-define(__3 <-> table(0+weighted(1*x#sign_magnitude_1, -2*and([x#sign_magnitude_3,x#sign_magnitude_1;int(1..)]), 2*x#sign_magnitude_2, -4*and([x#sign_magnitude_3,x#sign_magnitude_2;int(1..)])) with [], 0+weighted(1*y#sign_magnitude_1, -2*and([y#sign_magnitude_3,y#sign_magnitude_1;int(1..)]), 2*y#sign_magnitude_2, -4*and([y#sign_magnitude_3,y#sign_magnitude_2;int(1..)])) with [], [[0, 0], [3, 3]], negative=true)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+assert((x#sign_magnitude_3) -> (or([!(x#sign_magnitude_2),and([!(x#sign_magnitude_1);int(1..)]);int(1..)]))) using tseitin,
+assert((x#sign_magnitude_3) -> (or([x#sign_magnitude_1,x#sign_magnitude_2;int(1..)]))) using tseitin,
+assert(or([__0,__1,__2;int(1..)])) using tseitin,
+define(__3 <-> table(0+weighted(1*x#sign_magnitude_1, -2*and([x#sign_magnitude_3,x#sign_magnitude_1;int(1..)]), 2*x#sign_magnitude_2, -4*and([x#sign_magnitude_3,x#sign_magnitude_2;int(1..)])) with [], 0+weighted(1*y#sign_magnitude_1, -2*and([y#sign_magnitude_3,y#sign_magnitude_1;int(1..)]), 2*y#sign_magnitude_2, -4*and([y#sign_magnitude_3,y#sign_magnitude_2;int(1..)])) with [], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
 define(__4 <-> integer-weighted(1*y#sign_magnitude_1, -2*and([y#sign_magnitude_3,y#sign_magnitude_1;int(1..)]), 2*y#sign_magnitude_2, -4*and([y#sign_magnitude_3,y#sign_magnitude_2;int(1..)])) Equal -2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [],
 define(__5 <-> integer-weighted(1*y#sign_magnitude_1, -2*and([y#sign_magnitude_3,y#sign_magnitude_1;int(1..)]), 2*y#sign_magnitude_2, -4*and([y#sign_magnitude_3,y#sign_magnitude_2;int(1..)])) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [],
 define(__6 <-> integer-weighted(1*y#sign_magnitude_1, -2*and([y#sign_magnitude_3,y#sign_magnitude_1;int(1..)]), 2*y#sign_magnitude_2, -4*and([y#sign_magnitude_3,y#sign_magnitude_2;int(1..)])) Equal 3) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [],
-define(__7 <-> table(0+weighted(1*x#sign_magnitude_1, -2*and([x#sign_magnitude_3,x#sign_magnitude_1;int(1..)]), 2*x#sign_magnitude_2, -4*and([x#sign_magnitude_3,x#sign_magnitude_2;int(1..)])) with [], 0+weighted(1*y#sign_magnitude_1, -2*and([y#sign_magnitude_3,y#sign_magnitude_1;int(1..)]), 2*y#sign_magnitude_2, -4*and([y#sign_magnitude_3,y#sign_magnitude_2;int(1..)])) with [], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
-define(__8 <-> !(x#sign_magnitude_2)) using tseitin,
-define(__9 <-> !(y#sign_magnitude_2)) using tseitin,
-define(__10 <-> !(x#sign_magnitude_1)) using tseitin,
-define(__11 <-> !(y#sign_magnitude_1)) using tseitin,
-define(__12 <-> or([__4,__5,__6;int(1..)])) using tseitin,
-define(__13 <-> or([__0,__1,__2;int(1..)])) using tseitin,
-define(__14 <-> (positive) <-> (__7)) using tseitin,
-define(__15 <-> (negative) <-> (__3)) using tseitin,
-define(__16 <-> or([x#sign_magnitude_1,x#sign_magnitude_2;int(1..)])) using tseitin,
-define(__17 <-> (x#sign_magnitude_3) -> (__16)) using tseitin,
-define(__18 <-> or([y#sign_magnitude_1,y#sign_magnitude_2;int(1..)])) using tseitin,
-define(__19 <-> (y#sign_magnitude_3) -> (__18)) using tseitin,
-define(__20 <-> or([__8,__10;int(1..)])) using tseitin,
-define(__21 <-> (x#sign_magnitude_3) -> (__20)) using tseitin,
-define(__22 <-> or([__9,__11;int(1..)])) using tseitin,
-define(__23 <-> (y#sign_magnitude_3) -> (__22)) using tseitin,
-assert(__14) using tseitin,
-assert(__15) using tseitin,
-assert(__21) using tseitin,
-assert(__17) using tseitin,
-assert(__13) using tseitin,
-assert(__23) using tseitin,
-assert(__19) using tseitin,
-assert(__12) using tseitin
+assert((positive) <-> (__3)) using tseitin,
+assert((y#sign_magnitude_3) -> (or([!(y#sign_magnitude_2),and([!(y#sign_magnitude_1);int(1..)]);int(1..)]))) using tseitin,
+assert((y#sign_magnitude_3) -> (or([y#sign_magnitude_1,y#sign_magnitude_2;int(1..)]))) using tseitin,
+assert(or([__4,__5,__6;int(1..)])) using tseitin,
+define(__7 <-> table(0+weighted(1*x#sign_magnitude_1, -2*and([x#sign_magnitude_3,x#sign_magnitude_1;int(1..)]), 2*x#sign_magnitude_2, -4*and([x#sign_magnitude_3,x#sign_magnitude_2;int(1..)])) with [], 0+weighted(1*y#sign_magnitude_1, -2*and([y#sign_magnitude_3,y#sign_magnitude_1;int(1..)]), 2*y#sign_magnitude_2, -4*and([y#sign_magnitude_3,y#sign_magnitude_2;int(1..)])) with [], [[0, 0], [3, 3]], negative=true)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
+assert((negative) <-> (__7)) using tseitin
 

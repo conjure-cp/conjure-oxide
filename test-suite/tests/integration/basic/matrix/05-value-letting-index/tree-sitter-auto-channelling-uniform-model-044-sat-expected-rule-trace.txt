@@ -51,40 +51,26 @@ new SAT encoding decisions:
 __0,
 true,
 or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-__0,
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
-
---
-
-or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])) using tseitin
-
---
-
-__0,
-true,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__1
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
 true,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])) using tseitin
+
+--
+
+true
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+true
 
 --
 
@@ -107,7 +93,6 @@ letting a#components_6 be 2
 letting a#components_7 be 3
 letting a#components_8 be 2
 letting a#components_9 be 1
-findAux __1: bool
 
 such that
 
@@ -117,7 +102,6 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*b#direct_1, 2*b#direct_2, 3*b#direct_3, 4*b#direct_4, 5*b#direct_5) Less 2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }],
 at-most-one(b#direct_1, b#direct_2, b#direct_3, b#direct_4, b#direct_5) using Some(EncodingSelection { algorithm: PindakaasBitwise, provenance: Heuristic }),
-define(__1 <-> or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__1) using tseitin
+assert(or([b#direct_1,b#direct_2,b#direct_3,b#direct_4,b#direct_5;int(1..)])) using tseitin
 

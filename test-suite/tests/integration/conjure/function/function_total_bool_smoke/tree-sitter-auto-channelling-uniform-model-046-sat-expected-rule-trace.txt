@@ -142,6 +142,42 @@ new SAT encoding decisions:
 
 --
 
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+or([([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
+true,
+true,
+or([__0,__1;int(1..)]),
+or([__2,__3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+or([([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
+true,
+true,
+or([__2,__3;int(1..)])
+new SAT encoding decisions:
+  assert(or([__0,__1;int(1..)])) using tseitin
+
+--
+
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+or([([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
+true,
+true,
+or([__2,__3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
+or([([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
+true,
+true
+new SAT encoding decisions:
+  assert(or([__2,__3;int(1..)])) using tseitin
+
+--
+
 or([([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
 ([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)])
@@ -169,62 +205,6 @@ or([([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeInd
 [ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (bool, int(13, 17)), i in x#as_relation_1#as_set_1, j <- x#as_relation_1#as_set_1 ]
    ~~> lower_set_expression_generator ([("Base", 8600)])
 [ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (bool, int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13, 17)), j in x#as_relation_1#as_set_1 ]
-
---
-
-or([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> or([__2,__3;int(1..)])) using tseitin
-
---
-
-or([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> or([__0,__1;int(1..)])) using tseitin
-
---
-
-true,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (bool, int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13, 17)), j in x#as_relation_1#as_set_1 ]),
-([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
-true,
-true,
-__5,
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (bool, int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13, 17)), j in x#as_relation_1#as_set_1 ]),
-([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
-true,
-true,
-__4
-new SAT encoding decisions:
-  assert(__5) using tseitin
-
---
-
-true,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (bool, int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13, 17)), j in x#as_relation_1#as_set_1 ]),
-([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
-true,
-true,
-__4
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (bool, int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13, 17)), j in x#as_relation_1#as_set_1 ]),
-([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
-true,
-true
-new SAT encoding decisions:
-  assert(__4) using tseitin
 
 --
 
@@ -284,88 +264,26 @@ x#as_relation_1#as_set_1#explicit_1#components_2#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_1#components_2 < x#as_relation_1#as_set_1#explicit_1#components_2#components_2
    ~~> select_integer_relation ([("SAT", 18500)])
-__6
+__4
 new variables:
-  findAux __6: bool
+  findAux __4: bool
 new SAT encoding decisions:
-  define(__6 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6, -1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, -2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, -4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, -8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, -16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, 32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Less 0) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }, PbTermGroup { start: 6, end: 12, structure: BoundedBinary { lower: -17, upper: -13 } }]
-
---
-
-!(x#as_relation_1#as_set_1#explicit_1#components_1#components_1)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> !(x#as_relation_1#as_set_1#explicit_1#components_1#components_1)) using tseitin
-
---
-
-and([and([__7,x#as_relation_1#as_set_1#explicit_1#components_2#components_1;int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([__7,x#as_relation_1#as_set_1#explicit_1#components_2#components_1;int(1..)])
-
---
-
-or([__6;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__6
-
---
-
-and([__7,x#as_relation_1#as_set_1#explicit_1#components_2#components_1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> and([__7,x#as_relation_1#as_set_1#explicit_1#components_2#components_1;int(1..)])) using tseitin
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = x#as_relation_1#as_set_1#explicit_1#components_2#components_1
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> (x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (x#as_relation_1#as_set_1#explicit_1#components_2#components_1)) using tseitin
-
---
-
-and([__9,__6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> and([__9,__6;int(1..)])) using tseitin
-
---
-
-or([__8,__10;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> or([__8,__10;int(1..)])) using tseitin
+  define(__4 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6, -1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, -2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, -4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, -8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, -16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, 32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Less 0) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }, PbTermGroup { start: 6, end: 12, structure: BoundedBinary { lower: -17, upper: -13 } }]
 
 --
 
 true,
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (bool, int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13, 17)), j in x#as_relation_1#as_set_1 ]),
-__11,
+or([and([and([!(x#as_relation_1#as_set_1#explicit_1#components_1#components_1),x#as_relation_1#as_set_1#explicit_1#components_2#components_1;int(1..)]);int(1..)]),and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = x#as_relation_1#as_set_1#explicit_1#components_2#components_1,or([__4;int(1..)]);int(1..)]);int(1..)]),
 true,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (bool, int(13, 17)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13, 17)), j in x#as_relation_1#as_set_1 ]),
 true,
 true
 new SAT encoding decisions:
-  assert(__11) using tseitin
+  assert(or([and([and([!(x#as_relation_1#as_set_1#explicit_1#components_1#components_1),x#as_relation_1#as_set_1#explicit_1#components_2#components_1;int(1..)]);int(1..)]),and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = x#as_relation_1#as_set_1#explicit_1#components_2#components_1,or([__4;int(1..)]);int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -785,31 +703,31 @@ x#as_relation_1#as_set_1#explicit_1#components_2#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_2#components_2 = 13
    ~~> select_integer_relation ([("SAT", 18500)])
-__12
+__5
 new variables:
-  findAux __12: bool
+  findAux __5: bool
 new SAT encoding decisions:
-  define(__12 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+  define(__5 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
 x#as_relation_1#as_set_1#explicit_1#components_2#components_1 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__13
+__6
 new variables:
-  findAux __13: bool
+  findAux __6: bool
 new SAT encoding decisions:
-  define(__13 <-> (x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false)) using tseitin
+  define(__6 <-> (x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false)) using tseitin
 
 --
 
-and([__13,__12;int(1..)])
+and([__6,__5;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__14
+__7
 new variables:
-  findAux __14: bool
+  findAux __7: bool
 new SAT encoding decisions:
-  define(__14 <-> and([__13,__12;int(1..)])) using tseitin
+  define(__7 <-> and([__6,__5;int(1..)])) using tseitin
 
 --
 
@@ -839,31 +757,31 @@ x#as_relation_1#as_set_1#explicit_1#components_1#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_1#components_2 = 17
    ~~> select_integer_relation ([("SAT", 18500)])
-__15
+__8
 new variables:
-  findAux __15: bool
+  findAux __8: bool
 new SAT encoding decisions:
-  define(__15 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+  define(__8 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
 x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__16
+__9
 new variables:
-  findAux __16: bool
+  findAux __9: bool
 new SAT encoding decisions:
-  define(__16 <-> (x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false)) using tseitin
+  define(__9 <-> (x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false)) using tseitin
 
 --
 
-and([__16,__15;int(1..)])
+and([__9,__8;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__17
+__10
 new variables:
-  findAux __17: bool
+  findAux __10: bool
 new SAT encoding decisions:
-  define(__17 <-> and([__16,__15;int(1..)])) using tseitin
+  define(__10 <-> and([__9,__8;int(1..)])) using tseitin
 
 --
 
@@ -893,41 +811,41 @@ x#as_relation_1#as_set_1#explicit_1#components_2#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_2#components_2 = 17
    ~~> select_integer_relation ([("SAT", 18500)])
-__18
+__11
 new variables:
-  findAux __18: bool
+  findAux __11: bool
 new SAT encoding decisions:
-  define(__18 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+  define(__11 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
 x#as_relation_1#as_set_1#explicit_1#components_2#components_1 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__19
+__12
 new variables:
-  findAux __19: bool
+  findAux __12: bool
 new SAT encoding decisions:
-  define(__19 <-> (x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false)) using tseitin
+  define(__12 <-> (x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false)) using tseitin
 
 --
 
-and([__19,__18;int(1..)])
+and([__12,__11;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__20
+__13
 new variables:
-  findAux __20: bool
+  findAux __13: bool
 new SAT encoding decisions:
-  define(__20 <-> and([__19,__18;int(1..)])) using tseitin
+  define(__13 <-> and([__12,__11;int(1..)])) using tseitin
 
 --
 
-or([__17,__20;int(1..)])
+or([__10,__13;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__21
+__14
 new variables:
-  findAux __21: bool
+  findAux __14: bool
 new SAT encoding decisions:
-  define(__21 <-> or([__17,__20;int(1..)])) using tseitin
+  define(__14 <-> or([__10,__13;int(1..)])) using tseitin
 
 --
 
@@ -957,21 +875,21 @@ x#as_relation_1#as_set_1#explicit_1#components_1#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_1#components_2 = 13
    ~~> select_integer_relation ([("SAT", 18500)])
-__22
+__15
 new variables:
-  findAux __22: bool
+  findAux __15: bool
 new SAT encoding decisions:
-  define(__22 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+  define(__15 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
-and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1,__22;int(1..)])
+and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1,__15;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__23
+__16
 new variables:
-  findAux __23: bool
+  findAux __16: bool
 new SAT encoding decisions:
-  define(__23 <-> and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1,__22;int(1..)])) using tseitin
+  define(__16 <-> and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1,__15;int(1..)])) using tseitin
 
 --
 
@@ -1001,31 +919,31 @@ x#as_relation_1#as_set_1#explicit_1#components_2#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_2#components_2 = 13
    ~~> select_integer_relation ([("SAT", 18500)])
-__24
+__17
 new variables:
-  findAux __24: bool
+  findAux __17: bool
 new SAT encoding decisions:
-  define(__24 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+  define(__17 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
-and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1,__24;int(1..)])
+and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1,__17;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__25
+__18
 new variables:
-  findAux __25: bool
+  findAux __18: bool
 new SAT encoding decisions:
-  define(__25 <-> and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1,__24;int(1..)])) using tseitin
+  define(__18 <-> and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1,__17;int(1..)])) using tseitin
 
 --
 
-or([__23,__25;int(1..)])
+or([__16,__18;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__26
+__19
 new variables:
-  findAux __26: bool
+  findAux __19: bool
 new SAT encoding decisions:
-  define(__26 <-> or([__23,__25;int(1..)])) using tseitin
+  define(__19 <-> or([__16,__18;int(1..)])) using tseitin
 
 --
 
@@ -1055,21 +973,21 @@ x#as_relation_1#as_set_1#explicit_1#components_1#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_1#components_2 = 17
    ~~> select_integer_relation ([("SAT", 18500)])
-__27
+__20
 new variables:
-  findAux __27: bool
+  findAux __20: bool
 new SAT encoding decisions:
-  define(__27 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+  define(__20 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
-and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1,__27;int(1..)])
+and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1,__20;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__28
+__21
 new variables:
-  findAux __28: bool
+  findAux __21: bool
 new SAT encoding decisions:
-  define(__28 <-> and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1,__27;int(1..)])) using tseitin
+  define(__21 <-> and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1,__20;int(1..)])) using tseitin
 
 --
 
@@ -1099,31 +1017,31 @@ x#as_relation_1#as_set_1#explicit_1#components_2#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_2#components_2 = 17
    ~~> select_integer_relation ([("SAT", 18500)])
-__29
+__22
 new variables:
-  findAux __29: bool
+  findAux __22: bool
 new SAT encoding decisions:
-  define(__29 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+  define(__22 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
-and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1,__29;int(1..)])
+and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1,__22;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__30
+__23
 new variables:
-  findAux __30: bool
+  findAux __23: bool
 new SAT encoding decisions:
-  define(__30 <-> and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1,__29;int(1..)])) using tseitin
+  define(__23 <-> and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1,__22;int(1..)])) using tseitin
 
 --
 
-or([__28,__30;int(1..)])
+or([__21,__23;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__31
+__24
 new variables:
-  findAux __31: bool
+  findAux __24: bool
 new SAT encoding decisions:
-  define(__31 <-> or([__28,__30;int(1..)])) using tseitin
+  define(__24 <-> or([__21,__23;int(1..)])) using tseitin
 
 --
 
@@ -1153,41 +1071,41 @@ x#as_relation_1#as_set_1#explicit_1#components_1#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_1#components_2 = 13
    ~~> select_integer_relation ([("SAT", 18500)])
-__32
+__25
 new variables:
-  findAux __32: bool
+  findAux __25: bool
 new SAT encoding decisions:
-  define(__32 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+  define(__25 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
 x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = false
    ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__33
+__26
 new variables:
-  findAux __33: bool
+  findAux __26: bool
 new SAT encoding decisions:
-  define(__33 <-> (x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false)) using tseitin
+  define(__26 <-> (x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false)) using tseitin
 
 --
 
-and([__33,__32;int(1..)])
+and([__26,__25;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__34
+__27
 new variables:
-  findAux __34: bool
+  findAux __27: bool
 new SAT encoding decisions:
-  define(__34 <-> and([__33,__32;int(1..)])) using tseitin
+  define(__27 <-> and([__26,__25;int(1..)])) using tseitin
 
 --
 
-or([__34,__14;int(1..)])
+or([__27,__7;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__35
+__28
 new variables:
-  findAux __35: bool
+  findAux __28: bool
 new SAT encoding decisions:
-  define(__35 <-> or([__34,__14;int(1..)])) using tseitin
+  define(__28 <-> or([__27,__7;int(1..)])) using tseitin
 
 --
 
@@ -1217,31 +1135,31 @@ x#as_relation_1#as_set_1#explicit_1#components_2#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 17
    ~~> select_integer_relation ([("SAT", 18500)])
-__36
+__29
 new variables:
-  findAux __36: bool
+  findAux __29: bool
 new SAT encoding decisions:
-  define(__36 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+  define(__29 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
 x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != false
    ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__37
+__30
 new variables:
-  findAux __37: bool
+  findAux __30: bool
 new SAT encoding decisions:
-  define(__37 <-> !((x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false))) using tseitin
+  define(__30 <-> !((x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false))) using tseitin
 
 --
 
-or([__37,__36;int(1..)])
+or([__30,__29;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__38
+__31
 new variables:
-  findAux __38: bool
+  findAux __31: bool
 new SAT encoding decisions:
-  define(__38 <-> or([__37,__36;int(1..)])) using tseitin
+  define(__31 <-> or([__30,__29;int(1..)])) using tseitin
 
 --
 
@@ -1271,51 +1189,25 @@ x#as_relation_1#as_set_1#explicit_1#components_1#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 17
    ~~> select_integer_relation ([("SAT", 18500)])
-__39
+__32
 new variables:
-  findAux __39: bool
+  findAux __32: bool
 new SAT encoding decisions:
-  define(__39 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+  define(__32 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != false
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__40
-new variables:
-  findAux __40: bool
+true,
+and([(__28) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != false,__32;int(1..)]),__31;int(1..)])),(__14) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (false,13),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (false,13);int(1..)])),(__19) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (true,17),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (true,17);int(1..)])),(__24) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (true,13),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (true,13);int(1..)]));int(1..)]),
+true,
+true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+and([true,(__14) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (false,13),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (false,13);int(1..)])),(__19) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (true,17),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (true,17);int(1..)])),(__24) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (true,13),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (true,13);int(1..)]));int(1..)]),
+true,
+true
 new SAT encoding decisions:
-  define(__40 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false))) using tseitin
-
---
-
-or([__40,__39;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__41
-new variables:
-  findAux __41: bool
-new SAT encoding decisions:
-  define(__41 <-> or([__40,__39;int(1..)])) using tseitin
-
---
-
-and([__41,__38;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__42
-new variables:
-  findAux __42: bool
-new SAT encoding decisions:
-  define(__42 <-> and([__41,__38;int(1..)])) using tseitin
-
---
-
-(__35) -> (__42)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__43
-new variables:
-  findAux __43: bool
-new SAT encoding decisions:
-  define(__43 <-> (__35) -> (__42)) using tseitin
+  assert((__28) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != false,__32;int(1..)]),__31;int(1..)]))) using tseitin
 
 --
 
@@ -1345,213 +1237,31 @@ x#as_relation_1#as_set_1#explicit_1#components_1#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13
    ~~> select_integer_relation ([("SAT", 18500)])
-__44
+__33
 new variables:
-  findAux __44: bool
+  findAux __33: bool
 new SAT encoding decisions:
-  define(__44 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+  define(__33 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
 x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != false
    ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__45
+__34
 new variables:
-  findAux __45: bool
+  findAux __34: bool
 new SAT encoding decisions:
-  define(__45 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false))) using tseitin
+  define(__34 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false))) using tseitin
 
 --
 
-or([__45,__44;int(1..)])
+or([__34,__33;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__46
+__35
 new variables:
-  findAux __46: bool
+  findAux __35: bool
 new SAT encoding decisions:
-  define(__46 <-> or([__45,__44;int(1..)])) using tseitin
-
---
-
-SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#as_relation_1#as_set_1#explicit_1#components_2
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1#components_2
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_2 != (true,17)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != true,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 17;int(1..)])
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_2#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1#components_2#components_2
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 17
-   ~~> select_integer_relation ([("SAT", 18500)])
-__47
-new variables:
-  findAux __47: bool
-new SAT encoding decisions:
-  define(__47 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != true
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__48
-new variables:
-  findAux __48: bool
-new SAT encoding decisions:
-  define(__48 <-> !((x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (true))) using tseitin
-
---
-
-or([__48,__47;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__49
-new variables:
-  findAux __49: bool
-new SAT encoding decisions:
-  define(__49 <-> or([__48,__47;int(1..)])) using tseitin
-
---
-
-SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1 != (true,17)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != true,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 17;int(1..)])
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1#components_1#components_2
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 17
-   ~~> select_integer_relation ([("SAT", 18500)])
-__50
-new variables:
-  findAux __50: bool
-new SAT encoding decisions:
-  define(__50 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != true
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__51
-new variables:
-  findAux __51: bool
-new SAT encoding decisions:
-  define(__51 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (true))) using tseitin
-
---
-
-or([__51,__50;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__52
-new variables:
-  findAux __52: bool
-new SAT encoding decisions:
-  define(__52 <-> or([__51,__50;int(1..)])) using tseitin
-
---
-
-and([__52,__49;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__53
-new variables:
-  findAux __53: bool
-new SAT encoding decisions:
-  define(__53 <-> and([__52,__49;int(1..)])) using tseitin
-
---
-
-(__26) -> (__53)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__54
-new variables:
-  findAux __54: bool
-new SAT encoding decisions:
-  define(__54 <-> (__26) -> (__53)) using tseitin
-
---
-
-SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1 != (true,13)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != true,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)])
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1#components_1#components_2
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13
-   ~~> select_integer_relation ([("SAT", 18500)])
-__55
-new variables:
-  findAux __55: bool
-new SAT encoding decisions:
-  define(__55 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != true
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__56
-new variables:
-  findAux __56: bool
-new SAT encoding decisions:
-  define(__56 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (true))) using tseitin
-
---
-
-or([__56,__55;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__57
-new variables:
-  findAux __57: bool
-new SAT encoding decisions:
-  define(__57 <-> or([__56,__55;int(1..)])) using tseitin
+  define(__35 <-> or([__34,__33;int(1..)])) using tseitin
 
 --
 
@@ -1581,51 +1291,187 @@ x#as_relation_1#as_set_1#explicit_1#components_2#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13
    ~~> select_integer_relation ([("SAT", 18500)])
-__58
+__36
 new variables:
-  findAux __58: bool
+  findAux __36: bool
 new SAT encoding decisions:
-  define(__58 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+  define(__36 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != false
+true,
+and([(__14) -> (and([__35,or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != false,__36;int(1..)]);int(1..)])),(__19) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (true,17),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (true,17);int(1..)])),(__24) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (true,13),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (true,13);int(1..)]));int(1..)]),
+true,
+true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+and([true,(__19) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (true,17),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (true,17);int(1..)])),(__24) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (true,13),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (true,13);int(1..)]));int(1..)]),
+true,
+true
+new SAT encoding decisions:
+  assert((__14) -> (and([__35,or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != false,__36;int(1..)]);int(1..)]))) using tseitin
+
+--
+
+SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1 != (true,17)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != true,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 17;int(1..)])
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_1#components_2
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 17
+   ~~> select_integer_relation ([("SAT", 18500)])
+__37
+new variables:
+  findAux __37: bool
+new SAT encoding decisions:
+  define(__37 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != true
    ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__59
+__38
 new variables:
-  findAux __59: bool
+  findAux __38: bool
 new SAT encoding decisions:
-  define(__59 <-> !((x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false))) using tseitin
+  define(__38 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (true))) using tseitin
 
 --
 
-or([__59,__58;int(1..)])
+or([__38,__37;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__60
+__39
 new variables:
-  findAux __60: bool
+  findAux __39: bool
 new SAT encoding decisions:
-  define(__60 <-> or([__59,__58;int(1..)])) using tseitin
+  define(__39 <-> or([__38,__37;int(1..)])) using tseitin
 
 --
 
-and([__46,__60;int(1..)])
+SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_1#as_set_1#explicit_1#components_2
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_2
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_2 != (true,17)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != true,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 17;int(1..)])
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_2#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_2#components_2
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 17
+   ~~> select_integer_relation ([("SAT", 18500)])
+__40
+new variables:
+  findAux __40: bool
+new SAT encoding decisions:
+  define(__40 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 17) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+
+--
+
+true,
+and([(__19) -> (and([__39,or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != true,__40;int(1..)]);int(1..)])),(__24) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (true,13),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (true,13);int(1..)]));int(1..)]),
+true,
+true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+and([true,(__24) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (true,13),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (true,13);int(1..)]));int(1..)]),
+true,
+true
+new SAT encoding decisions:
+  assert((__19) -> (and([__39,or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != true,__40;int(1..)]);int(1..)]))) using tseitin
+
+--
+
+and([(__24) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (true,13),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (true,13);int(1..)]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+(__24) -> (and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) != (true,13),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) != (true,13);int(1..)]))
+
+--
+
+SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1 != (true,13)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != true,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)])
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_1#components_2
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13
+   ~~> select_integer_relation ([("SAT", 18500)])
+__41
+new variables:
+  findAux __41: bool
+new SAT encoding decisions:
+  define(__41 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != true
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
+__42
+new variables:
+  findAux __42: bool
+new SAT encoding decisions:
+  define(__42 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (true))) using tseitin
+
+--
+
+or([__42,__41;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__61
+__43
 new variables:
-  findAux __61: bool
+  findAux __43: bool
 new SAT encoding decisions:
-  define(__61 <-> and([__46,__60;int(1..)])) using tseitin
-
---
-
-(__21) -> (__61)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__62
-new variables:
-  findAux __62: bool
-new SAT encoding decisions:
-  define(__62 <-> (__21) -> (__61)) using tseitin
+  define(__43 <-> or([__42,__41;int(1..)])) using tseitin
 
 --
 
@@ -1655,74 +1501,24 @@ x#as_relation_1#as_set_1#explicit_1#components_2#components_2
 
 x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13
    ~~> select_integer_relation ([("SAT", 18500)])
-__63
+__44
 new variables:
-  findAux __63: bool
+  findAux __44: bool
 new SAT encoding decisions:
-  define(__63 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != true
-   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__64
-new variables:
-  findAux __64: bool
-new SAT encoding decisions:
-  define(__64 <-> !((x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (true))) using tseitin
-
---
-
-or([__64,__63;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__65
-new variables:
-  findAux __65: bool
-new SAT encoding decisions:
-  define(__65 <-> or([__64,__63;int(1..)])) using tseitin
-
---
-
-and([__57,__65;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__66
-new variables:
-  findAux __66: bool
-new SAT encoding decisions:
-  define(__66 <-> and([__57,__65;int(1..)])) using tseitin
-
---
-
-(__31) -> (__66)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__67
-new variables:
-  findAux __67: bool
-new SAT encoding decisions:
-  define(__67 <-> (__31) -> (__66)) using tseitin
-
---
-
-and([__43,__62,__54,__67;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__68
-new variables:
-  findAux __68: bool
-new SAT encoding decisions:
-  define(__68 <-> and([__43,__62,__54,__67;int(1..)])) using tseitin
+  define(__44 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 13) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }]
 
 --
 
 true,
-__68,
+(__24) -> (and([__43,or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != true,__44;int(1..)]);int(1..)])),
 true,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true
 new SAT encoding decisions:
-  assert(__68) using tseitin
+  assert((__24) -> (and([__43,or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != true,__44;int(1..)]);int(1..)]))) using tseitin
 
 --
 
@@ -1795,30 +1591,6 @@ findAux __41: bool
 findAux __42: bool
 findAux __43: bool
 findAux __44: bool
-findAux __45: bool
-findAux __46: bool
-findAux __47: bool
-findAux __48: bool
-findAux __49: bool
-findAux __50: bool
-findAux __51: bool
-findAux __52: bool
-findAux __53: bool
-findAux __54: bool
-findAux __55: bool
-findAux __56: bool
-findAux __57: bool
-findAux __58: bool
-findAux __59: bool
-findAux __60: bool
-findAux __61: bool
-findAux __62: bool
-findAux __63: bool
-findAux __64: bool
-findAux __65: bool
-findAux __66: bool
-findAux __67: bool
-findAux __68: bool
 
 such that
 
@@ -1832,73 +1604,52 @@ define(__0 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components
 define(__1 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
 define(__2 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
 define(__3 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__4 <-> or([__2,__3;int(1..)])) using tseitin,
-define(__5 <-> or([__0,__1;int(1..)])) using tseitin,
-assert(__5) using tseitin,
-assert(__4) using tseitin,
-define(__6 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6, -1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, -2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, -4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, -8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, -16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, 32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Less 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }, PbTermGroup { start: 6, end: 12, structure: BoundedBinary { lower: -17, upper: -13 } }],
-define(__7 <-> !(x#as_relation_1#as_set_1#explicit_1#components_1#components_1)) using tseitin,
-define(__8 <-> and([__7,x#as_relation_1#as_set_1#explicit_1#components_2#components_1;int(1..)])) using tseitin,
-define(__9 <-> (x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (x#as_relation_1#as_set_1#explicit_1#components_2#components_1)) using tseitin,
-define(__10 <-> and([__9,__6;int(1..)])) using tseitin,
-define(__11 <-> or([__8,__10;int(1..)])) using tseitin,
-assert(__11) using tseitin,
-define(__12 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__13 <-> (x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false)) using tseitin,
-define(__14 <-> and([__13,__12;int(1..)])) using tseitin,
-define(__15 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__16 <-> (x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false)) using tseitin,
-define(__17 <-> and([__16,__15;int(1..)])) using tseitin,
-define(__18 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__19 <-> (x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false)) using tseitin,
-define(__20 <-> and([__19,__18;int(1..)])) using tseitin,
-define(__21 <-> or([__17,__20;int(1..)])) using tseitin,
-define(__22 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__23 <-> and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1,__22;int(1..)])) using tseitin,
-define(__24 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__25 <-> and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1,__24;int(1..)])) using tseitin,
-define(__26 <-> or([__23,__25;int(1..)])) using tseitin,
-define(__27 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__28 <-> and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1,__27;int(1..)])) using tseitin,
-define(__29 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__30 <-> and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1,__29;int(1..)])) using tseitin,
-define(__31 <-> or([__28,__30;int(1..)])) using tseitin,
-define(__32 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__33 <-> (x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false)) using tseitin,
-define(__34 <-> and([__33,__32;int(1..)])) using tseitin,
-define(__35 <-> or([__34,__14;int(1..)])) using tseitin,
-define(__36 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__37 <-> !((x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false))) using tseitin,
-define(__38 <-> or([__37,__36;int(1..)])) using tseitin,
-define(__39 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__40 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false))) using tseitin,
-define(__41 <-> or([__40,__39;int(1..)])) using tseitin,
-define(__42 <-> and([__41,__38;int(1..)])) using tseitin,
-define(__43 <-> (__35) -> (__42)) using tseitin,
-define(__44 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__45 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false))) using tseitin,
-define(__46 <-> or([__45,__44;int(1..)])) using tseitin,
-define(__47 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__48 <-> !((x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (true))) using tseitin,
-define(__49 <-> or([__48,__47;int(1..)])) using tseitin,
-define(__50 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__51 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (true))) using tseitin,
-define(__52 <-> or([__51,__50;int(1..)])) using tseitin,
-define(__53 <-> and([__52,__49;int(1..)])) using tseitin,
-define(__54 <-> (__26) -> (__53)) using tseitin,
-define(__55 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__56 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (true))) using tseitin,
-define(__57 <-> or([__56,__55;int(1..)])) using tseitin,
-define(__58 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__59 <-> !((x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false))) using tseitin,
-define(__60 <-> or([__59,__58;int(1..)])) using tseitin,
-define(__61 <-> and([__46,__60;int(1..)])) using tseitin,
-define(__62 <-> (__21) -> (__61)) using tseitin,
-define(__63 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
-define(__64 <-> !((x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (true))) using tseitin,
-define(__65 <-> or([__64,__63;int(1..)])) using tseitin,
-define(__66 <-> and([__57,__65;int(1..)])) using tseitin,
-define(__67 <-> (__31) -> (__66)) using tseitin,
-define(__68 <-> and([__43,__62,__54,__67;int(1..)])) using tseitin,
-assert(__68) using tseitin
+assert(or([__0,__1;int(1..)])) using tseitin,
+assert(or([__2,__3;int(1..)])) using tseitin,
+define(__4 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6, -1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, -2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, -4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, -8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, -16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, 32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Less 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }, PbTermGroup { start: 6, end: 12, structure: BoundedBinary { lower: -17, upper: -13 } }],
+assert(or([and([and([!(x#as_relation_1#as_set_1#explicit_1#components_1#components_1),x#as_relation_1#as_set_1#explicit_1#components_2#components_1;int(1..)]);int(1..)]),and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = x#as_relation_1#as_set_1#explicit_1#components_2#components_1,or([__4;int(1..)]);int(1..)]);int(1..)])) using tseitin,
+define(__5 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__6 <-> (x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false)) using tseitin,
+define(__7 <-> and([__6,__5;int(1..)])) using tseitin,
+define(__8 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__9 <-> (x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false)) using tseitin,
+define(__10 <-> and([__9,__8;int(1..)])) using tseitin,
+define(__11 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__12 <-> (x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false)) using tseitin,
+define(__13 <-> and([__12,__11;int(1..)])) using tseitin,
+define(__14 <-> or([__10,__13;int(1..)])) using tseitin,
+define(__15 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__16 <-> and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1,__15;int(1..)])) using tseitin,
+define(__17 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__18 <-> and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1,__17;int(1..)])) using tseitin,
+define(__19 <-> or([__16,__18;int(1..)])) using tseitin,
+define(__20 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__21 <-> and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1,__20;int(1..)])) using tseitin,
+define(__22 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) Equal 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__23 <-> and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1,__22;int(1..)])) using tseitin,
+define(__24 <-> or([__21,__23;int(1..)])) using tseitin,
+define(__25 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) Equal 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__26 <-> (x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false)) using tseitin,
+define(__27 <-> and([__26,__25;int(1..)])) using tseitin,
+define(__28 <-> or([__27,__7;int(1..)])) using tseitin,
+define(__29 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__30 <-> !((x#as_relation_1#as_set_1#explicit_1#components_2#components_1) <-> (false))) using tseitin,
+define(__31 <-> or([__30,__29;int(1..)])) using tseitin,
+define(__32 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+assert((__28) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != false,__32;int(1..)]),__31;int(1..)]))) using tseitin,
+define(__33 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__34 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (false))) using tseitin,
+define(__35 <-> or([__34,__33;int(1..)])) using tseitin,
+define(__36 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+assert((__14) -> (and([__35,or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != false,__36;int(1..)]);int(1..)]))) using tseitin,
+define(__37 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__38 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (true))) using tseitin,
+define(__39 <-> or([__38,__37;int(1..)])) using tseitin,
+define(__40 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 17) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+assert((__19) -> (and([__39,or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != true,__40;int(1..)]);int(1..)]))) using tseitin,
+define(__41 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_1#components_2#twos_complement_6) NotEqual 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+define(__42 <-> !((x#as_relation_1#as_set_1#explicit_1#components_1#components_1) <-> (true))) using tseitin,
+define(__43 <-> or([__42,__41;int(1..)])) using tseitin,
+define(__44 <-> integer-weighted(1*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_1, 2*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_2, 4*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_3, 8*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_4, 16*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_5, -32*x#as_relation_1#as_set_1#explicit_1#components_2#components_2#twos_complement_6) NotEqual 13) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 13, upper: 17 } }],
+assert((__24) -> (and([__43,or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != true,__44;int(1..)]);int(1..)]))) using tseitin
 

@@ -11,6 +11,17 @@ atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)])
 
 --
 
+(small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
+!(small),
+atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
+atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)])
+new SAT encoding decisions:
+  assert(!(small)) using tseitin
+
+--
+
 xs
    ~~> select_representation ([("ReprGeneral", 10000)])
 xs
@@ -28,11 +39,9 @@ xs
 --
 
 (small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
-!(small),
 atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)])
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 (small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
-!(small),
 atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)])
 new variables:
   find xs#components_1#twos_complement_1: bool
@@ -111,117 +120,42 @@ new SAT encoding decisions:
 
 --
 
-!(small)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> !(small)) using tseitin
-
---
-
+(small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
+atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)]),
+or([and([__0,__1;int(1..)]);int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)]),
 or([and([__4,__5;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__4,__5;int(1..)])
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-or([and([__2,__3;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__2,__3;int(1..)])
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
+atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)]),
+or([and([__2,__3;int(1..)]);int(1..)]),
+or([and([__4,__5;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  define(__7 <-> and([__0,__1;int(1..)])) using tseitin
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
 
 --
 
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
+(small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
+atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)]),
+or([and([__2,__3;int(1..)]);int(1..)]),
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
+atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)]),
+or([and([__4,__5;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  define(__8 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-and([__4,__5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> and([__4,__5;int(1..)])) using tseitin
-
---
-
-(small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
-__6,
-atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)]),
-__7,
-__8,
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
-(small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
-atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)]),
-__7,
-__8,
-__9
-new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin
 
 --
 
 (small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
 atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)]),
-__7,
-__8,
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
-(small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
-atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)]),
-__8,
-__9
-new SAT encoding decisions:
-  assert(__7) using tseitin
-
---
-
-(small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
-atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)]),
-__8,
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
-(small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
-atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)]),
-__9
-new SAT encoding decisions:
-  assert(__8) using tseitin
-
---
-
-(small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
-atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)]),
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 (small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
 atLeast(flatten(xs), [1;int(1..1)], [3;int(1..1)])
 new SAT encoding decisions:
-  assert(__9) using tseitin
+  assert(or([and([__4,__5;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -257,41 +191,41 @@ and([sum([toInt(xs#components_1 = 3),toInt(xs#components_2 = 3),toInt(xs#compone
 
 xs#components_1 = 3
    ~~> select_integer_relation ([("SAT", 18500)])
-__10
+__6
 new variables:
-  findAux __10: bool
+  findAux __6: bool
 new SAT encoding decisions:
-  define(__10 <-> integer-weighted(1*xs#components_1#twos_complement_1, 2*xs#components_1#twos_complement_2, -4*xs#components_1#twos_complement_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  define(__6 <-> integer-weighted(1*xs#components_1#twos_complement_1, 2*xs#components_1#twos_complement_2, -4*xs#components_1#twos_complement_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
 xs#components_2 = 3
    ~~> select_integer_relation ([("SAT", 18500)])
-__11
+__7
 new variables:
-  findAux __11: bool
+  findAux __7: bool
 new SAT encoding decisions:
-  define(__11 <-> integer-weighted(1*xs#components_2#twos_complement_1, 2*xs#components_2#twos_complement_2, -4*xs#components_2#twos_complement_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  define(__7 <-> integer-weighted(1*xs#components_2#twos_complement_1, 2*xs#components_2#twos_complement_2, -4*xs#components_2#twos_complement_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
 xs#components_3 = 3
    ~~> select_integer_relation ([("SAT", 18500)])
-__12
+__8
 new variables:
-  findAux __12: bool
+  findAux __8: bool
 new SAT encoding decisions:
-  define(__12 <-> integer-weighted(1*xs#components_3#twos_complement_1, 2*xs#components_3#twos_complement_2, -4*xs#components_3#twos_complement_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  define(__8 <-> integer-weighted(1*xs#components_3#twos_complement_1, 2*xs#components_3#twos_complement_2, -4*xs#components_3#twos_complement_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
 (small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
-and([sum([toInt(__10),toInt(__11),toInt(__12);int(1..)]) >= 1;int(1..)])
+and([sum([toInt(__6),toInt(__7),toInt(__8);int(1..)]) >= 1;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 (small) <-> (atMost(flatten(xs), [1;int(1..1)], [1;int(1..1)])),
 and([true;int(1..)])
 new SAT encoding decisions:
-  count(__10, __11, __12) AtLeast 1 using None
+  count(__6, __7, __8) AtLeast 1 using None
 
 --
 
@@ -327,68 +261,52 @@ and([sum([toInt(xs#components_1 = 1),toInt(xs#components_2 = 1),toInt(xs#compone
 
 xs#components_1 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__13
+__9
 new variables:
-  findAux __13: bool
+  findAux __9: bool
 new SAT encoding decisions:
-  define(__13 <-> integer-weighted(1*xs#components_1#twos_complement_1, 2*xs#components_1#twos_complement_2, -4*xs#components_1#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  define(__9 <-> integer-weighted(1*xs#components_1#twos_complement_1, 2*xs#components_1#twos_complement_2, -4*xs#components_1#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
 xs#components_2 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__14
+__10
 new variables:
-  findAux __14: bool
+  findAux __10: bool
 new SAT encoding decisions:
-  define(__14 <-> integer-weighted(1*xs#components_2#twos_complement_1, 2*xs#components_2#twos_complement_2, -4*xs#components_2#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  define(__10 <-> integer-weighted(1*xs#components_2#twos_complement_1, 2*xs#components_2#twos_complement_2, -4*xs#components_2#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
 xs#components_3 = 1
    ~~> select_integer_relation ([("SAT", 18500)])
-__15
+__11
 new variables:
-  findAux __15: bool
+  findAux __11: bool
 new SAT encoding decisions:
-  define(__15 <-> integer-weighted(1*xs#components_3#twos_complement_1, 2*xs#components_3#twos_complement_2, -4*xs#components_3#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
+  define(__11 <-> integer-weighted(1*xs#components_3#twos_complement_1, 2*xs#components_3#twos_complement_2, -4*xs#components_3#twos_complement_3) Equal 1) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }]
 
 --
 
-(small) <-> (and([sum([toInt(__13),toInt(__14),toInt(__15);int(1..)]) <= 1;int(1..)])),
+(small) <-> (and([sum([toInt(__9),toInt(__10),toInt(__11);int(1..)]) <= 1;int(1..)])),
 true
    ~~> select_guarded_count ([("SAT", 18600)])
-(small) <-> (and([__16;int(1..)])),
+(small) <-> (and([__12;int(1..)])),
 true
 new variables:
-  findAux __16: bool
+  findAux __12: bool
 new SAT encoding decisions:
-  define(__16 <-> count(__13, __14, __15) LessEqual 1) using None, AMO None
+  define(__12 <-> count(__9, __10, __11) LessEqual 1) using None, AMO None
 
 --
 
-and([__16;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__16
-
---
-
-(small) <-> (__16)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__17
-new variables:
-  findAux __17: bool
-new SAT encoding decisions:
-  define(__17 <-> (small) <-> (__16)) using tseitin
-
---
-
-__17,
+(small) <-> (and([__12;int(1..)])),
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__17) using tseitin
+  assert((small) <-> (and([__12;int(1..)]))) using tseitin
 
 --
 
@@ -421,11 +339,6 @@ findAux __9: bool
 findAux __10: bool
 findAux __11: bool
 findAux __12: bool
-findAux __13: bool
-findAux __14: bool
-findAux __15: bool
-findAux __16: bool
-findAux __17: bool
 
 such that
 
@@ -433,28 +346,23 @@ true
 
 sat encoding decisions:
 
+assert(!(small)) using tseitin,
 define(__0 <-> integer-weighted(1*xs#components_1#twos_complement_1, 2*xs#components_1#twos_complement_2, -4*xs#components_1#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
 define(__1 <-> integer-weighted(1*xs#components_1#twos_complement_1, 2*xs#components_1#twos_complement_2, -4*xs#components_1#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
 define(__2 <-> integer-weighted(1*xs#components_2#twos_complement_1, 2*xs#components_2#twos_complement_2, -4*xs#components_2#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
 define(__3 <-> integer-weighted(1*xs#components_2#twos_complement_1, 2*xs#components_2#twos_complement_2, -4*xs#components_2#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
 define(__4 <-> integer-weighted(1*xs#components_3#twos_complement_1, 2*xs#components_3#twos_complement_2, -4*xs#components_3#twos_complement_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
 define(__5 <-> integer-weighted(1*xs#components_3#twos_complement_1, 2*xs#components_3#twos_complement_2, -4*xs#components_3#twos_complement_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__6 <-> !(small)) using tseitin,
-define(__7 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__8 <-> and([__2,__3;int(1..)])) using tseitin,
-define(__9 <-> and([__4,__5;int(1..)])) using tseitin,
-assert(__6) using tseitin,
-assert(__7) using tseitin,
-assert(__8) using tseitin,
-assert(__9) using tseitin,
-define(__10 <-> integer-weighted(1*xs#components_1#twos_complement_1, 2*xs#components_1#twos_complement_2, -4*xs#components_1#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__11 <-> integer-weighted(1*xs#components_2#twos_complement_1, 2*xs#components_2#twos_complement_2, -4*xs#components_2#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__12 <-> integer-weighted(1*xs#components_3#twos_complement_1, 2*xs#components_3#twos_complement_2, -4*xs#components_3#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-count(__10, __11, __12) AtLeast 1 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
-define(__13 <-> integer-weighted(1*xs#components_1#twos_complement_1, 2*xs#components_1#twos_complement_2, -4*xs#components_1#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__14 <-> integer-weighted(1*xs#components_2#twos_complement_1, 2*xs#components_2#twos_complement_2, -4*xs#components_2#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__15 <-> integer-weighted(1*xs#components_3#twos_complement_1, 2*xs#components_3#twos_complement_2, -4*xs#components_3#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
-define(__16 <-> count(__13, __14, __15) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
-define(__17 <-> (small) <-> (__16)) using tseitin,
-assert(__17) using tseitin
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__4,__5;int(1..)]);int(1..)])) using tseitin,
+define(__6 <-> integer-weighted(1*xs#components_1#twos_complement_1, 2*xs#components_1#twos_complement_2, -4*xs#components_1#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__7 <-> integer-weighted(1*xs#components_2#twos_complement_1, 2*xs#components_2#twos_complement_2, -4*xs#components_2#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__8 <-> integer-weighted(1*xs#components_3#twos_complement_1, 2*xs#components_3#twos_complement_2, -4*xs#components_3#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+count(__6, __7, __8) AtLeast 1 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+define(__9 <-> integer-weighted(1*xs#components_1#twos_complement_1, 2*xs#components_1#twos_complement_2, -4*xs#components_1#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__10 <-> integer-weighted(1*xs#components_2#twos_complement_1, 2*xs#components_2#twos_complement_2, -4*xs#components_2#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__11 <-> integer-weighted(1*xs#components_3#twos_complement_1, 2*xs#components_3#twos_complement_2, -4*xs#components_3#twos_complement_3) Equal 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 3 } }],
+define(__12 <-> count(__9, __10, __11) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
+assert((small) <-> (and([__12;int(1..)]))) using tseitin
 

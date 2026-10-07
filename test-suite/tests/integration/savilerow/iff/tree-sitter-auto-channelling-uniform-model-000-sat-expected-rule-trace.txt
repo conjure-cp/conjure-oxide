@@ -11,41 +11,11 @@ such that
 
 --
 
-(t) <-> (z)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
+(t) <-> (z) = (x) <-> (y)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__0 <-> (t) <-> (z)) using tseitin
-
---
-
-(x) <-> (y)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> (x) <-> (y)) using tseitin
-
---
-
-__0 = __1
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> (__0) <-> (__1)) using tseitin
-
---
-
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert((t) <-> (z) = (x) <-> (y)) using tseitin
 
 --
 
@@ -55,9 +25,6 @@ find t: bool
 find x: bool
 find y: bool
 find z: bool
-findAux __0: bool
-findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -65,8 +32,5 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> (t) <-> (z)) using tseitin,
-define(__1 <-> (x) <-> (y)) using tseitin,
-define(__2 <-> (__0) <-> (__1)) using tseitin,
-assert(__2) using tseitin
+assert((t) <-> (z) = (x) <-> (y)) using tseitin
 

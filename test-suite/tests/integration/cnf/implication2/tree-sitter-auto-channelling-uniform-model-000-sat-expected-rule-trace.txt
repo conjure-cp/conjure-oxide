@@ -10,31 +10,11 @@ such that
 
 --
 
-(b) -> (c)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
+(a) -> ((b) -> (c))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__0 <-> (b) -> (c)) using tseitin
-
---
-
-(a) -> (__0)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> (a) -> (__0)) using tseitin
-
---
-
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert((a) -> ((b) -> (c))) using tseitin
 
 --
 
@@ -43,8 +23,6 @@ Final model:
 find a: bool
 find b: bool
 find c: bool
-findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -52,7 +30,5 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> (b) -> (c)) using tseitin,
-define(__1 <-> (a) -> (__0)) using tseitin,
-assert(__1) using tseitin
+assert((a) -> ((b) -> (c))) using tseitin
 

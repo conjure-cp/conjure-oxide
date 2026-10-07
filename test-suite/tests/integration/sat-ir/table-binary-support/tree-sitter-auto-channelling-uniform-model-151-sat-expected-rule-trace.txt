@@ -67,6 +67,36 @@ new SAT encoding decisions:
 
 --
 
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+or([!(x#offset_3),and([!(x#offset_2);int(1..)]);int(1..)]),
+or([__0,__1,__2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+or([__0,__1,__2;int(1..)])
+new SAT encoding decisions:
+  assert(or([!(x#offset_3),and([!(x#offset_2);int(1..)]);int(1..)])) using tseitin
+
+--
+
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+or([__0,__1,__2;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(positive) <-> (table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})),
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)}))
+new SAT encoding decisions:
+  assert(or([__0,__1,__2;int(1..)])) using tseitin
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
 y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
@@ -80,13 +110,13 @@ new constraints:
 
 --
 
-negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})
+table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})
    ~~> select_table ([("SAT", 18500)])
 __3
 new variables:
   findAux __3: bool
 new SAT encoding decisions:
-  define(__3 <-> table(-2+weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], -2+weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], [[0, 0], [3, 3]], negative=true)) using None, PB None
+  define(__3 <-> table(-2+weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], -2+weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using None, PB None
 
 --
 
@@ -120,9 +150,36 @@ new SAT encoding decisions:
 
 --
 
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
+(positive) <-> (__3),
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+or([!(y#offset_3),and([!(y#offset_2);int(1..)]);int(1..)]),
+or([__4,__5,__6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+or([!(y#offset_3),and([!(y#offset_2);int(1..)]);int(1..)]),
+or([__4,__5,__6;int(1..)])
+new SAT encoding decisions:
+  assert((positive) <-> (__3)) using tseitin
+
+--
+
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+or([!(y#offset_3),and([!(y#offset_2);int(1..)]);int(1..)]),
+or([__4,__5,__6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+or([__4,__5,__6;int(1..)])
+new SAT encoding decisions:
+  assert(or([!(y#offset_3),and([!(y#offset_2);int(1..)]);int(1..)])) using tseitin
+
+--
+
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})),
+or([__4,__5,__6;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(negative) <-> (negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)}))
+new SAT encoding decisions:
+  assert(or([__4,__5,__6;int(1..)])) using tseitin
 
 --
 
@@ -132,198 +189,21 @@ y
 
 --
 
-table(sequence(x,y), {sequence(-2,0),sequence(3,-2),sequence(3,-2),sequence(7,3)})
+negativeTable(sequence(x,y), {sequence(0,0),sequence(3,3)})
    ~~> select_table ([("SAT", 18500)])
 __7
 new variables:
   findAux __7: bool
 new SAT encoding decisions:
-  define(__7 <-> table(-2+weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], -2+weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using None, PB None
+  define(__7 <-> table(-2+weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], -2+weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], [[0, 0], [3, 3]], negative=true)) using None, PB None
 
 --
 
-!(x#offset_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__8
-new variables:
-  findAux __8: bool
+(negative) <-> (__7)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__8 <-> !(x#offset_3)) using tseitin
-
---
-
-!(y#offset_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> !(y#offset_3)) using tseitin
-
---
-
-!(x#offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> !(x#offset_2)) using tseitin
-
---
-
-!(y#offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> !(y#offset_2)) using tseitin
-
---
-
-and([__10;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__10
-
---
-
-and([__11;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__11
-
---
-
-or([__4,__5,__6;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__12
-new variables:
-  findAux __12: bool
-new SAT encoding decisions:
-  define(__12 <-> or([__4,__5,__6;int(1..)])) using tseitin
-
---
-
-or([__0,__1,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> or([__0,__1,__2;int(1..)])) using tseitin
-
---
-
-(positive) <-> (__7)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> (positive) <-> (__7)) using tseitin
-
---
-
-(negative) <-> (__3)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__15
-new variables:
-  findAux __15: bool
-new SAT encoding decisions:
-  define(__15 <-> (negative) <-> (__3)) using tseitin
-
---
-
-or([__8,__10;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__16
-new variables:
-  findAux __16: bool
-new SAT encoding decisions:
-  define(__16 <-> or([__8,__10;int(1..)])) using tseitin
-
---
-
-or([__9,__11;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__17
-new variables:
-  findAux __17: bool
-new SAT encoding decisions:
-  define(__17 <-> or([__9,__11;int(1..)])) using tseitin
-
---
-
-__14,
-__15,
-__16,
-__13,
-__17,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-__15,
-__16,
-__13,
-__17,
-__12
-new SAT encoding decisions:
-  assert(__14) using tseitin
-
---
-
-__15,
-__16,
-__13,
-__17,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-__16,
-__13,
-__17,
-__12
-new SAT encoding decisions:
-  assert(__15) using tseitin
-
---
-
-__16,
-__13,
-__17,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-__13,
-__17,
-__12
-new SAT encoding decisions:
-  assert(__16) using tseitin
-
---
-
-__13,
-__17,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-__17,
-__12
-new SAT encoding decisions:
-  assert(__13) using tseitin
-
---
-
-__17,
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-__12
-new SAT encoding decisions:
-  assert(__17) using tseitin
-
---
-
-__12
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__12) using tseitin
+  assert((negative) <-> (__7)) using tseitin
 
 --
 
@@ -347,16 +227,6 @@ findAux __4: bool
 findAux __5: bool
 findAux __6: bool
 findAux __7: bool
-findAux __8: bool
-findAux __9: bool
-findAux __10: bool
-findAux __11: bool
-findAux __12: bool
-findAux __13: bool
-findAux __14: bool
-findAux __15: bool
-findAux __16: bool
-findAux __17: bool
 
 such that
 
@@ -367,25 +237,15 @@ sat encoding decisions:
 define(__0 <-> integer-weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
 define(__1 <-> integer-weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
 define(__2 <-> integer-weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) Equal 5) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
-define(__3 <-> table(-2+weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], -2+weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], [[0, 0], [3, 3]], negative=true)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
+assert(or([!(x#offset_3),and([!(x#offset_2);int(1..)]);int(1..)])) using tseitin,
+assert(or([__0,__1,__2;int(1..)])) using tseitin,
+define(__3 <-> table(-2+weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], -2+weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
 define(__4 <-> integer-weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
 define(__5 <-> integer-weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
 define(__6 <-> integer-weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3) Equal 5) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
-define(__7 <-> table(-2+weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], -2+weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], [[-2, 0], [3, -2], [3, -2], [7, 3]], negative=false)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
-define(__8 <-> !(x#offset_3)) using tseitin,
-define(__9 <-> !(y#offset_3)) using tseitin,
-define(__10 <-> !(x#offset_2)) using tseitin,
-define(__11 <-> !(y#offset_2)) using tseitin,
-define(__12 <-> or([__4,__5,__6;int(1..)])) using tseitin,
-define(__13 <-> or([__0,__1,__2;int(1..)])) using tseitin,
-define(__14 <-> (positive) <-> (__7)) using tseitin,
-define(__15 <-> (negative) <-> (__3)) using tseitin,
-define(__16 <-> or([__8,__10;int(1..)])) using tseitin,
-define(__17 <-> or([__9,__11;int(1..)])) using tseitin,
-assert(__14) using tseitin,
-assert(__15) using tseitin,
-assert(__16) using tseitin,
-assert(__13) using tseitin,
-assert(__17) using tseitin,
-assert(__12) using tseitin
+assert((positive) <-> (__3)) using tseitin,
+assert(or([!(y#offset_3),and([!(y#offset_2);int(1..)]);int(1..)])) using tseitin,
+assert(or([__4,__5,__6;int(1..)])) using tseitin,
+define(__7 <-> table(-2+weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], -2+weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }], [[0, 0], [3, 3]], negative=true)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }),
+assert((negative) <-> (__7)) using tseitin
 

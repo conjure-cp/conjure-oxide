@@ -52,6 +52,19 @@ new SAT encoding decisions:
 
 --
 
+sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
+__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ]),
+optimise(minimise=false, value=__0),
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
+__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ]),
+optimise(minimise=false, value=__0)
+new SAT encoding decisions:
+  assert(or([and([__1,__2;int(1..)]);int(1..)])) using tseitin
+
+--
+
 __0
    ~~> select_representation ([("ReprGeneral", 10000)])
 __0
@@ -68,13 +81,11 @@ new SAT encoding decisions:
 
 sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
 __0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ]),
-true,
-or([and([__1,__2;int(1..)]);int(1..)])
+true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
 __0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ]),
-true,
-or([and([__1,__2;int(1..)]);int(1..)])
+true
 new variables:
   find packed#components_1: bool
   find packed#components_10: bool
@@ -89,44 +100,13 @@ new variables:
 
 --
 
-or([and([__1,__2;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__1,__2;int(1..)])
-
---
-
-sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
-__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ]),
-true,
-and([__1,__2;int(1..)])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
-__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ]),
-true,
-and([__1,__2;int(1..)])
-
---
-
-and([__1,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> and([__1,__2;int(1..)])) using tseitin
-
---
-
-sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
-__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ]),
-true,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
 sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
 __0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ]),
 true
-new SAT encoding decisions:
-  assert(__3) using tseitin
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
+__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ]),
+true
 
 --
 
@@ -354,7 +334,6 @@ letting values#components_7 be 8
 letting values#components_8 be 5
 letting values#components_9 be 8
 letting values#components_10 be 4
-findAux __3: bool
 
 such that
 
@@ -364,9 +343,8 @@ sat encoding decisions:
 
 define(__1 <-> integer-weighted(1*__0#twos_complement_1, 2*__0#twos_complement_2, 4*__0#twos_complement_3, 8*__0#twos_complement_4, 16*__0#twos_complement_5, 32*__0#twos_complement_6, 64*__0#twos_complement_7, -128*__0#twos_complement_8) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 80 } }],
 define(__2 <-> integer-weighted(1*__0#twos_complement_1, 2*__0#twos_complement_2, 4*__0#twos_complement_3, 8*__0#twos_complement_4, 16*__0#twos_complement_5, 32*__0#twos_complement_6, 64*__0#twos_complement_7, -128*__0#twos_complement_8) LessEqual 80) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 80 } }],
+assert(or([and([__1,__2;int(1..)]);int(1..)])) using tseitin,
 optimise(minimise=false, value=0+weighted(1*__0#twos_complement_1, 2*__0#twos_complement_2, 4*__0#twos_complement_3, 8*__0#twos_complement_4, 16*__0#twos_complement_5, 32*__0#twos_complement_6, 64*__0#twos_complement_7, -128*__0#twos_complement_8) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 80 } }]) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
-define(__3 <-> and([__1,__2;int(1..)])) using tseitin,
-assert(__3) using tseitin,
 weighted(1*packed#components_1, 7*packed#components_2, 2*packed#components_3, 2*packed#components_4, 2*packed#components_5, 6*packed#components_6, 8*packed#components_7, 5*packed#components_8, 8*packed#components_9, 4*packed#components_10) AtMost 11 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }),
 weighted(1*__0#twos_complement_1, 2*__0#twos_complement_2, 4*__0#twos_complement_3, 8*__0#twos_complement_4, 16*__0#twos_complement_5, 32*__0#twos_complement_6, 64*__0#twos_complement_7, -128*__0#twos_complement_8, -1*packed#components_1, -7*packed#components_2, -2*packed#components_3, -2*packed#components_4, -2*packed#components_5, -6*packed#components_6, -8*packed#components_7, -5*packed#components_8, -8*packed#components_9, -4*packed#components_10) Exactly 0 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 80 } }]
 

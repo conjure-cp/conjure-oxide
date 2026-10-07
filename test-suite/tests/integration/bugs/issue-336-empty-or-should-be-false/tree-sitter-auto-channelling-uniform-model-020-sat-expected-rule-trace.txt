@@ -9,8 +9,16 @@ or([;int(1..0)])
 --
 
 false
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(false) using tseitin
+
+--
+
+true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-false
+true
 new variables:
   find a#order_1: bool
   find a#order_2: bool
@@ -47,183 +55,87 @@ new SAT encoding decisions:
 
 --
 
-!(a#order_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> !(a#order_2)) using tseitin
-
---
-
-!(a#order_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> !(a#order_3)) using tseitin
-
---
-
-!(a#order_4)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__4
-new variables:
-  findAux __4: bool
-new SAT encoding decisions:
-  define(__4 <-> !(a#order_4)) using tseitin
-
---
-
-!(a#order_5)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__5
-new variables:
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__5 <-> !(a#order_5)) using tseitin
-
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-or([__3,a#order_2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> or([__3,a#order_2;int(1..)])) using tseitin
-
---
-
-or([__4,a#order_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> or([__4,a#order_3;int(1..)])) using tseitin
-
---
-
-or([__5,a#order_4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> or([__5,a#order_4;int(1..)])) using tseitin
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-or([__2,a#order_1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> or([__2,a#order_1;int(1..)])) using tseitin
-
---
-
-false,
+true,
 a#order_1,
-__10,
-__6,
-__7,
-__8,
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
-false,
-__10,
-__6,
-__7,
-__8,
-__9
+or([!(a#order_2),a#order_1;int(1..)]),
+or([!(a#order_3),a#order_2;int(1..)]),
+or([!(a#order_4),a#order_3;int(1..)]),
+or([!(a#order_5),a#order_4;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+or([!(a#order_2),a#order_1;int(1..)]),
+or([!(a#order_3),a#order_2;int(1..)]),
+or([!(a#order_4),a#order_3;int(1..)]),
+or([!(a#order_5),a#order_4;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
 new SAT encoding decisions:
   assert(a#order_1) using tseitin
 
 --
 
-false,
-__10,
-__6,
-__7,
-__8,
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
-false,
-__6,
-__7,
-__8,
-__9
+true,
+or([!(a#order_2),a#order_1;int(1..)]),
+or([!(a#order_3),a#order_2;int(1..)]),
+or([!(a#order_4),a#order_3;int(1..)]),
+or([!(a#order_5),a#order_4;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+or([!(a#order_3),a#order_2;int(1..)]),
+or([!(a#order_4),a#order_3;int(1..)]),
+or([!(a#order_5),a#order_4;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__10) using tseitin
+  assert(or([!(a#order_2),a#order_1;int(1..)])) using tseitin
 
 --
 
-false,
-__6,
-__7,
-__8,
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
-false,
-__7,
-__8,
-__9
+true,
+or([!(a#order_3),a#order_2;int(1..)]),
+or([!(a#order_4),a#order_3;int(1..)]),
+or([!(a#order_5),a#order_4;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+or([!(a#order_4),a#order_3;int(1..)]),
+or([!(a#order_5),a#order_4;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert(or([!(a#order_3),a#order_2;int(1..)])) using tseitin
 
 --
 
-false,
-__7,
-__8,
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
-false,
-__8,
-__9
+true,
+or([!(a#order_4),a#order_3;int(1..)]),
+or([!(a#order_5),a#order_4;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+or([!(a#order_5),a#order_4;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__7) using tseitin
+  assert(or([!(a#order_4),a#order_3;int(1..)])) using tseitin
 
 --
 
-false,
-__8,
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
-false,
-__9
+true,
+or([!(a#order_5),a#order_4;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+or([and([__0,__1;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__8) using tseitin
+  assert(or([!(a#order_5),a#order_4;int(1..)])) using tseitin
 
 --
 
-false,
-__9
-   ~~> remove_single_atom ([("SAT", 8400)])
-false
+true,
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true
 new SAT encoding decisions:
-  assert(__9) using tseitin
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -237,37 +149,20 @@ find a#order_4: bool
 find a#order_5: bool
 findAux __0: bool
 findAux __1: bool
-findAux __2: bool
-findAux __3: bool
-findAux __4: bool
-findAux __5: bool
-findAux __6: bool
-findAux __7: bool
-findAux __8: bool
-findAux __9: bool
-findAux __10: bool
 
 such that
 
-false
+true
 
 sat encoding decisions:
 
+assert(false) using tseitin,
 define(__0 <-> integer-weighted(1*a#order_2, 1*a#order_3, 1*a#order_4, 1*a#order_5) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Chain }],
 define(__1 <-> integer-weighted(1*a#order_2, 1*a#order_3, 1*a#order_4, 1*a#order_5) LessEqual 4) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: Chain }],
-define(__2 <-> !(a#order_2)) using tseitin,
-define(__3 <-> !(a#order_3)) using tseitin,
-define(__4 <-> !(a#order_4)) using tseitin,
-define(__5 <-> !(a#order_5)) using tseitin,
-define(__6 <-> or([__3,a#order_2;int(1..)])) using tseitin,
-define(__7 <-> or([__4,a#order_3;int(1..)])) using tseitin,
-define(__8 <-> or([__5,a#order_4;int(1..)])) using tseitin,
-define(__9 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__10 <-> or([__2,a#order_1;int(1..)])) using tseitin,
 assert(a#order_1) using tseitin,
-assert(__10) using tseitin,
-assert(__6) using tseitin,
-assert(__7) using tseitin,
-assert(__8) using tseitin,
-assert(__9) using tseitin
+assert(or([!(a#order_2),a#order_1;int(1..)])) using tseitin,
+assert(or([!(a#order_3),a#order_2;int(1..)])) using tseitin,
+assert(or([!(a#order_4),a#order_3;int(1..)])) using tseitin,
+assert(or([!(a#order_5),a#order_4;int(1..)])) using tseitin,
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
 

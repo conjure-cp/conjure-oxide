@@ -27,18 +27,12 @@ new SAT encoding decisions:
 
 --
 
-or([x#direct_1;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-x#direct_1
-
---
-
 true,
-x#direct_1
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([x#direct_1;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(x#direct_1) using tseitin
+  assert(or([x#direct_1;int(1..)])) using tseitin
 
 --
 
@@ -55,5 +49,5 @@ true
 sat encoding decisions:
 
 at-most-one(x#direct_1) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
-assert(x#direct_1) using tseitin
+assert(or([x#direct_1;int(1..)])) using tseitin
 

@@ -83,56 +83,36 @@ new SAT encoding decisions:
 
 --
 
-or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__1 <-> or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])) using tseitin
-
---
-
-or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__2
-new variables:
-  findAux __2: bool
-new SAT encoding decisions:
-  define(__2 <-> or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])) using tseitin
-
---
-
 true,
 __0,
-__1,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)]),
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
-__1,
-__2
+or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)]),
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
 new SAT encoding decisions:
   assert(__0) using tseitin
 
 --
 
 true,
-__1,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)]),
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
-__2
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])) using tseitin
 
 --
 
 true,
-__2
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -148,8 +128,6 @@ find x#occurrence_2#direct_1: bool
 find x#occurrence_2#direct_2: bool
 find x#occurrence_2#direct_3: bool
 findAux __0: bool
-findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -160,9 +138,7 @@ sat encoding decisions:
 define(__0 <-> integer-weighted(0*x#occurrence_1#direct_1, 1*x#occurrence_1#direct_2, 2*x#occurrence_1#direct_3, 0*x#occurrence_2#direct_1, 1*x#occurrence_2#direct_2, 2*x#occurrence_2#direct_3) Equal 4) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
 at-most-one(x#occurrence_1#direct_1, x#occurrence_1#direct_2, x#occurrence_1#direct_3) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
 at-most-one(x#occurrence_2#direct_1, x#occurrence_2#direct_2, x#occurrence_2#direct_3) using Some(EncodingSelection { algorithm: Ladder, provenance: Heuristic }),
-define(__1 <-> or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])) using tseitin,
-define(__2 <-> or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])) using tseitin,
 assert(__0) using tseitin,
-assert(__1) using tseitin,
-assert(__2) using tseitin
+assert(or([x#occurrence_1#direct_1,x#occurrence_1#direct_2,x#occurrence_1#direct_3;int(1..)])) using tseitin,
+assert(or([x#occurrence_2#direct_1,x#occurrence_2#direct_2,x#occurrence_2#direct_3;int(1..)])) using tseitin
 

@@ -6333,7 +6333,7 @@ new SAT encoding decisions:
 and([SafeMod(SafeDiv(SATInt(Rank([(0, 7)]), [c#packed_1#rank_1,c#packed_1#rank_2,c#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(4, 4)]), [false;int(1..)] [4, 4])),2) != 1,SafeMod(SafeDiv(SATInt(Rank([(0, 7)]), [c#packed_1#rank_1,c#packed_1#rank_2,c#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2) = 1;int(1..)]),
 __3000,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([SafeMod(SafeDiv(SATInt(Rank([(0, 7)]), [c#packed_1#rank_1,c#packed_1#rank_2,c#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(4, 4)]), [false;int(1..)] [4, 4])),2) != 1,SafeMod(SafeDiv(SATInt(Rank([(0, 7)]), [c#packed_1#rank_1,c#packed_1#rank_2,c#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2) = 1;int(1..)]),
 true
 new SAT encoding decisions:
@@ -8385,6 +8385,22 @@ new SAT encoding decisions:
 
 --
 
+and([__4003,SafeMod(SafeDiv(SATInt(Rank([(0, 7)]), [c#packed_1#rank_1,c#packed_1#rank_2,c#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2) = 1;int(1..)]),
+true
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([true,SafeMod(SafeDiv(SATInt(Rank([(0, 7)]), [c#packed_1#rank_1,c#packed_1#rank_2,c#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2) = 1;int(1..)]),
+true
+new SAT encoding decisions:
+  assert(__4003) using tseitin
+
+--
+
+and([SafeMod(SafeDiv(SATInt(Rank([(0, 7)]), [c#packed_1#rank_1,c#packed_1#rank_2,c#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2) = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeMod(SafeDiv(SATInt(Rank([(0, 7)]), [c#packed_1#rank_1,c#packed_1#rank_2,c#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])),2) = 1
+
+--
+
 SafeDiv(SATInt(Rank([(0, 7)]), [c#packed_1#rank_1,c#packed_1#rank_2,c#packed_1#rank_3;int(1..)] [0, 7]), SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]))
    ~~> unify_sat_int_encodings ([("SAT", 4000)])
 SafeDiv(SATInt(Log, [__4004,__4006,__4008,__4010;int(1..)] [0, 7]), SATInt(Log, [__4013,__4015;int(1..)] [1, 1]))
@@ -10421,22 +10437,12 @@ new SAT encoding decisions:
 
 --
 
-and([__4003,__5002;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__5003
-new variables:
-  findAux __5003: bool
-new SAT encoding decisions:
-  define(__5003 <-> and([__4003,__5002;int(1..)])) using tseitin
-
---
-
-__5003,
+__5002,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__5003) using tseitin
+  assert(__5002) using tseitin
 
 --
 
@@ -15452,7 +15458,6 @@ findAux __4999: bool
 findAux __5000: bool
 findAux __5001: bool
 findAux __5002: bool
-findAux __5003: bool
 
 such that
 
@@ -19465,6 +19470,7 @@ define(__4000 <-> or([and([__3996,__3993;int(1..)]),and([!(__3996),false;int(1..
 define(__4001 <-> or([and([__3996,__3994;int(1..)]),and([!(__3996),false;int(1..)]);int(1..)])) using tseitin,
 define(__4002 <-> or([and([__3996,__3995;int(1..)]),and([!(__3996),false;int(1..)]);int(1..)])) using tseitin,
 define(__4003 <-> integer-weighted(1*__3997, 2*__3998, 4*__3999, 8*__4000, 16*__4001, -32*__4002) NotEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 1 } }],
+assert(__4003) using tseitin,
 define(__4004 <-> !((c#packed_1#rank_1) <-> (false))) using tseitin,
 define(__4005 <-> and([c#packed_1#rank_1,false;int(1..)])) using tseitin,
 define(__4006 <-> !((c#packed_1#rank_2) <-> (__4005))) using tseitin,
@@ -20464,6 +20470,5 @@ define(__4999 <-> or([and([__4995,__4992;int(1..)]),and([!(__4995),false;int(1..
 define(__5000 <-> or([and([__4995,__4993;int(1..)]),and([!(__4995),false;int(1..)]);int(1..)])) using tseitin,
 define(__5001 <-> or([and([__4995,__4994;int(1..)]),and([!(__4995),false;int(1..)]);int(1..)])) using tseitin,
 define(__5002 <-> integer-weighted(1*__4996, 2*__4997, 4*__4998, 8*__4999, 16*__5000, -32*__5001) Equal 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__5003 <-> and([__4003,__5002;int(1..)])) using tseitin,
-assert(__5003) using tseitin
+assert(__5002) using tseitin
 

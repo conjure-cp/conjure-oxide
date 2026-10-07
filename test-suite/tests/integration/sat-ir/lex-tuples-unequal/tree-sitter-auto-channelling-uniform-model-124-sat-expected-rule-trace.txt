@@ -116,87 +116,39 @@ new SAT encoding decisions:
 
 --
 
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-or([and([__2,__3;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__2,__3;int(1..)])
-
---
-
+(p <=lex q),
+true,
+or([and([__0,__1;int(1..)]);int(1..)]),
+true,
+or([and([__2,__3;int(1..)]);int(1..)]),
+true,
 or([and([__4,__5;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__4,__5;int(1..)])
-
---
-
-and([__2,__3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> and([__2,__3;int(1..)])) using tseitin
-
---
-
-and([__4,__5;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> and([__4,__5;int(1..)])) using tseitin
-
---
-
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-(p <=lex q),
-true,
-__8,
-true,
-__6,
-true,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 (p <=lex q),
 true,
 true,
-__6,
+or([and([__2,__3;int(1..)]);int(1..)]),
 true,
-__7
+or([and([__4,__5;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__8) using tseitin
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
 
 --
 
 (p <=lex q),
 true,
 true,
-__6,
+or([and([__2,__3;int(1..)]);int(1..)]),
 true,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 (p <=lex q),
 true,
 true,
 true,
-__7
+or([and([__4,__5;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  assert(__6) using tseitin
+  assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -204,14 +156,14 @@ new SAT encoding decisions:
 true,
 true,
 true,
-__7
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 (p <=lex q),
 true,
 true,
 true
 new SAT encoding decisions:
-  assert(__7) using tseitin
+  assert(or([and([__4,__5;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -265,30 +217,24 @@ q#components_1#packed_1
 
 p#components_1#packed_1 < q#components_1#packed_1
    ~~> select_integer_relation ([("SAT", 18500)])
-__9
+__6
 new variables:
-  findAux __9: bool
+  findAux __6: bool
 new SAT encoding decisions:
-  define(__9 <-> integer-weighted(1*p#components_1#packed_1#offset_1, 2*p#components_1#packed_1#offset_2, -1*q#components_1#packed_1#offset_1, -2*q#components_1#packed_1#offset_2) Less 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }]
+  define(__6 <-> integer-weighted(1*p#components_1#packed_1#offset_1, 2*p#components_1#packed_1#offset_2, -1*q#components_1#packed_1#offset_1, -2*q#components_1#packed_1#offset_2) Less 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }]
 
 --
 
-or([__9;int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-__9
-
---
-
-__9,
+or([__6;int(1..)]),
 true,
 true,
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true,
 true,
 true
 new SAT encoding decisions:
-  assert(__9) using tseitin
+  assert(or([__6;int(1..)])) using tseitin
 
 --
 
@@ -315,9 +261,6 @@ findAux __3: bool
 findAux __4: bool
 findAux __5: bool
 findAux __6: bool
-findAux __7: bool
-findAux __8: bool
-findAux __9: bool
 
 such that
 
@@ -333,12 +276,9 @@ define(__2 <-> integer-weighted(1*p#components_2#packed_1#offset_1, 2*p#componen
 define(__3 <-> integer-weighted(1*p#components_2#packed_1#offset_1, 2*p#components_2#packed_1#offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
 define(__4 <-> integer-weighted(1*q#components_1#packed_1#offset_1, 2*q#components_1#packed_1#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
 define(__5 <-> integer-weighted(1*q#components_1#packed_1#offset_1, 2*q#components_1#packed_1#offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
-define(__6 <-> and([__2,__3;int(1..)])) using tseitin,
-define(__7 <-> and([__4,__5;int(1..)])) using tseitin,
-define(__8 <-> and([__0,__1;int(1..)])) using tseitin,
-assert(__8) using tseitin,
-assert(__6) using tseitin,
-assert(__7) using tseitin,
-define(__9 <-> integer-weighted(1*p#components_1#packed_1#offset_1, 2*p#components_1#packed_1#offset_2, -1*q#components_1#packed_1#offset_1, -2*q#components_1#packed_1#offset_2) Less 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }],
-assert(__9) using tseitin
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__2,__3;int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__4,__5;int(1..)]);int(1..)])) using tseitin,
+define(__6 <-> integer-weighted(1*p#components_1#packed_1#offset_1, 2*p#components_1#packed_1#offset_2, -1*q#components_1#packed_1#offset_1, -2*q#components_1#packed_1#offset_2) Less 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }],
+assert(or([__6;int(1..)])) using tseitin
 

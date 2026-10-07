@@ -68,6 +68,34 @@ new SAT encoding decisions:
 
 --
 
+(inside) <-> (table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)})),
+(notInside) <-> (!(table(sequence(x,y), {sequence(0,0),sequence(3,3)}))),
+(booleanInside) <-> (__1),
+!(table(sequence(x,x), {sequence(-2,0),sequence(0,3)})),
+__0
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(inside) <-> (table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)})),
+(notInside) <-> (!(table(sequence(x,y), {sequence(0,0),sequence(3,3)}))),
+!(table(sequence(x,x), {sequence(-2,0),sequence(0,3)})),
+__0
+new SAT encoding decisions:
+  assert((booleanInside) <-> (__1)) using tseitin
+
+--
+
+(inside) <-> (table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)})),
+(notInside) <-> (!(table(sequence(x,y), {sequence(0,0),sequence(3,3)}))),
+!(table(sequence(x,x), {sequence(-2,0),sequence(0,3)})),
+__0
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(inside) <-> (table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)})),
+(notInside) <-> (!(table(sequence(x,y), {sequence(0,0),sequence(3,3)}))),
+!(table(sequence(x,x), {sequence(-2,0),sequence(0,3)}))
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
 x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
@@ -110,6 +138,19 @@ new SAT encoding decisions:
 
 --
 
+(inside) <-> (table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)})),
+(notInside) <-> (!(table(sequence(x,y), {sequence(0,0),sequence(3,3)}))),
+!(table(sequence(x,x), {sequence(-2,0),sequence(0,3)})),
+or([__2,__3,__4;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(inside) <-> (table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)})),
+(notInside) <-> (!(table(sequence(x,y), {sequence(0,0),sequence(3,3)}))),
+!(table(sequence(x,x), {sequence(-2,0),sequence(0,3)}))
+new SAT encoding decisions:
+  assert(or([__2,__3,__4;int(1..)])) using tseitin
+
+--
+
 y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
@@ -149,6 +190,19 @@ new variables:
   findAux __7: bool
 new SAT encoding decisions:
   define(__7 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) Equal 3) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }]
+
+--
+
+(inside) <-> (table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)})),
+(notInside) <-> (!(table(sequence(x,y), {sequence(0,0),sequence(3,3)}))),
+!(table(sequence(x,x), {sequence(-2,0),sequence(0,3)})),
+or([__5,__6,__7;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(inside) <-> (table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)})),
+(notInside) <-> (!(table(sequence(x,y), {sequence(0,0),sequence(3,3)}))),
+!(table(sequence(x,x), {sequence(-2,0),sequence(0,3)}))
+new SAT encoding decisions:
+  assert(or([__5,__6,__7;int(1..)])) using tseitin
 
 --
 
@@ -212,165 +266,31 @@ new SAT encoding decisions:
 
 --
 
+(inside) <-> (__8),
+(notInside) <-> (!(__10)),
 !(__9)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__11
-new variables:
-  findAux __11: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(notInside) <-> (!(__10)),
+!(__9)
 new SAT encoding decisions:
-  define(__11 <-> !(__9)) using tseitin
+  assert((inside) <-> (__8)) using tseitin
 
 --
 
-!(__10)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__12
-new variables:
-  findAux __12: bool
+(notInside) <-> (!(__10)),
+!(__9)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(__9)
 new SAT encoding decisions:
-  define(__12 <-> !(__10)) using tseitin
+  assert((notInside) <-> (!(__10))) using tseitin
 
 --
 
-or([__5,__6,__7;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
-new variables:
-  findAux __13: bool
+!(__9)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
 new SAT encoding decisions:
-  define(__13 <-> or([__5,__6,__7;int(1..)])) using tseitin
-
---
-
-or([__2,__3,__4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> or([__2,__3,__4;int(1..)])) using tseitin
-
---
-
-(inside) <-> (__8)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__15
-new variables:
-  findAux __15: bool
-new SAT encoding decisions:
-  define(__15 <-> (inside) <-> (__8)) using tseitin
-
---
-
-(notInside) <-> (__12)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__16
-new variables:
-  findAux __16: bool
-new SAT encoding decisions:
-  define(__16 <-> (notInside) <-> (__12)) using tseitin
-
---
-
-(booleanInside) <-> (__1)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__17
-new variables:
-  findAux __17: bool
-new SAT encoding decisions:
-  define(__17 <-> (booleanInside) <-> (__1)) using tseitin
-
---
-
-__15,
-__16,
-__17,
-__11,
-__0,
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__16,
-__17,
-__11,
-__0,
-__14,
-__13
-new SAT encoding decisions:
-  assert(__15) using tseitin
-
---
-
-__16,
-__17,
-__11,
-__0,
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__17,
-__11,
-__0,
-__14,
-__13
-new SAT encoding decisions:
-  assert(__16) using tseitin
-
---
-
-__17,
-__11,
-__0,
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__11,
-__0,
-__14,
-__13
-new SAT encoding decisions:
-  assert(__17) using tseitin
-
---
-
-__11,
-__0,
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__0,
-__14,
-__13
-new SAT encoding decisions:
-  assert(__11) using tseitin
-
---
-
-__0,
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__14,
-__13
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-__14,
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-__13
-new SAT encoding decisions:
-  assert(__14) using tseitin
-
---
-
-__13
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__13) using tseitin
+  assert(!(__9)) using tseitin
 
 --
 
@@ -400,13 +320,6 @@ findAux __7: bool
 findAux __8: bool
 findAux __9: bool
 findAux __10: bool
-findAux __11: bool
-findAux __12: bool
-findAux __13: bool
-findAux __14: bool
-findAux __15: bool
-findAux __16: bool
-findAux __17: bool
 
 such that
 
@@ -416,27 +329,20 @@ sat encoding decisions:
 
 define(__0 <-> table(0+weighted() with [] choices(0:true), [[0], [0]], negative=false)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
 define(__1 <-> table(0+weighted(1*b) with [], 0+weighted(1*c) with [], [[0, 1], [1, 0]], negative=false)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+assert((booleanInside) <-> (__1)) using tseitin,
+assert(__0) using tseitin,
 define(__2 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) Equal -2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
 define(__3 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
 define(__4 <-> integer-weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
+assert(or([__2,__3,__4;int(1..)])) using tseitin,
 define(__5 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) Equal -2) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
 define(__6 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) Equal 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
 define(__7 <-> integer-weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) Equal 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }],
+assert(or([__5,__6,__7;int(1..)])) using tseitin,
 define(__8 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted() with [] choices(0:true), [[-2, 0, -2, 0], [3, -2, 3, 0], [3, -2, 3, 0], [7, 0, 7, 0]], negative=false)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
 define(__9 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], [[-2, 0], [0, 3]], negative=false)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
 define(__10 <-> table(0+weighted(1*x#twos_complement_1, 2*x#twos_complement_2, -4*x#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], 0+weighted(1*y#twos_complement_1, 2*y#twos_complement_2, -4*y#twos_complement_3) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: -2, upper: 3 } }], [[0, 0], [3, 3]], negative=false)) using Some(EncodingSelection { algorithm: Tuple, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
-define(__11 <-> !(__9)) using tseitin,
-define(__12 <-> !(__10)) using tseitin,
-define(__13 <-> or([__5,__6,__7;int(1..)])) using tseitin,
-define(__14 <-> or([__2,__3,__4;int(1..)])) using tseitin,
-define(__15 <-> (inside) <-> (__8)) using tseitin,
-define(__16 <-> (notInside) <-> (__12)) using tseitin,
-define(__17 <-> (booleanInside) <-> (__1)) using tseitin,
-assert(__15) using tseitin,
-assert(__16) using tseitin,
-assert(__17) using tseitin,
-assert(__11) using tseitin,
-assert(__0) using tseitin,
-assert(__14) using tseitin,
-assert(__13) using tseitin
+assert((inside) <-> (__8)) using tseitin,
+assert((notInside) <-> (!(__10))) using tseitin,
+assert(!(__9)) using tseitin
 

@@ -37,28 +37,18 @@ new SAT encoding decisions:
 
 --
 
+and([ and([ j <= x | j : int(((i - 1))..(sum([i,1;int(1..)]))) ]) | i : int(1..((m - 1))) ]),
+or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([ and([ j <= x | j : int(((i - 1))..(sum([i,1;int(1..)]))) ]) | i : int(1..((m - 1))) ])
+new SAT encoding decisions:
+  assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)])) using tseitin
+
+--
+
 and([ and([ j <= x | j : int(((i - 1))..(sum([i,1;int(1..)]))) ]) | i : int(1..((m - 1))) ])
    ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
 and([ j <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..)]))) ])
-
---
-
-or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)])) using tseitin
-
---
-
-and([ j <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..)]))) ]),
-__0
-   ~~> remove_single_atom ([("SAT", 8400)])
-and([ j <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..)]))) ])
-new SAT encoding decisions:
-  assert(__0) using tseitin
 
 --
 
@@ -160,169 +150,159 @@ x
 
 0 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
-__1
+__0
 new variables:
-  findAux __1: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__1 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__0 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 1 <= x
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+2 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __2
 new variables:
   findAux __2: bool
 new SAT encoding decisions:
-  define(__2 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
-
---
-
-2 <= x
-   ~~> select_integer_relation ([("SAT", 18500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__2 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 1 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
-__4
+__3
 new variables:
-  findAux __4: bool
+  findAux __3: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__3 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -1) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 2 <= x
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+3 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __5
 new variables:
   findAux __5: bool
 new SAT encoding decisions:
-  define(__5 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
-
---
-
-3 <= x
-   ~~> select_integer_relation ([("SAT", 18500)])
-__6
-new variables:
-  findAux __6: bool
-new SAT encoding decisions:
-  define(__6 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__5 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 2 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
-__7
+__6
 new variables:
-  findAux __7: bool
+  findAux __6: bool
 new SAT encoding decisions:
-  define(__7 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__6 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -2) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 3 <= x
+   ~~> select_integer_relation ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+4 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __8
 new variables:
   findAux __8: bool
 new SAT encoding decisions:
-  define(__8 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
-
---
-
-4 <= x
-   ~~> select_integer_relation ([("SAT", 18500)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -4) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__8 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -4) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 3 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
-__10
+__9
 new variables:
-  findAux __10: bool
+  findAux __9: bool
 new SAT encoding decisions:
-  define(__10 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__9 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -3) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 4 <= x
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -4) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+5 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
 __11
 new variables:
   findAux __11: bool
 new SAT encoding decisions:
-  define(__11 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -4) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
-
---
-
-5 <= x
-   ~~> select_integer_relation ([("SAT", 18500)])
-__12
-new variables:
-  findAux __12: bool
-new SAT encoding decisions:
-  define(__12 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -5) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__11 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -5) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 4 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
-__13
+__12
 new variables:
-  findAux __13: bool
+  findAux __12: bool
 new SAT encoding decisions:
-  define(__13 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -4) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__12 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -4) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 5 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
-__14
+__13
 new variables:
-  findAux __14: bool
+  findAux __13: bool
 new SAT encoding decisions:
-  define(__14 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -5) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__13 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -5) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
 6 <= x
    ~~> select_integer_relation ([("SAT", 18500)])
-__15
+__14
 new variables:
-  findAux __15: bool
+  findAux __14: bool
 new SAT encoding decisions:
-  define(__15 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -6) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+  define(__14 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -6) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
 
 --
 
-and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14,__15;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__16
-new variables:
-  findAux __16: bool
-new SAT encoding decisions:
-  define(__16 <-> and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14,__15;int(1..)])) using tseitin
+and([__0,__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-__16
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
 new SAT encoding decisions:
-  assert(__16) using tseitin
+  assert(and([__0,__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14;int(1..)])) using tseitin
 
 --
 
@@ -352,8 +332,6 @@ findAux __11: bool
 findAux __12: bool
 findAux __13: bool
 findAux __14: bool
-findAux __15: bool
-findAux __16: bool
 
 such that
 
@@ -362,23 +340,21 @@ true
 sat encoding decisions:
 
 at-most-one(x#direct_1, x#direct_2, x#direct_3, x#direct_4, x#direct_5, x#direct_6, x#direct_7) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
-define(__0 <-> or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-define(__1 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__2 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__3 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__4 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__5 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__6 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__7 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__8 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__9 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -4) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__10 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__11 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -4) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__12 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -5) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__13 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -4) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__14 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -5) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__15 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -6) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
-define(__16 <-> and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14,__15;int(1..)])) using tseitin,
-assert(__16) using tseitin
+assert(or([x#direct_1,x#direct_2,x#direct_3,x#direct_4,x#direct_5,x#direct_6,x#direct_7;int(1..)])) using tseitin,
+define(__0 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__1 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__2 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__3 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -1) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__4 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__5 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__6 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -2) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__7 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__8 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -4) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__9 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -3) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__10 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -4) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__11 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -5) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__12 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -4) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__13 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -5) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+define(__14 <-> integer-weighted(0*x#direct_1, -1*x#direct_2, -2*x#direct_3, -3*x#direct_4, -4*x#direct_5, -5*x#direct_6, -6*x#direct_7) LessEqual -6) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+assert(and([__0,__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14;int(1..)])) using tseitin
 

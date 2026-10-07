@@ -51,6 +51,26 @@ new SAT encoding decisions:
 
 --
 
+(!(table(sequence(x,y), {sequence(1,1),sequence(2,2),sequence(3,3),sequence(4,4),sequence(5,5),sequence(6,6),sequence(7,7),sequence(8,8),sequence(9,9),sequence(10,10)}))) <-> (b),
+or([!(x#offset_4),and([!(x#offset_3),and([!(x#offset_2);int(1..)]);int(1..)]);int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(!(table(sequence(x,y), {sequence(1,1),sequence(2,2),sequence(3,3),sequence(4,4),sequence(5,5),sequence(6,6),sequence(7,7),sequence(8,8),sequence(9,9),sequence(10,10)}))) <-> (b),
+or([and([__0,__1;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(or([!(x#offset_4),and([!(x#offset_3),and([!(x#offset_2);int(1..)]);int(1..)]);int(1..)])) using tseitin
+
+--
+
+(!(table(sequence(x,y), {sequence(1,1),sequence(2,2),sequence(3,3),sequence(4,4),sequence(5,5),sequence(6,6),sequence(7,7),sequence(8,8),sequence(9,9),sequence(10,10)}))) <-> (b),
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(!(table(sequence(x,y), {sequence(1,1),sequence(2,2),sequence(3,3),sequence(4,4),sequence(5,5),sequence(6,6),sequence(7,7),sequence(8,8),sequence(9,9),sequence(10,10)}))) <-> (b)
+new SAT encoding decisions:
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
+
+--
+
 y
    ~~> select_representation ([("ReprGeneral", 10000)])
 y
@@ -95,237 +115,37 @@ new SAT encoding decisions:
 
 --
 
-!(__2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__5
-new variables:
-  findAux __5: bool
+(!(__2)) <-> (b),
+or([!(y#offset_4),and([!(y#offset_3),and([!(y#offset_2);int(1..)]);int(1..)]);int(1..)]),
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([!(y#offset_4),and([!(y#offset_3),and([!(y#offset_2);int(1..)]);int(1..)]);int(1..)]),
+or([and([__3,__4;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  define(__5 <-> !(__2)) using tseitin
+  assert((!(__2)) <-> (b)) using tseitin
 
 --
 
-!(x#offset_4)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__6
-new variables:
-  findAux __6: bool
+or([!(y#offset_4),and([!(y#offset_3),and([!(y#offset_2);int(1..)]);int(1..)]);int(1..)]),
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([and([__3,__4;int(1..)]);int(1..)])
 new SAT encoding decisions:
-  define(__6 <-> !(x#offset_4)) using tseitin
-
---
-
-!(y#offset_4)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__7
-new variables:
-  findAux __7: bool
-new SAT encoding decisions:
-  define(__7 <-> !(y#offset_4)) using tseitin
-
---
-
-!(x#offset_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__8
-new variables:
-  findAux __8: bool
-new SAT encoding decisions:
-  define(__8 <-> !(x#offset_3)) using tseitin
-
---
-
-!(y#offset_3)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__9
-new variables:
-  findAux __9: bool
-new SAT encoding decisions:
-  define(__9 <-> !(y#offset_3)) using tseitin
-
---
-
-!(x#offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__10
-new variables:
-  findAux __10: bool
-new SAT encoding decisions:
-  define(__10 <-> !(x#offset_2)) using tseitin
-
---
-
-!(y#offset_2)
-   ~~> apply_tseytin_not ([("SAT", 9005)])
-__11
-new variables:
-  findAux __11: bool
-new SAT encoding decisions:
-  define(__11 <-> !(y#offset_2)) using tseitin
+  assert(or([!(y#offset_4),and([!(y#offset_3),and([!(y#offset_2);int(1..)]);int(1..)]);int(1..)])) using tseitin
 
 --
 
 or([and([__3,__4;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__3,__4;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 
---
-
-or([and([__0,__1;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__0,__1;int(1..)])
-
---
-
-and([__10;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__10
-
---
-
-and([__11;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__11
-
---
-
-(__5) <-> (b),
-or([__6,and([__8,__10;int(1..)]);int(1..)]),
-and([__0,__1;int(1..)]),
-or([__7,and([__9,__11;int(1..)]);int(1..)]),
-and([__3,__4;int(1..)])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-(__5) <-> (b),
-or([__6,and([__8,__10;int(1..)]);int(1..)]),
-and([__0,__1;int(1..)]),
-or([__7,and([__9,__11;int(1..)]);int(1..)]),
-and([__3,__4;int(1..)])
-
---
-
-(__5) <-> (b)
-   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
-__12
-new variables:
-  findAux __12: bool
 new SAT encoding decisions:
-  define(__12 <-> (__5) <-> (b)) using tseitin
+  assert(or([and([__3,__4;int(1..)]);int(1..)])) using tseitin
 
 --
 
-and([__0,__1;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__13
-new variables:
-  findAux __13: bool
-new SAT encoding decisions:
-  define(__13 <-> and([__0,__1;int(1..)])) using tseitin
-
---
-
-and([__3,__4;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__14
-new variables:
-  findAux __14: bool
-new SAT encoding decisions:
-  define(__14 <-> and([__3,__4;int(1..)])) using tseitin
-
---
-
-and([__8,__10;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__15
-new variables:
-  findAux __15: bool
-new SAT encoding decisions:
-  define(__15 <-> and([__8,__10;int(1..)])) using tseitin
-
---
-
-or([__6,__15;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__16
-new variables:
-  findAux __16: bool
-new SAT encoding decisions:
-  define(__16 <-> or([__6,__15;int(1..)])) using tseitin
-
---
-
-and([__9,__11;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__17
-new variables:
-  findAux __17: bool
-new SAT encoding decisions:
-  define(__17 <-> and([__9,__11;int(1..)])) using tseitin
-
---
-
-or([__7,__17;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__18
-new variables:
-  findAux __18: bool
-new SAT encoding decisions:
-  define(__18 <-> or([__7,__17;int(1..)])) using tseitin
-
---
-
-__12,
-__16,
-__13,
-__18,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__16,
-__13,
-__18,
-__14
-new SAT encoding decisions:
-  assert(__12) using tseitin
-
---
-
-__16,
-__13,
-__18,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__13,
-__18,
-__14
-new SAT encoding decisions:
-  assert(__16) using tseitin
-
---
-
-__13,
-__18,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__18,
-__14
-new SAT encoding decisions:
-  assert(__13) using tseitin
-
---
-
-__18,
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
-__14
-new SAT encoding decisions:
-  assert(__18) using tseitin
-
---
-
-__14
-   ~~> remove_single_atom ([("SAT", 8400)])
 true
-new SAT encoding decisions:
-  assert(__14) using tseitin
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+true
 
 --
 
@@ -348,13 +168,6 @@ find y#offset_4: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
-findAux __5: bool
-findAux __6: bool
-findAux __7: bool
-findAux __8: bool
-findAux __9: bool
-findAux __10: bool
-findAux __11: bool
 letting tab#components_1 be 1
 letting tab#components_2 be 1
 letting tab#components_3 be 2
@@ -375,13 +188,6 @@ letting tab#components_17 be 9
 letting tab#components_18 be 9
 letting tab#components_19 be 10
 letting tab#components_20 be 10
-findAux __12: bool
-findAux __13: bool
-findAux __14: bool
-findAux __15: bool
-findAux __16: bool
-findAux __17: bool
-findAux __18: bool
 
 such that
 
@@ -391,26 +197,12 @@ sat encoding decisions:
 
 define(__0 <-> integer-weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3, 8*x#offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
 define(__1 <-> integer-weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3, 8*x#offset_4) LessEqual 9) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
+assert(or([!(x#offset_4),and([!(x#offset_3),and([!(x#offset_2);int(1..)]);int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
 define(__2 <-> table(1+weighted(1*x#offset_1, 2*x#offset_2, 4*x#offset_3, 8*x#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }], 1+weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3, 8*y#offset_4) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }], [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7], [8, 8], [9, 9], [10, 10]], negative=false)) using Some(EncodingSelection { algorithm: Mdd, provenance: Heuristic }), PB Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
 define(__3 <-> integer-weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3, 8*y#offset_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
 define(__4 <-> integer-weighted(1*y#offset_1, 2*y#offset_2, 4*y#offset_3, 8*y#offset_4) LessEqual 9) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 9 } }],
-define(__5 <-> !(__2)) using tseitin,
-define(__6 <-> !(x#offset_4)) using tseitin,
-define(__7 <-> !(y#offset_4)) using tseitin,
-define(__8 <-> !(x#offset_3)) using tseitin,
-define(__9 <-> !(y#offset_3)) using tseitin,
-define(__10 <-> !(x#offset_2)) using tseitin,
-define(__11 <-> !(y#offset_2)) using tseitin,
-define(__12 <-> (__5) <-> (b)) using tseitin,
-define(__13 <-> and([__0,__1;int(1..)])) using tseitin,
-define(__14 <-> and([__3,__4;int(1..)])) using tseitin,
-define(__15 <-> and([__8,__10;int(1..)])) using tseitin,
-define(__16 <-> or([__6,__15;int(1..)])) using tseitin,
-define(__17 <-> and([__9,__11;int(1..)])) using tseitin,
-define(__18 <-> or([__7,__17;int(1..)])) using tseitin,
-assert(__12) using tseitin,
-assert(__16) using tseitin,
-assert(__13) using tseitin,
-assert(__18) using tseitin,
-assert(__14) using tseitin
+assert((!(__2)) <-> (b)) using tseitin,
+assert(or([!(y#offset_4),and([!(y#offset_3),and([!(y#offset_2);int(1..)]);int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__3,__4;int(1..)]);int(1..)])) using tseitin
 

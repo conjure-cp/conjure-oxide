@@ -51,6 +51,21 @@ new SAT encoding decisions:
 
 --
 
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ]),
+optimise(minimise=true, value=__0),
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ]),
+optimise(minimise=true, value=__0)
+new SAT encoding decisions:
+  assert(or([and([__1,__2;int(1..)]);int(1..)])) using tseitin
+
+--
+
 __0
    ~~> select_representation ([("ReprGeneral", 10000)])
 __0
@@ -68,14 +83,12 @@ new SAT encoding decisions:
 and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
 and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
 __0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ]),
-true,
-or([and([__1,__2;int(1..)]);int(1..)])
+true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
 and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
 __0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ]),
-true,
-or([and([__1,__2;int(1..)]);int(1..)])
+true
 new variables:
   find rings#components_1: bool
   find rings#components_10: bool
@@ -106,48 +119,15 @@ sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
 
 --
 
-or([and([__1,__2;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__1,__2;int(1..)])
-
---
-
-and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
-and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
-__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
-true,
-and([__1,__2;int(1..)])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
-and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
-__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
-true,
-and([__1,__2;int(1..)])
-
---
-
-and([__1,__2;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__3
-new variables:
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__3 <-> and([__1,__2;int(1..)])) using tseitin
-
---
-
-and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
-and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
-__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
-true,
-__3
-   ~~> remove_single_atom ([("SAT", 8400)])
 and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
 and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
 __0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
 true
-new SAT encoding decisions:
-  assert(__3) using tseitin
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
+true
 
 --
 
@@ -267,224 +247,174 @@ sum([SATInt(Log, [rings#components_18,false;int(1..)] [0, 1]),SATInt(Log, [rings
 
 sum([SATInt(Log, [rings#components_1,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_2,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__4
+__3
 new variables:
-  findAux __4: bool
+  findAux __3: bool
 new SAT encoding decisions:
-  define(__4 <-> integer-weighted(1*rings#components_1, -2*false, 1*rings#components_2, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__3 <-> integer-weighted(1*rings#components_1, -2*false, 1*rings#components_2, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_6,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_7,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__5
+__4
 new variables:
-  findAux __5: bool
+  findAux __4: bool
 new SAT encoding decisions:
-  define(__5 <-> integer-weighted(1*rings#components_6, -2*false, 1*rings#components_7, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__4 <-> integer-weighted(1*rings#components_6, -2*false, 1*rings#components_7, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_11,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_12,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__6
+__5
 new variables:
-  findAux __6: bool
+  findAux __5: bool
 new SAT encoding decisions:
-  define(__6 <-> integer-weighted(1*rings#components_11, -2*false, 1*rings#components_12, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__5 <-> integer-weighted(1*rings#components_11, -2*false, 1*rings#components_12, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_16,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_17,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__7
+__6
 new variables:
-  findAux __7: bool
+  findAux __6: bool
 new SAT encoding decisions:
-  define(__7 <-> integer-weighted(1*rings#components_16, -2*false, 1*rings#components_17, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__6 <-> integer-weighted(1*rings#components_16, -2*false, 1*rings#components_17, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_1,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_4,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__8
+__7
 new variables:
-  findAux __8: bool
+  findAux __7: bool
 new SAT encoding decisions:
-  define(__8 <-> integer-weighted(1*rings#components_1, -2*false, 1*rings#components_4, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__7 <-> integer-weighted(1*rings#components_1, -2*false, 1*rings#components_4, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_6,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_9,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__9
+__8
 new variables:
-  findAux __9: bool
+  findAux __8: bool
 new SAT encoding decisions:
-  define(__9 <-> integer-weighted(1*rings#components_6, -2*false, 1*rings#components_9, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__8 <-> integer-weighted(1*rings#components_6, -2*false, 1*rings#components_9, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_11,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_14,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__10
+__9
 new variables:
-  findAux __10: bool
+  findAux __9: bool
 new SAT encoding decisions:
-  define(__10 <-> integer-weighted(1*rings#components_11, -2*false, 1*rings#components_14, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__9 <-> integer-weighted(1*rings#components_11, -2*false, 1*rings#components_14, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_16,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_19,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__11
+__10
 new variables:
-  findAux __11: bool
+  findAux __10: bool
 new SAT encoding decisions:
-  define(__11 <-> integer-weighted(1*rings#components_16, -2*false, 1*rings#components_19, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__10 <-> integer-weighted(1*rings#components_16, -2*false, 1*rings#components_19, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_2,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_3,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__12
+__11
 new variables:
-  findAux __12: bool
+  findAux __11: bool
 new SAT encoding decisions:
-  define(__12 <-> integer-weighted(1*rings#components_2, -2*false, 1*rings#components_3, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__11 <-> integer-weighted(1*rings#components_2, -2*false, 1*rings#components_3, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_7,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_8,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__13
+__12
 new variables:
-  findAux __13: bool
+  findAux __12: bool
 new SAT encoding decisions:
-  define(__13 <-> integer-weighted(1*rings#components_7, -2*false, 1*rings#components_8, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__12 <-> integer-weighted(1*rings#components_7, -2*false, 1*rings#components_8, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_12,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_13,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__14
+__13
 new variables:
-  findAux __14: bool
+  findAux __13: bool
 new SAT encoding decisions:
-  define(__14 <-> integer-weighted(1*rings#components_12, -2*false, 1*rings#components_13, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__13 <-> integer-weighted(1*rings#components_12, -2*false, 1*rings#components_13, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_17,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_18,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__15
+__14
 new variables:
-  findAux __15: bool
+  findAux __14: bool
 new SAT encoding decisions:
-  define(__15 <-> integer-weighted(1*rings#components_17, -2*false, 1*rings#components_18, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__14 <-> integer-weighted(1*rings#components_17, -2*false, 1*rings#components_18, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_3,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_5,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__16
+__15
 new variables:
-  findAux __16: bool
+  findAux __15: bool
 new SAT encoding decisions:
-  define(__16 <-> integer-weighted(1*rings#components_3, -2*false, 1*rings#components_5, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__15 <-> integer-weighted(1*rings#components_3, -2*false, 1*rings#components_5, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_8,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_10,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__17
+__16
 new variables:
-  findAux __17: bool
+  findAux __16: bool
 new SAT encoding decisions:
-  define(__17 <-> integer-weighted(1*rings#components_8, -2*false, 1*rings#components_10, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__16 <-> integer-weighted(1*rings#components_8, -2*false, 1*rings#components_10, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_13,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_15,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__18
+__17
 new variables:
-  findAux __18: bool
+  findAux __17: bool
 new SAT encoding decisions:
-  define(__18 <-> integer-weighted(1*rings#components_13, -2*false, 1*rings#components_15, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__17 <-> integer-weighted(1*rings#components_13, -2*false, 1*rings#components_15, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
 sum([SATInt(Log, [rings#components_18,false;int(1..)] [0, 1]),SATInt(Log, [rings#components_20,false;int(1..)] [0, 1]);int(1..)]) >= 2
    ~~> select_integer_relation ([("SAT", 18500)])
-__19
+__18
 new variables:
-  findAux __19: bool
+  findAux __18: bool
 new SAT encoding decisions:
-  define(__19 <-> integer-weighted(1*rings#components_18, -2*false, 1*rings#components_20, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
+  define(__18 <-> integer-weighted(1*rings#components_18, -2*false, 1*rings#components_20, -2*false) GreaterEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }]
 
 --
 
-or([__4,__5,__6,__7;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__20
-new variables:
-  findAux __20: bool
-new SAT encoding decisions:
-  define(__20 <-> or([__4,__5,__6,__7;int(1..)])) using tseitin
-
---
-
-or([__8,__9,__10,__11;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__21
-new variables:
-  findAux __21: bool
-new SAT encoding decisions:
-  define(__21 <-> or([__8,__9,__10,__11;int(1..)])) using tseitin
-
---
-
-or([__12,__13,__14,__15;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__22
-new variables:
-  findAux __22: bool
-new SAT encoding decisions:
-  define(__22 <-> or([__12,__13,__14,__15;int(1..)])) using tseitin
-
---
-
-or([__16,__17,__18,__19;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__23
-new variables:
-  findAux __23: bool
-new SAT encoding decisions:
-  define(__23 <-> or([__16,__17,__18,__19;int(1..)])) using tseitin
-
---
-
-and([__20,__21,__22,__23;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__24
-new variables:
-  findAux __24: bool
-new SAT encoding decisions:
-  define(__24 <-> and([__20,__21,__22,__23;int(1..)])) using tseitin
-
---
-
-__24,
+and([or([__3,__4,__5,__6;int(1..)]),or([__7,__8,__9,__10;int(1..)]),or([__11,__12,__13,__14;int(1..)]),or([__15,__16,__17,__18;int(1..)]);int(1..)]),
 and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
 SATInt(Log, [__0#twos_complement_1,__0#twos_complement_2,__0#twos_complement_3,__0#twos_complement_4,__0#twos_complement_5,__0#twos_complement_6;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
 true
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
 SATInt(Log, [__0#twos_complement_1,__0#twos_complement_2,__0#twos_complement_3,__0#twos_complement_4,__0#twos_complement_5,__0#twos_complement_6;int(1..)] [0, 20]) = sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ]),
 true
 new SAT encoding decisions:
-  assert(__24) using tseitin
+  assert(and([or([__3,__4,__5,__6;int(1..)]),or([__7,__8,__9,__10;int(1..)]),or([__11,__12,__13,__14;int(1..)]),or([__15,__16,__17,__18;int(1..)]);int(1..)])) using tseitin
 
 --
 
@@ -664,12 +594,6 @@ findAux __15: bool
 findAux __16: bool
 findAux __17: bool
 findAux __18: bool
-findAux __19: bool
-findAux __20: bool
-findAux __21: bool
-findAux __22: bool
-findAux __23: bool
-findAux __24: bool
 
 such that
 
@@ -680,31 +604,25 @@ sat encoding decisions:
 
 define(__1 <-> integer-weighted(1*__0#twos_complement_1, 2*__0#twos_complement_2, 4*__0#twos_complement_3, 8*__0#twos_complement_4, 16*__0#twos_complement_5, -32*__0#twos_complement_6) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }],
 define(__2 <-> integer-weighted(1*__0#twos_complement_1, 2*__0#twos_complement_2, 4*__0#twos_complement_3, 8*__0#twos_complement_4, 16*__0#twos_complement_5, -32*__0#twos_complement_6) LessEqual 20) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }],
+assert(or([and([__1,__2;int(1..)]);int(1..)])) using tseitin,
 optimise(minimise=true, value=0+weighted(1*__0#twos_complement_1, 2*__0#twos_complement_2, 4*__0#twos_complement_3, 8*__0#twos_complement_4, 16*__0#twos_complement_5, -32*__0#twos_complement_6) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 20 } }]) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
-define(__3 <-> and([__1,__2;int(1..)])) using tseitin,
-assert(__3) using tseitin,
-define(__4 <-> integer-weighted(1*rings#components_1, -2*false, 1*rings#components_2, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__5 <-> integer-weighted(1*rings#components_6, -2*false, 1*rings#components_7, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__6 <-> integer-weighted(1*rings#components_11, -2*false, 1*rings#components_12, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__7 <-> integer-weighted(1*rings#components_16, -2*false, 1*rings#components_17, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__8 <-> integer-weighted(1*rings#components_1, -2*false, 1*rings#components_4, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__9 <-> integer-weighted(1*rings#components_6, -2*false, 1*rings#components_9, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__10 <-> integer-weighted(1*rings#components_11, -2*false, 1*rings#components_14, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__11 <-> integer-weighted(1*rings#components_16, -2*false, 1*rings#components_19, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__12 <-> integer-weighted(1*rings#components_2, -2*false, 1*rings#components_3, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__13 <-> integer-weighted(1*rings#components_7, -2*false, 1*rings#components_8, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__14 <-> integer-weighted(1*rings#components_12, -2*false, 1*rings#components_13, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__15 <-> integer-weighted(1*rings#components_17, -2*false, 1*rings#components_18, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__16 <-> integer-weighted(1*rings#components_3, -2*false, 1*rings#components_5, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__17 <-> integer-weighted(1*rings#components_8, -2*false, 1*rings#components_10, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__18 <-> integer-weighted(1*rings#components_13, -2*false, 1*rings#components_15, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__19 <-> integer-weighted(1*rings#components_18, -2*false, 1*rings#components_20, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
-define(__20 <-> or([__4,__5,__6,__7;int(1..)])) using tseitin,
-define(__21 <-> or([__8,__9,__10,__11;int(1..)])) using tseitin,
-define(__22 <-> or([__12,__13,__14,__15;int(1..)])) using tseitin,
-define(__23 <-> or([__16,__17,__18,__19;int(1..)])) using tseitin,
-define(__24 <-> and([__20,__21,__22,__23;int(1..)])) using tseitin,
-assert(__24) using tseitin,
+define(__3 <-> integer-weighted(1*rings#components_1, -2*false, 1*rings#components_2, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__4 <-> integer-weighted(1*rings#components_6, -2*false, 1*rings#components_7, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__5 <-> integer-weighted(1*rings#components_11, -2*false, 1*rings#components_12, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__6 <-> integer-weighted(1*rings#components_16, -2*false, 1*rings#components_17, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__7 <-> integer-weighted(1*rings#components_1, -2*false, 1*rings#components_4, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__8 <-> integer-weighted(1*rings#components_6, -2*false, 1*rings#components_9, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__9 <-> integer-weighted(1*rings#components_11, -2*false, 1*rings#components_14, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__10 <-> integer-weighted(1*rings#components_16, -2*false, 1*rings#components_19, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__11 <-> integer-weighted(1*rings#components_2, -2*false, 1*rings#components_3, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__12 <-> integer-weighted(1*rings#components_7, -2*false, 1*rings#components_8, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__13 <-> integer-weighted(1*rings#components_12, -2*false, 1*rings#components_13, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__14 <-> integer-weighted(1*rings#components_17, -2*false, 1*rings#components_18, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__15 <-> integer-weighted(1*rings#components_3, -2*false, 1*rings#components_5, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__16 <-> integer-weighted(1*rings#components_8, -2*false, 1*rings#components_10, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__17 <-> integer-weighted(1*rings#components_13, -2*false, 1*rings#components_15, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+define(__18 <-> integer-weighted(1*rings#components_18, -2*false, 1*rings#components_20, -2*false) GreaterEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }],
+assert(and([or([__3,__4,__5,__6;int(1..)]),or([__7,__8,__9,__10;int(1..)]),or([__11,__12,__13,__14;int(1..)]),or([__15,__16,__17,__18;int(1..)]);int(1..)])) using tseitin,
 weighted(1*rings#components_1, -2*false, 1*rings#components_2, -2*false, 1*rings#components_3, -2*false, 1*rings#components_4, -2*false, 1*rings#components_5, -2*false) AtMost 3 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 4, end: 6, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 6, end: 8, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 8, end: 10, structure: BoundedBinary { lower: 0, upper: 1 } }],
 weighted(1*rings#components_6, -2*false, 1*rings#components_7, -2*false, 1*rings#components_8, -2*false, 1*rings#components_9, -2*false, 1*rings#components_10, -2*false) AtMost 2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 4, end: 6, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 6, end: 8, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 8, end: 10, structure: BoundedBinary { lower: 0, upper: 1 } }],
 weighted(1*rings#components_11, -2*false, 1*rings#components_12, -2*false, 1*rings#components_13, -2*false, 1*rings#components_14, -2*false, 1*rings#components_15, -2*false) AtMost 2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 4, end: 6, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 6, end: 8, structure: BoundedBinary { lower: 0, upper: 1 } }, PbTermGroup { start: 8, end: 10, structure: BoundedBinary { lower: 0, upper: 1 } }],

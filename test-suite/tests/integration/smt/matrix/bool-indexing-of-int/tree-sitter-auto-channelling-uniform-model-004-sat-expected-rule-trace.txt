@@ -59,43 +59,23 @@ new SAT encoding decisions:
 
 --
 
-or([a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__0
-new variables:
-  findAux __0: bool
-new SAT encoding decisions:
-  define(__0 <-> or([a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)])) using tseitin
-
---
-
+true,
+or([a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)]),
 or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__1
-new variables:
-  findAux __1: bool
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+true,
+or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)])
 new SAT encoding decisions:
-  define(__1 <-> or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)])) using tseitin
+  assert(or([a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)])) using tseitin
 
 --
 
 true,
-__0,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
-true,
-__1
-new SAT encoding decisions:
-  assert(__0) using tseitin
-
---
-
-true,
-__1
-   ~~> remove_single_atom ([("SAT", 8400)])
+or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
 true
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)])) using tseitin
 
 --
 
@@ -110,8 +90,6 @@ find a#components_1#direct_3: bool
 find a#components_2#direct_1: bool
 find a#components_2#direct_2: bool
 find a#components_2#direct_3: bool
-findAux __0: bool
-findAux __1: bool
 
 such that
 
@@ -121,8 +99,6 @@ sat encoding decisions:
 
 at-most-one(a#components_1#direct_1, a#components_1#direct_2, a#components_1#direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
 at-most-one(a#components_2#direct_1, a#components_2#direct_2, a#components_2#direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
-define(__0 <-> or([a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)])) using tseitin,
-define(__1 <-> or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)])) using tseitin,
-assert(__0) using tseitin,
-assert(__1) using tseitin
+assert(or([a#components_1#direct_1,a#components_1#direct_2,a#components_1#direct_3;int(1..)])) using tseitin,
+assert(or([a#components_2#direct_1,a#components_2#direct_2,a#components_2#direct_3;int(1..)])) using tseitin
 
