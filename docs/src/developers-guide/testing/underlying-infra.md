@@ -7,7 +7,7 @@
 
 This section contains a technical description of the testing infrastructure used by the Conjure Oxide Project to run all of the tests which have been described so far. It is useful for developers who intend to rework this system, add to it, or even replace it entirely. 
 
-The Testing Infrastructure currently used by conjure oxide is built using the Rust Testing Harness[todo: add ref to docs]. The harness provides a lot of very useful functionality - for instance, it natively supports integration tests, compiles and formats tests nicely and prints outputs in a readable fashion.
+The Testing Infrastructure currently used by conjure oxide is built using the [Rust Testing Harness](https://rust-exercises.com/advanced-testing/09_test_harness/00_intro.html). The harness provides a lot of very useful functionality - for instance, it natively supports integration tests, compiles and formats tests nicely and prints outputs in a readable fashion.
 
 However, the harness also introduces certain limitation that one must work within when adding new tests to the rust-based testing harness. As such, it is also important to understand how to use, work with (and in certain cases, chafe against) the harness before attempting to add new testing functionality or rework old testing functionality.  
 
