@@ -9,9 +9,9 @@ name = 'conjure-oxide'
 path = "src/main.rs"
 
 [dependencies]
-conjure-cp = { path = "../conjure-cp" }
-conjure-cp-lsp = { path = "../conjure-cp-lsp" }
-conjure-cp-rules = { path = "../conjure-cp-rules" }
+conjure-cp = { path = "../conjure-cp", default-features = false }
+conjure-cp-lsp = { path = "../conjure-cp-lsp", optional = true }
+conjure-cp-rules = { path = "../conjure-cp-rules", default-features = false }
 
 anyhow = { workspace = true }
 clap = { workspace = true }
@@ -20,7 +20,7 @@ git-version = { workspace = true }
 glob = { workspace = true }
 humantime = { workspace = true }
 itertools = { workspace = true }
-mimalloc = { workspace = true }
+mimalloc = { workspace = true, optional = true }
 schemars = { workspace = true }
 serde_json = { workspace = true }
 tempfile = { workspace = true }
@@ -31,9 +31,15 @@ versions = { workspace = true }
 
 [features]
 
-default = ["extra-rule-checks"]
+default = ["extra-rule-checks", "sat-cadical", "z3", "lsp", "mimalloc"]
+sat-cadical = ["conjure-cp/sat-cadical", "conjure-cp-rules/sat-cadical"]
+sat-batsat = ["conjure-cp/sat-batsat", "conjure-cp-rules/sat-batsat"]
+z3 = ["conjure-cp/z3", "conjure-cp-rules/z3"]
+lsp = ["dep:conjure-cp-lsp"]
+# Use with --no-default-features to omit native backends, LSP, and the allocator.
+wasm-target = ["sat-batsat"]
 extra-rule-checks = ["conjure-cp/extra-rule-checks"]
-z3-bundled = ["conjure-cp/z3-bundled", "conjure-cp-rules/z3-bundled", "conjure-cp-lsp/z3-bundled"]
+z3-bundled = ["z3", "conjure-cp/z3-bundled", "conjure-cp-rules/z3-bundled", "conjure-cp-lsp?/z3-bundled"]
 
 [lints]
 workspace = true

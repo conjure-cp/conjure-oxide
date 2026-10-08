@@ -175,7 +175,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
 
     let rewritten_model = rewrite(unified_model, &global_args, Arc::clone(&context))?;
 
-    let solver = init_solver(&global_args);
+    let solver = init_solver(&global_args)?;
 
     if solve_args.no_run_solver {
         println!("{}", rewritten_model);
@@ -278,11 +278,11 @@ pub(crate) fn init_context(
     Ok(context)
 }
 
-pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
+pub(crate) fn init_solver(global_args: &GlobalArgs) -> anyhow::Result<Solver> {
     let family = global_args.solver;
     let timeout = global_args.solver_timeout.map(Duration::from);
 
-    match family {
+    Ok(match family {
         SolverFamily::Minion => Solver::new(
             Minion::with_search_orders(global_args.minion_varorder, global_args.minion_valorder)
                 .with_solver_seed(global_args.solver_seed)
@@ -293,10 +293,15 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
                 .with_solver_seed(global_args.solver_seed)
                 .with_timeout(timeout),
         ),
+        #[cfg(feature = "z3")]
         SolverFamily::Z3 => {
             Solver::new(Smt::new(timeout).with_solver_seed(global_args.solver_seed))
         }
-    }
+        #[cfg(not(feature = "z3"))]
+        SolverFamily::Z3 => {
+            anyhow::bail!("Z3 solver support was not compiled in (enable the `z3` feature).")
+        }
+    })
 }
 
 pub(crate) fn parse(

@@ -40,6 +40,8 @@
 
 # Developer's Guide
 
+- [WebAssembly interface](developers-guide/wasm.md)
+
 - [Project Overview]()
   - [General Structure]()
   - [Main Concepts]()

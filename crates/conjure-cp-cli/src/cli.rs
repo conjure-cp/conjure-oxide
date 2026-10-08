@@ -356,7 +356,11 @@ fn parse_rewriter(input: &str) -> Result<Rewriter, String> {
 }
 
 fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
-    input.parse()
+    let family = input.parse()?;
+    if family == SolverFamily::Z3 && !cfg!(feature = "z3") {
+        return Err("Z3 solver support was not compiled in (enable the `z3` feature).".into());
+    }
+    Ok(family)
 }
 
 fn parse_parser(input: &str) -> Result<InputParser, String> {
@@ -394,6 +398,20 @@ fn parse_minion_variable_order(input: &str) -> Result<MinionVariableOrder, Strin
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(not(feature = "z3"))]
+    #[test]
+    fn selecting_z3_without_support_reports_the_missing_feature() {
+        let error =
+            Cli::try_parse_from(["conjure-oxide", "solve", "model.essence", "--solver", "z3"])
+                .unwrap_err();
+        assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+        assert!(
+            error
+                .to_string()
+                .contains("Z3 solver support was not compiled in")
+        );
+    }
 
     /// Regression test for #1631: `--version` used to fail as it requires a subcommand.
     #[test]
