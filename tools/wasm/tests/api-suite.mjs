@@ -68,8 +68,8 @@ export async function runSuite(run, log = () => {}) {
     return JSON.parse(result.stdout);
   };
   for (const solver of ["minion", "sat"]) {
-    for (const source of ["", "such that true"]) equal(await ok(source, solver), [{}]);
-    equal(await ok("such that false", solver), []);
+    equal(await ok("find x : bool\nsuch that x\n", solver), [{ x: true }]);
+    equal(await ok("find x : bool\nsuch that x, !x\n", solver), []);
     for (let i = 0; i < 2; i++) {
       const answer = await ok(booleans, solver);
       equal(answer.map(s => `${s.x},${s.y}`).sort(), ["false,true", "true,false"]);
@@ -94,7 +94,7 @@ export async function runSuite(run, log = () => {}) {
       const result = await solve(source, solver);
       assert(result.exitCode !== 0 && result.stderr.length > 0, JSON.stringify(result));
     }
-    log(`PASS: ${solver}: empty/unsatisfiable models, repeated runs, JSON values, parameters, 1000 solutions, and CLI errors`);
+    log(`PASS: ${solver}: satisfiable/unsatisfiable models, repeated runs, JSON values, parameters, 1000 solutions, and CLI errors`);
   }
   const help = await run(["--help"]);
   assert(help.exitCode === 0 && help.stdout.includes("solve"), "CLI help");
