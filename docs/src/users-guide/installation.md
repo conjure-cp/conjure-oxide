@@ -7,12 +7,13 @@ Currently, Conjure Oxide is installed either by [building from source](#building
 ## Building From Source
 ### Dependencies
 The following dependencies are required to build and use Conjure Oxide:
-- [Conjure](https://conjure.readthedocs.io/en/latest/installation.html) including solvers.
-    - Conjure is currently required for some components of Conjure Oxide. This is something that will change in the future as Conjure Oxide becomes more independent.
-    - Ensure that Conjure is placed early in your PATH to avoid conflicts with ImageMagick's `conjure` command!
 - [Clang](https://clang.llvm.org/) and libclang.
 - [CMake](https://cmake.org/download/).
 - [Rust](https://rust-lang.org/tools/install/) installed using rustup.
+- [Z3](https://github.com/Z3Prover/z3) Z3 solver.
+- [Conjure](https://conjure.readthedocs.io/en/latest/installation.html) including solvers. (optional)
+    - Conjure is currently required for some components of Conjure Oxide. This is something that will change in the future as Conjure Oxide becomes more independent.
+    - Ensure that Conjure is placed early in your PATH to avoid conflicts with ImageMagick's `conjure` command!
 
 ### Building
 1. Clone the repository:
