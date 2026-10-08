@@ -11,7 +11,7 @@ so the page stays responsive and concurrent calls have separate filesystems.
 ## Build
 
 To use an already-built `wasm-package`, skip this section and go to
-[Browser example and checks](#browser-example-and-checks). These tools are needed
+[Browser example and checks](#minimal-page-and-browser-checks). These tools are needed
 only to build the engine from source.
 
 ### Install the Rust target
