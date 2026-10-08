@@ -232,6 +232,19 @@ npm run dev
 The website records the imported version and asset hashes in `engine.lock.json`.
 It has no Rust dependencies or source imports from this checkout.
 
+To run the same headless Chromium checks as CI, build the package, then run:
+
+```sh
+cd tools/wasm/tests
+npm ci
+npx playwright install chromium
+npm test
+```
+
+The runner serves the repository locally and fails if the browser suite reports
+an error or does not finish within three minutes. CI also uploads the built
+package as an artefact.
+
 ## Following a request
 
 | File | Responsibility |
