@@ -28,10 +28,13 @@ permissions:
 jobs:
   browser:
     name: Build and test in Chromium
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
       CARGO_INCREMENTAL: 0
+      # Minion binding generation needs host libclang >=20 for Emscripten headers.
+      LIBCLANG_PATH: /usr/lib/llvm-20/lib
+      CLANG_PATH: /usr/bin/clang-20
     steps:
     - uses: actions/checkout@v7
 
@@ -39,7 +42,11 @@ jobs:
       run: .github/workflows/tools/free_disk_space.sh
 
     - name: Install native build dependencies
-      run: sudo apt-get update && sudo apt-get install -y clang libclang-dev cmake
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-20 libclang-20-dev cmake
+        "$CLANG_PATH" --version
+        test -f "$LIBCLANG_PATH/libclang.so"
 
     - name: Install Rust target
       run: |
