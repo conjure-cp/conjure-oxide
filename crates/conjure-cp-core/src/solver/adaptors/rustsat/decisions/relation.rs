@@ -212,22 +212,8 @@ impl Compiler<'_> {
                 }
             };
         }
-        let (mut bound, coefficients) = canonical_pb_terms(bound, terms);
-        let mut total = 0i128;
-        let mut positive = Vec::new();
-        for (literal, weight) in coefficients {
-            if weight == 0 {
-                continue;
-            }
-            let (literal, weight) = if weight < 0 {
-                bound -= weight;
-                (!literal, -weight)
-            } else {
-                (literal, weight)
-            };
-            total += weight;
-            positive.push((literal, weight));
-        }
+        let (bound, coefficients) = canonical_pb_terms(bound, terms);
+        let (bound, positive, total) = positive_pb_terms(bound, coefficients);
         if matches!(
             (relation, output),
             (IntegerRelation::Equal, Term::Constant(true))

@@ -324,6 +324,48 @@ fn canonical_pb_terms(
     }
     (bound, coefficients)
 }
+/// Convert signed coefficients to positive literal weights, shifting the bound exactly.
+fn positive_pb_terms(
+    mut bound: i128,
+    coefficients: std::collections::BTreeMap<Lit, i128>,
+) -> (i128, Vec<(Lit, i128)>, i128) {
+    let mut positive = Vec::with_capacity(coefficients.len());
+    let mut total = 0;
+    for (literal, weight) in coefficients {
+        if weight == 0 {
+            continue;
+        }
+        let (literal, weight) = if weight < 0 {
+            bound -= weight;
+            (!literal, -weight)
+        } else {
+            (literal, weight)
+        };
+        total += weight;
+        positive.push((literal, weight));
+    }
+    (bound, positive, total)
+}
+
+/// Preserve every occurrence while satisfying providers' distinct-variable input contract.
+fn distinct_occurrence_literals(instance: &mut SatInstance, literals: &[Lit]) -> Vec<Lit> {
+    let mut seen = std::collections::HashSet::new();
+    literals
+        .iter()
+        .copied()
+        .map(|literal| {
+            if seen.insert(literal.var()) {
+                literal
+            } else {
+                let alias = instance.new_lit();
+                instance.add_clause(atomics::lit_impl_lit(alias, literal));
+                instance.add_clause(atomics::lit_impl_lit(literal, alias));
+                alias
+            }
+        })
+        .collect()
+}
+
 fn validate_pb_groups(
     groups: &[crate::ast::sat_decision::PbTermGroup],
     len: usize,
@@ -350,12 +392,13 @@ pub(super) fn compile_objective_terms(
     minimise: bool,
     instance: &mut SatInstance,
     variables: &mut HashMap<Name, Lit>,
+    cache: &mut EncodingCache,
 ) -> Result<(i128, Vec<(Lit, usize)>), SolverError> {
     validate_pb_groups(&value.groups, value.terms.len())?;
     let mut compiler = Compiler {
         instance,
         variables,
-        counters: None,
+        counters: Some(cache),
     };
     let terms = value
         .terms
@@ -364,28 +407,21 @@ pub(super) fn compile_objective_terms(
         .collect::<Result<Vec<_>, _>>()?;
     let (adjusted, coefficients) = canonical_pb_terms(0, &terms);
     let sign = if minimise { 1i128 } else { -1i128 };
-    let mut constant = sign * (i128::from(value.constant) - adjusted);
-    let mut positive = Vec::new();
-    let mut total = 0i128;
-    for (literal, weight) in coefficients {
-        let weight = sign * weight;
-        if weight == 0 {
-            continue;
-        }
-        let (literal, weight) = if weight < 0 {
-            constant += weight;
-            (!literal, -weight)
-        } else {
-            (literal, weight)
-        };
-        total += weight;
-        if total >= (isize::MAX as i128).min(i128::from(i64::MAX)) {
-            return Err(SolverError::ModelInvalid(
-                "Objective coefficient sum exceeds the library range".into(),
-            ));
-        }
-        positive.push((literal, weight as usize));
+    let coefficients = coefficients
+        .into_iter()
+        .map(|(literal, weight)| (literal, sign * weight))
+        .collect();
+    let (shift, positive, total) = positive_pb_terms(0, coefficients);
+    let constant = sign * (i128::from(value.constant) - adjusted) - shift;
+    if total >= (isize::MAX as i128).min(i128::from(i64::MAX)) {
+        return Err(SolverError::ModelInvalid(
+            "Objective coefficient sum exceeds the library range".into(),
+        ));
     }
+    let positive = positive
+        .into_iter()
+        .map(|(literal, weight)| (literal, weight as usize))
+        .collect();
     Ok((constant, positive))
 }
 
@@ -413,7 +449,18 @@ struct WeightedThresholdKey {
     bound: i128,
 }
 
-type WeightedGroupKey = (u8, i128, i128, Vec<(i128, Term)>);
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
+enum WeightedGroupStructure {
+    Choice,
+    Chain,
+    BoundedBinary { lower: i128, upper: i128 },
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct WeightedGroupKey {
+    structure: WeightedGroupStructure,
+    members: Vec<(i128, Term)>,
+}
 
 // These providers expose bound outputs which can be enforced independently.
 enum WeightedEncoder {

@@ -565,8 +565,12 @@ impl SolverAdaptor for Sat {
                     instance
                         .var_manager_mut()
                         .increase_next_free(satVar::new(next_free));
-                    objective_assumptions =
-                        objective.tighten(&completed, &mut instance, &mut var_map)?;
+                    objective_assumptions = objective.tighten(
+                        &completed,
+                        &mut instance,
+                        &mut var_map,
+                        &mut self.counters,
+                    )?;
                     let (cnf, manager): (Cnf, BasicVarManager) = instance.into_cnf();
                     next_free = manager.n_used();
                     solver.add_cnf(cnf).map_err(|error| {
@@ -714,6 +718,7 @@ impl SolverAdaptor for Sat {
                 decision,
                 &mut inst,
                 &mut var_map,
+                &mut self.counters,
             )?);
         }
 

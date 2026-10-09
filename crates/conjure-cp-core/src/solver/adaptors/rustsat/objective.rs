@@ -9,7 +9,7 @@ use rustsat::{
     types::{Assignment, Clause, Lit, TernaryVal},
 };
 
-use super::decisions::{compile_decisions, compile_objective_terms};
+use super::decisions::{EncodingCache, compile_decisions_with_cache, compile_objective_terms};
 use crate::{
     ast::{
         Name, SatEncodingDecision,
@@ -42,6 +42,7 @@ impl CompiledObjective {
         decision: &SatEncodingDecision,
         instance: &mut SatInstance,
         variables: &mut HashMap<Name, Lit>,
+        cache: &mut EncodingCache,
     ) -> Result<Self, SolverError> {
         let SatEncodingDecision::Objective {
             minimise,
@@ -56,7 +57,8 @@ impl CompiledObjective {
         let selection = encoding.clone().ok_or_else(|| {
             SolverError::ModelInvalid("Unresolved objective PB encoding decision".into())
         })?;
-        let (constant, positive) = compile_objective_terms(value, *minimise, instance, variables)?;
+        let (constant, positive) =
+            compile_objective_terms(value, *minimise, instance, variables, cache)?;
         let encoder = match selection.algorithm {
             PbEncoding::RustsatGeneralizedTotalizer => {
                 UpperEncoder::Totalizer(positive.iter().copied().collect())
@@ -85,6 +87,7 @@ impl CompiledObjective {
         solution: &Assignment,
         instance: &mut SatInstance,
         variables: &mut HashMap<Name, Lit>,
+        cache: &mut EncodingCache,
     ) -> Result<Vec<Lit>, SolverError> {
         let current: usize = self
             .positive
@@ -121,7 +124,7 @@ impl CompiledObjective {
                 let bound = i64::try_from(actual).map_err(|_| {
                     SolverError::ModelInvalid("Objective value exceeds the library range".into())
                 })?;
-                compile_decisions(
+                compile_decisions_with_cache(
                     &[SatEncodingDecision::IntegerRelation {
                         output: true.into(),
                         terms: self.value.terms.clone(),
@@ -140,6 +143,7 @@ impl CompiledObjective {
                     }],
                     instance,
                     variables,
+                    cache,
                 )?;
                 return Ok(vec![]);
             }
@@ -164,6 +168,97 @@ mod tests {
         instances::{BasicVarManager, ManageVars},
         solvers::{Solve, SolveIncremental, SolverResult},
     };
+
+    #[test]
+    fn objectives_share_compound_gates_across_initial_and_tightening_batches() {
+        for algorithm in PbEncoding::ALL {
+            let reference = |name| {
+                Expression::from(Reference::new(DeclarationPtr::new_find(
+                    Name::user(name),
+                    Domain::bool(),
+                )))
+            };
+            let (a, b, named) = (reference("a"), reference("b"), reference("named"));
+            let conjunction = Expression::And(
+                Metadata::new(),
+                Moo::new(crate::into_matrix_expr!(vec![a, b])),
+            );
+            let mut instance = SatInstance::new();
+            let mut variables = HashMap::new();
+            let mut cache = EncodingCache::default();
+            compile_decisions_with_cache(
+                &[SatEncodingDecision::Boolean {
+                    output: named.clone(),
+                    expression: conjunction.clone(),
+                }],
+                &mut instance,
+                &mut variables,
+                &mut cache,
+            )
+            .unwrap();
+            let allocated = instance.var_manager_mut().n_used();
+            let clauses = instance.n_clauses();
+            let decision = SatEncodingDecision::Objective {
+                minimise: true,
+                value: SatIntegerView {
+                    constant: 0,
+                    terms: vec![(1, conjunction), (1, named)],
+                    groups: vec![],
+                    choices: None,
+                },
+                encoding: Some(EncodingSelection {
+                    algorithm,
+                    provenance: SelectionProvenance::ExplicitConfiguration,
+                }),
+            };
+            let mut objective =
+                CompiledObjective::new(&decision, &mut instance, &mut variables, &mut cache)
+                    .unwrap();
+            assert_eq!(
+                instance.var_manager_mut().n_used(),
+                allocated,
+                "objective must reuse a definition's gate"
+            );
+            assert_eq!(instance.n_clauses(), clauses);
+            let lits = [variables[&Name::user("a")], variables[&Name::user("b")]];
+            let mut solver = SatSolver::default();
+            let (cnf, mut manager): (Cnf, BasicVarManager) = instance.into_cnf();
+            solver.add_cnf(cnf).unwrap();
+            assert_eq!(solver.solve_assumps(&lits).unwrap(), SolverResult::Sat);
+            let completed = solver.full_solution().unwrap();
+            for _ in 0..2 {
+                let mut delta: SatInstance = SatInstance::new();
+                delta
+                    .var_manager_mut()
+                    .increase_next_free(rustsat::types::Var::new(manager.n_used()));
+                let enforcement = objective
+                    .tighten(&completed, &mut delta, &mut variables, &mut cache)
+                    .unwrap();
+                let (cnf, next): (Cnf, BasicVarManager) = delta.into_cnf();
+                manager = next;
+                solver.add_cnf(cnf).unwrap();
+                for assignment in 0..4 {
+                    let mut assumptions: Vec<_> = lits
+                        .iter()
+                        .enumerate()
+                        .map(|(bit, literal)| {
+                            if assignment & (1 << bit) != 0 {
+                                *literal
+                            } else {
+                                !*literal
+                            }
+                        })
+                        .collect();
+                    assumptions.extend(enforcement.iter().copied());
+                    assert_eq!(
+                        solver.solve_assumps(&assumptions).unwrap() == SolverResult::Sat,
+                        assignment != 3,
+                        "{algorithm:?}, {assignment}"
+                    );
+                }
+            }
+        }
+    }
 
     #[test]
     fn tightening_preserves_signed_objective_projections_and_reuses_native_state() {
@@ -205,8 +300,14 @@ mod tests {
                     };
                     let mut instance = SatInstance::new();
                     let mut variables = HashMap::new();
-                    let mut objective =
-                        CompiledObjective::new(&decision, &mut instance, &mut variables).unwrap();
+                    let mut cache = EncodingCache::default();
+                    let mut objective = CompiledObjective::new(
+                        &decision,
+                        &mut instance,
+                        &mut variables,
+                        &mut cache,
+                    )
+                    .unwrap();
                     let lits: Vec<_> = ["a", "b", "c"]
                         .map(|name| variables[&Name::user(name)])
                         .into();
@@ -240,7 +341,7 @@ mod tests {
                             .var_manager_mut()
                             .increase_next_free(rustsat::types::Var::new(manager.n_used()));
                         let enforcement = objective
-                            .tighten(&completed, &mut delta, &mut variables)
+                            .tighten(&completed, &mut delta, &mut variables, &mut cache)
                             .unwrap();
                         let (cnf, new_manager): (Cnf, BasicVarManager) = delta.into_cnf();
                         manager = new_manager;
@@ -276,7 +377,7 @@ mod tests {
                             .var_manager_mut()
                             .increase_next_free(rustsat::types::Var::new(manager.n_used()));
                         objective
-                            .tighten(&completed, &mut repeated, &mut variables)
+                            .tighten(&completed, &mut repeated, &mut variables, &mut cache)
                             .unwrap();
                         let (cnf, new_manager): (Cnf, BasicVarManager) = repeated.into_cnf();
                         assert_eq!(

@@ -61,23 +61,9 @@ impl Compiler<'_> {
                 bool_linear::{BoolLinAggregator, BoolLinExp, BoolLinVariant, BoolLinear},
                 cardinality_one::{BitwiseEncoder, LadderEncoder, PairwiseEncoder},
             };
-            // The public AMO input requires distinct variables, even for opposite polarities.
-            let mut seen = std::collections::HashSet::new();
-            let terms = inputs
+            let terms = distinct_occurrence_literals(self.instance, &inputs)
                 .into_iter()
-                .map(|literal| {
-                    let literal = if seen.insert(literal.var()) {
-                        literal
-                    } else {
-                        let alias = self.instance.new_lit();
-                        self.instance
-                            .add_clause(atomics::lit_impl_lit(alias, literal));
-                        self.instance
-                            .add_clause(atomics::lit_impl_lit(literal, alias));
-                        alias
-                    };
-                    (pind_lit(literal), 1)
-                })
+                .map(|literal| (pind_lit(literal), 1))
                 .collect::<Vec<_>>();
             let mut sink = PindakaasSink {
                 instance: self.instance,

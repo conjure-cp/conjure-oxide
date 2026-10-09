@@ -200,20 +200,23 @@ impl Compiler<'_> {
                     .iter()
                     .map(|(weight, term)| (i128::from(*weight) * sign, *term))
                     .collect();
-                let (kind, lower, upper) = match group.structure {
-                    PbTermStructure::Choice => (0, 0, 0),
-                    PbTermStructure::Chain => (1, 0, 0),
+                let structure = match group.structure {
+                    PbTermStructure::Choice => WeightedGroupStructure::Choice,
+                    PbTermStructure::Chain => WeightedGroupStructure::Chain,
                     PbTermStructure::BoundedBinary { lower, upper } => {
                         let a = i128::from(lower) * sign;
                         let b = i128::from(upper) * sign;
-                        (2, a.min(b), a.max(b))
+                        WeightedGroupStructure::BoundedBinary {
+                            lower: a.min(b),
+                            upper: a.max(b),
+                        }
                     }
                 };
                 // Chains carry implication order; choice/binary sums do not.
-                if kind != 1 {
+                if structure != WeightedGroupStructure::Chain {
                     members.sort_unstable();
                 }
-                (kind, lower, upper, members)
+                WeightedGroupKey { structure, members }
             })
             .collect();
         group_keys.sort_unstable();
@@ -417,28 +420,14 @@ impl Compiler<'_> {
         }
         // Aggregate by variable before making weights positive, retaining multiplicity
         // and cancelling complements. Widening keeps signed boundary values safe.
-        let (mut bound, coefficients) = canonical_pb_terms(bound, &terms);
+        let (bound, coefficients) = canonical_pb_terms(bound, &terms);
         let structured_input = (!groups.is_empty()
             && matches!(
                 algorithm,
                 PbEncoding::PindakaasBdd | PbEncoding::PindakaasSwc
             ))
         .then(|| (bound, coefficients.clone()));
-        let mut total = 0i128;
-        let mut positive = Vec::new();
-        for (literal, weight) in coefficients {
-            if weight == 0 {
-                continue;
-            }
-            let (literal, weight) = if weight < 0 {
-                bound -= weight;
-                (!literal, -weight)
-            } else {
-                (literal, weight)
-            };
-            total += weight;
-            positive.push((literal, weight));
-        }
+        let (mut bound, mut positive, mut total) = positive_pb_terms(bound, coefficients);
         let impossible = match relation {
             CardinalityRelation::AtMost => bound < 0,
             CardinalityRelation::AtLeast => bound > total,

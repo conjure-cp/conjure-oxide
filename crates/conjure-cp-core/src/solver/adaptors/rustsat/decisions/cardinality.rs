@@ -28,23 +28,7 @@ impl Compiler<'_> {
         let inputs = if let Some(inputs) = cache.occurrences.get(&literals) {
             inputs.clone()
         } else {
-            let mut seen = std::collections::HashSet::new();
-            let inputs: Vec<_> = literals
-                .iter()
-                .copied()
-                .map(|literal| {
-                    if seen.insert(literal.var()) {
-                        literal
-                    } else {
-                        let alias = self.instance.new_lit();
-                        self.instance
-                            .add_clause(atomics::lit_impl_lit(alias, literal));
-                        self.instance
-                            .add_clause(atomics::lit_impl_lit(literal, alias));
-                        alias
-                    }
-                })
-                .collect();
+            let inputs = distinct_occurrence_literals(self.instance, &literals);
             cache.occurrences.insert(literals.clone(), inputs.clone());
             inputs
         };
