@@ -57,7 +57,7 @@ use test_suite::diagnostics::{
     oxide_artifacts_dir, write_failure_record, write_oxide_failure_text,
 };
 use test_suite::golden_files::assert_no_redundant_expected_files;
-use test_suite::test_config::RuleTraceMode;
+use test_suite::test_config::TraceLevel;
 use test_suite::test_config::{
     NumberOfSolutions, RecordedConjureStats, RecordedModelRunStats, RecordedRunConfig,
     RuleTraceAggregateStats, read_stats_or_default, replace_config_model_stats,
@@ -513,9 +513,6 @@ fn integration_test_inner_with_status(
         .map(|(solutions, _)| Arc::clone(solutions));
     let conjure_timings = conjure_solutions.and_then(|(_, timings)| timings);
     let mut allowed_expected_files = BTreeSet::new();
-    let rule_trace_mode = (!test_tracing_disabled()).then_some(config.rule_trace);
-    let rule_trace_snapshots_enabled = rule_trace_mode == Some(RuleTraceMode::Full);
-    let rule_trace_aggregates_enabled = rule_trace_mode == Some(RuleTraceMode::Aggregate);
     let mut reference_solutions = None;
 
     let mut first_config_error = None;
@@ -523,6 +520,14 @@ fn integration_test_inner_with_status(
         for parser in parsers.iter().copied() {
             for rewriter in rewriters.clone() {
                 for solver in solvers.iter().copied() {
+                    let configured_trace_level = config.configured_trace_level_for(solver);
+                    let trace_level = if test_tracing_disabled() {
+                        TraceLevel::None
+                    } else {
+                        configured_trace_level
+                    };
+                    let rule_trace_snapshots_enabled = trace_level == TraceLevel::Full;
+                    let rule_trace_aggregates_enabled = trace_level == TraceLevel::Aggregate;
                     let heuristics = config.configured_heuristics_for(solver).map_err(|err| {
                         std::io::Error::new(std::io::ErrorKind::InvalidInput, err)
                     })?;
@@ -589,6 +594,7 @@ fn integration_test_inner_with_status(
                                         expected_integration_files_for_case(
                                             run_case.case_name,
                                             solver,
+                                            configured_trace_level,
                                         ),
                                     );
                                     let mut row = model_run_identity(
@@ -1313,12 +1319,17 @@ fn next_all_choice_path(decisions: &[HeuristicChoice]) -> Option<Vec<usize>> {
 }
 
 /// Returns the expected snapshot files for an executed integration run case.
-fn expected_integration_files_for_case(case_name: &str, solver: SolverFamily) -> BTreeSet<String> {
+fn expected_integration_files_for_case(
+    case_name: &str,
+    solver: SolverFamily,
+    trace_level: TraceLevel,
+) -> BTreeSet<String> {
     let solver_name = solver.as_str();
-    BTreeSet::from([
-        format!("{case_name}-{solver_name}.expected.solutions"),
-        format!("{case_name}-{solver_name}-expected-rule-trace.txt"),
-    ])
+    let mut files = BTreeSet::from([format!("{case_name}-{solver_name}.expected.solutions")]);
+    if trace_level == TraceLevel::Full {
+        files.insert(format!("{case_name}-{solver_name}-expected-rule-trace.txt"));
+    }
+    files
 }
 
 /// Rule applications counted by name across the runs of one configuration.
@@ -1657,6 +1668,105 @@ fn try_capture_oxide_minion(
         .load_model(rewritten_model)?;
     let mut file: Box<dyn std::io::Write> = Box::new(File::create(&minion_path)?);
     solver.write_solver_input_file(&mut file)?;
+    Ok(())
+}
+
+#[test]
+fn trace_levels_preserve_solutions_and_aggregate_counts() -> Result<(), Box<dyn Error>> {
+    let mut reference_solutions = None;
+    let mut full_rules = BTreeMap::new();
+    for (label, level) in [
+        ("full", TraceLevel::Full),
+        ("aggregate", TraceLevel::Aggregate),
+        ("none", TraceLevel::None),
+    ] {
+        let dir = tempfile::tempdir()?;
+        fs::write(
+            dir.path().join("input.essence"),
+            "find x, y : int(1..2) such that x < y",
+        )?;
+        let path = dir.path().to_str().unwrap();
+        let run = RunCase {
+            parser: "tree-sitter".parse()?,
+            rewriter: "optimised".parse()?,
+            comprehension_expander: "auto".parse()?,
+            solver: SolverFamily::Sat,
+            extra_rule_sets: &[],
+            heuristic: Heuristic::Compact,
+            channelling: Channelling::Uniform,
+            seed: 0,
+            solver_seed: 0,
+            choice_path: &[],
+            case_name: label,
+        };
+        let counts = RuleCounts::default();
+        let mut row = RecordedModelRunStats::default();
+        let result = execute_integration_run(
+            path,
+            "input",
+            "essence",
+            run,
+            10,
+            NumberOfSolutions::All,
+            false,
+            None,
+            true,
+            level == TraceLevel::Full,
+            (level == TraceLevel::Aggregate).then_some(&counts),
+            &mut row,
+        )?;
+        if let Some(reference) = &reference_solutions {
+            assert_eq!(reference, &result.comparable_solutions);
+        } else {
+            reference_solutions = Some(result.comparable_solutions);
+        }
+        let files = expected_integration_files_for_case(label, SolverFamily::Sat, level);
+        assert_no_redundant_expected_files(dir.path(), &files, None)?;
+        let trace = dir
+            .path()
+            .join(format!("{label}-sat-generated-rule-trace.txt"));
+        assert_eq!(trace.exists(), level == TraceLevel::Full);
+        assert_eq!(files.len(), if level == TraceLevel::Full { 2 } else { 1 });
+        if level == TraceLevel::Full {
+            let config = RecordedRunConfig {
+                parser: "tree-sitter".into(),
+                rewriter: "optimised".into(),
+                comprehension_expander: "auto".into(),
+                heuristic: "c".into(),
+                channelling: "uniform".into(),
+                seed: 0,
+                solver_seed: 0,
+                solver: "sat".into(),
+            };
+            full_rules = collect_rule_trace_aggregates(
+                dir.path(),
+                "-generated-rule-trace.txt",
+                &BTreeSet::from([label.to_string()]),
+                &config,
+            )?
+            .rules;
+            assert!(!full_rules.is_empty());
+        } else if level == TraceLevel::Aggregate {
+            assert_eq!(*counts.lock().unwrap(), full_rules);
+        } else {
+            assert!(counts.lock().unwrap().is_empty());
+        }
+        // Verify mode must compare solutions without requiring absent trace snapshots.
+        execute_integration_run(
+            path,
+            "input",
+            "essence",
+            run,
+            10,
+            NumberOfSolutions::All,
+            false,
+            None,
+            false,
+            level == TraceLevel::Full,
+            (level == TraceLevel::Aggregate).then_some(&counts),
+            &mut row,
+        )?;
+    }
     Ok(())
 }
 

@@ -37,11 +37,19 @@ channelling = "no"
 [solver-options.sat]
 heuristic = "x"
 channelling = "uniform"
+trace-level = "aggregate"
 ```
 
 SAT coverage uses `x` with uniform channelling when the fixture's existing backend profiles
 enumerate all choices. Where those profiles do not use `x`, SAT uses `c`: compact chooses one
 representation and the normal compact option for each SAT encoding family.
+
+`trace-level = "full"` is the default: write and compare complete rule trace snapshots.
+`trace-level = "aggregate"` counts rule applications in memory and records totals by rule in
+`stats.toml`, without formatting or writing full traces. `trace-level = "none"` disables both.
+The field can appear at the top level or in `[solver-options.sat]` (and other solver overrides).
+Solution comparisons remain enabled at every trace level. SAT fixtures with many expanded
+configurations use aggregate tracing to limit snapshot size and recording overhead.
 
 Integration tests use the `auto` comprehension expander by default, matching the CLI default.
 Configure it explicitly with `comprehension-expander = "auto"`. Accepted oxide timings, statuses,

@@ -733,7 +733,7 @@ impl NumberOfSolutions {
     }
 }
 
-/// Per-backend modelling choices for an integration fixture.
+/// Per-backend modelling and trace choices for an integration fixture.
 #[derive(Deserialize, Debug, Default)]
 #[serde(default, deny_unknown_fields)]
 pub struct SolverOptions {
@@ -743,6 +743,9 @@ pub struct SolverOptions {
     /// Override the fixture's representation-sharing policy for this backend.
     #[serde(deserialize_with = "deserialize_string_or_vec")]
     pub channelling: Vec<String>,
+    /// Override the fixture's trace level for this backend.
+    #[serde(rename = "trace-level")]
+    pub trace_level: Option<TraceLevel>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -791,7 +794,7 @@ pub struct TestConfig {
     )]
     pub solver: Vec<String>,
 
-    /// Backend-specific heuristic and channelling overrides.
+    /// Backend-specific modelling and trace overrides.
     #[serde(default, rename = "solver-options")]
     pub solver_options: BTreeMap<String, SolverOptions>,
 
@@ -827,9 +830,9 @@ pub struct TestConfig {
     )]
     pub keep_intermediate_solutions: bool,
 
-    /// How much of the rule trace each run records. See [`RuleTraceMode`].
-    #[serde(default, rename = "rule-trace")]
-    pub rule_trace: RuleTraceMode,
+    /// How much of the rule trace each run records. See [`TraceLevel`].
+    #[serde(default, rename = "trace-level")]
+    pub trace_level: TraceLevel,
 
     /// Empty `skip` runs the test; a non-empty string ignores it and records why.
     #[serde(default = "default_skip")]
@@ -846,7 +849,9 @@ pub struct TestConfig {
 /// The rule trace recorded by each integration run.
 #[derive(Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
-pub enum RuleTraceMode {
+pub enum TraceLevel {
+    /// Disable rule trace snapshots and aggregate counts.
+    None,
     /// Write the human-readable trace of every rule application and compare it with the
     /// expected snapshot.
     #[default]
@@ -877,7 +882,7 @@ impl Default for TestConfig {
             skip_conjure_validation: String::new(),
             number_of_solutions: NumberOfSolutions::All,
             keep_intermediate_solutions: false,
-            rule_trace: RuleTraceMode::Full,
+            trace_level: TraceLevel::Full,
             expected_time: None,
         }
     }
@@ -946,6 +951,14 @@ impl TestConfig {
         Ok(configured)
     }
 
+    /// Resolve a backend's trace level, inheriting the fixture default when omitted.
+    pub fn configured_trace_level_for(&self, solver: SolverFamily) -> TraceLevel {
+        self.solver_options
+            .get(&solver.as_str())
+            .and_then(|options| options.trace_level)
+            .unwrap_or(self.trace_level)
+    }
+
     /// Resolve a backend's heuristic while retaining the fixture default for other backends.
     pub fn configured_heuristics_for(
         &self,
@@ -987,6 +1000,38 @@ impl TestConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn trace_levels_default_inherit_override_and_validate() {
+        let default: TestConfig = toml::from_str("").unwrap();
+        for solver in [SolverFamily::Sat, SolverFamily::Minion, SolverFamily::Z3] {
+            assert_eq!(default.configured_trace_level_for(solver), TraceLevel::Full);
+        }
+        for (label, level) in [
+            ("none", TraceLevel::None),
+            ("aggregate", TraceLevel::Aggregate),
+            ("full", TraceLevel::Full),
+        ] {
+            let config: TestConfig = toml::from_str(&format!("trace-level = '{label}'")).unwrap();
+            assert_eq!(config.configured_trace_level_for(SolverFamily::Sat), level);
+            let config: TestConfig = toml::from_str(&format!(
+                "trace-level = '{label}'\n[solver-options.sat]\ntrace-level = 'aggregate'"
+            ))
+            .unwrap();
+            assert_eq!(
+                config.configured_trace_level_for(SolverFamily::Sat),
+                TraceLevel::Aggregate
+            );
+            for solver in [SolverFamily::Minion, SolverFamily::Z3] {
+                assert_eq!(config.configured_trace_level_for(solver), level);
+            }
+        }
+        assert!(toml::from_str::<TestConfig>("trace-level = 'invalid'").is_err());
+        assert!(
+            toml::from_str::<TestConfig>("[solver-options.sat]\ntrace-level = 'invalid'").is_err()
+        );
+        assert!(toml::from_str::<TestConfig>("rule-trace = 'aggregate'").is_err());
+    }
 
     #[test]
     fn uniform_is_accepted_without_changing_existing_configuration() {
