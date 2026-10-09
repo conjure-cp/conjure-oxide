@@ -21,7 +21,7 @@ fn max_magnitude(bounds: (i32, i32)) -> u64 {
 }
 
 register_representation!(
-    IntSignMagnitude("sign_magnitude")
+    IntBinarySignMagnitude("sign_magnitude")
     struct State<T> {
         /// Minimum and maximum semantic values.
         pub bounds: (i32, i32),
@@ -40,7 +40,7 @@ register_representation!(
         }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
-        let error = || ReprInitError::UnsupportedDomain(dom.clone(), IntSignMagnitude::NAME,
+        let error = || ReprInitError::UnsupportedDomain(dom.clone(), IntBinarySignMagnitude::NAME,
             "expected a non-empty finite ground integer domain".into());
         let ranges = canonical_ranges(int_ranges(&dom).ok_or_else(error)?);
         let bounds = finite_int_bounds(&ranges).ok_or_else(error)?;

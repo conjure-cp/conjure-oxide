@@ -1,2 +1,2 @@
 mod representation;
-pub use representation::IntOffset;
+pub use representation::IntBinaryOffset;

@@ -10,7 +10,7 @@ use conjure_cp::settings::SolverFamily;
 use std::collections::VecDeque;
 
 register_representation!(
-    IntOffset("offset")
+    IntBinaryOffset("offset")
     struct State<T> {
         /// Minimum and maximum semantic values.
         pub bounds: (i32, i32),
@@ -29,7 +29,7 @@ register_representation!(
         }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
-        let error = || ReprInitError::UnsupportedDomain(dom.clone(), IntOffset::NAME,
+        let error = || ReprInitError::UnsupportedDomain(dom.clone(), IntBinaryOffset::NAME,
             "expected a non-empty finite ground integer domain".into());
         let ranges = canonical_ranges(int_ranges(&dom).ok_or_else(error)?);
         let bounds = finite_int_bounds(&ranges).ok_or_else(error)?;

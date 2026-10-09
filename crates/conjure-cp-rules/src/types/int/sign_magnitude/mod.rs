@@ -1,2 +1,2 @@
 mod representation;
-pub use representation::IntSignMagnitude;
+pub use representation::IntBinarySignMagnitude;

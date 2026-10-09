@@ -13,7 +13,7 @@ use conjure_cp::settings::SolverFamily;
 use std::collections::VecDeque;
 
 register_representation!(
-    IntLog("twos_complement")
+    IntBinaryTwosComplement("twos_complement")
     struct State<T> {
         /// Overall lower and upper bound of the represented domain.
         pub bounds: (i32, i32),
@@ -41,7 +41,7 @@ register_representation!(
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(
             dom.clone(),
-            IntLog::NAME,
+            IntBinaryTwosComplement::NAME,
             String::from(msg),
         );
 

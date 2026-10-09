@@ -2,7 +2,8 @@
 
 pub use crate::types::function::{FunctionAsRelation, FunctionExplicit, FunctionPacked};
 pub use crate::types::int::{
-    IntDirect, IntLog, IntOffset, IntOrder, IntRank, IntSignMagnitude, SmtBv, SmtLia,
+    IntBinaryOffset, IntBinaryRank, IntBinarySignMagnitude, IntBinaryTwosComplement, IntDirect,
+    IntOrder, SmtBv, SmtLia,
 };
 pub use crate::types::matrix::{MatrixArray, MatrixComponents, MatrixPacked};
 pub use crate::types::mset::{MSetCounts, MSetOccurrence, MSetPacked, MSetRepetition};

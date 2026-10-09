@@ -1,2 +1,2 @@
 mod representation;
-pub use representation::IntRank;
+pub use representation::IntBinaryRank;

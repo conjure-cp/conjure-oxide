@@ -24,20 +24,23 @@ impl Linear {
             }
             Expr::Atomic(_, Atom::Reference(reference)) => {
                 use crate::types::int::{
-                    IntDirect, IntLog, IntOffset, IntOrder, IntRank, IntSignMagnitude,
+                    IntBinaryOffset, IntBinaryRank, IntBinarySignMagnitude,
+                    IntBinaryTwosComplement, IntDirect, IntOrder,
                 };
                 let represented = if let Some(state) = reference.get_repr_as::<IntDirect>() {
                     state.sat_int_expr()
                 } else if let Some(state) = reference.get_repr_as::<IntOrder>() {
                     state.sat_int_expr()
-                } else if let Some(state) = reference.get_repr_as::<IntOffset>() {
+                } else if let Some(state) = reference.get_repr_as::<IntBinaryOffset>() {
                     state.sat_int_expr()
-                } else if let Some(state) = reference.get_repr_as::<IntRank>() {
+                } else if let Some(state) = reference.get_repr_as::<IntBinaryRank>() {
                     state.sat_int_expr()
-                } else if let Some(state) = reference.get_repr_as::<IntSignMagnitude>() {
+                } else if let Some(state) = reference.get_repr_as::<IntBinarySignMagnitude>() {
                     state.sat_int_expr()
                 } else {
-                    reference.get_repr_as::<IntLog>()?.sat_int_expr()
+                    reference
+                        .get_repr_as::<IntBinaryTwosComplement>()?
+                        .sat_int_expr()
                 };
                 self.add(&represented, scale)?;
             }

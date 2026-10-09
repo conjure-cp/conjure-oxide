@@ -3,7 +3,7 @@
 //! `x` becomes one Boolean variable per value of its domain's span: bit `i` is true exactly when
 //! `x` takes the `i`th value. Equality and membership become a single literal, at the cost of a
 //! variable per value -- linear in the domain size, against
-//! [`IntLog`](super::super::IntLog)'s logarithmic.
+//! [`IntBinaryTwosComplement`](super::super::IntBinaryTwosComplement)'s logarithmic.
 
 use crate::shared::representation_prelude::*;
 use crate::types::int::{finite_int_bounds, int_ranges};
