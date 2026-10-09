@@ -316,14 +316,14 @@ pub struct PbTermGroup {
     pub structure: PbTermStructure,
 }
 
-/// Structure available to a pseudo-Boolean encoder, guaranteed elsewhere in the model.
+/// Representation structure available to a pseudo-Boolean encoder.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate)]
 pub enum PbTermStructure {
     /// At most one Boolean input in the group is true.
     Choice,
     /// Each Boolean input is implied by the next input in the group.
     Chain,
-    /// Binary terms whose weighted contribution is within these inclusive bounds.
+    /// Binary terms bounded by the representation's inclusive domain.
     BoundedBinary { lower: i64, upper: i64 },
 }
 

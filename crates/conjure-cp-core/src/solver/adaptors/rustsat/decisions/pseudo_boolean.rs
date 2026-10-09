@@ -822,6 +822,12 @@ impl Compiler<'_> {
                             pind_lit(if weight < 0 { !literal } else { literal }).into()
                         })
                         .collect();
+                    // Domain constraints can themselves be the source of this hint.
+                    // Enforce it independently before the native view folds fixed values.
+                    // Bits above the supplied width must be zero in the unsigned view.
+                    for (&literal, &weight) in inputs.iter().zip(&weights).skip(width) {
+                        self.assert(Term::Literal(if weight < 0 { literal } else { !literal }));
+                    }
                     let mut sink = PindakaasSink {
                         instance: self.instance,
                         guard: None,
@@ -832,6 +838,7 @@ impl Compiler<'_> {
                         &bits,
                         0,
                     )?;
+                    view.constrain(&mut sink)?;
                     bound -= constant;
                     (view, factor as i64)
                 }
@@ -862,6 +869,70 @@ mod tests {
     use crate::solver::adaptors::rustsat::adaptor::SatSolver;
     use rustsat::instances::{BasicVarManager, ManageVars};
     use rustsat::solvers::{Solve, SolveIncremental, SolverResult};
+
+    #[test]
+    fn structured_binary_views_enforce_supplied_domain_bounds() {
+        for algorithm in [PbEncoding::PindakaasBdd, PbEncoding::PindakaasSwc] {
+            for (lower, upper, weights) in [
+                (-7, -7, vec![1, 2, 4, -8]),
+                (-3, 2, vec![1, 2, -4]),
+                (100, 105, vec![1, 2, 4, 8, 16, 32, 64, -128]),
+            ] {
+                let mut instance: SatInstance = SatInstance::new();
+                let inputs: Vec<_> = weights.iter().map(|_| instance.new_lit()).collect();
+                let mut variables = HashMap::new();
+                let mut cache = EncodingCache::default();
+                Compiler {
+                    instance: &mut instance,
+                    variables: &mut variables,
+                    counters: Some(&mut cache),
+                }
+                .pseudo_boolean(
+                    algorithm,
+                    CardinalityRelation::AtMost,
+                    upper,
+                    inputs
+                        .iter()
+                        .zip(&weights)
+                        .map(|(&literal, &weight)| (weight, Term::Literal(literal)))
+                        .collect(),
+                    &[PbTermGroup {
+                        start: 0,
+                        end: weights.len(),
+                        structure: PbTermStructure::BoundedBinary { lower, upper },
+                    }],
+                )
+                .unwrap();
+                let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
+                let mut solver = SatSolver::default();
+                solver.add_cnf(cnf).unwrap();
+                for assignment in 0..(1 << weights.len()) {
+                    let value: i64 = weights
+                        .iter()
+                        .enumerate()
+                        .filter(|(index, _)| assignment & (1 << index) != 0)
+                        .map(|(_, weight)| weight)
+                        .sum();
+                    let assumptions: Vec<_> = inputs
+                        .iter()
+                        .enumerate()
+                        .map(|(index, literal)| {
+                            if assignment & (1 << index) != 0 {
+                                *literal
+                            } else {
+                                !*literal
+                            }
+                        })
+                        .collect();
+                    assert_eq!(
+                        solver.solve_assumps(&assumptions).unwrap() == SolverResult::Sat,
+                        (lower..=upper).contains(&value),
+                        "{algorithm:?}, domain={lower}..={upper}, value={value}"
+                    );
+                }
+            }
+        }
+    }
 
     #[test]
     fn structured_choice_equality_preserves_both_sum_three_assignments() {
