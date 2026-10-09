@@ -1920,7 +1920,7 @@ pub fn rewrite_model<'a>(
             .expect("rewriter stats were just added"),
     );
 
-    crate::ast::sat_decision::resolve_encoding_choices(model.sat_decisions_mut());
+    super::encoding_selection::resolve_encoding_choices(model.sat_decisions_mut());
 
     if rule_trace_enabled() && default_rule_trace_enabled() {
         trace!(

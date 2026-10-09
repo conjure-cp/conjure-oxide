@@ -88,6 +88,7 @@ use crate::{
     settings::{Rewriter, SolverFamily},
 };
 
+mod encoding_selection;
 mod resolve_rules;
 mod rewrite;
 mod rewriter_common;

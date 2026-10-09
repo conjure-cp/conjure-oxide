@@ -23,6 +23,7 @@ fn family(dom: &DomainPtr, rule: ReprRulePtr) -> Discriminant<ReturnType> {
     })
 }
 
+/// Return the uniform representation selected for this type in the current model.
 pub fn selected(dom: &DomainPtr, integer_encoding: bool) -> Option<ReprRulePtr> {
     if channelling() != Channelling::Uniform {
         return None;
