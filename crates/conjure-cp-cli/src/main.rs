@@ -1,5 +1,6 @@
 #![allow(clippy::unwrap_used)]
 
+#[cfg(feature = "mimalloc")]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
@@ -28,6 +29,7 @@ use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer, fmt};
 
+#[cfg(feature = "lsp")]
 use conjure_cp_lsp::server;
 
 struct LoggingState {
@@ -250,8 +252,13 @@ fn run_completion_command(completion_args: cli::CompletionArgs) -> anyhow::Resul
 }
 
 fn run_lsp_server() -> anyhow::Result<()> {
-    server::main();
-    Ok(())
+    #[cfg(feature = "lsp")]
+    {
+        server::main();
+        Ok(())
+    }
+    #[cfg(not(feature = "lsp"))]
+    anyhow::bail!("Language server support was not compiled in (enable the `lsp` feature).");
 }
 
 /// Runs the selected subcommand
@@ -270,6 +277,17 @@ fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use conjure_cp::parse::conjure_json::{get_example_model, get_example_model_by_path};
+
+    #[cfg(not(feature = "lsp"))]
+    #[test]
+    fn language_server_without_support_reports_the_missing_feature() {
+        let error = super::run_lsp_server().unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("Language server support was not compiled in")
+        );
+    }
 
     #[test]
     fn test_get_example_model_success() {

@@ -59,7 +59,7 @@ pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyh
 
     let rewritten_model = solve::rewrite(unified_model, &global_args, Arc::clone(&context))?;
 
-    let solver = init_solver(&global_args);
+    let solver = init_solver(&global_args)?;
 
     // now we are stealing from the integration tester
 

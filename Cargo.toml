@@ -67,12 +67,18 @@ tempfile = "3.26.0"
 thiserror = "2.0.18"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["ansi","env-filter","json",] }
-tree-sitter = "0.27.0"
-tree-sitter-haskell = "0.23.0"
+tree-sitter = "0.28.0"
 uniplate = { git = "https://github.com/conjure-cp/uniplate", rev = "460cf519b424b9b8874811a22e88f77f72a47d37" }
 ustr = { version = "1.1.0", features = ["serde"] }
 versions = "8.0.0"
 walkdir = "2.5.0"
+
+# Emscripten supplies libc; this revision excludes Tree-sitter's bare-Wasm shims.
+# Pin the language crate too: the runtime uses it through an upstream path dependency.
+# Return to crates.io once a release includes the Emscripten fix.
+[patch.crates-io]
+tree-sitter = { git = "https://github.com/tree-sitter/tree-sitter", rev = "b2f00cb0b5942ff10c45dc77d3a9c7e9c7515da8" }
+tree-sitter-language = { git = "https://github.com/tree-sitter/tree-sitter", rev = "b2f00cb0b5942ff10c45dc77d3a9c7e9c7515da8" }
 
 # Always use release profile options for z3 crate to minimise size
 [profile.dev.package.z3-sys]
