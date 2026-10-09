@@ -10,7 +10,7 @@ CARGO_LOCKED ?= --locked
 CARGO_FEATURES ?=
 CARGO_TARGET_DIR ?= target
 CARGO_BIN_DIR ?= $(HOME)/.cargo/bin
-CARGO_TEST_WORKSPACE = cargo nextest run --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+CARGO_TEST_WORKSPACE = cargo nextest run --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --no-fail-fast
 CARGO_DOC_TEST_WORKSPACE = cargo test --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --doc
 export PATH := $(CARGO_BIN_DIR):$(PATH)
 
