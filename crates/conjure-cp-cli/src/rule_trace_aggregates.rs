@@ -1,91 +1,44 @@
 //! Counts rule applications in memory and writes the totals once, when the CLI exits.
-use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::fs::{self, File};
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 
 use anyhow::Context as _;
-use tracing::field::{Field, Visit};
-use tracing::{Event, Subscriber};
-use tracing_subscriber::Layer;
-use tracing_subscriber::layer::Context;
+use conjure_cp_cli::utils::rule_trace::RuleApplicationCounter;
 
+/// Owns the CLI output path and shared rule application counter.
 #[derive(Clone)]
 pub struct RuleTraceAggregatesHandle {
-    state: Arc<Mutex<RuleTraceAggregatesState>>,
-}
-
-pub struct RuleTraceAggregatesLayer {
-    state: Arc<Mutex<RuleTraceAggregatesState>>,
-}
-
-struct RuleTraceAggregatesState {
     path: PathBuf,
-    total_rule_applications: usize,
-    counts: BTreeMap<String, usize>,
-}
-
-#[derive(Default)]
-struct RuleNameVisitor {
-    rule_name: Option<String>,
+    counter: RuleApplicationCounter,
 }
 
 impl RuleTraceAggregatesHandle {
-    /// Creates the output file now, so an unusable path fails before any rewriting.
+    /// Create the output file before rewriting, so an unusable path fails early.
     pub fn new(path: PathBuf) -> anyhow::Result<Self> {
         File::create(&path)
             .with_context(|| format!("Unable to create aggregate trace file {}", path.display()))?;
-
         Ok(Self {
-            state: Arc::new(Mutex::new(RuleTraceAggregatesState {
-                path,
-                total_rule_applications: 0,
-                counts: BTreeMap::new(),
-            })),
+            path,
+            counter: RuleApplicationCounter::default(),
         })
     }
 
-    pub fn layer(&self) -> RuleTraceAggregatesLayer {
-        RuleTraceAggregatesLayer {
-            state: Arc::clone(&self.state),
-        }
+    /// A layer sharing the counts written by this handle.
+    pub fn layer(&self) -> RuleApplicationCounter {
+        self.counter.clone()
     }
 
-    /// Writes the counts collected so far.
+    /// Write the counts collected so far.
     pub fn flush(&self) {
-        self.state
-            .lock()
-            .expect("rule trace aggregate state lock poisoned")
-            .write()
-            .expect("failed to write rule trace aggregates")
+        self.write().expect("failed to write rule trace aggregates")
     }
 }
 
-impl<S> Layer<S> for RuleTraceAggregatesLayer
-where
-    S: Subscriber,
-{
-    fn on_event(&self, event: &Event<'_>, _ctx: Context<'_, S>) {
-        let mut visitor = RuleNameVisitor::default();
-        event.record(&mut visitor);
-
-        let Some(rule_name) = visitor.rule_name else {
-            return;
-        };
-
-        let mut state = self
-            .state
-            .lock()
-            .expect("rule trace aggregate state lock poisoned");
-        state.total_rule_applications += 1;
-        *state.counts.entry(rule_name).or_insert(0) += 1;
-    }
-}
-
-impl RuleTraceAggregatesState {
+impl RuleTraceAggregatesHandle {
     fn write(&self) -> anyhow::Result<()> {
-        let mut rows: Vec<_> = self.counts.iter().collect();
+        let counts = self.counter.snapshot();
+        let mut rows: Vec<_> = counts.iter().collect();
         rows.sort_by(|(rule_name_a, count_a), (rule_name_b, count_b)| {
             count_b
                 .cmp(count_a)
@@ -94,7 +47,7 @@ impl RuleTraceAggregatesState {
 
         let mut contents = format!(
             "total_rule_applications: {}\n",
-            self.total_rule_applications
+            counts.values().sum::<u64>()
         );
         for (rule_name, count) in rows {
             writeln!(contents, "{count:6} {rule_name}")?;
@@ -106,19 +59,5 @@ impl RuleTraceAggregatesState {
                 self.path.display()
             )
         })
-    }
-}
-
-impl Visit for RuleNameVisitor {
-    fn record_str(&mut self, field: &Field, value: &str) {
-        if field.name() == "rule_name" {
-            self.rule_name = Some(value.to_owned());
-        }
-    }
-
-    fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
-        if field.name() == "rule_name" && self.rule_name.is_none() {
-            self.rule_name = Some(format!("{value:?}").trim_matches('"').to_owned());
-        }
     }
 }
