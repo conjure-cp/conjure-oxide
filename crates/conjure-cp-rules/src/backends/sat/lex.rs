@@ -73,7 +73,7 @@ fn splice_compound_lex_entries(expr: &Expression, _: &SymbolTable) -> Applicatio
 }
 
 #[register_rule("SAT", 18500, [LexLt, LexLeq])]
-fn scalar_lex_comparison(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
+fn scalar_lex_comparison(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs) = match expr {
         Expression::LexLt(_, lhs, rhs) | Expression::LexLeq(_, lhs, rhs) => (lhs, rhs),
         _ => return Err(RuleNotApplicable),
@@ -83,7 +83,7 @@ fn scalar_lex_comparison(expr: &Expression, symbols: &SymbolTable) -> Applicatio
         // lexicographic order does not depend on their index values.
         super::counting::matrix_entries(operand)
             .map(Ok)
-            .unwrap_or_else(|| super::super::smt::lex::lex_operand_elements(operand))
+            .unwrap_or_else(|| crate::shared::lex::lex_operand_elements(operand))
     };
     let (lhs, rhs) = (elements(lhs)?, elements(rhs)?);
     for entries in [&lhs, &rhs] {
@@ -92,12 +92,13 @@ fn scalar_lex_comparison(expr: &Expression, symbols: &SymbolTable) -> Applicatio
             return Err(RuleNotApplicable);
         }
     }
-    let matrix = |entries| Moo::new(conjure_cp::into_matrix_expr!(entries));
-    let comparison = match expr {
-        Expression::LexLt(..) => Expression::LexLt(Metadata::new(), matrix(lhs), matrix(rhs)),
-        _ => Expression::LexLeq(Metadata::new(), matrix(lhs), matrix(rhs)),
-    };
-    super::super::smt::lex::expand_lex_lt_leq(&comparison, symbols)
+    Ok(RuleEffect::pure(
+        crate::shared::lex::lex_elements_to_recursive_or(
+            &lhs,
+            &rhs,
+            matches!(expr, Expression::LexLeq(..)),
+        ),
+    ))
 }
 
 /// Representation ordering constraints may already be flattened into scalar atoms.

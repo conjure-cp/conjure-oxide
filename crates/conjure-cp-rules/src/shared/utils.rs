@@ -841,3 +841,25 @@ fn unpack_compound_literal_digit(digit: &Expr, values: &[Literal]) -> Option<Exp
         _ => None,
     }
 }
+
+/// Validate sparse tuple assignments and convert Essence positions to zero-based offsets.
+pub(crate) fn checked_short_table_row(expr: &Expr, width: usize) -> Option<Vec<(usize, Expr)>> {
+    let mut positions = std::collections::HashSet::new();
+    short_table_row_entries(expr)?
+        .into_iter()
+        .map(|pair| {
+            let entries = tuple_expr_entries(&pair)?;
+            let [position, value] = entries.as_slice() else {
+                return None;
+            };
+            let Literal::Int(position) = conjure_cp::ast::eval_constant(position)? else {
+                return None;
+            };
+            let position = usize::try_from(position.checked_sub(1)?).ok()?;
+            if position >= width || !positions.insert(position) {
+                return None;
+            }
+            Some((position, value.clone()))
+        })
+        .collect()
+}

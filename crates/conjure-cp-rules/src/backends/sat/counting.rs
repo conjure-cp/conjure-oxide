@@ -7,10 +7,10 @@ use conjure_cp::rule_engine::{
 
 /// Matrix entries in index order, ignoring the index domain and expanding `flatten(...)`.
 pub(super) fn matrix_entries(expression: &Expr) -> Option<Vec<Expr>> {
-    let expression = super::table::materialise(expression);
+    let expression = crate::shared::utils::table_operand(expression);
     if let Expr::Flatten(_, None, inner) = expression {
         fn leaves(expression: &Expr, output: &mut Vec<Expr>) -> Option<()> {
-            let expression = super::table::materialise(expression);
+            let expression = crate::shared::utils::table_operand(expression);
             if let Some((entries, _)) = expression.clone().unwrap_matrix_unchecked() {
                 for entry in entries {
                     leaves(&entry, output)?;
@@ -22,7 +22,7 @@ pub(super) fn matrix_entries(expression: &Expr) -> Option<Vec<Expr>> {
             }
             Some(())
         }
-        let (entries, _) = super::table::materialise(&inner).unwrap_matrix_unchecked()?;
+        let (entries, _) = crate::shared::utils::table_operand(&inner).unwrap_matrix_unchecked()?;
         let mut output = vec![];
         for entry in entries {
             leaves(&entry, &mut output)?;

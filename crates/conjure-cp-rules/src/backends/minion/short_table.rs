@@ -4,7 +4,7 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
-use crate::shared::utils::{table_ordered_entries, table_rows, tuple_expr_entries};
+use crate::shared::utils::{checked_short_table_row, table_ordered_entries, table_rows};
 
 /// Use native short tuples, introducing equality indicators for variable-valued cells.
 #[register_rule("Minion", 4050, [ShortTable])]
@@ -23,25 +23,10 @@ fn flatten_short_table(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         .collect::<Result<Vec<_>, _>>()?;
     let mut short_rows = Vec::with_capacity(rows.len());
     for row in rows {
-        let pairs = crate::shared::utils::short_table_row_entries(&row).ok_or(RuleNotApplicable)?;
-        let mut positions = std::collections::HashSet::new();
+        let pairs = checked_short_table_row(&row, width).ok_or(RuleNotApplicable)?;
         let mut short_row = Vec::with_capacity(pairs.len());
-        for pair in pairs {
-            let entries = tuple_expr_entries(&pair).ok_or(RuleNotApplicable)?;
-            let [position, value] = entries.as_slice() else {
-                return Err(RuleNotApplicable);
-            };
-            let Some(Literal::Int(position)) = eval_constant(position) else {
-                return Err(RuleNotApplicable);
-            };
-            let position = position
-                .checked_sub(1)
-                .and_then(|position| usize::try_from(position).ok())
-                .ok_or(RuleNotApplicable)?;
-            if position >= width || !positions.insert(position) {
-                return Err(RuleNotApplicable);
-            }
-            match eval_constant(value) {
+        for (position, value) in pairs {
+            match eval_constant(&value) {
                 Some(Literal::Int(value)) => short_row.push((position, value)),
                 Some(Literal::Bool(value)) => short_row.push((position, i32::from(value))),
                 Some(_) => return Err(RuleNotApplicable),

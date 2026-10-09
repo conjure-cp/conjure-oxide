@@ -8,7 +8,7 @@ use conjure_cp::rule_engine::{
 
 /// Materialise scalar matrix entries with their actual numeric index labels.
 pub(super) fn matrix_data(subject: &Expr) -> Option<(Vec<Expr>, Vec<i64>)> {
-    let subject = super::table::materialise(subject);
+    let subject = crate::shared::utils::table_operand(subject);
     let list = subject.is_list();
     let (entries, domain) = subject.unwrap_matrix_unchecked()?;
     let labels = if list {

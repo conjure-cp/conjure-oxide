@@ -1,5 +1,7 @@
 //! Preserve numeric table relations until library clause generation.
-use crate::shared::utils::{table_ordered_entries, table_rows};
+use crate::shared::utils::{
+    checked_short_table_row, table_operand, table_ordered_entries, table_rows,
+};
 use conjure_cp::ast::{Atom, Expression as Expr, Literal, SatEncodingDecision, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
@@ -16,22 +18,9 @@ fn expand_short_table(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let rows = rows
         .into_iter()
         .map(|row| {
-            let pairs = crate::shared::utils::short_table_row_entries(&materialise(&row))?;
             let mut values = inputs.clone();
-            let mut positions = std::collections::HashSet::new();
-            for pair in pairs {
-                let pair = crate::shared::utils::tuple_expr_entries(&pair)?;
-                let [position, value] = pair.as_slice() else {
-                    return None;
-                };
-                let Literal::Int(position) = conjure_cp::ast::eval_constant(position)? else {
-                    return None;
-                };
-                let position = usize::try_from(position.checked_sub(1)?).ok()?;
-                if position >= values.len() || !positions.insert(position) {
-                    return None;
-                }
-                values[position] = value.clone();
+            for (position, value) in checked_short_table_row(&row, inputs.len())? {
+                values[position] = value;
             }
             Some(conjure_cp::into_matrix_expr!(values))
         })
@@ -44,19 +33,8 @@ fn expand_short_table(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-pub(super) fn materialise(expression: &Expr) -> Expr {
-    if let Expr::Atomic(_, Atom::Reference(reference)) = expression {
-        if let Some(value) = reference.resolve_expression() {
-            return value;
-        }
-        if let Some(value) = reference.resolve_constant() {
-            return value.into();
-        }
-    }
-    expression.clone()
-}
 fn cell_value(expression: &Expr) -> Option<i64> {
-    let expression = materialise(expression);
+    let expression = table_operand(expression);
     match expression {
         Expr::Atomic(_, Atom::Literal(Literal::Int(value))) => Some(i64::from(value)),
         Expr::Atomic(_, Atom::Literal(Literal::Bool(value))) => Some(i64::from(value)),

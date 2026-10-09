@@ -42,7 +42,7 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         expr.children()
             .into_iter()
             .flat_map(|child| {
-                super::super::table::materialise(&child)
+                crate::shared::utils::table_operand(&child)
                     .universe()
                     .into_iter()
                     .filter(|input| matches!(input, Expr::SATInt(..)))
@@ -108,7 +108,7 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         .into_iter()
         .map(|child| {
             if table {
-                map_table_cells(super::super::table::materialise(&child), &mut convert)
+                map_table_cells(crate::shared::utils::table_operand(&child), &mut convert)
             } else {
                 match matrix_child(&child) {
                     Some((elements, index_domain)) => {
@@ -141,7 +141,7 @@ fn map_table_cells(expression: Expr, convert: &mut impl FnMut(Expr) -> Expr) -> 
     let children = expression
         .children()
         .into_iter()
-        .map(|child| map_table_cells(super::super::table::materialise(&child), convert))
+        .map(|child| map_table_cells(crate::shared::utils::table_operand(&child), convert))
         .collect();
     expression.with_children(children)
 }
