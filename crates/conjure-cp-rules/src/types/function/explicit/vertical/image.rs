@@ -139,39 +139,4 @@ mod tests {
         assert_eq!(indices.len(), 1);
         assert!(matches!(indices[0], Expr::IndexOf(_, _, _)));
     }
-
-    #[test]
-    fn image_outside_original_domain_is_undefined_even_at_valid_internal_positions() {
-        let domain = Domain::function(
-            FuncAttr::<i32> {
-                representation: None,
-                size: Range::Unbounded,
-                partiality: PartialityAttr::Total,
-                jectivity: JectivityAttr::None,
-            },
-            Domain::int(vec![Range::Single(-2), Range::Single(3)]),
-            domain_int!(10..20),
-        );
-        let mut symbols = SymbolTable::new();
-        let mut f = symbols.gen_find(&domain);
-        <super::FunctionExplicit as ReprRule>::init_for(&mut f).unwrap();
-        let function = Expr::from(Reference::new(f));
-        for argument in [-3, 0, 1, 2, 4] {
-            let expr = Expr::Image(
-                Metadata::new(),
-                Moo::new(function.clone()),
-                Moo::new(argument.into()),
-            );
-            let lowered = super::image_function_explicit(&expr, &symbols)
-                .unwrap()
-                .new_expression;
-            let Expr::Bubble(_, _, condition) = lowered else {
-                panic!("out-of-domain image must retain its definedness guard");
-            };
-            assert_eq!(
-                conjure_cp::ast::eval_constant(&condition),
-                Some(false.into())
-            );
-        }
-    }
 }

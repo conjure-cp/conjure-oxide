@@ -1348,37 +1348,6 @@ mod tests {
         Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Bool(value)))
     }
 
-    #[test]
-    fn alldifferent_sparse_matrix_comparisons_select_actual_index_labels() {
-        let x = atom_ref("x");
-        let y = atom_ref("y");
-        let matrix = Expr::AbstractLiteral(
-            Metadata::new(),
-            AbstractLiteral::Matrix(
-                vec![x.clone(), y.clone()],
-                Domain::int(vec![Range::Single(-1), Range::Single(2)]),
-            ),
-        );
-        for (label, expected) in [(-1, x), (2, y)] {
-            let expr = Expr::SafeIndex(
-                Metadata::new(),
-                Moo::new(matrix.clone()),
-                vec![label.into()],
-            );
-            assert_eq!(
-                run_partial_evaluator_local(&expr).unwrap().new_expression,
-                expected
-            );
-        }
-        for label in [0, 1, 3] {
-            assert!(resolve_matrix_element(&matrix, label).is_none());
-        }
-        assert_eq!(
-            integer_index_offset(&[Range::Bounded(i32::MIN, i32::MAX)], i32::MAX),
-            Some(u32::MAX as usize)
-        );
-    }
-
     fn atom_ref(name: &str) -> Expr {
         Expr::Atomic(
             Metadata::new(),

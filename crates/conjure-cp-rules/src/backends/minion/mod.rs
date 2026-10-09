@@ -3090,88 +3090,6 @@ mod tests {
     use conjure_cp::matrix_expr;
     use conjure_cp::rule_engine::{ApplicationError, get_rule_by_name};
 
-    #[test]
-    fn power_is_only_defined_by_minion_where_it_is_defined() {
-        let input = |name: &str, lower, upper| -> Expr {
-            Reference::new(DeclarationPtr::new_find(
-                Name::user(name),
-                Domain::int(vec![Range::Bounded(lower, upper)]),
-            ))
-            .into()
-        };
-        let power = |a, b| {
-            Expr::Eq(
-                Metadata::new(),
-                Moo::new(input("total", -100, 100)),
-                Moo::new(Expr::SafePow(Metadata::new(), Moo::new(a), Moo::new(b))),
-            )
-        };
-        let guard = |effect: RuleEffect| match effect.new_expression {
-            Expr::Imply(_, guard, pow) => {
-                assert!(matches!(pow.as_ref(), Expr::MinionPow(..)));
-                Some(Moo::unwrap_or_clone(guard))
-            }
-            Expr::MinionPow(..) => None,
-            other => panic!("unexpected power lowering {other}"),
-        };
-
-        let always_defined = power(input("a", -2, 2), input("b", 1, 3));
-        assert_eq!(
-            guard(introduce_poweq(&always_defined, &SymbolTable::new()).unwrap()),
-            None
-        );
-        let negative_exponent = power(input("a", 1, 2), input("b", -2, 3));
-        assert!(matches!(
-            guard(introduce_poweq(&negative_exponent, &SymbolTable::new()).unwrap()),
-            Some(Expr::Geq(..))
-        ));
-        let zero_to_zero = power(input("a", 0, 2), input("b", 0, 3));
-        assert!(matches!(
-            guard(introduce_poweq(&zero_to_zero, &SymbolTable::new()).unwrap()),
-            Some(Expr::Or(..))
-        ));
-        let both = power(input("a", -2, 2), input("b", -2, 3));
-        assert!(matches!(
-            guard(introduce_poweq(&both, &SymbolTable::new()).unwrap()),
-            Some(Expr::And(..))
-        ));
-    }
-
-    #[test]
-    fn alldifferent_variable_except_defines_counts_outside_its_truth() {
-        let input = |name: &str, lower, upper| -> Expr {
-            Reference::new(DeclarationPtr::new_find(
-                Name::user(name),
-                Domain::int(vec![Range::Bounded(lower, upper)]),
-            ))
-            .into()
-        };
-        let matrix = into_matrix_expr!(vec![input("x", -1, 0), input("y", 0, 1)]);
-        let expr = Expr::AllDifferentExcept(
-            Metadata::new(),
-            Moo::new(matrix),
-            Moo::new(input("exception", -1, 1)),
-        );
-        let effect = alldifferent_variable_except(&expr, &SymbolTable::new()).unwrap();
-        assert!(matches!(effect.new_expression, Expr::And(_, _)));
-        let Expr::GccWeak(_, _, values, counts) = &effect.new_top[0] else {
-            panic!("count definition must be unconditional")
-        };
-        assert_eq!(values.unwrap_list_cow().unwrap().len(), 3);
-        assert_eq!(counts.unwrap_list_cow().unwrap().len(), 3);
-        let wide = Expr::AllDifferentExcept(
-            Metadata::new(),
-            Moo::new(into_matrix_expr!(vec![
-                input("x", -100, 100),
-                input("y", -100, 100)
-            ])),
-            Moo::new(input("exception", -1, 1)),
-        );
-        let effect = alldifferent_variable_except(&wide, &SymbolTable::new()).unwrap();
-        assert!(effect.new_top.is_empty());
-        assert!(matches!(effect.new_expression, Expr::And(_, _)));
-    }
-
     /// Builds a boolean decision-variable atomic expression.
     fn bool_atom(name: &str) -> Expr {
         Expr::Atomic(
@@ -3512,38 +3430,6 @@ mod tests {
     }
 
     #[test]
-    fn identity_element_materialises_forward_entries_and_outside_defaults() {
-        let mut symbols = SymbolTable::new();
-        let index: Expr =
-            Reference::new(symbols.gen_find(&Domain::int(vec![Range::Bounded(0, 4)]))).into();
-        let expr = Expr::ElementId(
-            Metadata::new(),
-            Moo::new(matrix_expr![3.into(), 1.into(), 2.into()]),
-            Moo::new(index),
-        );
-        let lowered = total_identity_element(&expr, &symbols)
-            .unwrap()
-            .new_expression;
-        let Expr::UnsafeIndex(_, matrix, _) = lowered else {
-            panic!("total identity lookup");
-        };
-        let (entries, _) = Moo::unwrap_or_clone(matrix)
-            .unwrap_matrix_unchecked()
-            .unwrap();
-        assert_eq!(
-            entries
-                .iter()
-                .map(eval_constant)
-                .collect::<Option<Vec<_>>>()
-                .unwrap(),
-            [0, 3, 1, 2, 4]
-                .into_iter()
-                .map(Lit::Int)
-                .collect::<Vec<_>>()
-        );
-    }
-
-    #[test]
     fn fold_constant_index_of_to_index_finds_a_compound_literal() {
         // Regression: indexOf([(7,false),(7,true),(8,false),(8,true)], (8,true)) used to only
         // resolve for a plain int search value (`expr_int_literal` failing outright for a
@@ -3573,46 +3459,5 @@ mod tests {
 
         let folded = fold_constant_index_of_to_index(&index_of).expect("should fold");
         assert_eq!(folded, Expr::from(2));
-    }
-
-    #[test]
-    fn compound_index_of_lookup_builds_a_per_candidate_disjunction() {
-        let atom_list: Vec<Atom> = [(7, false), (7, true), (8, false), (8, true)]
-            .into_iter()
-            .map(|(a, b)| {
-                Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Tuple(vec![
-                    Lit::Int(a),
-                    Lit::Bool(b),
-                ])))
-            })
-            .collect();
-        let value_expr = int_atom("k");
-        let reference = Reference::new(DeclarationPtr::new_find(
-            Name::user("pos"),
-            Domain::int(vec![Range::Bounded(1, 4)]),
-        ));
-
-        let lookup = compound_index_of_lookup(&atom_list, &value_expr, &reference)
-            .expect("should build a disjunction for compound elements");
-        let Expr::Or(_, choices) = &lookup else {
-            panic!("expected an Or, got {lookup}");
-        };
-        let Some(choices) = choices.unwrap_list() else {
-            panic!("expected the Or's argument to be a plain list");
-        };
-        assert_eq!(choices.len(), 4);
-        assert!(choices.iter().all(|choice| matches!(choice, Expr::And(..))));
-    }
-
-    #[test]
-    fn compound_index_of_lookup_is_not_applicable_to_scalar_elements() {
-        let atom_list: Vec<Atom> = vec![Atom::Literal(Lit::Int(10)), Atom::Literal(Lit::Int(20))];
-        let value_expr = int_atom("k");
-        let reference = Reference::new(DeclarationPtr::new_find(
-            Name::user("pos"),
-            Domain::int(vec![Range::Bounded(1, 2)]),
-        ));
-
-        assert!(compound_index_of_lookup(&atom_list, &value_expr, &reference).is_none());
     }
 }

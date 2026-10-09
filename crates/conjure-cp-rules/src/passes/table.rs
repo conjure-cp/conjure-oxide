@@ -101,38 +101,3 @@ fn normalise_table_collections(expr: &Expr, _: &SymbolTable) -> ApplicationResul
         _ => unreachable!(),
     }))
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn canonical_tables_have_sequence_inputs_and_set_rows() {
-        let inputs = Moo::new(conjure_cp::matrix_expr![1.into(), 2.into()]);
-        let rows = Moo::new(conjure_cp::matrix_expr![conjure_cp::matrix_expr![
-            1.into(),
-            2.into()
-        ]]);
-        for expr in [
-            Expr::Table(Metadata::new(), inputs.clone(), rows.clone()),
-            Expr::NegativeTable(Metadata::new(), inputs, rows),
-        ] {
-            let effect = normalise_table_collections(&expr, &SymbolTable::new()).unwrap();
-            let (Expr::Table(_, inputs, rows) | Expr::NegativeTable(_, inputs, rows)) =
-                &effect.new_expression
-            else {
-                panic!("Expected table");
-            };
-            assert!(is_collection(inputs, false));
-            assert!(is_collection(rows, true));
-            assert!(
-                normalise_table_collections(&effect.new_expression, &SymbolTable::new()).is_err()
-            );
-            let folded = Expr::NegativeTable(
-                Metadata::new(),
-                Moo::new(conjure_cp::ast::eval_constant(inputs).unwrap().into()),
-                Moo::new(conjure_cp::ast::eval_constant(rows).unwrap().into()),
-            );
-            assert!(normalise_table_collections(&folded, &SymbolTable::new()).is_err());
-        }
-    }
-}

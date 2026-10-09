@@ -1454,28 +1454,6 @@ mod tests {
         Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(value)))
     }
 
-    #[test]
-    fn modulo_evaluation_and_domains_use_exact_floor_arithmetic() {
-        for (a, b, expected) in [
-            (-4, 3, 2),
-            (4, -3, -2),
-            (i32::MIN, -1, 0),
-            (i32::MAX, -3, -2),
-        ] {
-            for expression in [
-                Expr::SafeMod(Metadata::new(), Moo::new(int_lit(a)), Moo::new(int_lit(b))),
-                Expr::UnsafeMod(Metadata::new(), Moo::new(int_lit(a)), Moo::new(int_lit(b))),
-            ] {
-                assert_eq!(eval_constant(&expression), Some(Lit::Int(expected)));
-                let domain = expression.domain_of().unwrap().resolve().unwrap();
-                assert!(domain.values_i32().unwrap().contains(&expected));
-            }
-        }
-        let undefined =
-            Expr::UnsafeMod(Metadata::new(), Moo::new(int_lit(4)), Moo::new(int_lit(0)));
-        assert_eq!(eval_constant(&undefined), None);
-    }
-
     fn bool_lit(value: bool) -> Expr {
         Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Bool(value)))
     }

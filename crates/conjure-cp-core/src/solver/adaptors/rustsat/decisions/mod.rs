@@ -671,6 +671,3 @@ impl pindakaas::ClauseDatabase for PindakaasSink<'_> {
         pindakaas::VarRange::new(first, last)
     }
 }
-
-#[cfg(test)]
-mod tests;

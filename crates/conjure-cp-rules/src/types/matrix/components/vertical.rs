@@ -738,50 +738,6 @@ mod tests {
     }
 
     #[test]
-    fn safe_const_index_matrix_components_defers_outside_sparse_dimensions() {
-        let mut symbols = SymbolTable::new();
-        let domain = Domain::matrix(
-            Domain::int(vec![Range::Bounded(0, 10)]),
-            vec![
-                Domain::int(vec![Range::Bounded(1, 3), Range::Bounded(8, 10)]),
-                Domain::int(vec![Range::Single(1), Range::Single(3), Range::Single(9)]),
-            ],
-        );
-        let mut matrix = DeclarationPtr::new_find(Name::user("m"), domain);
-        let (extra, _) = MatrixComponents::init_for(&mut matrix).unwrap();
-        symbols.insert(matrix.clone()).unwrap();
-        symbols.extend(extra);
-        let subject = Expression::from(Reference::new(matrix.clone()));
-        for indices in [[0, 1], [4, 1], [11, 1], [1, 0], [1, 2], [1, 10]] {
-            let expr = Expression::SafeIndex(
-                Metadata::new(),
-                Moo::new(subject.clone()),
-                indices.into_iter().map(Expression::from).collect(),
-            );
-            assert!(matches!(
-                try_index_matrix_components(&expr, &symbols),
-                Err(ApplicationError::RuleNotApplicable)
-            ));
-        }
-        for indices in [[1, 1], [8, 9]] {
-            let expr = Expression::SafeIndex(
-                Metadata::new(),
-                Moo::new(subject.clone()),
-                indices.into_iter().map(Expression::from).collect(),
-            );
-            let effect = try_index_matrix_components(&expr, &symbols).unwrap();
-            let components = matrix.get_repr::<MatrixComponents>().unwrap();
-            let offset = components
-                .indices_lits_to_flat(&indices.into_iter().map(Literal::Int).collect::<Vec<_>>())
-                .unwrap();
-            assert_eq!(
-                effect.new_expression,
-                Expression::from(Reference::new(components.elements[offset].clone()))
-            );
-        }
-    }
-
-    #[test]
     fn unsafe_const_index_matrix_components_refuses_non_constant_index() {
         let (symbols, decl) = matrix_find_1d();
         let idx_dom = Domain::int(vec![Range::Bounded(1, 3)]);

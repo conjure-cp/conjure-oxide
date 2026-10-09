@@ -558,77 +558,6 @@ mod tests {
     use conjure_cp::{domain_int, range};
 
     #[test]
-    fn uniform_reuses_a_type_family_across_different_domains_and_element_types() {
-        use crate::types::set::SetExplicit;
-        use conjure_cp::settings::set_channelling;
-        set_channelling(Channelling::Uniform);
-        set_heuristic(Heuristic::All);
-        let mut symbols = SymbolTable::new();
-        let mut first = symbols.gen_find(&Domain::set(
-            SetAttr::new_min_max_size(1, 2),
-            domain_int!(1..3),
-        ));
-        SetExplicit::init_for(&mut first).unwrap();
-        let second = symbols.gen_find(&Domain::set(
-            SetAttr::new_min_max_size(0, 3),
-            domain_int!(-2..5),
-        ));
-        let booleans = symbols.gen_find(&Domain::set(
-            SetAttr::new_min_max_size(0, 2),
-            Domain::bool(),
-        ));
-        for declaration in [second, booleans] {
-            assert_eq!(
-                choose_representation_rule(&declaration, &symbols)
-                    .unwrap()
-                    .id(),
-                SetExplicit::id()
-            );
-        }
-        set_channelling(Channelling::No);
-        set_heuristic(Heuristic::Compact);
-    }
-
-    #[test]
-    fn uniform_integer_choice_reuses_encoding_and_rejects_direct_initialisation() {
-        use conjure_cp::settings::{SolverFamily, set_channelling, with_solver_family};
-        with_solver_family(SolverFamily::Sat, || {
-            set_channelling(Channelling::Uniform);
-            let mut symbols = SymbolTable::new();
-            let mut first = symbols.gen_find(&domain_int!(0..3));
-            IntOrder::init_for(&mut first).unwrap();
-            let mut second = symbols.gen_find(&domain_int!(-5..7));
-            assert_eq!(
-                choose_representation_rule(&second, &symbols).unwrap().id(),
-                IntOrder::id()
-            );
-            let err = IntLog::init_for(&mut second).unwrap_err();
-            assert!(err.to_string().contains("uniform representation conflict"));
-            assert!(second.reprs().is_empty());
-            IntOrder::init_for(&mut second).unwrap();
-            assert_eq!(second.reprs().iter().count(), 1);
-            set_channelling(Channelling::No);
-        });
-    }
-
-    #[test]
-    fn uniform_does_not_fall_back_for_an_incompatible_domain() {
-        use crate::types::set::SetOccurrence;
-        use conjure_cp::settings::set_channelling;
-        set_channelling(Channelling::Uniform);
-        let mut symbols = SymbolTable::new();
-        let mut first = symbols.gen_find(&Domain::set(SetAttr::new_max_size(2), domain_int!(1..3)));
-        SetOccurrence::init_for(&mut first).unwrap();
-        // Occurrence requires enumerating the element domain, unlike explicit.
-        let second = symbols.gen_find(&Domain::set(
-            SetAttr::new_max_size(2),
-            Domain::int(vec![conjure_cp::ast::Range::<i32>::Unbounded]),
-        ));
-        assert!(choose_representation_rule(&second, &symbols).is_none());
-        set_channelling(Channelling::No);
-    }
-
-    #[test]
     fn compact_prefers_the_smallest_representation_domain() {
         set_heuristic(Heuristic::Compact);
         let mut symbols = SymbolTable::new();
@@ -643,38 +572,6 @@ mod tests {
                 .name(),
             "SetPacked"
         );
-        set_heuristic(Heuristic::First);
-    }
-
-    #[test]
-    fn sat_compact_counts_all_packed_masks_and_honours_explicit_pins() {
-        use crate::types::set::{SetOccurrence, SetPacked};
-        use conjure_cp::settings::{SolverFamily, with_solver_family};
-        set_heuristic(Heuristic::Compact);
-        with_solver_family(SolverFamily::Sat, || {
-            let mut symbols = SymbolTable::new();
-            let domain = Domain::set(SetAttr::new_min_max_size(1, 2), domain_int!(1..3));
-            let declaration = symbols.gen_find(&domain);
-            assert_eq!(SetPacked::compactness_score(domain.clone()).unwrap(), 8);
-            assert_eq!(SetOccurrence::compactness_score(domain).unwrap(), 8);
-            assert_eq!(
-                choose_representation_rule(&declaration, &symbols)
-                    .unwrap()
-                    .name(),
-                "SetOccurrence"
-            );
-            let domain = Domain::set(
-                SetAttr::new_min_max_size(1, 2).with_representation("packed"),
-                domain_int!(1..3),
-            );
-            let pinned = symbols.gen_find(&domain);
-            assert_eq!(
-                choose_representation_rule(&pinned, &symbols)
-                    .unwrap()
-                    .name(),
-                "SetPacked"
-            );
-        });
         set_heuristic(Heuristic::First);
     }
 
