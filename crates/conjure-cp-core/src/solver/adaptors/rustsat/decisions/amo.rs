@@ -58,8 +58,8 @@ impl Compiler<'_> {
         ) {
             use pindakaas::{
                 Encoder,
-                bool_linear::{BoolLinAggregator, BoolLinExp, BoolLinVariant, BoolLinear},
-                cardinality_one::{BitwiseEncoder, LadderEncoder, PairwiseEncoder},
+                constraint::cardinality_one::{BitwiseEncoder, LadderEncoder, PairwiseEncoder},
+                constraint::linear::{LinAggregator, LinExp, LinVariant, Linear},
             };
             let terms = distinct_occurrence_literals(self.instance, &inputs)
                 .into_iter()
@@ -69,16 +69,16 @@ impl Compiler<'_> {
                 instance: self.instance,
                 guard,
             };
-            let variant = BoolLinAggregator::default().aggregate(
+            let variant = LinAggregator::default().aggregate(
                 &mut sink,
-                &BoolLinear::new(
-                    BoolLinExp::from_terms(&terms),
-                    pindakaas::bool_linear::Comparator::LessEq,
+                &Linear::new(
+                    LinExp::from_terms(&terms),
+                    pindakaas::constraint::linear::Comparator::LessEq,
                     1,
                 ),
             );
             let result = match variant {
-                Ok(BoolLinVariant::CardinalityOne(cardinality)) => match algorithm {
+                Ok(LinVariant::CardinalityOne(cardinality)) => match algorithm {
                     AmoEncoding::PindakaasPairwise => {
                         PairwiseEncoder::default().encode(&mut sink, &cardinality)
                     }
@@ -90,7 +90,7 @@ impl Compiler<'_> {
                     }
                     _ => unreachable!(),
                 },
-                Ok(BoolLinVariant::Trivial) => Ok(()),
+                Ok(LinVariant::Trivial) => Ok(()),
                 Ok(_) => {
                     return Err(SolverError::ModelInvalid(
                         "AMO normalisation unexpectedly produced a different constraint family"

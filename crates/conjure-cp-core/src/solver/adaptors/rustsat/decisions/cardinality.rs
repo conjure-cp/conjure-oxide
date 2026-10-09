@@ -315,55 +315,42 @@ impl Compiler<'_> {
             CardinalityEncoding::PindakaasSortingNetwork => {
                 use pindakaas::{
                     Encoder,
-                    bool_linear::{
-                        BoolLinAggregator, BoolLinExp, BoolLinVariant, BoolLinear, Comparator,
-                    },
-                    cardinality::SortingNetworkEncoder,
+                    constraint::cardinality::SortingNetworkEncoder,
+                    constraint::linear::{Comparator, LinAggregator, LinExp, LinVariant, Linear},
                 };
                 // Pindakaas cardinality inputs must use distinct variables. Alias repeats and
                 // opposite polarities instead of allowing aggregation into weighted PB terms.
-                let mut seen = std::collections::HashSet::new();
-                let literals = literals
+                let literals = distinct_occurrence_literals(self.instance, &literals)
                     .into_iter()
-                    .map(|literal| {
-                        let literal = if seen.insert(literal.var()) {
-                            literal
-                        } else {
-                            let alias = self.instance.new_lit();
-                            self.instance
-                                .add_clause(atomics::lit_impl_lit(alias, literal));
-                            self.instance
-                                .add_clause(atomics::lit_impl_lit(literal, alias));
-                            alias
-                        };
-                        pind_lit(literal)
-                    })
+                    .map(pind_lit)
                     .collect::<Vec<_>>();
                 let comparison = match relation {
                     CardinalityRelation::AtMost => Comparator::LessEq,
                     CardinalityRelation::AtLeast => Comparator::GreaterEq,
                     CardinalityRelation::Exactly => Comparator::Equal,
                 };
-                let expression = BoolLinExp::from_terms(
+                let expression = LinExp::from_terms(
                     &literals.into_iter().map(|lit| (lit, 1)).collect::<Vec<_>>(),
                 );
                 let mut sink = PindakaasSink {
                     instance: self.instance,
                     guard,
                 };
-                let variant = BoolLinAggregator::default()
-                    .aggregate(&mut sink, &BoolLinear::new(expression, comparison, bound));
+                let variant = LinAggregator::default()
+                    .aggregate(&mut sink, &Linear::new(expression, comparison, bound));
                 let encoder = SortingNetworkEncoder::default();
                 let result = match variant {
-                    Ok(BoolLinVariant::Cardinality(cardinality)) => {
+                    Ok(LinVariant::Cardinality(cardinality)) => {
                         encoder.encode(&mut sink, &cardinality)
                     }
-                    Ok(BoolLinVariant::CardinalityOne(cardinality)) => encoder.encode(
+                    Ok(LinVariant::CardinalityOne(cardinality)) => encoder.encode(
                         &mut sink,
-                        &pindakaas::cardinality::Cardinality::from(cardinality),
+                        &pindakaas::constraint::cardinality::Cardinality::from(cardinality),
                     ),
-                    Ok(BoolLinVariant::Trivial) => Ok(()),
-                    Ok(BoolLinVariant::Linear(_)) => {
+                    Ok(LinVariant::Trivial) => Ok(()),
+                    Ok(
+                        LinVariant::Linear(_) | LinVariant::BoolLinear(_) | LinVariant::Count(_),
+                    ) => {
                         return Err(SolverError::ModelInvalid(
                             "Cardinality normalisation unexpectedly produced weighted terms".into(),
                         ));

@@ -626,6 +626,13 @@ fn pind_lit(literal: Lit) -> pindakaas::Lit {
     pindakaas::Lit::from_raw(std::num::NonZeroI32::new(literal.to_ipasir()).unwrap())
 }
 /// Bridge both providers to the RustSAT allocator; no independent variable namespace.
+fn pind_term(term: Term) -> pindakaas::BoolVal {
+    match term {
+        Term::Constant(value) => pindakaas::BoolVal::Const(value),
+        Term::Literal(literal) => pind_lit(literal).into(),
+    }
+}
+
 struct PindakaasSink<'a> {
     instance: &'a mut SatInstance,
     guard: Option<Lit>,
