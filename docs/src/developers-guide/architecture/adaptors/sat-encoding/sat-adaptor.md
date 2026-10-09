@@ -17,7 +17,7 @@ The `--sat-encoding-*` options pin an encoding family. Unpinned families are sel
 
 The last three families compose library-backed numeric comparisons and Boolean operations. Structured Pindakaas inputs preserve guaranteed choice, chain and bounded-binary groups as native integer views. Oxide validates those groups and normalises constants, signed coefficients, repeated literals and complements before calling a provider. Direct views merge equal-valued choices and include the none-selected alternative; monotone chains use order views and bounded binary groups retain their supplied bits. Supplied binary views are constrained through Pindakaas before their bounds are used for simplification, since those bounds can also describe the domain constraint being compiled. Structured equalities use the same native relation path as inequalities.
 
-Oxide temporarily pins Pindakaas to a tested commit on its GitHub `develop` branch. Return to a crates.io dependency when the next release contains this API and its structured-equality fixes.
+Oxide temporarily pins Pindakaas to a tested fork commit containing the development API and the direct-view guard fix in [Pindakaas PR #238](https://github.com/pindakaashq/pindakaas/pull/238). Return to a crates.io dependency when a release contains this API and its encoding fixes.
 
 ## Shared state and incremental solving
 
