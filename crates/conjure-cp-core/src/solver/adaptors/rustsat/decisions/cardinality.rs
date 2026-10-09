@@ -16,7 +16,7 @@ impl Compiler<'_> {
         };
         // Input order has no semantic meaning, but multiplicity and polarity do.
         literals.sort_unstable();
-        let cache = self.counters.as_deref_mut().unwrap();
+        let cache = self.cache.as_deref_mut().unwrap();
         tracing::debug!(
             ?algorithm,
             ?relation,
@@ -83,14 +83,14 @@ impl Compiler<'_> {
         for (upper, positive) in bounds {
             let key = (literals.clone(), upper);
             let threshold =
-                if let Some(&literal) = self.counters.as_ref().unwrap().thresholds.get(&key) {
+                if let Some(&literal) = self.cache.as_ref().unwrap().thresholds.get(&key) {
                     literal
                 } else {
                     let output = self.instance.new_lit();
                     let mut one_shot = Compiler {
                         instance: self.instance,
                         variables: self.variables,
-                        counters: None,
+                        cache: None,
                     };
                     one_shot.cardinality_guarded(
                         algorithm,
@@ -106,7 +106,7 @@ impl Compiler<'_> {
                         inputs.iter().copied().map(Term::Literal).collect(),
                         Some(!output),
                     )?;
-                    self.counters
+                    self.cache
                         .as_deref_mut()
                         .unwrap()
                         .thresholds
@@ -280,7 +280,7 @@ impl Compiler<'_> {
             }
             return Ok(());
         }
-        if self.counters.is_some() {
+        if self.cache.is_some() {
             return self.cached_cardinality(algorithm, relation, bound, literals, guard);
         }
         match algorithm {

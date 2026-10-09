@@ -90,7 +90,7 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         return Err(RuleNotApplicable);
     }
 
-    let mut clauses = Vec::new();
+    let mut decisions = Vec::new();
     let mut new_symbols = symbols.clone();
 
     let mut convert = |input: Expr| {
@@ -100,7 +100,7 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         {
             input
         } else {
-            to_log(input, &mut clauses, &mut new_symbols)
+            to_log(input, &mut decisions, &mut new_symbols)
         }
     };
     let children: VecDeque<Expr> = expr
@@ -122,10 +122,10 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         .collect();
 
     let new_expression = expr.with_children(children);
-    if new_expression == *expr && clauses.is_empty() {
+    if new_expression == *expr && decisions.is_empty() {
         return Err(RuleNotApplicable);
     }
-    Ok(RuleEffect::sat(new_expression, clauses, new_symbols))
+    Ok(RuleEffect::sat(new_expression, decisions, new_symbols))
 }
 
 /// Whether semantic numeric decisions need a decoded actual-value circuit.
@@ -182,7 +182,7 @@ fn operands(expr: &Expr) -> impl Iterator<Item = Expr> {
 }
 
 /// Re-encode one operand into the logarithmic encoding, leaving anything else alone.
-fn to_log(expr: Expr, clauses: &mut Vec<SatEncodingDecision>, symbols: &mut SymbolTable) -> Expr {
+fn to_log(expr: Expr, decisions: &mut Vec<SatEncodingDecision>, symbols: &mut SymbolTable) -> Expr {
     if ready_indicator(&expr) {
         let Expr::ToInt(_, input) = expr else {
             unreachable!()
@@ -210,23 +210,25 @@ fn to_log(expr: Expr, clauses: &mut Vec<SatEncodingDecision>, symbols: &mut Symb
     let (low, high) = *bounds;
     let width = bit_magnitude(low).max(bit_magnitude(high));
     if matches!(encoding, SATIntEncoding::Offset | SATIntEncoding::Rank(_)) {
-        let mut decoded = add_unsigned_constant(&bits, i64::from(low), width, clauses, symbols);
+        let mut decoded = add_unsigned_constant(&bits, i64::from(low), width, decisions, symbols);
         if let SATIntEncoding::Rank(ranges) = encoding {
             let mut start = 0u64;
             for (index, &(range_low, range_high)) in ranges.iter().enumerate() {
                 if index > 0 {
-                    let selector = unsigned_at_least(&bits, start, clauses, symbols);
+                    let selector = unsigned_at_least(&bits, start, decisions, symbols);
                     let candidate = add_unsigned_constant(
                         &bits,
                         i64::from(range_low) - start as i64,
                         width,
-                        clauses,
+                        decisions,
                         symbols,
                     );
                     decoded = decoded
                         .into_iter()
                         .zip(candidate)
-                        .map(|(old, new)| tseytin_mux(selector.clone(), old, new, clauses, symbols))
+                        .map(|(old, new)| {
+                            tseytin_mux(selector.clone(), old, new, decisions, symbols)
+                        })
                         .collect();
                 }
                 start += (i64::from(range_high) - i64::from(range_low) + 1) as u64;
@@ -245,7 +247,7 @@ fn to_log(expr: Expr, clauses: &mut Vec<SatEncodingDecision>, symbols: &mut Symb
             Metadata::new(),
             SATIntEncoding::Log,
             Moo::new(into_matrix_expr!(sign_magnitude_to_twos_complement(
-                &bits, width, clauses, symbols
+                &bits, width, decisions, symbols
             ))),
             (low, high),
         );
@@ -255,7 +257,7 @@ fn to_log(expr: Expr, clauses: &mut Vec<SatEncodingDecision>, symbols: &mut Symb
     // difference between neighbouring thresholds to recover "x is exactly this value".
     let value_bits = match encoding {
         SATIntEncoding::Direct => bits,
-        SATIntEncoding::Order => order_to_value_bits(&bits, clauses, symbols),
+        SATIntEncoding::Order => order_to_value_bits(&bits, decisions, symbols),
         SATIntEncoding::Log
         | SATIntEncoding::Offset
         | SATIntEncoding::Rank(_)
@@ -275,7 +277,7 @@ fn to_log(expr: Expr, clauses: &mut Vec<SatEncodingDecision>, symbols: &mut Symb
             match terms.len() {
                 0 => Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
                 1 => terms.into_iter().next().expect("just checked the length"),
-                _ => tseytin_or(&terms, clauses, symbols),
+                _ => tseytin_or(&terms, decisions, symbols),
             }
         })
         .collect();
@@ -300,7 +302,7 @@ fn ready_indicator(expr: &Expr) -> bool {
 /// threshold there is nothing left to exclude.
 fn order_to_value_bits(
     thresholds: &[Expr],
-    clauses: &mut Vec<SatEncodingDecision>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     thresholds
@@ -308,8 +310,8 @@ fn order_to_value_bits(
         .enumerate()
         .map(|(index, threshold)| match thresholds.get(index + 1) {
             Some(next) => {
-                let not_next = tseytin_not(next.clone(), clauses, symbols);
-                tseytin_and(&[threshold.clone(), not_next], clauses, symbols)
+                let not_next = tseytin_not(next.clone(), decisions, symbols);
+                tseytin_and(&[threshold.clone(), not_next], decisions, symbols)
             }
             None => threshold.clone(),
         })

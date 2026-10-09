@@ -4,6 +4,7 @@ mod amo;
 mod boolean;
 mod cardinality;
 mod element;
+mod pindakaas_views;
 mod pseudo_boolean;
 mod relation;
 mod table;
@@ -37,20 +38,6 @@ impl Term {
     }
 }
 
-/// Compile semantic decisions using the instance's shared variable allocator.
-pub fn compile_decisions(
-    decisions: &[SatEncodingDecision],
-    instance: &mut SatInstance,
-    variables: &mut HashMap<Name, Lit>,
-) -> Result<(), SolverError> {
-    compile_decisions_with_cache(
-        decisions,
-        instance,
-        variables,
-        &mut EncodingCache::default(),
-    )
-}
-
 /// Compile another decision batch against encodings already emitted into the same solver.
 pub(super) fn compile_decisions_with_cache(
     decisions: &[SatEncodingDecision],
@@ -61,7 +48,7 @@ pub(super) fn compile_decisions_with_cache(
     let mut compiler = Compiler {
         instance,
         variables,
-        counters: Some(cache),
+        cache: Some(cache),
     };
     // Direct assertions determine whether a relation needs an assertion or equivalence.
     // Keep their units in the model so output literals remain correctly constrained.
@@ -398,7 +385,7 @@ pub(super) fn compile_objective_terms(
     let mut compiler = Compiler {
         instance,
         variables,
-        counters: Some(cache),
+        cache: Some(cache),
     };
     let terms = value
         .terms
@@ -471,7 +458,7 @@ enum WeightedEncoder {
 struct Compiler<'a> {
     instance: &'a mut SatInstance,
     variables: &'a mut HashMap<Name, Lit>,
-    counters: Option<&'a mut EncodingCache>,
+    cache: Option<&'a mut EncodingCache>,
 }
 impl Compiler<'_> {
     fn assert_guarded(&mut self, term: Term, guard: Option<Lit>) {
@@ -498,7 +485,7 @@ impl Compiler<'_> {
         while let Term::Literal(literal) = term {
             let positive = literal.var().pos_lit();
             let Some(value) = self
-                .counters
+                .cache
                 .as_ref()
                 .and_then(|cache| cache.aliases.get(&positive))
             else {
@@ -523,7 +510,7 @@ impl Compiler<'_> {
         if matches!(value, Term::Literal(value) if value.var() == output.var()) {
             return;
         }
-        if let Some(cache) = self.counters.as_mut() {
+        if let Some(cache) = self.cache.as_mut() {
             cache.aliases.insert(
                 output.var().pos_lit(),
                 if output.is_pos() {
@@ -542,7 +529,7 @@ impl Compiler<'_> {
         };
         let key = (and, literals.clone());
         let existing = self
-            .counters
+            .cache
             .as_ref()
             .and_then(|cache| cache.gates.get(&key))
             .copied();
@@ -551,7 +538,7 @@ impl Compiler<'_> {
             return self.resolve_alias(Term::Literal(output));
         }
         let implied = self
-            .counters
+            .cache
             .as_mut()
             .and_then(|cache| cache.implied_gates.remove(&key));
         let output = implied.unwrap_or_else(|| self.instance.new_lit());
@@ -559,7 +546,7 @@ impl Compiler<'_> {
             self.emit_gate_implication(and, output, &literals);
         }
         self.emit_gate_reverse(and, output, &literals);
-        if let Some(cache) = self.counters.as_mut() {
+        if let Some(cache) = self.cache.as_mut() {
             cache.gates.insert(key, output);
         }
         Term::Literal(output)

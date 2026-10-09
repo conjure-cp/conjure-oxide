@@ -169,7 +169,7 @@ impl Compiler<'_> {
         };
         let key = (and, literals.clone());
         let existing = self
-            .counters
+            .cache
             .as_ref()
             .and_then(|cache| {
                 cache
@@ -183,7 +183,7 @@ impl Compiler<'_> {
         }
         let output = self.instance.new_lit();
         self.emit_gate_implication(and, output, &literals);
-        if let Some(cache) = self.counters.as_mut() {
+        if let Some(cache) = self.cache.as_mut() {
             cache.implied_gates.insert(key, output);
         }
         Term::Literal(output)

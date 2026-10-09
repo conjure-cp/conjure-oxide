@@ -21,10 +21,10 @@ use ustr::Ustr;
 
 /// SAT solver selected by compilation features.
 #[cfg(feature = "sat-batsat")]
-pub(super) type SatSolver = rustsat_batsat::BasicSolver;
+type SatSolver = rustsat_batsat::BasicSolver;
 /// SAT solver selected by compilation features.
 #[cfg(not(feature = "sat-batsat"))]
-pub(super) type SatSolver = rustsat_cadical::CaDiCaL<'static, 'static>;
+type SatSolver = rustsat_cadical::CaDiCaL<'static, 'static>;
 
 use crate::ast::pretty::pretty_vec;
 use crate::ast::serde::HasId;
@@ -60,7 +60,7 @@ pub struct Sat {
     solver_inst: SatSolver,
     decision_refs: Option<Vec<Name>>,
     objective: Option<super::objective::CompiledObjective>,
-    counters: EncodingCache,
+    cache: EncodingCache,
     dominance_expression: Option<Expression>,
     dominance_model_template: Option<ConjureModel>,
 }
@@ -78,7 +78,7 @@ impl Default for Sat {
             model_inst: None,
             decision_refs: None,
             objective: None,
-            counters: EncodingCache::default(),
+            cache: EncodingCache::default(),
             dominance_expression: None,
             dominance_model_template: None,
         }
@@ -311,7 +311,7 @@ impl Sat {
         solution: &HashMap<Name, Literal>,
         var_map: &mut HashMap<Name, Lit>,
         next_free: &mut u32,
-        counters: &mut EncodingCache,
+        cache: &mut EncodingCache,
     ) -> Result<(), SolverError> {
         let Some(dominance_expression) = dominance_expression else {
             return Ok(());
@@ -355,13 +355,13 @@ impl Sat {
         instance
             .var_manager_mut()
             .increase_next_free(satVar::new(*next_free));
-        compile_decisions_with_cache(rewritten.sat_decisions(), &mut instance, var_map, counters)?;
+        compile_decisions_with_cache(rewritten.sat_decisions(), &mut instance, var_map, cache)?;
         for constraint in rewritten.constraints() {
             compile_decisions_with_cache(
                 &[crate::ast::SatEncodingDecision::Assert(constraint.clone())],
                 &mut instance,
                 var_map,
-                counters,
+                cache,
             )?;
         }
         let (cnf, manager): (Cnf, BasicVarManager) = instance.into_cnf();
@@ -569,7 +569,7 @@ impl SolverAdaptor for Sat {
                         &completed,
                         &mut instance,
                         &mut var_map,
-                        &mut self.counters,
+                        &mut self.cache,
                     )?;
                     let (cnf, manager): (Cnf, BasicVarManager) = instance.into_cnf();
                     next_free = manager.n_used();
@@ -590,7 +590,7 @@ impl SolverAdaptor for Sat {
                     &dominance_solution,
                     &mut var_map,
                     &mut next_free,
-                    &mut self.counters,
+                    &mut self.cache,
                 )?;
 
                 let blocking_cl = blocking_clause_for_solution(&solution, &var_map)?;
@@ -618,7 +618,7 @@ impl SolverAdaptor for Sat {
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
         self.objective = None;
-        self.counters = EncodingCache::default();
+        self.cache = EncodingCache::default();
         self.dominance_expression = model.dominance.as_ref().map(|expr| match expr {
             Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
             _ => expr.clone(),
@@ -701,7 +701,7 @@ impl SolverAdaptor for Sat {
         for name in finds {
             var_map.insert(name, inst.new_lit());
         }
-        compile_decisions_with_cache(decisions, &mut inst, &mut var_map, &mut self.counters)?;
+        compile_decisions_with_cache(decisions, &mut inst, &mut var_map, &mut self.cache)?;
         let objectives: Vec<_> = decisions
             .iter()
             .filter(|decision| {
@@ -718,7 +718,7 @@ impl SolverAdaptor for Sat {
                 decision,
                 &mut inst,
                 &mut var_map,
-                &mut self.counters,
+                &mut self.cache,
             )?);
         }
 

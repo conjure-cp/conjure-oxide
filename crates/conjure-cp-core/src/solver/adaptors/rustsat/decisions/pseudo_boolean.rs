@@ -37,7 +37,7 @@ impl Compiler<'_> {
                 )
             })
         };
-        if self.counters.is_some() && matches!(output, Term::Literal(_)) {
+        if self.cache.is_some() && matches!(output, Term::Literal(_)) {
             return self.cached_weighted_threshold(algorithm, output, bound, terms, groups);
         }
         match output {
@@ -124,7 +124,7 @@ impl Compiler<'_> {
                 "Reified integer coefficient sum exceeds the library range".into(),
             ));
         }
-        if self.counters.is_some() {
+        if self.cache.is_some() {
             let terms: Vec<_> = positive
                 .iter()
                 .map(|(lit, weight)| (*weight as i64, Term::Literal(*lit)))
@@ -227,7 +227,7 @@ impl Compiler<'_> {
             bound: if inverted { -adjusted - 1 } else { adjusted },
         };
         let existing = self
-            .counters
+            .cache
             .as_ref()
             .unwrap()
             .weighted_thresholds
@@ -271,7 +271,7 @@ impl Compiler<'_> {
                 let mut one_shot = Compiler {
                     instance: self.instance,
                     variables: self.variables,
-                    counters: None,
+                    cache: None,
                 };
                 one_shot.integer_relation(
                     algorithm,
@@ -282,7 +282,7 @@ impl Compiler<'_> {
                     groups,
                 )?;
             }
-            self.counters
+            self.cache
                 .as_deref_mut()
                 .unwrap()
                 .weighted_thresholds
@@ -323,7 +323,7 @@ impl Compiler<'_> {
         for (mut inputs, upper) in bounds {
             inputs.sort_unstable();
             let key = (algorithm, inputs);
-            let cache = self.counters.as_deref_mut().unwrap();
+            let cache = self.cache.as_deref_mut().unwrap();
             tracing::debug!(
                 ?algorithm,
                 bound = upper,
@@ -426,7 +426,7 @@ impl Compiler<'_> {
             ));
         }
         if guard.is_some()
-            && self.counters.is_some()
+            && self.cache.is_some()
             && (algorithm == PbEncoding::RustsatBinaryAdder
                 || (algorithm == PbEncoding::RustsatGeneralizedTotalizer
                     && positive.len() <= MAX_SHARED_WEIGHTED_INPUTS))
@@ -482,7 +482,7 @@ impl Compiler<'_> {
         // Preserve unconditional pruning before sharing; wide assertions retain
         // the library's original BoundBoth construction and propagation.
         if guard.is_none()
-            && self.counters.is_some()
+            && self.cache.is_some()
             && positive.len() <= MAX_SHARED_WEIGHTED_INPUTS
             && matches!(
                 algorithm,
@@ -652,208 +652,5 @@ impl Compiler<'_> {
             }
         }
         Ok(())
-    }
-    /// Share guaranteed representation structure as native Pindakaas integer views.
-    fn structured_pb_expression(
-        &mut self,
-        mut bound: i128,
-        mut coefficients: std::collections::BTreeMap<Lit, i128>,
-        terms: &[(i64, Term)],
-        groups: &[crate::ast::sat_decision::PbTermGroup],
-    ) -> Result<(pindakaas::constraint::linear::LinExp, i64), pindakaas::Unsatisfiable> {
-        use crate::ast::sat_decision::PbTermStructure;
-        use pindakaas::{BoolVal, constraint::linear::LinExp, decision::integer::IntVar};
-        let mut occurrences = HashMap::<Lit, usize>::new();
-        for (_, term) in terms {
-            if let Term::Literal(literal) = term {
-                *occurrences.entry(literal.var().pos_lit()).or_default() += 1;
-            }
-        }
-        let mut expression = LinExp::default();
-        for group in groups {
-            let inputs = terms[group.start..group.end]
-                .iter()
-                .map(|(_, term)| match term {
-                    // The guaranteed choice/chain refers to these original polarities.
-                    Term::Literal(literal) if !literal.is_neg() => Some(*literal),
-                    _ => None,
-                })
-                .collect::<Option<Vec<_>>>();
-            let Some(inputs) = inputs else { continue };
-            if inputs
-                .iter()
-                .collect::<std::collections::HashSet<_>>()
-                .len()
-                != inputs.len()
-            {
-                continue;
-            }
-            let weights: Vec<_> = inputs
-                .iter()
-                .map(|literal| coefficients.get(literal).copied().unwrap_or(0))
-                .collect();
-            if weights.iter().all(|weight| *weight == 0) {
-                continue;
-            }
-            let (view, factor) = match group.structure {
-                PbTermStructure::Choice => {
-                    // A choice permits none selected. Merge equal-valued alternatives,
-                    // including zero, before supplying exactly-one direct indicators.
-                    let mut values = std::collections::BTreeMap::<i64, Vec<Term>>::new();
-                    let selected = self.combine(
-                        false,
-                        inputs
-                            .iter()
-                            .map(|literal| Term::Literal(*literal))
-                            .collect(),
-                    );
-                    values.entry(0).or_default().push(selected.negated());
-                    for (&literal, &weight) in inputs.iter().zip(&weights) {
-                        values
-                            .entry(weight as i64)
-                            .or_default()
-                            .push(Term::Literal(literal));
-                    }
-                    let walk = values
-                        .into_iter()
-                        .map(|(value, terms)| (value, pind_term(self.combine(false, terms))))
-                        .collect::<Vec<_>>();
-                    let mut sink = PindakaasSink {
-                        instance: self.instance,
-                        guard: None,
-                    };
-                    (IntVar::from_direct_walk(&mut sink, walk)?, 1)
-                }
-                PbTermStructure::Chain => {
-                    let walk = if weights.iter().all(|weight| *weight >= 0) {
-                        let mut sum = 0i128;
-                        let mut walk = vec![(0, BoolVal::Const(true))];
-                        for (&literal, &weight) in inputs.iter().zip(&weights) {
-                            sum += weight;
-                            if weight != 0 {
-                                walk.push((sum as i64, pind_lit(literal).into()));
-                            }
-                        }
-                        Some(walk)
-                    } else if weights.iter().all(|weight| *weight <= 0) {
-                        let mut sum: i128 = weights.iter().sum();
-                        let mut walk = vec![(sum as i64, BoolVal::Const(true))];
-                        for (&literal, &weight) in inputs.iter().zip(&weights).rev() {
-                            sum -= weight;
-                            if weight != 0 {
-                                walk.push((sum as i64, pind_lit(!literal).into()));
-                            }
-                        }
-                        Some(walk)
-                    } else {
-                        None
-                    };
-                    let view = if let Some(walk) = walk {
-                        let mut sink = PindakaasSink {
-                            instance: self.instance,
-                            guard: None,
-                        };
-                        IntVar::from_order_walk(&mut sink, walk)?
-                    } else {
-                        // Mixed signed steps can revisit values; use prefix boundary
-                        // indicators as a direct view instead of assuming monotonicity.
-                        let mut values = std::collections::BTreeMap::<i64, Vec<Term>>::new();
-                        values.entry(0).or_default().push(Term::Literal(!inputs[0]));
-                        let mut sum = 0i128;
-                        for (index, &weight) in weights.iter().enumerate() {
-                            sum += weight;
-                            let selected = if index + 1 == inputs.len() {
-                                Term::Literal(inputs[index])
-                            } else {
-                                self.combine(
-                                    true,
-                                    vec![
-                                        Term::Literal(inputs[index]),
-                                        Term::Literal(!inputs[index + 1]),
-                                    ],
-                                )
-                            };
-                            values.entry(sum as i64).or_default().push(selected);
-                        }
-                        let walk = values
-                            .into_iter()
-                            .map(|(value, terms)| (value, pind_term(self.combine(false, terms))))
-                            .collect::<Vec<_>>();
-                        let mut sink = PindakaasSink {
-                            instance: self.instance,
-                            guard: None,
-                        };
-                        IntVar::from_direct_walk(&mut sink, walk)?
-                    };
-                    (view, 1)
-                }
-                PbTermStructure::BoundedBinary { lower, upper } => {
-                    // Combining another occurrence changes the meaning of the original bound.
-                    if inputs.iter().any(|literal| {
-                        occurrences[literal] != 1 || !coefficients.contains_key(literal)
-                    }) {
-                        continue;
-                    }
-                    let factor = weights[0].abs();
-                    if factor == 0
-                        || weights.iter().enumerate().any(|(index, weight)| {
-                            1i128
-                                .checked_shl(index as u32)
-                                .and_then(|power| factor.checked_mul(power))
-                                != Some(weight.abs())
-                        })
-                    {
-                        continue;
-                    }
-                    let constant: i128 = weights.iter().copied().filter(|weight| *weight < 0).sum();
-                    let lower = i128::from(lower) - constant;
-                    let upper = i128::from(upper) - constant;
-                    let capacity: i128 = weights.iter().map(|weight| weight.abs()).sum();
-                    if lower < 0 || upper > capacity || lower % factor != 0 || upper % factor != 0 {
-                        continue;
-                    }
-                    let upper = (upper / factor) as i64;
-                    let width = (i64::BITS - upper.leading_zeros()) as usize;
-                    let bits: Vec<_> = inputs
-                        .iter()
-                        .zip(&weights)
-                        .take(width)
-                        .map(|(&literal, &weight)| {
-                            pind_lit(if weight < 0 { !literal } else { literal }).into()
-                        })
-                        .collect();
-                    // Domain constraints can themselves be the source of this hint.
-                    // Enforce it independently before the native view folds fixed values.
-                    // Bits above the supplied width must be zero in the unsigned view.
-                    for (&literal, &weight) in inputs.iter().zip(&weights).skip(width) {
-                        self.assert(Term::Literal(if weight < 0 { literal } else { !literal }));
-                    }
-                    let mut sink = PindakaasSink {
-                        instance: self.instance,
-                        guard: None,
-                    };
-                    let view = IntVar::from_binary_encoding(
-                        &mut sink,
-                        (lower / factor) as i64..=upper,
-                        &bits,
-                        0,
-                    )?;
-                    view.constrain(&mut sink)?;
-                    bound -= constant;
-                    (view, factor as i64)
-                }
-            };
-            for literal in inputs {
-                coefficients.remove(&literal);
-            }
-            expression += view * factor;
-        }
-        let free: Vec<_> = coefficients
-            .into_iter()
-            .filter(|(_, weight)| *weight != 0)
-            .map(|(literal, weight)| (pind_lit(literal), weight as i64))
-            .collect();
-        expression += LinExp::from_terms(&free);
-        Ok((expression, bound as i64))
     }
 }

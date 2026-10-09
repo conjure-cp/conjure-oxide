@@ -23,22 +23,22 @@ use std::cmp;
 // Creates a boolean expression for > or >=
 // a > b or a >= b
 // This can also be used for < and <= by reversing the order of the inputs
-// Returns result, new symbol table, new clauses
+// Returns result, new symbol table, new decisions
 fn inequality_boolean(
     a: Vec<Expr>,
     b: Vec<Expr>,
     strict: bool,
-    clauses: &mut Vec<SatEncodingDecision>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Expr {
     let mut notb;
     let mut output;
 
     if strict {
-        notb = tseytin_not(b[0].clone(), clauses, symbols);
-        output = tseytin_and(&[a[0].clone(), notb], clauses, symbols);
+        notb = tseytin_not(b[0].clone(), decisions, symbols);
+        output = tseytin_and(&[a[0].clone(), notb], decisions, symbols);
     } else {
-        output = tseytin_imply(b[0].clone(), a[0].clone(), clauses, symbols);
+        output = tseytin_imply(b[0].clone(), a[0].clone(), decisions, symbols);
     }
 
     //TODO: There may be room for simplification, and constant optimisation
@@ -49,44 +49,50 @@ fn inequality_boolean(
     let mut rhs;
     let mut iff;
     for n in 1..(bit_count - 1) {
-        notb = tseytin_not(b[n].clone(), clauses, symbols);
-        lhs = tseytin_and(&[a[n].clone(), notb.clone()], clauses, symbols);
-        iff = tseytin_iff(a[n].clone(), b[n].clone(), clauses, symbols);
-        rhs = tseytin_and(&[iff.clone(), output.clone()], clauses, symbols);
-        output = tseytin_or(&[lhs.clone(), rhs.clone()], clauses, symbols);
+        notb = tseytin_not(b[n].clone(), decisions, symbols);
+        lhs = tseytin_and(&[a[n].clone(), notb.clone()], decisions, symbols);
+        iff = tseytin_iff(a[n].clone(), b[n].clone(), decisions, symbols);
+        rhs = tseytin_and(&[iff.clone(), output.clone()], decisions, symbols);
+        output = tseytin_or(&[lhs.clone(), rhs.clone()], decisions, symbols);
     }
 
     // final bool is the sign bit and should be handled inversely
-    let nota = tseytin_not(a[bit_count - 1].clone(), clauses, symbols);
-    lhs = tseytin_and(&[nota, b[bit_count - 1].clone()], clauses, symbols);
+    let nota = tseytin_not(a[bit_count - 1].clone(), decisions, symbols);
+    lhs = tseytin_and(&[nota, b[bit_count - 1].clone()], decisions, symbols);
     iff = tseytin_iff(
         a[bit_count - 1].clone(),
         b[bit_count - 1].clone(),
-        clauses,
+        decisions,
         symbols,
     );
-    rhs = tseytin_and(&[iff, output.clone()], clauses, symbols);
-    output = tseytin_or(&[lhs, rhs], clauses, symbols);
+    rhs = tseytin_and(&[iff, output.clone()], decisions, symbols);
+    output = tseytin_or(&[lhs, rhs], decisions, symbols);
 
     output
 }
 
-/// Returns result, new symbol table, new clauses
+/// Returns result, new symbol table, new decisions
 /// This function expects bits to match the lengths of x and y
 fn tseytin_int_adder(
     x: &[Expr],
     y: &[Expr],
     bits: usize,
-    clauses: &mut Vec<SatEncodingDecision>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     //TODO: Optimizing for constants
-    let (mut result, mut carry) = tseytin_half_adder(x[0].clone(), y[0].clone(), clauses, symbols);
+    let (mut result, mut carry) =
+        tseytin_half_adder(x[0].clone(), y[0].clone(), decisions, symbols);
 
     let mut output = vec![result];
     for i in 1..bits {
-        (result, carry) =
-            tseytin_full_adder(x[i].clone(), y[i].clone(), carry.clone(), clauses, symbols);
+        (result, carry) = tseytin_full_adder(
+            x[i].clone(),
+            y[i].clone(),
+            carry.clone(),
+            decisions,
+            symbols,
+        );
         output.push(result);
     }
 
@@ -98,14 +104,14 @@ fn tseytin_full_adder(
     a: Expr,
     b: Expr,
     carry: Expr,
-    clauses: &mut Vec<SatEncodingDecision>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> (Expr, Expr) {
-    let axorb = tseytin_xor(a.clone(), b.clone(), clauses, symbols);
-    let result = tseytin_xor(axorb.clone(), carry.clone(), clauses, symbols);
-    let aandb = tseytin_and(&[a, b], clauses, symbols);
-    let carryandaxorb = tseytin_and(&[carry, axorb], clauses, symbols);
-    let carryout = tseytin_or(&[aandb, carryandaxorb], clauses, symbols);
+    let axorb = tseytin_xor(a.clone(), b.clone(), decisions, symbols);
+    let result = tseytin_xor(axorb.clone(), carry.clone(), decisions, symbols);
+    let aandb = tseytin_and(&[a, b], decisions, symbols);
+    let carryandaxorb = tseytin_and(&[carry, axorb], decisions, symbols);
+    let carryout = tseytin_or(&[aandb, carryandaxorb], decisions, symbols);
 
     (result, carryout)
 }
@@ -114,11 +120,11 @@ fn tseytin_full_adder(
 fn tseytin_half_adder(
     a: Expr,
     b: Expr,
-    clauses: &mut Vec<SatEncodingDecision>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> (Expr, Expr) {
-    let result = tseytin_xor(a.clone(), b.clone(), clauses, symbols);
-    let carry = tseytin_and(&[a, b], clauses, symbols);
+    let result = tseytin_xor(a.clone(), b.clone(), decisions, symbols);
+    let carry = tseytin_and(&[a, b], decisions, symbols);
 
     (result, carry)
 }
@@ -128,7 +134,7 @@ fn tseytin_add_two_power(
     expr: &[Expr],
     exponent: usize,
     bits: usize,
-    clauses: &mut Vec<SatEncodingDecision>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mut result = vec![];
@@ -138,11 +144,16 @@ fn tseytin_add_two_power(
         result.push(item.clone());
     }
 
-    result.push(tseytin_not(expr[exponent].clone(), clauses, symbols));
+    result.push(tseytin_not(expr[exponent].clone(), decisions, symbols));
 
     for item in expr.iter().take(bits).skip(exponent + 1) {
-        result.push(tseytin_xor(product.clone(), item.clone(), clauses, symbols));
-        product = tseytin_and(&[product, item.clone()], clauses, symbols);
+        result.push(tseytin_xor(
+            product.clone(),
+            item.clone(),
+            decisions,
+            symbols,
+        ));
+        product = tseytin_and(&[product, item.clone()], decisions, symbols);
     }
 
     result
@@ -153,7 +164,7 @@ fn cnf_shift_add_multiply(
     x: &[Expr],
     y: &[Expr],
     bits: usize,
-    clauses: &mut Vec<SatEncodingDecision>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mut x = x.to_owned();
@@ -170,7 +181,7 @@ fn cnf_shift_add_multiply(
     let mut x_0andy_i;
 
     for bit in &y {
-        x_0andy_i = tseytin_and(&[x[0].clone(), bit.clone()], clauses, symbols);
+        x_0andy_i = tseytin_and(&[x[0].clone(), bit.clone()], decisions, symbols);
         s.push(x_0andy_i);
     }
 
@@ -188,13 +199,13 @@ fn cnf_shift_add_multiply(
         y[0] = false.into();
 
         // TODO switch to multiplexer
-        sum = tseytin_int_adder(&s, &y, bits * 2, clauses, symbols);
-        not_x_n = tseytin_not(item.clone(), clauses, symbols);
+        sum = tseytin_int_adder(&s, &y, bits * 2, decisions, symbols);
+        not_x_n = tseytin_not(item.clone(), decisions, symbols);
 
         for i in 0..(bits * 2) {
-            if_true = tseytin_and(&[item.clone(), sum[i].clone()], clauses, symbols);
-            if_false = tseytin_and(&[not_x_n.clone(), s[i].clone()], clauses, symbols);
-            s[i] = tseytin_or(&[if_true.clone(), if_false.clone()], clauses, symbols);
+            if_true = tseytin_and(&[item.clone(), sum[i].clone()], decisions, symbols);
+            if_false = tseytin_and(&[not_x_n.clone(), s[i].clone()], decisions, symbols);
+            s[i] = tseytin_or(&[if_true.clone(), if_false.clone()], decisions, symbols);
         }
     }
 
@@ -308,17 +319,17 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 fn tseytin_negate(
     expr: &Vec<Expr>,
     bits: usize,
-    clauses: &mut Vec<SatEncodingDecision>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mut result = vec![];
     // invert bits
     for bit in expr {
-        result.push(tseytin_not(bit.clone(), clauses, symbols));
+        result.push(tseytin_not(bit.clone(), decisions, symbols));
     }
 
     // add one
-    result = tseytin_add_two_power(&result, 0, bits, clauses, symbols);
+    result = tseytin_add_two_power(&result, 0, bits, decisions, symbols);
 
     result
 }
@@ -395,18 +406,18 @@ fn tseytin_binary_min_max(
     x: &[Expr],
     y: &[Expr],
     min: bool,
-    clauses: &mut Vec<SatEncodingDecision>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mask = if min {
         // mask is 1 if x > y
-        inequality_boolean(x.to_owned(), y.to_owned(), true, clauses, symbols)
+        inequality_boolean(x.to_owned(), y.to_owned(), true, decisions, symbols)
     } else {
         // flip the args if getting maximum x < y -> 1
-        inequality_boolean(y.to_owned(), x.to_owned(), true, clauses, symbols)
+        inequality_boolean(y.to_owned(), x.to_owned(), true, decisions, symbols)
     };
 
-    tseytin_select_array(mask, x, y, clauses, symbols)
+    tseytin_select_array(mask, x, y, decisions, symbols)
 }
 
 // Selects between two boolean vectors depending on a condition (both vectors must be the same length)
@@ -418,7 +429,7 @@ fn tseytin_select_array(
     cond: Expr,
     a: &[Expr],
     b: &[Expr],
-    clauses: &mut Vec<SatEncodingDecision>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     assert_eq!(
@@ -436,7 +447,7 @@ fn tseytin_select_array(
             cond.clone(),
             a[i].clone(),
             b[i].clone(),
-            clauses,
+            decisions,
             symbols,
         ));
     }
