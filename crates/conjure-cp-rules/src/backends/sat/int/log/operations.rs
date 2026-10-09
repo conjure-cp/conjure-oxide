@@ -781,19 +781,10 @@ fn encode_div_mod(
             &mut new_sat_decisions,
             &mut new_symbols,
         );
-        let signed = tseytin_select_array(
+        tseytin_select_array(
             denom_sign,
             &magnitude,
             &negative,
-            &mut new_sat_decisions,
-            &mut new_symbols,
-        );
-        // A safe zero divisor must not restrict the operands or escape the result bounds.
-        let nonzero = tseytin_or(&denom_bits, &mut new_sat_decisions, &mut new_symbols);
-        tseytin_select_array(
-            nonzero,
-            &vec![false.into(); bit_count],
-            &signed,
             &mut new_sat_decisions,
             &mut new_symbols,
         )
@@ -823,6 +814,17 @@ fn encode_div_mod(
             &mut new_symbols,
         )
     };
+
+    // Safe division and modulo must keep zero-divisor dummy values within their bounds.
+    // Definedness is handled separately by the bubble rules, including under negation.
+    let nonzero = tseytin_or(&denom_bits, &mut new_sat_decisions, &mut new_symbols);
+    let out = tseytin_select_array(
+        nonzero,
+        &vec![false.into(); bit_count],
+        &out,
+        &mut new_sat_decisions,
+        &mut new_symbols,
+    );
 
     Ok(RuleEffect::sat(
         Expr::SATInt(
