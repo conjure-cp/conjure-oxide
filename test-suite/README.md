@@ -94,9 +94,15 @@ each stage runs; on timeout the partial snapshot is kept and `stats.toml` is set
 
 To only raise `expected-time` (max of the current budget and the observed time), use
 `make test-accept-with-max-times` (`ACCEPT=with-max-times`). Running this a few times keeps
-the slowest observed budget and avoids recording a fast fluke. To discard `config.toml` / `stats.toml` files whose only local edits are noisy `*-time`
-field updates, run `./tools/discard-config-time-changes.sh`. Files with any other edits
-are left alone.
+the slowest observed budget and avoids recording a fast fluke. To discard small timing-only
+changes in `config.toml` / `stats.toml`, run `./tools/discard-config-time-changes.sh`.
+A file is restored from HEAD only when every changed `*-time` value either has both
+old and new times <= 1 second or has an absolute change <= 10% of the HEAD value.
+Override these defaults with `--max-time SECONDS` and `--max-change-percent PERCENT`,
+for example `./tools/discard-config-time-changes.sh --max-time 2 --max-change-percent 5`.
+Use `--dry-run` to preview restorations. Files with larger timing changes, any other
+edits, added/removed timing fields, or non-numeric timing changes are left alone.
+When the HEAD value is zero, only the small-time threshold can permit a change.
 
 After an accept run, you can write a Git-diff-based timing comparison CSV with
 `python3 ./tools/accept-times-diff-report.py` (default output:
