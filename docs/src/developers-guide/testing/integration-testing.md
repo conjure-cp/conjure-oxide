@@ -13,13 +13,12 @@ New Integration Tests should be added when:
 - New solving features are added in the form of transformation rules
 - New representations are added
 
-And in any other cases where outcome-oriented changes are introduced. Ideally, all behaviour should be tested via integration tests, in order to ensure that breaking changes introduced later do not accidentally remove or break features[^1].
-
+And in any other cases where outcome-oriented changes are introduced. Ideally, all behaviour should be covered by the integration tests, in order to ensure that breaking changes introduced later do not accidentally remove or break features[^1].
 ## Adding Integration Tests
 
-Integration test live at the following path within the conjure-oxide repository: `conjure-oxide/tests-integration/integration`. Any essence file in this test directory, or any of it's subdirectories is treated as the input for a separate integration test. While it is not strictly necessary, by convention we never put two essence files in the same directory. This allows us to then (also by convention) use `input.essence` as the name of all input files. The name of an Integration test is a truncation of its path, relative to the `integration` directory.
+Integration test live at the following path within the conjure-oxide repository: `conjure-oxide/test-suite/tests/integration`. Any `essence` file in this test directory, or any of it's sub-directories is treated as the input for a separate integration test. While it is not strictly necessary, by convention we never put two essence files in the same directory. This allows us to then (also by convention) use `input.essence` as the name of all input files. The name of an Integration test is a truncation of its path, relative to the `integration` directory.
 
-To add an integration test, create a new subdirectory and give it an appropriate name. Then write a valid essence file (ideally, granular enough to only test one new feature) in that same directory. Then, create a file named `config.toml` in the same directory as the input file. The name of the config file is _not_ convention alone, and your test may not work if it has some other name. In `config.toml`, select all of the options which should be tested for the essence file which you are writing this test for. Configuring is covered in greater detail in its own section below. 
+To add an integration test, create a new sub-directory and give it an appropriate name. Then write a valid essence file (ideally, granular enough to only test one new feature) in that same directory. Then, create a file named `config.toml` in the same directory as the input file. The name of the config file is _not_ convention alone, and your test may not work if it has some other name. In `config.toml`, select all of the options which should be tested for the essence file which you are writing this test for. Configuring is covered in greater detail in its own section below. 
 
 To automatically generate all of the necessary testing metadata, run the following command:
 
@@ -33,15 +32,13 @@ The environment variable `ACCEPT` is particularly important: when `ACCEPT` is se
 
 The config file for an integration test has the following fields, each of which contains a list of the 'active' or 'enabled' configuration options. All possible options supported by conjure-oxide are written in the file:
 
-- `parser`: defines which parser
-- `rewriter`: defines which rewriter
+- `parser`: defines which parser to use
+- `rewriter`: defines which rewriter to use
 - `comprehension-expander`: defines which system is used to expand comprehensions
 - `solver`: a list of which solvers to use
 - `number-of-solutions`: the number of solutions to generate. This could be a number, or it could be `all`.
 ``
 The integration tester tries all possible combinations of the options enabled in the `config.toml` file.
-
-Also by convention, we comment out configurations which are supported by conjure-oxide but do not work for the current solver. For instance, SAT solver does not support Matrices of Integers, so any tests that have matrices of integers will have all sat-solver options as comments. 
 
 As support is added, we go through tests and change the comments to code incrementally. We then regenerate the test metadata for the new tests. To generate a large number of tests at the same time, use the `test-accept` MakeFile target.
 

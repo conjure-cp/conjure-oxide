@@ -9,7 +9,7 @@ New Integration Tests should be added whenever additions are made to the AST, mo
 
 ## The Black-Box Testing Setup
 
-So far, testing of the compiled conjure oxide tool (also sometimes called Black-Box Testing[^5]) has been done using the GNU Parallel command line tool, and in certain cases using python or bash scripts. For a full explanation of the tool's many useful features, take a look at the (incredibly comprehensive) documentation for the tool on GNU's webpage. 
+So far, testing of the compiled conjure oxide tool (also sometimes called Black-Box Testing[^1]) has been done using the GNU Parallel command line tool, and in certain cases using python or bash scripts. For a full explanation of the tool's many useful features, take a look at the (incredibly comprehensive) documentation for the tool on GNU's webpage. 
 
 For the purposes of this chapter, it is important to know that GNU Parallel is a useful command line tool which, true to its name, is used to run commands in parallel. In addition to this, the tool can put together the commands which are to be run, using what is essentially a cartesian product of lists which are passed to it as arguments. It can also manage per-process runtime, memory allocation, process usage and so on, using command line flags. 
 
@@ -62,8 +62,8 @@ which provides 'runners' for different solvers: plain conjure, conjure with some
 Another useful example is the following setup:
 ```json
 "runner_commands": {
-    "naive": "conjure-oxide solve --rewriter naive",
-    "morph": "conjure-oxide solve --rewriter morph",
+    "naive": "conjure-oxide solve --rewriter baseline",
+    "morph": "conjure-oxide solve --rewriter optimised",
   },
 ```
 which provides 'runners' that both use the same solver (default is minion) but use different rewriters.
@@ -140,7 +140,7 @@ mkdir ~/my-container-output
 When a container is removed, everything written inside it is lost, unless a directory on the host machine is mounted to the container at run time. The `-v` flag allows some external directory on the host to be mounted into the container:
  
 ```bash
-podman run -it --rm -v ~/my-container-output:/output my-image
+podman run -it --rm -v ~/my-container-output:/output test-container
 ```
 
 Now, inside the container, make sure that the "outfile" in settings.json is set to somewhere inside the /output directory in the container.
@@ -150,4 +150,4 @@ After this initial setup step, each of the tools can be used in the usual manner
 ---
 
 
-[^5]: 'Black-Box Testing' is a model of testing in Software Engineering, which refers to tests which are made in a way that presumes no knowledge of the system being tested. 
+[^1]: 'Black-Box Testing' is a model of testing in Software Engineering, which refers to tests which are made in a way that presumes no knowledge of the system being tested. 
