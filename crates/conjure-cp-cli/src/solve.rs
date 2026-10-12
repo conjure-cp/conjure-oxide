@@ -289,7 +289,7 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> anyhow::Result<Solver> {
                 .with_timeout(timeout),
         ),
         SolverFamily::Sat => Solver::new(
-            Sat::default()
+            Sat::new(global_args.sat_backend)
                 .with_solver_seed(global_args.solver_seed)
                 .with_timeout(timeout),
         ),

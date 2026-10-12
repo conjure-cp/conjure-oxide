@@ -78,8 +78,8 @@ jobs:
       run: which cargo-shear || cargo +nightly install cargo-shear
 
     - name: run cargo-shear
-      # --expand enables all features, including the mutually exclusive SAT backends.
-      # Check source usage instead; macro-generated dependencies are documented in manifests.
+      # Check source usage across all backends without compiling optional native dependencies.
+      # Macro-generated dependencies are documented in manifests.
       run: cargo +nightly shear --locked
 
     - name: Save cache
