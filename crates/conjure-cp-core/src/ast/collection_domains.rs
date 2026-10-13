@@ -592,13 +592,43 @@ mod tests {
     }
 
     #[test]
-    fn literal_sets_count_distinct_values_and_preserve_empty_values() {
+    fn multiset_union_accepts_an_untyped_empty_literal() {
+        let a = variable(
+            "a",
+            Domain::mset(MSetAttr::new_size(2), Domain::int(vec![Range::Single(1)])),
+        );
+        let empty = Expression::AbstractLiteral(Metadata::new(), AbstractLiteral::MSet(vec![]));
+        for (a, b) in [(&a, &empty), (&empty, &a)] {
+            let result = operation(a, b, SetOperation::Union).domain_of().unwrap();
+            assert_eq!(result.as_mset_ground().unwrap().0.size, Range::Single(2));
+        }
+    }
+
+    #[test]
+    fn bounds_wider_than_i32_weaken_without_becoming_empty() {
+        let max = i64::from(i32::MAX);
+        assert_eq!(
+            SizeBounds::new(max + 1, Some(max * 2)).range(),
+            Some(Range::UnboundedR(i32::MAX))
+        );
+        let low = Domain::int(vec![
+            Range::Bounded(i32::MIN, 0),
+            Range::Bounded(i32::MIN, -1),
+        ]);
+        assert_eq!(capacity(&low), Some(max + 2));
+    }
+
+    #[test]
+    fn literal_sets_require_distinct_entries_and_preserve_empty_values() {
         use crate::ast::HasDomain;
-        let value = Literal::AbstractLiteral(AbstractLiteral::Set(vec![
-            Literal::Int(1),
-            Literal::Int(1),
-            Literal::Int(2),
-        ]));
+        let duplicate =
+            Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(1), Literal::Int(1)]));
+        assert!(matches!(
+            duplicate.domain_of().as_ground(),
+            Some(GroundDomain::Empty(ReturnType::Set(_)))
+        ));
+        let value =
+            Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(1), Literal::Int(2)]));
         let domain = value.domain_of();
         assert_eq!(domain.as_set_ground().unwrap().0.size, Range::Single(2));
         assert!(domain.resolve().unwrap().contains(&value).unwrap());

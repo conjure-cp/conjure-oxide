@@ -10,6 +10,7 @@ mod domains;
 pub mod eval;
 mod expression_arena;
 mod expressions;
+mod function_domains;
 mod literals;
 pub mod matrix;
 mod metadata;

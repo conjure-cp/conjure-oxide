@@ -305,8 +305,12 @@ impl AbstractLiteral<Expression> {
                 let high = i64::try_from(items.len()).ok()?;
                 let bounds = match values {
                     Some(values) => {
-                        let n = i64::try_from(distinct_literal_count(&values)).ok()?;
-                        SizeBounds::new(n, Some(n))
+                        if distinct_literal_count(&values) != values.len() {
+                            return Some(Domain::empty(ReturnType::Set(Box::new(
+                                item_domain.return_type(),
+                            ))));
+                        }
+                        SizeBounds::new(high, Some(high))
                     }
                     None => SizeBounds::new(1, Some(high)),
                 };
@@ -433,7 +437,7 @@ impl AbstractLiteral<Expression> {
     }
 }
 
-pub(super) fn distinct_literal_count(items: &[Literal]) -> usize {
+fn distinct_literal_count(items: &[Literal]) -> usize {
     let mut sorted = items.iter().collect::<Vec<_>>();
     sorted.sort_by(|a, b| a.essence_cmp(b));
     sorted.dedup_by(|a, b| a.essence_cmp(b).is_eq());
@@ -447,8 +451,10 @@ impl HasDomain for AbstractLiteral<Literal> {
         match self {
             AbstractLiteral::Set(items) => {
                 let (_, inner) = domain.as_set().expect("set literal domain");
-                let n =
-                    i64::try_from(distinct_literal_count(items)).expect("literal fits in memory");
+                if distinct_literal_count(items) != items.len() {
+                    return Domain::empty(ReturnType::Set(Box::new(inner.return_type())));
+                }
+                let n = i64::try_from(items.len()).expect("literal fits in memory");
                 bounded_set(SizeBounds::new(n, Some(n)), inner)
             }
             AbstractLiteral::MSet(items) => {
