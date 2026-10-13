@@ -1,7 +1,7 @@
 # Pull Requests
 
 > [!TIP]
-> We Use [GitHub Flow](https://guides.github.com/introduction/flow/index.html), so All Code Changes Happen Through Pull Requests
+> We Use [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow), so All Code Changes Happen Through Pull Requests
 
 Our development process is as follows:
 
@@ -12,7 +12,14 @@ Our development process is as follows:
      Having an active PR makes your work visible, allows others to help you and give feedback. Request reviews from people who have worked on similar parts of the project.
    - Keep the PR in draft status until you think it's ready to be merged.
 4. Assign PR to reviewer(s) when it's ready to be merged.
+<!-- Book editors as reviewers / list -->
    - Only Oz (@ozgurakgun) can merge PRs, so add him as a reviewer when you want your PR to be merged.
+   - For PRs affecting this documentation please also assign the current book editors:
+        - [London Rabec](https://github.com/lrabec)
+        - [Will Lucas-Evans](https://github.com/WillTheBigCodeMan)
+   - Below is a list of past book editors; their contributions are invaluable and greatly appreciated!
+        - [Jamie Melton](https://github.com/JamieASM) (2025-26)
+        - [Hanaa Khan](https://github.com/HKhan-5) (2025-26)
    - During reviewing, avoid force-pushing to the pull request, as this makes reviewing more difficult.
      Details on how to update a PR are given below.
 5. Once Oz has approved the PR:
@@ -24,7 +31,7 @@ Our development process is as follows:
 - Run `cargo fmt` in the project directory to automatically format code
 - Use `cargo clippy` to lint the code and identify any common issues
 
-See: [[Documentation Style]] and [[Rust Coding Style]] (TODO)
+<!-- !TODO: See: [[Documentation Style]] and [[Rust Coding Style]] -->
 
 # Commit and PR Titles
 
