@@ -1,5 +1,8 @@
 use std::fmt::Display;
 
+#[doc(hidden)]
+pub const BUG_REPORT_VERSION: &str = git_version::git_version!();
+
 /// Triggers a panic with a detailed bug report message, while ensuring the panic is ignored in coverage reports.
 ///
 /// This macro is useful in situations where an unreachable code path is hit or when a bug occurs.
@@ -33,7 +36,7 @@ version: {}
 location: {}:{}:{}
 
 {}
-"#, git_version::git_version!(),file!(),module_path!(),line!(), &formatted_msg);
+"#, $crate::bug::BUG_REPORT_VERSION,file!(),module_path!(),line!(), &formatted_msg);
 
         panic!("{}", full_message);
     }};

@@ -3,7 +3,7 @@
 
 ## API Documentation
 
- + [conjure-cp](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp/index.html)
+ + [conjure-cp](https://conjure.readthedocs.io/en/latest/)
  + [minion-sys](https://docs.rs/minion-sys)
 
 ### Internal crates

@@ -1,3 +1,8 @@
+#[cfg(not(any(feature = "sat-cadical", feature = "sat-batsat")))]
+compile_error!("Select a SAT backend: enable sat-cadical or sat-batsat.");
+#[cfg(all(target_family = "wasm", not(feature = "sat-batsat")))]
+compile_error!("Wasm requires sat-batsat; use --no-default-features --features sat-batsat.");
+
 #[doc(hidden)]
 pub extern crate self as conjure_cp_core;
 

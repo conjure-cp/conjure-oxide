@@ -7,10 +7,16 @@ on:
     paths:
     - .github/workflows/ci-treesitter.yml
     - crates/tree-sitter-essence/**
+    - Cargo.toml
+    - Cargo.lock
+    - rust-toolchain.toml
   pull_request:
     paths:
     - .github/workflows/ci-treesitter.yml
     - crates/tree-sitter-essence/**
+    - Cargo.toml
+    - Cargo.lock
+    - rust-toolchain.toml
 
 env:
   # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
@@ -45,10 +51,19 @@ jobs:
     - name: Set up tree-sitter
       uses: tree-sitter/setup-action/cli@v2
 
-    - name: Run parser and binding tests
+    - name: Run parser tests
       uses: tree-sitter/parser-test-action@v3
-      with:
-        test-rust: true
+
+    # Rust bindings inherit dependencies and patches from the original workspace.
+    - name: Set up Rust
+      run: rustup toolchain install
+      working-directory: repo
+
+    - name: Test Rust bindings in the workspace
+      run: cargo test --locked -p tree-sitter-essence --all-features
+      working-directory: repo
+      env:
+        RUSTFLAGS: -D warnings
 
   fuzz:
     name: Fuzz scanner

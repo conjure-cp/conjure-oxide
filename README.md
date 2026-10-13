@@ -71,7 +71,6 @@ used in isolation from it:
   consumed here as a published crate.
 - [`tree-sitter-essence`](./crates/tree-sitter-essence) defines a tree-sitter
   grammar for Essence.
-- [`randicheck`](./crates/randicheck)
 
 ### Related Projects 
 
