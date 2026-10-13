@@ -1,3 +1,5 @@
+<!-- TODO: Make all chapters one level deeper -->
+
 # Welcome
 
 - [Introduction](index.md)
@@ -24,7 +26,6 @@
 # Contributor's Guide
 
 - [Overview](contributors-guide/index.md)
-- [CONTRIBUTING.md](contributors-guide/CONTRIBUTING.md)
 - [Onboarding](contributors-guide/onboarding/index.md)
   - [Setting Up Your Development Environment](contributors-guide/onboarding/development-environment.md)
   - [How We Work](contributors-guide/onboarding/how-we-work.md)
