@@ -5,7 +5,7 @@
 Congratulations you are joining a very exciting project, pushing forward the field of Constraint Programming. 
 However, there is a lot to learn before you are up to speed. Expect to spend the first few weeks on the project learning, and so do not rush starting to contribute right away.
 
-Here are some tips for starting out.
+Here are some tips for starting out. Use these resources if you want to, but it can be equally useful to learn by just getting started on a project.
 
 ## What You Need to Learn
 The Conjure-Oxide project fundamentally involves the development of a constraint modelling tool in the Rust programming language. Therefore, learning about constraint programming and Rust will be your initial challenges.
@@ -31,16 +31,11 @@ This is a fundamentally cooperative project, and so do not be afraid to ask for 
 
 This stage will take a while, but understanding the core of the program will be tremendously helpful when you start implementing it.
 
+<!-- TODO: Reconsider the structuring here -->
 ## Selecting a Project
-Once you have spent time learning you will feel ready to select a project and begin contributing. There are lots of projects which can be undertaken in Conjure-Oxide; if you have an idea that's great, otherwise consider asking on our [GitHub Discussions page](https://github.com/conjure-cp/conjure-oxide/discussions) for ideas, because there are many tasks new starts could reasonably achieve. Do not feel rushed into selecting a project. Having a good understanding of the system before you start writing code, will really facilitate your productivity later in the semester.
-
-### Selecting a Starter Project
-Whilst you are familiarising yourself with the codebase, you may want to try tackling a couple smaller starter projects. There are always little issues in the codebase needing addressed and working on one of these, while you learn, can be a fantastic way to get a confidence boost from feeling productive. These issues are specifically marked with `good first issue` on GitHub. However, be aware that taking on a wide project with a lot of reach, even if small, can be very challenging for a new start, as it requires deeply understanding many different areas of the code.
-
-### Selecting a Project Early to Help Learn
-If the scale of the codebase is feeling overwhelming, then consider talking to the project lead [@ozgurakgun](https://github.com/ozgurakgun) and selecting a project earlier on. The project would not need to be well defined at this point but even if you are not initially implementing features, having a project in mind can help focus your learning of the codebase. This narrows the scope of what you try to understand and helps make the codebase less overwhelming. However, you must ensure you still a good general understanding of Conjure-Oxide as a whole, or this will make expanding your project harder in the future.
+As discussed above, this project can be daunting in scale so chosing a project to work on is challenging. It is important to remember that there is no rush to begin contributing; taking the time to sufficiently familiarise yourself with the project is more valuable than beginning work without the necessary knowledge. With that being said, if, during your time learning the codebase, you come across an issue which you can fix - fix it! Getting your first contribution under your belt will help your confidence. Finally, always feel free to reach out and ask for advice either on our [GitHub Discussions page](https://github.com/conjure-cp/conjure-oxide/discussions) or by contacting [@ozgurakgun](https://github.com/ozgurakgun). We are a welcoming community that is always pleased and eager to help those who want to contribute.
 
 ## The Most Important Things
 You should realise that it is okay to spend time learning and not contributing, and you should not feel bad, it is expected. If you get a good understanding now it will help you in the future.
 
-Also ensure to ask for help and talk to the rest of the team, using the [GitHub Discussions](https://github.com/conjure-cp/conjure-oxide/discussions). There will be people on the project who have done it for years now. Use their expertise.
+Also ensure to ask for help and talk to the rest of the team, using the [GitHub Discussions](https://github.com/conjure-cp/conjure-oxide/discussions). There will be people on the project who have done it for years now; use their expertise.
