@@ -10,6 +10,12 @@ Run the integration tests from the repository root with:
 cargo nextest run -p test-suite
 ```
 
+You can run a subset of tests with a filter:
+
+```sh
+cargo nextest run -p test-suite tests_integration_basic
+```
+
 ### How tests work
 
 Each test runs `conjure-oxide` on an `input.essence` file and checks that the rewritten AST and solver solutions match the expected output files stored in the test directory.
