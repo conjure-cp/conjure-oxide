@@ -1035,7 +1035,9 @@ impl GroundDomain {
             GroundDomain::Set(set_attr, inner_domain) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Set(lit_elems)) => {
                     // check if the literal's size is allowed by the set attribute
-                    let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    let sz = crate::ast::literals::distinct_literal_count(lit_elems)
+                        .to_i32()
+                        .ok_or(DomainOpError::TooLarge)?;
                     if !set_attr.size.contains(&sz) {
                         return Ok(false);
                     }

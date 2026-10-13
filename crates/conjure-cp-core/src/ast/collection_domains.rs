@@ -88,7 +88,8 @@ pub(super) fn collection_size(domain: &DomainPtr) -> Option<SizeBounds> {
     } else if let Some((attrs, inner)) = domain.as_mset() {
         Some(mset_size(&attrs, &inner))
     } else if let Some((_, dimensions)) = domain.as_matrix() {
-        Some(match product_capacity(&dimensions) {
+        // Matrix cardinality counts top-level entries, including rows of a higher-rank matrix.
+        Some(match dimensions.first().and_then(capacity) {
             Some(n) => SizeBounds::new(n, Some(n)),
             None => SizeBounds::new(0, None),
         })
@@ -619,14 +620,15 @@ mod tests {
     }
 
     #[test]
-    fn literal_sets_require_distinct_entries_and_preserve_empty_values() {
+    fn constant_literal_sets_count_distinct_entries_and_preserve_empty_values() {
         use crate::ast::HasDomain;
         let duplicate =
             Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(1), Literal::Int(1)]));
-        assert!(matches!(
-            duplicate.domain_of().as_ground(),
-            Some(GroundDomain::Empty(ReturnType::Set(_)))
-        ));
+        let domain = duplicate.domain_of();
+        assert_eq!(domain.as_set_ground().unwrap().0.size, Range::Single(1));
+        assert!(domain.resolve().unwrap().contains(&duplicate).unwrap());
+        let normalised = crate::ast::eval_constant(&Expression::from(duplicate)).unwrap();
+        assert!(domain.resolve().unwrap().contains(&normalised).unwrap());
         let value =
             Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(1), Literal::Int(2)]));
         let domain = value.domain_of();
@@ -684,5 +686,28 @@ mod tests {
         let (attrs, inner) = result.as_set_ground().unwrap();
         assert_eq!(attrs.size, Range::Bounded(1, 2));
         assert_eq!(inner.return_type(), ReturnType::Int);
+    }
+    #[test]
+    fn matrix_cardinality_domain_matches_every_two_dimensional_value() {
+        let domain = Domain::matrix(
+            Domain::bool(),
+            vec![
+                Domain::int(vec![Range::Bounded(1, 2)]),
+                Domain::int(vec![Range::Bounded(1, 3)]),
+            ],
+        );
+        let source = variable("matrix", domain.clone());
+        let inferred = Expression::Card(Metadata::new(), Moo::new(source))
+            .domain_of()
+            .unwrap();
+        assert_eq!(inferred, Domain::int(vec![Range::Single(2)]));
+        for value in domain.resolve().unwrap().values().unwrap() {
+            let actual = crate::ast::eval_constant(&Expression::Card(
+                Metadata::new(),
+                Moo::new(value.into()),
+            ))
+            .unwrap();
+            assert!(inferred.resolve().unwrap().contains(&actual).unwrap());
+        }
     }
 }
