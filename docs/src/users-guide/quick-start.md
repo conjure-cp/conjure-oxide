@@ -6,7 +6,7 @@ This guide walks you through running your first Essence model with Conjure Oxide
 
 Once you have gone through the [installation](installation.md) process and got Conjure Oxide on your computer you can solve your first problem.
 
-Suppose you want to find two numbers `x` and `y` so that they add up to 15 and the difference between them is 3. The mathematicians will immediately reach for their simultaneous equations and start doing arithmetic
+Suppose you want to find two numbers `x` and `y` so that they add up to 15 and the difference between them is 3. The mathematicians will immediately reach for their simultaneous equations and start doing arithmetic.
 
 \\[ x + y = 15 \\]
 \\[ x - y = 3 \\]
@@ -23,7 +23,7 @@ such that x + y = 15,
           x - y = 3
 ```
 
-In your terminal run this command
+In your terminal run this command:
 
 ```bash
 $ conjure-oxide solve my_problem.essence
@@ -46,13 +46,13 @@ We see that this indeed satisfies our constraints with \\[ 9 + 6 = 15 \\] and \\
 
 The first two lines are where we declare our *decision variables*. These are the things which we want to find. 
 
-These are declared as
+These are declared as:
 ```
 find <name> : <domain>
 ```
-where the domain tells Conjure Oxide what type and specifically what values the variable could possibly take on.
+Where the domain tells Conjure Oxide what type and specifically what values the variable could possibly take on.
 
-The last statement contains our constraints as a comma-separated list of boolean expressions
+The last statement contains our constraints as a comma-separated list of boolean expressions.
 
 The goal of Conjure Oxide is to give you values for all of your decision variables, within the allowed domains, that also make all of the boolean expressions evaluate to true.
 
