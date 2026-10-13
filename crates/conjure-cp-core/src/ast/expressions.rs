@@ -30,7 +30,10 @@ use crate::bug;
 
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
-use super::collection_domains::{SetOperation, set_operation_domain};
+use super::collection_domains::{
+    SetOperation, SizeBounds, bounded_set, collection_size, distinct_size, min_known, mset_size,
+    set_operation_domain,
+};
 use super::comprehension::{Comprehension, ComprehensionQualifier};
 use super::declaration::DeclarationKind;
 use super::domains::HasDomain as _;
@@ -939,24 +942,6 @@ fn sum_domain_of_child(child: &Expression) -> Option<DomainPtr> {
     })
 }
 
-fn finite_mset_bounds(attrs: &MSetAttr<i32>, inner_len: i32) -> Option<((i32, i32), i32)> {
-    let min_size = attrs.size.low().copied().unwrap_or(0);
-    let max_from_size = attrs.size.high().copied();
-    let max_from_occurrence = attrs
-        .occurrence
-        .high()
-        .copied()
-        .and_then(|max| max.checked_mul(inner_len));
-    let max_size = match (max_from_size, max_from_occurrence) {
-        (Some(size), Some(occurrence)) => size.min(occurrence),
-        (Some(size), None) => size,
-        (None, Some(occurrence)) => occurrence,
-        (None, None) => return None,
-    };
-    let max_occurrence = attrs.occurrence.high().copied().unwrap_or(max_size);
-    Some(((min_size, max_size), max_occurrence))
-}
-
 /// The value-level union of two multisets adds their cardinalities and occurrence counts.
 ///
 /// [`Domain::union`] instead computes a common type envelope and intentionally drops collection
@@ -984,25 +969,42 @@ pub(super) fn selected_representation(expr: &Expression) -> Option<String> {
 fn mset_union_result_domain(lhs: &Expression, rhs: &Expression) -> Option<DomainPtr> {
     let lhs_selected = selected_representation(lhs);
     let rhs_selected = selected_representation(rhs);
-    let lhs = lhs.domain_of()?.resolve().ok()?;
-    let rhs = rhs.domain_of()?.resolve().ok()?;
-    let GroundDomain::MSet(lhs_attrs, lhs_inner) = lhs.as_ref() else {
-        return None;
+    let (lhs_attrs, lhs_inner) = lhs.domain_of()?.as_mset()?;
+    let (rhs_attrs, rhs_inner) = rhs.domain_of()?.as_mset()?;
+    let lhs_size = mset_size(&lhs_attrs, &lhs_inner);
+    let rhs_size = mset_size(&rhs_attrs, &rhs_inner);
+    let inner = lhs_inner.union(&rhs_inner).ok()?;
+    if lhs_size.range().is_none() || rhs_size.range().is_none() {
+        return Some(Domain::empty(ReturnType::MSet(Box::new(
+            inner.return_type(),
+        ))));
+    }
+    let size = SizeBounds::new(
+        lhs_size.low.checked_add(rhs_size.low)?,
+        lhs_size
+            .high
+            .zip(rhs_size.high)
+            .and_then(|(a, b)| a.checked_add(b)),
+    )
+    .range()?;
+    let lhs_occurrence = min_known(
+        SizeBounds::from_size(&lhs_attrs.occurrence).high,
+        lhs_size.high,
+    );
+    let rhs_occurrence = min_known(
+        SizeBounds::from_size(&rhs_attrs.occurrence).high,
+        rhs_size.high,
+    );
+    let max_occurrence = lhs_occurrence
+        .zip(rhs_occurrence)
+        .and_then(|(a, b)| a.checked_add(b));
+    let occurrence = SizeBounds::new(0, max_occurrence).range()?;
+    // minOccur applies only to present values, including the empty multiset vacuously.
+    let occurrence = if max_occurrence == Some(0) {
+        occurrence
+    } else {
+        Range::new(Some(1), occurrence.high().copied())
     };
-    let GroundDomain::MSet(rhs_attrs, rhs_inner) = rhs.as_ref() else {
-        return None;
-    };
-
-    let lhs_len = i32::try_from(lhs_inner.length().ok()?).ok()?;
-    let rhs_len = i32::try_from(rhs_inner.length().ok()?).ok()?;
-    let ((lhs_min, lhs_max), lhs_max_occurrence) = finite_mset_bounds(lhs_attrs, lhs_len)?;
-    let ((rhs_min, rhs_max), rhs_max_occurrence) = finite_mset_bounds(rhs_attrs, rhs_len)?;
-
-    let min_size = lhs_min.checked_add(rhs_min)?;
-    let max_size = lhs_max.checked_add(rhs_max)?;
-    let max_occurrence = lhs_max_occurrence.checked_add(rhs_max_occurrence)?;
-    let size = Range::new(Some(min_size), Some(max_size));
-    let occurrence = Range::new(Some(1), Some(max_occurrence));
     let representation = match (
         lhs_selected
             .as_deref()
@@ -1015,11 +1017,10 @@ fn mset_union_result_domain(lhs: &Expression, rhs: &Expression) -> Option<Domain
         (Some(preference), None) | (None, Some(preference)) => Some(preference.to_owned()),
         _ => None,
     };
-    let inner = lhs_inner.union(rhs_inner).ok()?;
 
     let mut attrs = MSetAttr::new(size, occurrence);
     attrs.representation = representation;
-    Some(Domain::mset(attrs, DomainPtr::from(inner)))
+    Some(Domain::mset(attrs, inner))
 }
 
 impl Expression {
@@ -1709,28 +1710,18 @@ impl Expression {
                     let set_attrs = SetAttr::new(attrs.size);
                     Some(Domain::set(set_attrs, Domain::tuple(doms)))
                 } else if let Some((attrs, dom)) = other.domain_of()?.as_mset() {
-                    let set_attrs = SetAttr::new(attrs.size);
-                    Some(Domain::set(set_attrs, dom))
-                } else if let Some((dom, dimensions)) = other.domain_of()?.as_matrix() {
-                    // We combine all matrix domains into a tuple
-                    let mut doms = vec![];
-                    for _ in dimensions {
-                        doms.push(dom.clone());
+                    let size = mset_size(&attrs, &dom);
+                    let occurrence = SizeBounds::from_size(&attrs.occurrence);
+                    if size.range().is_none() || occurrence.range().is_none() {
+                        return Some(Domain::empty(ReturnType::Set(Box::new(dom.return_type()))));
                     }
-                    let doms_sizes: Result<Vec<i32>, _> =
-                        doms.iter().map(|x| x.length_signed()).collect();
-                    let attr = match doms_sizes {
-                        Ok(vals) => {
-                            if let Some(&size) = vals.iter().min() {
-                                SetAttr::new(Range::Single(size))
-                            } else {
-                                SetAttr::<i32>::default()
-                            }
-                        }
-                        // We do not know the ground dimensions yet so default is chosen
-                        Err(_) => SetAttr::<i32>::default(),
-                    };
-                    Some(Domain::set(attr, Domain::tuple(doms)))
+                    Some(bounded_set(distinct_size(size, occurrence), dom))
+                } else if let Some((dom, _)) = other.domain_of()?.as_matrix() {
+                    let size = collection_size(&other.domain_of()?)?;
+                    Some(bounded_set(
+                        distinct_size(size, SizeBounds::new(1, None)),
+                        dom,
+                    ))
                 } else {
                     bug!(
                         "Domain of {self} needed to be a function, relation, mset, or matrix for ToSet"
@@ -1852,78 +1843,16 @@ impl Expression {
             }
             Expression::Card(_, collection) => {
                 let domain = collection.domain_of()?;
-                if let Some((_, dimensions)) = domain.as_matrix() {
-                    let doms_ground: Result<Vec<i32>, _> =
-                        dimensions.iter().map(|x| x.length_signed()).collect();
-                    if let Ok(doms_ground) = doms_ground {
-                        let size: Range<i32> = Range::Single(doms_ground.iter().product());
-                        Some(Domain::int(vec![size]))
-                    } else {
-                        Some(Domain::int(vec![Range::<i32>::Unbounded]))
-                    }
-                } else if let Some((attr, dom)) = domain.as_set() {
-                    let attr_size = attr.resolve().ok()?.size;
-                    if let Ok(length) = dom.length_signed() {
-                        let unsafe_range = Range::minimal(&[attr_size, Range::Bounded(0, length)]);
-                        return match unsafe_range {
-                            Ok(range) => Some(Domain::int(vec![range])),
-                            Err(_) => None,
-                        };
-                    }
-                    // If the domain is not known we just need to go off of attributes
-                    Some(Domain::int(vec![attr_size]))
-                } else if let Some((attrs, dom)) = domain.as_mset() {
-                    let attrs_gd = attrs.resolve().ok()?;
-                    // Gets maximum value of the occurrence
-                    let attr_occ = match attrs_gd.occurrence {
-                        Range::Single(x) => Some(x),
-                        Range::Unbounded | Range::UnboundedR(_) => None,
-                        Range::Bounded(_, x) => Some(x),
-                        Range::UnboundedL(x) => Some(x),
-                    };
-                    if let Some(occ) = attr_occ {
-                        if let Ok(length) = dom.length_signed() {
-                            let unsafe_range =
-                                Range::minimal(&[attrs_gd.size, Range::Bounded(0, length * occ)]);
-                            match unsafe_range {
-                                Ok(range) => Some(Domain::int(vec![range])),
-                                Err(_) => None,
-                            }
-                        } else {
-                            // If the domain is not known we just need to go off of attributes
-                            Some(Domain::int(vec![attrs_gd.size]))
-                        }
-                    } else {
-                        // If no occurrence is provided then it must have bounded size
-                        Some(Domain::int(vec![attrs_gd.size]))
-                    }
-                } else if let Some((attrs, doms)) = domain.as_relation() {
-                    // TODO: Further inference may be possible using the binary attributes
-
-                    let attrs_gd = attrs.resolve().ok()?;
-                    // See if all domains are ground
-                    let doms_sizes: Result<Vec<i32>, _> =
-                        doms.iter().map(|x| x.length_signed()).collect();
-                    if let Ok(doms_sizes) = doms_sizes {
-                        let length = Range::Bounded(0, doms_sizes.iter().product());
-                        // Combine the attributes and the domain possibilities
-                        let unsafe_range = Range::minimal(&[attrs_gd.size, length]);
-                        return match unsafe_range {
-                            Ok(range) => Some(Domain::int(vec![range])),
-                            Err(_) => None,
-                        };
-                    }
-                    // If the domain is not known we just need to go off of attributes
-                    Some(Domain::int(vec![attrs_gd.size]))
+                if matches!(domain.as_ground(), Some(GroundDomain::Empty(_))) {
+                    Some(Domain::empty(ReturnType::Int))
+                } else if let Some(bounds) = collection_size(&domain) {
+                    Some(match bounds.range() {
+                        Some(size) => Domain::int(vec![size]),
+                        None => Domain::empty(ReturnType::Int),
+                    })
                 } else if let Some((attrs, dom, codom)) = domain.as_function() {
                     let size = Self::function_elements_size(attrs, &dom, &codom);
                     size.map(|size| Domain::int(vec![size]))
-                } else if let Some((attrs, _dom)) = domain.as_sequence() {
-                    // Unlike a set/mset, a sequence's length is not bounded by its inner
-                    // domain's size (repeated elements are allowed), so the attribute's own
-                    // size range is already the tightest bound available here.
-                    let attrs_gd = attrs.resolve().ok()?;
-                    Some(Domain::int(vec![attrs_gd.size]))
                 } else if let Some((_attrs, inner)) = domain.as_partition() {
                     // A partition always covers its whole "from" domain exactly (parts are
                     // disjoint and total), so |p| (== |participants(p)|, per the `partition-card`

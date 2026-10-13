@@ -1,7 +1,8 @@
 //! Value-level collection bounds; domain unions remain common type envelopes.
 
 use super::{
-    Domain, DomainPtr, Expression, GroundDomain, IntVal, Range, ReturnType, SetAttr, Typeable,
+    Domain, DomainPtr, Expression, GroundDomain, IntVal, JectivityAttr, MSetAttr, Range,
+    ReturnType, SetAttr, Typeable,
 };
 
 /// Cardinalities use wider arithmetic so an overflowing upper bound can be omitted safely.
@@ -57,6 +58,76 @@ pub(super) fn min_known(a: Option<i64>, b: Option<i64>) -> Option<i64> {
         (Some(a), Some(b)) => Some(a.min(b)),
         (a, b) => a.or(b),
     }
+}
+
+pub(super) fn product_capacity(domains: &[DomainPtr]) -> Option<i64> {
+    // A known empty factor makes the product zero even with unresolved other factors.
+    let lengths = domains.iter().map(capacity).collect::<Vec<_>>();
+    if lengths.contains(&Some(0)) {
+        return Some(0);
+    }
+    lengths
+        .into_iter()
+        .try_fold(1i64, |n, length| n.checked_mul(length?))
+}
+
+pub(super) fn mset_size(attrs: &MSetAttr<IntVal>, inner: &DomainPtr) -> SizeBounds {
+    let size = SizeBounds::from_size(&attrs.size);
+    let occurrence = SizeBounds::from_size(&attrs.occurrence);
+    let capacity = match (capacity(inner), occurrence.high) {
+        (Some(0), _) | (_, Some(0)) => Some(0),
+        (Some(n), Some(occ)) => n.checked_mul(occ),
+        _ => None,
+    };
+    size.cap(capacity)
+}
+
+pub(super) fn collection_size(domain: &DomainPtr) -> Option<SizeBounds> {
+    if let Some((attrs, inner)) = domain.as_set() {
+        Some(SizeBounds::from_size(&attrs.size).cap(capacity(&inner)))
+    } else if let Some((attrs, inner)) = domain.as_mset() {
+        Some(mset_size(&attrs, &inner))
+    } else if let Some((_, dimensions)) = domain.as_matrix() {
+        Some(match product_capacity(&dimensions) {
+            Some(n) => SizeBounds::new(n, Some(n)),
+            None => SizeBounds::new(0, None),
+        })
+    } else if let Some((attrs, domains)) = domain.as_relation() {
+        Some(SizeBounds::from_size(&attrs.size).cap(product_capacity(&domains)))
+    } else if let Some((attrs, inner)) = domain.as_sequence() {
+        let mut bounds = SizeBounds::from_size(&attrs.size);
+        let n = capacity(&inner);
+        match attrs.jectivity {
+            JectivityAttr::Injective => bounds = bounds.cap(n),
+            JectivityAttr::Surjective => bounds.low = bounds.low.max(n.unwrap_or(0)),
+            JectivityAttr::Bijective => {
+                bounds.low = bounds.low.max(n.unwrap_or(0));
+                bounds = bounds.cap(n);
+            }
+            JectivityAttr::None => {}
+        }
+        if n == Some(0) {
+            bounds = bounds.cap(Some(0));
+        }
+        Some(bounds)
+    } else {
+        None
+    }
+}
+
+/// Duplicates can shrink a collection; each present value occurs at least once.
+pub(super) fn distinct_size(size: SizeBounds, occurrence: SizeBounds) -> SizeBounds {
+    let low = if size.low == 0 {
+        0
+    } else {
+        occurrence
+            .high
+            .filter(|n| *n > 0)
+            .map(|n| 1 + (size.low - 1) / n)
+            .unwrap_or(1)
+    };
+    let high = size.high.map(|n| n / occurrence.low.max(1));
+    SizeBounds::new(low, high)
 }
 
 /// Count integer values using interval arithmetic, including ranges wider than i32.
@@ -443,5 +514,145 @@ mod tests {
             .domain_of()
             .unwrap();
         assert_eq!(result.as_set_ground().unwrap().0.size, Range::Single(0));
+    }
+    #[test]
+    fn multiset_cardinality_and_distinct_bounds_cover_small_values() {
+        for min_size in 0..=5 {
+            for max_size in min_size..=6 {
+                for min_occurrence in 1..=3 {
+                    for max_occurrence in min_occurrence..=3 {
+                        let attrs = MSetAttr::new(
+                            Range::Bounded(min_size, max_size),
+                            Range::Bounded(min_occurrence, max_occurrence),
+                        );
+                        let domain = Domain::mset(attrs, Domain::int(vec![Range::Bounded(0, 2)]));
+                        let source = variable("m", domain);
+                        let card = Expression::Card(Metadata::new(), Moo::new(source.clone()))
+                            .domain_of()
+                            .unwrap()
+                            .resolve()
+                            .unwrap();
+                        let set = Expression::ToSet(Metadata::new(), Moo::new(source))
+                            .domain_of()
+                            .unwrap()
+                            .resolve()
+                            .unwrap();
+                        for a in 0..=3 {
+                            for b in 0..=3 {
+                                for c in 0..=3 {
+                                    let counts = [a, b, c];
+                                    let n = a + b + c;
+                                    if !(min_size..=max_size).contains(&n)
+                                        || counts.iter().any(|x| {
+                                            *x != 0
+                                                && !(min_occurrence..=max_occurrence).contains(x)
+                                        })
+                                    {
+                                        continue;
+                                    }
+                                    let elems = counts
+                                        .iter()
+                                        .enumerate()
+                                        .filter(|(_, n)| **n > 0)
+                                        .map(|(i, _)| Literal::Int(i as i32))
+                                        .collect();
+                                    assert!(card.contains(&Literal::Int(n)).unwrap());
+                                    assert!(
+                                        set.contains(&Literal::AbstractLiteral(
+                                            AbstractLiteral::Set(elems)
+                                        ))
+                                        .unwrap()
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn multiset_union_retains_one_sided_bounds() {
+        let a = variable(
+            "a",
+            Domain::mset(
+                MSetAttr::new_min_size(2),
+                Domain::int(vec![Range::Bounded(0, 2)]),
+            ),
+        );
+        let b = variable(
+            "b",
+            Domain::mset(MSetAttr::new_size(1), Domain::int(vec![Range::Single(3)])),
+        );
+        let result = operation(&a, &b, SetOperation::Union).domain_of().unwrap();
+        let (attrs, _) = result.as_mset_ground().unwrap();
+        assert_eq!(attrs.size, Range::UnboundedR(3));
+        assert_eq!(attrs.occurrence, Range::UnboundedR(1));
+    }
+
+    #[test]
+    fn literal_sets_count_distinct_values_and_preserve_empty_values() {
+        use crate::ast::HasDomain;
+        let value = Literal::AbstractLiteral(AbstractLiteral::Set(vec![
+            Literal::Int(1),
+            Literal::Int(1),
+            Literal::Int(2),
+        ]));
+        let domain = value.domain_of();
+        assert_eq!(domain.as_set_ground().unwrap().0.size, Range::Single(2));
+        assert!(domain.resolve().unwrap().contains(&value).unwrap());
+        let empty = Expression::AbstractLiteral(Metadata::new(), AbstractLiteral::Set(vec![]));
+        let a = variable(
+            "a",
+            Domain::set(SetAttr::new_size(1), Domain::int(vec![Range::Single(1)])),
+        );
+        let result = operation(&a, &empty, SetOperation::Union)
+            .domain_of()
+            .unwrap();
+        assert_eq!(result.as_set_ground().unwrap().0.size, Range::Single(1));
+    }
+
+    #[test]
+    fn sequence_attributes_bound_cardinality_but_repetition_has_no_support_cap() {
+        use crate::ast::SequenceAttr;
+        for (jectivity, expected) in [
+            (JectivityAttr::None, Range::UnboundedR(0)),
+            (JectivityAttr::Injective, Range::Bounded(0, 3)),
+            (JectivityAttr::Surjective, Range::UnboundedR(3)),
+            (JectivityAttr::Bijective, Range::Single(3)),
+        ] {
+            let source = variable(
+                "s",
+                Domain::sequence(
+                    SequenceAttr::<i32> {
+                        jectivity,
+                        ..Default::default()
+                    },
+                    Domain::int(vec![Range::Bounded(0, 2)]),
+                ),
+            );
+            assert_eq!(
+                Expression::Card(Metadata::new(), Moo::new(source)).domain_of(),
+                Some(Domain::int(vec![expected]))
+            );
+        }
+    }
+
+    #[test]
+    fn matrix_to_set_uses_element_type_and_length_bounds() {
+        let source = variable(
+            "xs",
+            Domain::matrix(
+                Domain::int(vec![Range::Bounded(0, 1)]),
+                vec![Domain::int(vec![Range::Bounded(1, 3)])],
+            ),
+        );
+        let result = Expression::ToSet(Metadata::new(), Moo::new(source))
+            .domain_of()
+            .unwrap();
+        let (attrs, inner) = result.as_set_ground().unwrap();
+        assert_eq!(attrs.size, Range::Bounded(1, 2));
+        assert_eq!(inner.return_type(), ReturnType::Int);
     }
 }
