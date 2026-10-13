@@ -43,7 +43,7 @@ pub use minion::{Minion, MinionValueOrder, MinionVariableOrder};
     all(feature = "sat-cadical", not(target_family = "wasm"))
 ))]
 #[doc(inline)]
-pub use rustsat::Sat;
+pub use rustsat::{Sat, SatBackend};
 
 #[cfg(feature = "z3")]
 pub mod smt;

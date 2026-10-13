@@ -7,7 +7,7 @@ use conjure_cp::settings::{
     Channelling, DEFAULT_HEURISTIC_SEED, DEFAULT_MINION_DISCRETE_THRESHOLD, Heuristic,
     Parser as InputParser, QuantifiedExpander, Rewriter, SolverFamily,
 };
-use conjure_cp::solver::adaptors::{MinionValueOrder, MinionVariableOrder};
+use conjure_cp::solver::adaptors::{MinionValueOrder, MinionVariableOrder, SatBackend};
 use git_version::git_version;
 
 use crate::{pretty, solve, test_solve};
@@ -237,6 +237,11 @@ pub struct GlobalArgs {
     )]
     pub solver: SolverFamily,
 
+    /// SAT backend to use with --solver sat (only compiled backends are available).
+    #[arg(long, value_enum, default_value_t = SatBackend::default(), global = true,
+        help_heading = CONFIGURATION_HELP_HEADING)]
+    pub sat_backend: SatBackend,
+
     /// Int-domain size threshold for using Minion `DISCRETE` variables.
     ///
     /// If an int domain has size <= this value, Conjure Oxide emits `DISCRETE`; otherwise `BOUND`.
@@ -398,6 +403,42 @@ fn parse_minion_variable_order(input: &str) -> Result<MinionVariableOrder, Strin
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sat_backend_defaults_to_available_native_backend() {
+        let cli =
+            Cli::try_parse_from(["conjure-oxide", "solve", "model.essence", "--solver", "sat"])
+                .unwrap();
+        #[cfg(all(feature = "sat-cadical", not(target_family = "wasm")))]
+        assert_eq!(cli.global_args.sat_backend, SatBackend::Cadical);
+        #[cfg(not(all(feature = "sat-cadical", not(target_family = "wasm"))))]
+        assert_eq!(cli.global_args.sat_backend, SatBackend::Batsat);
+    }
+
+    #[test]
+    fn sat_backend_option_accepts_only_compiled_backends() {
+        for name in ["cadical", "batsat"] {
+            let result = Cli::try_parse_from([
+                "conjure-oxide",
+                "solve",
+                "model.essence",
+                "--solver",
+                "sat",
+                "--sat-backend",
+                name,
+            ]);
+            let available = SatBackend::value_variants()
+                .iter()
+                .find(|backend| backend.to_string() == name);
+            match available {
+                Some(backend) => assert_eq!(result.unwrap().global_args.sat_backend, *backend),
+                None => assert_eq!(
+                    result.unwrap_err().kind(),
+                    clap::error::ErrorKind::InvalidValue
+                ),
+            }
+        }
+    }
 
     #[cfg(not(feature = "z3"))]
     #[test]
