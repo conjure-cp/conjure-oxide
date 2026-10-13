@@ -28,7 +28,6 @@
 - [Overview](contributors-guide/index.md)
 - [Onboarding](contributors-guide/onboarding/index.md)
   - [Setting Up Your Development Environment](contributors-guide/onboarding/development-environment.md)
-  - [How We Work](contributors-guide/onboarding/how-we-work.md)
   - [Git Flow](contributors-guide/onboarding/git-flow.md)
 - [What We Didn't Do](contributors-guide/what-we-didnt-do.md)
 - [Writing Documentation](contributors-guide/writing-documentation/index.md)
