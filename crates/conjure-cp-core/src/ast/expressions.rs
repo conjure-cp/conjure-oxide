@@ -30,6 +30,7 @@ use crate::bug;
 
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
+use super::collection_domains::{SetOperation, set_operation_domain};
 use super::comprehension::{Comprehension, ComprehensionQualifier};
 use super::declaration::DeclarationKind;
 use super::domains::HasDomain as _;
@@ -960,7 +961,7 @@ fn finite_mset_bounds(attrs: &MSetAttr<i32>, inner_len: i32) -> Option<((i32, i3
 ///
 /// [`Domain::union`] instead computes a common type envelope and intentionally drops collection
 /// attributes, so it is too weak for the domain of an `a union b` expression.
-fn selected_representation(expr: &Expression) -> Option<String> {
+pub(super) fn selected_representation(expr: &Expression) -> Option<String> {
     match expr {
         Expression::Atomic(_, Atom::Reference(reference)) => reference
             .repr
@@ -1043,11 +1044,13 @@ impl Expression {
             Expression::Union(_, a, b) => {
                 let lhs = a.domain_of()?;
                 let rhs = b.domain_of()?;
-                mset_union_result_domain(a, b).or_else(|| lhs.union(&rhs).ok())
+                set_operation_domain(a, b, SetOperation::Union)
+                    .or_else(|| mset_union_result_domain(a, b))
+                    .or_else(|| lhs.union(&rhs).ok())
             }
-            Expression::Intersect(_, a, b) => a.domain_of()?.intersect(&b.domain_of()?).ok(),
-            // Removing elements can only shrink the left operand, never widen it.
-            Expression::Difference(_, a, _) => a.domain_of(),
+            Expression::Intersect(_, a, b) => set_operation_domain(a, b, SetOperation::Intersect)
+                .or_else(|| a.domain_of()?.intersect(&b.domain_of()?).ok()),
+            Expression::Difference(_, a, b) => set_operation_domain(a, b, SetOperation::Difference),
             Expression::In(_, _, _) => Some(Domain::bool()),
             Expression::Supset(_, _, _) => Some(Domain::bool()),
             Expression::SupsetEq(_, _, _) => Some(Domain::bool()),

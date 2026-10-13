@@ -3,6 +3,7 @@ pub mod assertions;
 mod atom;
 pub mod categories;
 mod cnf_clause;
+mod collection_domains;
 pub mod comprehension;
 pub mod declaration;
 mod domains;

@@ -177,18 +177,18 @@ impl<A: Num + Ord + Clone> Range<A> {
     /// Returns true if this interval touches another one on the left
     /// E.g: [1, 2] touches_left  [3, 4]
     pub fn touches_left(&self, other: &Range<A>) -> bool {
-        self.high().is_some_and(|ra| {
-            let ra = ra.clone() + A::one();
-            other.low().is_some_and(|lb| ra.eq(lb))
+        self.high().zip(other.low()).is_some_and(|(ra, lb)| {
+            // The strict ordering rules out overflowing at the largest endpoint.
+            ra < lb && ra.clone() + A::one() == *lb
         })
     }
 
     /// Returns true if this interval touches another one on the right
     /// E.g: [3, 4] touches_right  [1, 2]
     pub fn touches_right(&self, other: &Range<A>) -> bool {
-        self.low().is_some_and(|la| {
-            let la = la.clone() - A::one();
-            other.high().is_some_and(|rb| la.eq(rb))
+        self.low().zip(other.high()).is_some_and(|(la, rb)| {
+            // The strict ordering rules out overflowing at the smallest endpoint.
+            la > rb && la.clone() - A::one() == *rb
         })
     }
 
