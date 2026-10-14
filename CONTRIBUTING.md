@@ -95,7 +95,7 @@ These project conventions are more specific than the general guidance above.
 
 ## The Book
 
-Exists.
+[The book](https://conjure-cp.github.io/conjure-oxide-reports/main/book/index.html) is the primary documentation for Conjure Oxide. It covers user facing information for Conjure Oxide as well as thorough documentation of our implementation and our development practices for those wishing to contribute. 
 
 ## What We Didn't Do
 To prevent unknown unknowns, skim the documentation and [What We Didn't Do](https://github.com/conjure-cp/conjure-oxide/wiki/What-We-Didn%27t-Do).

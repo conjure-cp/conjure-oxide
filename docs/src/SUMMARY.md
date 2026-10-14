@@ -1,3 +1,5 @@
+<!-- TODO: Make all chapters one level deeper -->
+
 # Welcome
 
 - [Introduction](index.md)
@@ -24,10 +26,8 @@
 # Contributor's Guide
 
 - [Overview](contributors-guide/index.md)
-- [CONTRIBUTING.md](contributors-guide/CONTRIBUTING.md)
 - [Onboarding](contributors-guide/onboarding/index.md)
   - [Setting Up Your Development Environment](contributors-guide/onboarding/development-environment.md)
-  - [How We Work](contributors-guide/onboarding/how-we-work.md)
   - [Git Flow](contributors-guide/onboarding/git-flow.md)
 - [What We Didn't Do](contributors-guide/what-we-didnt-do.md)
 - [Writing Documentation](contributors-guide/writing-documentation/index.md)
@@ -42,7 +42,7 @@
 
 - [WebAssembly interface](developers-guide/wasm.md)
 
-- [Project Overview]()
+- [Project Overview](developers-guide/project-overview/index.md)
   - [General Structure]()
   - [Main Concepts]()
     - [Flatten](developers-guide/project-overview/main-concepts/flatten.md)

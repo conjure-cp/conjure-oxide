@@ -1,5 +1,3 @@
-<!-- TODO: Edit this -->
-
 # How We Work
 
 This is our Constitution, but in contrast to a real constitution of a company we intend this document to be a living document. Please feel free to suggest edits and improvements.
@@ -16,22 +14,14 @@ This is our Constitution, but in contrast to a real constitution of a company we
 We agree to adhere to the following guidelines when engaging in group work.
 
 - We communicate in English as a common, shared language.
-- We include all group members in meetings, group chats, messages, and social events.
-- We turn up on time to meetings.
-- We pay attention and contribute to group discussions.
-- We contribute to the group tasks.
 - We listen to each other’s opinions.
 - We share ideas and do not disregard other people’s thoughts or feelings.
 - We are respectful towards one another and treat each other with care and courtesy.
-- We complete tasks on time and to the best of our ability.
 - We do not make assumptions about individual abilities.
 
 ## Logistics
 
 - **GitHub**: We use GitHub as our main platform for code collaboration and version control.
-- **Teams**: We use Teams for day to day communications.
-- **Weekly report**: We use a web form to provide an update to the supervisors every week. This is not assessed and doesn't strictly follow the reflective writing methods. However, [this resource on the Gibbs reflective cycle](https://reflection.ed.ac.uk/reflectors-toolkit/reflecting-on-experience/gibbs-reflective-cycle) may still be helpful when approaching the weekly form and how to use the form effectively.
-- **Weekly meetings**: The whole group meets once a week. Before this meeting everyone fills in the weekly report. We take minutes at these meetings.
 
 ## Best Practices for Collaboration
 
@@ -42,7 +32,7 @@ We agree to adhere to the following guidelines when engaging in group work.
 
 ### 2. Show, Don’t Tell
 
-- Share your experiences and insights! Use GitHub or Microsoft Teams to share updates, challenges, and breakthroughs with the rest of the team.
+- Share your experiences and insights! Use GitHub to share updates, challenges, and breakthroughs with the rest of the team.
 - Showing real examples means other can more easily help you, it can help others understand your approach and may inspire new ideas.
 - High-level explanations can inadvertently hide important details. Showing the actual artefact (whether it's code, a design document or something else) together with your high-level commentary eliminates this risk.
 

@@ -8,6 +8,7 @@ Conjure Oxide supports Linux and Mac.
 
 Windows users should install [WSL](https://learn.microsoft.com/en-us/windows/wsl/setup/environment#set-up-your-linux-username-and-password) and follow the Linux (Ubuntu) instructions below:
 
+In all cases, we strongly recommend installing a binary release of Conjure over using containers.
 
 <details><summary><b>Linux (Debian/Ubuntu)</b></summary>
 
