@@ -51,13 +51,19 @@ register_representation!(
                     shift => essence_expr!(&digit + &shift),
                 };
             }
-            let values = self
+            let mut values = self
                 .values
                 .iter()
                 .cloned()
                 .map(Expression::from)
                 .collect::<Vec<_>>();
-            let position = essence_expr!(&digit + 1 - &offset);
+            if self.partial {
+                // Flattening lifts this lookup out of its definedness guard. Give digit 0 a
+                // valid dummy value so the element constraint does not force it to be defined.
+                // Defined digits still select values[digit - 1]; callers guard dummy values.
+                values.insert(0, values[0].clone());
+            }
+            let position = essence_expr!(&digit + 1);
             Expression::SafeIndex(
                 Metadata::new(),
                 Moo::new(into_matrix_expr!(values)),
