@@ -6,6 +6,42 @@ use conjure_cp::{
     },
 };
 
+/// `x in (a intersect b)` becomes membership in both operands.
+#[register_rule("Base", 8700, [In])]
+fn membership_in_intersection(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::In(_, member, collection) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let Expr::Intersect(_, a, b) = collection.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    Ok(RuleEffect::pure(Expr::And(
+        Metadata::new(),
+        Moo::new(into_matrix_expr![vec![
+            Expr::In(Metadata::new(), member.clone(), a.clone()),
+            Expr::In(Metadata::new(), member.clone(), b.clone()),
+        ]]),
+    )))
+}
+
+/// `x in (a union b)` becomes membership in either operand, including outside generators.
+#[register_rule("Base", 8700, [In])]
+fn membership_in_union(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::In(_, member, collection) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let Expr::Union(_, a, b) = collection.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    Ok(RuleEffect::pure(Expr::Or(
+        Metadata::new(),
+        Moo::new(into_matrix_expr![vec![
+            Expr::In(Metadata::new(), member.clone(), a.clone()),
+            Expr::In(Metadata::new(), member.clone(), b.clone()),
+        ]]),
+    )))
+}
+
 /// `x in {a, b, c}` ~~> `or([x = a, x = b, x = c])`.
 ///
 /// Membership in a set written out in full does not depend on a representation, so this holds for
@@ -71,4 +107,50 @@ fn minion_w_inset_applies(elements: &[Expr]) -> bool {
     elements.iter().all(|element| {
         matches!(element, Expr::Atomic(_, Atom::Literal(literal)) if i32::try_from(literal).is_ok())
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use conjure_cp::ast::eval_constant;
+
+    #[test]
+    fn compound_membership_preserves_all_small_set_values() {
+        let set = |mask: i32| {
+            Expr::from(Literal::AbstractLiteral(AbstractLiteral::Set(
+                (0..3)
+                    .filter(|n| mask & (1 << n) != 0)
+                    .map(Literal::Int)
+                    .collect(),
+            )))
+        };
+        for a in 0..8 {
+            for b in 0..8 {
+                for member in -1..=3 {
+                    let a = Moo::new(set(a));
+                    let b = Moo::new(set(b));
+                    for collection in [
+                        Expr::Union(Metadata::new(), a.clone(), b.clone()),
+                        Expr::Intersect(Metadata::new(), a.clone(), b.clone()),
+                    ] {
+                        let expr = Expr::In(
+                            Metadata::new(),
+                            Moo::new(member.into()),
+                            Moo::new(collection),
+                        );
+                        let rewritten = match membership_in_union(&expr, &SymbolTable::new()) {
+                            Ok(result) => result,
+                            Err(_) => {
+                                membership_in_intersection(&expr, &SymbolTable::new()).unwrap()
+                            }
+                        };
+                        assert_eq!(
+                            eval_constant(&rewritten.new_expression),
+                            eval_constant(&expr)
+                        );
+                    }
+                }
+            }
+        }
+    }
 }
