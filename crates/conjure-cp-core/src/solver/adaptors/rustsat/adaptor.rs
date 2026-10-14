@@ -9,9 +9,7 @@ use std::vec;
 use clap::error;
 use minion_sys::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
-#[cfg(not(feature = "sat-batsat"))]
-use rustsat::solvers::{ControlSignal, Terminate};
-use rustsat::solvers::{Solve, SolverResult};
+use rustsat::solvers::SolverResult;
 use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var as satVar};
 use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
@@ -19,10 +17,7 @@ use std::time::Duration;
 use tracing_subscriber::filter::DynFilterFn;
 use ustr::Ustr;
 
-#[cfg(feature = "sat-batsat")]
-type SatSolver = rustsat_batsat::BasicSolver;
-#[cfg(not(feature = "sat-batsat"))]
-type SatSolver = rustsat_cadical::CaDiCaL<'static, 'static>;
+use super::backend::{SatBackend, SatSolver};
 
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
@@ -47,7 +42,7 @@ use thiserror::Error;
 use uniplate::Uniplate;
 
 use itertools::Itertools;
-/// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
+/// A [SolverAdaptor] with runtime selection among the compiled SAT backends.
 pub struct Sat {
     __non_constructable: private::Internal,
     solver_seed: u32,
@@ -64,11 +59,18 @@ impl private::Sealed for Sat {}
 
 impl Default for Sat {
     fn default() -> Self {
-        Sat {
+        Self::new(SatBackend::default())
+    }
+}
+
+impl Sat {
+    /// Creates an adaptor using a specific compiled backend.
+    pub fn new(backend: SatBackend) -> Self {
+        Self {
             __non_constructable: private::Internal,
             solver_seed: 0,
             timeout: None,
-            solver_inst: SatSolver::default(),
+            solver_inst: SatSolver::new(backend),
             var_map: None,
             model_inst: None,
             decision_refs: None,
@@ -76,9 +78,7 @@ impl Default for Sat {
             dominance_model_template: None,
         }
     }
-}
 
-impl Sat {
     /// Sets the seed used by the SAT solver's random search behaviour.
     ///
     /// With BatSat, only zero (the default settings) is supported; other values
@@ -417,25 +417,7 @@ impl SolverAdaptor for Sat {
         let dominance_expression = self.dominance_expression.clone();
         let dominance_model_template = self.dominance_model_template.clone();
         let mut solver = &mut self.solver_inst;
-        #[cfg(feature = "sat-batsat")]
-        if self.solver_seed != 0 {
-            return Err(SolverError::Runtime(
-                "BatSat does not support configuring the solver seed through this adaptor".into(),
-            ));
-        }
-        #[cfg(not(feature = "sat-batsat"))]
-        {
-            let solver_seed = i32::try_from(self.solver_seed).map_err(|_| {
-                SolverError::Runtime(format!(
-                    "solver seed {} exceeds CaDiCaL's maximum supported value ({})",
-                    self.solver_seed,
-                    i32::MAX
-                ))
-            })?;
-            solver.set_option("seed", solver_seed).map_err(|err| {
-                SolverError::Runtime(format!("Failed setting CaDiCaL solver seed: {err}"))
-            })?;
-        }
+        solver.set_seed(self.solver_seed)?;
         let mut var_map = self.var_map.clone().ok_or_else(|| {
             SolverError::Runtime("Variable map is missing when retrieving solution".to_string())
         })?;
@@ -451,20 +433,7 @@ impl SolverAdaptor for Sat {
         })?;
 
         if timeout_enabled {
-            let terminator_budget = budget;
-            #[cfg(feature = "sat-batsat")]
-            solver
-                .batsat_mut()
-                .cb_mut()
-                .set_stop(move || terminator_budget.expired());
-            #[cfg(not(feature = "sat-batsat"))]
-            solver.attach_terminator(move || {
-                if terminator_budget.expired() {
-                    ControlSignal::Terminate
-                } else {
-                    ControlSignal::Continue
-                }
-            });
+            solver.set_budget(budget);
         }
 
         let mut has_sol = false;
@@ -787,7 +756,7 @@ mod tests {
     #[cfg(feature = "sat-batsat")]
     #[test]
     fn batsat_rejects_unsupported_seed() {
-        let mut sat = Sat::default().with_solver_seed(1);
+        let mut sat = Sat::new(SatBackend::Batsat).with_solver_seed(1);
         let result = sat.solve(Box::new(|_| true), private::Internal);
         assert!(
             matches!(result, Err(SolverError::Runtime(message)) if message.contains("solver seed"))
@@ -796,19 +765,85 @@ mod tests {
 
     #[test]
     fn zero_timeout_stops_before_first_sat_call() {
-        let mut sat = Sat::default().with_timeout(Some(Duration::ZERO));
-        sat.model_inst = Some(SatInstance::default());
-        sat.var_map = Some(HashMap::new());
-        sat.decision_refs = Some(Vec::new());
+        for &backend in <SatBackend as clap::ValueEnum>::value_variants() {
+            let mut sat = Sat::new(backend).with_timeout(Some(Duration::ZERO));
+            sat.model_inst = Some(SatInstance::default());
+            sat.var_map = Some(HashMap::new());
+            sat.decision_refs = Some(Vec::new());
 
-        let result = sat
-            .solve(Box::new(|_| true), private::Internal)
-            .expect("a timeout is a non-crashing incomplete search");
+            let result = sat
+                .solve(Box::new(|_| true), private::Internal)
+                .expect("a timeout is a non-crashing incomplete search");
 
-        assert_eq!(
-            result.status,
-            SearchStatus::Incomplete(solver::SearchIncomplete::Timeout)
-        );
+            assert_eq!(
+                result.status,
+                SearchStatus::Incomplete(solver::SearchIncomplete::Timeout)
+            );
+        }
+    }
+
+    #[test]
+    fn each_backend_enumerates_solutions_and_detects_unsat() {
+        use std::sync::{Arc, Mutex};
+
+        for &backend in <SatBackend as clap::ValueEnum>::value_variants() {
+            let x = Name::User("x".into());
+            let y = Name::User("y".into());
+            let mut inst = SatInstance::default();
+            let x_lit = inst.new_lit();
+            let y_lit = inst.new_lit();
+            inst.add_clause([x_lit, y_lit].into_iter().collect());
+
+            let mut sat = Sat::new(backend);
+            sat.model_inst = Some(inst.clone());
+            sat.var_map = Some(HashMap::from([(x.clone(), x_lit), (y.clone(), y_lit)]));
+            sat.decision_refs = Some(vec![x.clone(), y.clone()]);
+            let solutions = Arc::new(Mutex::new(Vec::new()));
+            let collected = solutions.clone();
+            let result = sat
+                .solve(
+                    Box::new(move |solution| {
+                        collected
+                            .lock()
+                            .unwrap()
+                            .push((solution[&x].clone(), solution[&y].clone()));
+                        true
+                    }),
+                    private::Internal,
+                )
+                .unwrap();
+            assert_eq!(
+                result.status,
+                SearchStatus::Complete(solver::SearchComplete::HasSolutions),
+                "{backend}"
+            );
+            let solutions = solutions.lock().unwrap();
+            assert_eq!(solutions.len(), 3, "{backend}");
+            for (x, y) in [(0, 1), (1, 0), (1, 1)] {
+                assert!(
+                    solutions.contains(&(Literal::Int(x), Literal::Int(y))),
+                    "{backend}"
+                );
+            }
+
+            inst.add_clause([x_lit].into_iter().collect());
+            inst.add_clause([!x_lit].into_iter().collect());
+            let mut sat = Sat::new(backend);
+            sat.model_inst = Some(inst);
+            sat.var_map = Some(HashMap::new());
+            sat.decision_refs = Some(Vec::new());
+            let result = sat
+                .solve(
+                    Box::new(|_| panic!("unsatisfiable CNF has no solutions")),
+                    private::Internal,
+                )
+                .unwrap();
+            assert_eq!(
+                result.status,
+                SearchStatus::Complete(NoSolutions),
+                "{backend}"
+            );
+        }
     }
 
     #[test]

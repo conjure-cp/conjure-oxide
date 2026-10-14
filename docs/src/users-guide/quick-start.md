@@ -4,63 +4,59 @@ This guide walks you through running your first Essence model with Conjure Oxide
 
 ## Your First Problem
 
+Once you have gone through the [installation](installation.md) process and got Conjure Oxide on your computer you can solve your first problem.
+
+Suppose you want to find two numbers `x` and `y` so that they add up to 15 and the difference between them is 3. The mathematicians will immediately reach for their simultaneous equations and start doing arithmetic.
+
+\\[ x + y = 15 \\]
+\\[ x - y = 3 \\]
+
+We, however, take the lazier approach.
+
 Create a file called `my_problem.essence` with the following content:
 
 ```essence
-find x : int(1..3)
-find y : int(2..5)
+find x : int(1..20)
+find y : int(2..20)
 
-such that x > y
+such that x + y = 15,
+          x - y = 3
 ```
 
-If you are curious about more complex models, you can check out the models that we use to test Conjure Oxide, available in the `test-suite/tests/integration` directory of the repository.
-
-## Running with Different Solvers
-
-`--solver` takes `minion`, `sat`, or `z3`.
-
-How a model is *expressed* for the chosen solver is separate from which solver it is. SAT has no
-integers, so each integer variable is encoded into Booleans as `int_log`, `int_direct` or
-`int_order`; Z3 has integers but two theories to hold them in, `lia` or `bv`. Both are
-representation choices made per declaration, exactly like choosing `occurrence` or `explicit` for a
-set, and both are steered with `--heuristic` (see the modelling-choices guide). Variables in
-different encodings are channelled together automatically where a constraint needs them to agree.
-
-### SAT Solver
+In your terminal run this command:
 
 ```bash
-cargo run -- solve --solver sat my_problem.essence
+$ conjure-oxide solve my_problem.essence
 ```
 
-### Z3 (SMT)
 
-```bash
-cargo run -- solve --solver z3 my_problem.essence
+**Expected output:**
+
+```
+$ Solution: 000001
+language Essence 1.3
+
+letting x be 9
+letting y be 6
 ```
 
-### Minion Solver
+We see that this indeed satisfies our constraints with \\[ 9 + 6 = 15 \\] and \\[9 - 6 = 3\\]
 
-```bash
-cargo run -- solve --solver minion my_problem.essence
+## Understanding the structure of the problem specification
+
+The first two lines are where we declare our *decision variables*. These are the things which we want to find. 
+
+These are declared as:
 ```
-
-**Expected output for both solvers:**
-
-```json
-Solutions:
-[
-  {
-    "x": {
-      "Int": 3
-    },
-    "y": {
-      "Int": 2
-    }
-  }
-]
+find <name> : <domain>
 ```
+Where the domain tells Conjure Oxide what type and specifically what values the variable could possibly take on.
 
-## Understanding What Happened
+The last statement contains our constraints as a comma-separated list of boolean expressions.
+
+The goal of Conjure Oxide is to give you values for all of your decision variables, within the allowed domains, that also make all of the boolean expressions evaluate to true.
+
+## Understanding What Conjure Oxide did
 
 Conjure Oxide transformed your high-level Essence model through several steps:
 
@@ -70,7 +66,3 @@ Conjure Oxide transformed your high-level Essence model through several steps:
 4. **Solution Extraction** - The solver's output was converted back to Essence format
 
 Want to see exactly what rules were applied? Check out the [Logging guide](command-line-guide/logging.md).
-
-## Functional Programming Style
-
-For developers who come from programming languages like Scala or Haskell, or those who favour a functional programming style, we have a [Functional Rust](../developers-guide/resources-conventions/functional-rust.md) guide that you might find useful.
