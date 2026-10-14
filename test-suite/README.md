@@ -21,7 +21,7 @@ AST depth for equally-applicable rules. The default is `x`. Set `seed = 123` for
 Backend solver randomness is configured independently with `solver-seed = 123` and defaults to
 `0`. Both seed fields remain explicit in recorded stats. The `x` strategy
 replays every representation and equally-applicable-rule choice from a fresh parsed model and keeps
-separate `model-000`, `model-001`, … golden artifacts for every parser/rewriter/expander/solver
+separate `model-000`, `model-001`, … rule traces for every parser/rewriter/expander/solver
 configuration. Channelling is configured with `channelling = "no"`; `yes` is reserved but currently
 unsupported.
 
@@ -30,6 +30,20 @@ Configure it explicitly with `comprehension-expander = "auto"`. Accepted oxide t
 and rule-trace aggregates are recorded in a `[[runs]]` entry in `stats.toml` for each configured
 run; the Conjure reference run is recorded separately. Each accepted run replaces the previous
 stats snapshot rather than merging with it.
+
+Tests with `number-of-solutions = "all"` compare every model/configuration's complete solution
+set (ignoring duplicate assignments) with the first run, then check one shared
+`<model>.expected.solutions` file (`input.expected.solutions` for `input.essence`). Solution order
+and boolean spelling (`false`/`true` versus `0`/`1`) are canonicalised. Matrix annotations use
+the index domain consistently across solvers; index ranges remain part of the snapshot.
+Per-run generated solution files remain available for debugging. Acceptance writes the shared
+file only after all configurations, rule traces, and enabled Conjure reference checks succeed.
+If configurations disagree, acceptance fails and preserves the previous shared solution file.
+Tests with a numeric solution limit retain per-run expected files and their existing count
+checks, because solver ordering can produce different subsets. Tests with solving skipped do
+not write a solution snapshot. SAT is disabled for
+`sets/occurrence-out-of-domain-equality` pending a fix for its out-of-domain set equality;
+Minion and Z3 still check the shared empty solution set.
 
 ### Creating a new test
 

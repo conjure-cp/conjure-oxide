@@ -753,6 +753,11 @@ impl Default for TestConfig {
 }
 
 impl TestConfig {
+    /// Complete searches share one golden across all configurations.
+    pub fn uses_shared_solution_snapshot(&self) -> bool {
+        matches!(self.number_of_solutions, NumberOfSolutions::All)
+    }
+
     /// Empty `skip-conjure-validation` runs Conjure reference validation during accept.
     pub fn should_skip_conjure_validation(&self) -> bool {
         !self.skip_conjure_validation.is_empty()
