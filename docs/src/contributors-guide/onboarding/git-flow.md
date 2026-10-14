@@ -20,6 +20,7 @@ Our development process is as follows:
    - Below is a list of past book editors; their contributions are invaluable and greatly appreciated!
         - [Jamie Melton](https://github.com/JamieASM) (2025-26)
         - [Hanaa Khan](https://github.com/HKhan-5) (2025-26)
+        - [Georgii Skorokhod](https://github.com/gskorokhod) (2024-25)
    - During reviewing, avoid force-pushing to the pull request, as this makes reviewing more difficult.
      Details on how to update a PR are given below.
 5. Once Oz has approved the PR:

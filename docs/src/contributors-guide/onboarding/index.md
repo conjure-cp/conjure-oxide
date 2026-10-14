@@ -31,9 +31,8 @@ This is a fundamentally cooperative project, and so do not be afraid to ask for 
 
 This stage will take a while, but understanding the core of the program will be tremendously helpful when you start implementing it.
 
-<!-- TODO: Reconsider the structuring here -->
 ## Selecting a Project
-As discussed above, this project can be daunting in scale so chosing a project to work on is challenging. It is important to remember that there is no rush to begin contributing; taking the time to sufficiently familiarise yourself with the project is more valuable than beginning work without the necessary knowledge. With that being said, if, during your time learning the codebase, you come across an issue which you can fix - fix it! Getting your first contribution under your belt will help your confidence. Finally, always feel free to reach out and ask for advice either on our [GitHub Discussions page](https://github.com/conjure-cp/conjure-oxide/discussions) or by contacting [@ozgurakgun](https://github.com/ozgurakgun). We are a welcoming community that is always pleased and eager to help those who want to contribute.
+As discussed above, this project can be daunting in scale so choosing a project to work on is challenging. It is important to remember that there is no rush to begin contributing; taking the time to sufficiently familiarise yourself with the project is more valuable than beginning work without the necessary knowledge. With that being said, if, during your time learning the codebase, you come across an issue which you can fix - fix it! Getting your first contribution under your belt will help your confidence. Finally, always feel free to reach out and ask for advice either on our [GitHub Discussions page](https://github.com/conjure-cp/conjure-oxide/discussions) or by contacting [@ozgurakgun](https://github.com/ozgurakgun). We are a welcoming community that is always pleased and eager to help those who want to contribute.
 
 ## The Most Important Things
 You should realise that it is okay to spend time learning and not contributing, and you should not feel bad, it is expected. If you get a good understanding now it will help you in the future.
