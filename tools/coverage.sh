@@ -128,7 +128,7 @@ ln -sf conjure-oxide "${TARGET_DIR}/debug/conjure-oxide-debug"
 
 echo_err "info: running tests"
 cargo +nightly test --workspace --doc "${CARGO_FEATURE_ARGS[@]}"
-cargo +nightly nextest run --workspace "${CARGO_FEATURE_ARGS[@]}"
+python3 tools/nextest.py +nightly --workspace "${CARGO_FEATURE_ARGS[@]}"
 
 echo_err "info: generating coverage reports"
 grcov "${TARGET_DIR}/coverage" -s . --binary-path ./target/debug -t html\

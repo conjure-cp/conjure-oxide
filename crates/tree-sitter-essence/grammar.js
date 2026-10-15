@@ -66,7 +66,11 @@ module.exports = grammar ({
 
     FALSE: $ => "false",
 
-    identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*'*/,
+    identifier: ($) => {
+      const emoji =
+        "\\p{Extended_Pictographic}[\\p{Emoji_Modifier}\\uFE0F]?(\\u200D\\p{Extended_Pictographic}[\\p{Emoji_Modifier}\\uFE0F]?)*";
+      return new RegExp(`([a-zA-Z_]|${emoji})([a-zA-Z0-9_]|${emoji})*'*`, "u");
+    },
 
     //meta-variable (aka template argument)
     metavar: $ => seq("&", field("identifier", $.identifier)),
