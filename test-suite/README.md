@@ -44,10 +44,14 @@ SAT coverage uses `x` with uniform channelling when the fixture's existing backe
 enumerate all choices. Where those profiles do not use `x`, SAT uses `c`: compact chooses one
 representation and the normal compact option for each SAT encoding family.
 
-`trace-level = "full"` is the default: write and compare complete rule trace snapshots.
+`trace-level = "full"` is the default: write and compare human-readable rule trace snapshots
+(up to the 1,000,000-character snapshot limit).
 `trace-level = "aggregate"` counts rule applications in memory and records totals by rule in
 `stats.toml`, without formatting or writing full traces. `trace-level = "none"` disables both.
 The field can appear at the top level or in `[solver-options.sat]` (and other solver overrides).
+Aggregate counts are recorded in accept mode but are not compared with the saved counts during
+normal test runs. Switching from `full` to `aggregate` therefore removes rule trace regression
+checks; it retains recording of counts for inspection.
 Solution comparisons remain enabled at every trace level. SAT fixtures with many expanded
 configurations use aggregate tracing to limit snapshot size and recording overhead.
 
@@ -121,8 +125,14 @@ After an accept run, you can write a Git-diff-based timing comparison CSV with
 `target/accept-times-diff.csv`).
 
 `stats.toml` also records the last accepted status, the shared Conjure timing stats, and per-config
-oxide timing stats and aggregate rule trace application counts derived from the expected rule trace
-snapshots.
+oxide timing stats and aggregate rule trace application counts. Full tracing derives application
+counts from the generated traces; aggregate tracing counts them in memory.
+
+`stats.toml` is an observational record, not a correctness baseline: normal tests do not compare
+current statuses, timings, rule-attempt counts, or per-rule application counts against its saved
+values. Its `expected-time` field is used to select tests via `MAX_EXPECTED_TIME`. Correctness
+checks use solution and rule trace snapshots separately; recording aggregate counts does not
+assert that those counts remain unchanged.
 
 For timing-only runs where rule trace generation overhead is unwanted, set
 `CONJURE_OXIDE_TEST_DISABLE_TRACING=1`. This skips integration-test rule trace file
