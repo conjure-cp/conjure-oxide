@@ -193,7 +193,7 @@ pub(super) fn restricted_domain(
             size,
             partiality,
             jectivity,
-            representation: attrs.representation.clone(),
+            representation: attrs.representation,
         },
         retained,
         codomain,
