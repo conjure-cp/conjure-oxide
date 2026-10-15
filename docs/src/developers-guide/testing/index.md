@@ -27,3 +27,26 @@ This template contains the code to call a new function which carries out the tes
 Finally, the test function itself includes the line `include!(concat!(env!("OUT_DIR"), "/gen_tests_<test type>.rs"));`, such that it is accessible during the test through insertion using the include macro.
 
 This format improves scalability and allows new tests to be created by just creating the input file.
+
+## Scheduling longer tests first
+
+`make test`, `make test-accept`, `make test-accept-with-max-times`, and the coverage
+script use `tools/nextest.py` to run tests with longer `expected-time` values first.
+This requires Python 3.11 or newer. Integration test timings come from
+`stats.toml`; custom test timings come from `config.toml`. Tests without timings
+(including roundtrip and unit tests) retain nextest's default priority.
+
+For a direct nextest run with the same scheduling, use:
+
+```bash
+python3 tools/nextest.py --release --workspace
+# Optional Cargo toolchain selector:
+python3 tools/nextest.py +nightly --workspace
+```
+
+The wrapper reads current timings on every invocation and passes a temporary
+configuration to nextest. Repository and command-line settings take precedence.
+Nextest 0.9.91 or newer is required. Tests with equal expected times share a
+priority; if there are more than 100 distinct times, adjacent duration buckets
+share priorities. This changes scheduling only; test filtering, concurrency,
+and timeouts still work as usual.
