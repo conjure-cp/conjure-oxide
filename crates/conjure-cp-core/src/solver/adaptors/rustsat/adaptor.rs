@@ -11,7 +11,7 @@ use minion_sys::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::SolverResult;
 use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var as satVar};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::result::Result::Ok;
 use std::time::Duration;
 use tracing_subscriber::filter::DynFilterFn;
@@ -23,7 +23,7 @@ use crate::ast::pretty::pretty_vec;
 use crate::ast::serde::HasId;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
 use crate::bug_assert;
-use crate::representation::util::try_up;
+use crate::representation::util::try_up_via;
 use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_configured_rewriter};
 use crate::settings::current_rewriter;
 use crate::solver::SearchComplete::NoSolutions;
@@ -49,7 +49,8 @@ pub struct Sat {
     solver_seed: u32,
     timeout: Option<Duration>,
     model_inst: Option<SatInstance>,
-    var_map: Option<HashMap<Name, Lit>>,
+    // Ordered maps keep solution blocking clauses stable across solver runs.
+    var_map: Option<BTreeMap<Name, Lit>>,
     solver_inst: SatSolver,
     decision_refs: Option<Vec<Name>>,
     objective: Option<super::objective::CompiledObjective>,
@@ -102,7 +103,7 @@ impl Sat {
 
 fn sub_in_solution_into_dominance_expr(
     expr: &Expression,
-    solution: &HashMap<Name, Literal>,
+    solution: &BTreeMap<Name, Literal>,
 ) -> Option<Expression> {
     match expr {
         Expression::FromSolution(_, atom_expr) => {
@@ -134,7 +135,7 @@ fn sub_in_solution_into_dominance_expr(
 
 fn sub_in_solution_into_current_refs(
     expr: &Expression,
-    solution: &HashMap<Name, Literal>,
+    solution: &BTreeMap<Name, Literal>,
 ) -> Option<Expression> {
     match expr {
         Expression::Atomic(_, Atom::Reference(reference)) => {
@@ -173,7 +174,7 @@ fn swap_from_solution_to_current_ref(expr: &Expression) -> Option<Expression> {
 
 fn rewrite_dominance_to_block_dominated_futures(
     dominance_expression: &Expression,
-    solution: &HashMap<Name, Literal>,
+    solution: &BTreeMap<Name, Literal>,
 ) -> Expression {
     Expression::Not(
         Metadata::new(),
@@ -185,7 +186,7 @@ fn rewrite_dominance_to_block_dominated_futures(
     )
 }
 
-fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model: &ConjureModel) {
+fn add_represented_decision_values(solution: &mut BTreeMap<Name, Literal>, model: &ConjureModel) {
     let symbols = model.symbols().clone();
     let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
     let representations = names
@@ -206,23 +207,23 @@ fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model:
         })
         .collect_vec();
 
-    let mut solution_btree = solution
-        .clone()
-        .into_iter()
-        .collect::<BTreeMap<Name, Literal>>();
     for (name, representation) in representations {
-        let Ok(value) = representation.value_up(&solution_btree) else {
+        let Ok(value) = representation.value_up(solution) else {
             continue;
         };
-        solution.insert(name.clone(), value.clone());
-        solution_btree.insert(name, value);
+        solution.insert(name, value);
     }
 
     for (_, declaration) in symbols.iter_local() {
         if declaration.reprs().is_empty() {
             continue;
         }
-        if let Ok(value) = try_up(declaration.clone(), solution) {
+        let value = {
+            let lookup: crate::representation::types::LookupFn<'_> =
+                Box::new(|decl| solution.get(&decl.name()).cloned());
+            try_up_via(declaration.clone(), &lookup)
+        };
+        if let Ok(value) = value {
             solution.insert(declaration.name().clone(), value);
         }
     }
@@ -231,9 +232,9 @@ fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model:
 fn get_ref_sols(
     find_refs: Vec<Name>,
     sol: Assignment,
-    var_map: HashMap<Name, Lit>,
-) -> HashMap<Name, Literal> {
-    let mut solution: HashMap<Name, Literal> = HashMap::new();
+    var_map: BTreeMap<Name, Lit>,
+) -> BTreeMap<Name, Literal> {
+    let mut solution: BTreeMap<Name, Literal> = BTreeMap::new();
 
     for reference in find_refs {
         // lit is `Nothing` for variables that don't exist. This should have thrown an error at parse-time.
@@ -268,8 +269,8 @@ fn is_user_visible_solution_var(name: &Name) -> bool {
 }
 
 fn blocking_clause_for_solution(
-    solution: &HashMap<Name, Literal>,
-    var_map: &HashMap<Name, Lit>,
+    solution: &BTreeMap<Name, Literal>,
+    var_map: &BTreeMap<Name, Lit>,
 ) -> Result<Clause, SolverError> {
     let mut clause = Clause::new();
 
@@ -306,8 +307,8 @@ impl Sat {
         dominance_expression: Option<&Expression>,
         dominance_model_template: Option<&ConjureModel>,
         solver: &mut SatSolver,
-        solution: &HashMap<Name, Literal>,
-        var_map: &mut HashMap<Name, Lit>,
+        solution: &BTreeMap<Name, Literal>,
+        var_map: &mut BTreeMap<Name, Lit>,
         next_free: &mut u32,
         cache: &mut EncodingCache,
     ) -> Result<(), SolverError> {
@@ -495,7 +496,7 @@ impl SolverAdaptor for Sat {
                         status: SearchStatus::Incomplete(solver::SearchIncomplete::Timeout),
                     });
                 }
-                if !callback(solution.clone()) {
+                if !callback(solution.clone().into_iter().collect()) {
                     // callback false
                     return Ok(SolveSuccess {
                         stats: SolverStats {
@@ -602,7 +603,7 @@ impl SolverAdaptor for Sat {
             let mut inst = SatInstance::new();
             inst.add_clause(Clause::new());
             self.decision_refs = Some(Vec::new());
-            self.var_map = Some(HashMap::new());
+            self.var_map = Some(BTreeMap::new());
             self.model_inst = Some(inst);
             return Ok(());
         }
@@ -610,7 +611,7 @@ impl SolverAdaptor for Sat {
         let sym_tab = model.symbols().deref().clone();
 
         let mut finds: Vec<Name> = Vec::new();
-        let mut var_map: HashMap<Name, Lit> = HashMap::new();
+        let mut var_map: BTreeMap<Name, Lit> = BTreeMap::new();
 
         for (name, decl) in sym_tab.into_iter_local() {
             if decl.as_find().is_none() {
@@ -730,8 +731,8 @@ impl SolverAdaptor for Sat {
 
 /// Expand free Boolean assignments lazily so limits can stop exponential completion.
 fn enumerate_all_solutions(
-    mut solution: HashMap<Name, Literal>,
-) -> impl Iterator<Item = HashMap<Name, Literal>> {
+    mut solution: BTreeMap<Name, Literal>,
+) -> impl Iterator<Item = BTreeMap<Name, Literal>> {
     let mut dont_cares: Vec<_> = solution
         .iter()
         .filter(|(_, value)| **value == Literal::Int(2))
@@ -772,7 +773,7 @@ mod tests {
         for &backend in <SatBackend as clap::ValueEnum>::value_variants() {
             let mut sat = Sat::new(backend).with_timeout(Some(Duration::ZERO));
             sat.model_inst = Some(SatInstance::default());
-            sat.var_map = Some(HashMap::new());
+            sat.var_map = Some(BTreeMap::new());
             sat.decision_refs = Some(Vec::new());
 
             let result = sat
@@ -800,7 +801,7 @@ mod tests {
 
             let mut sat = Sat::new(backend);
             sat.model_inst = Some(inst.clone());
-            sat.var_map = Some(HashMap::from([(x.clone(), x_lit), (y.clone(), y_lit)]));
+            sat.var_map = Some(BTreeMap::from([(x.clone(), x_lit), (y.clone(), y_lit)]));
             sat.decision_refs = Some(vec![x.clone(), y.clone()]);
             let solutions = Arc::new(Mutex::new(Vec::new()));
             let collected = solutions.clone();
@@ -834,7 +835,7 @@ mod tests {
             inst.add_clause([!x_lit].into_iter().collect());
             let mut sat = Sat::new(backend);
             sat.model_inst = Some(inst);
-            sat.var_map = Some(HashMap::new());
+            sat.var_map = Some(BTreeMap::new());
             sat.decision_refs = Some(Vec::new());
             let result = sat
                 .solve(
@@ -862,7 +863,7 @@ mod tests {
             Metadata::new(),
             Moo::new(Atom::Reference(Reference::new(x_ref))),
         );
-        let mut solution = HashMap::new();
+        let mut solution = BTreeMap::new();
         solution.insert(x, Literal::Int(7));
 
         let replaced = sub_in_solution_into_dominance_expr(&expr, &solution)
@@ -885,7 +886,7 @@ mod tests {
             Metadata::new(),
             Moo::new(Atom::Reference(Reference::new(x_ref))),
         );
-        let solution = HashMap::new();
+        let solution = BTreeMap::new();
 
         assert!(sub_in_solution_into_dominance_expr(&expr, &solution).is_none());
     }
@@ -898,7 +899,7 @@ mod tests {
             Metadata::new(),
             Moo::new(Atom::Reference(Reference::new(x_ref))),
         );
-        let mut solution = HashMap::new();
+        let mut solution = BTreeMap::new();
         solution.insert(x, Literal::Int(1));
 
         let replaced = sub_in_solution_into_dominance_expr(&expr, &solution)

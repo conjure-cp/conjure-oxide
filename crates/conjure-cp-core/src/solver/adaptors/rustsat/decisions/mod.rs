@@ -18,7 +18,7 @@ use rustsat::{
     instances::{Cnf, SatInstance},
     types::{Clause, Lit},
 };
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum Term {
@@ -42,7 +42,7 @@ impl Term {
 pub(super) fn compile_decisions_with_cache(
     decisions: &[SatEncodingDecision],
     instance: &mut SatInstance,
-    variables: &mut HashMap<Name, Lit>,
+    variables: &mut BTreeMap<Name, Lit>,
     cache: &mut EncodingCache,
 ) -> Result<(), SolverError> {
     let mut compiler = Compiler {
@@ -378,7 +378,7 @@ pub(super) fn compile_objective_terms(
     value: &crate::ast::sat_decision::SatIntegerView,
     minimise: bool,
     instance: &mut SatInstance,
-    variables: &mut HashMap<Name, Lit>,
+    variables: &mut BTreeMap<Name, Lit>,
     cache: &mut EncodingCache,
 ) -> Result<(i128, Vec<(Lit, usize)>), SolverError> {
     validate_pb_groups(&value.groups, value.terms.len())?;
@@ -457,7 +457,7 @@ enum WeightedEncoder {
 
 struct Compiler<'a> {
     instance: &'a mut SatInstance,
-    variables: &'a mut HashMap<Name, Lit>,
+    variables: &'a mut BTreeMap<Name, Lit>,
     cache: Option<&'a mut EncodingCache>,
 }
 impl Compiler<'_> {

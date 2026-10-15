@@ -1,5 +1,5 @@
 //! Retain native bound encoders while an objective improves.
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use rustsat::{
     encodings::pb::{
@@ -41,7 +41,7 @@ impl CompiledObjective {
     pub(super) fn new(
         decision: &SatEncodingDecision,
         instance: &mut SatInstance,
-        variables: &mut HashMap<Name, Lit>,
+        variables: &mut BTreeMap<Name, Lit>,
         cache: &mut EncodingCache,
     ) -> Result<Self, SolverError> {
         let SatEncodingDecision::Objective {
@@ -86,7 +86,7 @@ impl CompiledObjective {
         &mut self,
         solution: &Assignment,
         instance: &mut SatInstance,
-        variables: &mut HashMap<Name, Lit>,
+        variables: &mut BTreeMap<Name, Lit>,
         cache: &mut EncodingCache,
     ) -> Result<Vec<Lit>, SolverError> {
         let current: usize = self
