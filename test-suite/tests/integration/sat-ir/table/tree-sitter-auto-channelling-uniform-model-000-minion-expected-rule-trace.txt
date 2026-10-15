@@ -48,9 +48,9 @@ table(sequence(x,y), {sequence(0,0),sequence(3,3)})
 
 --
 
-(inside) <-> (table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)}))
+(inside) <-> (table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(7,0,7,0)}))
    ~~> iff_to_eq ([("Minion", 4400)])
-Reify(table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)}), inside)
+Reify(table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(7,0,7,0)}), inside)
 
 --
 
@@ -110,15 +110,15 @@ WatchedLiteral(__1,false)
 
 --
 
-table(sequence(0), {sequence(0),sequence(0)})
+table(sequence(0), {sequence(0)})
    ~~> flatten_table ([("Minion", 4050)])
-FlatTable([0], [[0], [0]], false)
+FlatTable([0], [[0]], false)
 
 --
 
-table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(3,-2,3,0),sequence(7,0,7,0)})
+table(sequence(x,y,x,0), {sequence(-2,0,-2,0),sequence(3,-2,3,0),sequence(7,0,7,0)})
    ~~> flatten_table ([("Minion", 4050)])
-FlatTable([x, y, x, 0], [[-2, 0, -2, 0], [3, -2, 3, 0], [3, -2, 3, 0], [7, 0, 7, 0]], false)
+FlatTable([x, y, x, 0], [[-2, 0, -2, 0], [3, -2, 3, 0], [7, 0, 7, 0]], false)
 
 --
 
@@ -154,11 +154,11 @@ findAux __1: bool
 
 such that
 
-Reify(FlatTable([x, y, x, 0], [[-2, 0, -2, 0], [3, -2, 3, 0], [3, -2, 3, 0], [7, 0, 7, 0]], false), inside),
+Reify(FlatTable([x, y, x, 0], [[-2, 0, -2, 0], [3, -2, 3, 0], [7, 0, 7, 0]], false), inside),
 Reify(WatchedLiteral(__1,false), notInside),
 Reify(FlatTable([b, c], [[0, 1], [1, 0]], false), booleanInside),
 WatchedLiteral(__0,false),
-FlatTable([0], [[0], [0]], false),
+FlatTable([0], [[0]], false),
 Reify(FlatTable([x, x], [[-2, 0], [0, 3]], false), __0),
 Reify(FlatTable([x, y], [[0, 0], [3, 3]], false), __1)
 
