@@ -24,24 +24,31 @@ use ustr::Ustr;
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
-use crate::ast::FuncAttr;
 use crate::ast::metadata::NO_HASH;
 use crate::bug;
 
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
+use super::collection_domains::{
+    SetOperation, SizeBounds, bounded_set, collection_size, distinct_size, min_known, mset_size,
+    set_operation_domain,
+};
 use super::comprehension::{Comprehension, ComprehensionQualifier};
 use super::declaration::DeclarationKind;
 use super::domains::HasDomain as _;
 use super::eval::{eval_constant, factorial_i32};
+use super::function_domains::{
+    defined_domain, function_size, image_set_domain, pre_image_domain, range_domain,
+    restricted_domain,
+};
 use super::pretty::{pretty_expression_domain_annotation, pretty_expression_type_annotation};
 use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::Field;
 use super::sat_encoding::SATIntEncoding;
 use super::{
-    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, JectivityAttr,
-    Literal, MSetAttr, Metadata, Model, Moo, Name, PartialityAttr, Range, Reference, RelAttr,
-    ReturnType, SetAttr, SymbolTable, SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
+    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
+    MSetAttr, Metadata, Model, Moo, Name, PartialityAttr, Range, Reference, RelAttr, ReturnType,
+    SetAttr, SymbolTable, SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
 };
 
 // Ensure that this type doesn't get too big
@@ -965,29 +972,11 @@ fn sum_domain_of_child(child: &Expression) -> Option<DomainPtr> {
     })
 }
 
-fn finite_mset_bounds(attrs: &MSetAttr<i32>, inner_len: i32) -> Option<((i32, i32), i32)> {
-    let min_size = attrs.size.low().copied().unwrap_or(0);
-    let max_from_size = attrs.size.high().copied();
-    let max_from_occurrence = attrs
-        .occurrence
-        .high()
-        .copied()
-        .and_then(|max| max.checked_mul(inner_len));
-    let max_size = match (max_from_size, max_from_occurrence) {
-        (Some(size), Some(occurrence)) => size.min(occurrence),
-        (Some(size), None) => size,
-        (None, Some(occurrence)) => occurrence,
-        (None, None) => return None,
-    };
-    let max_occurrence = attrs.occurrence.high().copied().unwrap_or(max_size);
-    Some(((min_size, max_size), max_occurrence))
-}
-
 /// The value-level union of two multisets adds their cardinalities and occurrence counts.
 ///
 /// [`Domain::union`] instead computes a common type envelope and intentionally drops collection
 /// attributes, so it is too weak for the domain of an `a union b` expression.
-fn selected_representation(expr: &Expression) -> Option<String> {
+pub(super) fn selected_representation(expr: &Expression) -> Option<String> {
     match expr {
         Expression::Atomic(_, Atom::Reference(reference)) => reference
             .repr
@@ -1010,25 +999,48 @@ fn selected_representation(expr: &Expression) -> Option<String> {
 fn mset_union_result_domain(lhs: &Expression, rhs: &Expression) -> Option<DomainPtr> {
     let lhs_selected = selected_representation(lhs);
     let rhs_selected = selected_representation(rhs);
-    let lhs = lhs.domain_of()?.resolve().ok()?;
-    let rhs = rhs.domain_of()?.resolve().ok()?;
-    let GroundDomain::MSet(lhs_attrs, lhs_inner) = lhs.as_ref() else {
-        return None;
+    let (lhs_attrs, lhs_inner) = lhs.domain_of()?.as_mset()?;
+    let (rhs_attrs, rhs_inner) = rhs.domain_of()?.as_mset()?;
+    let lhs_size = mset_size(&lhs_attrs, &lhs_inner);
+    let rhs_size = mset_size(&rhs_attrs, &rhs_inner);
+    if lhs_size.range().is_none() || rhs_size.range().is_none() {
+        return Some(Domain::empty(ReturnType::MSet(Box::new(
+            lhs_inner.return_type(),
+        ))));
+    }
+    let inner = if lhs_size.high == Some(0) {
+        rhs_inner
+    } else if rhs_size.high == Some(0) {
+        lhs_inner
+    } else {
+        lhs_inner.union(&rhs_inner).ok()?
     };
-    let GroundDomain::MSet(rhs_attrs, rhs_inner) = rhs.as_ref() else {
-        return None;
+    let size = SizeBounds::new(
+        lhs_size.low.checked_add(rhs_size.low)?,
+        lhs_size
+            .high
+            .zip(rhs_size.high)
+            .and_then(|(a, b)| a.checked_add(b)),
+    )
+    .range()?;
+    let lhs_occurrence = min_known(
+        SizeBounds::from_size(&lhs_attrs.occurrence).high,
+        lhs_size.high,
+    );
+    let rhs_occurrence = min_known(
+        SizeBounds::from_size(&rhs_attrs.occurrence).high,
+        rhs_size.high,
+    );
+    let max_occurrence = lhs_occurrence
+        .zip(rhs_occurrence)
+        .and_then(|(a, b)| a.checked_add(b));
+    let occurrence = SizeBounds::new(0, max_occurrence).range()?;
+    // minOccur applies only to present values, including the empty multiset vacuously.
+    let occurrence = if max_occurrence == Some(0) {
+        occurrence
+    } else {
+        Range::new(Some(1), occurrence.high().copied())
     };
-
-    let lhs_len = i32::try_from(lhs_inner.length().ok()?).ok()?;
-    let rhs_len = i32::try_from(rhs_inner.length().ok()?).ok()?;
-    let ((lhs_min, lhs_max), lhs_max_occurrence) = finite_mset_bounds(lhs_attrs, lhs_len)?;
-    let ((rhs_min, rhs_max), rhs_max_occurrence) = finite_mset_bounds(rhs_attrs, rhs_len)?;
-
-    let min_size = lhs_min.checked_add(rhs_min)?;
-    let max_size = lhs_max.checked_add(rhs_max)?;
-    let max_occurrence = lhs_max_occurrence.checked_add(rhs_max_occurrence)?;
-    let size = Range::new(Some(min_size), Some(max_size));
-    let occurrence = Range::new(Some(1), Some(max_occurrence));
     let representation = match (
         lhs_selected
             .as_deref()
@@ -1041,11 +1053,10 @@ fn mset_union_result_domain(lhs: &Expression, rhs: &Expression) -> Option<Domain
         (Some(preference), None) | (None, Some(preference)) => Some(preference.to_owned()),
         _ => None,
     };
-    let inner = lhs_inner.union(rhs_inner).ok()?;
 
     let mut attrs = MSetAttr::new(size, occurrence);
     attrs.representation = representation;
-    Some(Domain::mset(attrs, DomainPtr::from(inner)))
+    Some(Domain::mset(attrs, inner))
 }
 
 impl Expression {
@@ -1070,11 +1081,13 @@ impl Expression {
             Expression::Union(_, a, b) => {
                 let lhs = a.domain_of()?;
                 let rhs = b.domain_of()?;
-                mset_union_result_domain(a, b).or_else(|| lhs.union(&rhs).ok())
+                set_operation_domain(a, b, SetOperation::Union)
+                    .or_else(|| mset_union_result_domain(a, b))
+                    .or_else(|| lhs.union(&rhs).ok())
             }
-            Expression::Intersect(_, a, b) => a.domain_of()?.intersect(&b.domain_of()?).ok(),
-            // Removing elements can only shrink the left operand, never widen it.
-            Expression::Difference(_, a, _) => a.domain_of(),
+            Expression::Intersect(_, a, b) => set_operation_domain(a, b, SetOperation::Intersect)
+                .or_else(|| a.domain_of()?.intersect(&b.domain_of()?).ok()),
+            Expression::Difference(_, a, b) => set_operation_domain(a, b, SetOperation::Difference),
             Expression::In(_, _, _) => Some(Domain::bool()),
             Expression::Supset(_, _, _) => Some(Domain::bool()),
             Expression::SupsetEq(_, _, _) => Some(Domain::bool()),
@@ -1468,7 +1481,7 @@ impl Expression {
                 } else if matches!(a_resolved.as_ref(), GroundDomain::Set(_, _))
                     && matches!(b_resolved.as_ref(), GroundDomain::Set(_, _))
                 {
-                    Some(DomainPtr::from(a_resolved))
+                    set_operation_domain(a, b, SetOperation::Difference)
                 } else {
                     None
                 }
@@ -1508,224 +1521,19 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve().ok()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
-            Expression::Defined(_, function) => {
-                let (attrs, domain, codomain) = function.domain_of()?.as_function()?;
-                let size = Self::function_elements_size(attrs, &domain, &codomain);
-                if let Some(size) = size {
-                    Some(Domain::set(SetAttr::new(size), domain))
-                } else {
-                    Some(Domain::empty(ReturnType::Set(Box::new(
-                        domain.return_type(),
-                    ))))
-                }
-            }
-            Expression::Range(_, function) => {
-                let (attrs, domain, codomain) = function.domain_of()?.as_function()?;
-                let jectivity = attrs.resolve().ok()?.jectivity;
-
-                let size_size = attrs.resolve().ok()?.size;
-                let size_size = match size_size {
-                    Range::Unbounded => Range::UnboundedR(0),
-                    // If lower bound we can guarantee one mapping (unless size = 0)
-                    Range::Single(x) => match jectivity {
-                        JectivityAttr::Injective | JectivityAttr::Surjective => Range::Single(x),
-                        _ => Range::Bounded(Ord::min(1, x), x),
-                    },
-                    // Upper bound guarantees the same upper bound
-                    Range::UnboundedL(x) => Range::Bounded(0, x),
-                    // If not bounded by 0 can guarantee min 1
-                    Range::UnboundedR(x) => match jectivity {
-                        JectivityAttr::Injective | JectivityAttr::Surjective => {
-                            Range::UnboundedR(x)
-                        }
-                        _ => Range::UnboundedR(Ord::min(1, x)),
-                    },
-                    Range::Bounded(x, y) => Range::Bounded(Ord::min(1, x), y),
-                };
-
-                // Gets the size imposed by the partiality and jectivity attributes
-                let partiality = attrs.resolve().ok()?.partiality;
-                let codomain_length = codomain.length_signed();
-                let attr_size = match jectivity {
-                    // Bijective and surjective functions must have every element in the codomain mapped to
-                    JectivityAttr::Bijective | JectivityAttr::Surjective => match codomain_length {
-                        Ok(co_len) => Some(Range::Single(co_len)),
-                        Err(_) => None,
-                    },
-                    JectivityAttr::Injective => {
-                        let domain_length = domain.length_signed();
-                        match domain_length {
-                            Ok(len) => match codomain_length {
-                                Ok(co_len) => match partiality {
-                                    // When its injective we can guarantee 1 to 1, so the maximum domain length is a single bound
-                                    PartialityAttr::Total => {
-                                        Some(Range::Single(Ord::min(len, co_len)))
-                                    }
-                                    PartialityAttr::Partial => {
-                                        Some(Range::Bounded(0, Ord::min(len, co_len)))
-                                    }
-                                },
-                                Err(_) => None,
-                            },
-                            Err(_) => None,
-                        }
-                    }
-                    JectivityAttr::None => {
-                        let domain_length = domain.length_signed();
-                        match domain_length {
-                            // This is the general case, where we know there cannot be more codomain elements mapped to that domain elements
-                            Ok(len) => Some(Range::Bounded(0, len)),
-                            Err(_) => None,
-                        }
-                    }
-                };
-
-                let size = match attr_size {
-                    Some(attr_size) => {
-                        let unsafe_range = Range::minimal(&[size_size, attr_size]);
-                        match unsafe_range {
-                            Ok(range) => range,
-                            Err(_) => {
-                                return Some(Domain::empty(ReturnType::Set(Box::new(
-                                    domain.return_type(),
-                                ))));
-                            }
-                        }
-                    }
-                    None => size_size,
-                };
-                Some(Domain::set(SetAttr::new(size), codomain))
-            }
+            Expression::Defined(_, function) => defined_domain(function),
+            Expression::Range(_, function) => range_domain(function),
             Expression::Image(_, function, _) => get_function_codomain(function),
             Expression::PermInverse(_, perm) => perm.domain_of(),
             Expression::Compose(_, g, _h) => g.domain_of(),
-            Expression::ImageSet(_, function, _) => {
-                let codomain = get_function_codomain(function);
-                // An imageSet is the converted to a set, and can be empty
-                codomain.map(|inner_dom| Domain::set(SetAttr::new(Range::Bounded(0, 1)), inner_dom))
-            }
-            Expression::PreImage(_, function, _) => {
-                let (attrs, domain, codomain) = function.domain_of()?.as_function()?;
-
-                let size_size = attrs.resolve().ok()?.size;
-                let size_size = match size_size {
-                    // Our only guarantee is an upper bound is the same
-                    Range::Unbounded => Range::UnboundedR(0),
-                    Range::Single(x) => Range::Bounded(0, x),
-                    Range::UnboundedL(x) => Range::Bounded(0, x),
-                    Range::UnboundedR(_) => Range::UnboundedR(0),
-                    Range::Bounded(_, y) => Range::Bounded(0, y),
-                };
-
-                let jectivity = attrs.resolve().ok()?.jectivity;
-                let codomain_length = codomain.length_signed();
-                let attr_size = match jectivity {
-                    // When there is 1-to-1 mapping we can guarantee no more than 1 occurrence
-                    JectivityAttr::Bijective => Some(Range::Single(1)),
-                    JectivityAttr::Injective => match size_size {
-                        Range::Single(x) | Range::UnboundedL(x) | Range::Bounded(x, _) => {
-                            match codomain_length {
-                                Ok(co_len) => {
-                                    if x >= co_len {
-                                        Some(Range::Single(1))
-                                    } else {
-                                        Some(Range::Bounded(0, 1))
-                                    }
-                                }
-                                Err(_) => Some(Range::Bounded(0, 1)),
-                            }
-                        }
-                        _ => Some(Range::Bounded(0, 1)),
-                    },
-                    JectivityAttr::Surjective => {
-                        let domain_length = domain.length_signed();
-                        match domain_length {
-                            Ok(len) => match codomain_length {
-                                // We know the element is mapped but not how many times
-                                // Every element must be mapped so it cannot be every element of domain
-                                Ok(co_len) => match size_size {
-                                    Range::Bounded(_, x)
-                                    | Range::UnboundedL(x)
-                                    | Range::Single(x) => Some(Range::Bounded(
-                                        1,
-                                        Ord::max(Ord::min(len, x) - co_len + 1, 0),
-                                    )),
-                                    _ => Some(Range::Bounded(1, Ord::max(len - co_len + 1, 0))),
-                                },
-                                Err(_) => Some(Range::UnboundedR(1)),
-                            },
-                            Err(_) => Some(Range::UnboundedR(1)),
-                        }
-                    }
-                    JectivityAttr::None => {
-                        let domain_length = domain.length_signed();
-                        match domain_length {
-                            Ok(len) => Some(Range::Bounded(0, len)),
-                            Err(_) => Some(Range::UnboundedR(0)),
-                        }
-                    }
-                };
-
-                let size = match attr_size {
-                    Some(attr_size) => {
-                        let unsafe_range = Range::minimal(&[size_size, attr_size]);
-                        match unsafe_range {
-                            Ok(range) => range,
-                            Err(_) => {
-                                return Some(Domain::empty(ReturnType::Set(Box::new(
-                                    domain.return_type(),
-                                ))));
-                            }
-                        }
-                    }
-                    None => size_size,
-                };
-                Some(Domain::set(SetAttr::new(size), domain))
-            }
+            Expression::ImageSet(_, function, argument) => image_set_domain(function, argument)
+                .or_else(|| {
+                    get_function_codomain(function)
+                        .map(|inner| Domain::set(SetAttr::new(Range::Bounded(0, 1)), inner))
+                }),
+            Expression::PreImage(_, function, image) => pre_image_domain(function, image),
             Expression::Restrict(_, function, new_domain) => {
-                let mut domain = function.domain_of()?;
-                let (attrs_mut, dom, codom_mut) = domain.as_function_mut()?;
-
-                // Stops other references being mutable
-                let attrs: &FuncAttr<IntVal> = attrs_mut;
-                let codom: &Moo<Domain> = codom_mut;
-
-                // Gets the minimal range between the old domain and new domain
-                let mut new_dom = new_domain.domain_of()?;
-                // If domains cannot be resolved we just stick to the restricted one
-                if let Some(new_rng) = new_dom.as_int_ground_mut()
-                    && let Some(old_rng) = dom.as_int_ground_mut()
-                {
-                    new_rng.append(old_rng);
-                    if let Ok(rng) = Range::minimal(new_rng) {
-                        let ranges = vec![rng];
-                        new_dom = Domain::int(ranges);
-                    }
-                }
-                let attr_size = attrs.resolve().ok()?.size;
-                let new_size = match new_dom.length_signed() {
-                    // Combines current size attributes with length of new domain
-                    Ok(len) => match Range::minimal(&[attr_size, Range::Bounded(0, len)]) {
-                        Ok(size) => size,
-                        Err(_) => {
-                            // Means the restriction is impossible
-                            return Some(Domain::empty(ReturnType::Function(
-                                Box::new(new_dom.return_type()),
-                                Box::new(codom.return_type()),
-                            )));
-                        }
-                    },
-                    Err(_) => attr_size,
-                };
-                let jectivity = attrs.jectivity.clone();
-                let partiality = attrs.partiality.clone();
-                let new_attrs = FuncAttr {
-                    size: new_size,
-                    jectivity,
-                    partiality,
-                    representation: attrs.representation.clone(),
-                };
-                Some(Domain::function(new_attrs, new_dom, codom.clone()))
+                restricted_domain(function, new_domain)
             }
             Expression::Subsequence(_, _, _) => Some(Domain::bool()),
             Expression::Substring(_, _, _) => Some(Domain::bool()),
@@ -1740,34 +1548,30 @@ impl Expression {
             Expression::Active(..) => Some(Domain::bool()),
             Expression::ToSet(_, other) => {
                 if let Some((attrs, dom, codom)) = other.domain_of()?.as_function() {
-                    let set_attrs = SetAttr::new(attrs.size);
-                    Some(Domain::set(set_attrs, Domain::tuple(vec![dom, codom])))
-                } else if let Some((attrs, doms)) = other.domain_of()?.as_relation() {
-                    let set_attrs = SetAttr::new(attrs.size);
-                    Some(Domain::set(set_attrs, Domain::tuple(doms)))
+                    Some(bounded_set(
+                        function_size(&attrs, &dom, &codom),
+                        Domain::tuple(vec![dom, codom]),
+                    ))
+                } else if let Some((_, doms)) = other.domain_of()?.as_relation() {
+                    let size = collection_size(&other.domain_of()?)?;
+                    Some(bounded_set(size, Domain::tuple(doms)))
                 } else if let Some((attrs, dom)) = other.domain_of()?.as_mset() {
-                    let set_attrs = SetAttr::new(attrs.size);
-                    Some(Domain::set(set_attrs, dom))
-                } else if let Some((dom, dimensions)) = other.domain_of()?.as_matrix() {
-                    // We combine all matrix domains into a tuple
-                    let mut doms = vec![];
-                    for _ in dimensions {
-                        doms.push(dom.clone());
+                    let size = mset_size(&attrs, &dom);
+                    let occurrence = SizeBounds::from_size(&attrs.occurrence);
+                    if size.range().is_none() || occurrence.range().is_none() {
+                        return Some(Domain::empty(ReturnType::Set(Box::new(dom.return_type()))));
                     }
-                    let doms_sizes: Result<Vec<i32>, _> =
-                        doms.iter().map(|x| x.length_signed()).collect();
-                    let attr = match doms_sizes {
-                        Ok(vals) => {
-                            if let Some(&size) = vals.iter().min() {
-                                SetAttr::new(Range::Single(size))
-                            } else {
-                                SetAttr::<i32>::default()
-                            }
-                        }
-                        // We do not know the ground dimensions yet so default is chosen
-                        Err(_) => SetAttr::<i32>::default(),
-                    };
-                    Some(Domain::set(attr, Domain::tuple(doms)))
+                    Some(bounded_set(distinct_size(size, occurrence), dom))
+                } else if let Some((dom, dimensions)) = other.domain_of()?.as_matrix() {
+                    // toSet consumes a list; higher-rank matrices need explicit flattening.
+                    if dimensions.len() != 1 {
+                        return None;
+                    }
+                    let size = collection_size(&other.domain_of()?)?;
+                    Some(bounded_set(
+                        distinct_size(size, SizeBounds::new(1, None)),
+                        dom,
+                    ))
                 } else {
                     bug!(
                         "Domain of {self} needed to be a function, relation, mset, or matrix for ToSet"
@@ -1777,7 +1581,7 @@ impl Expression {
             Expression::ToMSet(_, other) => {
                 if let Some((attrs, dom, codom)) = other.domain_of()?.as_function() {
                     let set_attrs = MSetAttr {
-                        size: attrs.size,
+                        size: function_size(&attrs, &dom, &codom).range()?.into(),
                         occurrence: Range::Single(IntVal::Const(1)),
                         representation: None,
                     };
@@ -1804,7 +1608,7 @@ impl Expression {
                 let (attrs, domain, codomain) = function.domain_of()?.as_function()?;
                 // Function attributes apply to the relation
                 let rel_attrs = RelAttr {
-                    size: attrs.size,
+                    size: function_size(&attrs, &domain, &codomain).range()?,
                     binary: vec![],
                     // The function's layout does not say how its relation view is laid out.
                     representation: None,
@@ -1891,78 +1695,18 @@ impl Expression {
             }
             Expression::Card(_, collection) => {
                 let domain = collection.domain_of()?;
-                if let Some((_, dimensions)) = domain.as_matrix() {
-                    let doms_ground: Result<Vec<i32>, _> =
-                        dimensions.iter().map(|x| x.length_signed()).collect();
-                    if let Ok(doms_ground) = doms_ground {
-                        let size: Range<i32> = Range::Single(doms_ground.iter().product());
-                        Some(Domain::int(vec![size]))
-                    } else {
-                        Some(Domain::int(vec![Range::<i32>::Unbounded]))
-                    }
-                } else if let Some((attr, dom)) = domain.as_set() {
-                    let attr_size = attr.resolve().ok()?.size;
-                    if let Ok(length) = dom.length_signed() {
-                        let unsafe_range = Range::minimal(&[attr_size, Range::Bounded(0, length)]);
-                        return match unsafe_range {
-                            Ok(range) => Some(Domain::int(vec![range])),
-                            Err(_) => None,
-                        };
-                    }
-                    // If the domain is not known we just need to go off of attributes
-                    Some(Domain::int(vec![attr_size]))
-                } else if let Some((attrs, dom)) = domain.as_mset() {
-                    let attrs_gd = attrs.resolve().ok()?;
-                    // Gets maximum value of the occurrence
-                    let attr_occ = match attrs_gd.occurrence {
-                        Range::Single(x) => Some(x),
-                        Range::Unbounded | Range::UnboundedR(_) => None,
-                        Range::Bounded(_, x) => Some(x),
-                        Range::UnboundedL(x) => Some(x),
-                    };
-                    if let Some(occ) = attr_occ {
-                        if let Ok(length) = dom.length_signed() {
-                            let unsafe_range =
-                                Range::minimal(&[attrs_gd.size, Range::Bounded(0, length * occ)]);
-                            match unsafe_range {
-                                Ok(range) => Some(Domain::int(vec![range])),
-                                Err(_) => None,
-                            }
-                        } else {
-                            // If the domain is not known we just need to go off of attributes
-                            Some(Domain::int(vec![attrs_gd.size]))
-                        }
-                    } else {
-                        // If no occurrence is provided then it must have bounded size
-                        Some(Domain::int(vec![attrs_gd.size]))
-                    }
-                } else if let Some((attrs, doms)) = domain.as_relation() {
-                    // TODO: Further inference may be possible using the binary attributes
-
-                    let attrs_gd = attrs.resolve().ok()?;
-                    // See if all domains are ground
-                    let doms_sizes: Result<Vec<i32>, _> =
-                        doms.iter().map(|x| x.length_signed()).collect();
-                    if let Ok(doms_sizes) = doms_sizes {
-                        let length = Range::Bounded(0, doms_sizes.iter().product());
-                        // Combine the attributes and the domain possibilities
-                        let unsafe_range = Range::minimal(&[attrs_gd.size, length]);
-                        return match unsafe_range {
-                            Ok(range) => Some(Domain::int(vec![range])),
-                            Err(_) => None,
-                        };
-                    }
-                    // If the domain is not known we just need to go off of attributes
-                    Some(Domain::int(vec![attrs_gd.size]))
+                if matches!(domain.as_ground(), Some(GroundDomain::Empty(_))) {
+                    Some(Domain::empty(ReturnType::Int))
+                } else if let Some(bounds) = collection_size(&domain) {
+                    Some(match bounds.range() {
+                        Some(size) => Domain::int(vec![size]),
+                        None => Domain::empty(ReturnType::Int),
+                    })
                 } else if let Some((attrs, dom, codom)) = domain.as_function() {
-                    let size = Self::function_elements_size(attrs, &dom, &codom);
-                    size.map(|size| Domain::int(vec![size]))
-                } else if let Some((attrs, _dom)) = domain.as_sequence() {
-                    // Unlike a set/mset, a sequence's length is not bounded by its inner
-                    // domain's size (repeated elements are allowed), so the attribute's own
-                    // size range is already the tightest bound available here.
-                    let attrs_gd = attrs.resolve().ok()?;
-                    Some(Domain::int(vec![attrs_gd.size]))
+                    Some(match function_size(&attrs, &dom, &codom).range() {
+                        Some(size) => Domain::int(vec![size]),
+                        None => Domain::empty(ReturnType::Int),
+                    })
                 } else if let Some((_attrs, inner)) = domain.as_partition() {
                     // A partition always covers its whole "from" domain exactly (parts are
                     // disjoint and total), so |p| (== |participants(p)|, per the `partition-card`
@@ -1978,50 +1722,6 @@ impl Expression {
                     )
                 }
             }
-        }
-    }
-
-    // Gets the number of domain elements mapped in a function. This is the cardinality and also the defined
-    fn function_elements_size(
-        attrs: FuncAttr<IntVal>,
-        domain: &DomainPtr,
-        codomain: &DomainPtr,
-    ) -> Option<Range> {
-        let attrs_gd = attrs.resolve().ok()?;
-        let domain_length = domain.length_signed();
-        // We can only infer if the domain is ground and the length is known
-        let attr_size = match domain_length {
-            Ok(len) => match attrs_gd.partiality {
-                PartialityAttr::Total => Some(Range::Single(len)),
-                PartialityAttr::Partial => {
-                    // When partial we also need the codomain to be ground and known
-                    let codomain_length = codomain.length_signed();
-                    match codomain_length {
-                        Ok(co_len) => match attrs_gd.jectivity {
-                            JectivityAttr::Bijective => Some(Range::Single(co_len)),
-                            JectivityAttr::Surjective => Some(Range::Bounded(co_len, len)),
-                            JectivityAttr::Injective => {
-                                Some(Range::Bounded(0, Ord::min(len, co_len)))
-                            }
-                            JectivityAttr::None => Some(Range::Bounded(0, len)),
-                        },
-                        Err(_) => None,
-                    }
-                }
-            },
-            Err(_) => None,
-        };
-        // We combine the sizes:
-        // attrs_gd.size relates to size constraints imposed by the size attributes of the function
-        // attr_size relates to size constraints imposed by the jectivity and partiality attributes.
-        //       This uses inference from the domain and codomain lengths.
-        // If the attributes clash the function is unsolveable, and an empty domain is returned
-        match attr_size {
-            Some(attr_size) => {
-                let unsafe_range = Range::minimal(&[attrs_gd.size, attr_size]);
-                unsafe_range.ok()
-            }
-            None => Some(attrs_gd.size),
         }
     }
 

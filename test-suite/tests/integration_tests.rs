@@ -68,6 +68,10 @@ use test_suite::test_config::{
     upsert_tool_status_stats,
 };
 
+#[path = "support/solution_snapshots.rs"]
+mod solution_snapshots;
+use solution_snapshots::{SharedSolutionSnapshot, render_shared_solutions};
+
 const DISABLE_TRACING_ENV: &str = "CONJURE_OXIDE_TEST_DISABLE_TRACING";
 
 #[derive(Clone, Copy, Debug)]
@@ -423,16 +427,21 @@ fn integration_test_inner_with_status(
     let accept = accept_mode.accepts_outputs();
     let started_at = Instant::now();
 
-    if accept {
-        clean_test_dir_for_accept(path, essence_base, extension)?;
-    }
-
     let file_config: TestConfig =
         if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
             toml::from_str(&config_contents).unwrap()
         } else {
             Default::default()
         };
+
+    if accept {
+        clean_test_dir_for_accept(
+            path,
+            essence_base,
+            extension,
+            file_config.uses_shared_solution_snapshot(),
+        )?;
+    }
 
     let run_stats = read_stats_or_default(&stats_path(Path::new(path)))?;
     if accept {
@@ -515,6 +524,12 @@ fn integration_test_inner_with_status(
     let conjure_timings = conjure_solutions.and_then(|(_, timings)| timings);
     let mut allowed_expected_files = BTreeSet::new();
     let mut reference_solutions = None;
+    let shared_solutions_enabled = config.uses_shared_solution_snapshot();
+    let shared_expected_name = format!("{essence_base}.expected.solutions");
+    if shared_solutions_enabled {
+        allowed_expected_files.insert(shared_expected_name.clone());
+    }
+    let mut shared_solutions = SharedSolutionSnapshot::default();
 
     let mut first_config_error = None;
     for comprehension_expander in comprehension_expanders {
@@ -596,6 +611,8 @@ fn integration_test_inner_with_status(
                                             run_case.case_name,
                                             solver,
                                             configured_trace_level,
+                                            solver_solution_limit.is_some()
+                                                && !shared_solutions_enabled,
                                         ),
                                     );
                                     let mut row = model_run_identity(
@@ -618,6 +635,8 @@ fn integration_test_inner_with_status(
                                         rule_trace_aggregates_enabled
                                             .then_some(&config_rule_counts),
                                         &mut row,
+                                        shared_solutions_enabled,
+                                        &mut shared_solutions,
                                     );
                                     let outcome = match result {
                                         Ok(outcome) => outcome,
@@ -728,8 +747,13 @@ fn integration_test_inner_with_status(
     let oxide_result = if let Some(err) = first_config_error {
         Err(err)
     } else {
-        assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)
-            .map_err(|err| -> Box<dyn Error> { Box::new(err) })
+        (|| -> Result<(), Box<dyn Error>> {
+            assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
+            if !accept {
+                shared_solutions.finish(&Path::new(path).join(&shared_expected_name), false)?;
+            }
+            Ok(())
+        })()
     };
 
     if let Err(err) = &oxide_result {
@@ -770,6 +794,10 @@ fn integration_test_inner_with_status(
                 conjure_solve_time: conjure_timings.solve_time_s,
             },
         )?;
+    }
+
+    if accept {
+        shared_solutions.finish(&Path::new(path).join(&shared_expected_name), true)?;
     }
 
     Ok(())
@@ -824,6 +852,8 @@ fn execute_integration_run(
     rule_trace_snapshots_enabled: bool,
     rule_counts: Option<&RuleApplicationCounter>,
     model_stats: &mut RecordedModelRunStats,
+    shared_solutions_enabled: bool,
+    shared_solutions: &mut SharedSolutionSnapshot,
 ) -> Result<RunOutcome, Box<dyn Error>> {
     let run_label = run_case_label(path, essence_base, extension, run_case);
     let default_rule_trace_enabled = matches!(run_case.rewriter, Rewriter::Rewrite(_));
@@ -844,6 +874,8 @@ fn execute_integration_run(
             accept,
             rule_trace_snapshots_enabled,
             model_stats,
+            shared_solutions_enabled,
+            shared_solutions,
         )
     };
     let result = if rule_trace_snapshots_enabled {
@@ -904,6 +936,8 @@ fn integration_test_inner(
     accept: bool,
     rule_trace_snapshots_enabled: bool,
     model_stats: &mut RecordedModelRunStats,
+    shared_solutions_enabled: bool,
+    shared_solutions: &mut SharedSolutionSnapshot,
 ) -> Result<RunOutcome, Box<dyn Error>> {
     let parser = run_case.parser;
     let rewriter = run_case.rewriter;
@@ -1028,11 +1062,17 @@ fn integration_test_inner(
         }
     }
 
-    // When accept mode is enabled, copy all generated files to expected
+    // Shared complete searches publish a single golden after every configuration succeeds.
+    if shared_solutions_enabled && let Some(solutions) = &solutions {
+        shared_solutions.record(
+            &format!("{case_name}-{}", solver_fam.as_str()),
+            render_shared_solutions(solutions),
+        )?;
+    }
+
+    // Limited searches retain their per-run snapshots.
     if accept {
-        // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
-        // based on the test results, so they don't get done later.
-        if solutions.is_some() {
+        if solutions.is_some() && !shared_solutions_enabled {
             let solver_name = solver_fam.as_str();
             fs::copy(
                 format!("{path}/{case_name}-{solver_name}.generated.solutions"),
@@ -1046,7 +1086,7 @@ fn integration_test_inner(
 
     // Check Stage 3a (solutions). Compare the Essence artefacts as written — do not re-render
     // through `normalize_solutions_for_comparison`, which blanks matrix index domains.
-    if solutions.is_some() {
+    if solutions.is_some() && !shared_solutions_enabled {
         let expected_solutions = read_solutions_essence(path, case_name, "expected", solver_fam)?;
         let generated_solutions = read_solutions_essence(path, case_name, "generated", solver_fam)?;
 
@@ -1322,9 +1362,13 @@ fn expected_integration_files_for_case(
     case_name: &str,
     solver: SolverFamily,
     trace_level: TraceLevel,
+    per_run_solutions: bool,
 ) -> BTreeSet<String> {
     let solver_name = solver.as_str();
-    let mut files = BTreeSet::from([format!("{case_name}-{solver_name}.expected.solutions")]);
+    let mut files = BTreeSet::new();
+    if per_run_solutions {
+        files.insert(format!("{case_name}-{solver_name}.expected.solutions"));
+    }
     if trace_level == TraceLevel::Full {
         files.insert(format!("{case_name}-{solver_name}-expected-rule-trace.txt"));
     }
@@ -1421,6 +1465,7 @@ fn clean_test_dir_for_accept(
     path: &str,
     essence_base: &str,
     extension: &str,
+    preserve_shared_solutions: bool,
 ) -> Result<(), std::io::Error> {
     let input_filename = format!("{essence_base}.{extension}");
 
@@ -1432,6 +1477,9 @@ fn clean_test_dir_for_accept(
 
         if file_name == input_filename
             || file_name == "config.toml"
+            // Preserve the shared golden until all configurations pass acceptance.
+            || (preserve_shared_solutions
+                && file_name == format!("{essence_base}.expected.solutions"))
             || file_name == "stats.toml"
             || file_name == DIAGNOSTICS_DIR
             || file_name == "input.param.json"

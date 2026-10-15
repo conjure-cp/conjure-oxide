@@ -6,6 +6,9 @@ use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 use ustr::Ustr;
 
+use super::collection_domains::{SizeBounds, bounded_set};
+use super::eval::eval_constant;
+
 use super::{
     Atom, Domain, DomainPtr, Expression, GroundDomain, Moo, PartitionAttr, PermutationAttr, Range,
     ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int, records::Field,
@@ -282,6 +285,12 @@ impl AbstractLiteral<Expression> {
     pub fn domain_of(&self) -> Option<DomainPtr> {
         match self {
             AbstractLiteral::Set(items) => {
+                if items.is_empty() {
+                    return Some(Domain::set(
+                        SetAttr::new_size(0),
+                        Domain::empty(ReturnType::Unknown),
+                    ));
+                }
                 // ensure that all items have a domain, or return None
                 let item_domains: Vec<DomainPtr> = items
                     .iter()
@@ -291,10 +300,25 @@ impl AbstractLiteral<Expression> {
                 // union all item domains together
                 let item_domain = union_item_domains(item_domains, "set")?;
 
-                Some(Domain::set(SetAttr::<Int>::default(), item_domain))
+                let values = items.iter().map(eval_constant).collect::<Option<Vec<_>>>();
+                let high = i64::try_from(items.len()).ok()?;
+                let bounds = match values {
+                    Some(values) => {
+                        let n = i64::try_from(distinct_literal_count(&values)).ok()?;
+                        SizeBounds::new(n, Some(n))
+                    }
+                    None => SizeBounds::new(1, Some(high)),
+                };
+                Some(bounded_set(bounds, item_domain))
             }
 
             AbstractLiteral::MSet(items) => {
+                if items.is_empty() {
+                    return Some(Domain::mset(
+                        MSetAttr::new(Range::Single(0), Range::Single(0)),
+                        Domain::empty(ReturnType::Unknown),
+                    ));
+                }
                 let cardinality = i32::try_from(items.len()).ok()?;
                 // ensure that all items have a domain, or return None
                 let item_domains: Vec<DomainPtr> = items
@@ -439,10 +463,36 @@ impl AbstractLiteral<Expression> {
     }
 }
 
+pub(super) fn distinct_literal_count(items: &[Literal]) -> usize {
+    let mut sorted = items.iter().collect::<Vec<_>>();
+    sorted.sort_by(|a, b| a.essence_cmp(b));
+    sorted.dedup_by(|a, b| a.essence_cmp(b).is_eq());
+    sorted.len()
+}
+
 impl HasDomain for AbstractLiteral<Literal> {
     fn domain_of(&self) -> DomainPtr {
-        Domain::from_literal_vec(&[Literal::AbstractLiteral(self.clone())])
-            .expect("abstract literals should be correctly typed")
+        let domain = Domain::from_literal_vec(&[Literal::AbstractLiteral(self.clone())])
+            .expect("abstract literals should be correctly typed");
+        match self {
+            AbstractLiteral::Set(items) => {
+                let (_, inner) = domain.as_set().expect("set literal domain");
+                let n =
+                    i64::try_from(distinct_literal_count(items)).expect("literal fits in memory");
+                bounded_set(SizeBounds::new(n, Some(n)), inner)
+            }
+            AbstractLiteral::MSet(items) => {
+                let (_, inner) = domain.as_mset().expect("multiset literal domain");
+                let n = i32::try_from(items.len()).expect("literal cardinality fits i32");
+                let occurrence = if n == 0 {
+                    Range::Single(0)
+                } else {
+                    Range::Bounded(1, n)
+                };
+                Domain::mset(MSetAttr::new(Range::Single(n), occurrence), inner)
+            }
+            _ => domain,
+        }
     }
 }
 

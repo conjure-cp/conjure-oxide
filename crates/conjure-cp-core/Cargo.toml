@@ -4,7 +4,7 @@ version = "0.0.1"
 edition = "2024"
 
 [features]
-default = ["sat-cadical", "z3"]
+default = ["sat-batsat", "sat-cadical", "z3"]
 sat-cadical = ["dep:rustsat-cadical"]
 sat-batsat = ["dep:rustsat-batsat"]
 z3 = ["dep:z3"]
@@ -64,3 +64,8 @@ conjure-cp = { path = "../conjure-cp", default-features = false }
 
 [lints]
 workspace = true
+
+[package.metadata.cargo-shear]
+# EnumIter and EnumString generate references to strum that source analysis cannot see.
+# Quine generates references to syn.
+ignored = ["strum", "syn"]

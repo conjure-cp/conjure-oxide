@@ -76,24 +76,35 @@ compile but return an operating-system error in a browser.
 
 ## Library backend features
 
-Minion remains available unconditionally. SAT is also always available in a
-successful library build: select exactly one backend at compile time, `sat-cadical` or `sat-batsat`.
-Native defaults select CaDiCaL and enable Z3. To select BatSat, disable defaults
-and enable `sat-batsat` on `conjure-cp` / `conjure-cp-rules`. Re-enable `z3`
-explicitly if needed on native builds. Selecting neither or both SAT features is
-a compile error; consequently `--all-features` is not a supported configuration.
+Minion remains available unconditionally. SAT requires at least one compiled
+backend: `sat-cadical` or `sat-batsat`. Native defaults include both and enable
+Z3. `Sat::default()` selects CaDiCaL when available, otherwise BatSat;
+`Sat::new(SatBackend::Batsat)` selects a backend explicitly.
 
-Wasm requires `sat-batsat`. CaDiCaL is a native-only dependency. Cargo features
-are additive, so dependencies must agree on the target backend. Parser features
-forward the same choice. Procedural macros run on the host and use the parser's
-native default backend independently of the Wasm target's selection.
+The CLI selects the backend at runtime:
 
-The common `Sat` adaptor API is unchanged. BatSat supports timeout termination
-through its callback API; nonzero solver seeds return an explicit unsupported
-error rather than being ignored. Default seed zero uses BatSat's defaults.
-These features select the library backend. CLI builds expose the same backend
-choices, together with optional `z3`, `lsp`, and `mimalloc` features. Defaults
-retain CaDiCaL, Z3, the language server, and mimalloc on native builds. The
+```sh
+conjure-oxide solve model.essence --solver sat --sat-backend cadical
+conjure-oxide solve model.essence --solver sat --sat-backend batsat
+```
+
+`--sat-backend` defaults to CaDiCaL on native builds and BatSat on Wasm.
+Its help lists only the compiled backends, and selecting an unavailable backend
+is a command-line error. Both backends share SAT encoding and solution enumeration.
+
+To build with only BatSat, disable defaults and enable `sat-batsat` on
+`conjure-cp` / `conjure-cp-rules`. Re-enable `z3` explicitly if needed on native
+builds. Selecting neither SAT feature is a compile error.
+
+Wasm requires `sat-batsat`; CaDiCaL remains a native-only dependency. Parser
+features forward the backend features. Procedural macros run on the host and
+use the parser's native defaults independently of the Wasm target's selection.
+
+BatSat supports timeout termination through its callback API; nonzero solver
+seeds return an explicit unsupported error rather than being ignored. Default
+seed zero uses BatSat's defaults. CaDiCaL retains its seed and timeout support.
+CLI builds also expose optional `z3`, `lsp`, and `mimalloc` features. Native
+defaults include Z3, the language server, and mimalloc. The
 language server itself still uses its native dependencies.
 
 ## Install the build tools

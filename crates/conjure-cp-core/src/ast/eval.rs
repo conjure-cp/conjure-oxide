@@ -47,6 +47,17 @@ fn equal_constant_literals(lhs: &Lit, rhs: &Lit) -> Option<bool> {
     }
 }
 
+/// Preserve already-distinct literal order; constant duplicates denote the same set member.
+fn normalise_constant_set(mut literal: Lit) -> Lit {
+    if let Lit::AbstractLiteral(AbstractLiteral::Set(items)) = &mut literal
+        && super::literals::distinct_literal_count(items) != items.len()
+    {
+        items.sort_by(Lit::essence_cmp);
+        items.dedup_by(|a, b| a.essence_cmp(b).is_eq());
+    }
+    literal
+}
+
 /// Simplify an expression to a constant using only constants already present at this node.
 ///
 /// This is intended for the rewriter: child expressions should have been simplified by the
@@ -548,9 +559,13 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             domain.contains(lit).ok().map(Into::into)
         }
-        Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
-        Expr::Atomic(_, Atom::Reference(reference)) => reference.resolve_constant(),
-        Expr::AbstractLiteral(_, a) => Some(Lit::AbstractLiteral(a.clone().into_literals()?)),
+        Expr::Atomic(_, Atom::Literal(c)) => Some(normalise_constant_set(c.clone())),
+        Expr::Atomic(_, Atom::Reference(reference)) => {
+            reference.resolve_constant().map(normalise_constant_set)
+        }
+        Expr::AbstractLiteral(_, a) => Some(normalise_constant_set(Lit::AbstractLiteral(
+            a.clone().into_literals()?,
+        ))),
         Expr::Comprehension(_, comprehension) => {
             eval_constant_comprehension(comprehension.as_ref())
         }
@@ -1139,8 +1154,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 return None;
             };
             let length = match collection {
-                AbstractLiteral::Set(values)
-                | AbstractLiteral::MSet(values)
+                AbstractLiteral::Set(values) => super::literals::distinct_literal_count(&values),
+                AbstractLiteral::MSet(values)
                 | AbstractLiteral::Sequence(values)
                 | AbstractLiteral::Matrix(values, _) => values.len(),
                 AbstractLiteral::Function(entries) => entries.len(),
@@ -1576,6 +1591,28 @@ mod tests {
         let cardinality = Expr::Card(Metadata::new(), Moo::new(set));
 
         assert_eq!(eval_constant(&cardinality), Some(Lit::Int(2)));
+    }
+
+    #[test]
+    fn constant_set_duplicates_are_normalised_before_cardinality() {
+        let literal = Lit::AbstractLiteral(AbstractLiteral::Set(vec![1.into(), 1.into()]));
+        let atomic = Expr::from(literal);
+        let expression = Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Set(vec![1.into(), 1.into()]),
+        );
+        for set in [atomic, expression] {
+            let cardinality = Expr::Card(Metadata::new(), Moo::new(set));
+            assert_eq!(eval_constant(&cardinality), Some(Lit::Int(1)));
+        }
+        let multiset = Expr::from(Lit::AbstractLiteral(AbstractLiteral::MSet(vec![
+            1.into(),
+            1.into(),
+        ])));
+        assert_eq!(
+            eval_constant(&Expr::Card(Metadata::new(), Moo::new(multiset))),
+            Some(Lit::Int(2))
+        );
     }
 
     #[test]

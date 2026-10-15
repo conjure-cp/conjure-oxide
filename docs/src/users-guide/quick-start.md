@@ -4,14 +4,68 @@ This guide walks you through running your first Essence model with Conjure Oxide
 
 ## Your First Problem
 
+Once you have gone through the [installation](installation.md) process and got Conjure Oxide on your computer you can solve your first problem.
+
+Suppose you want to find two numbers `x` and `y` so that they add up to 15 and the difference between them is 3. The mathematicians will immediately reach for their simultaneous equations and start doing arithmetic.
+
+\\[ x + y = 15 \\]
+\\[ x - y = 3 \\]
+
+We, however, take the lazier approach.
+
 Create a file called `my_problem.essence` with the following content:
 
 ```essence
-find x : int(1..3)
-find y : int(2..5)
+find x : int(1..20)
+find y : int(2..20)
 
-such that x > y
+such that x + y = 15,
+          x - y = 3
 ```
+
+In your terminal run this command:
+
+```bash
+$ conjure-oxide solve my_problem.essence
+```
+
+
+**Expected output:**
+
+```
+$ Solution: 000001
+language Essence 1.3
+
+letting x be 9
+letting y be 6
+```
+
+We see that this indeed satisfies our constraints with \\[ 9 + 6 = 15 \\] and \\[9 - 6 = 3\\]
+
+## Understanding the structure of the problem specification
+
+The first two lines are where we declare our *decision variables*. These are the things which we want to find.
+
+These are declared as:
+```
+find <name> : <domain>
+```
+Where the domain tells Conjure Oxide what type and specifically what values the variable could possibly take on.
+
+The last statement contains our constraints as a comma-separated list of boolean expressions.
+
+The goal of Conjure Oxide is to give you values for all of your decision variables, within the allowed domains, that also make all of the boolean expressions evaluate to true.
+
+## Understanding What Conjure Oxide did
+
+Conjure Oxide transformed your high-level Essence model through several steps:
+
+1. **Parsing** - Your Essence file was parsed into an internal AST
+2. **Rule Application** - Backend-specific rules transformed the model
+3. **Solving** - The transformed model was sent to the solver
+4. **Solution Extraction** - The solver's output was converted back to Essence format
+
+Want to see exactly what rules were applied? Check out the [Logging guide](command-line-guide/logging.md).
 
 If you are curious about more complex models, you can check out the models that we use to test Conjure Oxide, available in the `test-suite/tests/integration` directory of the repository.
 
@@ -68,49 +122,4 @@ exercise the available combinations without choosing independently for each inte
 
 ### SAT Solver
 
-```bash
-cargo run -- solve --solver sat my_problem.essence
-```
-
-### Z3 (SMT)
-
-```bash
-cargo run -- solve --solver z3 my_problem.essence
-```
-
-### Minion Solver
-
-```bash
-cargo run -- solve --solver minion my_problem.essence
-```
-
-**Expected output for both solvers:**
-
-```json
-Solutions:
-[
-  {
-    "x": {
-      "Int": 3
-    },
-    "y": {
-      "Int": 2
-    }
-  }
-]
-```
-
-## Understanding What Happened
-
-Conjure Oxide transformed your high-level Essence model through several steps:
-
-1. **Parsing** - Your Essence file was parsed into an internal AST
-2. **Rule Application** - Backend-specific rules transformed the model
-3. **Solving** - The transformed model was sent to the solver
-4. **Solution Extraction** - The solver's output was converted back to Essence format
-
-Want to see exactly what rules were applied? Check out the [Logging guide](command-line-guide/logging.md).
-
-## Functional Programming Style
-
-For developers who come from programming languages like Scala or Haskell, or those who favour a functional programming style, we have a [Functional Rust](../developers-guide/resources-conventions/functional-rust.md) guide that you might find useful.
+Use `--solver sat` and select a compiled backend with `--sat-backend cadical` or `--sat-backend batsat`.
