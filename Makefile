@@ -8,10 +8,25 @@ EXTRA_CARGO_CHECK_FLAGS ?= -q
 CARGO_LOCKED ?= --locked
 # Extra feature flags to be passed to Cargo (e.g. --features z3-bundled).
 CARGO_FEATURES ?=
+# Extra arguments passed directly to cargo test and nextest (e.g. TEST_ARGS="alldiff").
+TEST_ARGS ?=
+# Optional test settings, forwarded to the harness as environment variables.
+# MAX_EXPECTED_TIME=N skips tests with recorded times above N seconds (0: no filter).
+# TEST_CASE_TIMEOUT=N limits each integration test to N seconds (unset: no timeout).
+# NEXTEST_TEST_THREADS=N sets how many tests nextest runs simultaneously.
+ifneq ($(origin MAX_EXPECTED_TIME),undefined)
+export MAX_EXPECTED_TIME
+endif
+ifneq ($(origin TEST_CASE_TIMEOUT),undefined)
+export TEST_CASE_TIMEOUT
+endif
+ifneq ($(origin NEXTEST_TEST_THREADS),undefined)
+export NEXTEST_TEST_THREADS
+endif
 CARGO_TARGET_DIR ?= target
 CARGO_BIN_DIR ?= $(HOME)/.cargo/bin
-CARGO_TEST_WORKSPACE = python3 tools/nextest.py --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --no-fail-fast
-CARGO_DOC_TEST_WORKSPACE = cargo test --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --doc
+CARGO_TEST_WORKSPACE = python3 tools/nextest.py --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --no-fail-fast $(TEST_ARGS)
+CARGO_DOC_TEST_WORKSPACE = cargo test --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --doc $(TEST_ARGS)
 export PATH := $(CARGO_BIN_DIR):$(PATH)
 
 .PHONY: check
@@ -48,7 +63,7 @@ install: build
 	@install -m 755 $(CARGO_TARGET_DIR)/debug/conjure-oxide $(CARGO_BIN_DIR)/conjure-oxide-debug
 
 .PHONY: test
-## Runs all tests
+## Runs tests (optional: TEST_ARGS="name_filter")
 test: install .installed-cargo-nextest.checkpoint
 	$(CARGO_DOC_TEST_WORKSPACE)
 	$(CARGO_TEST_WORKSPACE)
@@ -59,13 +74,13 @@ test-coverage:
 	./tools/coverage.sh
 
 .PHONY: test-accept
-## Runs all tests in accept mode (also updates expected run times)
+## Runs tests in accept mode (also updates expected run times; optional: TEST_ARGS="name_filter")
 test-accept: install .installed-cargo-nextest.checkpoint
 	ACCEPT=true $(CARGO_DOC_TEST_WORKSPACE)
 	ACCEPT=true $(CARGO_TEST_WORKSPACE)
 
 .PHONY: test-accept-with-max-times
-## Runs all tests in accept mode, only raising expected run times (max of current and observed)
+## Runs tests in accept mode, only raising expected run times (optional: TEST_ARGS="name_filter")
 test-accept-with-max-times: install .installed-cargo-nextest.checkpoint
 	ACCEPT=with-max-times $(CARGO_DOC_TEST_WORKSPACE)
 	ACCEPT=with-max-times $(CARGO_TEST_WORKSPACE)
