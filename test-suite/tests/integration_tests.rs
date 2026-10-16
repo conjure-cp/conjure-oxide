@@ -60,12 +60,10 @@ use test_suite::diagnostics::{
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::TraceLevel;
 use test_suite::test_config::{
-    NumberOfSolutions, RecordedConjureStats, RecordedModelRunStats, RecordedRunConfig,
-    RuleTraceAggregateStats, read_stats_or_default, replace_config_model_stats,
-    reset_stats_for_run, round_expected_time, stats_path, upsert_config_oxide_timing_stats,
-    upsert_config_rule_trace_aggregate_stats, upsert_config_status_stats,
-    upsert_conjure_timing_stats, upsert_expected_time_stats, upsert_status_stats,
-    upsert_tool_status_stats,
+    NumberOfSolutions, RecordedConjureStats, RecordedRuleTraceStats, RecordedRunConfig,
+    RecordedRunStats, read_stats_or_default, replace_config_run_stats, reset_stats_for_run,
+    round_expected_time, stats_path, upsert_conjure_timing_stats, upsert_expected_time_stats,
+    upsert_status_stats, upsert_tool_status_stats,
 };
 
 #[path = "support/solution_snapshots.rs"]
@@ -89,22 +87,8 @@ struct RunCase<'a> {
     case_name: &'a str,
 }
 
-#[derive(Clone, Copy, Debug, Default)]
-struct RunTimings {
-    translation_time_s: f64,
-    solve_time_s: f64,
-}
-
-impl RunTimings {
-    fn add(&mut self, other: Self) {
-        self.translation_time_s += other.translation_time_s;
-        self.solve_time_s += other.solve_time_s;
-    }
-}
-
 /// What one integration run produced, beyond pass/fail.
 struct RunOutcome {
-    timings: RunTimings,
     /// The run's solutions, normalised for comparison, when they are the model's complete
     /// solution set: the search ran to exhaustion and kept no intermediate optimisation steps.
     /// Every such run of one fixture solves the same problem, so they must all agree.
@@ -567,9 +551,6 @@ fn integration_test_inner_with_status(
                                 solver_seed,
                                 solver: solver.as_str(),
                             };
-                            let mut config_timings = RunTimings::default();
-                            let mut config_case_names = BTreeSet::new();
-                            let config_rule_counts = RuleApplicationCounter::default();
                             let mut model_rows = Vec::new();
                             let config_result = (|| -> Result<(), Box<dyn Error>> {
                                 let base_case_name = run_case_name(
@@ -605,7 +586,6 @@ fn integration_test_inner_with_status(
                                         choice_path: &choice_path,
                                         case_name: case_name.as_str(),
                                     };
-                                    config_case_names.insert(case_name.clone());
                                     allowed_expected_files.extend(
                                         expected_integration_files_for_case(
                                             run_case.case_name,
@@ -621,6 +601,7 @@ fn integration_test_inner_with_status(
                                         number_of_solutions,
                                     );
                                     row.model_index = model_index;
+                                    let model_rule_counts = RuleApplicationCounter::default();
                                     let result = execute_integration_run(
                                         path,
                                         essence_base,
@@ -632,27 +613,52 @@ fn integration_test_inner_with_status(
                                         conjure_solution_values.clone(),
                                         accept,
                                         rule_trace_snapshots_enabled,
-                                        rule_trace_aggregates_enabled
-                                            .then_some(&config_rule_counts),
+                                        rule_trace_aggregates_enabled.then_some(&model_rule_counts),
                                         &mut row,
                                         shared_solutions_enabled,
                                         &mut shared_solutions,
                                     );
+                                    let stats_result = (|| -> Result<(), Box<dyn Error>> {
+                                        if accept
+                                            && (rule_trace_snapshots_enabled
+                                                || rule_trace_aggregates_enabled)
+                                        {
+                                            let aggregates = if rule_trace_snapshots_enabled {
+                                                collect_rule_trace_aggregates(
+                                                    Path::new(path),
+                                                    &case_name,
+                                                    solver,
+                                                )?
+                                            } else {
+                                                let rules = model_rule_counts.snapshot();
+                                                RecordedRuleTraceStats {
+                                                    total_rule_applications: Some(
+                                                        rules.values().sum(),
+                                                    ),
+                                                    rules,
+                                                    ..RecordedRuleTraceStats::default()
+                                                }
+                                            };
+                                            row.rule_trace = aggregates;
+                                            row.rule_trace.total_rule_attempts =
+                                                Some(collect_rule_attempts(
+                                                    Path::new(path),
+                                                    &case_name,
+                                                    solver,
+                                                )?);
+                                        }
+                                        Ok(())
+                                    })();
+                                    let result =
+                                        result.and_then(|outcome| stats_result.map(|()| outcome));
                                     let outcome = match result {
                                         Ok(outcome) => outcome,
                                         Err(err) => {
-                                            config_timings.add(RunTimings {
-                                                translation_time_s: row
-                                                    .translation_time
-                                                    .unwrap_or_default(),
-                                                solve_time_s: row.solve_time.unwrap_or_default(),
-                                            });
                                             row.status = "fail".to_owned();
                                             model_rows.push(row);
                                             return Err(err);
                                         }
                                     };
-                                    config_timings.add(outcome.timings);
                                     model_rows.push(row);
                                     if let Some(solutions) = outcome.comparable_solutions {
                                         let agreement = check_solutions_agree(
@@ -683,53 +689,7 @@ fn integration_test_inner_with_status(
                             })();
 
                             if accept {
-                                replace_config_model_stats(&stats_path, &run_config, model_rows)?;
-                                let config_status =
-                                    if config_result.is_ok() { "ok" } else { "fail" };
-                                upsert_config_status_stats(
-                                    &stats_path,
-                                    &run_config,
-                                    config_status,
-                                )?;
-                                let solve_time =
-                                    solver_solution_limit.map(|_| config_timings.solve_time_s);
-                                upsert_config_oxide_timing_stats(
-                                    &stats_path,
-                                    &run_config,
-                                    config_timings.translation_time_s,
-                                    solve_time,
-                                )?;
-
-                                if rule_trace_snapshots_enabled || rule_trace_aggregates_enabled {
-                                    let aggregates = if rule_trace_snapshots_enabled {
-                                        collect_rule_trace_aggregates(
-                                            Path::new(path),
-                                            "-generated-rule-trace.txt",
-                                            &config_case_names,
-                                            &run_config,
-                                        )?
-                                    } else {
-                                        let rules = config_rule_counts.snapshot();
-                                        RuleTraceAggregateStats {
-                                            total_rule_applications: rules.values().sum(),
-                                            rules,
-                                            ..RuleTraceAggregateStats::default()
-                                        }
-                                    };
-                                    let aggregates = RuleTraceAggregateStats {
-                                        total_rule_attempts: collect_rule_attempts(
-                                            Path::new(path),
-                                            &config_case_names,
-                                            &run_config,
-                                        )?,
-                                        ..aggregates
-                                    };
-                                    upsert_config_rule_trace_aggregate_stats(
-                                        &stats_path,
-                                        &run_config,
-                                        &aggregates,
-                                    )?;
-                                }
+                                replace_config_run_stats(&stats_path, &run_config, model_rows)?;
                             }
 
                             if let Err(err) = config_result
@@ -851,7 +811,7 @@ fn execute_integration_run(
     accept: bool,
     rule_trace_snapshots_enabled: bool,
     rule_counts: Option<&RuleApplicationCounter>,
-    model_stats: &mut RecordedModelRunStats,
+    model_stats: &mut RecordedRunStats,
     shared_solutions_enabled: bool,
     shared_solutions: &mut SharedSolutionSnapshot,
 ) -> Result<RunOutcome, Box<dyn Error>> {
@@ -935,7 +895,7 @@ fn integration_test_inner(
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
     rule_trace_snapshots_enabled: bool,
-    model_stats: &mut RecordedModelRunStats,
+    model_stats: &mut RecordedRunStats,
     shared_solutions_enabled: bool,
     shared_solutions: &mut SharedSolutionSnapshot,
 ) -> Result<RunOutcome, Box<dyn Error>> {
@@ -1134,10 +1094,6 @@ fn integration_test_inner(
         .map(|solutions| normalize_solutions_for_comparison(&solutions));
 
     Ok(RunOutcome {
-        timings: RunTimings {
-            translation_time_s,
-            solve_time_s,
-        },
         comparable_solutions,
     })
 }
@@ -1147,8 +1103,8 @@ fn model_run_identity(
     run: RunCase<'_>,
     threshold: usize,
     limit: NumberOfSolutions,
-) -> RecordedModelRunStats {
-    RecordedModelRunStats {
+) -> RecordedRunStats {
+    RecordedRunStats {
         parser: run.parser.to_string(),
         rewriter: run.rewriter.to_string(),
         comprehension_expander: run.comprehension_expander.to_string(),
@@ -1165,7 +1121,7 @@ fn model_run_identity(
     }
 }
 
-fn record_choice_path(run: RunCase<'_>, row: &mut RecordedModelRunStats) {
+fn record_choice_path(run: RunCase<'_>, row: &mut RecordedRunStats) {
     if run.heuristic == Heuristic::All {
         let choices = heuristic_all_choices();
         row.choice_path = choices.iter().map(|choice| choice.selected).collect();
@@ -1176,7 +1132,7 @@ fn record_choice_path(run: RunCase<'_>, row: &mut RecordedModelRunStats) {
     }
 }
 
-fn record_model_choices(model: &Model, row: &mut RecordedModelRunStats) {
+fn record_model_choices(model: &Model, row: &mut RecordedRunStats) {
     row.representations = model
         .symbols()
         .iter_local()
@@ -1377,88 +1333,59 @@ fn expected_integration_files_for_case(
 
 fn collect_rule_trace_aggregates(
     path: &Path,
-    file_suffix: &str,
-    case_names: &BTreeSet<String>,
-    config: &RecordedRunConfig,
-) -> Result<RuleTraceAggregateStats, std::io::Error> {
-    let mut aggregates = RuleTraceAggregateStats::default();
-
-    for entry in fs::read_dir(path)? {
-        let entry = entry?;
-        let file_name = entry.file_name();
-        let file_name = file_name.to_string_lossy();
-        if !belongs_to_case(&file_name, file_suffix, case_names, config) {
+    case_name: &str,
+    solver: SolverFamily,
+) -> Result<RecordedRuleTraceStats, std::io::Error> {
+    let mut aggregates = RecordedRuleTraceStats::default();
+    let trace_path = path.join(format!(
+        "{case_name}-{}-generated-rule-trace.txt",
+        solver.as_str()
+    ));
+    let trace = fs::read_to_string(trace_path)?;
+    let mut applications = 0;
+    for line in trace.lines() {
+        let Some((_, rule_and_sets)) = line.split_once("~~>") else {
+            continue;
+        };
+        let rule_name = rule_and_sets
+            .trim()
+            .split_once(' ')
+            .map_or_else(|| rule_and_sets.trim(), |(rule, _)| rule);
+        if rule_name.is_empty() {
             continue;
         }
-
-        let trace = fs::read_to_string(entry.path())?;
-        for line in trace.lines() {
-            let Some((_, rule_and_sets)) = line.split_once("~~>") else {
-                continue;
-            };
-            let rule_name = rule_and_sets
-                .trim()
-                .split_once(' ')
-                .map_or_else(|| rule_and_sets.trim(), |(rule, _)| rule);
-
-            if rule_name.is_empty() {
-                continue;
-            }
-
-            aggregates.total_rule_applications += 1;
-            *aggregates.rules.entry(rule_name.to_string()).or_insert(0) += 1;
-        }
+        applications += 1;
+        *aggregates.rules.entry(rule_name.to_string()).or_insert(0) += 1;
     }
-
+    aggregates.total_rule_applications = Some(applications);
     Ok(aggregates)
 }
 
 fn collect_rule_attempts(
     path: &Path,
-    case_names: &BTreeSet<String>,
-    config: &RecordedRunConfig,
+    case_name: &str,
+    solver: SolverFamily,
 ) -> Result<u64, std::io::Error> {
-    let mut total = 0;
-
-    for entry in fs::read_dir(path)? {
-        let entry = entry?;
-        let file_name = entry.file_name();
-        let file_name = file_name.to_string_lossy();
-        if !belongs_to_case(&file_name, "-stats.json", case_names, config) {
-            continue;
-        }
-
-        let stats: JsonValue = serde_json::from_str(&fs::read_to_string(entry.path())?)
-            .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err))?;
-        let Some(rewriter_runs) = stats
-            .get("stats")
-            .and_then(|stats| stats.get("rewriterRuns"))
-            .and_then(JsonValue::as_array)
-        else {
-            continue;
-        };
-
-        total += rewriter_runs
-            .iter()
-            .filter_map(|run| {
-                run.get("rewriterRuleApplicationAttempts")
-                    .and_then(JsonValue::as_u64)
-            })
-            .sum::<u64>();
-    }
-
-    Ok(total)
-}
-
-fn belongs_to_case(
-    file_name: &str,
-    file_suffix: &str,
-    case_names: &BTreeSet<String>,
-    config: &RecordedRunConfig,
-) -> bool {
-    case_names
-        .iter()
-        .any(|case_name| file_name == format!("{case_name}-{}{file_suffix}", config.solver))
+    let stats_path = path.join(format!("{case_name}-{}-stats.json", solver.as_str()));
+    let contents = match fs::read_to_string(stats_path) {
+        Ok(contents) => contents,
+        // Failed runs may not have reached the stats-writing stage.
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(0),
+        Err(err) => return Err(err),
+    };
+    let stats: JsonValue = serde_json::from_str(&contents)
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err))?;
+    Ok(stats
+        .get("stats")
+        .and_then(|stats| stats.get("rewriterRuns"))
+        .and_then(JsonValue::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|run| {
+            run.get("rewriterRuleApplicationAttempts")
+                .and_then(JsonValue::as_u64)
+        })
+        .sum())
 }
 
 fn clean_test_dir_for_accept(

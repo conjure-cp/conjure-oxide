@@ -57,8 +57,8 @@ configurations use aggregate tracing to limit snapshot size and recording overhe
 
 Integration tests use the `auto` comprehension expander by default, matching the CLI default.
 Configure it explicitly with `comprehension-expander = "auto"`. Accepted oxide timings, statuses,
-and rule-trace aggregates are recorded in a `[[runs]]` entry in `stats.toml` for each configured
-run; the Conjure reference run is recorded separately. Each accepted run replaces the previous
+and rule counts are recorded in a `[[runs]]` entry in `stats.toml` for each compiled
+model; the Conjure reference run is recorded separately. Each accepted run replaces the previous
 stats snapshot rather than merging with it.
 
 Tests with `number-of-solutions = "all"` compare every model/configuration's complete solution
@@ -124,8 +124,8 @@ After an accept run, you can write a Git-diff-based timing comparison CSV with
 `python3 ./tools/accept-times-diff-report.py` (default output:
 `target/accept-times-diff.csv`).
 
-`stats.toml` also records the last accepted status, the shared Conjure timing stats, and per-config
-oxide timing stats and aggregate rule trace application counts. Full tracing derives application
+`stats.toml` also records the last accepted status, the shared Conjure timing stats, and per-model
+oxide timing stats and rule trace application counts. Full tracing derives application
 counts from the generated traces; aggregate tracing counts them in memory.
 
 `stats.toml` is an observational record, not a correctness baseline: normal tests do not compare
@@ -138,9 +138,9 @@ For timing-only runs where rule trace generation overhead is unwanted, set
 `CONJURE_OXIDE_TEST_DISABLE_TRACING=1`. This skips integration-test rule trace file
 generation and rule trace snapshot validation; solution checks and timing recording still run.
 
-Accepted integration runs also store a flat `[[model-runs]]` list. Each row identifies
-its parent configuration and model index, with the full realised choice path and
-selected labels for `heuristic = "x"`. Compact and other heuristics produce one row
+Accepted integration runs store a single flat `[[runs]]` list, with one entry per
+compiled model. Each row identifies its configuration and model index, with the
+full realised choice path and selected labels for `heuristic = "x"`. Compact and other heuristics produce one row
 per model. `representations` lists the representation rules used; the
 `sat-encoding-*` arrays list the resolved algorithms present in SAT decisions.
 A compact model may use several algorithms in one family: the timing measures
@@ -148,7 +148,8 @@ that combination, rather than assigning an invented time to each algorithm.
 
 `translation-time` covers parsing, instantiation and rewriting; `solve-time`
 covers backend loading, solving, reconstruction and writing the solution file.
-Their sums match the existing parent `[[runs]]` totals. The additional
+Configuration totals are obtained by summing their model rows; no separate
+aggregate rows are stored. Each row also records its own rule counts. The additional
 `backend-time`, `search-time` and `solution-processing-time` fields separate
 backend loading, the solver call (including callbacks and solver-time rewrites),
 and reconstruction plus solution output. These are wall-clock seconds, not
@@ -159,3 +160,7 @@ completed translation and solution-collection phases are retained when a later
 validation or snapshot check fails.
 Accepting a configuration replaces its model rows so smaller portfolios do not
 leave stale entries behind.
+
+The unified format replaces the former configuration-level `[[runs]]` and
+`[[model-runs]]` sections. Regenerate older integration stats by deleting their
+`stats.toml` files and running `make test-accept`.

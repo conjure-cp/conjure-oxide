@@ -280,33 +280,6 @@ pub struct RecordedRunConfig {
     pub solver: String,
 }
 
-/// Inserts or updates the latest observed status for one integration-test configuration.
-pub fn upsert_config_status_stats(
-    path: &Path,
-    config: &RecordedRunConfig,
-    status: &str,
-) -> io::Result<()> {
-    update_canonical_stats(path, |stats| {
-        config_run_mut(stats, config).status = Some(status.to_string());
-    })
-}
-
-/// Inserts or updates the conjure-oxide timing stats for one integration-test configuration.
-pub fn upsert_config_oxide_timing_stats(
-    path: &Path,
-    config: &RecordedRunConfig,
-    translation_time: f64,
-    solve_time: Option<f64>,
-) -> io::Result<()> {
-    update_canonical_stats(path, |stats| {
-        let run = config_run_mut(stats, config);
-        run.translation_time = Some(translation_time);
-        if let Some(solve_time) = solve_time {
-            run.solve_time = Some(solve_time);
-        }
-    })
-}
-
 /// Timing measurements recorded from one accepted Conjure reference run.
 #[derive(Clone, Copy, Debug)]
 pub struct RecordedConjureStats {
@@ -333,14 +306,6 @@ pub fn upsert_conjure_timing_stats(path: &Path, stats: RecordedConjureStats) -> 
     })
 }
 
-/// Aggregated rule application counts for the expected rule traces in one integration test.
-#[derive(Clone, Debug, Default)]
-pub struct RuleTraceAggregateStats {
-    pub total_rule_attempts: u64,
-    pub total_rule_applications: u64,
-    pub rules: std::collections::BTreeMap<String, u64>,
-}
-
 fn rule_trace_rules_by_count_desc(
     rules: &std::collections::BTreeMap<String, u64>,
 ) -> Vec<(&String, u64)> {
@@ -349,20 +314,6 @@ fn rule_trace_rules_by_count_desc(
         count_b.cmp(count_a).then_with(|| name_a.cmp(name_b))
     });
     sorted_rules
-}
-
-/// Replaces the rule-trace aggregates for one integration-test configuration.
-pub fn upsert_config_rule_trace_aggregate_stats(
-    path: &Path,
-    config: &RecordedRunConfig,
-    aggregates: &RuleTraceAggregateStats,
-) -> io::Result<()> {
-    update_canonical_stats(path, |stats| {
-        let rule_trace = &mut config_run_mut(stats, config).rule_trace;
-        rule_trace.total_rule_attempts = Some(aggregates.total_rule_attempts);
-        rule_trace.total_rule_applications = Some(aggregates.total_rule_applications);
-        rule_trace.rules.clone_from(&aggregates.rules);
-    })
 }
 
 /// Recorded integration-run metadata for one test directory.
@@ -384,18 +335,14 @@ pub struct TestRunStats {
     /// Metadata recorded for the Conjure plus Savile Row reference run.
     pub conjure: RecordedToolStats,
 
-    /// Canonical per-configuration run records.
-    pub runs: Vec<RecordedConfigRunStats>,
-
-    /// One measured row per compiled model, including each expanded `x` choice.
-    #[serde(rename = "model-runs")]
-    pub model_runs: Vec<RecordedModelRunStats>,
+    /// One measured run per compiled model, including each expanded `x` choice.
+    pub runs: Vec<RecordedRunStats>,
 }
 
 /// Flat timing and resolved modelling choices for one actual integration model.
 #[derive(Deserialize, Serialize, Debug, Default)]
 #[serde(default, deny_unknown_fields, rename_all = "kebab-case")]
-pub struct RecordedModelRunStats {
+pub struct RecordedRunStats {
     pub parser: String,
     pub rewriter: String,
     pub comprehension_expander: String,
@@ -421,41 +368,20 @@ pub struct RecordedModelRunStats {
     pub status: String,
     /// Zero means all solutions; absent means translation only.
     pub solution_limit: Option<i32>,
-    /// Parse, instantiate and rewrite, matching the aggregate translation time.
+    /// Wall time for parsing, instantiation and rewriting.
     pub translation_time: Option<f64>,
-    /// Complete solution collection and output, matching the aggregate solve time.
+    /// Wall time for complete solution collection and output.
     pub solve_time: Option<f64>,
     pub backend_time: Option<f64>,
     /// Solver-call wall time, including callbacks and solver-time rewrites.
     pub search_time: Option<f64>,
     pub solution_processing_time: Option<f64>,
-}
-
-/// Canonical metadata for one integration-test configuration.
-#[derive(Deserialize, Debug, Default)]
-#[serde(default)]
-#[serde(deny_unknown_fields)]
-pub struct RecordedConfigRunStats {
-    pub parser: String,
-    pub rewriter: String,
-    #[serde(rename = "comprehension-expander")]
-    pub comprehension_expander: String,
-    pub heuristic: String,
-    pub channelling: String,
-    pub seed: Option<u64>,
-    #[serde(rename = "solver-seed")]
-    pub solver_seed: Option<u32>,
-    pub solver: String,
-    pub status: Option<String>,
-    #[serde(rename = "translation-time")]
-    pub translation_time: Option<f64>,
-    #[serde(rename = "solve-time")]
-    pub solve_time: Option<f64>,
-    #[serde(rename = "rule-trace")]
+    /// Rule counts for this compiled model; written as dotted keys by the canonical writer.
+    #[serde(skip_serializing)]
     pub rule_trace: RecordedRuleTraceStats,
 }
 
-/// Recorded rule-trace aggregate metadata for one test directory.
+/// Recorded rule counts for one compiled model.
 #[derive(Deserialize, Debug, Default)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
@@ -506,13 +432,13 @@ pub struct RecordedToolStats {
 }
 
 /// Replace this configuration's model rows, removing stale portfolio entries.
-pub fn replace_config_model_stats(
+pub fn replace_config_run_stats(
     path: &Path,
     config: &RecordedRunConfig,
-    rows: Vec<RecordedModelRunStats>,
+    rows: Vec<RecordedRunStats>,
 ) -> io::Result<()> {
     update_canonical_stats(path, |stats| {
-        stats.model_runs.retain(|row| {
+        stats.runs.retain(|row| {
             !(row.parser == config.parser
                 && row.rewriter == config.rewriter
                 && row.comprehension_expander == config.comprehension_expander
@@ -522,8 +448,8 @@ pub fn replace_config_model_stats(
                 && row.solver_seed == config.solver_seed
                 && row.solver == config.solver)
         });
-        stats.model_runs.extend(rows);
-        stats.model_runs.sort_by(|a, b| {
+        stats.runs.extend(rows);
+        stats.runs.sort_by(|a, b| {
             (
                 &a.parser,
                 &a.rewriter,
@@ -548,37 +474,6 @@ pub fn replace_config_model_stats(
                 ))
         });
     })
-}
-
-fn config_run_mut<'a>(
-    stats: &'a mut TestRunStats,
-    config: &RecordedRunConfig,
-) -> &'a mut RecordedConfigRunStats {
-    if let Some(index) = stats.runs.iter().position(|run| {
-        run.parser == config.parser
-            && run.rewriter == config.rewriter
-            && run.comprehension_expander == config.comprehension_expander
-            && run.heuristic == config.heuristic
-            && run.channelling == config.channelling
-            && run.seed.unwrap_or_default() == config.seed
-            && run.solver_seed.unwrap_or_default() == config.solver_seed
-            && run.solver == config.solver
-    }) {
-        return &mut stats.runs[index];
-    }
-
-    stats.runs.push(RecordedConfigRunStats {
-        parser: config.parser.clone(),
-        rewriter: config.rewriter.clone(),
-        comprehension_expander: config.comprehension_expander.clone(),
-        heuristic: config.heuristic.clone(),
-        channelling: config.channelling.clone(),
-        seed: Some(config.seed),
-        solver_seed: Some(config.solver_seed),
-        solver: config.solver.clone(),
-        ..RecordedConfigRunStats::default()
-    });
-    stats.runs.last_mut().expect("run was just inserted")
 }
 
 fn update_canonical_stats(path: &Path, update: impl FnOnce(&mut TestRunStats)) -> io::Result<()> {
@@ -637,49 +532,10 @@ fn write_canonical_stats(path: &Path, stats: &TestRunStats) -> io::Result<()> {
     }
 
     for run in &stats.runs {
-        if !contents.is_empty() {
-            contents.push('\n');
-        }
-        contents.push_str("[[runs]]\n");
-        contents.push_str(&format!(
-            "comprehension-expander = {}\n",
-            quoted_toml_string(&run.comprehension_expander)
-        ));
-        if !run.parser.is_empty() {
-            contents.push_str(&format!("parser = {}\n", quoted_toml_string(&run.parser)));
-        }
-        if !run.rewriter.is_empty() {
-            contents.push_str(&format!(
-                "rewriter = {}\n",
-                quoted_toml_string(&run.rewriter)
-            ));
-        }
-        if !run.heuristic.is_empty() {
-            contents.push_str(&format!(
-                "heuristic = {}\n",
-                quoted_toml_string(&run.heuristic)
-            ));
-        }
-        if !run.channelling.is_empty() {
-            contents.push_str(&format!(
-                "channelling = {}\n",
-                quoted_toml_string(&run.channelling)
-            ));
-        }
-        if let Some(seed) = run.seed {
-            contents.push_str(&format!("seed = {seed}\n"));
-        }
-        if let Some(solver_seed) = run.solver_seed {
-            contents.push_str(&format!("solver-seed = {solver_seed}\n"));
-        }
-        if !run.solver.is_empty() {
-            contents.push_str(&format!("solver = {}\n", quoted_toml_string(&run.solver)));
-        }
-        if let Some(status) = &run.status {
-            contents.push_str(&format!("status = {}\n", quoted_toml_string(status)));
-        }
-        push_optional_float(&mut contents, "translation-time", run.translation_time);
-        push_optional_float(&mut contents, "solve-time", run.solve_time);
+        contents.push_str("\n[[runs]]\n");
+        contents.push_str(
+            &toml::to_string(run).map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?,
+        );
 
         if run.rule_trace.total_rule_attempts.is_some()
             || run.rule_trace.total_rule_applications.is_some()
@@ -701,13 +557,6 @@ fn write_canonical_stats(path: &Path, stats: &TestRunStats) -> io::Result<()> {
         }
     }
 
-    for row in &stats.model_runs {
-        contents.push_str("\n[[model-runs]]\n");
-        // Serialise independently so this remains a flat table, after all aggregate rows.
-        contents.push_str(
-            &toml::to_string(row).map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?,
-        );
-    }
     fs::write(path, contents)
 }
 
@@ -1038,91 +887,111 @@ mod tests {
                 solver_seed: 0,
                 solver: solver.to_string(),
             };
-            upsert_config_status_stats(&path, &config, "ok").unwrap();
-            upsert_config_oxide_timing_stats(&path, &config, translation_time, Some(3.0)).unwrap();
-            upsert_config_rule_trace_aggregate_stats(
-                &path,
-                &config,
-                &RuleTraceAggregateStats {
-                    total_rule_attempts: 4,
-                    total_rule_applications: 5,
-                    rules: std::collections::BTreeMap::from([("rule_name".to_string(), 5)]),
-                },
-            )
-            .unwrap();
+            let rows = (0..2)
+                .map(|model_index| RecordedRunStats {
+                    parser: config.parser.clone(),
+                    rewriter: config.rewriter.clone(),
+                    comprehension_expander: config.comprehension_expander.clone(),
+                    heuristic: config.heuristic.clone(),
+                    channelling: config.channelling.clone(),
+                    solver: config.solver.clone(),
+                    case_name: format!("tree-sitter-auto-model-{model_index:03}"),
+                    model_index,
+                    choice_path: vec![model_index],
+                    choices: vec![format!("choice-{model_index}")],
+                    status: "ok".to_owned(),
+                    translation_time: Some(translation_time),
+                    solve_time: Some(3.0),
+                    rule_trace: RecordedRuleTraceStats {
+                        total_rule_attempts: Some(4),
+                        total_rule_applications: Some(model_index as u64 + 1),
+                        rules: BTreeMap::from([("rule_name".to_owned(), model_index as u64 + 1)]),
+                    },
+                    ..RecordedRunStats::default()
+                })
+                .collect();
+            replace_config_run_stats(&path, &config, rows).unwrap();
         }
 
-        let expected = r#"expected-time = 1
-status = "ok"
-
-[conjure]
-status = "ok"
-wall-clock-time = 0.572384
-translation-time = 0.572306
-conjure-translation-time = 0.566306
-savilerow-translation-time = 0.006
-solve-time = 0.000078
-
-[[runs]]
-comprehension-expander = "auto"
-parser = "tree-sitter"
-rewriter = "optimised"
-heuristic = "x"
-channelling = "no"
-seed = 0
-solver-seed = 0
-solver = "minion"
-status = "ok"
-translation-time = 1.0
-solve-time = 3.0
-
-rule-trace.attempts = 4
-rule-trace.applications = 5
-rule-trace.rules.rule_name = 5
-
-[[runs]]
-comprehension-expander = "auto"
-parser = "tree-sitter"
-rewriter = "optimised"
-heuristic = "x"
-channelling = "no"
-seed = 0
-solver-seed = 0
-solver = "sat-log"
-status = "ok"
-translation-time = 2.0
-solve-time = 3.0
-
-rule-trace.attempts = 4
-rule-trace.applications = 5
-rule-trace.rules.rule_name = 5
-"#;
-        assert_eq!(fs::read_to_string(&path).unwrap(), expected);
-
+        let contents = fs::read_to_string(&path).unwrap();
+        let document: toml::Value = toml::from_str(&contents).unwrap();
+        assert!(document.get("model-runs").is_none());
+        assert_eq!(document["runs"].as_array().unwrap().len(), 4);
+        assert_eq!(
+            document["conjure"]["wall-clock-time"].as_float(),
+            Some(0.572384)
+        );
         let stats = read_stats_or_default(&path).unwrap();
-        assert_eq!(stats.runs.len(), 2);
+        assert_eq!(stats.expected_time, Some(1));
+        for (index, run) in stats.runs.iter().enumerate() {
+            assert_eq!(run.model_index, index % 2);
+            assert_eq!(run.choice_path, vec![index % 2]);
+            assert_eq!(
+                run.rule_trace.total_rule_applications,
+                Some((index % 2) as u64 + 1)
+            );
+            assert_eq!(run.rule_trace.rules["rule_name"], (index % 2) as u64 + 1);
+            assert_eq!(
+                run.translation_time,
+                Some(if index < 2 { 1.0 } else { 2.0 })
+            );
+        }
     }
 
     #[test]
-    fn records_heuristic_and_solver_seeds() {
+    fn replacing_a_portfolio_preserves_other_configurations_and_partial_failures() {
         let temp_dir = tempfile::tempdir().unwrap();
         let path = temp_dir.path().join(STATS_FILE_NAME);
         let config = RecordedRunConfig {
-            parser: "tree-sitter".to_string(),
-            rewriter: "optimised".to_string(),
-            comprehension_expander: "auto".to_string(),
-            heuristic: "r".to_string(),
-            channelling: "no".to_string(),
+            parser: "tree-sitter".to_owned(),
+            solver: "minion".to_owned(),
+            rewriter: "optimised".to_owned(),
+            comprehension_expander: "auto".to_owned(),
+            heuristic: "x".to_owned(),
+            channelling: "no".to_owned(),
             seed: 42,
             solver_seed: 7,
-            solver: "minion".to_string(),
         };
-
-        upsert_config_status_stats(&path, &config, "ok").unwrap();
-
-        let contents = fs::read_to_string(path).unwrap();
-        assert!(contents.contains("seed = 42\n"));
-        assert!(contents.contains("solver-seed = 7\n"));
+        let row = |model_index| RecordedRunStats {
+            parser: config.parser.clone(),
+            solver: config.solver.clone(),
+            rewriter: config.rewriter.clone(),
+            comprehension_expander: config.comprehension_expander.clone(),
+            heuristic: config.heuristic.clone(),
+            channelling: config.channelling.clone(),
+            seed: config.seed,
+            solver_seed: config.solver_seed,
+            model_index,
+            status: "ok".to_owned(),
+            ..RecordedRunStats::default()
+        };
+        replace_config_run_stats(&path, &config, vec![row(1), row(0)]).unwrap();
+        let other_config = RecordedRunConfig {
+            solver_seed: 8,
+            ..config.clone()
+        };
+        replace_config_run_stats(
+            &path,
+            &other_config,
+            vec![RecordedRunStats {
+                solver_seed: 8,
+                ..row(0)
+            }],
+        )
+        .unwrap();
+        let mut failed = row(0);
+        failed.status = "fail".to_owned();
+        failed.translation_time = Some(1.25);
+        replace_config_run_stats(&path, &config, vec![failed]).unwrap();
+        let stats = read_stats_or_default(&path).unwrap();
+        assert_eq!(stats.runs.len(), 2);
+        assert_eq!(stats.runs[0].seed, 42);
+        assert_eq!(stats.runs[0].solver_seed, 7);
+        assert_eq!(stats.runs[0].status, "fail");
+        assert_eq!(stats.runs[0].translation_time, Some(1.25));
+        assert_eq!(stats.runs[0].solve_time, None);
+        assert_eq!(stats.runs[1].solver_seed, 8);
+        assert_eq!(stats.runs[1].status, "ok");
     }
 
     #[test]

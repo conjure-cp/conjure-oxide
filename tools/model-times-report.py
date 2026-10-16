@@ -32,7 +32,7 @@ def config_key(row: dict[str, Any]) -> tuple[Any, ...]:
 
 def validate(stats: dict[str, Any], fixture: str) -> None:
     """Check recorded measurements without rejecting partial or failed runs."""
-    models = stats.get("model-runs", [])
+    models = stats.get("runs", [])
     for row in models:
         label = f"{fixture}: {row['solver']} model {row['model-index']}"
         if len(row.get("choice-path", [])) != len(row.get("choices", [])):
@@ -43,15 +43,6 @@ def validate(stats: dict[str, Any], fixture: str) -> None:
         parts = TIME_FIELDS[1:4]
         if "solve-time" in row and sum(row.get(key, 0) for key in parts) > row["solve-time"] + 1e-6:
             raise ValueError(f"{label}: collection phases exceed solve-time")
-    for run in stats.get("runs", []):
-        matches = [row for row in models if config_key(row) == config_key(run)]
-        if not matches:
-            continue
-        for key in ("translation-time", "solve-time"):
-            # Allow the rounding used by the canonical stats writer.
-            tolerance = 1e-6 * (len(matches) + 1)
-            if key in run and abs(sum(row.get(key, 0) for row in matches) - run[key]) > tolerance:
-                raise ValueError(f"{fixture}: {config_key(run)}: model totals differ for {key}")
 
 
 def markdown(rows: list[dict[str, Any]], top: int) -> str:
@@ -127,10 +118,10 @@ def main() -> int:
         for path in sorted({path.resolve() for path in paths}):
             fixture = path.parent.relative_to(INTEGRATION).as_posix()
             stats = tomllib.loads(path.read_text())
-            models = stats.get("model-runs", [])
+            models = stats.get("runs", [])
             if not models:
                 if args.fixtures:
-                    raise ValueError(f"{fixture}: no model-runs; record with ACCEPT=true first")
+                    raise ValueError(f"{fixture}: no runs; record with ACCEPT=true first")
                 skipped += 1
                 continue
             validate(stats, fixture)
@@ -145,12 +136,12 @@ def main() -> int:
             writer = csv.DictWriter(handle, fieldnames=columns)
             writer.writeheader()
             for row in rows:
-                writer.writerow({key: json.dumps(value) if isinstance(value, list) else value
+                writer.writerow({key: json.dumps(value) if isinstance(value, (list, dict)) else value
                                  for key, value in row.items()})
         (output / "model-runs.json").write_text(json.dumps(rows, indent=2) + "\n")
         (output / "model-runs.md").write_text(markdown(rows, args.top))
         print(f"Wrote {len(rows)} model rows across {fixture_count} fixtures to {output}; "
-              f"skipped {skipped} fixtures without model-runs")
+              f"skipped {skipped} fixtures without runs")
         return 0
     except (OSError, ValueError, KeyError, TypeError) as error:
         print(f"error: {error}", file=sys.stderr)
