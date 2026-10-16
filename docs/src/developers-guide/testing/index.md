@@ -28,6 +28,47 @@ Finally, the test function itself includes the line `include!(concat!(env!("OUT_
 
 This format improves scalability and allows new tests to be created by just creating the input file.
 
+## Running a subset of tests
+
+Pass `TEST_ARGS` to select tests by name or pass other arguments directly to
+both `cargo test` (doctests) and `cargo nextest run`:
+
+```bash
+make test TEST_ARGS="alldiff"
+make test-accept TEST_ARGS="tests_integration_basic_alldiff"
+make test-accept-with-max-times TEST_ARGS="tests_integration_basic_alldiff"
+make test TEST_ARGS="-p conjure-cp-core"
+```
+
+With no `TEST_ARGS`, these targets run all tests. Arguments must be supported by
+both runners; for nextest-specific options such as `-E`, use `tools/nextest.py`
+directly as described below.
+
+Timing and concurrency settings use the same Make argument syntax and work with
+all three targets:
+
+```bash
+make test TEST_ARGS="alldiff" MAX_EXPECTED_TIME=10 TEST_CASE_TIMEOUT=30 NEXTEST_TEST_THREADS=4
+make test-accept TEST_ARGS="alldiff" MAX_EXPECTED_TIME=10 TEST_CASE_TIMEOUT=30 NEXTEST_TEST_THREADS=4
+```
+
+`MAX_EXPECTED_TIME` skips integration and custom tests with a recorded
+`expected-time` above the given number of seconds. Tests without a recorded time
+still run; roundtrip and unit tests are unaffected. Omit it or use `0` to disable
+this filter.
+
+`TEST_CASE_TIMEOUT` stops and fails each integration test that exceeds the given
+number of seconds. It does not apply to other test types. Omit it to disable the
+timeout; `0` means an immediate timeout.
+
+`NEXTEST_TEST_THREADS` sets how many tests nextest runs simultaneously, for
+example `4` for four tests or `1` for sequential execution. It does not control
+doctest concurrency. Omit it to use nextest's configured default.
+
+Make exports these settings to the test runners. For direct Cargo runs, set
+them as environment variables instead, for example
+`MAX_EXPECTED_TIME=10 TEST_CASE_TIMEOUT=30 cargo nextest run -p test-suite`.
+
 ## Scheduling longer tests first
 
 `make test`, `make test-accept`, `make test-accept-with-max-times`, and the coverage
