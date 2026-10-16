@@ -115,7 +115,7 @@ jobs:
       run: brew install coreutils parallel
 
     - name: Run tests
-      run: make test CARGO_FEATURES="--features z3-bundled"
+      run: make test CARGO_FEATURES="--features z3-bundled" NEXTEST_TEST_THREADS=1
 
     - name: Save cache
       if: ${{ always() && github.event_name == 'push' && matrix.os == 'ubuntu-latest' && steps.restore_cache.outputs.cache-hit != 'true' }}

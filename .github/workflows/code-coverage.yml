@@ -114,6 +114,7 @@ jobs:
 
     - name: Generate code coverage reports
       env:
+        NEXTEST_TEST_THREADS: 1
         BASE_REF: ${{ github.event_name == 'pull_request_target' && format('upstream/{0}', github.event.pull_request.base.ref) || 'origin/main' }}
         DIFF_COVER_FAIL_UNDER: 0
       run: |
