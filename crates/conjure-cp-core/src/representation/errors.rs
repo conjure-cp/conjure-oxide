@@ -14,6 +14,15 @@ pub enum ReprInitError {
     /// This representation only targets other solver families.
     #[error("representation `{}` is not applicable to solver family `{}`", .0, .1.as_str())]
     WrongSolverFamily(&'static str, crate::settings::SolverFamily),
+    /// A different representation is already selected for this type family.
+    #[error(
+        "uniform representation conflict for domain `{domain}`: selected `{existing}`, requested `{requested}`"
+    )]
+    UniformConflict {
+        domain: DomainPtr,
+        existing: &'static str,
+        requested: &'static str,
+    },
     /// Can't initialise representation for a different reason
     #[error(transparent)]
     Other(#[from] anyhow::Error),

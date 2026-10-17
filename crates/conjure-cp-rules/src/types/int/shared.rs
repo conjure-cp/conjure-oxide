@@ -1,6 +1,6 @@
 //! Helpers shared by the SAT integer representations.
 //!
-//! The three encodings differ in how they lay out bits, but agree on which domains they accept
+//! The encodings differ in how they lay out bits, but agree on which domains they accept
 //! and on how a domain is restated as a constraint over the encoded value.
 
 use conjure_cp::ast::{DomainPtr, Expression, GroundDomain, Metadata, Moo, Range};
@@ -12,7 +12,7 @@ use conjure_cp::into_matrix_expr;
 /// Returns `None` for anything that is not an integer domain, and for integer domains with an
 /// unbounded range: every SAT encoding needs to know how many values it is laying out.
 pub(crate) fn int_ranges(dom: &DomainPtr) -> Option<Vec<(i32, i32)>> {
-    let GroundDomain::Int(ranges) = dom.as_ground()? else {
+    let GroundDomain::Int(ranges, _) = dom.as_ground()? else {
         return None;
     };
 

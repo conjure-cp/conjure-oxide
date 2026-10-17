@@ -1,0 +1,112 @@
+Model before rewriting:
+
+find a: int(-4..4)
+find b: int(-4..4)
+find r: int(-7, -4..4)
+
+such that
+
+r = catchUndef(a % b, -7)
+
+--
+
+a % b
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(a,b) @ b != 0}
+
+--
+
+catchUndef({SafeMod(a,b) @ b != 0}, -7)
+   ~~> catch_undef_bubble ([("Base", 8800)])
+[-7,SafeMod(a,b);int(0..1)][toInt(b != 0)]
+
+--
+
+[-7,SafeMod(a,b);int(0..1)][toInt(b != 0)]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([-7,SafeMod(a,b);int(0..1)],[toInt(b != 0)])
+
+--
+
+SafeIndex([-7,SafeMod(a,b);int(0..1)],[toInt(b != 0)])
+   ~~> shift_matrix_literal_index ([("Base", 5000)])
+SafeIndex([-7,SafeMod(a,b);int(1..)],[sum([toInt(b != 0),1;int(1..)])])
+
+--
+
+SafeIndex([-7,SafeMod(a,b);int(1..)],[sum([toInt(b != 0),1;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([-7,SafeMod(a,b);int(1..)],[__0])
+new variables:
+  findAux __0: int(1..2)
+new constraints:
+  __0 =aux sum([toInt(b != 0),1;int(1..)])
+
+--
+
+__0 =aux sum([toInt(b != 0),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __1], __0),SumGeq([1, __1], __0);int(1..)])
+new variables:
+  findAux __1: int(0..1)
+new constraints:
+  __1 =aux toInt(b != 0)
+
+--
+
+toInt(b != 0)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__2)
+new variables:
+  findAux __2: bool
+new constraints:
+  __2 =aux b != 0
+
+--
+
+__2 =aux b != 0
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(b != 0, __2)
+
+--
+
+SafeIndex([-7,SafeMod(a,b);int(1..)],[__0])
+   ~~> flatten_matrix_literal ([("Minion", 1000)])
+SafeIndex([-7,__3;int(1..)],[__0])
+new variables:
+  findAux __3: int(-3..3)
+new constraints:
+  __3 =aux SafeMod(a,b)
+
+--
+
+r = SafeIndex([-7,__3;int(1..)],[__0])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([-7,__3],__0,r)
+
+--
+
+__3 =aux SafeMod(a,b)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(a, b, __3)
+
+--
+
+Final model:
+
+find a: int(-4..4)
+find b: int(-4..4)
+find r: int(-7, -4..4)
+findAux __0: int(1..2)
+findAux __1: int(0..1)
+findAux __2: bool
+findAux __3: int(-3..3)
+
+such that
+
+__minion_element_one([-7,__3],__0,r),
+and([SumLeq([1, __1], __0),SumGeq([1, __1], __0);int(1..)]),
+__1 =aux toInt(__2),
+Reify(b != 0, __2),
+ModEq(a, b, __3)
+

@@ -4,7 +4,7 @@ use crate::Model as ConjureModel;
 use crate::ast::{
     self as conjure_ast, Atom, Expression, HasDomain, Moo, Name, OptimiseDirection, Range,
 };
-use crate::settings::{SolverFamily, minion_discrete_threshold};
+use crate::settings::{SolverFamily, select_minion_discrete_threshold};
 use crate::solver::SolverError::{
     ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
 };
@@ -29,7 +29,28 @@ pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> 
     let mut minion_model = MinionModel::new();
     minion_model.optimise = optimise;
     let discrete_vars = collect_discrete_required_variables(&model);
-    load_symbol_table(&model, &discrete_vars, &mut minion_model)?;
+    let has_optional_integer = {
+        let symbols = model.symbols();
+        symbols.iter_local().any(|(name, decl)| {
+            !discrete_vars.contains(name)
+                && decl.reprs().is_empty()
+                && symbols
+                    .representations_for(name)
+                    .is_none_or(|reprs| reprs.is_empty())
+                && decl.as_find().is_some_and(|var| {
+                    matches!(
+                        var.domain_of().resolve().as_deref(),
+                        Ok(conjure_ast::GroundDomain::Int(_, _))
+                    )
+                })
+        })
+    };
+    let threshold = if has_optional_integer {
+        select_minion_discrete_threshold()
+    } else {
+        crate::settings::DEFAULT_MINION_DISCRETE_THRESHOLD
+    };
+    load_symbol_table(&model, &discrete_vars, threshold, &mut minion_model)?;
     load_constraints(&model, &mut minion_model)?;
     Ok(minion_model)
 }
@@ -61,6 +82,7 @@ fn resolve_optimisation(model: &ConjureModel) -> Result<Option<Optimise>, Solver
 fn load_symbol_table(
     conjure_model: &ConjureModel,
     discrete_vars: &HashSet<conjure_ast::Name>,
+    threshold: usize,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     if let Some(ref vars) = conjure_model.search_order {
@@ -86,7 +108,14 @@ fn load_symbol_table(
                 if !search_vars.insert(leaf_name.clone()) {
                     continue;
                 }
-                load_var(&leaf_name, &var, true, discrete_vars, minion_model)?;
+                load_var(
+                    &leaf_name,
+                    &var,
+                    true,
+                    discrete_vars,
+                    threshold,
+                    minion_model,
+                )?;
             }
         }
 
@@ -95,7 +124,7 @@ fn load_symbol_table(
             if search_vars.contains(name) {
                 return Ok(());
             }
-            load_var(name, var, false, discrete_vars, minion_model)
+            load_var(name, var, false, discrete_vars, threshold, minion_model)
         })?;
     } else {
         for_each_unrepresented_var(conjure_model, |name, var, decl| {
@@ -103,7 +132,14 @@ fn load_symbol_table(
             // must not be branched on: they would otherwise create many duplicate user solutions.
             let is_search_var =
                 !decl.is_find_auxiliary() && !matches!(name, conjure_ast::Name::Machine(_));
-            load_var(name, var, is_search_var, discrete_vars, minion_model)
+            load_var(
+                name,
+                var,
+                is_search_var,
+                discrete_vars,
+                threshold,
+                minion_model,
+            )
         })?;
     }
     Ok(())
@@ -157,6 +193,8 @@ fn collect_table_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast:
             | conjure_ast::Expression::NegativeTable(_, tuple_expr, _) => {
                 Some(Moo::unwrap_or_clone(tuple_expr))
             }
+            flat @ (conjure_ast::Expression::FlatTable(..)
+            | conjure_ast::Expression::FlatShortTable(..)) => Some(flat),
             _ => None,
         })
         .flat_map(|tuple_expr| Biplate::<conjure_ast::Reference>::universe_bi(&tuple_expr))
@@ -277,15 +315,21 @@ fn load_var(
     var: &conjure_ast::DecisionVariable,
     search_var: bool,
     table_vars: &HashSet<conjure_ast::Name>,
+    threshold: usize,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let resolved_domain = var.domain_of().resolve();
     let force_discrete = table_vars.contains(name);
     match resolved_domain.as_deref() {
         Ok(conjure_ast::GroundDomain::Bool) => load_booldomain_var(name, search_var, minion_model),
-        Ok(conjure_ast::GroundDomain::Int(ranges)) => {
-            load_intdomain_var(name, ranges, search_var, force_discrete, minion_model)
-        }
+        Ok(conjure_ast::GroundDomain::Int(ranges, _)) => load_intdomain_var(
+            name,
+            ranges,
+            search_var,
+            force_discrete,
+            threshold,
+            minion_model,
+        ),
         x => Err(ModelFeatureNotSupported(format!(
             "variable {name} has unsupported domain {x:?}"
         ))),
@@ -298,6 +342,7 @@ fn load_intdomain_var(
     ranges: &[conjure_ast::Range<i32>],
     search_var: bool,
     force_discrete: bool,
+    threshold: usize,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let str_name = name_to_string(name.to_owned());
@@ -330,8 +375,7 @@ fn load_intdomain_var(
     }?;
 
     let size = i64::from(high) - i64::from(low) + 1;
-    let threshold = minion_discrete_threshold() as i64;
-    let use_discrete = force_discrete || size <= threshold;
+    let use_discrete = force_discrete || size as u128 <= threshold as u128;
 
     let domain = if use_discrete {
         minion_ast::VarDomain::Discrete(low, high)
@@ -499,19 +543,53 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atomic_expr(Moo::unwrap_or_clone(a))?,
             parse_atomic_expr(Moo::unwrap_or_clone(b))?,
         )),
-        conjure_ast::Expression::Table(_metadata, tuple_expr, allowed_rows_expr) => {
-            parse_table_constraint(
-                TableConstraintKind::Table,
-                Moo::unwrap_or_clone(tuple_expr),
-                Moo::unwrap_or_clone(allowed_rows_expr),
-            )
+        conjure_ast::Expression::FlatShortTable(_, inputs, rows) => {
+            let vars = inputs
+                .into_iter()
+                .map(parse_atom)
+                .collect::<Result<Vec<_>, _>>()?;
+            for row in &rows {
+                let mut positions = HashSet::new();
+                if row
+                    .iter()
+                    .any(|(position, _)| *position >= vars.len() || !positions.insert(*position))
+                {
+                    return Err(ModelInvalid(
+                        "FlatShortTable positions must be distinct and in range".into(),
+                    ));
+                }
+            }
+            let rows = rows
+                .into_iter()
+                .map(|row| {
+                    row.into_iter()
+                        .map(|(position, value)| (position, minion_ast::Constant::Integer(value)))
+                        .collect()
+                })
+                .collect();
+            Ok(minion_ast::Constraint::ShortStr2(vars, rows))
         }
-        conjure_ast::Expression::NegativeTable(_metadata, tuple_expr, forbidden_rows_expr) => {
-            parse_table_constraint(
-                TableConstraintKind::NegativeTable,
-                Moo::unwrap_or_clone(tuple_expr),
-                Moo::unwrap_or_clone(forbidden_rows_expr),
-            )
+        conjure_ast::Expression::FlatTable(_, inputs, rows, negative) => {
+            let kind = if negative {
+                TableConstraintKind::NegativeTable
+            } else {
+                TableConstraintKind::Table
+            };
+            let vars = inputs
+                .into_iter()
+                .map(parse_atom)
+                .collect::<Result<Vec<_>, _>>()?;
+            if rows.iter().any(|row| row.len() != vars.len()) {
+                return Err(ModelInvalid(
+                    "FlatTable row width does not match inputs".into(),
+                ));
+            }
+            Ok(kind.into_constraint(
+                vars,
+                rows.into_iter()
+                    .map(|row| row.into_iter().map(minion_ast::Constant::Integer).collect())
+                    .collect(),
+            ))
         }
         conjure_ast::Expression::AtLeast(_metadata, vars_expr, counts_expr, values_expr) => {
             parse_global_cardinality_constraint(
@@ -704,13 +782,6 @@ enum TableConstraintKind {
 }
 
 impl TableConstraintKind {
-    fn name(self) -> &'static str {
-        match self {
-            Self::Table => "table",
-            Self::NegativeTable => "negativeTable",
-        }
-    }
-
     fn into_constraint(
         self,
         vars: Vec<minion_ast::Var>,
@@ -721,56 +792,6 @@ impl TableConstraintKind {
             Self::NegativeTable => minion_ast::Constraint::NegativeTable(vars, tuples),
         }
     }
-}
-
-fn parse_table_constraint(
-    kind: TableConstraintKind,
-    tuple_expr: conjure_ast::Expression,
-    rows_expr: conjure_ast::Expression,
-) -> Result<minion_ast::Constraint, SolverError> {
-    let (tuple_elems, _) = tuple_expr
-        .unwrap_matrix_unchecked()
-        .ok_or_else(|| ModelInvalid(format!("{} first argument is not a matrix", kind.name())))?;
-    let (rows, _) = rows_expr
-        .unwrap_matrix_unchecked()
-        .ok_or_else(|| ModelInvalid(format!("{} second argument is not a matrix", kind.name())))?;
-
-    let vars = tuple_elems
-        .into_iter()
-        .map(parse_atomic_expr)
-        .collect::<Result<Vec<_>, SolverError>>()?;
-
-    let mut tuples = Vec::with_capacity(rows.len());
-    for row_expr in rows {
-        let (row_elems, _) = row_expr
-            .unwrap_matrix_unchecked()
-            .ok_or_else(|| ModelInvalid(format!("{} row is not a matrix", kind.name())))?;
-
-        if row_elems.len() != vars.len() {
-            return Err(ModelInvalid(format!(
-                "{} row width does not match tuple width",
-                kind.name()
-            )));
-        }
-
-        let tuple = row_elems
-            .into_iter()
-            .map(|row_val_expr| {
-                conjure_ast::eval_constant(&row_val_expr)
-                    .ok_or_else(|| {
-                        ModelInvalid(format!(
-                            "{} row contains a non-constant expression",
-                            kind.name()
-                        ))
-                    })
-                    .and_then(parse_literal)
-            })
-            .collect::<Result<Vec<_>, SolverError>>()?;
-
-        tuples.push(tuple);
-    }
-
-    Ok(kind.into_constraint(vars, tuples))
 }
 
 #[derive(Clone, Copy)]

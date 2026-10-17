@@ -1,12 +1,11 @@
 parser = "tree-sitter"
 rewriter = "optimised"
 comprehension-expander = "auto"
-solver = [
-    "minion",
-    "z3",
-]
+solver = ["minion", "sat", "z3"]
 heuristic = "f"
 number-of-solutions = "all"
 skip-conjure-validation = "Conjure does not support representation annotations in Essence input"
 
-# SAT currently drops the impossible out-of-domain equality; keep the UNSAT regression on Minion and Z3.
+[solver-options.sat]
+heuristic = "c"
+channelling = "uniform"

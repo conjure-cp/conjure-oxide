@@ -60,25 +60,36 @@ fn membership_in_set_literal(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     }
 
+    Ok(expand_membership(member, elements))
+}
+
+/// SAT uses numeric equalities for the constant sets delegated to Minion's native constraint.
+#[register_rule("SAT", 8700, [In])]
+fn membership_in_integer_set_literal_sat(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::In(_, member, collection) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let elements = set_literal_elements(collection).ok_or(RuleNotApplicable)?;
+    if !minion_w_inset_applies(&elements) {
+        return Err(RuleNotApplicable);
+    }
+    Ok(expand_membership(member, elements))
+}
+
+fn expand_membership(member: &Expr, elements: Vec<Expr>) -> RuleEffect {
     if elements.is_empty() {
-        return Ok(RuleEffect::pure(false.into()));
+        return RuleEffect::pure(false.into());
     }
 
     let disjuncts = elements
         .into_iter()
-        .map(|element| {
-            Expr::Eq(
-                Metadata::new(),
-                Moo::new(Moo::unwrap_or_clone(Moo::clone(member))),
-                Moo::new(element),
-            )
-        })
+        .map(|element| Expr::Eq(Metadata::new(), Moo::new(member.clone()), Moo::new(element)))
         .collect();
 
-    Ok(RuleEffect::pure(Expr::Or(
+    RuleEffect::pure(Expr::Or(
         Metadata::new(),
         Moo::new(into_matrix_expr![disjuncts]),
-    )))
+    ))
 }
 
 /// The elements of a set written out in full, in either the literal or the expression form.

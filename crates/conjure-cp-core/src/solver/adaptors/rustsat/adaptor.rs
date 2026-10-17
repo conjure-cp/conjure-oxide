@@ -11,7 +11,7 @@ use minion_sys::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::SolverResult;
 use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var as satVar};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::result::Result::Ok;
 use std::time::Duration;
 use tracing_subscriber::filter::DynFilterFn;
@@ -20,14 +20,15 @@ use ustr::Ustr;
 use super::backend::{SatBackend, SatSolver};
 
 use crate::ast::pretty::pretty_vec;
+use crate::ast::serde::HasId;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
 use crate::bug_assert;
-use crate::representation::util::try_up;
+use crate::representation::util::try_up_via;
 use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_configured_rewriter};
 use crate::settings::current_rewriter;
 use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::adaptors::SolveTimeBudget;
-use crate::solver::adaptors::rustsat::convs::{cnf_clause_to_sat_clause, handle_cnf};
+use crate::solver::adaptors::rustsat::decisions::{EncodingCache, compile_decisions_with_cache};
 use crate::solver::{
     self, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError, SolverFamily,
     SolverMutCallback, private,
@@ -48,9 +49,12 @@ pub struct Sat {
     solver_seed: u32,
     timeout: Option<Duration>,
     model_inst: Option<SatInstance>,
-    var_map: Option<HashMap<Name, Lit>>,
+    // Ordered maps keep solution blocking clauses stable across solver runs.
+    var_map: Option<BTreeMap<Name, Lit>>,
     solver_inst: SatSolver,
     decision_refs: Option<Vec<Name>>,
+    objective: Option<super::objective::CompiledObjective>,
+    cache: EncodingCache,
     dominance_expression: Option<Expression>,
     dominance_model_template: Option<ConjureModel>,
 }
@@ -74,6 +78,8 @@ impl Sat {
             var_map: None,
             model_inst: None,
             decision_refs: None,
+            objective: None,
+            cache: EncodingCache::default(),
             dominance_expression: None,
             dominance_model_template: None,
         }
@@ -97,7 +103,7 @@ impl Sat {
 
 fn sub_in_solution_into_dominance_expr(
     expr: &Expression,
-    solution: &HashMap<Name, Literal>,
+    solution: &BTreeMap<Name, Literal>,
 ) -> Option<Expression> {
     match expr {
         Expression::FromSolution(_, atom_expr) => {
@@ -129,7 +135,7 @@ fn sub_in_solution_into_dominance_expr(
 
 fn sub_in_solution_into_current_refs(
     expr: &Expression,
-    solution: &HashMap<Name, Literal>,
+    solution: &BTreeMap<Name, Literal>,
 ) -> Option<Expression> {
     match expr {
         Expression::Atomic(_, Atom::Reference(reference)) => {
@@ -168,7 +174,7 @@ fn swap_from_solution_to_current_ref(expr: &Expression) -> Option<Expression> {
 
 fn rewrite_dominance_to_block_dominated_futures(
     dominance_expression: &Expression,
-    solution: &HashMap<Name, Literal>,
+    solution: &BTreeMap<Name, Literal>,
 ) -> Expression {
     Expression::Not(
         Metadata::new(),
@@ -180,7 +186,7 @@ fn rewrite_dominance_to_block_dominated_futures(
     )
 }
 
-fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model: &ConjureModel) {
+fn add_represented_decision_values(solution: &mut BTreeMap<Name, Literal>, model: &ConjureModel) {
     let symbols = model.symbols().clone();
     let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
     let representations = names
@@ -201,23 +207,23 @@ fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model:
         })
         .collect_vec();
 
-    let mut solution_btree = solution
-        .clone()
-        .into_iter()
-        .collect::<BTreeMap<Name, Literal>>();
     for (name, representation) in representations {
-        let Ok(value) = representation.value_up(&solution_btree) else {
+        let Ok(value) = representation.value_up(solution) else {
             continue;
         };
-        solution.insert(name.clone(), value.clone());
-        solution_btree.insert(name, value);
+        solution.insert(name, value);
     }
 
     for (_, declaration) in symbols.iter_local() {
         if declaration.reprs().is_empty() {
             continue;
         }
-        if let Ok(value) = try_up(declaration.clone(), solution) {
+        let value = {
+            let lookup: crate::representation::types::LookupFn<'_> =
+                Box::new(|decl| solution.get(&decl.name()).cloned());
+            try_up_via(declaration.clone(), &lookup)
+        };
+        if let Ok(value) = value {
             solution.insert(declaration.name().clone(), value);
         }
     }
@@ -226,9 +232,9 @@ fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model:
 fn get_ref_sols(
     find_refs: Vec<Name>,
     sol: Assignment,
-    var_map: HashMap<Name, Lit>,
-) -> HashMap<Name, Literal> {
-    let mut solution: HashMap<Name, Literal> = HashMap::new();
+    var_map: BTreeMap<Name, Lit>,
+) -> BTreeMap<Name, Literal> {
+    let mut solution: BTreeMap<Name, Literal> = BTreeMap::new();
 
     for reference in find_refs {
         // lit is `Nothing` for variables that don't exist. This should have thrown an error at parse-time.
@@ -252,13 +258,19 @@ fn get_ref_sols(
     solution
 }
 
+// Representation names retain their original source through every nesting level.
 fn is_user_visible_solution_var(name: &Name) -> bool {
-    !matches!(name, Name::Machine(_))
+    match name {
+        Name::User(_) => true,
+        Name::Machine(_) => false,
+        Name::Represented(fields) => is_user_visible_solution_var(&fields.0),
+        Name::WithRepresentation(source, _) => is_user_visible_solution_var(source),
+    }
 }
 
 fn blocking_clause_for_solution(
-    solution: &HashMap<Name, Literal>,
-    var_map: &HashMap<Name, Lit>,
+    solution: &BTreeMap<Name, Literal>,
+    var_map: &BTreeMap<Name, Lit>,
 ) -> Result<Clause, SolverError> {
     let mut clause = Clause::new();
 
@@ -295,8 +307,10 @@ impl Sat {
         dominance_expression: Option<&Expression>,
         dominance_model_template: Option<&ConjureModel>,
         solver: &mut SatSolver,
-        solution: &HashMap<Name, Literal>,
-        var_map: &mut HashMap<Name, Lit>,
+        solution: &BTreeMap<Name, Literal>,
+        var_map: &mut BTreeMap<Name, Lit>,
+        next_free: &mut u32,
+        cache: &mut EncodingCache,
     ) -> Result<(), SolverError> {
         let Some(dominance_expression) = dominance_expression else {
             return Ok(());
@@ -311,8 +325,9 @@ impl Sat {
 
         let mut dominance_model = model_template.clone();
         dominance_model.replace_constraints(vec![]);
-        dominance_model.replace_clauses(vec![]);
+        dominance_model.replace_sat_decisions(vec![]);
         dominance_model.dominance = None;
+        dominance_model.objective = None;
         dominance_model.add_constraint(rewritten_dominance);
 
         // Prefer the rule sets the model was built with, but fall back to resolving them for this
@@ -331,76 +346,28 @@ impl Sat {
             rewrite_model_with_configured_rewriter(dominance_model, &rule_sets, current_rewriter())
                 .map_err(|e| {
                     SolverError::Runtime(format!(
-                        "Failed to rewrite dominance constraint into CNF clauses: {e}"
+                        "Failed to rewrite dominance constraint into SAT decisions: {e}"
                     ))
                 })?;
 
-        for clause in rewritten.clauses() {
-            let mut missing_refs: Vec<Name> = Vec::new();
-            let mut largest_new_var: Option<satVar> = None;
-            for literal in clause.iter() {
-                let maybe_name = match literal {
-                    Expression::Atomic(_, Atom::Reference(reference)) => {
-                        Some(reference.name().clone())
-                    }
-                    Expression::Not(_, inner) => {
-                        if let Expression::Atomic(_, Atom::Reference(reference)) = inner.as_ref() {
-                            Some(reference.name().clone())
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
-                };
-
-                if let Some(name) = maybe_name
-                    && !var_map.contains_key(&name)
-                {
-                    missing_refs.push(name);
-                }
-            }
-
-            if !missing_refs.is_empty() {
-                missing_refs.sort_by_key(|name| name.to_string());
-                missing_refs.dedup();
-
-                for name in &missing_refs {
-                    if var_map.contains_key(name) {
-                        continue;
-                    }
-                    let next_idx = var_map
-                        .values()
-                        .map(|lit| lit.var().idx32())
-                        .max()
-                        .map(|idx| idx + 1)
-                        .unwrap_or(0);
-                    let new_var = satVar::new(next_idx);
-                    let new_lit = new_var.pos_lit();
-                    var_map.insert(name.clone(), new_lit);
-                    largest_new_var = Some(new_var);
-                }
-            }
-
-            if let Some(max_var) = largest_new_var {
-                solver.reserve(max_var).map_err(|e| {
-                    SolverError::Runtime(format!(
-                        "Failed reserving SAT variable capacity up to {max_var} for dominance clauses: {e}"
-                    ))
-                })?;
-            }
-
-            if let Some(sat_clause) = cnf_clause_to_sat_clause(clause, var_map).map_err(|e| {
-                SolverError::Runtime(format!(
-                    "Failed converting dominance CNF clause to SAT clause. clause={clause:?}; error={e}"
-                ))
-            })? {
-                solver.add_clause(sat_clause).map_err(|e| {
-                    SolverError::Runtime(format!(
-                        "Failed adding dominance clause to SAT solver: {e}"
-                    ))
-                })?;
-            }
+        let mut instance: SatInstance = SatInstance::new();
+        instance
+            .var_manager_mut()
+            .increase_next_free(satVar::new(*next_free));
+        compile_decisions_with_cache(rewritten.sat_decisions(), &mut instance, var_map, cache)?;
+        for constraint in rewritten.constraints() {
+            compile_decisions_with_cache(
+                &[crate::ast::SatEncodingDecision::Assert(constraint.clone())],
+                &mut instance,
+                var_map,
+                cache,
+            )?;
         }
+        let (cnf, manager): (Cnf, BasicVarManager) = instance.into_cnf();
+        *next_free = manager.n_used();
+        solver
+            .add_cnf(cnf)
+            .map_err(|e| SolverError::Runtime(format!("Failed adding dominance encoding: {e}")))?;
 
         Ok(())
     }
@@ -416,6 +383,8 @@ impl SolverAdaptor for Sat {
         let timeout_enabled = self.timeout.is_some();
         let dominance_expression = self.dominance_expression.clone();
         let dominance_model_template = self.dominance_model_template.clone();
+        let mut objective = self.objective.take();
+        let mut objective_assumptions = Vec::new();
         let mut solver = &mut self.solver_inst;
         solver.set_seed(self.solver_seed)?;
         let mut var_map = self.var_map.clone().ok_or_else(|| {
@@ -428,6 +397,7 @@ impl SolverAdaptor for Sat {
             .ok_or_else(|| SolverError::Runtime("Model instance is missing".to_string()))?
             .into_cnf();
 
+        let mut next_free = cnf.1.n_used();
         solver.add_cnf(cnf.0).map_err(|e| {
             SolverError::Runtime(format!("Failed adding CNF to SAT solver before solve: {e}"))
         })?;
@@ -445,7 +415,7 @@ impl SolverAdaptor for Sat {
                 });
             }
 
-            let res = match solver.solve() {
+            let res = match solver.solve_assumps(&objective_assumptions) {
                 Ok(r) => r,
                 Err(e) => {
                     return Err(SolverError::Runtime(format!(
@@ -518,17 +488,15 @@ impl SolverAdaptor for Sat {
 
             let solutions = enumerate_all_solutions(sol_old);
 
-            tracing::info!("final solutions for run");
-            tracing::info!("{:#?}", solutions);
-
             for solution in solutions {
+                tracing::info!("completed solution: {:#?}", solution);
                 if budget.expired() {
                     return Ok(SolveSuccess {
                         stats: SolverStats::default(),
                         status: SearchStatus::Incomplete(solver::SearchIncomplete::Timeout),
                     });
                 }
-                if !callback(solution.clone()) {
+                if !callback(solution.clone().into_iter().collect()) {
                     // callback false
                     return Ok(SolveSuccess {
                         stats: SolverStats {
@@ -541,6 +509,42 @@ impl SolverAdaptor for Sat {
                     });
                 }
 
+                if let Some(objective) = objective.as_mut() {
+                    let mut completed = sol.clone();
+                    for literal in var_map.values() {
+                        if completed.var_value(literal.var()) == TernaryVal::DontCare {
+                            completed.assign_var(literal.var(), TernaryVal::False);
+                        }
+                    }
+                    for (name, value) in &solution {
+                        if let Some(literal) = var_map.get(name) {
+                            let value = match value {
+                                Literal::Bool(value) => *value,
+                                Literal::Int(value) => *value != 0,
+                                _ => continue,
+                            };
+                            completed.assign_var(
+                                literal.var(),
+                                TernaryVal::from(if literal.is_pos() { value } else { !value }),
+                            );
+                        }
+                    }
+                    let mut instance: SatInstance = SatInstance::new();
+                    instance
+                        .var_manager_mut()
+                        .increase_next_free(satVar::new(next_free));
+                    objective_assumptions = objective.tighten(
+                        &completed,
+                        &mut instance,
+                        &mut var_map,
+                        &mut self.cache,
+                    )?;
+                    let (cnf, manager): (Cnf, BasicVarManager) = instance.into_cnf();
+                    next_free = manager.n_used();
+                    solver.add_cnf(cnf).map_err(|error| {
+                        SolverError::Runtime(format!("Failed adding objective bound: {error}"))
+                    })?;
+                }
                 let mut dominance_solution = full_assignment_solution.clone();
                 dominance_solution.extend(solution.clone());
                 if let Some(model_template) = dominance_model_template.as_ref() {
@@ -553,6 +557,8 @@ impl SolverAdaptor for Sat {
                     solver,
                     &dominance_solution,
                     &mut var_map,
+                    &mut next_free,
+                    &mut self.cache,
                 )?;
 
                 let blocking_cl = blocking_clause_for_solution(&solution, &var_map)?;
@@ -562,6 +568,10 @@ impl SolverAdaptor for Sat {
                         "Failed adding solution blocking clause to SAT solver: {e}"
                     ))
                 })?;
+                // Dominance can invalidate the remaining free completions of this assignment.
+                if dominance_expression.is_some() || objective.is_some() {
+                    break;
+                }
             }
         }
     }
@@ -575,16 +585,33 @@ impl SolverAdaptor for Sat {
     }
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
+        self.objective = None;
+        self.cache = EncodingCache::default();
         self.dominance_expression = model.dominance.as_ref().map(|expr| match expr {
             Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
             _ => expr.clone(),
         });
         self.dominance_model_template = self.dominance_expression.as_ref().map(|_| model.clone());
 
+        // A residual false constraint makes the whole model unsatisfiable, even when previous
+        // rewrites already emitted decisions. Preserve it before inspecting unencoded finds.
+        if model
+            .constraints()
+            .iter()
+            .any(|constraint| *constraint == false.into())
+        {
+            let mut inst = SatInstance::new();
+            inst.add_clause(Clause::new());
+            self.decision_refs = Some(Vec::new());
+            self.var_map = Some(BTreeMap::new());
+            self.model_inst = Some(inst);
+            return Ok(());
+        }
+
         let sym_tab = model.symbols().deref().clone();
 
         let mut finds: Vec<Name> = Vec::new();
-        let mut var_map: HashMap<Name, Lit> = HashMap::new();
+        let mut var_map: BTreeMap<Name, Lit> = BTreeMap::new();
 
         for (name, decl) in sym_tab.into_iter_local() {
             if decl.as_find().is_none() {
@@ -598,11 +625,15 @@ impl SolverAdaptor for Sat {
             let domain = decl
                 .domain()
                 .expect("Decision variable should have a domain");
-            let domain = domain.as_ground().expect("Domain should be ground");
+            let domain = domain.resolve().map_err(|error| {
+                SolverError::ModelInvalid(format!(
+                    "Cannot resolve domain of decision variable '{name}': {error}"
+                ))
+            })?;
 
             // Everything reaching the solver must be Boolean by now. Integers are encoded into
             // Booleans by their representation, and a declaration that has one was skipped above.
-            if domain != &GroundDomain::Bool {
+            if domain.as_ref() != &GroundDomain::Bool {
                 Err(SolverError::ModelInvalid(format!(
                     "Only Boolean Decision Variables supported, but '{name}' has domain {domain}"
                 )))?;
@@ -610,16 +641,17 @@ impl SolverAdaptor for Sat {
             // Only expose non-internal boolean variables in solver solutions. Machine names are
             // auxiliaries introduced during rewriting and can create huge powersets of don't-care
             // assignments without changing the semantic solution.
-            if domain == &GroundDomain::Bool && is_user_visible_solution_var(&name) {
+            if domain.as_ref() == &GroundDomain::Bool && is_user_visible_solution_var(&name) {
                 finds.push(name);
             }
         }
 
         self.decision_refs = Some(finds.clone());
 
+        let model_objective_required = model.objective.is_some();
         let m_clone = model;
 
-        // all constraints should be encoded as clauses
+        // All constraints should have terminal encoding decisions.
         // the remaining constraint (if it exists) should just be a true/false expression
         let constraints = m_clone.constraints();
         bug_assert!(
@@ -630,9 +662,33 @@ impl SolverAdaptor for Sat {
             pretty_vec(constraints)
         );
 
-        let clauses = m_clone.clauses();
+        let decisions = m_clone.sat_decisions();
 
-        let inst: SatInstance = handle_cnf(clauses, &mut var_map, finds.clone());
+        let mut inst = SatInstance::new();
+        finds.sort_by_key(ToString::to_string);
+        for name in finds {
+            var_map.insert(name, inst.new_lit());
+        }
+        compile_decisions_with_cache(decisions, &mut inst, &mut var_map, &mut self.cache)?;
+        let objectives: Vec<_> = decisions
+            .iter()
+            .filter(|decision| {
+                matches!(decision, crate::ast::SatEncodingDecision::Objective { .. })
+            })
+            .collect();
+        if objectives.len() > 1 || (model_objective_required && objectives.is_empty()) {
+            return Err(SolverError::ModelInvalid(
+                "SAT requires exactly one compiled decision for an optimisation objective".into(),
+            ));
+        }
+        if let Some(decision) = objectives.first() {
+            self.objective = Some(super::objective::CompiledObjective::new(
+                decision,
+                &mut inst,
+                &mut var_map,
+                &mut self.cache,
+            )?);
+        }
 
         self.var_map = Some(var_map);
         let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();
@@ -673,86 +729,35 @@ impl SolverAdaptor for Sat {
     }
 }
 
-// Function that takes in solutions and returns updated solutions
-// update consists of checking each assignment and calling enumerate_real if dont-care types exist
-fn enumerate_all_solutions(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
-    tracing::info!("Enumerating");
-    for (key, val) in solution.clone() {
-        match val {
-            Literal::Int(a) => {
-                if (a == 2) {
-                    return enumerate_solution(solution);
-                } else {
-                    continue;
-                }
-            }
-            _ => continue,
+/// Expand free Boolean assignments lazily so limits can stop exponential completion.
+fn enumerate_all_solutions(
+    mut solution: BTreeMap<Name, Literal>,
+) -> impl Iterator<Item = BTreeMap<Name, Literal>> {
+    let mut dont_cares: Vec<_> = solution
+        .iter()
+        .filter(|(_, value)| **value == Literal::Int(2))
+        .map(|(name, _)| name.clone())
+        .collect();
+    dont_cares.sort_by_cached_key(ToString::to_string);
+    for name in &dont_cares {
+        solution.remove(name);
+    }
+    (0..dont_cares.len()).powerset().map(move |trues| {
+        let mut completed = solution.clone();
+        for (index, name) in dont_cares.iter().enumerate() {
+            completed.insert(
+                name.clone(),
+                Literal::Int(i32::from(trues.contains(&index))),
+            );
         }
-    }
-    vec![solution]
-}
-
-// Function that takes in ONE solution and
-// unfolds dont-care type ternaries into each possible type
-// returns all possible 'real' solutions for this 'generated' solution
-// a real solution is one with no variable assigned to Ternary::DontCare
-fn enumerate_solution(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
-    tracing::info!("Enumerating: Real");
-    let mut sols = Vec::new();
-    let mut dont_cares = Vec::new();
-    let mut solutions_inclusive = HashMap::new();
-
-    for (key, val) in solution {
-        let v = match val {
-            Literal::Int(i) => i,
-            _ => bug!("Only Integers expected at this time"),
-        };
-        if v == 2 {
-            // anytime the value is 2 (dont-care in the ternary system used by rustsat), add the
-            // key to a vector of dontcare values
-            dont_cares.push(key);
-        } else {
-            // if the value is not a dont-care, then this (k, v) pair is usable in the final
-            // solution, so just add it to the inclusive solution (another HashMap)
-            solutions_inclusive.insert(key, val);
-        }
-    }
-
-    let mut tdcs = Vec::new();
-
-    tdcs.push(vec![]);
-    for len in 1..(dont_cares.len()) {
-        for combination in dont_cares.iter().combinations(len) {
-            tdcs.push(combination);
-        }
-    }
-
-    for trues in tdcs {
-        let mut d = solutions_inclusive.clone();
-        for key in dont_cares.clone() {
-            if trues.contains(&&key) {
-                d.insert(key, Literal::Int(1));
-            } else {
-                d.insert(key, Literal::Int(0));
-            }
-        }
-        sols.push(d);
-    }
-
-    for i in dont_cares {
-        solutions_inclusive.insert(i, Literal::Int(1));
-    }
-
-    sols.push(solutions_inclusive);
-    sols
+        completed
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::ast::{DeclarationPtr, Domain, Moo, Reference};
-    use rustsat::types::Var as SatVar;
-
     #[cfg(feature = "sat-batsat")]
     #[test]
     fn batsat_rejects_unsupported_seed() {
@@ -768,7 +773,7 @@ mod tests {
         for &backend in <SatBackend as clap::ValueEnum>::value_variants() {
             let mut sat = Sat::new(backend).with_timeout(Some(Duration::ZERO));
             sat.model_inst = Some(SatInstance::default());
-            sat.var_map = Some(HashMap::new());
+            sat.var_map = Some(BTreeMap::new());
             sat.decision_refs = Some(Vec::new());
 
             let result = sat
@@ -796,7 +801,7 @@ mod tests {
 
             let mut sat = Sat::new(backend);
             sat.model_inst = Some(inst.clone());
-            sat.var_map = Some(HashMap::from([(x.clone(), x_lit), (y.clone(), y_lit)]));
+            sat.var_map = Some(BTreeMap::from([(x.clone(), x_lit), (y.clone(), y_lit)]));
             sat.decision_refs = Some(vec![x.clone(), y.clone()]);
             let solutions = Arc::new(Mutex::new(Vec::new()));
             let collected = solutions.clone();
@@ -830,7 +835,7 @@ mod tests {
             inst.add_clause([!x_lit].into_iter().collect());
             let mut sat = Sat::new(backend);
             sat.model_inst = Some(inst);
-            sat.var_map = Some(HashMap::new());
+            sat.var_map = Some(BTreeMap::new());
             sat.decision_refs = Some(Vec::new());
             let result = sat
                 .solve(
@@ -858,7 +863,7 @@ mod tests {
             Metadata::new(),
             Moo::new(Atom::Reference(Reference::new(x_ref))),
         );
-        let mut solution = HashMap::new();
+        let mut solution = BTreeMap::new();
         solution.insert(x, Literal::Int(7));
 
         let replaced = sub_in_solution_into_dominance_expr(&expr, &solution)
@@ -881,7 +886,7 @@ mod tests {
             Metadata::new(),
             Moo::new(Atom::Reference(Reference::new(x_ref))),
         );
-        let solution = HashMap::new();
+        let solution = BTreeMap::new();
 
         assert!(sub_in_solution_into_dominance_expr(&expr, &solution).is_none());
     }
@@ -894,7 +899,7 @@ mod tests {
             Metadata::new(),
             Moo::new(Atom::Reference(Reference::new(x_ref))),
         );
-        let mut solution = HashMap::new();
+        let mut solution = BTreeMap::new();
         solution.insert(x, Literal::Int(1));
 
         let replaced = sub_in_solution_into_dominance_expr(&expr, &solution)

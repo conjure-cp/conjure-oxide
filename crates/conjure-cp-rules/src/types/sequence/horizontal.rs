@@ -63,6 +63,34 @@ fn sequence_side(expr: &Expr) -> Option<SeqSide> {
     None
 }
 
+/// Expose fixed-length decision sequence inputs through either sequence representation.
+#[register_rule("Base", 25100, [Table, NegativeTable, ShortTable])]
+fn fixed_sequence_table_inputs(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let (meta, inputs, rows) = match expr {
+        Expr::Table(meta, inputs, rows)
+        | Expr::NegativeTable(meta, inputs, rows)
+        | Expr::ShortTable(meta, inputs, rows) => (meta, inputs, rows),
+        _ => return Err(RuleNotApplicable),
+    };
+    if !is_reference(inputs) {
+        return Err(RuleNotApplicable);
+    }
+    let side = sequence_side(inputs).ok_or(RuleNotApplicable)?;
+    if conjure_cp::ast::eval_constant(&side.length_expr) != Some(Literal::Int(side.max_size)) {
+        return Err(RuleNotApplicable);
+    }
+    let inputs = Moo::new(Expr::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Sequence(side.slot),
+    ));
+    Ok(Reduction::pure(match expr {
+        Expr::Table(..) => Expr::Table(meta.clone(), inputs, rows.clone()),
+        Expr::NegativeTable(..) => Expr::NegativeTable(meta.clone(), inputs, rows.clone()),
+        Expr::ShortTable(..) => Expr::ShortTable(meta.clone(), inputs, rows.clone()),
+        _ => unreachable!(),
+    }))
+}
+
 fn is_reference(expr: &Expr) -> bool {
     matches!(expr, Expr::Atomic(_, Atom::Reference(_)))
 }

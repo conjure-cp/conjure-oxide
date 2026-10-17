@@ -347,7 +347,7 @@ fn apply_facts_to_declaration(mut decl: DeclarationPtr, facts: Vec<SequenceSizeF
         return;
     }
 
-    let GroundDomain::Matrix(inner, _) = ground.as_ref() else {
+    let GroundDomain::Matrix(inner, _, _) = ground.as_ref() else {
         return;
     };
     let GroundDomain::Sequence(_, _) = inner.as_ref() else {
@@ -418,10 +418,10 @@ fn apply_facts_to_declaration(mut decl: DeclarationPtr, facts: Vec<SequenceSizeF
     let Some(new_inner) = with_sequence_size(inner.as_ref(), new_inner_size) else {
         return;
     };
-    let GroundDomain::Matrix(_, idx_doms) = ground.as_ref() else {
+    let GroundDomain::Matrix(_, idx_doms, _) = ground.as_ref() else {
         return;
     };
-    let new_domain = GroundDomain::Matrix(Moo::new(new_inner), idx_doms.clone());
+    let new_domain = GroundDomain::Matrix(Moo::new(new_inner), idx_doms.clone(), None);
     if let Some(mut var) = decl.as_find_mut() {
         var.domain = new_domain.into();
         var.element_domains = Some(element_domains);
@@ -563,7 +563,7 @@ mod tests {
                     Literal::Int(1),
                 ])),
             ],
-            Moo::new(GroundDomain::Int(vec![range!(1..2)])),
+            Moo::new(GroundDomain::Int(vec![range!(1..2)], None)),
         ));
         let clues = DeclarationPtr::new_value_letting(Name::user("clues"), Expr::from(clues_lit));
         let locs = DeclarationPtr::new_find(

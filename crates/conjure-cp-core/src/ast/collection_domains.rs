@@ -137,7 +137,7 @@ pub(super) fn capacity(domain: &DomainPtr) -> Option<i64> {
 }
 
 fn ground_capacity(ground: &GroundDomain) -> Option<i64> {
-    if let GroundDomain::Int(ranges) = ground {
+    if let GroundDomain::Int(ranges, _) = ground {
         let mut intervals = ranges
             .iter()
             .map(|range| Some((i64::from(*range.low()?), i64::from(*range.high()?))))
@@ -166,13 +166,13 @@ fn ground_capacity(ground: &GroundDomain) -> Option<i64> {
         match ground {
             GroundDomain::Empty(_) => Some(0),
             GroundDomain::Bool => Some(2),
-            GroundDomain::Tuple(domains) => domains
+            GroundDomain::Tuple(domains, _) => domains
                 .iter()
                 .try_fold(1i64, |n, d| n.checked_mul(ground_capacity(d)?)),
-            GroundDomain::Record(fields) => fields
+            GroundDomain::Record(fields, _) => fields
                 .iter()
                 .try_fold(1i64, |n, f| n.checked_mul(ground_capacity(&f.value)?)),
-            GroundDomain::Variant(fields) => fields
+            GroundDomain::Variant(fields, _) => fields
                 .iter()
                 .try_fold(0i64, |n, f| n.checked_add(ground_capacity(&f.value)?)),
             // Avoid potentially expensive combinatorial counting for nested collections.
@@ -190,7 +190,7 @@ pub(super) fn overlap_domain(a: &DomainPtr, b: &DomainPtr) -> DomainPtr {
         match (a_ground.as_ref(), b_ground.as_ref()) {
             (GroundDomain::Empty(_), _) => return DomainPtr::from(a_ground),
             (_, GroundDomain::Empty(_)) => return DomainPtr::from(b_ground),
-            (GroundDomain::Int(a_ranges), GroundDomain::Int(b_ranges)) => {
+            (GroundDomain::Int(a_ranges, _), GroundDomain::Int(b_ranges, _)) => {
                 let ranges = a_ranges
                     .iter()
                     .flat_map(|a| {

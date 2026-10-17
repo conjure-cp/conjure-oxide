@@ -1,0 +1,32 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+
+such that
+
+and([x,y;int(1..)])
+
+--
+
+and([x,y;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(and([x,y;int(1..)])) using tseitin
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+assert(and([x,y;int(1..)])) using tseitin
+

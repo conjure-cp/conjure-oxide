@@ -58,7 +58,7 @@ fn int_theory_of_ast(ast: &Dynamic) -> IntTheory {
 /// nesting level.
 fn domain_disequality(domain: &GroundDomain, ast: &Dynamic, other: &Dynamic) -> Bool {
     match domain {
-        GroundDomain::Matrix(value_domain, index_domains) => {
+        GroundDomain::Matrix(value_domain, index_domains, _) => {
             let neqs: Vec<_> = index_domains
                 .iter()
                 .map(|domain| domain_to_ast_vec(IntTheory::Lia, domain).unwrap())
@@ -182,7 +182,7 @@ mod tests {
     fn matrix_of_sets_blocking_ignores_members_outside_the_element_domain() {
         let element_domain = domain_int_ground!(1..3);
         let set_domain = Moo::new(GroundDomain::Set(SetAttr::new_size(1), element_domain));
-        let domain = GroundDomain::Matrix(set_domain, vec![domain_int_ground!(1..2)]);
+        let domain = GroundDomain::Matrix(set_domain, vec![domain_int_ground!(1..2)], None);
         let (sort, _) = domain_to_sort(&domain, IntTheory::Lia).unwrap();
         let left = Dynamic::new_const("left", &sort);
         let right = Dynamic::new_const("right", &sort);
@@ -242,7 +242,7 @@ fn interpret(
             let bool = bool_ast.as_bool().unwrap();
             Ok(Literal::Bool(bool))
         }
-        (Lia, GroundDomain::Int(_)) => {
+        (Lia, GroundDomain::Int(_, _)) => {
             let int_ast = lit_ast.as_int().unwrap();
             let int = int_ast
                 .as_i64()
@@ -255,7 +255,7 @@ fn interpret(
                 })?;
             Ok(Literal::Int(int))
         }
-        (Bv, GroundDomain::Int(_)) => {
+        (Bv, GroundDomain::Int(_, _)) => {
             // BVs do not sign-extend when returning u64s (if they are < 64 bits)
             // To correctly retrieve negative numbers, we downsize to a u32 and then bit-wise
             // interpret it as an i32, rather than casting.
@@ -270,14 +270,16 @@ fn interpret(
             let signed = i32::from_ne_bytes(unsigned_32.to_ne_bytes());
             Ok(Literal::Int(signed))
         }
-        (_, GroundDomain::Matrix(val_domain, idx_domains)) => {
+        (_, GroundDomain::Matrix(val_domain, idx_domains, _)) => {
             let arr_ast = lit_ast.as_array().unwrap();
 
             let inner_domain = match idx_domains.as_slice() {
                 [idx_domain] => val_domain.clone(),
-                [idx_domain, tail @ ..] => {
-                    Moo::new(GroundDomain::Matrix(val_domain.clone(), tail.to_vec()))
-                }
+                [idx_domain, tail @ ..] => Moo::new(GroundDomain::Matrix(
+                    val_domain.clone(),
+                    tail.to_vec(),
+                    None,
+                )),
                 [] => return Err(SolverError::Runtime("empty matrix index domain".into())),
             };
 

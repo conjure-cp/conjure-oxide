@@ -119,7 +119,7 @@ pub(super) fn min_max_skip_value(
         .domain_of()
         .and_then(|domain| domain.as_ground().cloned())
         .and_then(|ground| match ground {
-            GroundDomain::Int(ranges) => Some(ranges),
+            GroundDomain::Int(ranges, _) => Some(ranges),
             _ => None,
         })
         .ok_or_else(not_supported)?;

@@ -11,10 +11,14 @@
 # genuine representation-portfolio cost-modelling gap (compactness alone can't capture expected
 # propagation strength), not a correctness bug; shrinking preserves full attribute-combination
 # coverage while keeping the case tractable regardless of which representation gets picked.
-# Artefacts recorded with TEST_CASE_TIMEOUT=120.
 parser = "tree-sitter"
 rewriter = "optimised"
 comprehension-expander = "auto"
 heuristic = "x"
-solver = "minion"
+solver = ["minion", "sat"]
 number-of-solutions = "all"
+trace-level = "none"
+
+[solver-options.sat]
+heuristic = "c"
+channelling = "uniform"

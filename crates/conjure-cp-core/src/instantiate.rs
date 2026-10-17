@@ -150,7 +150,7 @@ mod tests {
 
         assert_eq!(
             declaration.domain().unwrap().resolve().unwrap().as_ref(),
-            &GroundDomain::Int(vec![Range::Single(7)])
+            &GroundDomain::Int(vec![Range::Single(7)], None)
         );
     }
 
@@ -206,7 +206,7 @@ mod tests {
 
         assert_eq!(
             objective_domain.resolve().unwrap().as_ref(),
-            &GroundDomain::Int(vec![Range::Bounded(1, 7)])
+            &GroundDomain::Int(vec![Range::Bounded(1, 7)], None)
         );
     }
 }

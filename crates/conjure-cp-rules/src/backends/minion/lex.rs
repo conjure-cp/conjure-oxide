@@ -3,7 +3,7 @@ use crate::types::matrix::MatrixComponents;
 use crate::types::record::RecordComponents;
 use crate::types::tuple::{TupleComponents, TuplePacked};
 use conjure_cp::ast::{
-    Atom, Expression as Expr, GroundDomain, IntVal, Metadata, Moo, Name, Range, SymbolTable, matrix,
+    Atom, Expression as Expr, GroundDomain, Metadata, Moo, Name, SymbolTable, matrix,
 };
 use conjure_cp::representation::ReprRule;
 use conjure_cp::rule_engine::{
@@ -21,13 +21,10 @@ fn lex_operand_elements(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
         return Ok(elements);
     }
 
-    let Some((elements, domain)) = expr.clone().unwrap_matrix_unchecked() else {
-        return Err(RuleNotApplicable);
-    };
-    let Some(ranges) = domain.as_int() else {
-        return Err(RuleNotApplicable);
-    };
-    let [Range::Bounded(IntVal::Const(1), _)] = ranges[..] else {
+    // Lex order depends only on the order of the elements, not on the index values, so any
+    // (one-dimensional) index domain is fine. Elements of a multi-dimensional matrix are
+    // themselves matrices, which `flatten_lex_element` rejects.
+    let Some((elements, _)) = expr.clone().unwrap_matrix_unchecked() else {
         return Err(RuleNotApplicable);
     };
     Ok(elements)
@@ -122,7 +119,7 @@ fn lex_represented_matrix_to_atoms(
         .ok_or(RuleNotApplicable)?[0]
         .clone();
     let domain = declaration.resolved_domain().ok_or(RuleNotApplicable)?;
-    let GroundDomain::Matrix(_, index_domains) = domain.as_ref() else {
+    let GroundDomain::Matrix(_, index_domains, _) = domain.as_ref() else {
         return Ok(None);
     };
     if index_domains.len() != 1 {

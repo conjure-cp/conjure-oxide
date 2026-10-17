@@ -1,0 +1,181 @@
+Model before rewriting:
+
+find s: sequence (size 2) of int(0..1)
+
+such that
+
+table(s, {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(s, {sequence(1,1)}),
+shortTable(s, {{(1,0)},{(2,0)}})
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+new variables:
+  find s#packed_1: int(0..3)
+
+--
+
+table(s, {sequence(0,1),sequence(1,0),sequence(1,1)})
+   ~~> fixed_sequence_table_inputs ([("Base", 25100)])
+table(sequence((s#packed_1 / 2),s#packed_1 % 2), {sequence(0,1),sequence(1,0),sequence(1,1)})
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+
+--
+
+negativeTable(s, {sequence(1,1)})
+   ~~> fixed_sequence_table_inputs ([("Base", 25100)])
+negativeTable(sequence((s#packed_1 / 2),s#packed_1 % 2), {sequence(1,1)})
+
+--
+
+shortTable(s, {{(1,0)},{(2,0)}})
+   ~~> fixed_sequence_table_inputs ([("Base", 25100)])
+shortTable(sequence((s#packed_1 / 2),s#packed_1 % 2), {{(1,0)},{(2,0)}})
+
+--
+
+(s#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(s#packed_1, 2) @ 2 != 0}
+
+--
+
+s#packed_1 % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(s#packed_1,2) @ 2 != 0}
+
+--
+
+(s#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(s#packed_1, 2) @ 2 != 0}
+
+--
+
+s#packed_1 % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(s#packed_1,2) @ 2 != 0}
+
+--
+
+(s#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(s#packed_1, 2) @ 2 != 0}
+
+--
+
+s#packed_1 % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(s#packed_1,2) @ 2 != 0}
+
+--
+
+table(sequence(SafeDiv(s#packed_1, 2),SafeMod(s#packed_1,2)), {sequence(0,1),sequence(1,0),sequence(1,1)})
+   ~~> flatten_table ([("Minion", 4050)])
+FlatTable([__0, __1], [[0, 1], [1, 0], [1, 1]], false)
+new variables:
+  findAux __0: int(0..1)
+  findAux __1: int(0..1)
+new constraints:
+  __0 =aux SafeDiv(s#packed_1, 2)
+  __1 =aux SafeMod(s#packed_1,2)
+
+--
+
+__0 =aux SafeDiv(s#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(s#packed_1, 2, __0)
+
+--
+
+__1 =aux SafeMod(s#packed_1,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(s#packed_1, 2, __1)
+
+--
+
+negativeTable(sequence(SafeDiv(s#packed_1, 2),SafeMod(s#packed_1,2)), {sequence(1,1)})
+   ~~> flatten_table ([("Minion", 4050)])
+FlatTable([__2, __3], [[1, 1]], true)
+new variables:
+  findAux __2: int(0..1)
+  findAux __3: int(0..1)
+new constraints:
+  __2 =aux SafeDiv(s#packed_1, 2)
+  __3 =aux SafeMod(s#packed_1,2)
+
+--
+
+__2 =aux SafeDiv(s#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(s#packed_1, 2, __2)
+
+--
+
+__3 =aux SafeMod(s#packed_1,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(s#packed_1, 2, __3)
+
+--
+
+shortTable(sequence(SafeDiv(s#packed_1, 2),SafeMod(s#packed_1,2)), {{(1,0)},{(2,0)}})
+   ~~> flatten_short_table ([("Minion", 4050)])
+FlatShortTable([__4, __5], [[(0, 0)], [(1, 0)]])
+new variables:
+  findAux __4: int(0..1)
+  findAux __5: int(0..1)
+new constraints:
+  __4 =aux SafeDiv(s#packed_1, 2)
+  __5 =aux SafeMod(s#packed_1,2)
+
+--
+
+__4 =aux SafeDiv(s#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(s#packed_1, 2, __4)
+
+--
+
+__5 =aux SafeMod(s#packed_1,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(s#packed_1, 2, __5)
+
+--
+
+Final model:
+
+find s: sequence (size 2) of int(0..1)
+find s#packed_1: int(0..3)
+findAux __0: int(0..1)
+findAux __1: int(0..1)
+findAux __2: int(0..1)
+findAux __3: int(0..1)
+findAux __4: int(0..1)
+findAux __5: int(0..1)
+
+such that
+
+FlatTable([__0, __1], [[0, 1], [1, 0], [1, 1]], false),
+FlatTable([__2, __3], [[1, 1]], true),
+FlatShortTable([__4, __5], [[(0, 0)], [(1, 0)]]),
+DivEq(s#packed_1, 2, __0),
+ModEq(s#packed_1, 2, __1),
+DivEq(s#packed_1, 2, __2),
+ModEq(s#packed_1, 2, __3),
+DivEq(s#packed_1, 2, __4),
+ModEq(s#packed_1, 2, __5)
+

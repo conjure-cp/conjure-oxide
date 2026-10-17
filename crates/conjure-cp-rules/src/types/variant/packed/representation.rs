@@ -43,7 +43,7 @@ register_representation!(
             dom.clone(), VariantPacked::NAME, message);
         let resolved = dom.resolve().ok()
             .ok_or_else(|| domain_err("expected a ground variant domain".to_owned()))?;
-        let GroundDomain::Variant(fields) = resolved.as_ref() else {
+        let GroundDomain::Variant(fields, _) = resolved.as_ref() else {
             return Err(domain_err("expected a variant domain".to_owned()));
         };
         if fields.is_empty() {

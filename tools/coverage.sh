@@ -61,7 +61,7 @@ fi
 
 if ! command -v grcov &> /dev/null; then
   echo_err "info: installing grcov"
-  cargo install grcov
+  cargo install grcov --locked
 fi
 
 

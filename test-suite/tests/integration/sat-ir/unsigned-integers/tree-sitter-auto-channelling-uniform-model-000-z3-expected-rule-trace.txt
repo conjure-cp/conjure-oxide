@@ -1,0 +1,149 @@
+Model before rewriting:
+
+find x: int(-3, -1, 2)
+find y: int(100, 103, 105)
+find z: int(-7)
+find a: bool
+find b: bool
+find c: bool
+find flag: bool
+
+such that
+
+sum([x,y;int(1..)]) = 102,
+sum([product([3,x;int(1..)]),y;int(1..)]) >= 99,
+product([x,x;int(1..)]) <= 4,
+z = -7,
+sum([toInt(a),toInt(b),toInt(c);int(1..3)]) <= 1,
+sum([toInt(a),toInt(b),toInt(c),toInt(flag);int(1..4)]) = 2
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(-3, -1, 2)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#bv_1: int(100, 103, 105)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+sum([x,y;int(1..)]) = 102,
+sum([product([3,x;int(1..)]),y;int(1..)]) >= 99,
+product([x,x;int(1..)]) <= 4,
+true,
+sum([toInt(a),toInt(b),toInt(c);int(1..3)]) <= 1,
+sum([toInt(a),toInt(b),toInt(c),toInt(flag);int(1..4)]) = 2
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+sum([x,y;int(1..)]) = 102,
+sum([product([3,x;int(1..)]),y;int(1..)]) >= 99,
+product([x,x;int(1..)]) <= 4,
+true,
+sum([toInt(a),toInt(b),toInt(c);int(1..3)]) <= 1,
+sum([toInt(a),toInt(b),toInt(c),toInt(flag);int(1..4)]) = 2
+new variables:
+  find z#bv_1: int(-7)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+sum([toInt(a),toInt(b),toInt(c);int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(flag);int(1..4)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(flag);int(1..)])
+
+--
+
+Final model:
+
+find x: int(-3, -1, 2)
+find y: int(100, 103, 105)
+find z: int(-7)
+find a: bool
+find b: bool
+find c: bool
+find flag: bool
+find x#bv_1: int(-3, -1, 2)
+find y#bv_1: int(100, 103, 105)
+find z#bv_1: int(-7)
+
+such that
+
+sum([x#bv_1,y#bv_1;int(1..)]) = 102,
+sum([product([3,x#bv_1;int(1..)]),y#bv_1;int(1..)]) >= 99,
+product([x#bv_1,x#bv_1;int(1..)]) <= 4,
+true,
+sum([toInt(a),toInt(b),toInt(c);int(1..)]) <= 1,
+sum([toInt(a),toInt(b),toInt(c),toInt(flag);int(1..)]) = 2
+

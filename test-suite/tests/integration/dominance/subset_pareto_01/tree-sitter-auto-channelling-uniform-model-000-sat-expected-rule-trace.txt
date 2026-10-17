@@ -1,0 +1,94 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+
+such that
+
+or([or([a,b;int(1..)]),c;int(1..)]),
+or([b,d;int(1..)]),
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+
+--
+
+or([or([a,b;int(1..)]),c;int(1..)]),
+or([b,d;int(1..)]),
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([b,d;int(1..)]),
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+new SAT encoding decisions:
+  assert(or([or([a,b;int(1..)]),c;int(1..)])) using tseitin
+
+--
+
+or([b,d;int(1..)]),
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+new SAT encoding decisions:
+  assert(or([b,d;int(1..)])) using tseitin
+
+--
+
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+new SAT encoding decisions:
+  assert(or([c,e;int(1..)])) using tseitin
+
+--
+
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(and([b,e;int(1..)]))
+new SAT encoding decisions:
+  assert(!(and([a,d;int(1..)]))) using tseitin
+
+--
+
+!(and([b,e;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(!(and([b,e;int(1..)]))) using tseitin
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+assert(or([or([a,b;int(1..)]),c;int(1..)])) using tseitin,
+assert(or([b,d;int(1..)])) using tseitin,
+assert(or([c,e;int(1..)])) using tseitin,
+assert(!(and([a,d;int(1..)]))) using tseitin,
+assert(!(and([b,e;int(1..)]))) using tseitin
+

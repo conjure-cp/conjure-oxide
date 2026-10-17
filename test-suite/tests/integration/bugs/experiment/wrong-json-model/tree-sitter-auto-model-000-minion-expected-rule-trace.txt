@@ -1,0 +1,34 @@
+Model before rewriting:
+
+find a: int(1..7)
+find c: int(7..10)
+
+such that
+
+sum([min([5,7;int(1..2)]),a;int(1..)]) <= 10,
+sum([min([5,7;int(1..2)]),3;int(1..)]) <= c
+
+--
+
+sum([5,a;int(1..)]) <= 10
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([5, a], 10)
+
+--
+
+8 <= c
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(8, c, 0)
+
+--
+
+Final model:
+
+find a: int(1..7)
+find c: int(7..10)
+
+such that
+
+SumLeq([5, a], 10),
+Ineq(8, c, 0)
+

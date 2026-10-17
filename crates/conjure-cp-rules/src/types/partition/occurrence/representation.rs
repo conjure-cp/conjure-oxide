@@ -195,7 +195,7 @@ register_representation!(
         ));
         let part_sizes_decl = Literal::AbstractLiteral(AbstractLiteral::Matrix(
             part_sizes_vals.into_iter().map(Literal::Int).collect(),
-            Moo::new(GroundDomain::Int(vec![Range::new(Some(1), Some(state.max_num_parts))])),
+            Moo::new(GroundDomain::Int(vec![Range::new(Some(1), Some(state.max_num_parts))], None)),
         ));
 
         Ok(State {
@@ -241,7 +241,7 @@ register_representation!(
 /// for a sizeable index domain, and a `bool`-indexed partition (at most 2 elements) is already
 /// handled perfectly well, and more simply, by `PartitionAsSet`.
 fn can_index_matrix(dom: &GroundDomain) -> bool {
-    matches!(dom, GroundDomain::Int(_))
+    matches!(dom, GroundDomain::Int(_, _))
 }
 
 /// `forAll <outer> : &outer_domain [, outer_guard] . outer_body(&outer, <inner-kind> <inner> :
