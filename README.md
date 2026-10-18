@@ -51,11 +51,11 @@ The following crates define the `conjure-oxide` system:
 
 - [`conjure-cp-cli`](./crates/conjure-cp-cli) implements the `conjure-oxide`
   command line interface, and exports various CLI related utilities for use by
-  the integration tester.
+  the exhaustive tester.
 - [`conjure-cp-rules`](./crates/conjure-cp-rules) defines the default rewrite
   rules used by `conjure-oxide`.
 - [`test-suite`](./test-suite) is an internal crate containing
-  integration tests for `conjure-oxide`.
+  exhaustive tests for `conjure-oxide`.
 - [`conjure-cp-lsp`](./crates/conjure-cp-lsp/) implements the language server
   for use in a VSCode extension (as outlined in Language Server Protocol) for
   `conjure-oxide`.

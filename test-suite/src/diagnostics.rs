@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
-/// Gitignored directory inside each integration test case for debugging failed runs.
+/// Gitignored directory inside each exhaustive test case for debugging failed runs.
 pub const DIAGNOSTICS_DIR: &str = "diagnostics";
 
 #[derive(Debug, Serialize)]

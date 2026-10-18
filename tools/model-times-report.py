@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export accepted per-model integration timings as CSV, JSON and Markdown."""
+"""Export accepted per-model exhaustive timings as CSV, JSON and Markdown."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ TIME_FIELDS = (
     "solution-processing-time", "solve-time",
 )
 ROOT = Path(__file__).resolve().parent.parent
-INTEGRATION = ROOT / "test-suite/tests/integration"
+EXHAUSTIVE = ROOT / "test-suite/tests/exhaustive"
 
 
 def config_key(row: dict[str, Any]) -> tuple[Any, ...]:
@@ -53,7 +53,7 @@ def markdown(rows: list[dict[str, Any]], top: int) -> str:
         return "| " + " | ".join(cell(value) for value in values) + " |"
 
     lines = [
-        "# Integration model timings", "",
+        "# Exhaustive model timings", "",
         "Wall-clock seconds from accepted stats. Each model measures its whole combination "
         "of choices. Search includes callbacks and solver-time rewrites. Missing measurements "
         "are shown as '-' rather than zero.", "",
@@ -94,7 +94,7 @@ def markdown(rows: list[dict[str, Any]], top: int) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("fixtures", nargs="*", help="Fixture paths relative to test-suite/tests/integration; "
+    parser.add_argument("fixtures", nargs="*", help="Fixture paths relative to test-suite/tests/exhaustive; "
                         "also accepts directory or stats.toml paths relative to the current directory")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "target/model-timings",
                         help="Output directory (default: target/model-timings in the repository)")
@@ -108,15 +108,15 @@ def main() -> int:
             for fixture in args.fixtures:
                 path = Path(fixture)
                 if not path.exists():
-                    path = INTEGRATION / fixture
+                    path = EXHAUSTIVE / fixture
                 paths.append(path / "stats.toml" if path.is_dir() else path)
         else:
-            paths = list(INTEGRATION.rglob("stats.toml"))
+            paths = list(EXHAUSTIVE.rglob("stats.toml"))
         rows = []
         skipped = 0
         fixture_count = 0
         for path in sorted({path.resolve() for path in paths}):
-            fixture = path.parent.relative_to(INTEGRATION).as_posix()
+            fixture = path.parent.relative_to(EXHAUSTIVE).as_posix()
             stats = tomllib.loads(path.read_text())
             models = stats.get("runs", [])
             if not models:

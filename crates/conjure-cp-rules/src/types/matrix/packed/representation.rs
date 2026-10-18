@@ -164,7 +164,7 @@ register_representation!(
         // Nothing had ever selected this representation before matrices joined representation
         // selection, and doing so uncovered a queue of defects in it -- several already fixed
         // (slicing and offset-indexing its decoded literal, rendering the value lettings it
-        // introduces) and at least one open: in `tests/integration/antichain`, the comparisons
+        // introduces) and at least one open: in `tests/exhaustive/antichain`, the comparisons
         // inside `exists k . S[i,k] < S[j,k]` reach `promote_abstract_cmp_to_lex` with the whole
         // decoded matrix as their operands rather than the indexed cells, so they are promoted to
         // a lex comparison between scalars that no backend can lower.

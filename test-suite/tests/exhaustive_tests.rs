@@ -87,7 +87,7 @@ struct RunCase<'a> {
     case_name: &'a str,
 }
 
-/// What one integration run produced, beyond pass/fail.
+/// What one exhaustive run produced, beyond pass/fail.
 struct RunOutcome {
     /// The run's solutions, normalised for comparison, when they are the model's complete
     /// solution set: the search ran to exhaustion and kept no intermediate optimisation steps.
@@ -161,7 +161,7 @@ fn check_solutions_agree(
     .into())
 }
 
-fn run_integration_test_with_timeout<F>(
+fn run_exhaustive_test_with_timeout<F>(
     test_name: &str,
     test_dir: &str,
     run_test: F,
@@ -187,7 +187,7 @@ where
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
-    pass_integration_test_env(&mut command);
+    pass_exhaustive_test_env(&mut command);
 
     #[cfg(unix)]
     command.process_group(0);
@@ -329,7 +329,7 @@ fn test_case_timeout() -> Result<Option<Duration>, Box<dyn Error>> {
     }
 }
 
-fn pass_integration_test_env(command: &mut Command) {
+fn pass_exhaustive_test_env(command: &mut Command) {
     for key in [
         "TEST_CASE_TIMEOUT",
         "ACCEPT",
@@ -387,8 +387,8 @@ fn param_file_in_test_dir(path: &str) -> Option<String> {
         .map(|path| path.to_string_lossy().to_string())
 }
 
-fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
-    let result = integration_test_inner_with_status(path, essence_base, extension);
+fn exhaustive_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
+    let result = exhaustive_test_inner_with_status(path, essence_base, extension);
 
     if result.is_ok() {
         let _ = clear_diagnostics(Path::new(path));
@@ -402,7 +402,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     result
 }
 
-fn integration_test_inner_with_status(
+fn exhaustive_test_inner_with_status(
     path: &str,
     essence_base: &str,
     extension: &str,
@@ -481,7 +481,7 @@ fn integration_test_inner_with_status(
             }
             Err(err) => {
                 upsert_tool_status_stats(&stats_path, "conjure", "fail")?;
-                record_integration_failure(
+                record_exhaustive_failure(
                     path,
                     FailureRecord {
                         stage: "conjure".to_string(),
@@ -587,7 +587,7 @@ fn integration_test_inner_with_status(
                                         case_name: case_name.as_str(),
                                     };
                                     allowed_expected_files.extend(
-                                        expected_integration_files_for_case(
+                                        expected_exhaustive_files_for_case(
                                             run_case.case_name,
                                             solver,
                                             configured_trace_level,
@@ -602,7 +602,7 @@ fn integration_test_inner_with_status(
                                     );
                                     row.model_index = model_index;
                                     let model_rule_counts = RuleApplicationCounter::default();
-                                    let result = execute_integration_run(
+                                    let result = execute_exhaustive_run(
                                         path,
                                         essence_base,
                                         extension,
@@ -717,7 +717,7 @@ fn integration_test_inner_with_status(
     };
 
     if let Err(err) = &oxide_result {
-        record_integration_failure(
+        record_exhaustive_failure(
             path,
             FailureRecord {
                 stage: "oxide".to_string(),
@@ -763,7 +763,7 @@ fn integration_test_inner_with_status(
     Ok(())
 }
 
-/// Runs an integration test for a given Conjure model by:
+/// Runs an exhaustive test for a given Conjure model by:
 /// 1. Parsing the model from an Essence file.
 /// 2. Rewriting the model according to predefined rule sets.
 /// 3. Solving the model using the Minion solver and validating the solutions.
@@ -799,7 +799,7 @@ fn integration_test_inner_with_status(
 /// Returns an error if any stage fails due to a mismatch with expected results or file I/O issues.
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::too_many_arguments)]
-fn execute_integration_run(
+fn execute_exhaustive_run(
     path: &str,
     essence_base: &str,
     extension: &str,
@@ -822,7 +822,7 @@ fn execute_integration_run(
     set_rule_attempt_trace_enabled(false);
     set_rule_trace_aggregates_enabled(rule_counts.is_some());
     let run_test = || {
-        integration_test_inner(
+        exhaustive_test_inner(
             path,
             essence_base,
             extension,
@@ -884,7 +884,7 @@ fn execute_integration_run(
     })
 }
 
-fn integration_test_inner(
+fn exhaustive_test_inner(
     path: &str,
     essence_base: &str,
     extension: &str,
@@ -1313,8 +1313,8 @@ fn next_all_choice_path(decisions: &[HeuristicChoice]) -> Option<Vec<usize>> {
     None
 }
 
-/// Returns the expected snapshot files for an executed integration run case.
-fn expected_integration_files_for_case(
+/// Returns the expected snapshot files for an executed exhaustive run case.
+fn expected_exhaustive_files_for_case(
     case_name: &str,
     solver: SolverFamily,
     trace_level: TraceLevel,
@@ -1446,7 +1446,7 @@ fn copy_human_trace_generated_to_expected(
     Ok(())
 }
 
-fn record_integration_failure(
+fn record_exhaustive_failure(
     test_dir: &str,
     record: FailureRecord,
     number_of_solutions: NumberOfSolutions,

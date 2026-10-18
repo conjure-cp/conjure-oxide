@@ -17,10 +17,10 @@ def priority_config(repo_root: Path) -> str:
     """Mirror build.rs discovery and assign higher priorities to longer tests."""
     tests_root = repo_root / "test-suite" / "tests"
     buckets = defaultdict(list)
-    for suite, metadata in (("integration", "stats.toml"), ("custom", "config.toml")):
+    for suite, metadata in (("exhaustive", "stats.toml"), ("custom", "config.toml")):
         for path in sorted((tests_root / suite).rglob(metadata)):
             directory = path.parent
-            if suite == "integration":
+            if suite == "exhaustive":
                 if len(list(directory.glob("*.essence"))) != 1:
                     continue
             elif not (directory / "run.sh").is_file():

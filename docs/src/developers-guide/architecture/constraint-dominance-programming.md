@@ -132,8 +132,8 @@ In addition to core CDP support, related Minion work included:
 - dedicated regression tests around mid-search variable/constraint injection behaviour.
 
 ## Testing Coverage
-CDP behaviour is exercised in integration tests under:
+CDP behaviour is exercised in exhaustive tests under:
 
-- `test-suite/tests/integration/dominance/`
+- `test-suite/tests/exhaustive/dominance/`
 
 These include both explicit dominance formulas and `pareto(...)` syntax, across integer and boolean cases, and across multiple solver families.

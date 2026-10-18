@@ -183,7 +183,7 @@ pub fn snapshot_symbols_after_effect(
     snapshot_variable_declarations(&merged)
 }
 
-/// Logs, to the main log, and the human readable traces used by the integration tester, that the
+/// Logs, to the main log, and the human readable traces used by the exhaustive tester, that the
 /// rule has been applied to the expression
 pub fn log_rule_application(
     result: &RuleResult,

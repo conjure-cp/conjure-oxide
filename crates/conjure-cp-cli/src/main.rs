@@ -297,7 +297,7 @@ mod tests {
 
     #[test]
     fn test_get_example_model_by_filepath() {
-        let filepath = "../../test-suite/tests/integration/basic/misc/xyz/input.essence";
+        let filepath = "../../test-suite/tests/exhaustive/basic/misc/xyz/input.essence";
         get_example_model_by_path(filepath).unwrap();
     }
 

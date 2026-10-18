@@ -22,7 +22,7 @@ pub enum Heuristic {
     Compact,
     /// Prompt on stdin, or consume values from [`set_heuristic_responses`].
     Interactive,
-    /// Enumerate every applicable choice. This is supported by the integration model generator,
+    /// Enumerate every applicable choice. This is supported by the exhaustive model generator,
     /// but is not accepted by the command-line interface yet.
     All,
 }

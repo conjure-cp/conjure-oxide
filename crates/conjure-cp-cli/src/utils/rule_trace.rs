@@ -1,4 +1,4 @@
-//! Shared in-memory rule application counts for CLI and integration traces.
+//! Shared in-memory rule application counts for CLI and exhaustive traces.
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 

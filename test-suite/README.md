@@ -1,10 +1,10 @@
 ## `test-suite`
 
-Integration tests for `conjure-oxide`
+Exhaustive tests for `conjure-oxide`
 
 ### Usage
 
-Run the integration tests from the repository root with:
+Run the exhaustive tests from the repository root with:
 
 ```sh
 cargo nextest run -p test-suite
@@ -55,7 +55,7 @@ checks; it retains recording of counts for inspection.
 Solution comparisons remain enabled at every trace level. SAT fixtures with many expanded
 configurations use aggregate tracing to limit snapshot size and recording overhead.
 
-Integration tests use the `auto` comprehension expander by default, matching the CLI default.
+Exhaustive tests use the `auto` comprehension expander by default, matching the CLI default.
 Configure it explicitly with `comprehension-expander = "auto"`. Accepted oxide timings, statuses,
 and rule counts are recorded in a `[[runs]]` entry in `stats.toml` for each compiled
 model; the Conjure reference run is recorded separately. Each accepted run replaces the previous
@@ -75,9 +75,9 @@ not write a solution snapshot. The out-of-domain set equality regression checks 
 
 ### Creating a new test
 
-1. Create a new directory under `test-suite/tests/integration/<folder>`.
+1. Create a new directory under `test-suite/tests/exhaustive/<folder>`.
 2. Add your `input.essence` file and (optionally) a `config.toml` to configure the solver.
-   Integration run metadata is tracked separately in `stats.toml`.
+   Exhaustive run metadata is tracked separately in `stats.toml`.
 3. Run the following to generate the expected `.solutions` and rule-trace files:
 
 ```sh
@@ -135,10 +135,10 @@ checks use solution and rule trace snapshots separately; recording aggregate cou
 assert that those counts remain unchanged.
 
 For timing-only runs where rule trace generation overhead is unwanted, set
-`CONJURE_OXIDE_TEST_DISABLE_TRACING=1`. This skips integration-test rule trace file
+`CONJURE_OXIDE_TEST_DISABLE_TRACING=1`. This skips exhaustive-test rule trace file
 generation and rule trace snapshot validation; solution checks and timing recording still run.
 
-Accepted integration runs store a single flat `[[runs]]` list, with one entry per
+Accepted exhaustive runs store a single flat `[[runs]]` list, with one entry per
 compiled model. Each row identifies its configuration and model index, with the
 full realised choice path and selected labels for `heuristic = "x"`. Compact and other heuristics produce one row
 per model. `representations` lists the representation rules used; the
@@ -162,5 +162,5 @@ Accepting a configuration replaces its model rows so smaller portfolios do not
 leave stale entries behind.
 
 The unified format replaces the former configuration-level `[[runs]]` and
-`[[model-runs]]` sections. Regenerate older integration stats by deleting their
+`[[model-runs]]` sections. Regenerate older exhaustive stats by deleting their
 `stats.toml` files and running `make test-accept`.
