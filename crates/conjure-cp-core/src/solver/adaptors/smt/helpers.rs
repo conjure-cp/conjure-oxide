@@ -26,7 +26,7 @@ pub fn domain_to_sort(domain: &GroundDomain, ints: IntTheory) -> SolverResult<(S
 
         // Return a disjunction of the restrictions each range of the domain enforces
         // I.e. `x: int(1, 3..5)` -> `or([x = 1, x >= 3 /\ x <= 5])`
-        (Lia, GroundDomain::Int(ranges)) => {
+        (Lia, GroundDomain::Int(ranges, _)) => {
             let ranges = ranges.clone();
             let restrict_fn = move |ast: &Dynamic| {
                 let int = ast.as_int().unwrap();
@@ -38,7 +38,7 @@ pub fn domain_to_sort(domain: &GroundDomain, ints: IntTheory) -> SolverResult<(S
             };
             Ok((Sort::int(), Box::new(restrict_fn)))
         }
-        (Bv, GroundDomain::Int(ranges)) => {
+        (Bv, GroundDomain::Int(ranges, _)) => {
             let ranges = ranges.clone();
             let restrict_fn = move |ast: &Dynamic| {
                 let bv = ast.as_bv().unwrap();
@@ -51,7 +51,7 @@ pub fn domain_to_sort(domain: &GroundDomain, ints: IntTheory) -> SolverResult<(S
             Ok((Sort::bitvector(BV_SIZE), Box::new(restrict_fn)))
         }
 
-        (_, GroundDomain::Matrix(val_domain, idx_domains)) => {
+        (_, GroundDomain::Matrix(val_domain, idx_domains, _)) => {
             // We constrain the inner values of the domain recursively
             // I.e. every way to index the array must give a value in the correct domain
 
@@ -59,7 +59,8 @@ pub fn domain_to_sort(domain: &GroundDomain, ints: IntTheory) -> SolverResult<(S
                 [_] => domain_to_sort(val_domain, ints),
                 [_, tail @ ..] => {
                     // Treat as a matrix containing (n-1)-dimensional matrices
-                    let inner_domain = GroundDomain::Matrix(val_domain.clone(), tail.to_vec());
+                    let inner_domain =
+                        GroundDomain::Matrix(val_domain.clone(), tail.to_vec(), None);
                     domain_to_sort(&inner_domain, ints)
                 }
                 [] => Err(SolverError::ModelInvalid(

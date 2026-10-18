@@ -74,7 +74,7 @@ mod tests {
     #[test]
     fn variable_membership_is_an_indexed_lookup() {
         let (symbols, set, occurs) = occurrence_set();
-        let member = symbols.clone().gen_find(&domain_int!(1..3));
+        let member = symbols.clone().gen_find(&domain_int!(0..4));
         let membership = Expr::In(
             Metadata::new(),
             Moo::new(Reference::new(member).into()),
@@ -84,7 +84,13 @@ mod tests {
         let lowered = membership_occurrence(&membership, &symbols)
             .unwrap()
             .new_expression;
-        let Expr::SafeIndex(_, subject, indices) = &lowered else {
+        let Expr::And(_, terms) = &lowered else {
+            panic!("expected guarded membership, got {lowered}");
+        };
+        let terms = terms.unwrap_list_ref().unwrap();
+        assert!(matches!(terms[0], Expr::Geq(..)));
+        assert!(matches!(terms[1], Expr::Leq(..)));
+        let Expr::SafeIndex(_, subject, indices) = &terms[2] else {
             panic!("expected an indexed lookup, got {lowered}");
         };
         assert_eq!(indices.len(), 1);

@@ -52,7 +52,7 @@ register_representation!(
             dom.clone(), RecordPacked::NAME, message.to_owned());
         let resolved = dom.resolve().ok()
             .ok_or_else(|| domain_err("expected a ground record domain"))?;
-        let GroundDomain::Record(mut fields) = resolved.as_ref().clone() else {
+        let GroundDomain::Record(mut fields, _) = resolved.as_ref().clone() else {
             return Err(domain_err("expected a record domain"));
         };
         fields.sort_by(|lhs, rhs| lhs.name.cmp(&rhs.name));

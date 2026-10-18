@@ -1,0 +1,148 @@
+Model before rewriting:
+
+find a: int(-2..2)
+find b: int(-2..3)
+find result: int(-9..9)
+
+such that
+
+result = catchUndef((a ** b), -9)
+
+--
+
+(a ** b)
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(a, b) @ and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)])}
+
+--
+
+catchUndef({SafePow(a, b) @ and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)])}, -9)
+   ~~> catch_undef_bubble ([("Base", 8800)])
+[-9,SafePow(a, b);int(0..1)][toInt(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)]))]
+
+--
+
+[-9,SafePow(a, b);int(0..1)][toInt(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)]))]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([-9,SafePow(a, b);int(0..1)],[toInt(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)]))])
+
+--
+
+SafeIndex([-9,SafePow(a, b);int(0..1)],[toInt(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)]))])
+   ~~> shift_matrix_literal_index ([("Base", 5000)])
+SafeIndex([-9,SafePow(a, b);int(1..)],[sum([toInt(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)])),1;int(1..)])])
+
+--
+
+SafeIndex([-9,SafePow(a, b);int(1..)],[sum([toInt(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)])),1;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([-9,SafePow(a, b);int(1..)],[__0])
+new variables:
+  findAux __0: int(1..2)
+new constraints:
+  __0 =aux sum([toInt(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)])),1;int(1..)])
+
+--
+
+__0 =aux sum([toInt(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)])),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __1], __0),SumGeq([1, __1], __0);int(1..)])
+new variables:
+  findAux __1: int(0..1)
+new constraints:
+  __1 =aux toInt(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)]))
+
+--
+
+toInt(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__2)
+new variables:
+  findAux __2: bool
+new constraints:
+  __2 =aux and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)])
+
+--
+
+__2 =aux and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)]), __2)
+
+--
+
+b >= 0
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(0, b, 0)
+
+--
+
+SafeIndex([-9,SafePow(a, b);int(1..)],[__0])
+   ~~> flatten_matrix_literal ([("Minion", 1000)])
+SafeIndex([-9,__3;int(1..)],[__0])
+new variables:
+  findAux __3: int(-8, -2..2, 4, 8)
+new constraints:
+  __3 =aux SafePow(a, b)
+
+--
+
+result = SafeIndex([-9,__3;int(1..)],[__0])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([-9,__3],__0,result)
+
+--
+
+__3 =aux SafePow(a, b)
+   ~~> introduce_poweq ([("Minion", 4200)])
+(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)])) -> (MinionPow(a,b,__3))
+
+--
+
+(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)])) -> (MinionPow(a,b,__3))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__4) -> (MinionPow(a,b,__3))
+new variables:
+  findAux __4: bool
+new constraints:
+  __4 =aux and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)])
+
+--
+
+(__4) -> (MinionPow(a,b,__3))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(MinionPow(a,b,__3), __4)
+
+--
+
+__4 =aux and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([or([a != 0,b != 0;int(1..)]),b >= 0;int(1..)]), __4)
+
+--
+
+b >= 0
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(0, b, 0)
+
+--
+
+Final model:
+
+find a: int(-2..2)
+find b: int(-2..3)
+find result: int(-9..9)
+findAux __0: int(1..2)
+findAux __1: int(0..1)
+findAux __2: bool
+findAux __3: int(-8, -2..2, 4, 8)
+findAux __4: bool
+
+such that
+
+__minion_element_one([-9,__3],__0,result),
+and([SumLeq([1, __1], __0),SumGeq([1, __1], __0);int(1..)]),
+__1 =aux toInt(__2),
+Reify(and([or([a != 0,b != 0;int(1..)]),Ineq(0, b, 0);int(1..)]), __2),
+ReifyImply(MinionPow(a,b,__3), __4),
+Reify(and([or([a != 0,b != 0;int(1..)]),Ineq(0, b, 0);int(1..)]), __4)
+

@@ -45,11 +45,15 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 */
 #[register_rule("Bubble", 8800, [* / Bubble, * / Atomic / Reference])]
 fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
+    // catchUndef consumes definedness itself; lifting its bubble would bypass the fallback.
     // do not put root inside a bubble
     //
     // also do not bubble bubbles inside bubbles, as this does nothing productive it just shuffles
     // the conditions around, shuffles them back, then gets stuck in a loop doing this ad infinitum
-    if matches!(expr, Expression::Root(_, _) | Expression::Bubble(_, _, _)) {
+    if matches!(
+        expr,
+        Expression::Root(_, _) | Expression::Bubble(_, _, _) | Expression::CatchUndef(_, _, _)
+    ) {
         return Err(RuleNotApplicable);
     }
 
@@ -81,13 +85,14 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
 
     // The value-letting guard walks every referenced name in the subtree, so keep it behind the
     // cheap direct-child check above. Most `bubble_up` attempts fail before this point. Lettings
-    // this call has just followed are exempt: their bubble is the one being lifted.
+    // this call has just followed are exempt: their bubble is the one being lifted. Defined
+    // constant lettings cannot hide another bubble and must not prevent index guards escaping.
     if expr.universe_bi().iter().any(|x: &Name| {
         !followed_lettings.contains(x)
             && syms.lookup(x).is_some_and(|x| {
                 matches!(
                     &x.kind() as &DeclarationKind,
-                    DeclarationKind::ValueLetting(_, _)
+                    DeclarationKind::ValueLetting(value, _) if eval_constant(value).is_none()
                 )
             })
     }) {

@@ -7,6 +7,7 @@ mod serde;
 mod store;
 pub mod stored;
 pub mod types;
+pub mod uniform;
 pub mod util;
 
 pub use conjure_cp_rule_macros::register_representation;

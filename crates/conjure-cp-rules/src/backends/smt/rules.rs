@@ -47,7 +47,7 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             Metadata::new(),
             Atom::Literal(Literal::Bool(true)),
         )),
-        GroundDomain::Int(ranges) => {
+        GroundDomain::Int(ranges, _) => {
             let elements: Vec<_> = ranges
                 .iter()
                 .map(|range| match range {
@@ -154,7 +154,7 @@ fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         };
 
         let dom = decl.resolved_domain().ok_or(RuleNotApplicable)?;
-        let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
+        let GroundDomain::Matrix(_, index_domains, _) = dom.as_ref() else {
             continue;
         };
 
@@ -190,13 +190,16 @@ fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationR
         })
         .collect();
 
-    let new_dom = GroundDomain::Int(vec![Range::Bounded(
-        1,
-        elems
-            .len()
-            .try_into()
-            .expect("length of matrix should be able to be held in Int type"),
-    )]);
+    let new_dom = GroundDomain::Int(
+        vec![Range::Bounded(
+            1,
+            elems
+                .len()
+                .try_into()
+                .expect("length of matrix should be able to be held in Int type"),
+        )],
+        None,
+    );
     let new_expr = Expr::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Matrix(elems, new_dom.into()),

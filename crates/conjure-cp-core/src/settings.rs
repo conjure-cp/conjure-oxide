@@ -62,6 +62,8 @@ pub enum Channelling {
     #[default]
     No,
     Yes,
+    /// One representation kind per type family throughout a model, without channelling.
+    Uniform,
 }
 
 impl Display for Channelling {
@@ -69,6 +71,7 @@ impl Display for Channelling {
         f.write_str(match self {
             Self::No => "no",
             Self::Yes => "yes",
+            Self::Uniform => "uniform",
         })
     }
 }
@@ -80,8 +83,9 @@ impl FromStr for Channelling {
         match value.trim().to_ascii_lowercase().as_str() {
             "no" => Ok(Self::No),
             "yes" => Ok(Self::Yes),
+            "uniform" => Ok(Self::Uniform),
             other => Err(format!(
-                "unknown channelling setting '{other}'; expected yes or no"
+                "unknown channelling setting '{other}'; expected yes, no, or uniform"
             )),
         }
     }
@@ -90,6 +94,12 @@ impl FromStr for Channelling {
 pub const DEFAULT_HEURISTIC_SEED: u64 = 0;
 
 thread_local! {
+    static ELEMENT_ENCODING: Cell<Option<crate::ast::sat_decision::ElementEncoding>> = const { Cell::new(None) };
+    static TABLE_ENCODING: Cell<Option<crate::ast::sat_decision::TableEncoding>> = const { Cell::new(None) };
+    static ALLDIFFERENT_ENCODING: Cell<Option<crate::ast::sat_decision::AllDifferentEncoding>> = const { Cell::new(None) };
+    static PB_ENCODING: Cell<Option<crate::ast::sat_decision::PbEncoding>> = const { Cell::new(None) };
+    static CARDINALITY_ENCODING: Cell<Option<crate::ast::sat_decision::CardinalityEncoding>> = const { Cell::new(None) };
+    static AMO_ENCODING: Cell<Option<crate::ast::sat_decision::AmoEncoding>> = const { Cell::new(None) };
     static HEURISTIC: Cell<Heuristic> = const { Cell::new(Heuristic::Compact) };
     static CHANNELLING: Cell<Channelling> = const { Cell::new(Channelling::No) };
     static HEURISTIC_RANDOM_STATE: Cell<u64> = const { Cell::new(DEFAULT_HEURISTIC_SEED) };
@@ -130,6 +140,7 @@ pub fn heuristic() -> Heuristic {
 
 pub fn set_channelling(channelling: Channelling) {
     CHANNELLING.with(|current| current.set(channelling));
+    crate::representation::uniform::reset();
 }
 
 pub fn channelling() -> Channelling {
@@ -618,8 +629,7 @@ thread_local! {
     ///
     /// If an int domain size is <= this threshold, the Minion adaptor uses `DISCRETE`; otherwise
     /// it uses `BOUND`, unless another constraint requires `DISCRETE`.
-    static MINION_DISCRETE_THRESHOLD: Cell<usize> =
-        const { Cell::new(DEFAULT_MINION_DISCRETE_THRESHOLD) };
+    static MINION_DISCRETE_THRESHOLD: Cell<Option<usize>> = const { Cell::new(None) };
 
     /// Thread-local setting controlling whether rule-trace outputs are active in this phase.
     ///
@@ -694,12 +704,30 @@ pub fn ints_need_representation() -> bool {
     )
 }
 
-pub fn set_minion_discrete_threshold(threshold: usize) {
+/// Pins Minion's domain threshold, or leaves it to the modelling heuristic.
+pub fn set_minion_discrete_threshold(threshold: Option<usize>) {
     MINION_DISCRETE_THRESHOLD.with(|current| current.set(threshold));
 }
 
-pub fn minion_discrete_threshold() -> usize {
-    MINION_DISCRETE_THRESHOLD.with(|current| current.get())
+/// Selects one threshold for a Minion model: the default, all bound, or all discrete.
+/// Constraints requiring discrete variables still override the threshold.
+pub fn select_minion_discrete_threshold() -> usize {
+    if let Some(threshold) = MINION_DISCRETE_THRESHOLD.with(Cell::get) {
+        return threshold;
+    }
+    let thresholds = [DEFAULT_MINION_DISCRETE_THRESHOLD, 0, usize::MAX];
+    let labels = [
+        "minion-discrete-threshold=10",
+        "minion-discrete-threshold=0",
+        "minion-discrete-threshold=unlimited",
+    ];
+    let index = match heuristic() {
+        Heuristic::First | Heuristic::Compact => 0,
+        Heuristic::Random => next_heuristic_random_index(thresholds.len()),
+        Heuristic::Interactive => next_heuristic_interactive_index(&labels),
+        Heuristic::All => next_heuristic_all_index(&labels),
+    };
+    thresholds[index]
 }
 
 pub fn set_rule_trace_enabled(enabled: bool) {
@@ -808,6 +836,8 @@ mod tests {
         assert_eq!(Heuristic::from_str("x"), Ok(Heuristic::All));
         assert_eq!(Channelling::from_str("no"), Ok(Channelling::No));
         assert_eq!(Channelling::from_str("yes"), Ok(Channelling::Yes));
+        assert_eq!(Channelling::from_str("uniform"), Ok(Channelling::Uniform));
+        assert_eq!(Channelling::Uniform.to_string(), "uniform");
     }
 
     #[test]
@@ -941,4 +971,58 @@ mod tests {
         assert!(Rewriter::from_str("dirty").is_err());
         assert!(Rewriter::from_str("baseline+dirty").is_err());
     }
+}
+
+/// Pin the AMO algorithm, or allow the modelling heuristic to choose.
+pub fn set_amo_encoding(encoding: Option<crate::ast::sat_decision::AmoEncoding>) {
+    AMO_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit AMO algorithm override for this compilation thread.
+pub fn amo_encoding() -> Option<crate::ast::sat_decision::AmoEncoding> {
+    AMO_ENCODING.with(Cell::get)
+}
+
+/// Pin a cardinality provider/algorithm, or let the heuristic select it.
+pub fn set_cardinality_encoding(encoding: Option<crate::ast::sat_decision::CardinalityEncoding>) {
+    CARDINALITY_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit cardinality encoder override for this compilation thread.
+pub fn cardinality_encoding() -> Option<crate::ast::sat_decision::CardinalityEncoding> {
+    CARDINALITY_ENCODING.with(Cell::get)
+}
+
+/// Pin a pseudo-Boolean provider/algorithm, or let the heuristic select it.
+pub fn set_pb_encoding(encoding: Option<crate::ast::sat_decision::PbEncoding>) {
+    PB_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit pseudo-Boolean encoder override for this compilation thread.
+pub fn pb_encoding() -> Option<crate::ast::sat_decision::PbEncoding> {
+    PB_ENCODING.with(Cell::get)
+}
+
+/// Pin the allDifferent strategy, or let the heuristic choose an applicable composition.
+pub fn set_alldifferent_encoding(encoding: Option<crate::ast::sat_decision::AllDifferentEncoding>) {
+    ALLDIFFERENT_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit allDifferent strategy override for this compilation thread.
+pub fn alldifferent_encoding() -> Option<crate::ast::sat_decision::AllDifferentEncoding> {
+    ALLDIFFERENT_ENCODING.with(Cell::get)
+}
+
+/// Pin the table composition, or let the modelling heuristic select it.
+pub fn set_table_encoding(encoding: Option<crate::ast::sat_decision::TableEncoding>) {
+    TABLE_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit table strategy override for this compilation thread.
+pub fn table_encoding() -> Option<crate::ast::sat_decision::TableEncoding> {
+    TABLE_ENCODING.with(Cell::get)
+}
+
+/// Pin the element composition, or let the modelling heuristic select it.
+pub fn set_element_encoding(encoding: Option<crate::ast::sat_decision::ElementEncoding>) {
+    ELEMENT_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit element strategy override for this compilation thread.
+pub fn element_encoding() -> Option<crate::ast::sat_decision::ElementEncoding> {
+    ELEMENT_ENCODING.with(Cell::get)
 }

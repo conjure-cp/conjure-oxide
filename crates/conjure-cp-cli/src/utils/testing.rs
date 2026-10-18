@@ -323,8 +323,10 @@ pub fn normalize_solutions_for_comparison(
                         // make all domains the same (this is just in the tester so the types dont
                         // actually matter)
 
-                        let mut matrix =
-                            AbstractLiteral::Matrix(elems, Moo::new(GroundDomain::Int(vec![])));
+                        let mut matrix = AbstractLiteral::Matrix(
+                            elems,
+                            Moo::new(GroundDomain::Int(vec![], None)),
+                        );
                         matrix = matrix.transform(&move |x: AbstractLiteral<Literal>| match x {
                             AbstractLiteral::Matrix(items, _) => {
                                 let items = items
@@ -336,7 +338,10 @@ pub fn normalize_solutions_for_comparison(
                                     })
                                     .collect_vec();
 
-                                AbstractLiteral::Matrix(items, Moo::new(GroundDomain::Int(vec![])))
+                                AbstractLiteral::Matrix(
+                                    items,
+                                    Moo::new(GroundDomain::Int(vec![], None)),
+                                )
                             }
                             x => x,
                         });

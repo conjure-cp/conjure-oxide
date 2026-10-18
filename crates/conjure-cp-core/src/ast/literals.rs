@@ -10,9 +10,8 @@ use super::collection_domains::{SizeBounds, bounded_set};
 use super::eval::eval_constant;
 
 use super::{
-    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, PartitionAttr,
-    PermutationAttr, Range, ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int,
-    records::Field,
+    Atom, Domain, DomainPtr, Expression, GroundDomain, Moo, PartitionAttr, PermutationAttr, Range,
+    ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int, records::Field,
 };
 use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
@@ -223,14 +222,14 @@ impl AbstractLiteralValue for Expression {
         let Domain::Ground(domain) = domain.as_ref() else {
             return false;
         };
-        matches!(domain.as_ref(), GroundDomain::Int(ranges) if ranges.as_slice() == [Range::UnboundedR(1)])
+        matches!(domain.as_ref(), GroundDomain::Int(ranges, _) if ranges.as_slice() == [Range::UnboundedR(1)])
     }
 }
 impl AbstractLiteralValue for Literal {
     type Dom = Moo<GroundDomain>;
 
     fn has_implied_list_domain(domain: &Self::Dom) -> bool {
-        matches!(domain.as_ref(), GroundDomain::Int(ranges) if ranges.as_slice() == [Range::UnboundedR(1)])
+        matches!(domain.as_ref(), GroundDomain::Int(ranges, _) if ranges.as_slice() == [Range::UnboundedR(1)])
     }
 }
 
@@ -401,31 +400,62 @@ impl AbstractLiteral<Expression> {
             }
 
             AbstractLiteral::Matrix(items, _) => {
-                // ensure that all items have a domain, or return None
                 let item_domains = items
                     .iter()
                     .map(|x| x.domain_of())
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
-                let item_domain = union_item_domains(item_domains, "matrix")?;
+                let mut item_domain = union_item_domains(item_domains, "matrix")?;
 
                 let mut new_index_domain = vec![];
 
                 // flatten index domains of n-d matrix into list
-                let mut e = Expression::AbstractLiteral(Metadata::new(), self.clone());
-                while let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, idx)) = e {
+                let mut matrix = self;
+                while let AbstractLiteral::Matrix(elems, idx) = matrix {
                     bug_assert!(
                         idx.as_matrix().is_none(),
                         "n-dimensional matrix literals should be represented as a matrix inside a matrix, got {idx}"
                     );
-                    new_index_domain.push(idx);
-                    e = elems[0].clone();
+                    new_index_domain.push(idx.clone());
+                    let Some(Expression::AbstractLiteral(_, inner @ AbstractLiteral::Matrix(..))) =
+                        elems.first()
+                    else {
+                        break;
+                    };
+                    matrix = inner;
+                }
+                // Each flattened literal dimension has already contributed to the row domain.
+                // Peel those dimensions so they are not represented twice. Matrix-valued
+                // expression leaves retain their own domains.
+                let mut remaining = new_index_domain.len() - 1;
+                while remaining > 0 {
+                    let (inner, indices) = item_domain.as_matrix()?;
+                    if indices.is_empty() {
+                        return None;
+                    }
+                    remaining = remaining.checked_sub(indices.len())?;
+                    item_domain = inner;
                 }
                 Some(Domain::matrix(item_domain, new_index_domain))
             }
-            AbstractLiteral::Tuple(_) => None,
-            AbstractLiteral::Record(_) => None,
+            AbstractLiteral::Tuple(items) => Some(Domain::tuple(
+                items
+                    .iter()
+                    .map(Expression::domain_of)
+                    .collect::<Option<Vec<_>>>()?,
+            )),
+            AbstractLiteral::Record(items) => Some(Domain::record(
+                items
+                    .iter()
+                    .map(|field| {
+                        Some(super::Field {
+                            name: field.name.clone(),
+                            value: field.value.domain_of()?,
+                        })
+                    })
+                    .collect::<Option<Vec<_>>>()?,
+            )),
             AbstractLiteral::Function(_) => None,
             AbstractLiteral::Variant(_) => None,
             AbstractLiteral::Relation(_) => None,
@@ -583,6 +613,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 for item in items {
                     item_types.push(item.clone().func_map(|x| x.return_type()));
                 }
+                item_types.sort();
                 ReturnType::Record(item_types)
             }
             AbstractLiteral::Function(items) => {
@@ -650,7 +681,10 @@ where
     ///
     /// This acts as a variable sized list.
     pub fn matrix_implied_indices(elems: Vec<T>) -> Self {
-        AbstractLiteral::Matrix(elems, GroundDomain::Int(vec![Range::UnboundedR(1)]).into())
+        AbstractLiteral::Matrix(
+            elems,
+            GroundDomain::Int(vec![Range::UnboundedR(1)], None).into(),
+        )
     }
 
     /// If the AbstractLiteral is a list, returns its elements.
@@ -1336,7 +1370,7 @@ mod tests {
 
     use super::*;
     use crate::ast::matrix::{flatten, partial_flatten, shape_of};
-    use crate::ast::{DeclarationPtr, Name};
+    use crate::ast::{DeclarationPtr, Metadata, Name};
     use crate::{domain_int_ground, into_matrix, matrix, matrix_lit, range};
     use uniplate::Uniplate;
 
@@ -1379,10 +1413,10 @@ mod tests {
         let matrix = |values: &[i32]| {
             Literal::AbstractLiteral(AbstractLiteral::Matrix(
                 values.iter().copied().map(Literal::Int).collect(),
-                Moo::new(GroundDomain::Int(vec![Range::Bounded(
-                    1,
-                    values.len() as i32,
-                )])),
+                Moo::new(GroundDomain::Int(
+                    vec![Range::Bounded(1, values.len() as i32)],
+                    None,
+                )),
             ))
         };
         assert_eq!(
@@ -1414,7 +1448,10 @@ mod tests {
 
         assert_eq!(
             item_domain.resolve(),
-            Ok(Moo::new(GroundDomain::Int(vec![Range::Bounded(1, 999)])))
+            Ok(Moo::new(GroundDomain::Int(
+                vec![Range::Bounded(1, 999)],
+                None
+            )))
         );
     }
 

@@ -97,7 +97,7 @@ pub fn parse_atom(
         }
         "flatten" => parse_flatten(ctx, node),
         "element_id" => parse_element_id(ctx, node),
-        "table" | "negative_table" => parse_table(ctx, node),
+        "table" | "negative_table" | "short_table" => parse_table(ctx, node),
         "index_or_slice" => parse_index_or_slice(ctx, node),
         "annotation_expr" => parse_annotation_expression(ctx, node),
         // for now, assume is binary since powerset isn't implemented
@@ -207,6 +207,11 @@ fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
             Moo::new(variables),
             Moo::new(rows),
         ))),
+        "short_table" => Ok(Some(Expression::ShortTable(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(rows),
+        ))),
         "negative_table" => Ok(Some(Expression::NegativeTable(
             Metadata::new(),
             Moo::new(variables),
@@ -271,7 +276,7 @@ fn parse_element_id(
         ctx.typechecking_context = saved_context;
         return Ok(None);
     };
-    let Some(value) = parse_table_operand(ctx, &value_node)? else {
+    let Some(value) = parse_expression(ctx, value_node)? else {
         ctx.typechecking_context = saved_context;
         return Ok(None);
     };
@@ -976,11 +981,11 @@ fn typecheck_variable(
     let actual = match ground_domain.as_ref() {
         GroundDomain::Empty(_) => "empty",
         GroundDomain::Bool => "bool",
-        GroundDomain::Int(_) => "int",
-        GroundDomain::Tuple(_) => "tuple",
-        GroundDomain::Record(_) => "record",
-        GroundDomain::Variant(_) => "variant",
-        GroundDomain::Matrix(_, _) => "matrix",
+        GroundDomain::Int(_, _) => "int",
+        GroundDomain::Tuple(_, _) => "tuple",
+        GroundDomain::Record(_, _) => "record",
+        GroundDomain::Variant(_, _) => "variant",
+        GroundDomain::Matrix(_, _, _) => "matrix",
         GroundDomain::Sequence(_, _) => "sequence",
         GroundDomain::Set(_, _) => "set",
         GroundDomain::MSet(_, _) => "mset",

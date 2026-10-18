@@ -31,8 +31,8 @@ fn promote_abstract_cmp_to_lex(expr: &Expr, _: &SymbolTable) -> ApplicationResul
         return Err(RuleNotApplicable);
     };
     let (is_scalar, is_matrix) = match ground.as_ref() {
-        GroundDomain::Bool | GroundDomain::Int(_) => (true, false),
-        GroundDomain::Matrix(_, _) => (false, true),
+        GroundDomain::Bool | GroundDomain::Int(_, _) => (true, false),
+        GroundDomain::Matrix(_, _, _) => (false, true),
         _ => (false, false),
     };
     if is_scalar {

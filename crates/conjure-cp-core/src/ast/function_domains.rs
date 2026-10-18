@@ -73,7 +73,7 @@ fn exact_overlap(a: &DomainPtr, b: &DomainPtr) -> bool {
             a == b
                 || matches!(
                     (a.as_ref(), b.as_ref()),
-                    (GroundDomain::Int(_), GroundDomain::Int(_))
+                    (GroundDomain::Int(_, _), GroundDomain::Int(_, _))
                         | (GroundDomain::Empty(_), _)
                         | (_, GroundDomain::Empty(_))
                 )
@@ -193,6 +193,7 @@ pub(super) fn restricted_domain(
             size,
             partiality,
             jectivity,
+            representation: attrs.representation,
         },
         retained,
         codomain,
@@ -251,6 +252,7 @@ mod tests {
                                         size: size.clone(),
                                         partiality: partiality.clone(),
                                         jectivity: jectivity.clone(),
+                                        representation: None,
                                     },
                                     ints(domain_len),
                                     ints(codomain_len),
@@ -395,6 +397,7 @@ mod tests {
             size: Range::Single(8),
             partiality: PartialityAttr::Partial,
             jectivity: JectivityAttr::Surjective,
+            representation: None,
         };
         let source = variable("f", Domain::function(attrs, ints(10), ints(3)));
         let result = restricted_domain(&source, &variable("D", ints(5))).unwrap();
@@ -412,6 +415,7 @@ mod tests {
                     size: Range::<i32>::Unbounded,
                     partiality: PartialityAttr::Total,
                     jectivity: JectivityAttr::Bijective,
+                    representation: None,
                 },
                 ints(2),
                 ints(2),
@@ -433,6 +437,7 @@ mod tests {
                     size: Range::<i32>::Unbounded,
                     partiality: PartialityAttr::Total,
                     jectivity: JectivityAttr::None,
+                    representation: None,
                 },
                 ints(2),
                 ints(3),
@@ -458,6 +463,7 @@ mod tests {
                     size: Range::<i32>::Unbounded,
                     partiality: PartialityAttr::Total,
                     jectivity: JectivityAttr::Bijective,
+                    representation: None,
                 },
                 ints(3),
                 ints(3),

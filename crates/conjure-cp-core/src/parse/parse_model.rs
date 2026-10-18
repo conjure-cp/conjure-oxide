@@ -300,6 +300,7 @@ fn parse_domain(
                 num_parts,
                 part_len,
                 is_regular,
+                representation: None,
             };
             Ok(Domain::partition(attr, domain))
         }
@@ -324,7 +325,10 @@ fn parse_domain(
                 num_moved = parse_size_attr(attr_map, symbols)?;
             }
 
-            let attr: PermutationAttr<IntVal> = PermutationAttr { num_moved };
+            let attr: PermutationAttr<IntVal> = PermutationAttr {
+                num_moved,
+                representation: None,
+            };
             Ok(Domain::permutation(attr, domain))
         }
         "DomainMatrix" => {
@@ -549,6 +553,7 @@ fn parse_domain(
                 size,
                 partiality,
                 jectivity,
+                representation: None,
             };
 
             Ok(Domain::function(attr, domain, codomain))
@@ -629,7 +634,11 @@ fn parse_domain(
                 })
                 .collect::<Result<Vec<BinaryAttr>>>()?;
 
-            let attr: RelAttr<IntVal> = RelAttr { size, binary };
+            let attr: RelAttr<IntVal> = RelAttr {
+                size,
+                binary,
+                representation: None,
+            };
 
             Ok(Domain::relation(attr, domains))
         }

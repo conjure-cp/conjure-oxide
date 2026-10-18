@@ -1,6 +1,7 @@
 mod lex;
 mod normalise;
 mod set;
+mod short_table;
 
 /************************************************************************/
 /*        Rules for translating to Minion-supported constraints         */
@@ -78,7 +79,7 @@ fn inline_constant_matrix_subject_for_minion(expr: &Expr, _: &SymbolTable) -> Ap
 }
 
 fn literal_matrix_offset(domain: &GroundDomain, index: i32) -> Option<usize> {
-    let GroundDomain::Int(ranges) = domain else {
+    let GroundDomain::Int(ranges, _) = domain else {
         return None;
     };
     let [range] = ranges.as_slice() else {
@@ -140,52 +141,44 @@ fn specialise_literal_matrix_index(resolved: &Expr, indices: &[Expr]) -> Option<
     ))
 }
 
-fn materialise_matrix_operand(expr: &Expr) -> Option<Expr> {
-    if expr.clone().unwrap_matrix_unchecked().is_some() {
-        return None;
-    }
-
-    let Expr::Atomic(_, Atom::Reference(reference)) = expr else {
-        return None;
-    };
-
-    if let Some(resolved) = reference.resolve_expression()
-        && resolved.clone().unwrap_matrix_unchecked().is_some()
-    {
-        return Some(resolved);
-    }
-
-    if let Some(lit @ Lit::AbstractLiteral(AbstractLiteral::Matrix(_, _))) =
-        reference.resolve_constant()
-    {
-        return Some(Expr::Atomic(Metadata::new(), Atom::Literal(lit)));
-    }
-
-    None
-}
-
-/// Expands value-letting references used as the row matrix in table constraints.
+/// Lower modelling collections to Minion's scalar table relation.
 #[register_rule("Minion", 4050, [Table, NegativeTable])]
-fn inline_table_row_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    match expr {
-        Expr::Table(meta, tuple, rows) => {
-            let new_rows = materialise_matrix_operand(rows).ok_or(RuleNotApplicable)?;
-            Ok(RuleEffect::pure(Expr::Table(
-                meta.clone(),
-                tuple.clone(),
-                Moo::new(new_rows),
-            )))
-        }
-        Expr::NegativeTable(meta, tuple, rows) => {
-            let new_rows = materialise_matrix_operand(rows).ok_or(RuleNotApplicable)?;
-            Ok(RuleEffect::pure(Expr::NegativeTable(
-                meta.clone(),
-                tuple.clone(),
-                Moo::new(new_rows),
-            )))
-        }
-        _ => Err(RuleNotApplicable),
-    }
+fn flatten_table(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let (inputs, rows, negative) = match expr {
+        Expr::Table(_, inputs, rows) => (inputs, rows, false),
+        Expr::NegativeTable(_, inputs, rows) => (inputs, rows, true),
+        _ => return Err(RuleNotApplicable),
+    };
+    let inputs = crate::shared::utils::table_ordered_entries(inputs).ok_or(RuleNotApplicable)?;
+    let rows = crate::shared::utils::table_rows(rows).ok_or(RuleNotApplicable)?;
+    let rows = rows
+        .iter()
+        .map(|row| {
+            let row = crate::shared::utils::table_ordered_entries(row)?;
+            if row.len() != inputs.len() {
+                return None;
+            }
+            row.iter()
+                .map(|value| match eval_constant(value)? {
+                    Lit::Int(value) => Some(value),
+                    Lit::Bool(value) => Some(i32::from(value)),
+                    _ => None,
+                })
+                .collect::<Option<Vec<_>>>()
+        })
+        .collect::<Option<Vec<_>>>()
+        .ok_or(RuleNotApplicable)?;
+    let mut symbols = symbols.clone();
+    let mut top = vec![];
+    let inputs = inputs
+        .into_iter()
+        .map(|input| flatten_expression_to_atom(input, &mut symbols, &mut top))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(RuleEffect::new(
+        Expr::FlatTable(Metadata::new(), inputs, rows, negative),
+        top,
+        symbols,
+    ))
 }
 
 #[register_rule("Minion", 4200, [Eq / Product, AuxDeclaration / Product])]
@@ -652,7 +645,7 @@ fn minion_atom_as_i32_bounds(atom: &Atom) -> Option<(i32, i32)> {
     let resolved = atom.domain_of().resolve().ok()?;
     match resolved.as_ref() {
         GroundDomain::Bool => Some((0, 1)),
-        GroundDomain::Int(ranges) => {
+        GroundDomain::Int(ranges, _) => {
             let mut lo = i32::MAX;
             let mut hi = i32::MIN;
             for range in ranges {
@@ -1274,11 +1267,54 @@ fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .try_into()
         .or(Err(RuleNotApplicable))?;
 
-    Ok(RuleEffect::pure(Expr::MinionPow(
+    // `SafePow` leaves its value unconstrained where `a ** b` is undefined (negative exponents and
+    // `0 ** 0`); definedness is enforced separately. Minion's `pow` instead fails on most negative
+    // exponents and gives `0 ** 0 = 1`, so it only defines the result where the power is defined.
+    let can_be_zero = |atom: &Atom| {
+        atom.domain_of()
+            .resolve()
+            .ok()
+            .is_none_or(|domain| domain.contains(&Lit::Int(0)).unwrap_or(true))
+    };
+    let mut defined = Vec::new();
+    if can_be_zero(&a) && can_be_zero(&b) {
+        defined.push(Expr::Or(
+            Metadata::new(),
+            Moo::new(matrix_expr![
+                Expr::Neq(
+                    Metadata::new(),
+                    Moo::new(Expr::Atomic(Metadata::new(), a.clone())),
+                    Moo::new(0.into()),
+                ),
+                Expr::Neq(
+                    Metadata::new(),
+                    Moo::new(Expr::Atomic(Metadata::new(), b.clone())),
+                    Moo::new(0.into()),
+                ),
+            ]),
+        ));
+    }
+    if minion_atom_as_i32_bounds(&b).is_none_or(|(low, _)| low < 0) {
+        defined.push(Expr::Geq(
+            Metadata::new(),
+            Moo::new(Expr::Atomic(Metadata::new(), b.clone())),
+            Moo::new(0.into()),
+        ));
+    }
+
+    let pow = Expr::MinionPow(Metadata::new(), Moo::new(a), Moo::new(b), Moo::new(total));
+    if defined.is_empty() {
+        return Ok(RuleEffect::pure(pow));
+    }
+    let defined = if defined.len() == 1 {
+        defined.pop().unwrap()
+    } else {
+        Expr::And(Metadata::new(), Moo::new(into_matrix_expr!(defined)))
+    };
+    Ok(RuleEffect::pure(Expr::Imply(
         Metadata::new(),
-        Moo::new(a),
-        Moo::new(b),
-        Moo::new(total),
+        Moo::new(defined),
+        Moo::new(pow),
     )))
 }
 
@@ -1394,7 +1430,7 @@ fn alldifferent_except_to_gccweak(expr: &Expr, symbols: &SymbolTable) -> Applica
         .ok_or(RuleNotApplicable)?
         .resolve()
         .map_err(|_| RuleNotApplicable)?;
-    let GroundDomain::Int(_) = domain.as_ref() else {
+    let GroundDomain::Int(_, _) = domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
     let values: Vec<i32> = domain
@@ -1433,14 +1469,199 @@ fn alldifferent_except_to_gccweak(expr: &Expr, symbols: &SymbolTable) -> Applica
     ))
 }
 
-/// Introduces `MinionElementOne` from an auxiliary variable bound to `elementId`.
+/// A variable exception uses defined occurrence counts, even beneath reification.
+#[register_rule("Minion", 4100, [AllDifferentExcept])]
+fn alldifferent_variable_except(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::AllDifferentExcept(_, matrix, except) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    if eval_constant(except).is_some() || !except.domain_of().is_some_and(|domain| domain.is_int())
+    {
+        return Err(RuleNotApplicable);
+    }
+    let inputs = matrix.unwrap_list_cow().ok_or(RuleNotApplicable)?;
+    if inputs.len() < 2 {
+        return Ok(RuleEffect::pure(true.into()));
+    }
+    let size = i32::try_from(inputs.len()).map_err(|_| RuleNotApplicable)?;
+    let mut values = std::collections::BTreeSet::new();
+    // Large domains use pairwise comparisons rather than enumerating every value.
+    let limit = inputs.len().saturating_mul(inputs.len());
+    for input in inputs.iter() {
+        let domain = input
+            .domain_of()
+            .ok_or(RuleNotApplicable)?
+            .resolve()
+            .map_err(|_| RuleNotApplicable)?;
+        if !matches!(domain.as_ref(), GroundDomain::Int(_, _)) {
+            return Err(RuleNotApplicable);
+        }
+        for value in domain.values().map_err(|_| RuleNotApplicable)? {
+            let Lit::Int(value) = value else {
+                return Err(RuleNotApplicable);
+            };
+            values.insert(value);
+            if values.len() > limit {
+                let mut pairs = Vec::new();
+                for (index, left) in inputs.iter().enumerate() {
+                    for right in &inputs[index + 1..] {
+                        pairs.push(Expr::Or(
+                            Metadata::new(),
+                            Moo::new(into_matrix_expr![vec![
+                                Expr::Neq(
+                                    Metadata::new(),
+                                    Moo::new(left.clone()),
+                                    Moo::new(right.clone())
+                                ),
+                                Expr::Eq(Metadata::new(), Moo::new(left.clone()), except.clone()),
+                            ]]),
+                        ));
+                    }
+                }
+                return Ok(RuleEffect::pure(Expr::And(
+                    Metadata::new(),
+                    Moo::new(into_matrix_expr![pairs]),
+                )));
+            }
+        }
+    }
+    let mut symbols = symbols.clone();
+    let mut counts = Vec::new();
+    let mut bounds = Vec::new();
+    let mut literals = Vec::new();
+    for value in values {
+        let count: Expr =
+            Reference::new(symbols.gen_find_auxiliary(&Domain::int(vec![Range::Bounded(0, size)])))
+                .into();
+        let value: Expr = value.into();
+        bounds.push(Expr::Or(
+            Metadata::new(),
+            Moo::new(into_matrix_expr![vec![
+                Expr::Eq(Metadata::new(), except.clone(), Moo::new(value.clone())),
+                Expr::Leq(Metadata::new(), Moo::new(count.clone()), Moo::new(1.into())),
+            ]]),
+        ));
+        counts.push(count);
+        literals.push(value);
+    }
+    let definition = Expr::GccWeak(
+        Metadata::new(),
+        Moo::new(into_matrix_expr![inputs.into_owned()]),
+        Moo::new(into_matrix_expr![literals]),
+        Moo::new(into_matrix_expr![counts]),
+    );
+    Ok(RuleEffect::new(
+        Expr::And(Metadata::new(), Moo::new(into_matrix_expr![bounds])),
+        vec![definition],
+        symbols,
+    ))
+}
+
+/// Native element requires a valid index; materialise identity entries across the finite bounds.
+#[register_rule("Minion", 19500, [ElementId])]
+fn total_identity_element(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::ElementId(_, matrix, index) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let (entries, labels) = (**matrix)
+        .clone()
+        .unwrap_matrix_unchecked()
+        .ok_or(RuleNotApplicable)?;
+    if entries.is_empty() {
+        let default = if index.return_type() == ReturnType::Bool {
+            Expr::ToInt(Metadata::new(), index.clone())
+        } else {
+            (**index).clone()
+        };
+        return Ok(RuleEffect::pure(default));
+    }
+    if entries
+        .iter()
+        .any(|entry| !matches!(entry.return_type(), ReturnType::Int | ReturnType::Bool))
+    {
+        return Err(RuleNotApplicable);
+    }
+    let labels = if matrix.is_list() {
+        (1..=entries.len())
+            .map(|label| i32::try_from(label).ok())
+            .collect::<Option<Vec<_>>>()
+            .ok_or(RuleNotApplicable)?
+    } else {
+        labels
+            .resolve()
+            .map_err(|_| RuleNotApplicable)?
+            .values()
+            .map_err(|_| RuleNotApplicable)?
+            .map(|label| match label {
+                Lit::Int(value) => Some(value),
+                Lit::Bool(value) => Some(i32::from(value)),
+                _ => None,
+            })
+            .collect::<Option<Vec<_>>>()
+            .ok_or(RuleNotApplicable)?
+    };
+    if labels.len() != entries.len() {
+        return Err(RuleNotApplicable);
+    }
+    let domain = index
+        .domain_of()
+        .ok_or(RuleNotApplicable)?
+        .resolve()
+        .map_err(|_| RuleNotApplicable)?;
+    let (minimum, maximum, index) = match domain.as_ref() {
+        GroundDomain::Bool => (0, 1, Expr::ToInt(Metadata::new(), index.clone())),
+        GroundDomain::Int(ranges, _) => {
+            let bounds = ranges
+                .iter()
+                .map(|range| match range {
+                    Range::Single(value) => Some((*value, *value)),
+                    Range::Bounded(lower, upper) => Some((*lower, *upper)),
+                    _ => None,
+                })
+                .collect::<Option<Vec<_>>>()
+                .ok_or(RuleNotApplicable)?;
+            (
+                bounds
+                    .iter()
+                    .map(|(lower, _)| *lower)
+                    .min()
+                    .ok_or(RuleNotApplicable)?,
+                bounds
+                    .iter()
+                    .map(|(_, upper)| *upper)
+                    .max()
+                    .ok_or(RuleNotApplicable)?,
+                (**index).clone(),
+            )
+        }
+        _ => return Err(RuleNotApplicable),
+    };
+    let entries: HashMap<_, _> = labels.into_iter().zip(entries).collect();
+    let total = (minimum..=maximum)
+        .map(|label| {
+            let entry = entries.get(&label).cloned().unwrap_or_else(|| label.into());
+            if entry.return_type() == ReturnType::Bool {
+                Expr::ToInt(Metadata::new(), Moo::new(entry))
+            } else {
+                entry
+            }
+        })
+        .collect::<Vec<_>>();
+    Ok(RuleEffect::pure(Expr::UnsafeIndex(
+        Metadata::new(),
+        Moo::new(into_matrix_expr![total; Domain::int(vec![Range::Bounded(minimum, maximum)])]),
+        vec![index],
+    )))
+}
+
+/// Introduces `MinionElementOne` from an auxiliary variable bound to `indexOf`.
 #[register_rule("Minion", 4400, [AuxDeclaration])]
-fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn introduce_index_of_from_aux_decl(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::AuxDeclaration(_, reference, inner) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::ElementId(_, matrix, value) = inner.as_ref() else {
+    let Expr::IndexOf(_, matrix, value) = inner.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
@@ -1471,15 +1692,15 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
         // candidate" shape `RelationPacked::tuple_membership_expr` and the tuple-literal equality
         // rules (`types::tuple::horizontal::tuple_literal_eq_literal`) already use for compound
         // values elsewhere, just built directly here since this list is always fully literal.
-        if let Some(lookup) = compound_element_id_lookup(&atom_list, &value_expr, reference) {
+        if let Some(lookup) = compound_index_of_lookup(&atom_list, &value_expr, reference) {
             return Ok(RuleEffect::pure(lookup));
         }
 
         // Use table only if the search value can be out of bounds; otherwise element_one.
         if let Some(search_values) = literal_matrix_int_values(&atom_list)
-            && element_id_value_may_be_outside_matrix(&value_expr, &search_values)
+            && index_of_value_may_be_outside_matrix(&value_expr, &search_values)
         {
-            if let Ok(atom_list) = indexed_element_id_inverse_lookup(matrix.as_ref(), &value_expr) {
+            if let Ok(atom_list) = indexed_index_of_inverse_lookup(matrix.as_ref(), &value_expr) {
                 return Ok(RuleEffect::pure(Expr::MinionElementOne(
                     Metadata::new(),
                     atom_list,
@@ -1488,7 +1709,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
                 )));
             }
 
-            let rows = element_id_table_rows(&value_expr, &search_values)?;
+            let rows = index_of_table_rows(&value_expr, &search_values)?;
             let tuple = into_matrix_expr![vec![
                 value_expr,
                 Expr::Atomic(Metadata::new(), Atom::Reference(reference.clone()),),
@@ -1501,8 +1722,8 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
             )));
         }
 
-        let atom_list = pad_indexed_element_id_list(matrix.as_ref(), atom_list.clone(), reference)
-            .or_else(|| pad_represented_element_id_list(atom_list.clone(), reference))
+        let atom_list = pad_indexed_index_of_list(matrix.as_ref(), atom_list.clone(), reference)
+            .or_else(|| pad_represented_index_of_list(atom_list.clone(), reference))
             .unwrap_or(atom_list);
 
         return Ok(RuleEffect::pure(Expr::MinionElementOne(
@@ -1513,7 +1734,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
         )));
     }
 
-    let atom_list = indexed_element_id_inverse_lookup(matrix.as_ref(), &value_expr)?;
+    let atom_list = indexed_index_of_inverse_lookup(matrix.as_ref(), &value_expr)?;
 
     Ok(RuleEffect::pure(Expr::MinionElementOne(
         Metadata::new(),
@@ -1523,7 +1744,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
     )))
 }
 
-/// `elementId([e1,...,en], value) = reference` where at least one `ei` is a *compound* literal
+/// `indexOf([e1,...,en], value) = reference` where at least one `ei` is a *compound* literal
 /// (a matrix of plain int/bool literals is left to the native `element`/`table` lowering, which
 /// already handles it): `reference` is pinned to the one-based position `i` such that `value`
 /// equals `ei`, expressed directly as a disjunction over positions rather than through any
@@ -1537,7 +1758,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
 ///
 /// Returns `None` (not an error) when every element is already scalar, so the caller falls
 /// through to the existing, more efficient native-constraint paths unchanged.
-fn compound_element_id_lookup(
+fn compound_index_of_lookup(
     atom_list: &[Atom],
     value_expr: &Expr,
     reference: &Reference,
@@ -1582,13 +1803,13 @@ fn compound_element_id_lookup(
     ))
 }
 
-fn indexed_element_id_inverse_lookup(
+fn indexed_index_of_inverse_lookup(
     matrix_expr: &Expr,
     value_expr: &Expr,
 ) -> Result<Vec<Atom>, ApplicationError> {
     let (elems, index_domain) =
-        indexed_element_id_literal_parts(matrix_expr).ok_or(RuleNotApplicable)?;
-    let GroundDomain::Int(index_ranges) = index_domain.as_ref() else {
+        indexed_index_of_literal_parts(matrix_expr).ok_or(RuleNotApplicable)?;
+    let GroundDomain::Int(index_ranges, _) = index_domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
     let index_values = Range::values(index_ranges)
@@ -1601,7 +1822,7 @@ fn indexed_element_id_inverse_lookup(
 
     let value_domain = value_expr.domain_of().ok_or(RuleNotApplicable)?;
     let value_domain = value_domain.resolve().map_err(|_| RuleNotApplicable)?;
-    let GroundDomain::Int(value_ranges) = value_domain.as_ref() else {
+    let GroundDomain::Int(value_ranges, _) = value_domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
     let value_values = Range::values(value_ranges)
@@ -1631,7 +1852,7 @@ fn indexed_element_id_inverse_lookup(
         .collect())
 }
 
-fn pad_indexed_element_id_list(
+fn pad_indexed_index_of_list(
     matrix_expr: &Expr,
     atom_list: Vec<Atom>,
     result: &Reference,
@@ -1646,7 +1867,7 @@ fn pad_indexed_element_id_list(
         ) => index_domain.clone(),
         _ => return None,
     };
-    let GroundDomain::Int(index_ranges) = index_domain.as_ref() else {
+    let GroundDomain::Int(index_ranges, _) = index_domain.as_ref() else {
         return None;
     };
     let index_values = Range::values(index_ranges)?.collect_vec();
@@ -1655,7 +1876,7 @@ fn pad_indexed_element_id_list(
     }
 
     let result_domain = result.domain()?.resolve().ok()?;
-    let GroundDomain::Int(result_ranges) = result_domain.as_ref() else {
+    let GroundDomain::Int(result_ranges, _) = result_domain.as_ref() else {
         return None;
     };
     let max_result = Range::values(result_ranges)?.max()?;
@@ -1673,9 +1894,9 @@ fn pad_indexed_element_id_list(
     Some(padded)
 }
 
-fn pad_represented_element_id_list(atom_list: Vec<Atom>, result: &Reference) -> Option<Vec<Atom>> {
+fn pad_represented_index_of_list(atom_list: Vec<Atom>, result: &Reference) -> Option<Vec<Atom>> {
     let result_domain = result.domain()?.resolve().ok()?;
-    let GroundDomain::Int(result_ranges) = result_domain.as_ref() else {
+    let GroundDomain::Int(result_ranges, _) = result_domain.as_ref() else {
         return None;
     };
     let result_values = Range::values(result_ranges)?.collect_vec();
@@ -1715,7 +1936,7 @@ fn represented_matrix_to_atom_index(atom: &Atom) -> Option<i32> {
     suffix.as_str().parse().ok()
 }
 
-fn indexed_element_id_literal_parts(matrix_expr: &Expr) -> Option<(Vec<i32>, Moo<GroundDomain>)> {
+fn indexed_index_of_literal_parts(matrix_expr: &Expr) -> Option<(Vec<i32>, Moo<GroundDomain>)> {
     match matrix_expr {
         Expr::AbstractLiteral(_, AbstractLiteral::Matrix(elems, index_domain)) => Some((
             elems.iter().map(expr_int_literal).collect::<Option<_>>()?,
@@ -1756,7 +1977,7 @@ fn literal_matrix_int_values(atoms: &[Atom]) -> Option<Vec<i32>> {
         .collect()
 }
 
-fn element_id_value_may_be_outside_matrix(value_expr: &Expr, search_values: &[i32]) -> bool {
+fn index_of_value_may_be_outside_matrix(value_expr: &Expr, search_values: &[i32]) -> bool {
     let Some(value_domain) = value_expr
         .domain_of()
         .and_then(|domain| domain.resolve().ok())
@@ -1772,10 +1993,7 @@ fn element_id_value_may_be_outside_matrix(value_expr: &Expr, search_values: &[i3
         .any(|value| !search_values.contains(value))
 }
 
-fn element_id_table_rows(
-    value_expr: &Expr,
-    search_values: &[i32],
-) -> Result<Expr, ApplicationError> {
+fn index_of_table_rows(value_expr: &Expr, search_values: &[i32]) -> Result<Expr, ApplicationError> {
     let value_domain = value_expr
         .domain_of()
         .ok_or(RuleNotApplicable)?
@@ -1803,9 +2021,9 @@ fn element_id_table_rows(
     Ok(into_matrix_expr![rows])
 }
 
-/// General (any-`Literal`) counterpart to [`indexed_element_id_literal_parts`], used when the
+/// General (any-`Literal`) counterpart to [`indexed_index_of_literal_parts`], used when the
 /// search target may itself be compound (e.g. a tuple), not just a plain int.
-fn indexed_element_id_parts(matrix_expr: &Expr) -> Option<(Vec<Lit>, Moo<GroundDomain>)> {
+fn indexed_index_of_parts(matrix_expr: &Expr) -> Option<(Vec<Lit>, Moo<GroundDomain>)> {
     match matrix_expr {
         Expr::AbstractLiteral(_, AbstractLiteral::Matrix(elems, index_domain)) => Some((
             elems.iter().map(eval_constant).collect::<Option<_>>()?,
@@ -1819,13 +2037,13 @@ fn indexed_element_id_parts(matrix_expr: &Expr) -> Option<(Vec<Lit>, Moo<GroundD
     }
 }
 
-fn fold_constant_element_id_to_index(element_id: &Expr) -> Option<Expr> {
-    let Expr::ElementId(_, matrix, value) = element_id else {
+fn fold_constant_index_of_to_index(index_of: &Expr) -> Option<Expr> {
+    let Expr::IndexOf(_, matrix, value) = index_of else {
         return None;
     };
     let search_value = eval_constant(value.as_ref())?;
-    let (elems, index_domain) = indexed_element_id_parts(matrix.as_ref())?;
-    let GroundDomain::Int(index_ranges) = index_domain.as_ref() else {
+    let (elems, index_domain) = indexed_index_of_parts(matrix.as_ref())?;
+    let GroundDomain::Int(index_ranges, _) = index_domain.as_ref() else {
         return None;
     };
     let index_values = Range::values(index_ranges)?.collect_vec();
@@ -1842,12 +2060,12 @@ fn fold_constant_element_id_to_index(element_id: &Expr) -> Option<Expr> {
         }
     }
 
-    // Match the identity-padding used by [`pad_indexed_element_id_list`] / Minion `element_one`
-    // for partial permutations (e.g. `elementId([j,i;int(i,j)], k)`): values absent from the
+    // Match the identity-padding used by [`pad_indexed_index_of_list`] / Minion `element_one`
+    // for partial permutations (e.g. `indexOf([j,i;int(i,j)], k)`): values absent from the
     // matrix map to themselves as indices. Without this, out-of-matrix lookups become unconstrained
     // auxiliaries and lex constraints are weakened. Only meaningful for a plain int value -- a
     // compound value has no "map to itself as an index" reading, so it's left unfolded (the
-    // AuxDeclaration-based path, `compound_element_id_lookup`, still handles it structurally).
+    // AuxDeclaration-based path, `compound_index_of_lookup`, still handles it structurally).
     if let Lit::Int(search_value) = search_value {
         return Some(Expr::Atomic(
             Metadata::new(),
@@ -1857,9 +2075,9 @@ fn fold_constant_element_id_to_index(element_id: &Expr) -> Option<Expr> {
     None
 }
 
-/// Introduces an auxiliary variable for `elementId` used as a matrix index.
+/// Introduces an auxiliary variable for `indexOf` used as a matrix index.
 #[register_rule("Minion", 4300, [SafeIndex])]
-fn flatten_element_id_index(expr: &Expr, _symbols: &SymbolTable) -> ApplicationResult {
+fn flatten_index_of_index(expr: &Expr, _symbols: &SymbolTable) -> ApplicationResult {
     let Expr::SafeIndex(meta, subject, indices) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -1868,11 +2086,11 @@ fn flatten_element_id_index(expr: &Expr, _symbols: &SymbolTable) -> ApplicationR
         return Err(RuleNotApplicable);
     }
 
-    let Expr::ElementId(_, _, _) = indices[0].clone() else {
+    let Expr::IndexOf(_, _, _) = indices[0].clone() else {
         return Err(RuleNotApplicable);
     };
 
-    if let Some(index) = fold_constant_element_id_to_index(&indices[0]) {
+    if let Some(index) = fold_constant_index_of_to_index(&indices[0]) {
         return Ok(RuleEffect::pure(Expr::SafeIndex(
             meta.clone(),
             subject.clone(),
@@ -1998,15 +2216,15 @@ fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &SymbolTable) -> Applica
     }
 }
 
-/// Constant-folds `__inDomain(elementId(...), domain)` when the elementId result domain is
+/// Constant-folds `__inDomain(indexOf(...), domain)` when the indexOf result domain is
 /// already contained in `domain`.
 #[register_rule("Minion", 4350, [InDomain])]
-fn constant_fold_indomain_element_id(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn constant_fold_indomain_index_of(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::InDomain(_, e, domain) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::ElementId(..) = e.as_ref() else {
+    let Expr::IndexOf(..) = e.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
@@ -2020,10 +2238,10 @@ fn constant_fold_indomain_element_id(expr: &Expr, _: &SymbolTable) -> Applicatio
         .intersect(&domain)
         .map_err(|_| RuleNotApplicable)?;
 
-    let GroundDomain::Int(_) = expr_domain.as_ref() else {
+    let GroundDomain::Int(_, _) = expr_domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
-    let GroundDomain::Int(_) = &intersection else {
+    let GroundDomain::Int(_, _) = &intersection else {
         return Err(RuleNotApplicable);
     };
 
@@ -2042,19 +2260,22 @@ fn constant_fold_indomain_element_id(expr: &Expr, _: &SymbolTable) -> Applicatio
 
 fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
     match domain {
-        GroundDomain::Int(ranges) => GroundDomain::Int(Range::squeeze(
-            &ranges
-                .iter()
-                .map(|range| Range::new(range.low().copied(), range.high().copied()))
-                .collect_vec(),
-        )),
+        GroundDomain::Int(ranges, representation) => GroundDomain::Int(
+            Range::squeeze(
+                &ranges
+                    .iter()
+                    .map(|range| Range::new(range.low().copied(), range.high().copied()))
+                    .collect_vec(),
+            ),
+            representation.clone(),
+        ),
         _ => domain.clone(),
     }
 }
 
-/// Resolves `__n =aux matrix[index]` when `index` is a constant `elementId` lookup.
+/// Resolves `__n =aux matrix[index]` when `index` is a constant `indexOf` lookup.
 #[register_rule("Minion", 4450, [AuxDeclaration])]
-fn resolve_safeindex_element_id_aux(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn resolve_safeindex_index_of_aux(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::AuxDeclaration(meta, reference, inner) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -2067,7 +2288,7 @@ fn resolve_safeindex_element_id_aux(expr: &Expr, symbols: &SymbolTable) -> Appli
         return Err(RuleNotApplicable);
     }
 
-    let index = fold_constant_element_id_to_index(&indices[0]).ok_or(RuleNotApplicable)?;
+    let index = fold_constant_index_of_to_index(&indices[0]).ok_or(RuleNotApplicable)?;
     let safeindex = Expr::SafeIndex(index_meta.clone(), subject.clone(), vec![index]);
     let RuleEffect { new_expression, .. } = try_index_matrix_components(&safeindex, symbols)?;
 
@@ -2081,16 +2302,13 @@ fn resolve_safeindex_element_id_aux(expr: &Expr, symbols: &SymbolTable) -> Appli
     )))
 }
 
-/// Rewrites `__n =aux matrix[elementId(..., k)]` when constant `k` is absent from the matrix.
+/// Rewrites `__n =aux matrix[indexOf(..., k)]` when constant `k` is absent from the matrix.
 ///
-/// Uses the same identity-index fallback as [`fold_constant_element_id_to_index`]: the lookup
+/// Uses the same identity-index fallback as [`fold_constant_index_of_to_index`]: the lookup
 /// becomes `matrix[k]`. Previously this dropped the aux link entirely, leaving unconstrained
 /// auxiliaries inside lex constraints.
 #[register_rule("Minion", 4450, [AuxDeclaration])]
-fn drop_invalid_constant_element_id_safeindex_aux(
-    expr: &Expr,
-    _: &SymbolTable,
-) -> ApplicationResult {
+fn drop_invalid_constant_index_of_safeindex_aux(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::AuxDeclaration(meta, reference, inner) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -2103,14 +2321,14 @@ fn drop_invalid_constant_element_id_safeindex_aux(
         return Err(RuleNotApplicable);
     }
 
-    let Expr::ElementId(_, _, value) = &indices[0] else {
+    let Expr::IndexOf(_, _, value) = &indices[0] else {
         return Err(RuleNotApplicable);
     };
 
     // Prefer the shared folder (including identity padding). If it succeeds, rewrite to a plain
-    // SafeIndex with that constant index; flatten_element_id_index / resolve paths usually handle
+    // SafeIndex with that constant index; flatten_index_of_index / resolve paths usually handle
     // this earlier, so this is a fallback.
-    let Some(index) = fold_constant_element_id_to_index(&indices[0]) else {
+    let Some(index) = fold_constant_index_of_to_index(&indices[0]) else {
         return Err(RuleNotApplicable);
     };
 
@@ -2276,7 +2494,7 @@ fn introduce_element_from_index(expr: &Expr, symtab: &SymbolTable) -> Applicatio
 /// in which case the caller has no straightforward shift to apply.
 fn offset_to_one_based(index_domain: &DomainPtr, elements: usize) -> Option<i32> {
     let resolved = index_domain.resolve().ok()?;
-    let GroundDomain::Int(ranges) = resolved.as_ref() else {
+    let GroundDomain::Int(ranges, _) = resolved.as_ref() else {
         return None;
     };
     if !Range::is_contiguous(ranges) {
@@ -2491,11 +2709,11 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
                 top_level_exprs.push(top);
                 child_changed = true;
             } else if let Expr::SafeIndex(_, subject, indices) = e {
-                let index_has_element_id = indices
+                let index_has_index_of = indices
                     .iter()
-                    .any(|index| matches!(index, Expr::ElementId(..)));
+                    .any(|index| matches!(index, Expr::IndexOf(..)));
                 let subject_is_ref = matches!(**subject, Expr::Atomic(_, Atom::Reference(_)));
-                if !index_has_element_id && subject_is_ref {
+                if !index_has_index_of && subject_is_ref {
                     continue;
                 }
                 // we dont normally flatten indexing expressions, but we want to do it if they are
@@ -3212,10 +3430,10 @@ mod tests {
     }
 
     #[test]
-    fn fold_constant_element_id_to_index_finds_a_compound_literal() {
-        // Regression: elementId([(7,false),(7,true),(8,false),(8,true)], (8,true)) used to only
+    fn fold_constant_index_of_to_index_finds_a_compound_literal() {
+        // Regression: indexOf([(7,false),(7,true),(8,false),(8,true)], (8,true)) used to only
         // resolve for a plain int search value (`expr_int_literal` failing outright for a
-        // compound one), leaving the ElementId node -- and eventually the raw tuple literal --
+        // compound one), leaving the IndexOf node -- and eventually the raw tuple literal --
         // unresolved all the way to Minion.
         let matrix = one_based_matrix(vec![
             tuple_lit(7, false),
@@ -3223,65 +3441,23 @@ mod tests {
             tuple_lit(8, false),
             tuple_lit(8, true),
         ]);
-        let element_id = Expr::ElementId(
+        let index_of = Expr::IndexOf(
             Metadata::new(),
             Moo::new(matrix),
             Moo::new(tuple_lit(8, true)),
         );
 
-        let folded = fold_constant_element_id_to_index(&element_id).expect("should fold");
+        let folded = fold_constant_index_of_to_index(&index_of).expect("should fold");
         assert_eq!(folded, Expr::from(4));
     }
 
     #[test]
-    fn fold_constant_element_id_to_index_still_finds_a_plain_int() {
+    fn fold_constant_index_of_to_index_still_finds_a_plain_int() {
         // The pre-existing scalar case must keep working once the lookup is generalised.
         let matrix = one_based_matrix(vec![Expr::from(10), Expr::from(20), Expr::from(30)]);
-        let element_id =
-            Expr::ElementId(Metadata::new(), Moo::new(matrix), Moo::new(Expr::from(20)));
+        let index_of = Expr::IndexOf(Metadata::new(), Moo::new(matrix), Moo::new(Expr::from(20)));
 
-        let folded = fold_constant_element_id_to_index(&element_id).expect("should fold");
+        let folded = fold_constant_index_of_to_index(&index_of).expect("should fold");
         assert_eq!(folded, Expr::from(2));
-    }
-
-    #[test]
-    fn compound_element_id_lookup_builds_a_per_candidate_disjunction() {
-        let atom_list: Vec<Atom> = [(7, false), (7, true), (8, false), (8, true)]
-            .into_iter()
-            .map(|(a, b)| {
-                Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Tuple(vec![
-                    Lit::Int(a),
-                    Lit::Bool(b),
-                ])))
-            })
-            .collect();
-        let value_expr = int_atom("k");
-        let reference = Reference::new(DeclarationPtr::new_find(
-            Name::user("pos"),
-            Domain::int(vec![Range::Bounded(1, 4)]),
-        ));
-
-        let lookup = compound_element_id_lookup(&atom_list, &value_expr, &reference)
-            .expect("should build a disjunction for compound elements");
-        let Expr::Or(_, choices) = &lookup else {
-            panic!("expected an Or, got {lookup}");
-        };
-        let Some(choices) = choices.unwrap_list() else {
-            panic!("expected the Or's argument to be a plain list");
-        };
-        assert_eq!(choices.len(), 4);
-        assert!(choices.iter().all(|choice| matches!(choice, Expr::And(..))));
-    }
-
-    #[test]
-    fn compound_element_id_lookup_is_not_applicable_to_scalar_elements() {
-        let atom_list: Vec<Atom> = vec![Atom::Literal(Lit::Int(10)), Atom::Literal(Lit::Int(20))];
-        let value_expr = int_atom("k");
-        let reference = Reference::new(DeclarationPtr::new_find(
-            Name::user("pos"),
-            Domain::int(vec![Range::Bounded(1, 2)]),
-        ));
-
-        assert!(compound_element_id_lookup(&atom_list, &value_expr, &reference).is_none());
     }
 }

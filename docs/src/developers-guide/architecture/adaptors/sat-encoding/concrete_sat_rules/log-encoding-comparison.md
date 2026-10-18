@@ -1,5 +1,7 @@
 # Log Encoding Comparison inequalities 
 
+Model-level comparisons now use actual-value integer views and the selected PB provider. The bitwise construction below describes circuit logic used when binary operands are required; signed operands need sign extension rather than unconditional zero padding. See [integer representations](../encoding-types.md).
+
 ## Overview
 
 ```text

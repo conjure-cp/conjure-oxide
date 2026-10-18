@@ -38,12 +38,15 @@ impl ConstantBoundOp {
 /// Normalises integer ranges so equivalent domains compare structurally equal.
 fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
     match domain {
-        GroundDomain::Int(ranges) => GroundDomain::Int(Range::squeeze(
-            &ranges
-                .iter()
-                .map(|range| Range::new(range.low().copied(), range.high().copied()))
-                .collect::<Vec<_>>(),
-        )),
+        GroundDomain::Int(ranges, representation) => GroundDomain::Int(
+            Range::squeeze(
+                &ranges
+                    .iter()
+                    .map(|range| Range::new(range.low().copied(), range.high().copied()))
+                    .collect::<Vec<_>>(),
+            ),
+            representation.clone(),
+        ),
         _ => domain.clone(),
     }
 }
@@ -125,7 +128,7 @@ fn singleton_int_value(expr: &Expr) -> Option<i32> {
     }
 
     let domain = resolved_ground_domain_of_for_partial_eval(expr)?;
-    let GroundDomain::Int(ranges) = domain.as_ref() else {
+    let GroundDomain::Int(ranges, _) = domain.as_ref() else {
         return None;
     };
     let [range] = ranges.as_slice() else {
@@ -149,7 +152,7 @@ fn cheap_singleton_int_value(expr: &Expr) -> Option<i32> {
         Expr::Atomic(_, Atom::Literal(Lit::Int(value))) => Some(*value),
         Expr::Atomic(_, Atom::Reference(reference)) => {
             let domain = reference.domain()?.resolve().ok()?;
-            let GroundDomain::Int(ranges) = domain.as_ref() else {
+            let GroundDomain::Int(ranges, _) = domain.as_ref() else {
                 return None;
             };
             let [range] = ranges.as_slice() else {
@@ -165,23 +168,30 @@ fn cheap_singleton_int_value(expr: &Expr) -> Option<i32> {
 }
 
 fn matrix_index_offset(index_domain: &DomainPtr, index: i32) -> Option<usize> {
-    let ranges = index_domain.as_int_ground()?;
-    let [range] = ranges.as_slice() else {
-        return None;
-    };
-    let from = *range.low()?;
-    usize::try_from(index.checked_sub(from)?).ok()
+    integer_index_offset(index_domain.as_int_ground()?, index)
 }
 
 fn ground_matrix_index_offset(index_domain: &GroundDomain, index: i32) -> Option<usize> {
-    let GroundDomain::Int(ranges) = index_domain else {
+    let GroundDomain::Int(ranges, _) = index_domain else {
         return None;
     };
-    let [range] = ranges.as_slice() else {
-        return None;
-    };
-    let from = *range.low()?;
-    usize::try_from(index.checked_sub(from)?).ok()
+    integer_index_offset(ranges, index)
+}
+
+/// Locate a label by its domain position, including gaps, without enumerating ranges.
+fn integer_index_offset(ranges: &[Range<i32>], index: i32) -> Option<usize> {
+    let mut offset = 0usize;
+    for range in ranges {
+        let lower = i64::from(*range.low()?);
+        let index = i64::from(index);
+        let upper = range.high().map(|value| i64::from(*value));
+        if index >= lower && upper.is_none_or(|upper| index <= upper) {
+            return offset.checked_add(usize::try_from(index - lower).ok()?);
+        }
+        let length = (upper? - lower + 1).max(0);
+        offset = offset.checked_add(usize::try_from(length).ok()?)?;
+    }
+    None
 }
 
 /// Selects one element from a matrix literal, including a referenced constant matrix.
@@ -228,7 +238,7 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
     match expr {
         Expr::SafeIndex(_, subject, _) => {
             let subject_domain = resolved_ground_domain_of_for_partial_eval(subject)?;
-            let GroundDomain::Matrix(elem_domain, _) = subject_domain.as_ref() else {
+            let GroundDomain::Matrix(elem_domain, _, _) = subject_domain.as_ref() else {
                 return None;
             };
 
@@ -236,7 +246,8 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
         }
         Expr::SafeSlice(_, subject, indices) => {
             let subject_domain = resolved_ground_domain_of_for_partial_eval(subject)?;
-            let GroundDomain::Matrix(elem_domain, index_domains) = subject_domain.as_ref() else {
+            let GroundDomain::Matrix(elem_domain, index_domains, _) = subject_domain.as_ref()
+            else {
                 return None;
             };
             let sliced_dimension = indices.iter().position(Option::is_none);
@@ -245,6 +256,7 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
                 Some(dimension) => Some(Moo::new(GroundDomain::Matrix(
                     elem_domain.clone(),
                     vec![index_domains[dimension].clone()],
+                    None,
                 ))),
                 None => Some(elem_domain.clone()),
             }
@@ -318,7 +330,7 @@ fn simplify_comparison_with_literal(
 
     match (expr_domain.as_ref(), lit) {
         (GroundDomain::Bool, Lit::Bool(_)) => None,
-        (GroundDomain::Int(ranges), Lit::Int(value)) => {
+        (GroundDomain::Int(ranges, _), Lit::Int(value)) => {
             let [range] = ranges.as_slice() else {
                 return None;
             };
@@ -447,8 +459,10 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::Metavar(_, _) => Err(RuleNotApplicable),
         Expr::UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
-        Expr::Table(_, _, _) => Err(RuleNotApplicable),
-        Expr::NegativeTable(_, _, _) => Err(RuleNotApplicable),
+        Expr::Table(_, _, _) | Expr::FlatTable(..) | Expr::FlatShortTable(..) => {
+            Err(RuleNotApplicable)
+        }
+        Expr::NegativeTable(_, _, _) | Expr::ShortTable(_, _, _) => Err(RuleNotApplicable),
         Expr::AtLeast(_, _, _, _) => Err(RuleNotApplicable),
         Expr::AtMost(_, _, _, _) => Err(RuleNotApplicable),
         Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => Err(RuleNotApplicable),
@@ -1138,7 +1152,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionWInSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
-        Expr::SATInt(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::SatObjective(..) | Expr::SATInt(_, _, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseSum(_, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseProduct(_, _, _) => Err(RuleNotApplicable),
         Expr::Active(m, variant, alternative) => {
@@ -1188,7 +1202,11 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::LexGeq(_, _, _) => Err(RuleNotApplicable),
         Expr::FlatLexLt(_, _, _) => Err(RuleNotApplicable),
         Expr::FlatLexLeq(_, _, _) => Err(RuleNotApplicable),
-        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) => Err(RuleNotApplicable),
+        Expr::AllDifferentExcept(_, _, _)
+        | Expr::ElementId(_, _, _)
+        | Expr::IndexOf(_, _, _)
+        | Expr::SatElement(_, _, _, _)
+        | Expr::SatAllDifferentComparisons(_, _) => Err(RuleNotApplicable),
     }
 }
 

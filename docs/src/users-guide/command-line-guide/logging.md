@@ -71,7 +71,7 @@ This will show:
 + Tseytin transformations
 + All rules that were tried and applied
 
-> Which integer encoding each variable gets -- `int_log`, `int_direct` or `int_order` -- is a
+> Which integer encoding each variable gets -- `direct`, `order`, `twos_complement`, `sign_magnitude`, `offset` or `rank` -- is a
 > representation choice made per declaration rather than part of the solver name. Use
 > `--heuristic` to steer it: `-h i` prompts for each choice, and `-h c` (the default) takes the
 > most compact.

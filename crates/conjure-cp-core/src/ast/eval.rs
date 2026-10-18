@@ -218,6 +218,8 @@ fn constraint_skips_deep_root_normalisation(expr: &Expr) -> bool {
         | Expr::FlatMinusEq(_, _, _)
         | Expr::FlatAbsEq(_, _, _)
         | Expr::FlatAllDiff(_, _)
+        | Expr::FlatTable(..)
+        | Expr::FlatShortTable(..)
         | Expr::SmtDistinct(_, _)
         | Expr::FlatWeightedSumLeq(_, _, _, _)
         | Expr::FlatWeightedSumGeq(_, _, _, _)
@@ -700,8 +702,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::And(_, e) => {
             vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
         }
-        Expr::Table(_, _, _) => None,
-        Expr::NegativeTable(_, _, _) => None,
+        Expr::Table(_, _, _) | Expr::FlatTable(..) | Expr::FlatShortTable(..) => None,
+        Expr::NegativeTable(_, _, _) | Expr::ShortTable(_, _, _) => None,
         Expr::AtLeast(_, _, _, _) => None,
         Expr::AtMost(_, _, _, _) => None,
         Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => None,
@@ -767,17 +769,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             opt_vec_lit_op::<i32, i32>(|e| e.iter().max().copied(), e.as_ref()).map(Lit::Int)
         }
         Expr::UnsafeDiv(_, a, b) | Expr::SafeDiv(_, a, b) => {
-            if unwrap_expr::<i32>(b)? == 0 {
-                return None;
-            }
-            bin_op::<i32, i32>(|a, b| ((a as f32) / (b as f32)).floor() as i32, a, b).map(Lit::Int)
+            super::floor_div(unwrap_expr::<i32>(a)?, unwrap_expr::<i32>(b)?).map(Lit::Int)
         }
         Expr::UnsafeMod(_, a, b) | Expr::SafeMod(_, a, b) => {
-            if unwrap_expr::<i32>(b)? == 0 {
-                return None;
-            }
-            bin_op::<i32, i32>(|a, b| a - b * (a as f32 / b as f32).floor() as i32, a, b)
-                .map(Lit::Int)
+            super::floor_mod(unwrap_expr::<i32>(a)?, unwrap_expr::<i32>(b)?).map(Lit::Int)
         }
         Expr::Substring(_, s, t) => match (s.as_ref(), t.as_ref()) {
             (
@@ -864,7 +859,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 return None;
             }
 
-            let modulo = a - b * (a as f32 / b as f32).floor() as i32;
+            let modulo = super::floor_mod(a, b)?;
             Some(Lit::Bool(modulo == c))
         }
         Expr::MinionPow(_, a, b, c) => {
@@ -1038,6 +1033,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 _ => None,
             }
         }
+        Expr::SatObjective(..) => None,
         Expr::SATInt(_, _, _, _) => {
             // TODO: If this SATInt is composed of literals, we should evaluate it back to an
             // integer literal.
@@ -1230,10 +1226,14 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             })?;
             Some(lt.into())
         }
-        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) => None,
+        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) | Expr::IndexOf(_, _, _) => {
+            None
+        }
         // Needs the target's domain to expand, which this function has no access to; the
         // fallback rewrite rule (passes::attribute_as_constraint) handles expansion instead.
-        Expr::AttributeAsConstraint(_, _, _, _) => None,
+        Expr::AttributeAsConstraint(_, _, _, _)
+        | Expr::SatElement(_, _, _, _)
+        | Expr::SatAllDifferentComparisons(_, _) => None,
     }
 }
 

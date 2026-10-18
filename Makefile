@@ -25,7 +25,7 @@ export NEXTEST_TEST_THREADS
 endif
 CARGO_TARGET_DIR ?= target
 CARGO_BIN_DIR ?= $(HOME)/.cargo/bin
-CARGO_TEST_WORKSPACE = python3 tools/nextest.py --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace $(TEST_ARGS)
+CARGO_TEST_WORKSPACE = python3 tools/nextest.py --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --no-fail-fast $(TEST_ARGS)
 CARGO_DOC_TEST_WORKSPACE = cargo test --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --doc $(TEST_ARGS)
 export PATH := $(CARGO_BIN_DIR):$(PATH)
 

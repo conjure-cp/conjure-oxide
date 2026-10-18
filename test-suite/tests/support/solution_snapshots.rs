@@ -21,7 +21,7 @@ pub fn render_shared_solutions(solutions: &[BTreeMap<Name, Literal>]) -> String 
                             // Some adaptors attach the full matrix domain, others only its index
                             // domain. Each nested matrix stores its own remaining index domains.
                             let domain = match domain.as_ref() {
-                                GroundDomain::Matrix(_, indices) => {
+                                GroundDomain::Matrix(_, indices, _) => {
                                     indices.first().cloned().unwrap_or(domain)
                                 }
                                 _ => domain,

@@ -1,0 +1,28 @@
+Model before rewriting:
+
+letting forbidden be {sequence(0,0),sequence(1,1),sequence(2,2)}
+find x: int(0..2)
+find y: int(0..2)
+
+such that
+
+negativeTable(sequence(x,y), forbidden)
+
+--
+
+negativeTable(sequence(x,y), {sequence(0,0),sequence(1,1),sequence(2,2)})
+   ~~> flatten_table ([("Minion", 4050)])
+FlatTable([x, y], [[0, 0], [1, 1], [2, 2]], true)
+
+--
+
+Final model:
+
+letting forbidden be {sequence(0,0),sequence(1,1),sequence(2,2)}
+find x: int(0..2)
+find y: int(0..2)
+
+such that
+
+FlatTable([x, y], [[0, 0], [1, 1], [2, 2]], true)
+

@@ -159,6 +159,14 @@ pub enum Expression {
     #[compatible(SMT)]
     SafeIndex(Metadata, Moo<Expression>, Vec<Expression>),
 
+    /// Internal total element definition. Outside the index domain, the value is unconstrained.
+    /// Safe indexing introduces this before representation-specific comparisons finish lowering.
+    #[polyquine_skip]
+    SatElement(Metadata, Moo<Expression>, Moo<Expression>, Moo<Expression>),
+
+    /// Whole-value distinctness after constructing representation-independent comparisons.
+    SatAllDifferentComparisons(Metadata, Moo<Expression>),
+
     /// A matrix slice: `a[indices]`.
     ///
     /// One of the indicies may be `None`, representing the dimension of the matrix we want to take
@@ -373,22 +381,38 @@ pub enum Expression {
     #[compatible(JsonInput)]
     AllDifferentExcept(Metadata, Moo<Expression>, Moo<Expression>),
 
-    /// `elementId(<matrix>, <value>)` — 1-based index of value in matrix
+    /// Select a scalar matrix entry, returning the index itself outside the index domain.
     ElementId(Metadata, Moo<Expression>, Moo<Expression>),
 
-    /// `table([x1, x2, ...], [[r11, r12, ...], [r21, r22, ...], ...])`
+    /// Internal inverse lookup used to locate a function argument among its domain values.
+    #[polyquine_skip]
+    IndexOf(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// `table(sequence(x1, x2, ...), {sequence(r11, r12, ...), sequence(r21, r22, ...), ...})`
     ///
-    /// Represents a positive table constraint: the tuple `[x1, x2, ...]` must match one of the
+    /// Represents a positive table constraint: the input sequence must match one of the
     /// allowed rows.
     #[compatible(JsonInput)]
     Table(Metadata, Moo<Expression>, Moo<Expression>),
 
-    /// `negativeTable([x1, x2, ...], [[r11, r12, ...], [r21, r22, ...], ...])`
+    /// `negativeTable(sequence(x1, x2, ...), rows)` forbids the set of sequence rows.
     ///
-    /// Represents a negative table constraint: the tuple `[x1, x2, ...]` must NOT match any of the
+    /// Represents a negative table constraint: the input sequence must NOT match any of the
     /// forbidden rows.
     #[compatible(JsonInput)]
     NegativeTable(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// `shortTable(sequence(x1, x2, ...), {{(position, value), ...}, ...})` uses one-based positions.
+    /// Omitted positions are wildcards; each sparse row and the relation itself are sets.
+    ShortTable(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Minion table relation with scalar inputs and numeric rows; the flag forbids matching rows.
+    #[polyquine_skip]
+    FlatTable(Metadata, Vec<Atom>, Vec<Vec<i32>>, bool),
+
+    /// Minion sparse table with zero-based positions and numeric values; omitted inputs are wildcards.
+    #[polyquine_skip]
+    FlatShortTable(Metadata, Vec<Atom>, Vec<Vec<(usize, i32)>>),
 
     /// `atleast(vars, counts, values)`
     ///
@@ -675,6 +699,9 @@ pub enum Expression {
     /// This expression is for encoding ints for the SAT solver, it stores the encoding type, the vector of booleans and the min/max for the int.
     #[compatible(SAT)]
     SATInt(Metadata, SATIntEncoding, Moo<Expression>, (i32, i32)),
+    /// Retain an optimisation objective until its actual-value SAT view is ready.
+    #[compatible(SAT)]
+    SatObjective(Metadata, bool, Moo<Expression>),
 
     /// Addition over a pair of expressions (i.e. a + b) rather than a vec-expr like Expression::Sum.
     /// This is for compatibility with backends that do not support addition over vectors.
@@ -777,7 +804,7 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     let expr = exprs.pop()?;
     let dom = expr.domain_of()?;
     let resolved = dom.resolve().ok()?;
-    let GroundDomain::Int(ranges) = resolved.as_ref() else {
+    let GroundDomain::Int(ranges, _) = resolved.as_ref() else {
         return None;
     };
 
@@ -786,7 +813,7 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     for expr in exprs {
         let dom = expr.domain_of()?;
         let resolved = dom.resolve().ok()?;
-        let GroundDomain::Int(ranges) = resolved.as_ref() else {
+        let GroundDomain::Int(ranges, _) = resolved.as_ref() else {
             return None;
         };
 
@@ -898,7 +925,7 @@ fn sum_domain_for_comprehension(expr: &Expression) -> Option<DomainPtr> {
     };
     let comp = comp.as_ref();
     let resolved = comp.return_expression.domain_of()?.resolve().ok()?;
-    let GroundDomain::Int(return_ranges) = resolved.as_ref() else {
+    let GroundDomain::Int(return_ranges, _) = resolved.as_ref() else {
         return None;
     };
     let (term_min, term_max) = range_vec_bounds_i32(return_ranges)?;
@@ -1214,13 +1241,7 @@ impl Expression {
                 .apply_i32(
                     // rust integer division is truncating; however, we want to always round down,
                     // including for negative numbers.
-                    |x, y| {
-                        if y != 0 {
-                            Some((x as f32 / y as f32).floor() as i32)
-                        } else {
-                            None
-                        }
-                    },
+                    super::floor_div,
                     b.domain_of()?.resolve().ok()?.as_ref(),
                 )
                 .map(DomainPtr::from)
@@ -1238,19 +1259,10 @@ impl Expression {
                     .domain_of()?
                     .resolve()
                     .ok()?
-                    .apply_i32(
-                        |x, y| {
-                            if y != 0 {
-                                Some((x as f32 / y as f32).floor() as i32)
-                            } else {
-                                None
-                            }
-                        },
-                        b.domain_of()?.resolve().ok()?.as_ref(),
-                    )
+                    .apply_i32(super::floor_div, b.domain_of()?.resolve().ok()?.as_ref())
                     .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
 
-                if let GroundDomain::Int(ranges) = domain {
+                if let GroundDomain::Int(ranges, _) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
                     Some(Domain::int(ranges))
@@ -1264,10 +1276,7 @@ impl Expression {
                 .domain_of()?
                 .resolve()
                 .ok()?
-                .apply_i32(
-                    |x, y| if y != 0 { Some(x % y) } else { None },
-                    b.domain_of()?.resolve().ok()?.as_ref(),
-                )
+                .apply_i32(super::floor_mod, b.domain_of()?.resolve().ok()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
             Expression::SafeMod(_, a, b) => {
@@ -1275,13 +1284,10 @@ impl Expression {
                     .domain_of()?
                     .resolve()
                     .ok()?
-                    .apply_i32(
-                        |x, y| if y != 0 { Some(x % y) } else { None },
-                        b.domain_of()?.resolve().ok()?.as_ref(),
-                    )
+                    .apply_i32(super::floor_mod, b.domain_of()?.resolve().ok()?.as_ref())
                     .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
 
-                if let GroundDomain::Int(ranges) = domain {
+                if let GroundDomain::Int(ranges, _) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
                     Some(Domain::int(ranges))
@@ -1323,7 +1329,7 @@ impl Expression {
             Expression::Lt(_, _, _) => Some(Domain::bool()),
             Expression::Factorial(_, a) => {
                 let dom = a.domain_of()?.resolve().ok()?;
-                let GroundDomain::Int(_) = dom.as_ref() else {
+                let GroundDomain::Int(_, _) = dom.as_ref() else {
                     return None;
                 };
                 let values = dom.values_i32().ok()?;
@@ -1351,7 +1357,7 @@ impl Expression {
                     // TODO: currently only works for matrices
                     let dom = m.domain_of()?.resolve().ok()?;
                     let (val_dom, idx_doms) = match dom.as_ref() {
-                        GroundDomain::Matrix(val, idx) => (val, idx),
+                        GroundDomain::Matrix(val, idx, _) => (val, idx),
                         _ => return None,
                     };
                     let num_elems = matrix::num_elements(idx_doms).ok()? as i32;
@@ -1367,10 +1373,36 @@ impl Expression {
             Expression::AllDiff(_, _) => Some(Domain::bool()),
             Expression::SmtDistinct(_, _) => Some(Domain::bool()),
             Expression::AllDifferentExcept(_, _, _) => Some(Domain::bool()),
-            Expression::ElementId(_, matrix, value) => {
+            Expression::ElementId(_, matrix, index) => {
+                let lookup = Expression::UnsafeIndex(
+                    Metadata::new(),
+                    matrix.clone(),
+                    vec![(**index).clone()],
+                );
+                let numeric = |domain: DomainPtr| {
+                    if domain.is_bool() {
+                        Some(Domain::int(vec![Range::Bounded(0, 1)]))
+                    } else if domain.is_int() {
+                        Some(domain)
+                    } else {
+                        None
+                    }
+                };
+                if matches!(matrix.as_ref(), Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(entries, _)))) if entries.is_empty())
+                    || matrix
+                        .unwrap_matrix_unchecked_ref()
+                        .is_some_and(|(entries, _)| entries.is_empty())
+                {
+                    return numeric(index.domain_of()?);
+                }
+                numeric(lookup.domain_of()?)?
+                    .union(&numeric(index.domain_of()?)?)
+                    .ok()
+            }
+            Expression::IndexOf(_, matrix, value) => {
                 let dom = matrix.domain_of()?.resolve().ok()?;
                 let idx_doms = match dom.as_ref() {
-                    GroundDomain::Matrix(_, idx) => idx,
+                    GroundDomain::Matrix(_, idx, _) => idx,
                     _ => return None,
                 };
                 if let [idx_dom] = idx_doms.as_slice() {
@@ -1401,8 +1433,14 @@ impl Expression {
                     Some(Domain::int(vec![Range::Bounded(1, num_elems)]))
                 }
             }
-            Expression::Table(_, _, _) => Some(Domain::bool()),
-            Expression::NegativeTable(_, _, _) => Some(Domain::bool()),
+            Expression::SatElement(_, _, _, _) | Expression::SatAllDifferentComparisons(_, _) => {
+                Some(Domain::bool())
+            }
+            Expression::Table(_, _, _)
+            | Expression::FlatTable(..)
+            | Expression::FlatShortTable(..)
+            | Expression::NegativeTable(_, _, _)
+            | Expression::ShortTable(_, _, _) => Some(Domain::bool()),
             Expression::AtLeast(_, _, _, _) => Some(Domain::bool()),
             Expression::AtMost(_, _, _, _) => Some(Domain::bool()),
             Expression::Gcc(_, _, _, _) | Expression::GccWeak(_, _, _, _) => Some(Domain::bool()),
@@ -1433,8 +1471,8 @@ impl Expression {
                 let a_resolved = a.domain_of()?.resolve().ok()?;
                 let b_resolved = b.domain_of()?.resolve().ok()?;
 
-                if matches!(a_resolved.as_ref(), GroundDomain::Int(_))
-                    && matches!(b_resolved.as_ref(), GroundDomain::Int(_))
+                if matches!(a_resolved.as_ref(), GroundDomain::Int(_, _))
+                    && matches!(b_resolved.as_ref(), GroundDomain::Int(_, _))
                 {
                     a_resolved
                         .apply_i32(|x, y| Some(x - y), b_resolved.as_ref())
@@ -1465,6 +1503,7 @@ impl Expression {
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::bool()),
             Expression::ToInt(_, _) => Some(Domain::int(vec![Range::Bounded(0, 1)])),
+            Expression::SatObjective(..) => Some(Domain::bool()),
             Expression::SATInt(_, _, _, (low, high)) => {
                 Some(Domain::int_ground(vec![Range::Bounded(*low, *high)]))
             }
@@ -1571,6 +1610,8 @@ impl Expression {
                 let rel_attrs = RelAttr {
                     size: function_size(&attrs, &domain, &codomain).range()?,
                     binary: vec![],
+                    // The function's layout does not say how its relation view is laid out.
+                    representation: None,
                 };
                 Some(Domain::relation(rel_attrs, vec![domain, codomain]))
             }
@@ -1707,6 +1748,8 @@ impl Expression {
             RecordField,
             UnsafeIndex,
             SafeIndex,
+            SatElement,
+            SatAllDifferentComparisons,
             UnsafeSlice,
             SafeSlice,
             InDomain,
@@ -1756,10 +1799,13 @@ impl Expression {
             SmtDistinct,
             AllDifferentExcept,
             ElementId,
+            IndexOf,
             Minus,
             Factorial,
             FlatAbsEq,
             FlatAllDiff,
+            FlatTable,
+            FlatShortTable,
             FlatMinEq,
             FlatSumGeq,
             FlatSumLeq,
@@ -1779,6 +1825,7 @@ impl Expression {
             MinionElementOne,
             AuxDeclaration,
             SATInt,
+            SatObjective,
             PairwiseSum,
             PairwiseProduct,
             Image,
@@ -1795,6 +1842,7 @@ impl Expression {
             FlatLexLt,
             FlatLexLeq,
             NegativeTable,
+            ShortTable,
             Table,
             AtLeast,
             AtMost,
@@ -2150,7 +2198,7 @@ pub fn image_can_be_undefined(subject: &Expression, argument: &Expression) -> bo
             min_length <= 0
                 || !argument_always_in(
                     argument,
-                    &GroundDomain::Int(vec![Range::Bounded(1, min_length)]),
+                    &GroundDomain::Int(vec![Range::Bounded(1, min_length)], None),
                 )
         }
         _ => true,
@@ -2497,8 +2545,24 @@ impl Display for Expression {
             Expression::ElementId(_, matrix, value) => {
                 write!(f, "elementId({matrix}, {value})")
             }
+            Expression::IndexOf(_, matrix, value) => write!(f, "indexOf({matrix}, {value})"),
+            Expression::SatAllDifferentComparisons(_, conditions) => {
+                write!(f, "sat-allDifferent-comparisons({conditions})")
+            }
+            Expression::SatElement(_, matrix, index, value) => {
+                write!(f, "satElement({matrix}, {index}, {value})")
+            }
+            Expression::FlatShortTable(_, inputs, rows) => {
+                write!(f, "FlatShortTable({}, {rows:?})", pretty_vec(inputs))
+            }
+            Expression::FlatTable(_, inputs, rows, negative) => {
+                write!(f, "FlatTable({}, {rows:?}, {negative})", pretty_vec(inputs))
+            }
             Expression::Table(_, tuple_expr, rows_expr) => {
                 write!(f, "table({tuple_expr}, {rows_expr})")
+            }
+            Expression::ShortTable(_, tuple_expr, rows_expr) => {
+                write!(f, "shortTable({tuple_expr}, {rows_expr})")
             }
             Expression::NegativeTable(_, tuple_expr, rows_expr) => {
                 write!(f, "negativeTable({tuple_expr}, {rows_expr})")
@@ -2640,6 +2704,9 @@ impl Display for Expression {
                 write!(f, "toInt({expr})")
             }
 
+            Expression::SatObjective(_, minimise, value) => {
+                write!(f, "optimise(minimise={minimise}, value={value})")
+            }
             Expression::SATInt(_, encoding, bits, (min, max)) => {
                 write!(f, "SATInt({encoding:?}, {bits} [{min}, {max}])")
             }
@@ -2816,7 +2883,7 @@ impl Typeable for Expression {
             Expression::Parts(_, subject) => {
                 ReturnType::Set(Box::new(ReturnType::Set(Box::new(subject.return_type()))))
             }
-            Expression::CatchUndef(_, _, _) => ReturnType::Int,
+            Expression::CatchUndef(_, value, _) => value.return_type(),
             Expression::SafeDiv(_, _, _) => ReturnType::Int,
             Expression::UnsafeDiv(_, _, _) => ReturnType::Int,
             Expression::FlatAllDiff(_, _) => ReturnType::Bool,
@@ -2844,9 +2911,16 @@ impl Typeable for Expression {
             Expression::AllDiff(_, _) => ReturnType::Bool,
             Expression::SmtDistinct(_, _) => ReturnType::Bool,
             Expression::AllDifferentExcept(_, _, _) => ReturnType::Bool,
-            Expression::ElementId(_, _, _) => ReturnType::Int,
-            Expression::Table(_, _, _) => ReturnType::Bool,
-            Expression::NegativeTable(_, _, _) => ReturnType::Bool,
+            Expression::ElementId(_, _, _) | Expression::IndexOf(_, _, _) => ReturnType::Int,
+            Expression::SatElement(_, _, _, _) | Expression::SatAllDifferentComparisons(_, _) => {
+                ReturnType::Bool
+            }
+            Expression::Table(_, _, _)
+            | Expression::FlatTable(..)
+            | Expression::FlatShortTable(..) => ReturnType::Bool,
+            Expression::NegativeTable(_, _, _) | Expression::ShortTable(_, _, _) => {
+                ReturnType::Bool
+            }
             Expression::AtLeast(_, _, _, _) => ReturnType::Bool,
             Expression::AtMost(_, _, _, _) => ReturnType::Bool,
             Expression::Gcc(_, _, _, _) | Expression::GccWeak(_, _, _, _) => ReturnType::Bool,
@@ -2892,6 +2966,7 @@ impl Typeable for Expression {
             Expression::MinionPow(_, _, _, _) => ReturnType::Bool,
             Expression::ToInt(_, _) => ReturnType::Int,
             Expression::SATInt(..) => ReturnType::Int,
+            Expression::SatObjective(..) => ReturnType::Bool,
             Expression::PairwiseSum(_, _, _) => ReturnType::Int,
             Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
             Expression::Defined(_, function) => {
@@ -3117,6 +3192,7 @@ impl Expression {
             | Expression::PermInverse(_, m1)
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
+            | Expression::SatAllDifferentComparisons(_, m1)
             | Expression::SmtDistinct(_, m1)
             | Expression::Factorial(_, m1)
             | Expression::Range(_, m1)
@@ -3134,6 +3210,7 @@ impl Expression {
             // Moo<Expression> + Moo<Expression>
             Expression::Table(_, m1, m2)
             | Expression::NegativeTable(_, m1, m2)
+            | Expression::ShortTable(_, m1, m2)
             | Expression::Bubble(_, m1, m2)
             | Expression::Imply(_, m1, m2)
             | Expression::Iff(_, m1, m2)
@@ -3198,7 +3275,8 @@ impl Expression {
             }
 
             // Moo<Expression> + Moo<Expression> + Moo<Expression>
-            Expression::AtLeast(_, m1, m2, m3)
+            Expression::SatElement(_, m1, m2, m3)
+            | Expression::AtLeast(_, m1, m2, m3)
             | Expression::AtMost(_, m1, m2, m3)
             | Expression::Gcc(_, m1, m2, m3)
             | Expression::GccWeak(_, m1, m2, m3) => {
@@ -3208,7 +3286,9 @@ impl Expression {
             }
 
             // Moo<Expression> + Moo<Expression> (two-arg globals)
-            Expression::AllDifferentExcept(_, m1, m2) | Expression::ElementId(_, m1, m2) => {
+            Expression::AllDifferentExcept(_, m1, m2)
+            | Expression::ElementId(_, m1, m2)
+            | Expression::IndexOf(_, m1, m2) => {
                 f(m1);
                 f(m2);
             }
@@ -3245,7 +3325,7 @@ impl Expression {
             }
 
             // SATIntEncoding + Moo<Expression> + (i32, i32)
-            Expression::SATInt(_, _, m, _) => {
+            Expression::SatObjective(_, _, m) | Expression::SATInt(_, _, m, _) => {
                 f(m);
             }
 
@@ -3261,6 +3341,8 @@ impl Expression {
             | Expression::MinionModuloEqUndefZero(_, _, _, _)
             | Expression::MinionPow(_, _, _, _)
             | Expression::FlatAllDiff(_, _)
+            | Expression::FlatTable(..)
+            | Expression::FlatShortTable(..)
             | Expression::FlatMinEq(_, _, _)
             | Expression::FlatSumGeq(_, _, _)
             | Expression::FlatSumLeq(_, _, _)
@@ -3431,6 +3513,7 @@ impl Expression {
             | Expression::PermInverse(_, m1)
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
+            | Expression::SatAllDifferentComparisons(_, m1)
             | Expression::SmtDistinct(_, m1)
             | Expression::Factorial(_, m1)
             | Expression::Participants(_, m1)
@@ -3454,6 +3537,7 @@ impl Expression {
             // Moo<Expression> + Moo<Expression>
             Expression::Table(_, m1, m2)
             | Expression::NegativeTable(_, m1, m2)
+            | Expression::ShortTable(_, m1, m2)
             | Expression::Bubble(_, m1, m2)
             | Expression::Imply(_, m1, m2)
             | Expression::Iff(_, m1, m2)
@@ -3521,7 +3605,8 @@ impl Expression {
             }
 
             // Moo<Expression> + Moo<Expression> + Moo<Expression>
-            Expression::AtLeast(_, m1, m2, m3)
+            Expression::SatElement(_, m1, m2, m3)
+            | Expression::AtLeast(_, m1, m2, m3)
             | Expression::AtMost(_, m1, m2, m3)
             | Expression::Gcc(_, m1, m2, m3)
             | Expression::GccWeak(_, m1, m2, m3) => {
@@ -3531,7 +3616,9 @@ impl Expression {
             }
 
             // Moo<Expression> + Moo<Expression> (two-arg globals)
-            Expression::AllDifferentExcept(_, m1, m2) | Expression::ElementId(_, m1, m2) => {
+            Expression::AllDifferentExcept(_, m1, m2)
+            | Expression::ElementId(_, m1, m2)
+            | Expression::IndexOf(_, m1, m2) => {
                 child_hash(child_hashes).hash(&mut hasher);
                 child_hash(child_hashes).hash(&mut hasher);
             }
@@ -3578,6 +3665,10 @@ impl Expression {
             }
 
             // SATIntEncoding + Moo<Expression> + (i32, i32)
+            Expression::SatObjective(_, minimise, _) => {
+                minimise.hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
+            }
             Expression::SATInt(_, enc, m, bounds) => {
                 enc.hash(&mut hasher);
                 child_hash(child_hashes).hash(&mut hasher);
@@ -3606,6 +3697,16 @@ impl Expression {
                 a1.hash(&mut hasher);
                 a2.hash(&mut hasher);
                 a3.hash(&mut hasher);
+            }
+
+            Expression::FlatShortTable(_, inputs, rows) => {
+                inputs.hash(&mut hasher);
+                rows.hash(&mut hasher);
+            }
+            Expression::FlatTable(_, inputs, rows, negative) => {
+                inputs.hash(&mut hasher);
+                rows.hash(&mut hasher);
+                negative.hash(&mut hasher);
             }
 
             // Vec<Atom>
@@ -3772,7 +3873,7 @@ mod tests {
         assert_eq!(attrs.representation.as_deref(), Some("counts"));
         assert_eq!(
             inner.as_ref(),
-            &GroundDomain::Int(vec![Range::Bounded(1, 999)])
+            &GroundDomain::Int(vec![Range::Bounded(1, 999)], None)
         );
     }
 

@@ -61,6 +61,7 @@ mod tests {
     fn membership_on_a_literal_member_reduces_to_plain_literal_matrix_indices() {
         let domain = Domain::relation(
             RelAttr {
+                representation: None,
                 size: range!(2),
                 binary: vec![],
             },
