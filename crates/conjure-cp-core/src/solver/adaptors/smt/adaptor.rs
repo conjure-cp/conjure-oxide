@@ -556,7 +556,7 @@ where
 ///
 /// `unknown` is not evidence that the model is unsatisfiable. In particular, Z3 returns it when a
 /// configured timeout expires or an in-progress check is interrupted. Treating iterator exhaustion
-/// as `NoSolutions` in that case lets an interrupted integration test pass with an empty solution
+/// as `NoSolutions` in that case lets an interrupted exhaustive test pass with an empty solution
 /// file.
 fn search_status_from_terminal_result(
     found_solution: bool,

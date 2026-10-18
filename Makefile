@@ -12,7 +12,7 @@ CARGO_FEATURES ?=
 TEST_ARGS ?=
 # Optional test settings, forwarded to the harness as environment variables.
 # MAX_EXPECTED_TIME=N skips tests with recorded times above N seconds (0: no filter).
-# TEST_CASE_TIMEOUT=N limits each integration test to N seconds (unset: no timeout).
+# TEST_CASE_TIMEOUT=N limits each exhaustive test to N seconds (unset: no timeout).
 # NEXTEST_TEST_THREADS=N sets how many tests nextest runs simultaneously.
 ifneq ($(origin MAX_EXPECTED_TIME),undefined)
 export MAX_EXPECTED_TIME
@@ -114,9 +114,9 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 	touch .installed-cargo-nextest.checkpoint
 
 test-clean:
-	cd test-suite/tests/integration/; find -type f -path '**generated**' -delete
-	cd test-suite/tests/integration/; find -type f -path '**expected**' -delete
-	cd test-suite/tests/integration/; find -type f -path '**stats**' -delete
+	cd test-suite/tests/exhaustive/; find -type f -path '**generated**' -delete
+	cd test-suite/tests/exhaustive/; find -type f -path '**expected**' -delete
+	cd test-suite/tests/exhaustive/; find -type f -path '**stats**' -delete
 
 .PHONY: help
 ## Shows this help text

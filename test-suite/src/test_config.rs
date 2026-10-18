@@ -20,7 +20,7 @@ pub fn stats_path(test_dir: &Path) -> std::path::PathBuf {
     test_dir.join(STATS_FILE_NAME)
 }
 
-/// Starts a fresh stats snapshot for an integration run.
+/// Starts a fresh stats snapshot for an exhaustive run.
 pub fn reset_stats_for_run(path: &Path) -> io::Result<()> {
     write_canonical_stats(path, &TestRunStats::default())
 }
@@ -235,7 +235,7 @@ pub fn upsert_expected_time_stats(path: &Path, expected_time: u64) -> io::Result
 
 /// Inserts or updates the `expected-time` entry in a test `config.toml`.
 ///
-/// Custom tests still keep their expected-time metadata in `config.toml`; integration tests use
+/// Custom tests still keep their expected-time metadata in `config.toml`; exhaustive tests use
 /// `stats.toml`.
 pub fn upsert_expected_time_config(path: &Path, expected_time: u64) -> io::Result<()> {
     let expected_time = i64::try_from(expected_time).map_err(|err| {
@@ -249,12 +249,12 @@ pub fn upsert_expected_time_config(path: &Path, expected_time: u64) -> io::Resul
     write_toml_document(path, &document)
 }
 
-/// Inserts or updates the latest observed integration status in a test `stats.toml`.
+/// Inserts or updates the latest observed exhaustive status in a test `stats.toml`.
 pub fn upsert_status_stats(path: &Path, status: &str) -> io::Result<()> {
     update_canonical_stats(path, |stats| stats.status = Some(status.to_string()))
 }
 
-/// Inserts or updates the latest observed status for one part of an integration test.
+/// Inserts or updates the latest observed status for one part of an exhaustive test.
 pub fn upsert_tool_status_stats(path: &Path, tool: &str, status: &str) -> io::Result<()> {
     if tool != "conjure" {
         return Err(io::Error::new(
@@ -267,7 +267,7 @@ pub fn upsert_tool_status_stats(path: &Path, tool: &str, status: &str) -> io::Re
     })
 }
 
-/// Identifies one configured integration-test run.
+/// Identifies one configured exhaustive-test run.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RecordedRunConfig {
     pub parser: String,
@@ -316,7 +316,7 @@ fn rule_trace_rules_by_count_desc(
     sorted_rules
 }
 
-/// Recorded integration-run metadata for one test directory.
+/// Recorded exhaustive-run metadata for one test directory.
 #[derive(Deserialize, Debug, Default)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
@@ -339,7 +339,7 @@ pub struct TestRunStats {
     pub runs: Vec<RecordedRunStats>,
 }
 
-/// Flat timing and resolved modelling choices for one actual integration model.
+/// Flat timing and resolved modelling choices for one actual exhaustive model.
 #[derive(Deserialize, Serialize, Debug, Default)]
 #[serde(default, deny_unknown_fields, rename_all = "kebab-case")]
 pub struct RecordedRunStats {
@@ -560,14 +560,14 @@ fn write_canonical_stats(path: &Path, stats: &TestRunStats) -> io::Result<()> {
     fs::write(path, contents)
 }
 
-/// Solution search limit requested by an integration test.
+/// Solution search limit requested by an exhaustive test.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum NumberOfSolutions {
     /// Search for every solution.
     All,
     /// Stop after the given number of solutions.
     Limit(i32),
-    /// Do not run the solver for this integration test.
+    /// Do not run the solver for this exhaustive test.
     Skip,
 }
 
@@ -582,7 +582,7 @@ impl NumberOfSolutions {
     }
 }
 
-/// Per-backend modelling and trace choices for an integration fixture.
+/// Per-backend modelling and trace choices for an exhaustive fixture.
 #[derive(Deserialize, Debug, Default)]
 #[serde(default, deny_unknown_fields)]
 pub struct SolverOptions {
@@ -695,7 +695,7 @@ pub struct TestConfig {
     pub expected_time: Option<u64>,
 }
 
-/// The rule trace recorded by each integration run.
+/// The rule trace recorded by each exhaustive run.
 #[derive(Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum TraceLevel {
