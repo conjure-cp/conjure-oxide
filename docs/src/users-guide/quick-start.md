@@ -67,7 +67,7 @@ Conjure Oxide transformed your high-level Essence model through several steps:
 
 Want to see exactly what rules were applied? Check out the [Logging guide](command-line-guide/logging.md).
 
-If you are curious about more complex models, you can check out the models that we use to test Conjure Oxide, available in the `test-suite/tests/integration` directory of the repository.
+If you are curious about more complex models, you can check out the models that we use to test Conjure Oxide, available in the `test-suite/tests/exhaustive` directory of the repository.
 
 ## Running with Different Solvers
 
@@ -117,7 +117,7 @@ The interactive heuristic prompts once for each undecided type family. An incomp
 rather than silently switching representation. `--channelling no` keeps the existing policy of
 one representation per variable, and `yes` permits multiple channelled representations.
 
-Integration-test configurations can use `channelling = "uniform"` with `heuristic = "x"` to
+Exhaustive-test configurations can use `channelling = "uniform"` with `heuristic = "x"` to
 exercise the available combinations without choosing independently for each integer variable.
 
 ### SAT Solver

@@ -76,7 +76,7 @@ These project conventions are more specific than the general guidance above.
 ### Test Runs
 
 - Use `MAX_EXPECTED_TIME=N` to only run test cases that are expected to take up to `N` seconds. Omit or use `MAX_EXPECTED_TIME=0` to run all tests.
-- Use `TEST_CASE_TIMEOUT=N` to set a per-test timeout for integration tests.
+- Use `TEST_CASE_TIMEOUT=N` to set a per-test timeout for exhaustive tests.
 - When recording artefacts from a timeout-bounded run, record the timeout value explicitly in the relevant `config.toml` file.
 
 ### Test Artefacts

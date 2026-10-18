@@ -76,7 +76,7 @@ These project conventions are more specific than the general guidance above.
 ### Test Runs
 
 - Use `MAX_EXPECTED_TIME=N` to only run test cases that are expected to take up to `N` seconds. Omit or use `MAX_EXPECTED_TIME=0` to run all tests.
-- Use `TEST_CASE_TIMEOUT=N` to set a per-test timeout for integration tests.
+- Use `TEST_CASE_TIMEOUT=N` to set a per-test timeout for exhaustive tests.
 - When recording artefacts from a timeout-bounded run, record the timeout value explicitly in the relevant `config.toml` file.
 
 ### Test Artefacts
@@ -86,7 +86,7 @@ These project conventions are more specific than the general guidance above.
 - `make test-accept` / `ACCEPT=true` also rewrites `expected-time` (and other timing fields) from the current run. Do **not** blindly commit those timing updates: runtimes are noisy across machines and load, and tiny time-only diffs create pointless churn. Prefer leaving small timing wobbles uncommitted; only land timing changes when they reflect a real, intentional shift (for example a new slow test, or a deliberate budget change). Use `make test-accept-with-max-times` when recording budgets over several runs: each run keeps the max of the current budget and the observed time, so a fast fluke does not lower it. To discard small timing-only changes, run `./tools/discard-config-time-changes.sh`. A file is restored from HEAD only when every changed `*-time` value either has both old and new times <= 1 second or has an absolute change <= 10% of the HEAD value. Override these defaults with `--max-time SECONDS` and `--max-change-percent PERCENT`; use `--dry-run` to preview restorations. Files with larger timing changes, non-time edits, added/removed timing fields, or non-numeric timing changes are left alone.
 
 - To compare accepted timing changes with a Git baseline, run `python3 ./tools/accept-times-diff-report.py` (see `--help` for options). The default output is `target/accept-times-diff.csv`.
-- To export per-model timings and modelling choices from integration `stats.toml` files, run `python3 ./tools/model-times-report.py` (Python 3.11+). It writes `model-runs.csv`, `model-runs.json`, and `model-runs.md` under `target/model-timings/`; use `--output-dir` to change the destination. With no fixture arguments it discovers all recorded model rows and skips fixtures without them. Select fixtures with, for example, `python3 ./tools/model-times-report.py savilerow/blackhole cnf/neg-div`. Record missing rows with `ACCEPT=true` first. CSV list fields contain JSON arrays; each expanded `x` model has its own row. The exporter validates timing sums against configuration totals, and `--top N` controls the number of slow models shown in Markdown.
+- To export per-model timings and modelling choices from exhaustive `stats.toml` files, run `python3 ./tools/model-times-report.py` (Python 3.11+). It writes `model-runs.csv`, `model-runs.json`, and `model-runs.md` under `target/model-timings/`; use `--output-dir` to change the destination. With no fixture arguments it discovers all recorded model rows and skips fixtures without them. Select fixtures with, for example, `python3 ./tools/model-times-report.py savilerow/blackhole cnf/neg-div`. Record missing rows with `ACCEPT=true` first. CSV list fields contain JSON arrays; each expanded `x` model has its own row. The exporter validates timing sums against configuration totals, and `--top N` controls the number of slow models shown in Markdown.
 
 ### Commits
 

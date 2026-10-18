@@ -4,20 +4,20 @@
 # Testing
 ## Types of Tests
 Conjure-Oxide currently has four forms of tests:
-- Integration tests
+- Exhaustive tests
 - [Custom tests](writing-custom-tests.md)
 - [Roundtrip tests](roundtrip-testing.md)
 - A small number of unit tests
 ## Test generation
-The test generation occurs in the file `./test-suite/build.rs`. This generates the integration, custom and roundtrip tests all in a similar manner.
+The test generation occurs in the file `./test-suite/build.rs`. This generates the exhaustive, custom and roundtrip tests all in a similar manner.
 
 For each test framework we define a base directory for all these tests:
-- `./test-suite/tests/integration`
+- `./test-suite/tests/exhaustive`
 - `./test-suite/tests/custom`
 - `./test-suite/tests/roundtrip`
 
 Any sub-directory of these defined directories containing the necessary files to make a test, will be considered a test.
-- For integration and roundtrip tests this is containing a singular file with a `.essence` or `.eprime` extension.
+- For exhaustive and roundtrip tests this is containing a singular file with a `.essence` or `.eprime` extension.
 - For custom tests this is containing a `run.sh` script file.
 
 Once these tests are identified a Rust `#[test]` is created using the defined templates (`<test type>_test_template`). This test is within the pre-generated file `gen_tests_<test type>.rs` within the specified output directory (`OUT_DIR`).
@@ -35,8 +35,8 @@ both `cargo test` (doctests) and `cargo nextest run`:
 
 ```bash
 make test TEST_ARGS="alldiff"
-make test-accept TEST_ARGS="tests_integration_basic_alldiff"
-make test-accept-with-max-times TEST_ARGS="tests_integration_basic_alldiff"
+make test-accept TEST_ARGS="tests_exhaustive_basic_alldiff"
+make test-accept-with-max-times TEST_ARGS="tests_exhaustive_basic_alldiff"
 make test TEST_ARGS="-p conjure-cp-core"
 ```
 
@@ -52,12 +52,12 @@ make test TEST_ARGS="alldiff" MAX_EXPECTED_TIME=10 TEST_CASE_TIMEOUT=30 NEXTEST_
 make test-accept TEST_ARGS="alldiff" MAX_EXPECTED_TIME=10 TEST_CASE_TIMEOUT=30 NEXTEST_TEST_THREADS=4
 ```
 
-`MAX_EXPECTED_TIME` skips integration and custom tests with a recorded
+`MAX_EXPECTED_TIME` skips exhaustive and custom tests with a recorded
 `expected-time` above the given number of seconds. Tests without a recorded time
 still run; roundtrip and unit tests are unaffected. Omit it or use `0` to disable
 this filter.
 
-`TEST_CASE_TIMEOUT` stops and fails each integration test that exceeds the given
+`TEST_CASE_TIMEOUT` stops and fails each exhaustive test that exceeds the given
 number of seconds. It does not apply to other test types. Omit it to disable the
 timeout; `0` means an immediate timeout.
 
@@ -73,7 +73,7 @@ them as environment variables instead, for example
 
 `make test`, `make test-accept`, `make test-accept-with-max-times`, and the coverage
 script use `tools/nextest.py` to run tests with longer `expected-time` values first.
-This requires Python 3.11 or newer. Integration test timings come from
+This requires Python 3.11 or newer. Exhaustive test timings come from
 `stats.toml`; custom test timings come from `config.toml`. Tests without timings
 (including roundtrip and unit tests) retain nextest's default priority.
 
