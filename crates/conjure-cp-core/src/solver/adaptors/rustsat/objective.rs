@@ -59,17 +59,29 @@ impl CompiledObjective {
         })?;
         let (constant, positive) =
             compile_objective_terms(value, *minimise, instance, variables, cache)?;
-        let encoder = match selection.algorithm {
-            PbEncoding::RustsatGeneralizedTotalizer => {
-                UpperEncoder::Totalizer(positive.iter().copied().collect())
+        // A binary word already has its sum bits. Use the shared relation compiler's
+        // digit comparator instead of constructing a bound-indexed objective counter.
+        let mut digits = 0usize;
+        let binary_word = positive.iter().all(|(_, weight)| {
+            let distinct = weight.is_power_of_two() && digits & weight == 0;
+            digits |= weight;
+            distinct
+        });
+        let encoder = if binary_word {
+            UpperEncoder::OneShot
+        } else {
+            match selection.algorithm {
+                PbEncoding::RustsatGeneralizedTotalizer => {
+                    UpperEncoder::Totalizer(positive.iter().copied().collect())
+                }
+                PbEncoding::RustsatBinaryAdder => {
+                    UpperEncoder::Adder(positive.iter().copied().collect())
+                }
+                PbEncoding::RustsatDynamicPolyWatchdog => {
+                    UpperEncoder::Watchdog(positive.iter().copied().collect())
+                }
+                PbEncoding::PindakaasBdd | PbEncoding::PindakaasSwc => UpperEncoder::OneShot,
             }
-            PbEncoding::RustsatBinaryAdder => {
-                UpperEncoder::Adder(positive.iter().copied().collect())
-            }
-            PbEncoding::RustsatDynamicPolyWatchdog => {
-                UpperEncoder::Watchdog(positive.iter().copied().collect())
-            }
-            PbEncoding::PindakaasBdd | PbEncoding::PindakaasSwc => UpperEncoder::OneShot,
         };
         Ok(Self {
             minimise: *minimise,
