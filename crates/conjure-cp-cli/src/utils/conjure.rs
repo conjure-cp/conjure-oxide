@@ -611,6 +611,18 @@ pub fn solutions_to_essence(solutions: &[BTreeMap<Name, Literal>]) -> String {
     for (index, solution) in solutions.iter().enumerate() {
         writeln!(output, "$ Solution: {:06}", index + 1).unwrap();
         writeln!(output, "language Essence 1.3\n").unwrap();
+        let mut unnamed_types = BTreeMap::new();
+        for value in solution.values() {
+            for literal in value.universe() {
+                if let Literal::Unnamed(value) = literal {
+                    unnamed_types.insert(value.ty.name.clone(), value.ty.size);
+                }
+            }
+        }
+        for (name, size) in unnamed_types {
+            let members = (1..=size).map(|index| format!("{name}_{index}")).join(", ");
+            writeln!(output, "letting {name} be new type enum {{{members}}}").unwrap();
+        }
         for (name, value) in *solution {
             writeln!(output, "letting {name} be {value}").unwrap();
         }
