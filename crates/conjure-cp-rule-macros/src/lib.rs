@@ -326,6 +326,7 @@ struct ReprDefArgs {
     /// `applies: (SolverFamily) -> bool`. If omitted, the representation is solver-independent.
     applies_fn: Option<ItemFn>,
     integer_encoding_fn: Option<ItemFn>,
+    probe_score_fn: Option<ItemFn>,
 }
 
 impl Parse for ReprDefArgs {
@@ -340,7 +341,7 @@ impl Parse for ReprDefArgs {
 
         let mut funcs = HashMap::<String, ItemFn>::new();
         let mut errors: Vec<syn::Error> = Vec::new();
-        for _ in 0..8 {
+        for _ in 0..9 {
             match input.parse::<ItemFn>() {
                 Ok(func) => {
                     let ident = func.sig.ident.to_string();
@@ -373,6 +374,7 @@ impl Parse for ReprDefArgs {
         let compactness_fn = funcs.remove("compactness");
         let applies_fn = funcs.remove("applies");
         let integer_encoding_fn = funcs.remove("integer_encoding");
+        let probe_score_fn = funcs.remove("probe_score");
 
         if repr_vars_fn.is_none() && matches!(state_ty, ReprStateType::Path(..)) {
             return Err(input.error("A repr_vars implementation is required for external types"));
@@ -390,6 +392,7 @@ impl Parse for ReprDefArgs {
             compactness_fn,
             applies_fn,
             integer_encoding_fn,
+            probe_score_fn,
         })
     }
 }
@@ -479,6 +482,8 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         },
         None => quote! {},
     };
+
+    let probe_score_impl = args.probe_score_fn.map(|f| quote! { #f });
 
     let integer_encoding_impl = args.integer_encoding_fn.map(|mut f| {
         f.sig.ident = Ident::new("is_integer_encoding", f.sig.ident.span());
@@ -655,6 +660,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
 
             #applies_impl
             #integer_encoding_impl
+            #probe_score_impl
         }
 
         // -- Registry entry

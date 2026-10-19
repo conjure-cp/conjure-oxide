@@ -114,6 +114,12 @@ pub trait ReprRule: Send + Sync {
         Ok(Self::DomainLevel::init(dom)?.compactness_score())
     }
 
+    /// A domain-only probe for representations whose state can be expensive to construct.
+    /// Returning `None` retains the full instantiation check.
+    fn probe_score(_dom: DomainPtr) -> Result<Option<usize>, ReprInitError> {
+        Ok(None)
+    }
+
     fn get_or_init_for(
         decl: &'_ mut DeclarationPtr,
     ) -> ReprGetOrInitResult<'_, Self::DeclLevel, ReprError> {
@@ -132,7 +138,8 @@ pub trait ReprRule: Send + Sync {
         decl.get_repr::<Self>()
     }
 
-    fn init_for(decl: &mut DeclarationPtr) -> ReprResult {
+    /// Check declaration, backend and channelling requirements without allocating state.
+    fn domain_for(decl: &DeclarationPtr) -> Result<DomainPtr, ReprError> {
         if let Some(family) = crate::settings::try_current_solver_family()
             && !Self::applies_to(family)
         {
@@ -163,6 +170,11 @@ pub trait ReprRule: Send + Sync {
         let dom = dom.resolve().map(Into::into).unwrap_or(dom);
 
         super::uniform::check_choice(&dom, Self::STORED)?;
+        Ok(dom)
+    }
+
+    fn init_for(decl: &mut DeclarationPtr) -> ReprResult {
+        let dom = Self::domain_for(decl)?;
         let dom_level = Self::DomainLevel::init(dom.clone())?;
         let (state, symbols, mut constraints) = dom_level.instantiate(decl.clone())?;
 

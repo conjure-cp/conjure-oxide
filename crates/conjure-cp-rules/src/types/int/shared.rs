@@ -63,3 +63,31 @@ pub(crate) fn as_ranges(bounds: &[(i32, i32)]) -> Vec<Range<i32>> {
         })
         .collect()
 }
+
+/// Bounds and Boolean count for a per-value encoding, without constructing its bit vector.
+pub(super) struct PerValueLayout {
+    pub ranges: Vec<(i32, i32)>,
+    pub bounds: (i32, i32),
+    pub width: usize,
+}
+
+pub(super) fn per_value_layout(
+    dom: &DomainPtr,
+    representation: &'static str,
+) -> Result<PerValueLayout, conjure_cp::representation::ReprInitError> {
+    let error = || {
+        conjure_cp::representation::ReprInitError::UnsupportedDomain(
+            dom.clone(),
+            representation,
+            "expected a non-empty finite ground integer domain".into(),
+        )
+    };
+    let ranges = int_ranges(dom).ok_or_else(error)?;
+    let bounds @ (low, high) = finite_int_bounds(&ranges).ok_or_else(error)?;
+    let width = usize::try_from(i64::from(high) - i64::from(low) + 1).map_err(|_| error())?;
+    Ok(PerValueLayout {
+        ranges,
+        bounds,
+        width,
+    })
+}
