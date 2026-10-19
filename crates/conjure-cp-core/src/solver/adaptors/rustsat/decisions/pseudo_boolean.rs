@@ -2,6 +2,40 @@
 use super::*;
 
 impl Compiler<'_> {
+    /// Distinct powers of two already form a binary word. Compare its digits directly;
+    /// a numeric bound must not become the size of a PB encoder's comparator table.
+    fn binary_word_upper(
+        &mut self,
+        bound: i128,
+        positive: &[(Lit, i128)],
+        total: i128,
+    ) -> Option<Term> {
+        let mut bits = BTreeMap::new();
+        for &(literal, weight) in positive {
+            let weight = u128::try_from(weight).ok()?;
+            if !weight.is_power_of_two()
+                || bits
+                    .insert(weight.trailing_zeros(), Term::Literal(literal))
+                    .is_some()
+            {
+                return None;
+            }
+        }
+        if bound < 0 || bound >= total {
+            return Some(Term::Constant(bound >= total));
+        }
+        let highest = *bits.last_key_value()?.0;
+        let mut upper = Term::Constant(true);
+        for bit in 0..=highest {
+            let input = bits.get(&bit).copied().unwrap_or(Term::Constant(false));
+            // Starting at the least significant digit, equality defers to the lower digits.
+            // A zero bound digit requires a zero input; a one permits a smaller input.
+            let and = (bound as u128) & (1u128 << bit) == 0;
+            upper = self.combine(and, vec![input.negated(), upper]);
+        }
+        Some(upper)
+    }
+
     // Keep the original polarities and group bounds in both implication directions.
     pub(super) fn structured_reified_upper(
         &mut self,
@@ -123,6 +157,10 @@ impl Compiler<'_> {
             return Err(SolverError::ModelInvalid(
                 "Reified integer coefficient sum exceeds the library range".into(),
             ));
+        }
+        if let Some(value) = self.binary_word_upper(bound, positive, total) {
+            self.equate(output, value);
+            return Ok(());
         }
         if self.cache.is_some() {
             let terms: Vec<_> = positive
@@ -424,6 +462,25 @@ impl Compiler<'_> {
             return Err(SolverError::ModelInvalid(
                 "Pseudo-Boolean coefficient sum exceeds the library range".into(),
             ));
+        }
+        let upper_bound = if relation == CardinalityRelation::AtLeast {
+            bound - 1
+        } else {
+            bound
+        };
+        if let Some(upper) = self.binary_word_upper(upper_bound, &positive, total) {
+            let value = match relation {
+                CardinalityRelation::AtMost => upper,
+                CardinalityRelation::AtLeast => upper.negated(),
+                CardinalityRelation::Exactly => {
+                    let below = self
+                        .binary_word_upper(bound - 1, &positive, total)
+                        .expect("the coefficients still form the same binary word");
+                    self.combine(true, vec![upper, below.negated()])
+                }
+            };
+            self.assert_guarded(value, guard);
+            return Ok(());
         }
         if guard.is_some()
             && self.cache.is_some()
