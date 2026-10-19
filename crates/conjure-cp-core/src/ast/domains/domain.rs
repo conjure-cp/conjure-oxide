@@ -21,13 +21,13 @@ use uniplate::Uniplate;
 /// The integer type used in all domain code (int ranges, set sizes, etc)
 pub type Int = i32;
 
-/// Lower bound of the default fully-bounded integer domain used by Conjure Oxide.
+/// Default lower bound used when a finite solver needs bounds for an unbounded integer.
 ///
 /// One greater than [`i32::MIN`] so the magnitude of `OXIDE_INT_MIN` is representable as a
 /// positive [`i32`].
 pub const OXIDE_INT_MIN: Int = Int::MIN + 1;
 
-/// Upper bound of the default fully-bounded integer domain used by Conjure Oxide.
+/// Default upper bound used when a finite solver needs bounds for an unbounded integer.
 pub const OXIDE_INT_MAX: Int = Int::MAX;
 
 pub type DomainPtr = Moo<Domain>;

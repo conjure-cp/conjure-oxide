@@ -135,27 +135,23 @@ pub fn domain_to_ast_vec(ints: IntTheory, domain: &GroundDomain) -> SolverResult
 
 /// Returns a boolean expression restricting the given integer variable to the given range.
 pub fn int_range_to_int_restriction(var: &Int, range: &Range<i32>) -> Bool {
-    match range {
-        Range::Single(n) => var.eq(Int::from(*n)),
-        Range::UnboundedL(r) => var.le(Int::from(*r)),
-        Range::UnboundedR(l) => var.ge(Int::from(*l)),
-        Range::Bounded(l, r) => Bool::and(&[var.ge(Int::from(*l)), var.le(Int::from(*r))]),
-        _ => bug!("int ranges should not be unbounded"),
+    if let Range::Single(n) = range {
+        return var.eq(Int::from(*n));
     }
+    let (low, high) = range.int_bounds_with_defaults();
+    Bool::and(&[var.ge(Int::from(low)), var.le(Int::from(high))])
 }
 
 /// Returns a boolean expression restricting the given bitvector variable to the given integer range.
 pub fn int_range_to_bv_restriction(var: &BV, range: &Range<i32>) -> Bool {
-    match range {
-        Range::Single(n) => var.eq(BV::from_i64(*n as i64, BV_SIZE)),
-        Range::UnboundedL(r) => var.bvsle(BV::from_i64(*r as i64, BV_SIZE)),
-        Range::UnboundedR(l) => var.bvsge(BV::from_i64(*l as i64, BV_SIZE)),
-        Range::Bounded(l, r) => Bool::and(&[
-            var.bvsge(BV::from_i64(*l as i64, BV_SIZE)),
-            var.bvsle(BV::from_i64(*r as i64, BV_SIZE)),
-        ]),
-        _ => bug!("int ranges should not be unbounded"),
+    if let Range::Single(n) = range {
+        return var.eq(BV::from_i64(*n as i64, BV_SIZE));
     }
+    let (low, high) = range.int_bounds_with_defaults();
+    Bool::and(&[
+        var.bvsge(BV::from_i64(low as i64, BV_SIZE)),
+        var.bvsle(BV::from_i64(high as i64, BV_SIZE)),
+    ])
 }
 
 pub fn name_to_symbol(name: &Name) -> SolverResult<Symbol> {

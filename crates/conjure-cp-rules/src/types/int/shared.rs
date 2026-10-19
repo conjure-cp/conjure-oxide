@@ -9,17 +9,14 @@ use conjure_cp::into_matrix_expr;
 
 /// The inclusive intervals of a finite ground integer domain.
 ///
-/// Returns `None` for anything that is not an integer domain, and for integer domains with an
-/// unbounded range: every SAT encoding needs to know how many values it is laying out.
+/// Returns `None` for anything that is not an integer domain. Missing endpoints use the
+/// default machine limits at this encoding boundary; the original domain remains unbounded.
 pub(crate) fn int_ranges(dom: &DomainPtr) -> Option<Vec<(i32, i32)>> {
     let GroundDomain::Int(ranges, _) = dom.as_ground()? else {
         return None;
     };
 
-    ranges
-        .iter()
-        .map(|range| Some((*range.low()?, *range.high()?)))
-        .collect()
+    Some(ranges.iter().map(Range::int_bounds_with_defaults).collect())
 }
 
 /// The overall lower and upper bound of a set of inclusive intervals.

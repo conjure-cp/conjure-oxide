@@ -365,14 +365,12 @@ fn load_intdomain_var(
     }
     let range = Range::spanning(ranges);
 
-    let (low, high) = match range {
-        Range::Bounded(x, y) => Ok((x.to_owned(), y.to_owned())),
-        Range::Single(x) => Ok((x.to_owned(), x.to_owned())),
-        #[allow(unreachable_patterns)]
-        x => Err(ModelFeatureNotSupported(format!(
-            "variable {name} has a non-finite int domain: {x:?}"
-        ))),
-    }?;
+    if ranges.is_empty() {
+        return Err(ModelFeatureNotSupported(format!(
+            "variable {name} has an empty int domain"
+        )));
+    }
+    let (low, high) = range.int_bounds_with_defaults();
 
     let size = i64::from(high) - i64::from(low) + 1;
     let use_discrete = force_discrete || size as u128 <= threshold as u128;
