@@ -1,1 +1,1 @@
-conjure-oxide pretty model.essence --output-format=ast-json
+conjure-oxide pretty model.essence

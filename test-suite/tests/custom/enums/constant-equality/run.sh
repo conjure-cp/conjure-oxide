@@ -1,1 +1,1 @@
-conjure-oxide --solver minion solve model.essence --output-format=json --number-of-solutions=all
+conjure-oxide --solver minion solve model.essence --number-of-solutions=all
