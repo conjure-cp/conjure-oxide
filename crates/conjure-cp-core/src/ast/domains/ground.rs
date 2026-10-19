@@ -2,6 +2,7 @@ use crate::ast::domains::attrs::{PartitionAttr, PermutationAttr};
 use crate::ast::domains::{JectivityAttr, MSetAttr, PartialityAttr, SequenceAttr};
 use crate::ast::enumerated::EnumeratedType;
 use crate::ast::pretty::pretty_vec;
+use crate::ast::unnamed::UnnamedType;
 use crate::ast::{
     AbstractLiteral, DomainOpError, FuncAttr, Literal, Moo, Name, RelAttr, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
@@ -104,7 +105,7 @@ pub enum GroundDomain {
     /// An enumerated type
     EnumeratedType(Moo<EnumeratedType>, Vec<Range<u32>>),
     /// An unnamed type
-    UnnamedType(u32),
+    UnnamedType(Moo<UnnamedType>),
     /// A partition
     Partition(PartitionAttr, Moo<GroundDomain>),
     /// A permutation
@@ -273,6 +274,9 @@ impl GroundDomain {
         // error instead of entering an unsupported implementation. Each group uses declaration
         // order.
         match (self, other) {
+            (GroundDomain::UnnamedType(lhs), GroundDomain::UnnamedType(rhs)) if lhs == rhs => {
+                Ok(self.clone())
+            }
             (GroundDomain::EnumeratedType(_, _) | GroundDomain::UnnamedType(_), _)
             | (_, GroundDomain::EnumeratedType(_, _) | GroundDomain::UnnamedType(_)) => {
                 Err(DomainOpError::WrongType)
@@ -402,6 +406,9 @@ impl GroundDomain {
         // needs to be tested once comprehension rules are written
 
         match (self, other) {
+            (GroundDomain::UnnamedType(lhs), GroundDomain::UnnamedType(rhs)) if lhs == rhs => {
+                Ok(self.clone())
+            }
             // one or more arguments is an empty int domain
             (d @ GroundDomain::Empty(ReturnType::Int), GroundDomain::Int(_, _)) => Ok(d.clone()),
             (GroundDomain::Int(_, _), d @ GroundDomain::Empty(ReturnType::Int)) => Ok(d.clone()),
@@ -473,7 +480,15 @@ impl GroundDomain {
                     .collect::<Vec<_>>();
                 Ok(Box::new(values.into_iter()))
             }
-            GroundDomain::UnnamedType(_) => todo!("enumerate unnamed domains"),
+            GroundDomain::UnnamedType(ty) => {
+                let ty = ty.clone();
+                Ok(Box::new((1..=ty.size).map(move |value| {
+                    Literal::Unnamed(crate::ast::unnamed::UnnamedValue {
+                        ty: ty.clone(),
+                        value,
+                    })
+                })))
+            }
             GroundDomain::Bool => Ok(Box::new(
                 vec![Literal::from(false), Literal::from(true)].into_iter(),
             )),
@@ -967,7 +982,7 @@ impl GroundDomain {
                 Ok(ans)
             }
             GroundDomain::EnumeratedType(et, ranges) => Ok(enum_indices(et, ranges).count() as u64),
-            GroundDomain::UnnamedType(size) => Ok(*size as u64),
+            GroundDomain::UnnamedType(ty) => Ok(ty.size as u64),
         }
     }
 
@@ -1233,7 +1248,9 @@ impl GroundDomain {
                 Literal::EnumVariant(value) if value.ty == *ty && (value.variant as usize) < ty.len()
                 && (ranges.is_empty() || ranges.iter().any(|range| range.contains(&value.variant)))
             )),
-            GroundDomain::UnnamedType(_) => todo!(),
+            GroundDomain::UnnamedType(ty) => Ok(
+                matches!(lit, Literal::Unnamed(value) if value.ty == *ty && (1..=ty.size).contains(&value.value)),
+            ),
             GroundDomain::Permutation(attr, dom) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Permutation(cycles)) => {
                     // numMoved is the count of moved points (elements mentioned in some cycle),
@@ -1544,6 +1561,16 @@ impl GroundDomain {
                     Err(DomainOpError::WrongType)
                 } else {
                     Ok(GroundDomain::Bool)
+                }
+            }
+            Literal::Unnamed(first) => {
+                if literals
+                    .iter()
+                    .all(|value| matches!(value, Literal::Unnamed(value) if value.ty == first.ty))
+                {
+                    Ok(GroundDomain::UnnamedType(first.ty.clone()))
+                } else {
+                    Err(DomainOpError::WrongType)
                 }
             }
             Literal::EnumVariant(first_ev) => {
@@ -2090,7 +2117,7 @@ impl Typeable for GroundDomain {
             }
             GroundDomain::EnumeratedType(et, _) => ReturnType::EnumeratedType(et.clone()),
             // TODO: Ensure bounded range on type level
-            GroundDomain::UnnamedType(_) => ReturnType::UnnamedType,
+            GroundDomain::UnnamedType(ty) => ReturnType::UnnamedType(ty.clone()),
         }
     }
 }
@@ -2184,8 +2211,8 @@ impl Display for GroundDomain {
                     write!(f, "{}", et.name)
                 }
             }
-            GroundDomain::UnnamedType(size) => {
-                write!(f, "unnamed type of size {}", size)
+            GroundDomain::UnnamedType(ty) => {
+                write!(f, "{}", ty.name)
             }
             GroundDomain::Permutation(attrs, inner) => {
                 write!(f, "permutation {attrs} of {inner}")

@@ -116,6 +116,7 @@ pub fn params_from_simplified_json_str(
 /// Encode a literal in Conjure's simplified JSON format.
 pub fn literal_to_simplified_json(literal: &Literal) -> anyhow::Result<JsonValue> {
     match literal {
+        Literal::Unnamed(_) => bail!("simplified JSON for unnamed types is not supported yet"),
         Literal::EnumVariant(_) => {
             bail!("simplified JSON for enumerated types is not supported yet")
         }

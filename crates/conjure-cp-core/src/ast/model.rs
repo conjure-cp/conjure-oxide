@@ -466,6 +466,8 @@ impl Display for Model {
                     "letting {name} be new type enum {{{}}}",
                     ty.variants.iter().join(", ")
                 )?;
+            } else if let DeclarationKind::UnnamedType(size) = &decl.kind() as &DeclarationKind {
+                writeln!(f, "letting {name} be new type of size {size}")?;
             }
         }
         for (name, decl) in symbols.iter_local() {
@@ -504,10 +506,7 @@ impl Display for Model {
                 DeclarationKind::QuantifiedExpr(expr) => {
                     writeln!(f, "quantified expr {name} <- {}", expr)?;
                 }
-                DeclarationKind::EnumeratedType(_) => {}
-                DeclarationKind::UnnamedType(size) => {
-                    writeln!(f, "letting {name} be new type of size {size}")?;
-                }
+                DeclarationKind::EnumeratedType(_) | DeclarationKind::UnnamedType(_) => {}
             }
         }
 

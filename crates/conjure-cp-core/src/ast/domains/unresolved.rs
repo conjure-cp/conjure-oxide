@@ -353,10 +353,15 @@ impl UnresolvedDomain {
                     .ptr
                     .as_unnamed_type()
                     .unwrap_or_else(|| {
-                        bug!("Enumerated type domain should point to enumerated type letting letting, but got {decl}")
+                        bug!("Unnamed type domain should point to an unnamed type declaration, but got {decl}")
                     });
 
-                Ok(GroundDomain::UnnamedType(ut))
+                Ok(GroundDomain::UnnamedType(Moo::new(
+                    crate::ast::unnamed::UnnamedType {
+                        name: decl.ptr.name().clone(),
+                        size: ut,
+                    },
+                )))
             }
         }
     }
@@ -694,7 +699,7 @@ impl Typeable for UnresolvedDomain {
                 ReturnType::Relation(inner_types)
             }
             UnresolvedDomain::EnumeratedType(et, _) => ReturnType::EnumeratedType(et.clone()),
-            UnresolvedDomain::UnnamedType(_) => ReturnType::UnnamedType,
+            UnresolvedDomain::UnnamedType(reference) => reference.ptr.return_type(),
             UnresolvedDomain::Partition(_, inner) => {
                 ReturnType::Partition(Box::new(inner.return_type()))
             }
@@ -786,9 +791,7 @@ impl Display for UnresolvedDomain {
                 }
             }
             UnresolvedDomain::UnnamedType(reference) => {
-                // TODO: this is currently just an integer
-                let unnamed = reference.ptr.as_unnamed_type().unwrap();
-                write!(f, "{unnamed}")
+                write!(f, "{reference}")
             }
             UnresolvedDomain::Partition(attrs, inner_dom) => {
                 write!(f, "partition {attrs} from {inner_dom}")

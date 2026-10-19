@@ -403,11 +403,12 @@ impl DeclarationPtr {
     ///
     /// ```
     pub fn domain(&self) -> Option<DomainPtr> {
+        let declaration = self.read();
         // Expressions stored inside a declaration (as opposed to the constraint tree the rewrite
         // engine walks) can be mutated in place by substitution utilities that never touch
         // the constraint-tree metadata cache, so `domain_of`'s cache would go stale silently for
         // them. Use the uncached path here.
-        match &self.kind() as &DeclarationKind {
+        match &declaration.kind {
             DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => {
                 Some(var.domain_of())
             }
@@ -420,9 +421,15 @@ impl DeclarationPtr {
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
             DeclarationKind::QuantifiedExpr(expr) => expr.domain_of_uncached()?.element_domain(),
             DeclarationKind::EnumeratedType(et) => Some(et.to_domain()),
-            DeclarationKind::UnnamedType(size) => {
-                Some(Moo::new(crate::ast::GroundDomain::UnnamedType(*size)).into())
-            }
+            DeclarationKind::UnnamedType(size) => Some(
+                Moo::new(crate::ast::GroundDomain::UnnamedType(Moo::new(
+                    crate::ast::unnamed::UnnamedType {
+                        name: declaration.name.clone(),
+                        size: *size,
+                    },
+                )))
+                .into(),
+            ),
         }
     }
 
@@ -848,7 +855,8 @@ impl DefaultWithId for DeclarationPtr {
 
 impl Typeable for DeclarationPtr {
     fn return_type(&self) -> ReturnType {
-        match &self.kind() as &DeclarationKind {
+        let declaration = self.read();
+        match &declaration.kind {
             DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => var.return_type(),
             DeclarationKind::ValueLetting(expression, _)
             | DeclarationKind::TemporaryValueLetting(expression) => expression.return_type(),
@@ -857,7 +865,12 @@ impl Typeable for DeclarationPtr {
             DeclarationKind::Quantified(inner) => inner.domain.return_type(),
             DeclarationKind::QuantifiedExpr(expr) => expr.return_type(),
             DeclarationKind::EnumeratedType(ty) => ReturnType::EnumeratedType(ty.clone()),
-            DeclarationKind::UnnamedType(_) => ReturnType::UnnamedType,
+            DeclarationKind::UnnamedType(size) => {
+                ReturnType::UnnamedType(Moo::new(crate::ast::unnamed::UnnamedType {
+                    name: declaration.name.clone(),
+                    size: *size,
+                }))
+            }
         }
     }
 }

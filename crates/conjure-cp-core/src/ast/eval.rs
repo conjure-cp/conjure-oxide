@@ -39,6 +39,7 @@ fn equal_constant_literals(lhs: &Lit, rhs: &Lit) -> Option<bool> {
         (Lit::EnumVariant(lhs), Lit::EnumVariant(rhs)) if lhs.ty == rhs.ty => {
             Some(lhs.variant == rhs.variant)
         }
+        (Lit::Unnamed(lhs), Lit::Unnamed(rhs)) if lhs.ty == rhs.ty => Some(lhs.value == rhs.value),
         (Lit::Int(_), Lit::Int(_)) | (Lit::Bool(_), Lit::Bool(_)) => {
             Some(lhs.essence_cmp(rhs) == CmpOrdering::Equal)
         }
@@ -923,7 +924,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                     return None;
                 };
                 match x {
-                    Lit::Int(_) | Lit::Bool(_) | Lit::EnumVariant(_) => {
+                    Lit::Int(_) | Lit::Bool(_) | Lit::EnumVariant(_) | Lit::Unnamed(_) => {
                         if lits.contains(x) {
                             return Some(Lit::Bool(false));
                         } else {
@@ -943,7 +944,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 };
 
                 match x {
-                    Lit::Int(_) | Lit::Bool(_) | Lit::EnumVariant(_) => {
+                    Lit::Int(_) | Lit::Bool(_) | Lit::EnumVariant(_) | Lit::Unnamed(_) => {
                         if lits.contains(x) {
                             return Some(Lit::Bool(false));
                         } else {

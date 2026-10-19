@@ -1,4 +1,5 @@
 use crate::ast::Field;
+use crate::ast::unnamed::UnnamedType;
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -26,7 +27,7 @@ pub enum ReturnType {
     Relation(Vec<ReturnType>),
     Partition(Box<ReturnType>),
     EnumeratedType(Moo<EnumeratedType>),
-    UnnamedType,
+    UnnamedType(Moo<UnnamedType>),
     Permutation(Box<ReturnType>),
 }
 
@@ -86,7 +87,7 @@ impl Display for ReturnType {
             }
             ReturnType::Partition(inner) => write!(f, "partition of {inner}"),
             ReturnType::EnumeratedType(et) => write!(f, "{}", et),
-            ReturnType::UnnamedType => write!(f, "unnamed type"),
+            ReturnType::UnnamedType(ty) => write!(f, "{}", ty.name),
             ReturnType::Permutation(inner) => write!(f, "permutation of {inner}"),
         }
     }

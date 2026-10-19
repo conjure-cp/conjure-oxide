@@ -26,6 +26,7 @@ mod sat_encoding;
 pub mod serde;
 mod symbol_table;
 mod types;
+pub mod unnamed;
 mod variables;
 mod versioned_cache;
 

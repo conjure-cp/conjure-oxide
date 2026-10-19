@@ -1204,6 +1204,6 @@ fn type_name(return_type: &ReturnType) -> &'static str {
         ReturnType::Partition(_) => "partition",
         ReturnType::Permutation(_) => "permutation",
         ReturnType::EnumeratedType(_) => "enum",
-        ReturnType::UnnamedType => "unnamed",
+        ReturnType::UnnamedType(_) => "unnamed",
     }
 }

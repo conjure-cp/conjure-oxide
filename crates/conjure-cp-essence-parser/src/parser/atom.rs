@@ -1116,7 +1116,8 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         let actual = match &lit {
             Literal::Bool(_) => "bool",
             Literal::Int(_) => "int",
-            Literal::EnumVariant(_) => todo!(),
+            Literal::EnumVariant(_) => "enum",
+            Literal::Unnamed(_) => "unnamed",
             Literal::AbstractLiteral(_) => return Ok(None), // Abstract literals aren't type-checked here
         };
 

@@ -2806,7 +2806,7 @@ fn minus_operand_return_type(expr: &Expression) -> ReturnType {
                     var.return_type()
                 }
                 DeclarationKind::EnumeratedType(ty) => ReturnType::EnumeratedType(ty),
-                DeclarationKind::UnnamedType(_) => ReturnType::UnnamedType,
+                DeclarationKind::UnnamedType(_) => reference.ptr.return_type(),
                 DeclarationKind::Given(domain)
                 | DeclarationKind::DomainLetting(domain) => domain.return_type(),
                 DeclarationKind::Quantified(inner) => inner.domain().return_type(),
