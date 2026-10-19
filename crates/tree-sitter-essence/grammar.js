@@ -101,6 +101,7 @@ module.exports = grammar ({
       field("bool_domain", $.bool_domain),
       field("int_domain", $.int_domain),
       field("variable_domain", $.identifier),
+      field("enum_domain", $.enum_domain),
       field("tuple_domain", $.tuple_domain),
       field("matrix_domain", $.matrix_domain),
       field("record_domain", $.record_domain),
@@ -113,6 +114,11 @@ module.exports = grammar ({
       field("partition_domain", $.partition_domain),
       field("permutation_domain", $.permutation_domain),
     ),
+    enum_domain: $ => seq(
+      field("name", $.identifier),
+      "(", field("ranges", $.range_list), ")"
+    ),
+
     bool_domain: $ => "bool",
 
     // `int(1..4)`, or with a representation preference first: `int(representation order, 1..4)`.
@@ -630,6 +636,7 @@ module.exports = grammar ({
       field("variable_list", $.variable_list), 
       field("be", "be"), 
       choice(
+        field("expr_or_domain", $.enum_type_declaration),
         field("expr_or_domain", choice($.bool_expr, $.arithmetic_expr, $.atom)),
         seq(
           field("domain", "domain"),
@@ -638,7 +645,17 @@ module.exports = grammar ({
       )
     ),
 
-    // Constraints 
+    enum_type_declaration: $ => seq(
+      "new", "type", "enum", "{",
+      field("members", $.variable_list), "}"
+    ),
+
+    enum_operator: $ => seq(
+      field("operator", choice("pred", "succ")),
+      "(", field("argument", choice($.arithmetic_expr, $.atom)), ")"
+    ),
+
+    // Constraints
     // boolean expressions require the operands to be boolean and return a boolean
     bool_expr: $ => prec(2, choice(
       field("not_expression", $.not_expr),
@@ -845,6 +862,7 @@ module.exports = grammar ({
     )),
 
     atom: $ => prec(-1, choice(
+      $.enum_operator,
       field("sub_atom_expression", $.sub_atom_expr),
       field("constant", $.constant),
       field("variable", $.identifier),
@@ -1036,6 +1054,7 @@ module.exports = grammar ({
       field("bool_domain", $.bool_domain),
       field("int_domain", $.annotation_int_domain),
       field("variable_domain", $.identifier),
+      field("enum_domain", $.enum_domain),
       field("tuple_domain", $.annotation_tuple_domain),
       field("matrix_domain", $.annotation_matrix_domain),
       field("record_domain", $.annotation_record_domain),

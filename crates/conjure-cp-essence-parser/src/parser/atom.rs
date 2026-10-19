@@ -106,6 +106,35 @@ pub fn parse_atom(
         "comprehension" => parse_comprehension(ctx, node),
         "defined_expr" | "range_expr" | "to_set_expr" | "to_mset_expr" | "to_relation_expr"
         | "perm_inverse_expr" => parse_function_unary_operator(ctx, node),
+        "enum_operator" => {
+            let Some(argument) = field!(recover, ctx, node, "argument") else {
+                return Ok(None);
+            };
+            let saved = ctx.typechecking_context;
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            let parsed = parse_expression(ctx, argument);
+            ctx.typechecking_context = saved;
+            let Some(expression) = parsed? else {
+                return Ok(None);
+            };
+            if !matches!(expression.return_type(), ReturnType::EnumeratedType(_)) {
+                ctx.record_error(RecoverableParseError::new(
+                    "Expected an enum member".to_owned(),
+                    Some(argument.range()),
+                ));
+                return Ok(None);
+            }
+            let Some(operator) = field!(recover, ctx, node, "operator") else {
+                return Ok(None);
+            };
+            let constructor =
+                if &ctx.source_code[operator.start_byte()..operator.end_byte()] == "pred" {
+                    Expression::Pred
+                } else {
+                    Expression::Succ
+                };
+            Ok(Some(constructor(Metadata::new(), Moo::new(expression))))
+        }
         "apply_expr" => parse_apply_expr(ctx, node),
         "image_expr" | "image_set_expr" | "pre_image_expr" | "inverse_expr" | "compose_expr" => {
             parse_function_binary_operator(ctx, node)
@@ -906,7 +935,14 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
                 DeclarationKind::DomainLetting(_) => SymbolKind::LettingVar,
                 DeclarationKind::Quantified(..) => SymbolKind::FindVar,
                 DeclarationKind::QuantifiedExpr(..) => SymbolKind::FindVar,
-                &_ => todo!(),
+                DeclarationKind::EnumeratedType(_) | DeclarationKind::UnnamedType(_) => {
+                    ctx.record_error(RecoverableParseError::new(
+                        format!("The identifier '{name}' is a type, not a value"),
+                        Some(node.range()),
+                    ));
+                    return Ok(None);
+                }
+                _ => SymbolKind::LettingVar,
             };
 
             let hover = HoverInfo {

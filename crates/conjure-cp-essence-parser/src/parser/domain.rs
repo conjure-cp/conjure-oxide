@@ -7,10 +7,11 @@ use crate::expression::parse_expression;
 use crate::parser::ParseContext;
 use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
+use conjure_cp_core::ast::Typeable;
 use conjure_cp_core::ast::{
-    Atom, BinaryAttr, DeclarationPtr, Domain, DomainPtr, Expression, Field, FuncAttr, IntVal,
-    JectivityAttr, Literal, MSetAttr, Moo, Name, PartialityAttr, PartitionAttr, PermutationAttr,
-    Range, Reference, RelAttr, SequenceAttr, SetAttr,
+    Atom, BinaryAttr, DeclarationPtr, Domain, DomainPtr, EnumVariantVal, Expression, Field,
+    FuncAttr, IntVal, JectivityAttr, Literal, MSetAttr, Moo, Name, PartialityAttr, PartitionAttr,
+    PermutationAttr, Range, Reference, RelAttr, SequenceAttr, SetAttr,
 };
 use tree_sitter::Node;
 
@@ -35,6 +36,7 @@ pub fn parse_domain(
             };
             parse_domain(ctx, inner)
         }
+        "enum_domain" => parse_enum_domain(ctx, domain),
         "bool_domain" => {
             ctx.add_span_and_doc_hover(&domain, "L_bool", SymbolKind::Domain, None, None);
             Ok(Some(Domain::bool()))
@@ -44,7 +46,8 @@ pub fn parse_domain(
             let Some(decl) = get_declaration_ptr_from_identifier(ctx, domain)? else {
                 return Ok(None);
             };
-            let Some(dom) = Domain::reference(decl) else {
+            let enum_domain = decl.as_enumerated_type().map(|ty| ty.to_domain());
+            let Some(dom) = enum_domain.or_else(|| Domain::reference(decl)) else {
                 ctx.record_error(crate::errors::RecoverableParseError::new(
                     format!(
                         "The identifier '{}' is not a valid domain",
@@ -1094,4 +1097,81 @@ fn parse_collection_valued_expression(
             | conjure_cp_core::ast::ReturnType::Sequence(_)
     )
     .then_some(expr))
+}
+
+fn parse_enum_domain(
+    ctx: &mut ParseContext,
+    node: Node,
+) -> Result<Option<DomainPtr>, FatalParseError> {
+    let Some(name) = field!(recover, ctx, node, "name") else {
+        return Ok(None);
+    };
+    let Some(declaration) = get_declaration_ptr_from_identifier(ctx, name)? else {
+        return Ok(None);
+    };
+    let Some(ty) = declaration.as_enumerated_type().map(|ty| ty.clone()) else {
+        ctx.record_error(RecoverableParseError::new(
+            "Expected an enumerated type".to_owned(),
+            Some(name.range()),
+        ));
+        return Ok(None);
+    };
+    let Some(ranges_node) = field!(recover, ctx, node, "ranges") else {
+        return Ok(None);
+    };
+    let mut ranges = Vec::new();
+    for range in named_children(&ranges_node) {
+        let mut parse_bound = |bound| -> Result<Option<EnumVariantVal>, FatalParseError> {
+            let saved = ctx.typechecking_context;
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            let result = parse_expression(ctx, bound);
+            ctx.typechecking_context = saved;
+            let Some(expression) = result? else {
+                return Ok(None);
+            };
+            if let Expression::Atomic(_, Atom::Reference(reference)) = expression
+                && reference.return_type()
+                    == conjure_cp_core::ast::ReturnType::EnumeratedType(ty.clone())
+            {
+                return Ok(Some(EnumVariantVal(reference)));
+            }
+            ctx.record_error(RecoverableParseError::new(
+                "Expected a member of this enumerated type".to_owned(),
+                Some(bound.range()),
+            ));
+            Ok(None)
+        };
+        if range.kind() == "int_range" {
+            let lower = match range.child_by_field_name("lower") {
+                Some(bound) => {
+                    let Some(value) = parse_bound(bound)? else {
+                        return Ok(None);
+                    };
+                    Some(value)
+                }
+                None => None,
+            };
+            let upper = match range.child_by_field_name("upper") {
+                Some(bound) => {
+                    let Some(value) = parse_bound(bound)? else {
+                        return Ok(None);
+                    };
+                    Some(value)
+                }
+                None => None,
+            };
+            ranges.push(match (lower, upper) {
+                (Some(a), Some(b)) => Range::Bounded(a, b),
+                (Some(a), None) => Range::UnboundedR(a),
+                (None, Some(b)) => Range::UnboundedL(b),
+                (None, None) => Range::Unbounded,
+            });
+        } else {
+            let Some(value) = parse_bound(range)? else {
+                return Ok(None);
+            };
+            ranges.push(Range::Single(value));
+        }
+    }
+    Ok(Some(Domain::enumerated(ty, ranges)))
 }

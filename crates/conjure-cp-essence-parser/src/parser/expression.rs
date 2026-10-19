@@ -45,6 +45,7 @@ pub fn parse_expression(
         | "table"
         | "negative_table"
         | "short_table"
+        | "enum_operator"
         | "apply_expr"
         | "image_expr"
         | "image_set_expr"

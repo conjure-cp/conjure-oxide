@@ -682,6 +682,14 @@
         },
         {
           "type": "FIELD",
+          "name": "enum_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "enum_domain"
+          }
+        },
+        {
+          "type": "FIELD",
           "name": "tuple_domain",
           "content": {
             "type": "SYMBOL",
@@ -767,6 +775,35 @@
             "type": "SYMBOL",
             "name": "permutation_domain"
           }
+        }
+      ]
+    },
+    "enum_domain": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "FIELD",
+          "name": "ranges",
+          "content": {
+            "type": "SYMBOL",
+            "name": "range_list"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ")"
         }
       ]
     },
@@ -5337,6 +5374,14 @@
               "type": "FIELD",
               "name": "expr_or_domain",
               "content": {
+                "type": "SYMBOL",
+                "name": "enum_type_declaration"
+              }
+            },
+            {
+              "type": "FIELD",
+              "name": "expr_or_domain",
+              "content": {
                 "type": "CHOICE",
                 "members": [
                   {
@@ -5376,6 +5421,86 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    "enum_type_declaration": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "new"
+        },
+        {
+          "type": "STRING",
+          "value": "type"
+        },
+        {
+          "type": "STRING",
+          "value": "enum"
+        },
+        {
+          "type": "STRING",
+          "value": "{"
+        },
+        {
+          "type": "FIELD",
+          "name": "members",
+          "content": {
+            "type": "SYMBOL",
+            "name": "variable_list"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "}"
+        }
+      ]
+    },
+    "enum_operator": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "operator",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "STRING",
+                "value": "pred"
+              },
+              {
+                "type": "STRING",
+                "value": "succ"
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "FIELD",
+          "name": "argument",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "arithmetic_expr"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "atom"
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ")"
         }
       ]
     },
@@ -7136,6 +7261,10 @@
         "type": "CHOICE",
         "members": [
           {
+            "type": "SYMBOL",
+            "name": "enum_operator"
+          },
+          {
             "type": "FIELD",
             "name": "sub_atom_expression",
             "content": {
@@ -8570,6 +8699,14 @@
           "content": {
             "type": "SYMBOL",
             "name": "identifier"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "enum_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "enum_domain"
           }
         },
         {
