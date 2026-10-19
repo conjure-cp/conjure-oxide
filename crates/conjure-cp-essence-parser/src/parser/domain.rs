@@ -46,8 +46,13 @@ pub fn parse_domain(
             let Some(decl) = get_declaration_ptr_from_identifier(ctx, domain)? else {
                 return Ok(None);
             };
-            let enum_domain = decl.as_enumerated_type().map(|ty| ty.to_domain());
-            let Some(dom) = enum_domain.or_else(|| Domain::reference(decl)) else {
+            let is_unnamed = decl.as_unnamed_type().is_some();
+            let type_domain = if is_unnamed {
+                decl.domain()
+            } else {
+                decl.as_enumerated_type().map(|ty| ty.to_domain())
+            };
+            let Some(dom) = type_domain.or_else(|| Domain::reference(decl)) else {
                 ctx.record_error(crate::errors::RecoverableParseError::new(
                     format!(
                         "The identifier '{}' is not a valid domain",

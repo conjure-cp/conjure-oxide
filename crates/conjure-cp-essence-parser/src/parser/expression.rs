@@ -683,6 +683,35 @@ pub fn parse_binary_expression(
     // restore original contexts for parent expression parsing
     ctx.typechecking_context = saved_ctx;
 
+    if matches!(op_str, "=" | "!=" | "<" | "<=" | ">" | ">=") {
+        let left_type = left
+            .domain_of()
+            .map(|domain| domain.return_type())
+            .unwrap_or(ReturnType::Unknown);
+        let right_type = right
+            .domain_of()
+            .map(|domain| domain.return_type())
+            .unwrap_or(ReturnType::Unknown);
+        if matches!(left_type, ReturnType::UnnamedType(_))
+            || matches!(right_type, ReturnType::UnnamedType(_))
+        {
+            if matches!(op_str, "<" | "<=" | ">" | ">=") {
+                ctx.record_error(RecoverableParseError::new(
+                    "Unnamed types do not support ordering".to_string(),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            if matches!(op_str, "=" | "!=") && left_type != right_type {
+                ctx.record_error(RecoverableParseError::new(
+                    format!("Cannot compare different types: {left_type} and {right_type}"),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+        }
+    }
+
     let mut doc_name = "";
     let expr = match op_str {
         // NB: We are deliberately setting the index domain to 1.., not 1..2.

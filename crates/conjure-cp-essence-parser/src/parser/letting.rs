@@ -141,7 +141,31 @@ pub fn parse_letting_statement(
             return Ok(None);
         };
 
-        if expr_or_domain.kind() == "enum_type_declaration" {
+        if expr_or_domain.kind() == "unnamed_type_declaration" {
+            let Some(size_node) = field!(recover, ctx, expr_or_domain, "size") else {
+                return Ok(None);
+            };
+            let Some(size_expr) = parse_expression(ctx, size_node)? else {
+                return Ok(None);
+            };
+            let Some(Literal::Int(size)) = eval_constant(&size_expr) else {
+                ctx.record_error(RecoverableParseError::new(
+                    "Unnamed type size must be a constant integer".to_string(),
+                    Some(size_node.range()),
+                ));
+                return Ok(None);
+            };
+            if size < 1 {
+                ctx.record_error(RecoverableParseError::new(
+                    "Unnamed type size must be positive".to_string(),
+                    Some(size_node.range()),
+                ));
+                return Ok(None);
+            }
+            for name in temp_symbols {
+                symbol_table.insert(DeclarationPtr::new_unnamed(Name::user(name), size as u32));
+            }
+        } else if expr_or_domain.kind() == "enum_type_declaration" {
             let Some(members) = field!(recover, ctx, expr_or_domain, "members") else {
                 return Ok(None);
             };

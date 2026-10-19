@@ -637,12 +637,18 @@ module.exports = grammar ({
       field("be", "be"), 
       choice(
         field("expr_or_domain", $.enum_type_declaration),
+        field("expr_or_domain", $.unnamed_type_declaration),
         field("expr_or_domain", choice($.bool_expr, $.arithmetic_expr, $.atom)),
         seq(
           field("domain", "domain"),
           field("expr_or_domain", $.domain)
         )
       )
+    ),
+
+    unnamed_type_declaration: $ => seq(
+      "new", "type", "of", "size",
+      field("size", choice($.arithmetic_expr, $.atom))
     ),
 
     enum_type_declaration: $ => seq(
