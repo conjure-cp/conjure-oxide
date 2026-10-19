@@ -2191,7 +2191,7 @@ impl Expression {
     pub fn try_return_type(&self) -> Option<ReturnType> {
         let has_untyped_reference = self.any_expression(|expr| {
             matches!(expr, Expression::Atomic(_, Atom::Reference(reference))
-                if reference.domain().is_none() && reference.resolve_constant().is_none())
+                if reference.domain().is_none())
         });
 
         (!has_untyped_reference).then(|| self.return_type())

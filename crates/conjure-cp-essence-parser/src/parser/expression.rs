@@ -684,14 +684,10 @@ pub fn parse_binary_expression(
     ctx.typechecking_context = saved_ctx;
 
     if matches!(op_str, "=" | "!=" | "<" | "<=" | ">" | ">=") {
-        let left_type = left
-            .domain_of()
-            .map(|domain| domain.return_type())
-            .unwrap_or(ReturnType::Unknown);
-        let right_type = right
-            .domain_of()
-            .map(|domain| domain.return_type())
-            .unwrap_or(ReturnType::Unknown);
+        // Parameter-dependent local lettings may not have a domain yet. Only check types
+        // that can already be inferred, without requiring their domains to resolve.
+        let left_type = left.try_return_type().unwrap_or(ReturnType::Unknown);
+        let right_type = right.try_return_type().unwrap_or(ReturnType::Unknown);
         if matches!(left_type, ReturnType::UnnamedType(_))
             || matches!(right_type, ReturnType::UnnamedType(_))
         {
