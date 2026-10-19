@@ -798,7 +798,7 @@ fn rewrite_int_ranges_in_unresolved_domain(
             );
             rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
         }
-        UnresolvedDomain::EnumeratedType(_, _) | UnresolvedDomain::UnnamedType(_) => todo!(),
+        UnresolvedDomain::EnumeratedType(_, _) | UnresolvedDomain::UnnamedType(_) => {}
         UnresolvedDomain::Reference(_) => {}
     }
 }
