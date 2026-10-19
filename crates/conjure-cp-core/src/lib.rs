@@ -1,3 +1,8 @@
+#[cfg(not(any(feature = "sat-cadical", feature = "sat-batsat")))]
+compile_error!("Select a SAT backend: enable sat-cadical or sat-batsat.");
+#[cfg(all(target_family = "wasm", not(feature = "sat-batsat")))]
+compile_error!("Wasm requires sat-batsat; use --no-default-features --features sat-batsat.");
+
 #[doc(hidden)]
 pub extern crate self as conjure_cp_core;
 
@@ -8,11 +13,13 @@ pub mod ast;
 
 // NOTE: this module defines the bug! macro, which is exported at the crate level, and has no other
 // contents.
-mod bug;
+pub mod bug;
 
 pub mod context;
+pub mod domain_tightening;
 pub mod error;
 pub mod instantiate;
+pub mod objective;
 pub mod parse;
 pub mod representation;
 pub mod rule_engine;
@@ -21,7 +28,7 @@ pub mod solver;
 pub mod stats;
 
 // Various internal helper functions
-mod utils;
+pub mod utils;
 
 /// Creates a [`Domain::Int`](ast::Domain::Int).
 ///
@@ -51,7 +58,7 @@ macro_rules! domain_int_ground {
     // when parsing expressions, rust groups 1..2 into a single token tree, (1..2)
     // however, we want it to be three seperate token trees [1,..,2] for parsing.
     // use defile to turn it back into 3 token trees
-    ($($e:expr),+ $(,)?) => {::defile::defile! { $crate::ast::GroundDomain::Int(vec![$($crate::range!(@$e)),+]).into() } };
+    ($($e:expr),+ $(,)?) => {::defile::defile! { $crate::ast::GroundDomain::Int(vec![$($crate::range!(@$e)),+], None).into() } };
 }
 
 /// Creates a [`Range`](ast::Range).

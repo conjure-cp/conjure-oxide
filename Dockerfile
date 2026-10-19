@@ -2,7 +2,7 @@
 # 1) build-environment: a container that sets up the build environment needed
 #    to compile conjure oxide.
 #
-#    This stage can be used as the container for Github workflows that involve
+#    This stage can be used as the container for GitHub workflows that involve
 #    building Conjure Oxide e.g. nightly releases, testing.
 #
 #    This uses an older version of glibc, 2.8, to ensure the build binary is

@@ -1,0 +1,22 @@
+language Essence 1.3
+
+find a, b, c, g : bool
+find le, lt, eq, ne, ge, gt, reversed, duplicate : bool
+find y : int(0..3)
+find z : int(0..1)
+such that
+    z = toInt(sum([toInt(a), toInt(b), toInt(c)]) <= 1),
+    y = sum([toInt(a), toInt(b), toInt(c)]),
+    sum([toInt(eq), toInt(ne), toInt(g)]) <= 2,
+    sum([toInt(le), toInt(gt)]) <= 1,
+    sum([toInt(eq), toInt(ne)]) != 0,
+    (sum([toInt(a), toInt(b), toInt(c)]) <= 1) <-> le,
+    (sum([toInt(a), toInt(b), toInt(c)]) < 1) <-> lt,
+    (sum([toInt(a), toInt(b), toInt(c)]) = 1) <-> eq,
+    (sum([toInt(a), toInt(b), toInt(c)]) != 1) <-> ne,
+    (sum([toInt(a), toInt(b), toInt(c)]) >= 1) <-> ge,
+    (sum([toInt(a), toInt(b), toInt(c)]) > 1) <-> gt,
+    (1 >= sum([toInt(a), toInt(b), toInt(c)])) <-> reversed,
+    (sum([toInt(a), toInt(a), toInt(!b), 1, 0]) = 2) <-> duplicate,
+    g -> (sum([toInt(a), toInt(b), toInt(c)]) <= 1),
+    !(sum([toInt(a), toInt(b), toInt(c)]) = 2) \/ g

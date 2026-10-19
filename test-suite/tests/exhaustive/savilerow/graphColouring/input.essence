@@ -1,0 +1,29 @@
+language ESSENCE' 1.0
+
+$ ----- PARAMETERS -------------------------
+given vertices : int(1..)
+given colours : int(1..)
+
+letting VERTICES be domain int(1..vertices)
+letting COLOURS be domain int(1..colours)
+
+given edges : matrix indexed by [VERTICES,VERTICES] of bool
+
+
+$ ----- VARIABLES --------------------------
+find colouring : matrix indexed by [VERTICES] of COLOURS
+find usedColours : matrix indexed by [COLOURS] of bool
+
+$ ----- OBJECTIVE --------------------------
+minimising sum c : COLOURS . toInt(usedColours[c])
+
+$ ----- CONSTRAINTS ------------------------
+such that 
+   
+   forAll a,b : VERTICES . 
+        edges[a,b] -> 
+              colouring[a] != colouring[b],
+
+   forAll a : VERTICES .
+      forAll c : COLOURS . 
+         (colouring[a] = c)  -> (usedColours[c])

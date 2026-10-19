@@ -1,7 +1,11 @@
 use crate::ast::serde::{AsId, HasId};
+use crate::representation::types::ReprGetOrInitResult;
+use crate::representation::{
+    ReferenceReprError, ReprError, ReprRule, ReprRulePtr, ReprSelectError, ReprStateStored,
+};
 use crate::{ast::DeclarationPtr, bug};
 use derivative::Derivative;
-use parking_lot::MappedRwLockReadGuard;
+use parking_lot::{MappedRwLockReadGuard, RwLockReadGuard};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
@@ -29,11 +33,12 @@ use super::{
 pub struct Reference {
     #[serde_as(as = "AsId")]
     pub ptr: DeclarationPtr,
+    pub repr: Option<ReprRulePtr>,
 }
 
 impl Reference {
     pub fn new(ptr: DeclarationPtr) -> Self {
-        Reference { ptr }
+        Reference { ptr, repr: None }
     }
 
     pub fn ptr(&self) -> &DeclarationPtr {
@@ -57,10 +62,167 @@ impl Reference {
     }
 
     pub fn resolved_domain(&self) -> Option<Moo<GroundDomain>> {
-        self.domain()?.resolve()
+        self.domain()?.resolve().ok()
+    }
+
+    /// Select the given representation for this reference, if it is currently unrepresented
+    /// and the representation exists for the underlying variable.
+    ///
+    /// # Errors
+    /// - [ReprSelectError::AlreadySelected] if a different representation is already selected for this reference
+    /// - [ReprSelectError::DoesNotExist] if the representation does not exist for this variable
+    ///
+    /// # Returns
+    /// State of the initialised representation
+    pub fn select_repr<R: ReprRule + ?Sized>(
+        &mut self,
+    ) -> Result<MappedRwLockReadGuard<'_, R::DeclLevel>, ReprSelectError> {
+        let _ = self.select_repr_via(R::STORED);
+        Ok(self.repr_state_as_unchecked::<R>())
+    }
+
+    /// Same as [Reference::select_repr], but type-erased
+    pub fn select_repr_via(
+        &mut self,
+        rule: ReprRulePtr,
+    ) -> Result<MappedRwLockReadGuard<'_, dyn ReprStateStored>, ReprSelectError> {
+        if let Some(repr) = self.repr
+            && repr != rule
+        {
+            return Err(ReprSelectError::AlreadySelected(repr));
+        }
+        if !self.ptr.reprs().has_repr(rule) {
+            return Err(ReprSelectError::DoesNotExist(self.ptr.clone(), rule.name()));
+        }
+        self.repr = Some(rule);
+        Ok(self.repr_state_unchecked())
+    }
+
+    /// Same as [Reference::select_or_init_repr], but type-erased
+    pub fn select_or_init_repr_via(
+        &mut self,
+        rule: ReprRulePtr,
+    ) -> ReprGetOrInitResult<'_, dyn ReprStateStored, ReferenceReprError> {
+        if let Some(repr) = self.repr
+            && repr != rule
+        {
+            return Err(ReprSelectError::AlreadySelected(repr).into());
+        }
+        self.update_or_init_repr_via(rule).map_err(Into::into)
+    }
+
+    /// Select the given representation for this reference, initialising it if necessary.
+    /// Will fail if a different representation is already selected.
+    ///
+    /// # Errors
+    /// - [ReprSelectError] if a different representation is already selected for this reference
+    /// - [ReprInitError] | [ReprInstantiateError] if the representation could not be initialised
+    ///
+    /// # Returns
+    ///
+    /// `(state, symbols, constraints)`
+    /// where:
+    /// - `state` is an instance of the given representation
+    /// - `symbols` are new variables created by the representation
+    /// - `constraints` are new top-level constraints created by the representation
+    pub fn select_or_init_repr<R: ReprRule + ?Sized>(
+        &mut self,
+    ) -> ReprGetOrInitResult<'_, R::DeclLevel, ReferenceReprError> {
+        let (_, symbols, constraints) = self.select_or_init_repr_via(R::STORED)?;
+        let state = self.repr_state_as_unchecked::<R>();
+        Ok((state, symbols, constraints))
+    }
+
+    /// Select the given representation for this reference, initialising it if necessary.
+    /// Will overwrite the existing selection.
+    ///
+    /// # Errors
+    /// - [ReprInitError] | [ReprInstantiateError] if the representation could not be initialised
+    ///
+    /// # Returns
+    ///
+    /// `(state, symbols, constraints)`
+    /// where:
+    /// - `state` is an instance of the given representation
+    /// - `symbols` are new variables created by the representation
+    /// - `constraints` are new top-level constraints created by the representation
+    pub fn update_or_init_repr<R: ReprRule + ?Sized>(
+        &mut self,
+    ) -> ReprGetOrInitResult<'_, R::DeclLevel, ReprError> {
+        let (_, symbols, constraints) = self.update_or_init_repr_via(R::STORED)?;
+        let state = self.repr_state_as_unchecked::<R>();
+        Ok((state, symbols, constraints))
+    }
+
+    /// Same as [Reference::update_or_init_repr], but type-erased
+    pub fn update_or_init_repr_via(
+        &mut self,
+        rule: ReprRulePtr,
+    ) -> ReprGetOrInitResult<'_, dyn ReprStateStored, ReprError> {
+        let (symbols, constraints) = rule.init_for_if_not_exists(&mut self.ptr)?;
+        self.repr = Some(rule);
+        let state = self.repr_state_unchecked();
+        Ok((state, symbols, constraints))
+    }
+
+    /// If this reference has a representation selected, return `(rule, state)`
+    /// where
+    /// - `rule` is a pointer to the representation rule
+    /// - `state` is an instance of that representation
+    pub fn get_repr(
+        &self,
+    ) -> Option<(ReprRulePtr, MappedRwLockReadGuard<'_, dyn ReprStateStored>)> {
+        let rule = self.repr?;
+        Some((rule, self.repr_state_unchecked()))
+    }
+
+    /// If this reference has this specific representation selected, get its state as a concrete type
+    pub fn get_repr_as<R: ReprRule + ?Sized>(
+        &self,
+    ) -> Option<MappedRwLockReadGuard<'_, R::DeclLevel>> {
+        if let Some(rule) = self.repr
+            && rule == R::STORED
+        {
+            return Some(self.repr_state_as_unchecked::<R>());
+        }
+        None
+    }
+
+    /// If this reference has a representation selected, return its state, otherwise crash
+    fn repr_state_unchecked(&self) -> MappedRwLockReadGuard<'_, dyn ReprStateStored> {
+        let rule = self
+            .repr
+            .unwrap_or_else(|| bug!("`{}` had no representation", self.name()));
+        RwLockReadGuard::map(self.ptr.reprs(), |reprs| {
+            reprs.get_by_rule(rule).unwrap_or_else(|| {
+                bug!(
+                    "Representation '{}' was selected for '{}' but its state was not stored!",
+                    rule.name(),
+                    self.name()
+                )
+            })
+        })
+    }
+
+    /// If this reference has this specific representation selected, return its state
+    /// as a concrete type, otherwise crash
+    fn repr_state_as_unchecked<R: ReprRule + ?Sized>(
+        &self,
+    ) -> MappedRwLockReadGuard<'_, R::DeclLevel> {
+        R::get_for(&self.ptr).unwrap_or_else(|| {
+            bug!(
+                "`{}` did not have the expected representation `{}`",
+                self.name(),
+                R::NAME
+            )
+        })
     }
 
     /// Returns the expression behind a value-letting reference, if this is one.
+    ///
+    /// Prefer [`Reference::with_resolved_expression`] when the expression only needs to be
+    /// inspected. Returning an owned value here necessarily clones collection-bearing
+    /// expressions such as matrix literals.
     pub fn resolve_expression(&self) -> Option<Expression> {
         if let Some(expr) = self.ptr().as_value_letting() {
             return Some(expr.clone());
@@ -84,24 +246,53 @@ impl Reference {
         None
     }
 
+    /// Calls `inspect` with the expression behind a value-letting reference.
+    ///
+    /// The declaration is kept read-locked for the duration of `inspect`, allowing callers to ask
+    /// questions about large value lettings without cloning them. Quantified declarations may
+    /// delegate their value to an expression generator; those are handled here as well.
+    pub fn with_resolved_expression<T>(&self, inspect: impl FnOnce(&Expression) -> T) -> Option<T> {
+        if let Some(expr) = self.ptr().as_value_letting() {
+            return Some(inspect(&expr));
+        }
+
+        let generator = {
+            let kind = self.ptr.kind();
+            if let DeclarationKind::Quantified(inner) = &*kind {
+                inner.generator().cloned()
+            } else {
+                None
+            }
+        }?;
+        let expr = generator.as_value_letting()?;
+        Some(inspect(&expr))
+    }
+
     /// Evaluates this reference to a literal if it resolves to a constant.
     pub fn resolve_constant(&self) -> Option<Literal> {
-        self.resolve_expression()
-            .and_then(|expr| super::eval::eval_constant(&expr))
+        self.with_resolved_expression(super::eval::eval_constant)
+            .flatten()
     }
 
     /// Resolves this reference to an atomic expression, if possible.
     pub fn resolve_atomic(&self) -> Option<Atom> {
-        self.resolve_expression().and_then(|expr| match expr {
-            Expression::Atomic(_, atom) => Some(atom),
+        self.with_resolved_expression(|expr| match expr {
+            Expression::Atomic(_, atom) => Some(atom.clone()),
             _ => None,
         })
+        .flatten()
     }
 }
 
 impl From<Reference> for Expression {
     fn from(value: Reference) -> Self {
         Expression::Atomic(Metadata::new(), value.into())
+    }
+}
+
+impl From<Reference> for Moo<Expression> {
+    fn from(value: Reference) -> Self {
+        Moo::new(value.into())
     }
 }
 

@@ -14,7 +14,7 @@ Sequences _must_ have either a `size` or `maxSize` cardinality attribute.
 
 The cardinality attribute is used with some value (i.e. `size 4`), whereas the jectivity attribute is used by itself.
 For example;
-```
+```essence
 $ Valid
 find foo: sequence of int(1..5)
 find bar: sequence (size 5, surjective) of int(1..5)

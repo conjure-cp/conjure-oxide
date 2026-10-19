@@ -1,0 +1,51 @@
+Bootstrap: docker
+From: ubuntu:24.04
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export TZ=Europe/London
+
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+    echo $TZ > /etc/timezone
+
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        tzdata \
+        make \
+        build-essential \
+        rustc \
+        cargo \
+        z3 \
+        libz3-dev \
+        git \
+        python3 \
+        clang \
+        libclang-dev \
+        pkg-config \
+        ca-certificates \
+        wget \
+        zip \
+        unzip \
+        default-jdk
+
+    dpkg-reconfigure -f noninteractive tzdata
+
+    mkdir -p /opt/conjure
+
+    wget -c \
+        -O /tmp/conjure-nightly-linux-with-solvers.zip \
+        https://github.com/conjure-cp/conjure/releases/download/nightly/conjure-nightly-linux-with-solvers.zip
+
+    unzip -q /tmp/conjure-nightly-linux-with-solvers.zip -d /opt/conjure
+
+    rm -f /tmp/conjure-nightly-linux-with-solvers.zip
+
+    chmod -R a+rX /opt/conjure
+
+    apt-get clean
+
+%environment
+    export PATH="${HOME}/.cargo/bin:/opt/conjure/conjure-nightly-linux-with-solvers:${PATH}"
+
+%runscript
+    exec /bin/bash "$@"

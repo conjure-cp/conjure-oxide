@@ -1,3 +1,4 @@
+use crate::representation::ReprId;
 use std::fmt::Display;
 
 use itertools::Itertools as _;
@@ -23,7 +24,7 @@ pub enum Name {
             // The source variable
             Name,
             // The representation rule used
-            Ustr,
+            ReprId,
             // Additional, rule dependent, information
             Ustr,
         )>,
@@ -33,7 +34,7 @@ pub enum Name {
     WithRepresentation(
         Box<Name>,
         /// representations chosen
-        Vec<Ustr>,
+        Vec<ReprId>,
     ),
 }
 
@@ -41,6 +42,11 @@ impl Name {
     /// Creates a new `Name::User` from a `&str`.
     pub fn user(name: &str) -> Self {
         Name::User(Ustr::from(name))
+    }
+
+    /// Creates a name for an auxiliary variable introduced by a representation.
+    pub fn repr(src: Name, rule: ReprId, suffix: &str) -> Self {
+        Name::Represented(Box::new((src, rule, Ustr::from(suffix))))
     }
 }
 
@@ -58,8 +64,8 @@ impl Display for Name {
             Name::User(s) => write!(f, "{s}"),
             Name::Machine(i) => write!(f, "__{i}"),
             Name::Represented(fields) => {
-                let (name, rule_string, suffix) = fields.as_ref();
-                write!(f, "{name}#{rule_string}_{suffix}")
+                let (name, rule, suffix) = fields.as_ref();
+                write!(f, "{name}#{rule}_{suffix}")
             }
             Name::WithRepresentation(name, items) => {
                 // TODO: what is the correct syntax for nested reprs?

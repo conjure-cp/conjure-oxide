@@ -6,6 +6,9 @@ on:
     - main # run for pushes to the main branch
   workflow_dispatch:
 
+concurrency:
+  group: conjure-oxide-reports-deploy
+  cancel-in-progress: false
 
 env:
   # we define these in the env if they are not defined as matrix parameters
@@ -24,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout the repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         # Avoid checkout's auth header so deploy uses the app token.
         persist-credentials: false
@@ -36,7 +39,7 @@ jobs:
 
     - name: Restore cache
       id: restore_cache
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: |
           ~/.cargo/bin/
@@ -56,9 +59,6 @@ jobs:
 
     - name: Install rust
       run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
-
-    - name: Initialise submodules
-      run: make submodules
 
     - name: Generate documentation
       working-directory: .
@@ -80,7 +80,7 @@ jobs:
         repositories: |
           conjure-oxide-reports
 
-    - name: Deploy to Github Pages
+    - name: Deploy to GitHub Pages
       if: ${{ steps.reports-token.outputs.token != '' }}
       uses: JamesIves/github-pages-deploy-action@v4
       env:
@@ -98,7 +98,7 @@ jobs:
 
     - name: Save cache
       if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
-      uses: actions/cache/save@v5
+      uses: actions/cache/save@v6
       with:
         path: |
           ~/.cargo/bin/

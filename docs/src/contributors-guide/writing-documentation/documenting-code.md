@@ -81,10 +81,10 @@ For simple methods they may not be necessary.
 /// # Returns
 /// - true if the environment variable is set to "1".
 /// - false if the environment variable is not set or set to any other value.
-fn optimizations_enabled() -> bool {
+fn optimisations_enabled() -> bool {
     match env::var("OPTIMIZATIONS") {
         Ok(val) => val == "1",
-        Err(_) => false, // Assume optimizations are disabled if the environment variable is not set
+        Err(_) => false, // Assume optimisations are disabled if the environment variable is not set
     }
 }
 ```
@@ -93,7 +93,7 @@ fn optimizations_enabled() -> bool {
 
 ```rust
 /// Checks if the OPTIMIZATIONS environment variable is set to "1"
-fn optimizations_enabled() -> bool { ... }
+fn optimisations_enabled() -> bool { ... }
 ```
 
 ⚠️ Not bad, but sounds a bit robotic

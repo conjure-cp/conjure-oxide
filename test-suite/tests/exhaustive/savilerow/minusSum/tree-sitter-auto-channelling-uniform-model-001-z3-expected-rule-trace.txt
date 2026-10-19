@@ -1,0 +1,69 @@
+Model before rewriting:
+
+find q: int(1..5)
+
+such that
+
+(q - 1) = (q - q)
+
+--
+
+q
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q
+new variables:
+  find q#lia_1: int(1..5)
+
+--
+
+q
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q
+
+--
+
+q
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q
+
+--
+
+q
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q#lia_1
+
+--
+
+q
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q#lia_1
+
+--
+
+q
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q#lia_1
+
+--
+
+(q#lia_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q#lia_1,-(1);int(1..)])
+
+--
+
+(q#lia_1 - q#lia_1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q#lia_1,-(q#lia_1);int(1..)])
+
+--
+
+Final model:
+
+find q: int(1..5)
+find q#lia_1: int(1..5)
+
+such that
+
+sum([q#lia_1,-1;int(1..)]) = sum([q#lia_1,-(q#lia_1);int(1..)])
+

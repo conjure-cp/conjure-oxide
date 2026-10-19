@@ -10,23 +10,45 @@ use super::util::named_children;
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
+use crate::parser::keyword_checks::is_keyword_identifier;
 use conjure_cp_core::ast::{DomainPtr, Name};
+
+/// Parsed find / findAux declarations and whether they are auxiliary.
+pub struct ParsedFindStatement {
+    pub declarations: BTreeMap<Name, DomainPtr>,
+    pub auxiliary: bool,
+}
 
 pub fn parse_find_statement(
     ctx: &mut ParseContext,
     find_statement: Node,
-) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
+) -> Result<ParsedFindStatement, FatalParseError> {
     let Some(keyword) = field!(recover, ctx, find_statement, "find_keyword") else {
-        return Ok(BTreeMap::new());
+        return Ok(ParsedFindStatement {
+            declarations: BTreeMap::new(),
+            auxiliary: false,
+        });
     };
-    ctx.add_span_and_doc_hover(&keyword, "find", SymbolKind::Find, None, None);
-    let mut var_hashmap = BTreeMap::new();
+
+    let keyword_text = &ctx.source_code[keyword.start_byte()..keyword.end_byte()];
+    let auxiliary = keyword_text == "findAux";
+    let (doc_key, symbol_kind, var_kind) = if auxiliary {
+        ("findAux", SymbolKind::Find, SymbolKind::FindVar)
+    } else {
+        ("find", SymbolKind::Find, SymbolKind::FindVar)
+    };
+    ctx.add_span_and_doc_hover(&keyword, doc_key, symbol_kind, None, None);
+
+    let mut declarations = BTreeMap::new();
     for var_decl in named_children(&find_statement) {
-        if let Ok(mut decls) = parse_declaration_statement(ctx, var_decl, SymbolKind::FindVar) {
-            var_hashmap.append(&mut decls);
+        if let Ok(mut decls) = parse_declaration_statement(ctx, var_decl, var_kind, auxiliary) {
+            declarations.append(&mut decls);
         }
     }
-    Ok(var_hashmap)
+    Ok(ParsedFindStatement {
+        declarations,
+        auxiliary,
+    })
 }
 
 pub fn parse_given_statement(
@@ -51,7 +73,9 @@ pub fn parse_given_statement(
 
     let mut var_hashmap = BTreeMap::new();
     for var_decl in named_children(&given_statement) {
-        if let Ok(mut decls) = parse_declaration_statement(ctx, var_decl, SymbolKind::GivenVar) {
+        if let Ok(mut decls) =
+            parse_declaration_statement(ctx, var_decl, SymbolKind::GivenVar, false)
+        {
             var_hashmap.append(&mut decls);
         }
     }
@@ -62,6 +86,7 @@ pub fn parse_declaration_statement(
     ctx: &mut ParseContext,
     statement_node: Node,
     symbol_kind: SymbolKind,
+    auxiliary_find: bool,
 ) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
     let mut vars = BTreeMap::new();
 
@@ -90,6 +115,14 @@ pub fn parse_declaration_statement(
         let variable_name = &ctx.source_code[start..end];
         let name = Name::user(variable_name);
 
+        if is_keyword_identifier(variable_name) {
+            ctx.errors.push(RecoverableParseError::new(
+                format!("Keyword '{variable_name}' used as identifier"),
+                Some(variable.range()),
+            ));
+            // still add variable to symbol table to avoid follow-up errors
+        }
+
         // Check for duplicate within the same statement
         if vars.contains_key(&name) {
             ctx.errors.push(RecoverableParseError::new(
@@ -97,6 +130,7 @@ pub fn parse_declaration_statement(
                     "Variable '{}' is already declared in this {} statement",
                     variable_name,
                     match symbol_kind {
+                        SymbolKind::FindVar if auxiliary_find => "findAux",
                         SymbolKind::FindVar => "find",
                         SymbolKind::GivenVar => "given",
                         _ => "declaration",
@@ -135,6 +169,7 @@ pub fn parse_declaration_statement(
             description: format!(
                 "{} variable: {variable_name}",
                 match symbol_kind {
+                    SymbolKind::FindVar if auxiliary_find => "FindAux",
                     SymbolKind::FindVar => "Find",
                     SymbolKind::GivenVar => "Given",
                     _ => "Declaration",

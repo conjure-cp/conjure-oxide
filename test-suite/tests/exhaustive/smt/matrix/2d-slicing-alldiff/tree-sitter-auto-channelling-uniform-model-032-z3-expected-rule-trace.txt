@@ -1,0 +1,324 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..3), int(1..2)] of int(1..3)
+
+such that
+
+allDifferent(a[..,1]),
+allDifferent(a[..,2]),
+allDifferent(a[1,..]),
+allDifferent(a[2,..]),
+allDifferent(a[3,..]),
+a[1, 1] = 1,
+a[2, 2] = 1
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#array_1: matrix indexed by [int(1..3), int(1..2)] of int(1..3)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+allDifferent(a[..,1]),
+allDifferent(a[..,2]),
+allDifferent(a[1,..]),
+allDifferent(a[2,..]),
+allDifferent(a[3,..]),
+a[1, 1] = 1,
+a[2, 2] = 1
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+allDifferent(a[..,1]),
+allDifferent(a[..,2]),
+allDifferent(a[1,..]),
+allDifferent(a[2,..]),
+allDifferent(a[3,..]),
+a[1, 1] = 1,
+a[2, 2] = 1
+new variables:
+  find a#array_1#lia_1: matrix indexed by [int(1..3), int(1..2)] of int(1..3)
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a#array_1#lia_1[..,1]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(a#array_1#lia_1,[..,1])
+
+--
+
+a#array_1#lia_1[..,2]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(a#array_1#lia_1,[..,2])
+
+--
+
+a#array_1#lia_1[1,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(a#array_1#lia_1,[1,..])
+
+--
+
+a#array_1#lia_1[2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(a#array_1#lia_1,[2,..])
+
+--
+
+a#array_1#lia_1[3,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(a#array_1#lia_1,[3,..])
+
+--
+
+a#array_1#lia_1[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#lia_1,[1, 1])
+
+--
+
+a#array_1#lia_1[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#lia_1,[2, 2])
+
+--
+
+allDifferent(SafeSlice(a#array_1#lia_1,[..,1]))
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct(SafeSlice(a#array_1#lia_1,[..,1]))
+
+--
+
+allDifferent(SafeSlice(a#array_1#lia_1,[..,2]))
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct(SafeSlice(a#array_1#lia_1,[..,2]))
+
+--
+
+allDifferent(SafeSlice(a#array_1#lia_1,[1,..]))
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct(SafeSlice(a#array_1#lia_1,[1,..]))
+
+--
+
+allDifferent(SafeSlice(a#array_1#lia_1,[2,..]))
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct(SafeSlice(a#array_1#lia_1,[2,..]))
+
+--
+
+allDifferent(SafeSlice(a#array_1#lia_1,[3,..]))
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct(SafeSlice(a#array_1#lia_1,[3,..]))
+
+--
+
+SafeSlice(a#array_1#lia_1,[..,1])
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(a#array_1#lia_1,[1, 1]),SafeIndex(a#array_1#lia_1,[2, 1]),SafeIndex(a#array_1#lia_1,[3, 1]);int(1..)]
+
+--
+
+SafeSlice(a#array_1#lia_1,[..,2])
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(a#array_1#lia_1,[1, 2]),SafeIndex(a#array_1#lia_1,[2, 2]),SafeIndex(a#array_1#lia_1,[3, 2]);int(1..)]
+
+--
+
+SafeSlice(a#array_1#lia_1,[1,..])
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(a#array_1#lia_1,[1, 1]),SafeIndex(a#array_1#lia_1,[1, 2]);int(1..)]
+
+--
+
+SafeSlice(a#array_1#lia_1,[2,..])
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(a#array_1#lia_1,[2, 1]),SafeIndex(a#array_1#lia_1,[2, 2]);int(1..)]
+
+--
+
+SafeSlice(a#array_1#lia_1,[3,..])
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(a#array_1#lia_1,[3, 1]),SafeIndex(a#array_1#lia_1,[3, 2]);int(1..)]
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..3), int(1..2)] of int(1..3)
+find a#array_1: matrix indexed by [int(1..3), int(1..2)] of int(1..3)
+find a#array_1#lia_1: matrix indexed by [int(1..3), int(1..2)] of int(1..3)
+
+such that
+
+smtDistinct([SafeIndex(a#array_1#lia_1,[1, 1]),SafeIndex(a#array_1#lia_1,[2, 1]),SafeIndex(a#array_1#lia_1,[3, 1]);int(1..)]),
+smtDistinct([SafeIndex(a#array_1#lia_1,[1, 2]),SafeIndex(a#array_1#lia_1,[2, 2]),SafeIndex(a#array_1#lia_1,[3, 2]);int(1..)]),
+smtDistinct([SafeIndex(a#array_1#lia_1,[1, 1]),SafeIndex(a#array_1#lia_1,[1, 2]);int(1..)]),
+smtDistinct([SafeIndex(a#array_1#lia_1,[2, 1]),SafeIndex(a#array_1#lia_1,[2, 2]);int(1..)]),
+smtDistinct([SafeIndex(a#array_1#lia_1,[3, 1]),SafeIndex(a#array_1#lia_1,[3, 2]);int(1..)]),
+SafeIndex(a#array_1#lia_1,[1, 1]) = 1,
+SafeIndex(a#array_1#lia_1,[2, 2]) = 1
+

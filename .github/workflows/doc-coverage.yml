@@ -8,8 +8,9 @@ name: RustDoc Coverage
 on:
   pull_request_target:
     paths:
+    - Cargo.*
     - crates/**
-    - tests-integration/**
+    - test-suite/**
     - tools/ci/generate-doc-coverage-summary-md.bash
     - tools/ci/generate-doc-coverage-report-md.bash
     - tools/ci/list-doc-coverage-targets.bash
@@ -17,8 +18,9 @@ on:
     branches:
     - main
     paths:
+    - Cargo.*
     - crates/**
-    - tests-integration/**
+    - test-suite/**
     - tools/ci/generate-doc-coverage-summary-md.bash
     - tools/ci/generate-doc-coverage-report-md.bash
     - tools/ci/list-doc-coverage-targets.bash
@@ -27,6 +29,9 @@ on:
     - .github/workflows/rustdoc.yml
   workflow_dispatch:
 
+concurrency:
+  group: conjure-oxide-reports-deploy
+  cancel-in-progress: false
 
 env:
   os: ubuntu-latest
@@ -47,16 +52,17 @@ jobs:
     steps:
     - name: Checkout PR
       if: ${{ github.event_name == 'pull_request_target' }}
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         # Avoid checkout's default auth header so deploy uses the app token.
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         ref: ${{ github.event.pull_request.head.sha }}
+        allow-unsafe-pr-checkout: true
         persist-credentials: false
 
     - name: Checkout repository
       if: ${{ github.event_name != 'pull_request_target' }}
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         # Avoid checkout's default auth header so deploy uses the app token.
         persist-credentials: false
@@ -66,7 +72,7 @@ jobs:
 
     - name: Restore cache
       id: restore_cache
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: |
           ~/.cargo/bin/
@@ -83,9 +89,6 @@ jobs:
 
     - name: Install pandoc
       uses: pandoc/actions/setup@v1
-
-    - name: Initialise submodules
-      run: make submodules
 
     - name: Build RustDoc coverage report
       run: |
@@ -320,7 +323,7 @@ jobs:
 
     - name: Save cache
       if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
-      uses: actions/cache/save@v5
+      uses: actions/cache/save@v6
       with:
         path: |
           ~/.cargo/bin/

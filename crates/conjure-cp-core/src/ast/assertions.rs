@@ -80,8 +80,19 @@ pub fn debug_assert_all_names_resolved(model: &Model, origin: &str) {
         );
     }
 
-    for clause in model.clauses() {
-        for literal in clause.iter() {
+    if let Some(objective) = &model.objective {
+        referenced_names.extend(
+            Biplate::<Reference>::universe_bi(&objective.expression)
+                .into_iter()
+                .map(|reference| {
+                    let name = reference.name();
+                    canonical_resolution_name(&name).clone()
+                }),
+        );
+    }
+
+    for clause in model.sat_decisions() {
+        for literal in clause.expressions().into_iter() {
             referenced_names.extend(Biplate::<Reference>::universe_bi(literal).into_iter().map(
                 |reference| {
                     let name = reference.name();
@@ -129,9 +140,9 @@ pub fn debug_assert_root_at_top_level_only(model: &Model, origin: &str) {
         .count();
 
     let root_count_in_clauses = model
-        .clauses()
+        .sat_decisions()
         .iter()
-        .flat_map(|clause| clause.iter())
+        .flat_map(|clause| clause.expressions().into_iter())
         .map(|expr| {
             Biplate::<Expression>::universe_bi(expr)
                 .iter()
@@ -160,8 +171,14 @@ fn collect_reachable_symbol_tables(model: &Model) -> Vec<SymbolTablePtr> {
         pending_tables.extend(Biplate::<SymbolTablePtr>::universe_bi(dominance));
     }
 
-    for clause in model.clauses() {
-        for literal in clause.iter() {
+    if let Some(objective) = &model.objective {
+        pending_tables.extend(Biplate::<SymbolTablePtr>::universe_bi(
+            &objective.expression,
+        ));
+    }
+
+    for clause in model.sat_decisions() {
+        for literal in clause.expressions().into_iter() {
             pending_tables.extend(Biplate::<SymbolTablePtr>::universe_bi(literal));
         }
     }

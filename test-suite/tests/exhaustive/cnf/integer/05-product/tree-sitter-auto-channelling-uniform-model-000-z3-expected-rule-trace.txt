@@ -1,0 +1,50 @@
+Model before rewriting:
+
+find a: int(1..30)
+find b: int(1..30)
+
+such that
+
+product([a,b;int(1..)]) = 30
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#bv_1: int(1..30)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#bv_1: int(1..30)
+
+--
+
+a
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#bv_1
+
+--
+
+b
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#bv_1
+
+--
+
+Final model:
+
+find a: int(1..30)
+find b: int(1..30)
+find a#bv_1: int(1..30)
+find b#bv_1: int(1..30)
+
+such that
+
+product([a#bv_1,b#bv_1;int(1..)]) = 30
+

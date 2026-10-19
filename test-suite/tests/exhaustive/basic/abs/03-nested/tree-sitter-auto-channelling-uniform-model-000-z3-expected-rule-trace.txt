@@ -1,0 +1,103 @@
+Model before rewriting:
+
+find x: int(-5..2)
+find y: int(-5..2)
+find z: int(-5..2)
+
+such that
+
+sum([|(sum([(x / 2),y;int(1..)]) - z)|,(|y| / 2);int(1..)]) = 10
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#bv_1: int(-5..2)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#bv_1: int(-5..2)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(-5..2)
+
+--
+
+z
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+z#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+(sum([(x#bv_1 / 2),y#bv_1;int(1..)]) - z#bv_1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([sum([(x#bv_1 / 2),y#bv_1;int(1..)]),-(z#bv_1);int(1..)])
+
+--
+
+sum([sum([(x#bv_1 / 2),y#bv_1;int(1..)]),-(z#bv_1);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([(x#bv_1 / 2),y#bv_1,-(z#bv_1);int(1..)])
+
+--
+
+(|y#bv_1| / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(|y#bv_1|, 2) @ 2 != 0}
+
+--
+
+(x#bv_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#bv_1, 2) @ 2 != 0}
+
+--
+
+Final model:
+
+find x: int(-5..2)
+find y: int(-5..2)
+find z: int(-5..2)
+find z#bv_1: int(-5..2)
+find y#bv_1: int(-5..2)
+find x#bv_1: int(-5..2)
+
+such that
+
+sum([|sum([SafeDiv(x#bv_1, 2),y#bv_1,-(z#bv_1);int(1..)])|,SafeDiv(|y#bv_1|, 2);int(1..)]) = 10
+

@@ -23,20 +23,20 @@ Expected token is absent.
 
 ### Example 1: Missing identifier(s)
 
-```text
-find: bool
+```essence
+find : bool
 ```
 
 ### Example 2: Missing right operand
 
-```text
+```essence
 find x: int
 such that x /
 ```
 
 ### Example 3: Missing domain in tuple
 
-```text
+```essence
 find x: tuple()
 ```
 
@@ -52,20 +52,20 @@ Symbol(s) that are not supposed to be there according to the grammar rule tree-s
 
 ### Example 1: Extra `)` at the end
 
-```text
+```essence
 find x: int(1..2))
 ```
 
 ### Example 2: Unexpected `%` in implication
 
-```text
+```essence
 find x: int(1..3)
 such that x -> %9
 ```
 
 ### Example 3: Unexpected `&` inside matrix domain
 
-```text
+```essence
 find x: matrix indexed by [int, &] of int
 ```
 
@@ -81,7 +81,7 @@ A line that cannot be parsed by the tree-sitter using any of the grammar rules.
 
 ### Example 1: Invalid `print x`
 
-```text
+```essence
 find x: int(1..5)
 print x 
 ```
@@ -90,7 +90,7 @@ print x
 
 More of an edge case. Even though the keyword `find` is present, tree-sitter does not parse the line using the `find_statement` rule since the first symbol after `find` cannot be parsed an identifier.
 
-```text
+```essence
 find +,a,b: int(1..3)
 ```
 
@@ -114,13 +114,13 @@ Compare the variable names against the set of keywords that should not be allowe
 
 ### Example 1: Keyword `bool` as an identifier
 
-```text
+```essence
 find bool: bool
 ```
 
 ### Example 2: Keyword `letting` used as an identifier
 
-```text
+```essence
 find letting,b,c: int(1..3)
 ```
 
@@ -136,7 +136,7 @@ Checking that the identifier used in a constraint was previously declared in a `
 
 ### Example: x was not declared before
 
-```text
+```essence
 find y: int (1..4)
 such that x = 5
 ```
@@ -151,7 +151,7 @@ Logically or mathematically invalid bounds.
 
 ### Example: a bigger value before smaller
 
-```text
+```essence
 find x: int(10..5)
 ```
 
@@ -167,7 +167,7 @@ Enforcing types on operations and catching a mismatch between expected types and
 
 ### Example: Adding an integer and boolean
 
-```text
+```essence
 letting y be true 
 find x: int (5..10)
 such that 5 + y = 6
@@ -183,7 +183,7 @@ Attempt to divide/modulo by zero.
 
 ### Example: Divide by zero
 
-```text
+```essence
 find x: int(5..10)
 such that x/0 = 3
 ```
@@ -199,7 +199,7 @@ Negative, zero or index out of bounds is invalid.
 
 ### Example: s tuple index of out bounds
 
-```text
+```essence
 letting s be tuple(0,1,1,0)
 letting t be tuple(0,0,0,1)
 find a : bool such that a = (s[5] = t[1]) $ true

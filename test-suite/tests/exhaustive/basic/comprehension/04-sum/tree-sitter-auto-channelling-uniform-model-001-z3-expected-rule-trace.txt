@@ -1,0 +1,102 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+sum([ a[i] | i : int(1..2) ]) = 3
+
+--
+
+sum([ a[i] | i : int(1..2) ]) = 3
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+sum([ a[i] | i : int(1..2) ]) = 3
+new variables:
+  find a#array_1: matrix indexed by [int(1..2)] of int(1..2)
+
+--
+
+sum([ a[i] | i : int(1..2) ]) = 3
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+sum([ a[i] | i : int(1..2) ]) = 3
+new variables:
+  find a#array_1#lia_1: matrix indexed by [int(1..2)] of int(1..2)
+
+--
+
+[ a[i] | i : int(1..2) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[a[1],a[2];int(1..)]
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a#array_1#lia_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#lia_1,[1])
+
+--
+
+a#array_1#lia_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#lia_1,[2])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+find a#array_1: matrix indexed by [int(1..2)] of int(1..2)
+find a#array_1#lia_1: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+sum([SafeIndex(a#array_1#lia_1,[1]),SafeIndex(a#array_1#lia_1,[2]);int(1..)]) = 3
+

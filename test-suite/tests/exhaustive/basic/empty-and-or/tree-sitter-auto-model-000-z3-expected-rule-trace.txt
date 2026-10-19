@@ -1,0 +1,45 @@
+Model before rewriting:
+
+find x: int(0..1)
+
+such that
+
+and([;int(1..0)]),
+!(or([;int(1..0)])),
+or([and([;int(1..0)]),x = 0;int(1..)]),
+or([or([;int(1..0)]),x = 1;int(1..)])
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(0..1)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+or([x#bv_1 = 1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+x#bv_1 = 1
+
+--
+
+Final model:
+
+find x: int(0..1)
+find x#bv_1: int(0..1)
+
+such that
+
+true,
+true,
+true,
+x#bv_1 = 1
+

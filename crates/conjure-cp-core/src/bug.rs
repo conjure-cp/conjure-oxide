@@ -1,3 +1,8 @@
+use std::fmt::Display;
+
+#[doc(hidden)]
+pub const BUG_REPORT_VERSION: &str = git_version::git_version!();
+
 /// Triggers a panic with a detailed bug report message, while ensuring the panic is ignored in coverage reports.
 ///
 /// This macro is useful in situations where an unreachable code path is hit or when a bug occurs.
@@ -31,8 +36,80 @@ version: {}
 location: {}:{}:{}
 
 {}
-"#, git_version::git_version!(),file!(),module_path!(),line!(), &formatted_msg);
+"#, $crate::bug::BUG_REPORT_VERSION,file!(),module_path!(),line!(), &formatted_msg);
 
         panic!("{}", full_message);
     }};
+}
+
+/// Like [assert!], but formats the error message using [bug!]
+#[macro_export]
+macro_rules! bug_assert {
+    ($cond:expr, $msg:expr, $($arg:tt)*) => {
+        if !$cond {
+            let formatted_msg = format!($msg, $($arg)*);
+            $crate::bug!("assertion failed: {}\n{}", stringify!($cond), formatted_msg);
+        }
+    };
+
+    ($cond:expr, $msg:expr) => {
+        if !$cond {
+            $crate::bug!("assertion failed: {}\n{}", stringify!($cond), $msg);
+        }
+    };
+
+    ($cond:expr) => {
+        if !$cond {
+            $crate::bug!("assertion failed: {}", stringify!($cond));
+        }
+    };
+}
+
+/// Like [assert_eq!], but formats the error message using [bug!]
+#[macro_export]
+macro_rules! bug_assert_eq {
+    ($left:expr, $right:expr, $msg:expr, $($arg:tt)*) => {
+        if &$left != &$right {
+            let formatted_msg = format!($msg, $($arg)*);
+            $crate::bug!(
+                "assertion failed: {} != {}\n{}",
+                stringify!($left),
+                stringify!($right),
+                formatted_msg
+            );
+        }
+    };
+
+    ($left:expr, $right:expr, $msg:expr) => {
+        $crate::bug_assert_eq!($left, $right, $msg,);
+    };
+
+    ($left:expr, $right:expr) => {
+        if &$left != &$right {
+            $crate::bug!(
+                "assertion failed: {} != {}",
+                stringify!($left),
+                stringify!($right)
+            );
+        }
+    };
+}
+
+pub trait UnwrapOrBug {
+    type Output;
+    fn unwrap_or_bug(self) -> Self::Output;
+}
+
+impl<T, E: Display> UnwrapOrBug for Result<T, E> {
+    type Output = T;
+    fn unwrap_or_bug(self) -> Self::Output {
+        self.unwrap_or_else(|e| bug!("error: {}", e))
+    }
+}
+
+impl<T> UnwrapOrBug for Option<T> {
+    type Output = T;
+    fn unwrap_or_bug(self) -> Self::Output {
+        self.unwrap_or_else(|| bug!("expected a value, but got None"))
+    }
 }

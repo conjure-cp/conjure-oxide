@@ -2,7 +2,7 @@
 #
 # ./update-test-configs.sh
 #
-# DESCRIPTION: bulk manipulate the config.toml files of integration tests
+# DESCRIPTION: bulk manipulate the config.toml files of exhaustive tests
 #
 # USAGE:
 #   See the "usage" message below. Run script with --help to print it.
@@ -16,8 +16,8 @@
 
 set -euo pipefail
 
-ROOT="tests-integration/tests"
-ALLOWED_PATHS_DESC="tests-integration/tests/{integration,roundtrip}"
+ROOT="test-suite/tests"
+ALLOWED_PATHS_DESC="test-suite/tests/{exhaustive,roundtrip}"
 
 usage() {
   cat <<'EOF'
@@ -26,11 +26,11 @@ Usage:
 
 Input:
   Test selectors are read from stdin, one per line, as either:
-    - test names, e.g. tests_integration_basic_div_04
-    - globbed test names, e.g. tests_integration_cnf*
+    - test names, e.g. tests_exhaustive_basic_div_04
+    - globbed test names, e.g. tests_exhaustive_cnf*
     - paths (absolute or relative to repo root), e.g.
-      ./tests-integration/tests/integration/basic/comprehension-01-1
-  Paths outside <repo root>/tests-integration/tests/{integration,roundtrip} are ignored.
+      ./test-suite/tests/exhaustive/basic/comprehension/set-fixed-size-sum
+  Paths outside <repo root>/test-suite/tests/{exhaustive,roundtrip} are ignored.
   If no input is given, your default editor will be opened so you can type in the paths;
   This behaviour is disabled when the script is not ran interactively (e.g input is piped from another command)
 
@@ -49,9 +49,9 @@ Options:
       For regex, prefix with re:, e.g.
       "re:^# TODO\(repr\):"
 
-  --skip [true|false]
-      true    - ensure "skip = true" exists  (default)
-      false   - remove any "skip = ..." line
+  --skip [REASON|false]
+      REASON  - set skip = "REASON" (non-empty string giving why the test is ignored)
+      false   - remove any skip = ... line
       omitted - do not touch skip
 
   --create-if-empty
@@ -60,7 +60,7 @@ Options:
   --parser tree-sitter|via-conjure
       If set, enable only this parser in [parser]
 
-  --rewriter naive|morph
+  --rewriter baseline|optimised|baseline+prefilter|baseline+worklist
       If set, enable only this rewriter in [rewriter]
 
   --comprehension-expander native|via-solver|via-solver-ac
@@ -107,6 +107,44 @@ validate_choice() {
   [[ "$ok" -eq 1 ]] || err "Invalid $name: '$value' (allowed: ${allowed[*]})"
 }
 
+validate_rewriter() {
+  local value="$1"
+  case "$value" in
+    baseline|optimised) return 0 ;;
+  esac
+
+  [[ "$value" == baseline+* ]] || err "Invalid rewriter: '$value' (allowed: baseline, optimised, baseline+prefilter, baseline+worklist and combinations)"
+
+  local seen_baseline=0
+  local seen_prefilter=0
+  local seen_worklist=0
+  local token
+  local tokens
+  IFS='+' read -ra tokens <<< "$value"
+  for token in "${tokens[@]}"; do
+    case "$token" in
+      baseline)
+        [[ "$seen_baseline" -eq 0 ]] || err "Invalid rewriter: duplicate 'baseline'"
+        seen_baseline=1
+        ;;
+      prefilter)
+        [[ "$seen_prefilter" -eq 0 ]] || err "Invalid rewriter: duplicate 'prefilter'"
+        seen_prefilter=1
+        ;;
+      worklist)
+        [[ "$seen_worklist" -eq 0 ]] || err "Invalid rewriter: duplicate 'worklist'"
+        seen_worklist=1
+        ;;
+      *)
+        err "Invalid rewriter option: '$token' (allowed: baseline, prefilter, worklist)"
+        ;;
+    esac
+  done
+
+  [[ "$seen_baseline" -eq 1 ]] || err "Invalid rewriter: '$value' must start with baseline"
+  [[ "$seen_prefilter$seen_worklist" != "00" ]] || err "Invalid rewriter: '$value' has no options"
+}
+
 prepend_comment() {
   local file="$1"
   local text="$2"
@@ -119,22 +157,24 @@ prepend_comment() {
   mv "$tmp" "$file"
 }
 
-set_skip_true() {
+set_skip_reason() {
   local file="$1"
+  local reason="$2"
+  [[ -n "$reason" ]] || err "skip reason must be non-empty"
   local tmp
   tmp="$(mktemp)"
-  awk '
-    BEGIN { done=0 }
+  SKIP_REASON="$reason" awk '
+    BEGIN { reason = ENVIRON["SKIP_REASON"]; gsub(/\\/, "\\\\", reason); gsub(/"/, "\\\"", reason); done = 0 }
     /^[[:space:]]*skip[[:space:]]*=/ {
       if (!done) {
-        print "skip = true"
-        done=1
+        printf "skip = \"%s\"\n", reason
+        done = 1
       }
       next
     }
     { print }
     END {
-      if (!done) print "skip = true"
+      if (!done) printf "skip = \"%s\"\n", reason
     }
   ' "$file" > "$tmp"
   mv "$tmp" "$file"
@@ -270,8 +310,8 @@ is_allowed_config_path() {
   local candidate
   candidate="$(realpath -m "$1")"
   case "$candidate" in
-    "${REPO_ROOT}/${ROOT}/integration/config.toml" | \
-    "${REPO_ROOT}/${ROOT}/integration/"*/config.toml | \
+    "${REPO_ROOT}/${ROOT}/exhaustive/config.toml" | \
+    "${REPO_ROOT}/${ROOT}/exhaustive/"*/config.toml | \
     "${REPO_ROOT}/${ROOT}/roundtrip/config.toml" | \
     "${REPO_ROOT}/${ROOT}/roundtrip/"*/config.toml)
       return 0
@@ -287,9 +327,9 @@ name_to_config_path() {
   local suite rel
 
   case "$test_name" in
-    tests_integration_*)
-      suite="integration"
-      rel="${test_name#tests_integration_}"
+    tests_exhaustive_*)
+      suite="exhaustive"
+      rel="${test_name#tests_exhaustive_}"
       ;;
     tests_roundtrip_*)
       suite="roundtrip"
@@ -355,7 +395,7 @@ config_path_to_glob_key() {
   rel="${rel#*/}"
 
   case "$suite" in
-    integration|roundtrip) ;;
+    exhaustive|roundtrip) ;;
     *) return 1 ;;
   esac
 
@@ -405,7 +445,7 @@ resolve_test_input_paths() {
   local input="$1"
 
   if is_glob_pattern "$input"; then
-    [[ "$input" == tests_integration_* || "$input" == tests_roundtrip_* ]] || return 1
+    [[ "$input" == tests_exhaustive_* || "$input" == tests_roundtrip_* ]] || return 1
     local p key
     for p in "${ALL_CONFIGS[@]}"; do
       key="$(config_path_to_glob_key "$p" || true)"
@@ -452,14 +492,16 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --skip)
-      # Optional value: --skip => true, --skip false => false
       if [[ $# -ge 2 && "$2" != --* ]]; then
-        skip_opt="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')"
-        [[ "$skip_opt" == "true" || "$skip_opt" == "false" ]] || err "--skip must be true or false"
+        skip_opt="$2"
+        if [[ "$(printf '%s' "$skip_opt" | tr '[:upper:]' '[:lower:]')" == "false" ]]; then
+          skip_opt="false"
+        elif [[ -z "$skip_opt" ]]; then
+          err "--skip requires a non-empty reason string, or false to clear"
+        fi
         shift 2
       else
-        skip_opt="true"
-        shift
+        err "--skip requires a reason string, or false to clear"
       fi
       ;;
     --create-if-empty)
@@ -475,7 +517,7 @@ while [[ $# -gt 0 ]]; do
     --rewriter)
       [[ $# -ge 2 ]] || err "--rewriter requires a value"
       rewriter_opt="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')"
-      validate_choice "rewriter" "$rewriter_opt" "naive" "morph"
+      validate_rewriter "$rewriter_opt"
       shift 2
       ;;
     --comprehension-expander)
@@ -514,7 +556,7 @@ cd "$REPO_ROOT"
 
 mapfile -t ALL_CONFIGS < <(
   {
-    find "${REPO_ROOT}/${ROOT}/integration" -type f -name config.toml 2>/dev/null
+    find "${REPO_ROOT}/${ROOT}/exhaustive" -type f -name config.toml 2>/dev/null
     find "${REPO_ROOT}/${ROOT}/roundtrip" -type f -name config.toml 2>/dev/null
   } | sort
 )
@@ -550,7 +592,7 @@ for t in "${test_names[@]}"; do
     elif is_path_input "$t"; then
       echo "WARN: Ignoring path outside ${ALLOWED_PATHS_DESC}: $t" >&2
     else
-      echo "WARN: Invalid test selector (expected tests_integration_... / tests_roundtrip_... or /path/to/test...): $t" >&2
+      echo "WARN: Invalid test selector (expected tests_exhaustive_... / tests_roundtrip_... or /path/to/test...): $t" >&2
     fi
     ((skipped+=1))
     continue
@@ -597,10 +639,10 @@ for t in "${test_names[@]}"; do
     fi
 
     if [[ -n "$skip_opt" ]]; then
-      if [[ "$skip_opt" == "true" ]]; then
-        set_skip_true "$work_file"
-      else
+      if [[ "$skip_opt" == "false" ]]; then
         set_skip_false "$work_file"
+      else
+        set_skip_reason "$work_file" "$skip_opt"
       fi
     fi
 

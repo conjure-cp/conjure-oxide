@@ -10,7 +10,7 @@ Multisets have attributes and a single domain. A multiset can be defined for bot
 In the original conjure implementation, a multiset was _infinite_ without `size`, `maxSize`, or `maxOccur`. 
 In the new conjure-oxide implementation, a variable's domain is _ground_ if it is fully-bounded (i.e. has a `minSize` and `maxSize`).
 
-```
+```essence
 $ Valid
 find foo: multiset (maxSize 5, minOccur 2) of int(1..10)
 find bar: multiset (size 3) of int(1..4)

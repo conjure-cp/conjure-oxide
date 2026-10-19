@@ -46,7 +46,7 @@ Which shows the average wall-clock time, as well as providing some information o
 ``criterion`` is usually the right tool for most benchmarks, although there are issues. Due to the statistics-driven ethos of ``criterion``, there is currently no one-shot support, with 10 samples being the minimum number of samples for a benchmark. Wall-clock time also gives little insight into where things are slowing in your code, and will not catch things like poor memory locality. Even more crucially, however, is how ``criterion`` performs in CI pipelines. The developer’s themselves say the following:
 
 _”You probably shouldn’t (or, if you do, don’t rely on the results). The virtualization used by_
-_Cloud-CI providers like Travis-CI and Github Actions introduces a great deal of noise into the_
+_Cloud-CI providers like Travis-CI and GitHub Actions introduces a great deal of noise into the_
 _benchmarking process, and Criterion.rs’ statistical analysis can only do so much to mitigate_
 _that. This can result in the appearance of large changes in the measured performance even_
 _if the actual performance of the code is not changing."_
@@ -101,10 +101,10 @@ As you can see, ``iai`` is lightweight, fast and can provide some really accurat
 
 # Workflows
 
-Once benchmarking is established, workflows are not too difficult to add too. As discussed before, for CI workflows ``iai`` should be used, and not ``criterion``. Take the following example from the ``tree-morph`` crate. I will put the code below and then briefly explain each portion. It should not be too difficult to adapt to other benchmarks.
+Once benchmarking is established, workflows are not too difficult to add too. As discussed before, for CI workflows ``iai`` should be used, and not ``criterion``. Take the following example workflow. It should not be too difficult to adapt to other benchmarks.
 
 ```yaml
-name: "iai tree-morph Benchmarks"
+name: "iai Benchmarks"
 
 on:
   push:
@@ -117,7 +117,7 @@ on:
       - crates/**
       - Cargo.*
       - conjure_oxide/tests/**
-      - .github/workflows/iai-tree-morph-benches.yml
+      - .github/workflows/iai-benches.yml
   pull_request:
     paths:
       - conjure_oxide/**
@@ -125,14 +125,14 @@ on:
       - crates/**
       - Cargo.*
       - conjure_oxide/tests/**
-      - .github/workflows/iai-tree-morph-benches.yml
+      - .github/workflows/iai-benches.yml
   workflow_dispatch:
 
 
 
 jobs:
   benches:
-    name: "Run iai tree-morph benchmarks"
+    name: "Run iai benchmarks"
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -166,8 +166,8 @@ jobs:
       - name: Install iai-callgrind-runner
         run: cargo install --version 0.14.0 iai-callgrind-runner
 
-      - name: Run tree-morph benchmarks with iai-callgrind
-        run: cargo bench --manifest-path crates/tree_morph/Cargo.toml --bench iai-factorial --bench iai-identity --bench iai-modify_leafs > iai_callgrind_output.txt
+      - name: Run benchmarks with iai-callgrind
+        run: cargo bench --bench iai-bench > iai_callgrind_output.txt
 
       - name: Upload artefact
         uses: actions/upload-artifact@v4

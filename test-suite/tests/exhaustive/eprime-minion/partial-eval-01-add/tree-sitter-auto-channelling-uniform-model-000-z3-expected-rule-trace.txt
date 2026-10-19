@@ -1,0 +1,56 @@
+Model before rewriting:
+
+find x: int(1..10)
+find y: int(1..10)
+
+such that
+
+sum([sum([sum([sum([x,2;int(1..)]),4;int(1..)]),y;int(1..)]),1;int(1..)]) = 20
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#bv_1: int(1..10)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(1..10)
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+sum([sum([sum([sum([x#bv_1,2;int(1..)]),4;int(1..)]),y#bv_1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([x#bv_1,2,4,y#bv_1,1;int(1..)])
+
+--
+
+Final model:
+
+find x: int(1..10)
+find y: int(1..10)
+find y#bv_1: int(1..10)
+find x#bv_1: int(1..10)
+
+such that
+
+sum([x#bv_1,y#bv_1,7;int(1..)]) = 20
+

@@ -1,0 +1,36 @@
+Model before rewriting:
+
+find x: int(0..1)
+
+such that
+
+and([;int(1..0)]),
+!(or([;int(1..0)])),
+or([and([;int(1..0)]),x = 0;int(1..)]),
+or([or([;int(1..0)]),x = 1;int(1..)])
+
+--
+
+or([x = 1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+x = 1
+
+--
+
+x = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x,1)
+
+--
+
+Final model:
+
+find x: int(0..1)
+
+such that
+
+true,
+true,
+true,
+WatchedLiteral(x,1)
+

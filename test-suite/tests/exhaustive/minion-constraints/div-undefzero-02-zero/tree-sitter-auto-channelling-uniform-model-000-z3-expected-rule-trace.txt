@@ -1,0 +1,85 @@
+Model before rewriting:
+
+find x: int(1..5)
+find y: int(0..2)
+find z: int(1..2)
+
+such that
+
+(x / y) = z
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#bv_1: int(1..2)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(1..5)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#bv_1: int(0..2)
+
+--
+
+z
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+z#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+(x#bv_1 / y#bv_1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#bv_1, y#bv_1) @ y#bv_1 != 0}
+
+--
+
+{SafeDiv(x#bv_1, y#bv_1) @ y#bv_1 != 0} = z#bv_1
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeDiv(x#bv_1, y#bv_1) = z#bv_1 @ y#bv_1 != 0}
+
+--
+
+{SafeDiv(x#bv_1, y#bv_1) = z#bv_1 @ y#bv_1 != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeDiv(x#bv_1, y#bv_1) = z#bv_1,y#bv_1 != 0;int(1..)])
+
+--
+
+Final model:
+
+find x: int(1..5)
+find y: int(0..2)
+find z: int(1..2)
+find z#bv_1: int(1..2)
+find x#bv_1: int(1..5)
+find y#bv_1: int(0..2)
+
+such that
+
+and([SafeDiv(x#bv_1, y#bv_1) = z#bv_1,y#bv_1 != 0;int(1..)])
+

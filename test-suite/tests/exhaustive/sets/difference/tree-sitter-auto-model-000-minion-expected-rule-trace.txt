@@ -1,0 +1,177 @@
+Model before rewriting:
+
+find c: set (size 2) of int(1..3)
+
+such that
+
+c = ({1,2,3} - {2})
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+new variables:
+  find c#explicit_1: matrix indexed by [int(1..2)] of int(1..3)
+new constraints:
+  or([2 < 2,([SafeIndex(c#explicit_1,[1]);int(1..)] <lex [SafeIndex(c#explicit_1,[2]);int(1..)]);int(1..)])
+  or([1 <= 2,SafeIndex(c#explicit_1,[1]) = 1;int(1..)])
+  or([2 <= 2,SafeIndex(c#explicit_1,[2]) = 1;int(1..)])
+
+--
+
+c#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c#explicit_1
+new variables:
+  find c#explicit_1#components_1: int(1..3)
+  find c#explicit_1#components_2: int(1..3)
+
+--
+
+c#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c#explicit_1
+
+--
+
+c = {1,3}
+   ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
+and([2 = 2,or([and([1 <= 2,SafeIndex(c#explicit_1,[1]) = 1;int(1..)]),and([2 <= 2,SafeIndex(c#explicit_1,[2]) = 1;int(1..)]);int(1..)]),or([and([1 <= 2,SafeIndex(c#explicit_1,[1]) = 3;int(1..)]),and([2 <= 2,SafeIndex(c#explicit_1,[2]) = 3;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+c#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c#explicit_1
+
+--
+
+c#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c#explicit_1
+
+--
+
+c#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c#explicit_1
+
+--
+
+c#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c#explicit_1
+
+--
+
+or([([SafeIndex(c#explicit_1,[1]);int(1..)] <lex [SafeIndex(c#explicit_1,[2]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+([SafeIndex(c#explicit_1,[1]);int(1..)] <lex [SafeIndex(c#explicit_1,[2]);int(1..)])
+
+--
+
+and([SafeIndex(c#explicit_1,[1]) = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(c#explicit_1,[1]) = 1
+
+--
+
+and([SafeIndex(c#explicit_1,[2]) = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(c#explicit_1,[2]) = 1
+
+--
+
+and([SafeIndex(c#explicit_1,[1]) = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(c#explicit_1,[1]) = 3
+
+--
+
+and([SafeIndex(c#explicit_1,[2]) = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(c#explicit_1,[2]) = 3
+
+--
+
+SafeIndex(c#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+c#explicit_1#components_1
+
+--
+
+SafeIndex(c#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+c#explicit_1#components_2
+
+--
+
+SafeIndex(c#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+c#explicit_1#components_1
+
+--
+
+SafeIndex(c#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+c#explicit_1#components_2
+
+--
+
+SafeIndex(c#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+c#explicit_1#components_1
+
+--
+
+SafeIndex(c#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+c#explicit_1#components_2
+
+--
+
+c#explicit_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(c#explicit_1#components_1,1)
+
+--
+
+c#explicit_1#components_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(c#explicit_1#components_2,1)
+
+--
+
+c#explicit_1#components_1 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(c#explicit_1#components_1,3)
+
+--
+
+c#explicit_1#components_2 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(c#explicit_1#components_2,3)
+
+--
+
+([c#explicit_1#components_1;int(1..)] <lex [c#explicit_1#components_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([c#explicit_1#components_1], [c#explicit_1#components_2])
+
+--
+
+Final model:
+
+find c: set (representation explicit, size 2) of int(1..3)
+find c#explicit_1: matrix indexed by [int(1..2)] of int(1..3)
+find c#explicit_1#components_1: int(1..3)
+find c#explicit_1#components_2: int(1..3)
+
+such that
+
+and([or([WatchedLiteral(c#explicit_1#components_1,1),WatchedLiteral(c#explicit_1#components_2,1);int(1..)]),or([WatchedLiteral(c#explicit_1#components_1,3),WatchedLiteral(c#explicit_1#components_2,3);int(1..)]);int(1..)]),
+FlatLexLt([c#explicit_1#components_1], [c#explicit_1#components_2]),
+true,
+true
+

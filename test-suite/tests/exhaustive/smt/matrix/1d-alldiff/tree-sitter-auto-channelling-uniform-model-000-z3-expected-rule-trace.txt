@@ -1,0 +1,246 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..3)] of int(1..3)
+
+such that
+
+allDifferent(a),
+allDifferent(a[..]),
+a[1] <= a[2],
+a[2] <= a[3]
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#array_1: matrix indexed by [int(1..3)] of int(1..3)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+allDifferent(a),
+allDifferent(a[..]),
+a[1] <= a[2],
+a[2] <= a[3]
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+allDifferent(a),
+allDifferent(a[..]),
+a[1] <= a[2],
+a[2] <= a[3]
+new variables:
+  find a#array_1#bv_1: matrix indexed by [int(1..3)] of int(1..3)
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#array_1#bv_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#array_1#bv_1
+
+--
+
+a#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#array_1#bv_1
+
+--
+
+a#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#array_1#bv_1
+
+--
+
+a#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#array_1#bv_1
+
+--
+
+a#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#array_1#bv_1
+
+--
+
+a#array_1#bv_1[..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(a#array_1#bv_1,[..])
+
+--
+
+a#array_1#bv_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#bv_1,[1])
+
+--
+
+a#array_1#bv_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#bv_1,[2])
+
+--
+
+a#array_1#bv_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#bv_1,[2])
+
+--
+
+a#array_1#bv_1[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#bv_1,[3])
+
+--
+
+allDifferent(a#array_1#bv_1)
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct(a#array_1#bv_1)
+
+--
+
+allDifferent(SafeSlice(a#array_1#bv_1,[..]))
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct(SafeSlice(a#array_1#bv_1,[..]))
+
+--
+
+SafeSlice(a#array_1#bv_1,[..])
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(a#array_1#bv_1,[1]),SafeIndex(a#array_1#bv_1,[2]),SafeIndex(a#array_1#bv_1,[3]);int(1..)]
+
+--
+
+smtDistinct(a#array_1#bv_1)
+   ~~> matrix_ref_to_slice ([("Smt", 999)])
+smtDistinct(SafeSlice(a#array_1#bv_1,[..]))
+
+--
+
+SafeSlice(a#array_1#bv_1,[..])
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(a#array_1#bv_1,[1]),SafeIndex(a#array_1#bv_1,[2]),SafeIndex(a#array_1#bv_1,[3]);int(1..)]
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..3)] of int(1..3)
+find a#array_1: matrix indexed by [int(1..3)] of int(1..3)
+find a#array_1#bv_1: matrix indexed by [int(1..3)] of int(1..3)
+
+such that
+
+smtDistinct([SafeIndex(a#array_1#bv_1,[1]),SafeIndex(a#array_1#bv_1,[2]),SafeIndex(a#array_1#bv_1,[3]);int(1..)]),
+smtDistinct([SafeIndex(a#array_1#bv_1,[1]),SafeIndex(a#array_1#bv_1,[2]),SafeIndex(a#array_1#bv_1,[3]);int(1..)]),
+SafeIndex(a#array_1#bv_1,[1]) <= SafeIndex(a#array_1#bv_1,[2]),
+SafeIndex(a#array_1#bv_1,[2]) <= SafeIndex(a#array_1#bv_1,[3])
+

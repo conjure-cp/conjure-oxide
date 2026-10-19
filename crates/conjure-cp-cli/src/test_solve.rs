@@ -1,11 +1,11 @@
+use crate::exit;
 use std::path::PathBuf;
-use std::process::exit;
 use std::sync::Arc;
 
 use crate::cli::GlobalArgs;
 use crate::solve::{self, init_solver};
 use clap::ValueHint;
-use conjure_cp::instantiate::instantiate_model;
+use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
 use conjure_cp_cli::utils::conjure::{
     get_solutions, get_solutions_from_conjure, solutions_to_json,
 };
@@ -48,21 +48,26 @@ pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyh
             let param_model = solve::parse(&global_args, Arc::clone(&context), param_file_name)?;
             instantiate_model(problem_model, param_model)?
         }
-        None => problem_model,
+        None => {
+            let mut problem_model = problem_model;
+            validate_instantiation_conditions(&mut problem_model)?;
+            problem_model
+        }
     };
 
     drop(ctx_lock);
 
     let rewritten_model = solve::rewrite(unified_model, &global_args, Arc::clone(&context))?;
 
-    let solver = init_solver(&global_args);
+    let solver = init_solver(&global_args)?;
 
-    // now we are stealing from the integration tester
+    // now we are stealing from the exhaustive tester
 
     let our_solutions = get_solutions(
         solver,
         rewritten_model,
         0,
+        false,
         &global_args.save_solver_input_file,
         global_args.rule_trace_cdp,
     )?;

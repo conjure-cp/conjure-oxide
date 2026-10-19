@@ -1,0 +1,52 @@
+Model before rewriting:
+
+find a: int(-5..4)
+find b: int(-5..4)
+find c: int(-5..4)
+find d: int(-5..4)
+
+such that
+
+a = -(b),
+-2 = c,
+-(-(d)) = 3
+
+--
+
+-(-(d))
+   ~~> elmininate_double_negation ([("Base", 8400)])
+d
+
+--
+
+a = -(b)
+   ~~> introduce_minuseq_from_eq ([("Minion", 4400)])
+MinusEq(a,b)
+
+--
+
+-2 = c
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(c,-2)
+
+--
+
+d = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(d,3)
+
+--
+
+Final model:
+
+find a: int(-5..4)
+find b: int(-5..4)
+find c: int(-5..4)
+find d: int(-5..4)
+
+such that
+
+MinusEq(a,b),
+WatchedLiteral(c,-2),
+WatchedLiteral(d,3)
+

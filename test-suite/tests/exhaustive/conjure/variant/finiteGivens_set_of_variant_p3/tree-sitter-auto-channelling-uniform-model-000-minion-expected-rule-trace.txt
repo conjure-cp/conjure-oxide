@@ -1,0 +1,50 @@
+Model before rewriting:
+
+letting REC be domain variant {a: int(-2147483647..2147483647), b: int(-2147483647..2147483647)}
+letting p be {variant{a = 10},variant{a = 13},variant{b = 7},variant{b = 3}}
+find x: int(0..100)
+find y: int(0..100)
+letting r be variant{b = 4}
+find r_in_p: bool
+
+such that
+
+x = sum([ i[a] | i <- p, active(i, a) ]),
+y = sum([ i[b] | i <- p, active(i, b) ]),
+r_in_p = r in p
+
+--
+
+x = 23
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x,23)
+
+--
+
+y = 10
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,10)
+
+--
+
+r_in_p = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(r_in_p,false)
+
+--
+
+Final model:
+
+letting REC be domain variant {a: int(-2147483647..2147483647), b: int(-2147483647..2147483647)}
+letting p be {variant{a = 10},variant{a = 13},variant{b = 7},variant{b = 3}}
+find x: int(0..100)
+find y: int(0..100)
+letting r be variant{b = 4}
+find r_in_p: bool
+
+such that
+
+WatchedLiteral(x,23),
+WatchedLiteral(y,10),
+WatchedLiteral(r_in_p,false)
+

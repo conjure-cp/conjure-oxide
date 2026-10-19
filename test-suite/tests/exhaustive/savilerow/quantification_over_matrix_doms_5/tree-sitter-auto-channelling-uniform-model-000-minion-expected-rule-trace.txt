@@ -1,0 +1,28 @@
+Model before rewriting:
+
+letting k be 2
+letting n be 2
+find x: int(1..n)
+
+such that
+
+and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ])
+
+--
+
+[ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true;int(1..)]
+
+--
+
+Final model:
+
+letting k be 2
+letting n be 2
+find x: int(1..n)
+
+such that
+
+true
+

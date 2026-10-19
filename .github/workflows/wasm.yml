@@ -1,0 +1,89 @@
+name: Wasm
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+    - crates/**
+    - Cargo.*
+    - rust-toolchain.toml
+    - tools/build-wasm.sh
+    - tools/emscripten-linker.sh
+    - tools/wasm/**
+    - .github/workflows/wasm.yml
+  pull_request:
+    paths:
+    - crates/**
+    - Cargo.*
+    - rust-toolchain.toml
+    - tools/build-wasm.sh
+    - tools/emscripten-linker.sh
+    - tools/wasm/**
+    - .github/workflows/wasm.yml
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    name: Build and test in Chromium
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CARGO_INCREMENTAL: 0
+      # Minion binding generation needs host libclang >=20 for Emscripten headers.
+      LIBCLANG_PATH: /usr/lib/llvm-20/lib
+      CLANG_PATH: /usr/bin/clang-20
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Free disk space
+      run: .github/workflows/tools/free_disk_space.sh
+
+    - name: Install native build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-20 libclang-20-dev cmake
+        "$CLANG_PATH" --version
+        test -f "$LIBCLANG_PATH/libclang.so"
+
+    - name: Install Rust target
+      run: |
+        rustup toolchain install
+        rustup target add wasm32-unknown-emscripten
+
+    - name: Install Emscripten
+      run: |
+        git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+        "$RUNNER_TEMP/emsdk/emsdk" install 6.0.10
+        "$RUNNER_TEMP/emsdk/emsdk" activate 6.0.10
+
+    - name: Build Wasm package
+      shell: bash
+      run: |
+        source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+        bash tools/build-wasm.sh
+
+    - uses: actions/setup-node@v6
+      with:
+        node-version: '24'
+        cache: npm
+        cache-dependency-path: tools/wasm/tests/package-lock.json
+
+    - name: Install browser test dependencies
+      working-directory: tools/wasm/tests
+      run: |
+        npm ci
+        npx playwright install --with-deps chromium
+
+    - name: Test browser interface
+      working-directory: tools/wasm/tests
+      run: npm test
+
+    - name: Upload Wasm package
+      uses: actions/upload-artifact@v6
+      with:
+        name: conjure-wasm
+        path: target/wasm-package/
+        if-no-files-found: error

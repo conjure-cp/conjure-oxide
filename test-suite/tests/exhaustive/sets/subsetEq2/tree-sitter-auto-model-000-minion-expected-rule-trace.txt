@@ -1,0 +1,147 @@
+Model before rewriting:
+
+letting a be {2,3}
+letting b be {1,2}
+find c: set (size 1) of int(1..3)
+
+such that
+
+and([(c subsetEq b),!((c subsetEq a));int(1..)])
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+new variables:
+  find c#explicit_1: matrix indexed by [int(1..1)] of int(1..3)
+new constraints:
+  or([1 <= 1,SafeIndex(c#explicit_1,[1]) = 1;int(1..)])
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+
+--
+
+and([(c subsetEq {1,2}),!((c subsetEq {2,3}));int(1..)]),
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([(c subsetEq {1,2}),!((c subsetEq {2,3}));int(1..)]),
+true
+new variables:
+  find c#explicit_1#components_1: int(1..3)
+
+--
+
+(c subsetEq {1,2})
+   ~~> subseteq_explicit ([("ReprGeneral", 9500)])
+and([or([1 < 1,SafeIndex(c#explicit_1,[1]) in {1,2};int(1..)]);int(1..)])
+
+--
+
+c#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c#explicit_1
+
+--
+
+(c subsetEq {2,3})
+   ~~> subseteq_explicit ([("ReprGeneral", 9500)])
+and([or([1 < 1,SafeIndex(c#explicit_1,[1]) in {2,3};int(1..)]);int(1..)])
+
+--
+
+c#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c#explicit_1
+
+--
+
+and([or([SafeIndex(c#explicit_1,[1]) in {1,2};int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+or([SafeIndex(c#explicit_1,[1]) in {1,2};int(1..)])
+
+--
+
+or([SafeIndex(c#explicit_1,[1]) in {1,2};int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+SafeIndex(c#explicit_1,[1]) in {1,2}
+
+--
+
+and([or([SafeIndex(c#explicit_1,[1]) in {2,3};int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+or([SafeIndex(c#explicit_1,[1]) in {2,3};int(1..)])
+
+--
+
+or([SafeIndex(c#explicit_1,[1]) in {2,3};int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+SafeIndex(c#explicit_1,[1]) in {2,3}
+
+--
+
+SafeIndex(c#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+c#explicit_1#components_1
+
+--
+
+SafeIndex(c#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+c#explicit_1#components_1
+
+--
+
+!(c#explicit_1#components_1 in {2,3})
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__0)
+new variables:
+  findAux __0: bool
+new constraints:
+  __0 =aux c#explicit_1#components_1 in {2,3}
+
+--
+
+__0 =aux c#explicit_1#components_1 in {2,3}
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(c#explicit_1#components_1 in {2,3}, __0)
+
+--
+
+!(__0)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__0,false)
+
+--
+
+c#explicit_1#components_1 in {2,3}
+   ~~> in_set ([("Minion", 1)])
+__minion_w_inset(c#explicit_1#components_1,[2,3])
+
+--
+
+c#explicit_1#components_1 in {1,2}
+   ~~> in_set ([("Minion", 1)])
+__minion_w_inset(c#explicit_1#components_1,[1,2])
+
+--
+
+Final model:
+
+letting a be {2,3}
+letting b be {1,2}
+find c: set (representation explicit, size 1) of int(1..3)
+find c#explicit_1: matrix indexed by [int(1..1)] of int(1..3)
+find c#explicit_1#components_1: int(1..3)
+findAux __0: bool
+
+such that
+
+and([__minion_w_inset(c#explicit_1#components_1,[1,2]),WatchedLiteral(__0,false);int(1..)]),
+true,
+Reify(__minion_w_inset(c#explicit_1#components_1,[2,3]), __0)
+

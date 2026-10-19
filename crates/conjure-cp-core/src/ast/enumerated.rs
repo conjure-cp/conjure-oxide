@@ -19,8 +19,12 @@ impl EnumeratedType {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.variants.is_empty()
+    }
+
     pub fn len(&self) -> usize {
-        self.variants.len() as usize
+        self.variants.len()
     }
 }
 

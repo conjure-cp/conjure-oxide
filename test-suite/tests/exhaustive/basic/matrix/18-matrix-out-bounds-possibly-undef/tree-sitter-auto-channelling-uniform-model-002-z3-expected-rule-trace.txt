@@ -1,0 +1,211 @@
+Model before rewriting:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [int(-1..1)] of int(1..2)
+find z: bool
+
+such that
+
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+new variables:
+  find c#lia_1: int(1..2)
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#array_1: matrix indexed by [int(-1..1)] of int(1..2)
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#lia_1: int(-1..2)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#lia_1: int(-1..2)
+
+--
+
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+(z) <-> (m[sum([a,b;int(1..)])] = c),
+m[0] = 1,
+m[1] = 1
+new variables:
+  find m#array_1#lia_1: matrix indexed by [int(-1..1)] of int(1..2)
+
+--
+
+c
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+c#lia_1
+
+--
+
+m
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#array_1
+
+--
+
+m
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#array_1#lia_1
+
+--
+
+m#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#array_1#lia_1
+
+--
+
+m
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#array_1#lia_1
+
+--
+
+a
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#lia_1
+
+--
+
+b
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+b#lia_1
+
+--
+
+m#array_1#lia_1[0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#array_1#lia_1,[0])
+
+--
+
+m#array_1#lia_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#array_1#lia_1,[1])
+
+--
+
+m#array_1#lia_1[sum([a#lia_1,b#lia_1;int(1..)])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m#array_1#lia_1,[sum([a#lia_1,b#lia_1;int(1..)])]) @ __inDomain(sum([a#lia_1,b#lia_1;int(1..)]),int(-1..1))}
+
+--
+
+{SafeIndex(m#array_1#lia_1,[sum([a#lia_1,b#lia_1;int(1..)])]) @ __inDomain(sum([a#lia_1,b#lia_1;int(1..)]),int(-1..1))} = c#lia_1
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex(m#array_1#lia_1,[sum([a#lia_1,b#lia_1;int(1..)])]) = c#lia_1 @ __inDomain(sum([a#lia_1,b#lia_1;int(1..)]),int(-1..1))}
+
+--
+
+{SafeIndex(m#array_1#lia_1,[sum([a#lia_1,b#lia_1;int(1..)])]) = c#lia_1 @ __inDomain(sum([a#lia_1,b#lia_1;int(1..)]),int(-1..1))}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(m#array_1#lia_1,[sum([a#lia_1,b#lia_1;int(1..)])]) = c#lia_1,__inDomain(sum([a#lia_1,b#lia_1;int(1..)]),int(-1..1));int(1..)])
+
+--
+
+__inDomain(sum([a#lia_1,b#lia_1;int(1..)]),int(-1..1))
+   ~~> flatten_indomain ([("Smt", 1000)])
+or([and([sum([a#lia_1,b#lia_1;int(1..)]) >= -1,sum([a#lia_1,b#lia_1;int(1..)]) <= 1;int(1..)]);int(1..)])
+
+--
+
+or([and([sum([a#lia_1,b#lia_1;int(1..)]) >= -1,sum([a#lia_1,b#lia_1;int(1..)]) <= 1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([sum([a#lia_1,b#lia_1;int(1..)]) >= -1,sum([a#lia_1,b#lia_1;int(1..)]) <= 1;int(1..)])
+
+--
+
+and([SafeIndex(m#array_1#lia_1,[sum([a#lia_1,b#lia_1;int(1..)])]) = c#lia_1,and([sum([a#lia_1,b#lia_1;int(1..)]) >= -1,sum([a#lia_1,b#lia_1;int(1..)]) <= 1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SafeIndex(m#array_1#lia_1,[sum([a#lia_1,b#lia_1;int(1..)])]) = c#lia_1,sum([a#lia_1,b#lia_1;int(1..)]) >= -1,sum([a#lia_1,b#lia_1;int(1..)]) <= 1;int(1..)])
+
+--
+
+Final model:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [int(-1..1)] of int(1..2)
+find z: bool
+find c#lia_1: int(1..2)
+find m#array_1: matrix indexed by [int(-1..1)] of int(1..2)
+find a#lia_1: int(-1..2)
+find b#lia_1: int(-1..2)
+find m#array_1#lia_1: matrix indexed by [int(-1..1)] of int(1..2)
+
+such that
+
+(z) <-> (and([SafeIndex(m#array_1#lia_1,[sum([a#lia_1,b#lia_1;int(1..)])]) = c#lia_1,sum([a#lia_1,b#lia_1;int(1..)]) >= -1,sum([a#lia_1,b#lia_1;int(1..)]) <= 1;int(1..)])),
+SafeIndex(m#array_1#lia_1,[0]) = 1,
+SafeIndex(m#array_1#lia_1,[1]) = 1
+

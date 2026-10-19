@@ -1,0 +1,64 @@
+Model before rewriting:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+(t) <-> (z) = (x) <-> (y)
+
+--
+
+(t) <-> (z)
+   ~~> iff_to_eq ([("Minion", 4400)])
+t = z
+
+--
+
+(x) <-> (y)
+   ~~> iff_to_eq ([("Minion", 4400)])
+x = y
+
+--
+
+t = z = x = y
+   ~~> flatten_eq ([("Minion", 4200)])
+__0 = __1
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+new constraints:
+  __0 =aux t = z
+  __1 =aux x = y
+
+--
+
+__0 =aux t = z
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(t = z, __0)
+
+--
+
+__1 =aux x = y
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x = y, __1)
+
+--
+
+Final model:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+findAux __0: bool
+findAux __1: bool
+
+such that
+
+__0 = __1,
+Reify(t = z, __0),
+Reify(x = y, __1)
+

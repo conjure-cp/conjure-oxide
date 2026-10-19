@@ -1,0 +1,27 @@
+language Essence 1.3
+
+$ `and([])` and `or([])` are the identities of conjunction and disjunction, so
+$ `and([])` holds and `or([])` does not.
+$
+$ Nothing else in the test suite writes an empty `and`/`or`. This test exists to
+$ track how they are simplified: the partial evaluator handles both, which is why
+$ there is no rule for it.
+
+find x : int(0..1)
+
+such that
+
+$ Holds, and constrains nothing.
+and([]),
+
+$ `or([])` is false, so its negation holds.
+!or([]),
+
+$ The same two in a nested position, where the solution count pins their values.
+$ The first disjunct is true, so this leaves x free; were `and([])` false it would
+$ force x = 0 and clash with the constraint below, making the model unsatisfiable.
+and([]) \/ (x = 0),
+
+$ The first disjunct is false, so this forces x = 1; were `or([])` true it would
+$ leave x free and admit a second solution.
+or([]) \/ (x = 1)

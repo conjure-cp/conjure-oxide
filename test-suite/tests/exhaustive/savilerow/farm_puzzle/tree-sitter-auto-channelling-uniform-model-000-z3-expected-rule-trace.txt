@@ -1,0 +1,145 @@
+Model before rewriting:
+
+letting numberOfLegs be 22
+letting FEET be domain int(2, 4)
+find animal1: FEET
+find animal2: FEET
+find animal3: FEET
+find animal4: FEET
+find animal5: FEET
+find animal6: FEET
+find animal7: FEET
+
+such that
+
+sum([sum([sum([sum([sum([sum([animal1,animal2;int(1..)]),animal3;int(1..)]),animal4;int(1..)]),animal5;int(1..)]),animal6;int(1..)]),animal7;int(1..)]) = numberOfLegs
+
+--
+
+animal7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+animal7
+new variables:
+  find animal7#bv_1: int(2, 4)
+
+--
+
+animal6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+animal6
+new variables:
+  find animal6#bv_1: int(2, 4)
+
+--
+
+animal5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+animal5
+new variables:
+  find animal5#bv_1: int(2, 4)
+
+--
+
+animal4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+animal4
+new variables:
+  find animal4#bv_1: int(2, 4)
+
+--
+
+animal3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+animal3
+new variables:
+  find animal3#bv_1: int(2, 4)
+
+--
+
+animal1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+animal1
+new variables:
+  find animal1#bv_1: int(2, 4)
+
+--
+
+animal2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+animal2
+new variables:
+  find animal2#bv_1: int(2, 4)
+
+--
+
+animal7
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+animal7#bv_1
+
+--
+
+animal6
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+animal6#bv_1
+
+--
+
+animal5
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+animal5#bv_1
+
+--
+
+animal4
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+animal4#bv_1
+
+--
+
+animal3
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+animal3#bv_1
+
+--
+
+animal1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+animal1#bv_1
+
+--
+
+animal2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+animal2#bv_1
+
+--
+
+sum([sum([sum([sum([sum([sum([animal1#bv_1,animal2#bv_1;int(1..)]),animal3#bv_1;int(1..)]),animal4#bv_1;int(1..)]),animal5#bv_1;int(1..)]),animal6#bv_1;int(1..)]),animal7#bv_1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([animal1#bv_1,animal2#bv_1,animal3#bv_1,animal4#bv_1,animal5#bv_1,animal6#bv_1,animal7#bv_1;int(1..)])
+
+--
+
+Final model:
+
+letting numberOfLegs be 22
+letting FEET be domain int(2, 4)
+find animal1: FEET
+find animal2: FEET
+find animal3: FEET
+find animal4: FEET
+find animal5: FEET
+find animal6: FEET
+find animal7: FEET
+find animal7#bv_1: int(2, 4)
+find animal6#bv_1: int(2, 4)
+find animal5#bv_1: int(2, 4)
+find animal4#bv_1: int(2, 4)
+find animal3#bv_1: int(2, 4)
+find animal1#bv_1: int(2, 4)
+find animal2#bv_1: int(2, 4)
+
+such that
+
+sum([animal1#bv_1,animal2#bv_1,animal3#bv_1,animal4#bv_1,animal5#bv_1,animal6#bv_1,animal7#bv_1;int(1..)]) = 22
+

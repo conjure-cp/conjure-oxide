@@ -16,12 +16,12 @@ use uniplate::{Biplate, Tree, Uniplate};
 
 use super::serde::{HasId, ObjId, PtrAsInner};
 use super::{
-    Atom, CnfClause, DeclarationPtr, Expression, Literal, Metadata, Moo, Name, ReturnType,
-    SymbolTable, SymbolTablePtr, Typeable,
+    Atom, DeclarationPtr, Expression, Literal, Metadata, Moo, Name, Objective, ReturnType,
+    SatEncodingDecision, SymbolTable, SymbolTablePtr, Typeable,
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
-        pretty_clauses, pretty_domain_letting_declaration, pretty_expressions_as_top_level,
+        pretty_domain_letting_declaration, pretty_expressions_as_top_level, pretty_sat_decisions,
         pretty_value_letting_declaration, pretty_variable_declaration,
     },
 };
@@ -32,12 +32,16 @@ use super::{
 #[derivative(PartialEq, Eq)]
 pub struct Model {
     constraints: Moo<Expression>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    instantiation_conditions: Vec<Expression>,
     #[serde_as(as = "PtrAsInner")]
     symbols: SymbolTablePtr,
-    cnf_clauses: Vec<CnfClause>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    sat_decisions: Vec<SatEncodingDecision>,
 
     pub search_order: Option<Vec<Name>>,
     pub dominance: Option<Expression>,
+    pub objective: Option<Objective>,
 
     #[serde(skip, default = "default_context")]
     #[derivative(PartialEq = "ignore")]
@@ -52,10 +56,12 @@ impl Model {
     fn new_empty(symbols: SymbolTablePtr, context: Arc<RwLock<Context<'static>>>) -> Model {
         Model {
             constraints: Moo::new(Expression::Root(Metadata::new(), vec![])),
+            instantiation_conditions: Vec::new(),
             symbols,
-            cnf_clauses: Vec::new(),
+            sat_decisions: Vec::new(),
             search_order: None,
             dominance: None,
+            objective: None,
             context,
         }
     }
@@ -120,9 +126,9 @@ impl Model {
         constraints
     }
 
-    /// The cnf clauses in this model.
-    pub fn clauses(&self) -> &Vec<CnfClause> {
-        &self.cnf_clauses
+    /// The SAT encoding decisions in this model.
+    pub fn sat_decisions(&self) -> &Vec<SatEncodingDecision> {
+        &self.sat_decisions
     }
 
     /// The top-level constraints in this model as a mutable vector.
@@ -134,9 +140,9 @@ impl Model {
         constraints
     }
 
-    /// The cnf clauses in this model as a mutable vector.
-    pub fn clauses_mut(&mut self) -> &mut Vec<CnfClause> {
-        &mut self.cnf_clauses
+    /// The SAT encoding decisions in this model as a mutable vector.
+    pub fn sat_decisions_mut(&mut self) -> &mut Vec<SatEncodingDecision> {
+        &mut self.sat_decisions
     }
 
     /// Replaces the top-level constraints with `new_constraints`, returning the old ones.
@@ -144,9 +150,12 @@ impl Model {
         std::mem::replace(self.constraints_mut(), new_constraints)
     }
 
-    /// Replaces the cnf clauses with `new_clauses`, returning the old ones.
-    pub fn replace_clauses(&mut self, new_clauses: Vec<CnfClause>) -> Vec<CnfClause> {
-        std::mem::replace(self.clauses_mut(), new_clauses)
+    /// Replaces the SAT encoding decisions with `new_sat_decisions`, returning the old ones.
+    pub fn replace_sat_decisions(
+        &mut self,
+        new_sat_decisions: Vec<SatEncodingDecision>,
+    ) -> Vec<SatEncodingDecision> {
+        std::mem::replace(self.sat_decisions_mut(), new_sat_decisions)
     }
 
     /// Adds a top-level constraint.
@@ -154,9 +163,9 @@ impl Model {
         self.constraints_mut().push(constraint);
     }
 
-    /// Adds a cnf clause.
-    pub fn add_clause(&mut self, clause: CnfClause) {
-        self.clauses_mut().push(clause);
+    /// Adds a SAT encoding decision.
+    pub fn add_sat_decision(&mut self, decision: SatEncodingDecision) {
+        self.sat_decisions_mut().push(decision);
     }
 
     /// Adds top-level constraints.
@@ -164,9 +173,24 @@ impl Model {
         self.constraints_mut().extend(constraints);
     }
 
-    /// Adds cnf clauses.
-    pub fn add_clauses(&mut self, clauses: Vec<CnfClause>) {
-        self.clauses_mut().extend(clauses);
+    /// Conditions introduced by top-level `where` statements.
+    pub fn instantiation_conditions(&self) -> &[Expression] {
+        &self.instantiation_conditions
+    }
+
+    /// Adds a condition that must hold after parameter instantiation.
+    pub fn add_instantiation_condition(&mut self, condition: Expression) {
+        self.instantiation_conditions.push(condition);
+    }
+
+    /// Removes and returns all pending instantiation conditions.
+    pub fn take_instantiation_conditions(&mut self) -> Vec<Expression> {
+        std::mem::take(&mut self.instantiation_conditions)
+    }
+
+    /// Adds SAT encoding decisions.
+    pub fn add_sat_decisions(&mut self, decisions: Vec<SatEncodingDecision>) {
+        self.sat_decisions_mut().extend(decisions);
     }
 
     /// Adds a new symbol to the symbol table.
@@ -203,8 +227,12 @@ impl Model {
         visit_symbol_table(self.symbols_ptr_unchecked().clone(), &mut id_list);
 
         let mut exprs: VecDeque<Expression> = self.universe_bi();
+        exprs.extend(self.sat_decisions.universe_bi());
         if let Some(dominance) = &self.dominance {
             exprs.push_back(dominance.clone());
+        }
+        if let Some(objective) = &self.objective {
+            exprs.push_back(objective.expression.clone());
         }
 
         for symbol_table in Biplate::<SymbolTablePtr>::universe_bi(&exprs) {
@@ -245,10 +273,12 @@ impl Typeable for Model {
 impl Hash for Model {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.constraints.hash(state);
+        self.instantiation_conditions.hash(state);
         self.symbols.hash(state);
-        self.cnf_clauses.hash(state);
+        self.sat_decisions.hash(state);
         self.search_order.hash(state);
         self.dominance.hash(state);
+        self.objective.hash(state);
     }
 }
 
@@ -271,30 +301,55 @@ impl Biplate<Expression> for Model {
             None => Tree::Zero,
         };
 
+        let obj_tree = match &self.objective {
+            Some(objective) => Tree::One(objective.expression.clone()),
+            None => Tree::Zero,
+        };
+
+        let instantiation_tree = Tree::Many(
+            self.instantiation_conditions
+                .iter()
+                .cloned()
+                .map(Tree::One)
+                .collect(),
+        );
+
         let tree = Tree::Many(VecDeque::from([
             Tree::One(self.root().clone()),
+            instantiation_tree,
             symtab_tree,
             dom_tree,
+            obj_tree,
         ]));
+
+        let obj_direction = self.objective.as_ref().map(|objective| objective.direction);
 
         let self2 = self.clone();
         let ctx = Box::new(move |x| {
             let Tree::Many(xs) = x else {
-                panic!("Expected a tree with three children");
+                panic!("Expected a tree with five children");
             };
-            if xs.len() != 3 {
-                panic!("Expected a tree with three children");
+            if xs.len() != 5 {
+                panic!("Expected a tree with five children");
             }
 
             let Tree::One(root) = xs[0].clone() else {
                 panic!("Expected root expression tree");
             };
 
-            let symtab = symtab_ctx(xs[1].clone());
-            let dominance = match xs[2].clone() {
+            let Tree::Many(instantiation_conditions) = xs[1].clone() else {
+                panic!("Expected instantiation-condition expression tree");
+            };
+            let symtab = symtab_ctx(xs[2].clone());
+            let dominance = match xs[3].clone() {
                 Tree::One(expr) => Some(expr),
                 Tree::Zero => None,
                 _ => panic!("Expected dominance tree"),
+            };
+            let objective_expr = match xs[4].clone() {
+                Tree::One(expr) => Some(expr),
+                Tree::Zero => None,
+                _ => panic!("Expected objective tree"),
             };
 
             let mut self3 = self2.clone();
@@ -304,8 +359,22 @@ impl Biplate<Expression> for Model {
             };
 
             *self3.root_mut_unchecked() = root;
+            self3.instantiation_conditions = instantiation_conditions
+                .into_iter()
+                .map(|tree| match tree {
+                    Tree::One(expr) => expr,
+                    _ => panic!("Expected instantiation condition expression"),
+                })
+                .collect();
             *self3.symbols_mut() = symtab;
             self3.dominance = dominance;
+            self3.objective = match (obj_direction, objective_expr) {
+                (Some(direction), Some(expression)) => Some(Objective {
+                    direction,
+                    expression,
+                }),
+                _ => None,
+            };
 
             self3
         });
@@ -387,27 +456,28 @@ impl Biplate<Comprehension> for Model {
 impl Display for Model {
     #[allow(clippy::unwrap_used)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (name, decl) in self.symbols().clone().into_iter_local() {
+        let symbols = self.symbols();
+        for (name, decl) in symbols.iter_local() {
             match &decl.kind() as &DeclarationKind {
-                DeclarationKind::Find(_) => {
+                DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => {
                     writeln!(
                         f,
                         "{}",
-                        pretty_variable_declaration(&self.symbols(), &name).unwrap()
+                        pretty_variable_declaration(&symbols, name).unwrap()
                     )?;
                 }
                 DeclarationKind::ValueLetting(_, _) | DeclarationKind::TemporaryValueLetting(_) => {
                     writeln!(
                         f,
                         "{}",
-                        pretty_value_letting_declaration(&self.symbols(), &name).unwrap()
+                        pretty_value_letting_declaration(&symbols, name).unwrap()
                     )?;
                 }
                 DeclarationKind::DomainLetting(_) => {
                     writeln!(
                         f,
                         "{}",
-                        pretty_domain_letting_declaration(&self.symbols(), &name).unwrap()
+                        pretty_domain_letting_declaration(&symbols, name).unwrap()
                     )?;
                 }
                 DeclarationKind::Given(d) => {
@@ -419,9 +489,6 @@ impl Display for Model {
                 DeclarationKind::QuantifiedExpr(expr) => {
                     writeln!(f, "quantified expr {name} <- {}", expr)?;
                 }
-                DeclarationKind::Field(_) => {
-                    // We do not want to print anything, as it will be in the domains
-                }
                 DeclarationKind::EnumeratedType(_) => todo!(),
                 DeclarationKind::UnnamedType(_) => todo!(),
             }
@@ -432,9 +499,18 @@ impl Display for Model {
             writeln!(f, "{}", pretty_expressions_as_top_level(self.constraints()))?;
         }
 
-        if !self.clauses().is_empty() {
-            writeln!(f, "\nclauses:\n")?;
-            writeln!(f, "{}", pretty_clauses(self.clauses()))?;
+        if !self.instantiation_conditions.is_empty() {
+            writeln!(f, "\nwhere\n")?;
+            writeln!(
+                f,
+                "{}",
+                pretty_expressions_as_top_level(&self.instantiation_conditions)
+            )?;
+        }
+
+        if !self.sat_decisions().is_empty() {
+            writeln!(f, "\nsat encoding decisions:\n")?;
+            writeln!(f, "{}", pretty_sat_decisions(self.sat_decisions()))?;
         }
         Ok(())
     }
@@ -448,11 +524,15 @@ impl Display for Model {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SerdeModel {
     constraints: Moo<Expression>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    instantiation_conditions: Vec<Expression>,
     #[serde_as(as = "PtrAsInner")]
     symbols: SymbolTablePtr,
-    cnf_clauses: Vec<CnfClause>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    sat_decisions: Vec<SatEncodingDecision>,
     search_order: Option<Vec<Name>>,
     dominance: Option<Expression>,
+    objective: Option<Objective>,
 }
 
 impl SerdeModel {
@@ -464,8 +544,13 @@ impl SerdeModel {
         tables.insert(self.symbols.id(), self.symbols.clone());
 
         let mut exprs: VecDeque<Expression> = self.constraints.universe_bi();
+        exprs.extend(self.sat_decisions.universe_bi());
+        exprs.extend(self.instantiation_conditions.clone());
         if let Some(dominance) = &self.dominance {
             exprs.push_back(dominance.clone());
+        }
+        if let Some(objective) = &self.objective {
+            exprs.push_back(objective.expression.clone());
         }
 
         // Some expressions (e.g. abstract comprehensions) contain additional symbol tables.
@@ -492,7 +577,7 @@ impl SerdeModel {
             }
         }
 
-        self.constraints = self.constraints.transform_bi(&move |decl: DeclarationPtr| {
+        let rebind = |decl: DeclarationPtr| {
             let id = decl.id();
             all_declarations
                 .get(&id)
@@ -502,14 +587,18 @@ impl SerdeModel {
                     )
                 })
                 .clone()
-        });
+        };
+        self.constraints = self.constraints.transform_bi(&rebind);
+        self.sat_decisions = self.sat_decisions.transform_bi(&rebind);
 
         Some(Model {
             constraints: self.constraints,
+            instantiation_conditions: self.instantiation_conditions,
             symbols: self.symbols,
-            cnf_clauses: self.cnf_clauses,
+            sat_decisions: self.sat_decisions,
             search_order: self.search_order,
             dominance: self.dominance,
+            objective: self.objective,
             context,
         })
     }
@@ -519,10 +608,12 @@ impl From<Model> for SerdeModel {
     fn from(val: Model) -> Self {
         SerdeModel {
             constraints: val.constraints,
+            instantiation_conditions: val.instantiation_conditions,
             symbols: val.symbols,
-            cnf_clauses: val.cnf_clauses,
+            sat_decisions: val.sat_decisions,
             search_order: val.search_order,
             dominance: val.dominance,
+            objective: val.objective,
         }
     }
 }
@@ -531,10 +622,12 @@ impl Display for SerdeModel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let model = Model {
             constraints: self.constraints.clone(),
+            instantiation_conditions: self.instantiation_conditions.clone(),
             symbols: self.symbols.clone(),
-            cnf_clauses: self.cnf_clauses.clone(),
+            sat_decisions: self.sat_decisions.clone(),
             search_order: self.search_order.clone(),
             dominance: self.dominance.clone(),
+            objective: self.objective.clone(),
             context: default_context(),
         };
         std::fmt::Display::fmt(&model, f)
@@ -546,10 +639,12 @@ impl SerdeModel {
     pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
         let model = Model {
             constraints: self.constraints.clone(),
+            instantiation_conditions: self.instantiation_conditions.clone(),
             symbols: self.symbols.clone(),
-            cnf_clauses: self.cnf_clauses.clone(),
+            sat_decisions: self.sat_decisions.clone(),
             search_order: self.search_order.clone(),
             dominance: self.dominance.clone(),
+            objective: self.objective.clone(),
             context: default_context(),
         };
         model.collect_stable_id_mapping()

@@ -1,0 +1,33 @@
+Model before rewriting:
+
+find x: int(0..10000)
+
+such that
+
+x = sum([ sum([ sum([ k | k : int(i..j) ]) | j : int(((i - 1))..(sum([i,1;int(1..)]))) ]) | i : int(1..10) ])
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(0..10000)
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+Final model:
+
+find x: int(0..10000)
+find x#lia_1: int(0..10000)
+
+such that
+
+x#lia_1 = 175
+

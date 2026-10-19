@@ -1,0 +1,32 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+
+such that
+
+product([toInt(x),toInt(y);int(1..)]) = 1
+
+--
+
+product([toInt(x),toInt(y);int(1..)])
+   ~~> flatten_product ([("Minion", 4200)])
+product([x,y;int(1..)])
+
+--
+
+product([x,y;int(1..)]) = 1
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(y,x,1)
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+
+such that
+
+FlatProductEq(y,x,1)
+

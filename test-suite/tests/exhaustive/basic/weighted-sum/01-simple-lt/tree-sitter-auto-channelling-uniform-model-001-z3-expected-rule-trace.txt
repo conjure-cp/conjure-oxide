@@ -1,0 +1,73 @@
+Model before rewriting:
+
+find x: int(2..4)
+find y: int(2..4)
+find z: int(2..4)
+
+such that
+
+sum([sum([product([2,x;int(1..)]),product([3,y;int(1..)]);int(1..)]),z;int(1..)]) < 14
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#lia_1: int(2..4)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(2..4)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#lia_1: int(2..4)
+
+--
+
+z
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+z#lia_1
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+sum([sum([product([2,x#lia_1;int(1..)]),product([3,y#lia_1;int(1..)]);int(1..)]),z#lia_1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([2,x#lia_1;int(1..)]),product([3,y#lia_1;int(1..)]),z#lia_1;int(1..)])
+
+--
+
+Final model:
+
+find x: int(2..4)
+find y: int(2..4)
+find z: int(2..4)
+find z#lia_1: int(2..4)
+find x#lia_1: int(2..4)
+find y#lia_1: int(2..4)
+
+such that
+
+sum([product([2,x#lia_1;int(1..)]),product([3,y#lia_1;int(1..)]),z#lia_1;int(1..)]) < 14
+

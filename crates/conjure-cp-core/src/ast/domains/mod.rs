@@ -1,16 +1,21 @@
 mod attrs;
 mod domain;
+mod domain_conversions;
 mod error;
 mod ground;
+mod int_val;
 mod range;
 mod unresolved;
+pub use unresolved::domain_has_int_from_values;
 
 pub use attrs::{
-    BinaryAttr, FuncAttr, JectivityAttr, MSetAttr, PartialityAttr, PartitionAttr, RelAttr,
-    SequenceAttr, SetAttr,
+    BinaryAttr, FuncAttr, JectivityAttr, MSetAttr, PartialityAttr, PartitionAttr, PermutationAttr,
+    RelAttr, SequenceAttr, SetAttr,
 };
-pub use domain::{Domain, DomainPtr, HasDomain, Int};
+pub use domain::{Domain, DomainPtr, HasDomain, Int, OXIDE_INT_MAX, OXIDE_INT_MIN};
 pub use error::DomainOpError;
-pub use ground::{FieldEntryGround, GroundDomain};
+pub use ground::GroundDomain;
+pub use int_val::IntVal;
 pub use range::Range;
-pub use unresolved::{EnumVariantVal, FieldEntry, IntVal, UnresolvedDomain};
+pub use unresolved::EnumVariantVal;
+pub use unresolved::UnresolvedDomain;
