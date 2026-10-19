@@ -839,10 +839,7 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
         .as_array()
         .ok_or(Error::Parse("DomainInt[1] is not an array".to_owned()))?[1];
     if range_values.as_array().is_some_and(Vec::is_empty) {
-        return Ok(Domain::int(vec![Range::Bounded(
-            crate::ast::OXIDE_INT_MIN,
-            crate::ast::OXIDE_INT_MAX,
-        )]));
+        return Ok(Domain::int_ground(vec![Range::Unbounded]));
     }
     let ranges = parse_range_list(range_values, |v| parse_expression_to_int_val(v, &scope))?;
     Ok(Domain::int(ranges))

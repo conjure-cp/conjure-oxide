@@ -30,9 +30,8 @@ use conjure_cp_core::ast::{
 ///   interval evaluation, also works when those declarations currently have unbounded or
 ///   full-width (`int`) domains.
 ///
-/// Eager `Expression::domain_of` must not run here for non-constant integers: arithmetic
-/// over bare `int` givens would materialise Cartesian products of
-/// `OXIDE_INT_MIN..OXIDE_INT_MAX` via `GroundDomain::apply_i32` during parse
+/// Eager `Expression::domain_of` must not run here for non-constant integers: domains of
+/// parameter-dependent arithmetic may remain unresolved until instantiation
 /// (e.g. BIBD `letting b be (l*v*(v-1))/(k*(k-1))`).
 fn value_letting_domain(expr: &Expression) -> Option<DomainPtr> {
     match expr.return_type() {
