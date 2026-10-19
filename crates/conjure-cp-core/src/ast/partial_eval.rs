@@ -62,6 +62,8 @@ fn is_semantically_safe(expr: &Expr) -> bool {
                 | Expr::UnsafeIndex(_, _, _)
                 | Expr::Bubble(_, _, _)
                 | Expr::UnsafeSlice(_, _, _)
+                | Expr::Pred(_, _)
+                | Expr::Succ(_, _)
         ) {
             return false;
         }
@@ -268,18 +270,19 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
 
 /// Whether `expr` is an undefined value whose domain is empty.
 ///
-/// `min`/`max` of an empty collection is the only unsafe shape that carries an empty domain, so it
-/// is the only one for which [`simplify_comparison_with_literal`] derives a domain despite the
-/// expression not being semantically safe.
+/// `min`/`max` of an empty collection carries an empty domain despite being unsafe.
+/// Enum neighbours also carry useful partial domains and are handled separately below.
 fn is_empty_min_max(expr: &Expr) -> bool {
     matches!(expr, Expr::Min(_, values) | Expr::Max(_, values) if is_empty_matrix_operand(values))
 }
 
-/// Whether `expr` is unsafe in a way that still leaves its domain worth deriving: it can be
-/// undefined, but every value it *can* take is a real one, so a literal outside that set decides
-/// the equality regardless.
-fn can_be_undefined_but_not_empty(expr: &Expr) -> bool {
-    matches!(expr, Expr::Image(_, _, _))
+/// Whether an unsafe expression's domain still describes all values it can take.
+/// An empty domain rules out both equality and disequality under relational semantics.
+fn can_derive_unsafe_domain(expr: &Expr) -> bool {
+    matches!(
+        expr,
+        Expr::Image(_, _, _) | Expr::Pred(_, _) | Expr::Succ(_, _)
+    )
 }
 
 /// Tries to decide `expr = lit` and `expr != lit` from the resolved domain of `expr`.
@@ -297,7 +300,7 @@ fn simplify_comparison_with_literal(
     // `min`/`max`, or a literal its domain cannot hold -- but nothing else can, so a safe
     // expression is worth the lookup unconditionally and an unsafe one only for those shapes.
     let is_safe = is_semantically_safe(expr);
-    if !is_safe && !is_empty_min_max(expr) && !can_be_undefined_but_not_empty(expr) {
+    if !is_safe && !is_empty_min_max(expr) && !can_derive_unsafe_domain(expr) {
         return None;
     }
 

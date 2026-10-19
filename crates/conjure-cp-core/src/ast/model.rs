@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
@@ -457,8 +458,22 @@ impl Display for Model {
     #[allow(clippy::unwrap_used)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let symbols = self.symbols();
+        // Enum members are introduced by their type declaration, before any value uses them.
+        for (name, decl) in symbols.iter_local() {
+            if let DeclarationKind::EnumeratedType(ty) = &*decl.kind() {
+                writeln!(
+                    f,
+                    "letting {name} be new type enum {{{}}}",
+                    ty.variants.iter().join(", ")
+                )?;
+            }
+        }
         for (name, decl) in symbols.iter_local() {
             match &decl.kind() as &DeclarationKind {
+                DeclarationKind::ValueLetting(
+                    Expression::Atomic(_, Atom::Literal(Literal::EnumVariant(value))),
+                    _,
+                ) if value.name() == name => {}
                 DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => {
                     writeln!(
                         f,
@@ -489,8 +504,10 @@ impl Display for Model {
                 DeclarationKind::QuantifiedExpr(expr) => {
                     writeln!(f, "quantified expr {name} <- {}", expr)?;
                 }
-                DeclarationKind::EnumeratedType(_) => todo!(),
-                DeclarationKind::UnnamedType(_) => todo!(),
+                DeclarationKind::EnumeratedType(_) => {}
+                DeclarationKind::UnnamedType(size) => {
+                    writeln!(f, "letting {name} be new type of size {size}")?;
+                }
             }
         }
 

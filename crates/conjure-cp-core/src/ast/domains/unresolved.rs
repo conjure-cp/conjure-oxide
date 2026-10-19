@@ -778,12 +778,11 @@ impl Display for UnresolvedDomain {
                 write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
             }
             UnresolvedDomain::EnumeratedType(ty, ranges) => {
-                // TODO: Name ranges
-                if ranges.iter().all(Range::is_lower_or_upper_bounded) {
+                if !ranges.is_empty() && ranges.iter().all(Range::is_lower_or_upper_bounded) {
                     let rngs: String = ranges.iter().map(|r| format!("{r}")).join(", ");
-                    write!(f, "{}({})", ty, rngs)
+                    write!(f, "{}({})", ty.name, rngs)
                 } else {
-                    write!(f, "{}", ty)
+                    write!(f, "{}", ty.name)
                 }
             }
             UnresolvedDomain::UnnamedType(reference) => {

@@ -462,9 +462,18 @@ impl GroundDomain {
     pub fn values(&self) -> Result<Box<dyn Iterator<Item = Literal>>, DomainOpError> {
         match self {
             GroundDomain::Empty(_) => Ok(Box::new(vec![].into_iter())),
-            GroundDomain::EnumeratedType(_, _) | GroundDomain::UnnamedType(_) => {
-                todo!("enumerate enum and unnamed domains")
+            GroundDomain::EnumeratedType(ty, ranges) => {
+                let values = enum_indices(ty, ranges)
+                    .map(|index| {
+                        Literal::EnumVariant(crate::ast::enumerated::EnumVariant::new(
+                            ty.clone(),
+                            index,
+                        ))
+                    })
+                    .collect::<Vec<_>>();
+                Ok(Box::new(values.into_iter()))
             }
+            GroundDomain::UnnamedType(_) => todo!("enumerate unnamed domains"),
             GroundDomain::Bool => Ok(Box::new(
                 vec![Literal::from(false), Literal::from(true)].into_iter(),
             )),
@@ -957,27 +966,7 @@ impl GroundDomain {
                 }
                 Ok(ans)
             }
-            GroundDomain::EnumeratedType(et, ranges) => {
-                if ranges.is_empty() || ranges[0].is_unbounded() {
-                    return Ok(et.len() as u64);
-                }
-
-                // TODO: Fix
-                let mut length = 0;
-
-                let low = ranges[0].low().unwrap_or(&0);
-                length += (ranges[0].high().unwrap() - low) as u64;
-
-                for range in ranges {
-                    if let Some(range_length) = range.length() {
-                        length += range_length as u64;
-                    } else {
-                        length += et.len() as u64 - *range.low().unwrap() as u64;
-                    }
-                }
-
-                Ok(length)
-            }
+            GroundDomain::EnumeratedType(et, ranges) => Ok(enum_indices(et, ranges).count() as u64),
             GroundDomain::UnnamedType(size) => Ok(*size as u64),
         }
     }
@@ -1240,7 +1229,10 @@ impl GroundDomain {
                 }
                 _ => Ok(false),
             },
-            GroundDomain::EnumeratedType(_, _) => todo!(),
+            GroundDomain::EnumeratedType(ty, ranges) => Ok(matches!(lit,
+                Literal::EnumVariant(value) if value.ty == *ty && (value.variant as usize) < ty.len()
+                && (ranges.is_empty() || ranges.iter().any(|range| range.contains(&value.variant)))
+            )),
             GroundDomain::UnnamedType(_) => todo!(),
             GroundDomain::Permutation(attr, dom) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Permutation(cycles)) => {
@@ -2174,13 +2166,23 @@ impl Display for GroundDomain {
                 write!(f, "partition {attrs} from {inner}")
             }
             GroundDomain::EnumeratedType(et, ranges) => {
-                if ranges.iter().all(Range::is_lower_or_upper_bounded) {
-                    let rngs: String = ranges.iter().map(|r| format!("{r}")).join(", ");
-                    write!(f, "{}({})", et, rngs)
+                if !ranges.is_empty() && ranges.iter().all(Range::is_lower_or_upper_bounded) {
+                    let ranges = ranges
+                        .iter()
+                        .cloned()
+                        .map(|range| {
+                            range.func_map(|index| {
+                                et.variants
+                                    .get(index as usize)
+                                    .map(ToString::to_string)
+                                    .unwrap_or_else(|| index.to_string())
+                            })
+                        })
+                        .join(", ");
+                    write!(f, "{}({ranges})", et.name)
                 } else {
-                    write!(f, "{}", et)
+                    write!(f, "{}", et.name)
                 }
-                // TODO: Convert to Names in ranges
             }
             GroundDomain::UnnamedType(size) => {
                 write!(f, "unnamed type of size {}", size)
@@ -2766,4 +2768,12 @@ mod tests {
             assert!(dom.contains(value).unwrap());
         }
     }
+}
+
+fn enum_indices<'a>(
+    ty: &'a Moo<EnumeratedType>,
+    ranges: &'a [Range<u32>],
+) -> impl Iterator<Item = u32> + 'a {
+    (0..ty.len() as u32)
+        .filter(move |index| ranges.is_empty() || ranges.iter().any(|range| range.contains(index)))
 }

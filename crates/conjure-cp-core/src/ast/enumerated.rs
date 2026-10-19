@@ -65,7 +65,7 @@ impl EnumVariant {
     }
 
     pub fn succ(&self) -> Option<EnumVariant> {
-        if self.variant == self.ty.variants.len() as u32 {
+        if self.variant as usize >= self.ty.variants.len().saturating_sub(1) {
             return None;
         }
 

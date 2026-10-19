@@ -63,6 +63,12 @@ impl Literal {
         match (self, other) {
             (Literal::Bool(lhs), Literal::Bool(rhs)) => lhs.cmp(rhs),
             (Literal::Int(lhs), Literal::Int(rhs)) => lhs.cmp(rhs),
+            (Literal::EnumVariant(lhs), Literal::EnumVariant(rhs)) => (
+                &lhs.ty.name,
+                &lhs.ty.variants,
+                lhs.variant,
+            )
+                .cmp(&(&rhs.ty.name, &rhs.ty.variants, rhs.variant)),
             (Literal::AbstractLiteral(lhs), Literal::AbstractLiteral(rhs)) => {
                 abstract_literal_essence_cmp(lhs, rhs)
             }
@@ -1388,7 +1394,7 @@ impl Display for Literal {
         match &self {
             Literal::Int(i) => write!(f, "{i}"),
             Literal::Bool(b) => write!(f, "{b}"),
-            Literal::EnumVariant(ev) => write!(f, "{ev:?}"), // TODO: better display
+            Literal::EnumVariant(ev) => write!(f, "{}", ev.name()),
             Literal::AbstractLiteral(l) => write!(f, "{l}"),
         }
     }

@@ -36,6 +36,9 @@ fn eval_constant_set(expr: &Expr) -> Option<Vec<Lit>> {
 /// direct evaluator calls on unlike primitive or abstract literal kinds safely unevaluable.
 fn equal_constant_literals(lhs: &Lit, rhs: &Lit) -> Option<bool> {
     match (lhs, rhs) {
+        (Lit::EnumVariant(lhs), Lit::EnumVariant(rhs)) if lhs.ty == rhs.ty => {
+            Some(lhs.variant == rhs.variant)
+        }
         (Lit::Int(_), Lit::Int(_)) | (Lit::Bool(_), Lit::Bool(_)) => {
             Some(lhs.essence_cmp(rhs) == CmpOrdering::Equal)
         }

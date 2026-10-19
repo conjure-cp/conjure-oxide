@@ -1240,7 +1240,34 @@ impl Expression {
                 })
                 .or_else(|| matrix_element_domain(e))
             }
-            Expression::Pred(_, _) | Expression::Succ(_, _) => todo!(),
+            Expression::Pred(_, operand) | Expression::Succ(_, operand) => {
+                let domain = operand.domain_of()?.resolve().ok()?;
+                if !matches!(domain.as_ref(), GroundDomain::EnumeratedType(_, _)) {
+                    return None;
+                }
+                let values = domain
+                    .values()
+                    .ok()?
+                    .filter_map(|value| {
+                        let Literal::EnumVariant(value) = value else {
+                            return None;
+                        };
+                        let neighbour = if matches!(self, Expression::Pred(_, _)) {
+                            value.pred()
+                        } else {
+                            value.succ()
+                        };
+                        neighbour.map(Literal::EnumVariant)
+                    })
+                    .collect::<Vec<_>>();
+                if values.is_empty() {
+                    Some(Domain::empty(operand.return_type()))
+                } else {
+                    GroundDomain::from_literal_vec(&values)
+                        .ok()
+                        .map(DomainPtr::from)
+                }
+            }
             Expression::UnsafeDiv(_, a, b) => a
                 .domain_of()?
                 .resolve()
@@ -1894,6 +1921,8 @@ impl Expression {
                     | Expression::UnsafeIndex(_, _, _)
                     | Expression::Bubble(_, _, _)
                     | Expression::UnsafeSlice(_, _, _)
+                    | Expression::Pred(_, _)
+                    | Expression::Succ(_, _)
             ) || matches!(expr, Expression::Image(_, subject, argument)
                 if image_can_be_undefined(subject, argument))
         })

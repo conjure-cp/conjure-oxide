@@ -420,7 +420,9 @@ impl DeclarationPtr {
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
             DeclarationKind::QuantifiedExpr(expr) => expr.domain_of_uncached()?.element_domain(),
             DeclarationKind::EnumeratedType(et) => Some(et.to_domain()),
-            DeclarationKind::UnnamedType(_) => todo!(),
+            DeclarationKind::UnnamedType(size) => {
+                Some(Moo::new(crate::ast::GroundDomain::UnnamedType(*size)).into())
+            }
         }
     }
 
@@ -817,8 +819,9 @@ impl CategoryOf for DeclarationPtr {
             DeclarationKind::Given(_) => Category::Parameter,
             DeclarationKind::Quantified(..) => Category::Quantified,
             DeclarationKind::QuantifiedExpr(..) => Category::Quantified,
-            DeclarationKind::EnumeratedType(_) => todo!(),
-            DeclarationKind::UnnamedType(_) => todo!(),
+            DeclarationKind::EnumeratedType(_) | DeclarationKind::UnnamedType(_) => {
+                Category::Constant
+            }
         }
     }
 }
@@ -853,8 +856,8 @@ impl Typeable for DeclarationPtr {
             DeclarationKind::Given(domain) => domain.return_type(),
             DeclarationKind::Quantified(inner) => inner.domain.return_type(),
             DeclarationKind::QuantifiedExpr(expr) => expr.return_type(),
-            DeclarationKind::EnumeratedType(_) => todo!(),
-            DeclarationKind::UnnamedType(_) => todo!(),
+            DeclarationKind::EnumeratedType(ty) => ReturnType::EnumeratedType(ty.clone()),
+            DeclarationKind::UnnamedType(_) => ReturnType::UnnamedType,
         }
     }
 }
@@ -1040,8 +1043,9 @@ fn biplate_declaration_kind_references(
                 Box::new(move |x| DeclarationKind::QuantifiedExpr(recons_expr(x))),
             )
         }
-        DeclarationKind::EnumeratedType(_) => todo!(),
-        DeclarationKind::UnnamedType(_) => todo!(),
+        kind @ (DeclarationKind::EnumeratedType(_) | DeclarationKind::UnnamedType(_)) => {
+            (Tree::Zero, Box::new(move |_| kind.clone()))
+        }
     }
 }
 

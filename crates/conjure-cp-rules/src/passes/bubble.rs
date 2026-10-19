@@ -260,3 +260,28 @@ fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     }
     Err(ApplicationError::RuleNotApplicable)
 }
+
+/// An enum endpoint has no predecessor/successor. Preserve that undefinedness until the
+/// surrounding boolean expression (or catchUndef) consumes it.
+#[register_rule("Bubble", 6000, [Pred, Succ])]
+fn enum_neighbour_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    let (Expression::Pred(_, operand) | Expression::Succ(_, operand)) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let Some(Literal::EnumVariant(value)) = eval_constant(operand) else {
+        return Err(RuleNotApplicable);
+    };
+    let neighbour = if matches!(expr, Expression::Pred(_, _)) {
+        value.pred()
+    } else {
+        value.succ()
+    };
+    if neighbour.is_some() {
+        return Err(RuleNotApplicable);
+    }
+    Ok(RuleEffect::pure(Expression::Bubble(
+        Metadata::new(),
+        operand.clone(),
+        Moo::new(false.into()),
+    )))
+}
