@@ -131,10 +131,13 @@ impl<R: ReprRule> ReprRuleStored for R {
     }
 
     fn probe_for(&self, decl: &DeclarationPtr) -> Result<usize, ReprError> {
-        let domain = decl
-            .domain()
-            .ok_or_else(|| super::errors::ReprInstantiateError::NoDomain(decl.clone()))?;
-        let domain = domain.resolve().map(Into::into).unwrap_or(domain);
+        let domain = R::domain_for(decl)?;
+        // Value lettings still need `down` to check that their value can be represented.
+        if (decl.as_find().is_some() || decl.is_find_auxiliary())
+            && let Some(score) = R::probe_score(domain.clone())?
+        {
+            return Ok(score);
+        }
         let mut detached = decl.clone().detach();
         super::uniform::probe(|| {
             R::init_for(&mut detached)?;

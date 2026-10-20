@@ -2,6 +2,35 @@
 use super::*;
 
 impl Compiler<'_> {
+    /// Distinct powers of two already form a binary word. Compare its digits directly;
+    /// a numeric bound must not become the size of a PB encoder's comparator table.
+    pub(super) fn binary_word_upper(
+        &mut self,
+        bound: i128,
+        positive: &[(Lit, i128)],
+        total: i128,
+    ) -> Option<Term> {
+        let mut bits = BTreeMap::new();
+        for &(literal, weight) in positive {
+            let weight = u128::try_from(weight).ok()?;
+            if !weight.is_power_of_two()
+                || bits
+                    .insert(weight.trailing_zeros(), Term::Literal(literal))
+                    .is_some()
+            {
+                return None;
+            }
+        }
+        if bound < 0 || bound >= total {
+            return Some(Term::Constant(bound >= total));
+        }
+        let highest = *bits.last_key_value()?.0;
+        let bits: Vec<_> = (0..=highest)
+            .map(|bit| bits.get(&bit).copied().unwrap_or(Term::Constant(false)))
+            .collect();
+        Some(self.word_upper(bound, &bits))
+    }
+
     // Keep the original polarities and group bounds in both implication directions.
     pub(super) fn structured_reified_upper(
         &mut self,
@@ -124,6 +153,10 @@ impl Compiler<'_> {
                 "Reified integer coefficient sum exceeds the library range".into(),
             ));
         }
+        if let Some(value) = self.weighted_upper(algorithm, bound, positive, total) {
+            self.equate(output, value);
+            return Ok(());
+        }
         if self.cache.is_some() {
             let terms: Vec<_> = positive
                 .iter()
@@ -244,9 +277,8 @@ impl Compiler<'_> {
             predicate
         } else {
             let predicate = self.instance.new_lit();
-            if algorithm == PbEncoding::RustsatBinaryAdder
-                || (algorithm == PbEncoding::RustsatGeneralizedTotalizer
-                    && terms.len() <= MAX_SHARED_WEIGHTED_INPUTS)
+            if algorithm == PbEncoding::RustsatGeneralizedTotalizer
+                && terms.len() <= MAX_SHARED_WEIGHTED_INPUTS
             {
                 self.guarded_pseudo_boolean(
                     algorithm,
@@ -331,36 +363,20 @@ impl Compiler<'_> {
                 reused = cache.weighted.contains_key(&key),
                 "compiling shared weighted counter"
             );
-            let encoder =
-                cache
-                    .weighted
-                    .entry(key)
-                    .or_insert_with_key(|(_, inputs)| match algorithm {
-                        PbEncoding::RustsatGeneralizedTotalizer => {
-                            WeightedEncoder::Totalizer(inputs.iter().copied().collect())
-                        }
-                        PbEncoding::RustsatBinaryAdder => {
-                            WeightedEncoder::Adder(inputs.iter().copied().collect())
-                        }
-                        _ => unreachable!(),
-                    });
+            debug_assert_eq!(algorithm, PbEncoding::RustsatGeneralizedTotalizer);
+            let encoder = cache
+                .weighted
+                .entry(key)
+                .or_insert_with_key(|(_, inputs)| inputs.iter().copied().collect());
             let mut cnf = Cnf::new();
-            macro_rules! encode {
-                ($encoder:expr) => {{
-                    $encoder
-                        .encode_ub_change(upper..=upper, &mut cnf, self.instance.var_manager_mut())
-                        .map_err(|e| {
-                            SolverError::Runtime(format!("Incremental PB encoding failed: {e}"))
-                        })?;
-                    $encoder.enforce_ub(upper).map_err(|e| {
-                        SolverError::Runtime(format!("Incremental PB bound failed: {e}"))
-                    })?
-                }};
-            }
-            let enforcement = match encoder {
-                WeightedEncoder::Totalizer(encoder) => encode!(encoder),
-                WeightedEncoder::Adder(encoder) => encode!(encoder),
-            };
+            encoder
+                .encode_ub_change(upper..=upper, &mut cnf, self.instance.var_manager_mut())
+                .map_err(|e| {
+                    SolverError::Runtime(format!("Incremental PB encoding failed: {e}"))
+                })?;
+            let enforcement = encoder
+                .enforce_ub(upper)
+                .map_err(|e| SolverError::Runtime(format!("Incremental PB bound failed: {e}")))?;
             for clause in cnf {
                 self.instance.add_clause(clause);
             }
@@ -425,11 +441,29 @@ impl Compiler<'_> {
                 "Pseudo-Boolean coefficient sum exceeds the library range".into(),
             ));
         }
+        let upper_bound = if relation == CardinalityRelation::AtLeast {
+            bound - 1
+        } else {
+            bound
+        };
+        if let Some(upper) = self.weighted_upper(algorithm, upper_bound, &positive, total) {
+            let value = match relation {
+                CardinalityRelation::AtMost => upper,
+                CardinalityRelation::AtLeast => upper.negated(),
+                CardinalityRelation::Exactly => {
+                    let below = self
+                        .weighted_upper(algorithm, bound - 1, &positive, total)
+                        .expect("the same coefficients still support a digit comparator");
+                    self.combine(true, vec![upper, below.negated()])
+                }
+            };
+            self.assert_guarded(value, guard);
+            return Ok(());
+        }
         if guard.is_some()
             && self.cache.is_some()
-            && (algorithm == PbEncoding::RustsatBinaryAdder
-                || (algorithm == PbEncoding::RustsatGeneralizedTotalizer
-                    && positive.len() <= MAX_SHARED_WEIGHTED_INPUTS))
+            && algorithm == PbEncoding::RustsatGeneralizedTotalizer
+            && positive.len() <= MAX_SHARED_WEIGHTED_INPUTS
             && bound != 0
             && bound != total
         {
@@ -484,10 +518,7 @@ impl Compiler<'_> {
         if guard.is_none()
             && self.cache.is_some()
             && positive.len() <= MAX_SHARED_WEIGHTED_INPUTS
-            && matches!(
-                algorithm,
-                PbEncoding::RustsatGeneralizedTotalizer | PbEncoding::RustsatBinaryAdder
-            )
+            && algorithm == PbEncoding::RustsatGeneralizedTotalizer
         {
             return self.cached_weighted_bound(
                 algorithm,
@@ -498,13 +529,12 @@ impl Compiler<'_> {
             );
         }
         match algorithm {
-            PbEncoding::RustsatGeneralizedTotalizer
-            | PbEncoding::RustsatBinaryAdder
-            | PbEncoding::RustsatDynamicPolyWatchdog => {
+            PbEncoding::RustsatBinaryAdder => unreachable!("binary sums use digit comparators"),
+            PbEncoding::RustsatGeneralizedTotalizer | PbEncoding::RustsatDynamicPolyWatchdog => {
                 debug_assert!(guard.is_none());
                 use rustsat::{
                     encodings::pb::{
-                        BinaryAdder, BoundBoth, DoubleGeneralizedTotalizer, DynamicPolyWatchdog,
+                        BoundBoth, DoubleGeneralizedTotalizer, DynamicPolyWatchdog,
                         simulators::{Double, Inverted},
                     },
                     types::constraints::PbConstraint,
@@ -531,11 +561,6 @@ impl Compiler<'_> {
                             self.instance.var_manager_mut(),
                         )
                     }
-                    PbEncoding::RustsatBinaryAdder => BinaryAdder::encode_constr(
-                        constraint,
-                        &mut cnf,
-                        self.instance.var_manager_mut(),
-                    ),
                     PbEncoding::RustsatDynamicPolyWatchdog => {
                         // The inverted copy supplies lower bounds; precision remains exact.
                         Double::<DynamicPolyWatchdog, Inverted<DynamicPolyWatchdog>>::encode_constr(

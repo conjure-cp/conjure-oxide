@@ -2,9 +2,7 @@
 use std::collections::BTreeMap;
 
 use rustsat::{
-    encodings::pb::{
-        BinaryAdder, BoundUpper, BoundUpperIncremental, DynamicPolyWatchdog, GeneralizedTotalizer,
-    },
+    encodings::pb::{BoundUpper, BoundUpperIncremental, DynamicPolyWatchdog, GeneralizedTotalizer},
     instances::{Cnf, SatInstance},
     types::{Assignment, Clause, Lit, TernaryVal},
 };
@@ -21,7 +19,6 @@ use crate::{
 // Each instance owns a fixed input set. Tightening extends its existing bound encoding.
 enum UpperEncoder {
     Totalizer(GeneralizedTotalizer),
-    Adder(BinaryAdder),
     Watchdog(DynamicPolyWatchdog),
     OneShot,
 }
@@ -59,17 +56,28 @@ impl CompiledObjective {
         })?;
         let (constant, positive) =
             compile_objective_terms(value, *minimise, instance, variables, cache)?;
-        let encoder = match selection.algorithm {
-            PbEncoding::RustsatGeneralizedTotalizer => {
-                UpperEncoder::Totalizer(positive.iter().copied().collect())
+        // Use the shared digit comparator for binary words and binary-adder sums.
+        // Its arithmetic gates survive successive improvements in the encoding cache.
+        let mut digits = 0usize;
+        let binary_word = positive.iter().all(|(_, weight)| {
+            let distinct = weight.is_power_of_two() && digits & weight == 0;
+            digits |= weight;
+            distinct
+        });
+        let encoder = if binary_word || selection.algorithm == PbEncoding::RustsatBinaryAdder {
+            UpperEncoder::OneShot
+        } else {
+            match selection.algorithm {
+                PbEncoding::RustsatGeneralizedTotalizer => {
+                    UpperEncoder::Totalizer(positive.iter().copied().collect())
+                }
+                PbEncoding::RustsatDynamicPolyWatchdog => {
+                    UpperEncoder::Watchdog(positive.iter().copied().collect())
+                }
+                PbEncoding::RustsatBinaryAdder
+                | PbEncoding::PindakaasBdd
+                | PbEncoding::PindakaasSwc => UpperEncoder::OneShot,
             }
-            PbEncoding::RustsatBinaryAdder => {
-                UpperEncoder::Adder(positive.iter().copied().collect())
-            }
-            PbEncoding::RustsatDynamicPolyWatchdog => {
-                UpperEncoder::Watchdog(positive.iter().copied().collect())
-            }
-            PbEncoding::PindakaasBdd | PbEncoding::PindakaasSwc => UpperEncoder::OneShot,
         };
         Ok(Self {
             minimise: *minimise,
@@ -116,7 +124,6 @@ impl CompiledObjective {
         }
         let units = match &mut self.encoder {
             UpperEncoder::Totalizer(encoder) => tighten!(encoder),
-            UpperEncoder::Adder(encoder) => tighten!(encoder),
             UpperEncoder::Watchdog(encoder) => tighten!(encoder),
             UpperEncoder::OneShot => {
                 let cost = self.constant + current as i128;

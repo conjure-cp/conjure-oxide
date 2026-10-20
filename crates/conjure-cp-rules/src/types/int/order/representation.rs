@@ -5,7 +5,8 @@
 //! the mirror image of [`IntDirect`](super::super::IntDirect), which makes equality cheap instead.
 
 use crate::shared::representation_prelude::*;
-use crate::types::int::{finite_int_bounds, int_domain_to_expr, int_ranges};
+use crate::types::int::int_domain_to_expr;
+use crate::types::int::shared::{PerValueLayout, per_value_layout};
 use conjure_cp::ast::{Domain, Moo, Reference, SATIntEncoding};
 use conjure_cp::into_matrix_expr;
 use conjure_cp::settings::SolverFamily;
@@ -38,24 +39,7 @@ register_representation!(
         }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
-        let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(
-            dom.clone(),
-            IntOrder::NAME,
-            String::from(msg),
-        );
-
-        // A per-value encoding needs explicit bounds; do not expand the implicit machine
-        // window of an unbounded integer into billions of Boolean variables while probing.
-        if dom.as_int().is_some_and(|ranges| ranges.iter().any(|range| !range.is_finite())) {
-            return Err(domain_err("per-value encoding requires explicit integer bounds"));
-        }
-        let ranges = int_ranges(&dom)
-            .ok_or_else(|| domain_err("expected a finite ground integer domain"))?;
-        let bounds @ (low, high) = finite_int_bounds(&ranges)
-            .ok_or_else(|| domain_err("expected a non-empty integer domain"))?;
-
-        let width = usize::try_from(i64::from(high) - i64::from(low) + 1)
-            .map_err(|_| domain_err("integer domain is too large for an order encoding"))?;
+        let PerValueLayout { ranges, bounds, width } = per_value_layout(&dom, IntOrder::NAME)?;
         let bits = Moo::new(std::iter::repeat_n(Domain::bool(), width).collect());
         Ok(State { bounds, ranges, bits })
     }
@@ -134,6 +118,10 @@ register_representation!(
     }
     fn compactness(state: &State<DomainPtr>) -> usize {
         1usize.checked_shl(state.bits.len() as u32).unwrap_or(usize::MAX)
+    }
+    fn probe_score(dom: DomainPtr) -> Result<Option<usize>, ReprInitError> {
+        let PerValueLayout { width, .. } = per_value_layout(&dom, IntOrder::NAME)?;
+        Ok(Some(u32::try_from(width).ok().and_then(|width| 1usize.checked_shl(width)).unwrap_or(usize::MAX)))
     }
     fn integer_encoding() -> bool { true }
     fn applies(family: SolverFamily) -> bool {

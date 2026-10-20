@@ -1,6 +1,7 @@
 //! Generate solver clauses directly from semantic Boolean encoding decisions.
 mod alldifferent;
 mod amo;
+mod binary_sum;
 mod boolean;
 mod cardinality;
 mod element;
@@ -418,7 +419,8 @@ pub(super) struct EncodingCache {
     totalizers: HashMap<Vec<Lit>, rustsat::encodings::card::Totalizer>,
     thresholds: HashMap<(Vec<Lit>, i64), Lit>,
     occurrences: HashMap<Vec<Lit>, Vec<Lit>>,
-    weighted: HashMap<WeightedKey, WeightedEncoder>,
+    weighted: HashMap<WeightedKey, rustsat::encodings::pb::GeneralizedTotalizer>,
+    binary_sums: HashMap<Vec<(Lit, i128)>, Vec<Term>>,
     weighted_thresholds: HashMap<WeightedThresholdKey, Lit>,
     gates: HashMap<(bool, Vec<Lit>), Lit>,
     // Assertion witnesses encode only output -> formula until equivalence is required.
@@ -447,12 +449,6 @@ enum WeightedGroupStructure {
 struct WeightedGroupKey {
     structure: WeightedGroupStructure,
     members: Vec<(i128, Term)>,
-}
-
-// These providers expose bound outputs which can be enforced independently.
-enum WeightedEncoder {
-    Totalizer(rustsat::encodings::pb::GeneralizedTotalizer),
-    Adder(rustsat::encodings::pb::BinaryAdder),
 }
 
 struct Compiler<'a> {
