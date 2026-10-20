@@ -81,5 +81,9 @@ such that
              (((row1 - i = row2) /\ (col1 + i = col2)) ->  
                    (board[row1,col1] + board[row2,col2] != 3)  
               ))
+,
 
-    
+$ Bound this regression so its complete solution set stays small.
+board[1,1]!=2, board[2,1]!=2, board[3,4]!=1, board[4,2]!=1,
+(forAll row,col : N .
+ !(((row=1 \/ row=2) /\ col=1) \/ (row=3 /\ col=4) \/ (row=4 /\ col=2)) -> board[row,col]=0)

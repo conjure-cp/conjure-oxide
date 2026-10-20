@@ -32,3 +32,9 @@ $ Colinear sequences must not reuse the same colour on adjacent edges
         i != j /\ j != k /\ i != k /\
         ( (x[j] - x[i]) * (y[k] - y[i]) = (x[k] - x[i]) * (y[j] - y[i]) ) ->
             !(colour[i,j] != 0 /\ colour[j,k] != 0 /\ colour[i,j] = colour[j,k])
+,
+
+$ Bound this regression so its complete solution set stays small.
+colour[1,2] <= 2,
+colour[2,3] <= 2,
+(forAll i,j : int(1..n) . !((i=1 /\ j=2) \/ (i=2 /\ j=3)) -> colour[i,j]=0)

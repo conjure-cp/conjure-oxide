@@ -13,6 +13,14 @@ letting overnight be 2
 letting dayoff be 3
 
 given Demand : matrix indexed by [DAY,SHIFT] of int(0..n_nurses)
+letting fixedRoster be [[0,0,1,1,2,2;int(1..6)],
+    [0,0,1,1,2,2;int(1..6)],
+    [0,0,1,1,2,2;int(1..6)],
+    [1,1,0,0,3,3;int(1..6)],
+    [1,1,2,2,0,0;int(1..6)],
+    [2,2,3,3,0,0;int(1..6)],
+    [3,3,1,1,0,0;int(1..6)];int(0..6)]
+
 find Roster :  matrix indexed by [DAY,NURSE] of SHIFT
 
 such that
@@ -47,4 +55,8 @@ forAll n : NURSE .
 $ the number of night shifts has to be less than the number of morning shifts
 forAll n : NURSE . 
    ( sum d : DAY . toInt(Roster[d,n] = overnight)) <= 
-   ( sum d : DAY . toInt(Roster[d,n] = morning))  
+   ( sum d : DAY . toInt(Roster[d,n] = morning))
+,
+
+$ Bound this regression so its complete solution set stays small.
+(forAll d : DAY . forAll n : NURSE . !((d=4 /\ n=2)) -> Roster[d,n]=fixedRoster[d,n])
