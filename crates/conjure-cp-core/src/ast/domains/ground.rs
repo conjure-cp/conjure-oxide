@@ -1,6 +1,8 @@
 use crate::ast::domains::attrs::{PartitionAttr, PermutationAttr};
 use crate::ast::domains::{JectivityAttr, MSetAttr, PartialityAttr, SequenceAttr};
+use crate::ast::enumerated::EnumeratedType;
 use crate::ast::pretty::pretty_vec;
+use crate::ast::unnamed::UnnamedType;
 use crate::ast::{
     AbstractLiteral, DomainOpError, FuncAttr, Literal, Moo, Name, RelAttr, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
@@ -100,6 +102,10 @@ pub enum GroundDomain {
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
     /// A relation as a set of tuples
     Relation(RelAttr, Vec<Moo<GroundDomain>>),
+    /// An enumerated type
+    EnumeratedType(Moo<EnumeratedType>, Vec<Range<u32>>),
+    /// An unnamed type
+    UnnamedType(Moo<UnnamedType>),
     /// A partition
     Partition(PartitionAttr, Moo<GroundDomain>),
     /// A permutation
@@ -268,6 +274,13 @@ impl GroundDomain {
         // error instead of entering an unsupported implementation. Each group uses declaration
         // order.
         match (self, other) {
+            (GroundDomain::UnnamedType(lhs), GroundDomain::UnnamedType(rhs)) if lhs == rhs => {
+                Ok(self.clone())
+            }
+            (GroundDomain::EnumeratedType(_, _) | GroundDomain::UnnamedType(_), _)
+            | (_, GroundDomain::EnumeratedType(_, _) | GroundDomain::UnnamedType(_)) => {
+                Err(DomainOpError::WrongType)
+            }
             (GroundDomain::Empty(ty), dom) | (dom, GroundDomain::Empty(ty)) => {
                 if *ty == dom.return_type() {
                     Ok(dom.clone())
@@ -393,6 +406,9 @@ impl GroundDomain {
         // needs to be tested once comprehension rules are written
 
         match (self, other) {
+            (GroundDomain::UnnamedType(lhs), GroundDomain::UnnamedType(rhs)) if lhs == rhs => {
+                Ok(self.clone())
+            }
             // one or more arguments is an empty int domain
             (d @ GroundDomain::Empty(ReturnType::Int), GroundDomain::Int(_, _)) => Ok(d.clone()),
             (GroundDomain::Int(_, _), d @ GroundDomain::Empty(ReturnType::Int)) => Ok(d.clone()),
@@ -453,6 +469,26 @@ impl GroundDomain {
     pub fn values(&self) -> Result<Box<dyn Iterator<Item = Literal>>, DomainOpError> {
         match self {
             GroundDomain::Empty(_) => Ok(Box::new(vec![].into_iter())),
+            GroundDomain::EnumeratedType(ty, ranges) => {
+                let values = enum_indices(ty, ranges)
+                    .map(|index| {
+                        Literal::EnumVariant(crate::ast::enumerated::EnumVariant::new(
+                            ty.clone(),
+                            index,
+                        ))
+                    })
+                    .collect::<Vec<_>>();
+                Ok(Box::new(values.into_iter()))
+            }
+            GroundDomain::UnnamedType(ty) => {
+                let ty = ty.clone();
+                Ok(Box::new((1..=ty.size).map(move |value| {
+                    Literal::Unnamed(crate::ast::unnamed::UnnamedValue {
+                        ty: ty.clone(),
+                        value,
+                    })
+                })))
+            }
             GroundDomain::Bool => Ok(Box::new(
                 vec![Literal::from(false), Literal::from(true)].into_iter(),
             )),
@@ -945,6 +981,8 @@ impl GroundDomain {
                 }
                 Ok(ans)
             }
+            GroundDomain::EnumeratedType(et, ranges) => Ok(enum_indices(et, ranges).count() as u64),
+            GroundDomain::UnnamedType(ty) => Ok(ty.size as u64),
         }
     }
 
@@ -1206,6 +1244,13 @@ impl GroundDomain {
                 }
                 _ => Ok(false),
             },
+            GroundDomain::EnumeratedType(ty, ranges) => Ok(matches!(lit,
+                Literal::EnumVariant(value) if value.ty == *ty && (value.variant as usize) < ty.len()
+                && (ranges.is_empty() || ranges.iter().any(|range| range.contains(&value.variant)))
+            )),
+            GroundDomain::UnnamedType(ty) => Ok(
+                matches!(lit, Literal::Unnamed(value) if value.ty == *ty && (1..=ty.size).contains(&value.value)),
+            ),
             GroundDomain::Permutation(attr, dom) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Permutation(cycles)) => {
                     // numMoved is the count of moved points (elements mentioned in some cycle),
@@ -1517,6 +1562,36 @@ impl GroundDomain {
                 } else {
                     Ok(GroundDomain::Bool)
                 }
+            }
+            Literal::Unnamed(first) => {
+                if literals
+                    .iter()
+                    .all(|value| matches!(value, Literal::Unnamed(value) if value.ty == first.ty))
+                {
+                    Ok(GroundDomain::UnnamedType(first.ty.clone()))
+                } else {
+                    Err(DomainOpError::WrongType)
+                }
+            }
+            Literal::EnumVariant(first_ev) => {
+                let mut variants = BTreeSet::new();
+
+                for lit in literals {
+                    let Literal::EnumVariant(current_ev) = lit else {
+                        return Err(DomainOpError::WrongType);
+                    };
+
+                    if current_ev.ty != first_ev.ty {
+                        return Err(DomainOpError::WrongType);
+                    }
+
+                    variants.insert(current_ev.variant);
+                }
+
+                Ok(GroundDomain::EnumeratedType(
+                    first_ev.ty.clone(),
+                    variants.into_iter().map(Range::Single).collect(),
+                ))
             }
             Literal::AbstractLiteral(AbstractLiteral::Set(_)) => {
                 let mut all_elems = vec![];
@@ -1832,7 +1907,9 @@ impl GroundDomain {
     /// True if any domain in this tree has a representation preference.
     pub fn has_representation_preference(&self) -> bool {
         match self {
-            GroundDomain::Empty(_) => false,
+            GroundDomain::Empty(_)
+            | GroundDomain::EnumeratedType(_, _)
+            | GroundDomain::UnnamedType(_) => false,
             GroundDomain::Bool => false,
             GroundDomain::Int(_, representation) => representation.is_some(),
             GroundDomain::Tuple(inners, representation) => {
@@ -1886,6 +1963,8 @@ impl GroundDomain {
     pub fn as_type_string(&self) -> String {
         match self {
             GroundDomain::Empty(ty) => format!("empty({ty})"),
+            GroundDomain::EnumeratedType(ty, _) => ty.to_string(),
+            GroundDomain::UnnamedType(_) => "unnamed type".to_string(),
             GroundDomain::Bool => "bool".to_string(),
             GroundDomain::Int(_, representation) => int_type_string(representation.as_deref()),
             GroundDomain::Tuple(inners, representation) => {
@@ -2036,6 +2115,9 @@ impl Typeable for GroundDomain {
             GroundDomain::Permutation(_, inner) => {
                 ReturnType::Permutation(Box::new(inner.return_type()))
             }
+            GroundDomain::EnumeratedType(et, _) => ReturnType::EnumeratedType(et.clone()),
+            // TODO: Ensure bounded range on type level
+            GroundDomain::UnnamedType(ty) => ReturnType::UnnamedType(ty.clone()),
         }
     }
 }
@@ -2109,6 +2191,28 @@ impl Display for GroundDomain {
             }
             GroundDomain::Partition(attrs, inner) => {
                 write!(f, "partition {attrs} from {inner}")
+            }
+            GroundDomain::EnumeratedType(et, ranges) => {
+                if !ranges.is_empty() && ranges.iter().all(Range::is_lower_or_upper_bounded) {
+                    let ranges = ranges
+                        .iter()
+                        .cloned()
+                        .map(|range| {
+                            range.func_map(|index| {
+                                et.variants
+                                    .get(index as usize)
+                                    .map(ToString::to_string)
+                                    .unwrap_or_else(|| index.to_string())
+                            })
+                        })
+                        .join(", ");
+                    write!(f, "{}({ranges})", et.name)
+                } else {
+                    write!(f, "{}", et.name)
+                }
+            }
+            GroundDomain::UnnamedType(ty) => {
+                write!(f, "{}", ty.name)
             }
             GroundDomain::Permutation(attrs, inner) => {
                 write!(f, "permutation {attrs} of {inner}")
@@ -2691,4 +2795,12 @@ mod tests {
             assert!(dom.contains(value).unwrap());
         }
     }
+}
+
+fn enum_indices<'a>(
+    ty: &'a Moo<EnumeratedType>,
+    ranges: &'a [Range<u32>],
+) -> impl Iterator<Item = u32> + 'a {
+    (0..ty.len() as u32)
+        .filter(move |index| ranges.is_empty() || ranges.iter().any(|range| range.contains(index)))
 }

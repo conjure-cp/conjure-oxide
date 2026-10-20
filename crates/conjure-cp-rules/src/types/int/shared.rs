@@ -9,17 +9,14 @@ use conjure_cp::into_matrix_expr;
 
 /// The inclusive intervals of a finite ground integer domain.
 ///
-/// Returns `None` for anything that is not an integer domain, and for integer domains with an
-/// unbounded range: every SAT encoding needs to know how many values it is laying out.
+/// Returns `None` for anything that is not an integer domain. Missing endpoints use the
+/// default machine limits at this encoding boundary; the original domain remains unbounded.
 pub(crate) fn int_ranges(dom: &DomainPtr) -> Option<Vec<(i32, i32)>> {
     let GroundDomain::Int(ranges, _) = dom.as_ground()? else {
         return None;
     };
 
-    ranges
-        .iter()
-        .map(|range| Some((*range.low()?, *range.high()?)))
-        .collect()
+    Some(ranges.iter().map(Range::int_bounds_with_defaults).collect())
 }
 
 /// The overall lower and upper bound of a set of inclusive intervals.
@@ -82,6 +79,20 @@ pub(super) fn per_value_layout(
             "expected a non-empty finite ground integer domain".into(),
         )
     };
+    // Direct/order encodings require explicit endpoints. The machine defaults used by
+    // binary encodings must not turn an unbounded domain into billions of Boolean bits.
+    if dom
+        .as_int()
+        .is_some_and(|ranges| ranges.iter().any(|range| !range.is_finite()))
+    {
+        return Err(
+            conjure_cp::representation::ReprInitError::UnsupportedDomain(
+                dom.clone(),
+                representation,
+                "per-value encoding requires explicit integer bounds".into(),
+            ),
+        );
+    }
     let ranges = int_ranges(dom).ok_or_else(error)?;
     let bounds @ (low, high) = finite_int_bounds(&ranges).ok_or_else(error)?;
     let width = usize::try_from(i64::from(high) - i64::from(low) + 1).map_err(|_| error())?;

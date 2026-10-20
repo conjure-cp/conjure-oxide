@@ -1,5 +1,8 @@
+use crate::ast::enumerated::{EnumVariant, EnumeratedType};
+use crate::ast::{DeclarationKind, Literal, eval_constant};
 use std::fmt::{Display, Formatter};
 use std::iter::zip;
+use std::ops::Deref;
 
 use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::PartitionAttr;
@@ -22,6 +25,74 @@ use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use uniplate::Uniplate;
+
+fn eval_expr_to_enum_variant(expr: &Expression, expected: &Moo<EnumeratedType>) -> Option<u32> {
+    let Literal::EnumVariant(EnumVariant { ty, variant }) = eval_constant(expr)? else {
+        bug!("Expected enum variant expression, got: {expr}");
+    };
+
+    if ty != *expected {
+        bug!("Expected variant of enum {expected}, got {ty}:");
+    }
+
+    Some(variant)
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=Reference)]
+pub struct EnumVariantVal(pub Reference);
+
+impl EnumVariantVal {
+    fn resolve(&self, expected: &Moo<EnumeratedType>) -> Option<u32> {
+        let re = &self.0;
+        match re.ptr.kind().deref() {
+            DeclarationKind::ValueLetting(expr, _)
+            | DeclarationKind::TemporaryValueLetting(expr)
+            | DeclarationKind::QuantifiedExpr(expr) => eval_expr_to_enum_variant(expr, expected),
+            // If this is an int given we will be able to resolve it eventually, but not yet
+            DeclarationKind::Given(_) => None,
+            DeclarationKind::Quantified(inner) => {
+                if let Some(generator) = inner.generator()
+                    && let Some(expr) = generator.as_value_letting()
+                {
+                    eval_expr_to_enum_variant(&expr, expected)
+                } else {
+                    None
+                }
+            }
+            // Decision variables inside domains are unresolved until solving.
+            DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => None,
+            DeclarationKind::DomainLetting(_)
+            | DeclarationKind::EnumeratedType(_)
+            | DeclarationKind::UnnamedType(_) => {
+                bug!("Expected integer expression, given, or letting inside enum domain; Got: {re}")
+            }
+        }
+    }
+}
+
+impl Range<EnumVariantVal> {
+    pub fn resolve(&self, expected: &Moo<EnumeratedType>) -> Option<Range<u32>> {
+        match self {
+            Range::Single(x) => Some(Range::Single(x.resolve(expected)?)),
+            Range::Bounded(l, r) => {
+                Some(Range::Bounded(l.resolve(expected)?, r.resolve(expected)?))
+            }
+            Range::UnboundedL(r) => Some(Range::UnboundedL(r.resolve(expected)?)),
+            Range::UnboundedR(l) => Some(Range::UnboundedR(l.resolve(expected)?)),
+            Range::Unbounded => Some(Range::Unbounded),
+        }
+    }
+}
+
+impl Display for EnumVariantVal {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+        // TODO: Better
+        // write!(f, "{}", resolve_constant(self.0))
+    }
+}
 
 pub(super) type FieldUnresolved = Field<DomainPtr>;
 
@@ -72,6 +143,12 @@ pub enum UnresolvedDomain {
     /// A relation as a set of tuples
     Relation(RelAttr<IntVal>, Vec<DomainPtr>),
     Partition(PartitionAttr<IntVal>, DomainPtr),
+    /// An enumerated type
+    #[polyquine_skip]
+    EnumeratedType(Moo<EnumeratedType>, Vec<Range<EnumVariantVal>>),
+    /// An unnamed type
+    #[polyquine_skip]
+    UnnamedType(Reference),
     Permutation(PermutationAttr<IntVal>, DomainPtr),
     /// A reference to a domain letting
     #[polyquine_skip]
@@ -81,7 +158,10 @@ pub enum UnresolvedDomain {
 impl UnresolvedDomain {
     pub(super) fn from_ground(domain: &GroundDomain) -> Option<UnresolvedDomain> {
         let unresolved = match domain {
-            GroundDomain::Empty(_) | GroundDomain::Bool => return None,
+            GroundDomain::Empty(_)
+            | GroundDomain::Bool
+            | GroundDomain::EnumeratedType(_, _)
+            | GroundDomain::UnnamedType(_) => return None,
             GroundDomain::Int(ranges, representation) => UnresolvedDomain::Int(
                 ranges.iter().cloned().map(Into::into).collect(),
                 representation.clone(),
@@ -157,7 +237,9 @@ impl UnresolvedDomain {
             UnresolvedDomain::Function(_, from, to) => {
                 domain_has_int_from_values(from) || domain_has_int_from_values(to)
             }
-            UnresolvedDomain::Reference(_) => false,
+            UnresolvedDomain::Reference(_)
+            | UnresolvedDomain::EnumeratedType(_, _)
+            | UnresolvedDomain::UnnamedType(_) => false,
         }
     }
 
@@ -257,6 +339,30 @@ impl UnresolvedDomain {
                 })
                 .resolve()
                 .map(Moo::unwrap_or_clone),
+            UnresolvedDomain::EnumeratedType(et, ranges) => {
+                let ranges: Vec<_> = ranges
+                    .clone()
+                    .into_iter()
+                    .map(|r| r.resolve(et))
+                    .collect::<Option<Vec<_>>>()
+                    .ok_or(DomainOpError::NotGround)?;
+                Ok(GroundDomain::EnumeratedType(et.clone(), ranges))
+            }
+            UnresolvedDomain::UnnamedType(decl) => {
+                let ut = *decl
+                    .ptr
+                    .as_unnamed_type()
+                    .unwrap_or_else(|| {
+                        bug!("Unnamed type domain should point to an unnamed type declaration, but got {decl}")
+                    });
+
+                Ok(GroundDomain::UnnamedType(Moo::new(
+                    crate::ast::unnamed::UnnamedType {
+                        name: decl.ptr.name().clone(),
+                        size: ut,
+                    },
+                )))
+            }
         }
     }
 
@@ -337,6 +443,12 @@ impl UnresolvedDomain {
                 Err(DomainOpError::WrongType)
             }
             #[allow(unreachable_patterns)]
+            (UnresolvedDomain::EnumeratedType(_, _), _)
+            | (_, UnresolvedDomain::EnumeratedType(_, _)) => Err(DomainOpError::WrongType),
+            #[allow(unreachable_patterns)]
+            (UnresolvedDomain::UnnamedType(_), _) | (_, UnresolvedDomain::UnnamedType(_)) => {
+                Err(DomainOpError::WrongType)
+            }
             (UnresolvedDomain::Function(_, _, _), _) | (_, UnresolvedDomain::Function(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
@@ -385,7 +497,9 @@ impl UnresolvedDomain {
     pub fn has_representation_preference(&self) -> bool {
         match self {
             UnresolvedDomain::Int(_, representation) => representation.is_some(),
-            UnresolvedDomain::IntFromValues(_) => false,
+            UnresolvedDomain::IntFromValues(_)
+            | UnresolvedDomain::EnumeratedType(_, _)
+            | UnresolvedDomain::UnnamedType(_) => false,
             UnresolvedDomain::Tuple(inners, representation) => {
                 representation.is_some() || inners.iter().any(|d| d.has_representation_preference())
             }
@@ -441,6 +555,8 @@ impl UnresolvedDomain {
         match self {
             UnresolvedDomain::Int(_, representation) => int_type_string(representation.as_deref()),
             UnresolvedDomain::IntFromValues(_) => "int".to_string(),
+            UnresolvedDomain::EnumeratedType(ty, _) => ty.to_string(),
+            UnresolvedDomain::UnnamedType(_) => "unnamed type".to_string(),
             UnresolvedDomain::Tuple(inners, representation) => {
                 let args = representation
                     .iter()
@@ -582,6 +698,8 @@ impl Typeable for UnresolvedDomain {
                 }
                 ReturnType::Relation(inner_types)
             }
+            UnresolvedDomain::EnumeratedType(et, _) => ReturnType::EnumeratedType(et.clone()),
+            UnresolvedDomain::UnnamedType(reference) => reference.ptr.return_type(),
             UnresolvedDomain::Partition(_, inner) => {
                 ReturnType::Partition(Box::new(inner.return_type()))
             }
@@ -663,6 +781,17 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Relation(attrs, domains) => {
                 write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
+            }
+            UnresolvedDomain::EnumeratedType(ty, ranges) => {
+                if !ranges.is_empty() && ranges.iter().all(Range::is_lower_or_upper_bounded) {
+                    let rngs: String = ranges.iter().map(|r| format!("{r}")).join(", ");
+                    write!(f, "{}({})", ty.name, rngs)
+                } else {
+                    write!(f, "{}", ty.name)
+                }
+            }
+            UnresolvedDomain::UnnamedType(reference) => {
+                write!(f, "{reference}")
             }
             UnresolvedDomain::Partition(attrs, inner_dom) => {
                 write!(f, "partition {attrs} from {inner_dom}")

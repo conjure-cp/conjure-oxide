@@ -6,6 +6,7 @@ mod collection_domains;
 pub mod comprehension;
 pub mod declaration;
 mod domains;
+pub mod enumerated;
 pub mod eval;
 mod expression_arena;
 mod expressions;
@@ -25,6 +26,7 @@ mod sat_encoding;
 pub mod serde;
 mod symbol_table;
 mod types;
+pub mod unnamed;
 mod variables;
 mod versioned_cache;
 
@@ -35,9 +37,9 @@ pub use atom::Atom;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::domain_has_int_from_values;
 pub use domains::{
-    BinaryAttr, Domain, DomainOpError, DomainPtr, FuncAttr, GroundDomain, HasDomain, IntVal,
-    JectivityAttr, MSetAttr, OXIDE_INT_MAX, OXIDE_INT_MIN, PartialityAttr, PartitionAttr,
-    PermutationAttr, Range, RelAttr, SequenceAttr, SetAttr, UnresolvedDomain,
+    BinaryAttr, Domain, DomainOpError, DomainPtr, EnumVariantVal, FuncAttr, GroundDomain,
+    HasDomain, IntVal, JectivityAttr, MSetAttr, OXIDE_INT_MAX, OXIDE_INT_MIN, PartialityAttr,
+    PartitionAttr, PermutationAttr, Range, RelAttr, SequenceAttr, SetAttr, UnresolvedDomain,
 };
 pub use eval::generator_values_from_expr;
 pub use eval::{

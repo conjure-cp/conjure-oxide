@@ -1,6 +1,6 @@
 Model before rewriting:
 
-letting ticks be 3
+letting ticks be 2
 letting TICKS be domain int(1..ticks)
 find x: int(1..ticks)
 find ruler: matrix indexed by [TICKS] of int(0..((ticks ** 2)))
@@ -9,6 +9,8 @@ findAux __0: int(0..((ticks ** 2)))
 such that
 
 1 = 1,
+ruler[1] = 1,
+ruler[2] = 0,
 __0 =aux ruler[x]
 
 --
@@ -17,9 +19,32 @@ ruler
    ~~> select_representation ([("ReprGeneral", 10000)])
 ruler
 new variables:
-  find ruler#components_1: int(0..9)
-  find ruler#components_2: int(0..9)
-  find ruler#components_3: int(0..9)
+  find ruler#components_1: int(0..4)
+  find ruler#components_2: int(0..4)
+
+--
+
+ruler
+   ~~> select_representation ([("ReprGeneral", 10000)])
+ruler
+
+--
+
+ruler
+   ~~> select_representation ([("ReprGeneral", 10000)])
+ruler
+
+--
+
+ruler[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+ruler#components_1
+
+--
+
+ruler[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+ruler#components_2
 
 --
 
@@ -31,7 +56,7 @@ SafeIndex(ruler,[x])
 
 SafeIndex(ruler,[x])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([ruler#components_1,ruler#components_2,ruler#components_3;int(1..)],[sum([product([1,(x - 1);int(1..)]),1;int(1..)])])
+SafeIndex([ruler#components_1,ruler#components_2;int(1..)],[sum([product([1,(x - 1);int(1..)]),1;int(1..)])])
 
 --
 
@@ -65,25 +90,38 @@ x
 
 --
 
-__0 =aux SafeIndex([ruler#components_1,ruler#components_2,ruler#components_3;int(1..)],[x])
+ruler#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(ruler#components_1,1)
+
+--
+
+ruler#components_2 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(ruler#components_2,0)
+
+--
+
+__0 =aux SafeIndex([ruler#components_1,ruler#components_2;int(1..)],[x])
    ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([ruler#components_1,ruler#components_2,ruler#components_3],x,__0)
+__minion_element_one([ruler#components_1,ruler#components_2],x,__0)
 
 --
 
 Final model:
 
-letting ticks be 3
+letting ticks be 2
 letting TICKS be domain int(1..ticks)
 find x: int(1..ticks)
 find ruler: matrix indexed by [TICKS] of int(0..((ticks ** 2)))
 findAux __0: int(0..((ticks ** 2)))
-find ruler#components_1: int(0..9)
-find ruler#components_2: int(0..9)
-find ruler#components_3: int(0..9)
+find ruler#components_1: int(0..4)
+find ruler#components_2: int(0..4)
 
 such that
 
 true,
-__minion_element_one([ruler#components_1,ruler#components_2,ruler#components_3],x,__0)
+WatchedLiteral(ruler#components_1,1),
+WatchedLiteral(ruler#components_2,0),
+__minion_element_one([ruler#components_1,ruler#components_2],x,__0)
 

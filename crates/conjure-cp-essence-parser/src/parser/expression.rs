@@ -45,6 +45,7 @@ pub fn parse_expression(
         | "table"
         | "negative_table"
         | "short_table"
+        | "enum_operator"
         | "apply_expr"
         | "image_expr"
         | "image_set_expr"
@@ -682,6 +683,31 @@ pub fn parse_binary_expression(
     // restore original contexts for parent expression parsing
     ctx.typechecking_context = saved_ctx;
 
+    if matches!(op_str, "=" | "!=" | "<" | "<=" | ">" | ">=") {
+        // Parameter-dependent local lettings may not have a domain yet. Only check types
+        // that can already be inferred, without requiring their domains to resolve.
+        let left_type = left.try_return_type().unwrap_or(ReturnType::Unknown);
+        let right_type = right.try_return_type().unwrap_or(ReturnType::Unknown);
+        if matches!(left_type, ReturnType::UnnamedType(_))
+            || matches!(right_type, ReturnType::UnnamedType(_))
+        {
+            if matches!(op_str, "<" | "<=" | ">" | ">=") {
+                ctx.record_error(RecoverableParseError::new(
+                    "Unnamed types do not support ordering".to_string(),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            if matches!(op_str, "=" | "!=") && left_type != right_type {
+                ctx.record_error(RecoverableParseError::new(
+                    format!("Cannot compare different types: {left_type} and {right_type}"),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+        }
+    }
+
     let mut doc_name = "";
     let expr = match op_str {
         // NB: We are deliberately setting the index domain to 1.., not 1..2.
@@ -1084,6 +1110,9 @@ fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
         GroundDomain::Sequence(_, _) => TypecheckingContext::Sequence,
         GroundDomain::Set(_, _) => TypecheckingContext::Set,
         GroundDomain::MSet(_, _) => TypecheckingContext::MSet,
+        GroundDomain::EnumeratedType(_, _) | GroundDomain::UnnamedType(_) => {
+            TypecheckingContext::Unknown
+        }
         GroundDomain::Function(_, _, _) => TypecheckingContext::Function,
         GroundDomain::Relation(_, _) => TypecheckingContext::Relation,
         GroundDomain::Partition(_, _) => TypecheckingContext::Partition,
@@ -1199,5 +1228,7 @@ fn type_name(return_type: &ReturnType) -> &'static str {
         ReturnType::Relation(_) => "relation",
         ReturnType::Partition(_) => "partition",
         ReturnType::Permutation(_) => "permutation",
+        ReturnType::EnumeratedType(_) => "enum",
+        ReturnType::UnnamedType(_) => "unnamed",
     }
 }

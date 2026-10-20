@@ -14,8 +14,8 @@ pub struct Args {
     #[arg(value_name = "INPUT_ESSENCE", value_hint = ValueHint::FilePath)]
     pub input_file: PathBuf,
 
-    // The format you would like to print out (e.g. ast-json)
-    #[arg(long, help_heading=LOGGING_HELP_HEADING)]
+    /// Output format: essence, ast-json, or expression-domains.
+    #[arg(long, default_value = "essence", help_heading=LOGGING_HELP_HEADING)]
     pub output_format: String,
 }
 
@@ -32,12 +32,12 @@ pub fn run_pretty_command(global_args: GlobalArgs, pretty_args: Args) -> anyhow:
 
     // Running the correct method to acquire pretty string
     let output = match pretty_args.output_format.as_str() {
+        "essence" => Ok(model.to_string()),
         "ast-json" => serialize_model(&model),
         "expression-domains" => serialize_domains(&model),
-        // "add_new_flag" => method(),
         _ => {
             return Err(anyhow!(
-                "Unknown output format {}; supports [ast-json, expression-domains]",
+                "Unknown output format {}; supports [essence, ast-json, expression-domains]",
                 pretty_args.output_format
             ));
         }

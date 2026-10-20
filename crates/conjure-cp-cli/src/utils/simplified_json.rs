@@ -116,6 +116,10 @@ pub fn params_from_simplified_json_str(
 /// Encode a literal in Conjure's simplified JSON format.
 pub fn literal_to_simplified_json(literal: &Literal) -> anyhow::Result<JsonValue> {
     match literal {
+        Literal::Unnamed(_) => bail!("simplified JSON for unnamed types is not supported yet"),
+        Literal::EnumVariant(_) => {
+            bail!("simplified JSON for enumerated types is not supported yet")
+        }
         Literal::Bool(b) => Ok(JsonValue::Bool(*b)),
         Literal::Int(i) => Ok(JsonValue::Number(Number::from(*i))),
         Literal::AbstractLiteral(abs) => abstract_literal_to_simplified_json(abs),
@@ -268,6 +272,9 @@ fn literal_from_simplified_json_with_ground(
     domain: &GroundDomain,
 ) -> anyhow::Result<Literal> {
     match domain {
+        GroundDomain::EnumeratedType(_, _) | GroundDomain::UnnamedType(_) => {
+            bail!("simplified JSON for enumerated and unnamed types is not supported yet")
+        }
         GroundDomain::Empty(_) => bail!("cannot parse a value for an empty domain"),
         GroundDomain::Bool => match value {
             JsonValue::Bool(b) => Ok(Literal::Bool(*b)),

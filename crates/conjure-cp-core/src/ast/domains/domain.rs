@@ -1,3 +1,4 @@
+use crate::ast::domains::unresolved::EnumVariantVal;
 use crate::ast::domains::{
     attrs::{MSetAttr, PartitionAttr, PermutationAttr, SetAttr},
     ground::{FieldGround, GroundDomain},
@@ -5,6 +6,7 @@ use crate::ast::domains::{
     range::Range,
     unresolved::{FieldUnresolved, UnresolvedDomain},
 };
+use crate::ast::enumerated::EnumeratedType;
 use crate::ast::{
     DeclarationPtr, DomainOpError, Expression, Field, FuncAttr, Literal, Moo, Reference, RelAttr,
     ReturnType, SequenceAttr, Typeable,
@@ -19,13 +21,13 @@ use uniplate::Uniplate;
 /// The integer type used in all domain code (int ranges, set sizes, etc)
 pub type Int = i32;
 
-/// Lower bound of the default fully-bounded integer domain used by Conjure Oxide.
+/// Default lower bound used when a finite solver needs bounds for an unbounded integer.
 ///
 /// One greater than [`i32::MIN`] so the magnitude of `OXIDE_INT_MIN` is representable as a
 /// positive [`i32`].
 pub const OXIDE_INT_MIN: Int = Int::MIN + 1;
 
-/// Upper bound of the default fully-bounded integer domain used by Conjure Oxide.
+/// Default upper bound used when a finite solver needs bounds for an unbounded integer.
 pub const OXIDE_INT_MAX: Int = Int::MAX;
 
 pub type DomainPtr = Moo<Domain>;
@@ -361,6 +363,20 @@ impl Domain {
         ))))
     }
 
+    /// Create a new enumerated type domain
+    pub fn enumerated_ground(ty: Moo<EnumeratedType>, ranges: Vec<Range<u32>>) -> DomainPtr {
+        Moo::new(Domain::Ground(Moo::new(GroundDomain::EnumeratedType(
+            ty, ranges,
+        ))))
+    }
+
+    /// Create a new enumerated type domain
+    pub fn enumerated(ty: Moo<EnumeratedType>, ranges: Vec<Range<EnumVariantVal>>) -> DomainPtr {
+        Moo::new(Domain::Unresolved(Moo::new(
+            UnresolvedDomain::EnumeratedType(ty, ranges),
+        )))
+    }
+
     /// If this domain is ground, return a [Moo] to the underlying [GroundDomain].
     /// Otherwise, try to resolve it; Return None if this is not yet possible.
     /// Domains which contain references to givens cannot be resolved until these
@@ -602,7 +618,10 @@ impl Domain {
                 GroundDomain::Relation(attr, _) => attr.representation.as_deref(),
                 GroundDomain::Partition(attr, _) => attr.representation.as_deref(),
                 GroundDomain::Permutation(attr, _) => attr.representation.as_deref(),
-                GroundDomain::Empty(_) | GroundDomain::Bool => None,
+                GroundDomain::Empty(_)
+                | GroundDomain::Bool
+                | GroundDomain::EnumeratedType(_, _)
+                | GroundDomain::UnnamedType(_) => None,
             },
             Domain::Unresolved(ud) => match ud.as_ref() {
                 UnresolvedDomain::Int(_, representation)
@@ -617,7 +636,10 @@ impl Domain {
                 UnresolvedDomain::Relation(attr, _) => attr.representation.as_deref(),
                 UnresolvedDomain::Partition(attr, _) => attr.representation.as_deref(),
                 UnresolvedDomain::Permutation(attr, _) => attr.representation.as_deref(),
-                UnresolvedDomain::IntFromValues(_) | UnresolvedDomain::Reference(_) => None,
+                UnresolvedDomain::IntFromValues(_)
+                | UnresolvedDomain::Reference(_)
+                | UnresolvedDomain::EnumeratedType(_, _)
+                | UnresolvedDomain::UnnamedType(_) => None,
             },
         }
     }
@@ -639,7 +661,10 @@ impl Domain {
                 GroundDomain::Relation(attr, _) => attr.representation = representation,
                 GroundDomain::Partition(attr, _) => attr.representation = representation,
                 GroundDomain::Permutation(attr, _) => attr.representation = representation,
-                GroundDomain::Empty(_) | GroundDomain::Bool => {}
+                GroundDomain::Empty(_)
+                | GroundDomain::Bool
+                | GroundDomain::EnumeratedType(_, _)
+                | GroundDomain::UnnamedType(_) => {}
             },
             Domain::Unresolved(ud) => match Moo::make_mut(ud) {
                 UnresolvedDomain::Int(_, preference)
@@ -654,7 +679,10 @@ impl Domain {
                 UnresolvedDomain::Relation(attr, _) => attr.representation = representation,
                 UnresolvedDomain::Partition(attr, _) => attr.representation = representation,
                 UnresolvedDomain::Permutation(attr, _) => attr.representation = representation,
-                UnresolvedDomain::IntFromValues(_) | UnresolvedDomain::Reference(_) => {}
+                UnresolvedDomain::IntFromValues(_)
+                | UnresolvedDomain::Reference(_)
+                | UnresolvedDomain::EnumeratedType(_, _)
+                | UnresolvedDomain::UnnamedType(_) => {}
             },
         }
     }

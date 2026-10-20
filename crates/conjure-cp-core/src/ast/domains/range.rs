@@ -1,4 +1,7 @@
-use crate::ast::{DomainOpError, domains::Int};
+use crate::ast::{
+    DomainOpError,
+    domains::{Int, OXIDE_INT_MAX, OXIDE_INT_MIN},
+};
 use funcmap::{FuncMap, TryFuncMap};
 use num_traits::Num;
 use polyquine::Quine;
@@ -13,6 +16,17 @@ pub enum Range<A = Int> {
     UnboundedL(A),
     UnboundedR(A),
     Unbounded,
+}
+
+impl Range<Int> {
+    /// Effective endpoints for a finite integer solver. Missing endpoints use the default
+    /// machine limits without replacing the unbounded range stored in the model.
+    pub fn int_bounds_with_defaults(&self) -> (Int, Int) {
+        (
+            *self.low().unwrap_or(&OXIDE_INT_MIN),
+            *self.high().unwrap_or(&OXIDE_INT_MAX),
+        )
+    }
 }
 
 impl<A> Range<A> {

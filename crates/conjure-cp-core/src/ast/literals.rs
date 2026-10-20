@@ -14,6 +14,7 @@ use super::{
     ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int, records::Field,
 };
 use crate::ast::domains::{MSetAttr, SequenceAttr};
+use crate::ast::enumerated::EnumVariant;
 use crate::ast::pretty::pretty_vec;
 use crate::bug;
 use crate::bug_assert;
@@ -33,6 +34,8 @@ use uniplate::{Biplate, Tree, Uniplate};
 pub enum Literal {
     Int(i32),
     Bool(bool),
+    EnumVariant(EnumVariant),
+    Unnamed(crate::ast::unnamed::UnnamedValue),
     //abstract literal variant ends in Literal, but that's ok
     #[allow(clippy::enum_variant_names)]
     AbstractLiteral(AbstractLiteral<Literal>),
@@ -43,6 +46,12 @@ impl HasDomain for Literal {
         match self {
             Literal::Int(i) => Domain::int(vec![Range::Single(*i)]),
             Literal::Bool(_) => Domain::bool(),
+            Literal::EnumVariant(ev) => {
+                Domain::enumerated_ground(ev.ty.clone(), vec![Range::Single(ev.variant)])
+            }
+            Literal::Unnamed(value) => {
+                Moo::new(crate::ast::GroundDomain::UnnamedType(value.ty.clone())).into()
+            }
             Literal::AbstractLiteral(abstract_literal) => abstract_literal.domain_of(),
         }
     }
@@ -56,8 +65,17 @@ impl Literal {
     /// ascending element values (`false < true`).
     pub fn essence_cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
+            (Literal::Unnamed(lhs), Literal::Unnamed(rhs)) => {
+                (&lhs.ty.name, lhs.ty.size, lhs.value).cmp(&(&rhs.ty.name, rhs.ty.size, rhs.value))
+            }
             (Literal::Bool(lhs), Literal::Bool(rhs)) => lhs.cmp(rhs),
             (Literal::Int(lhs), Literal::Int(rhs)) => lhs.cmp(rhs),
+            (Literal::EnumVariant(lhs), Literal::EnumVariant(rhs)) => (
+                &lhs.ty.name,
+                &lhs.ty.variants,
+                lhs.variant,
+            )
+                .cmp(&(&rhs.ty.name, &rhs.ty.variants, rhs.variant)),
             (Literal::AbstractLiteral(lhs), Literal::AbstractLiteral(rhs)) => {
                 abstract_literal_essence_cmp(lhs, rhs)
             }
@@ -71,6 +89,8 @@ fn literal_kind(literal: &Literal) -> u8 {
         Literal::Bool(_) => 0,
         Literal::Int(_) => 1,
         Literal::AbstractLiteral(_) => 2,
+        Literal::EnumVariant(_) => 3,
+        Literal::Unnamed(_) => 4,
     }
 }
 
@@ -1155,6 +1175,28 @@ impl TryFrom<&Literal> for bool {
     }
 }
 
+impl TryFrom<Literal> for EnumVariant {
+    type Error = &'static str;
+
+    fn try_from(value: Literal) -> Result<Self, Self::Error> {
+        match value {
+            Literal::EnumVariant(v) => Ok(v),
+            _ => Err("Cannot convert non-enum literal to enum variant"),
+        }
+    }
+}
+
+impl TryFrom<&Literal> for EnumVariant {
+    type Error = &'static str;
+
+    fn try_from(value: &Literal) -> Result<Self, Self::Error> {
+        match value {
+            Literal::EnumVariant(v) => Ok(v.clone()),
+            _ => Err("Cannot convert non-enum literal to enum variant"),
+        }
+    }
+}
+
 impl From<i32> for Literal {
     fn from(i: i32) -> Self {
         Literal::Int(i)
@@ -1360,6 +1402,8 @@ impl Display for Literal {
         match &self {
             Literal::Int(i) => write!(f, "{i}"),
             Literal::Bool(b) => write!(f, "{b}"),
+            Literal::EnumVariant(ev) => write!(f, "{}", ev.name()),
+            Literal::Unnamed(value) => write!(f, "{}_{}", value.ty.name, value.value),
             Literal::AbstractLiteral(l) => write!(f, "{l}"),
         }
     }

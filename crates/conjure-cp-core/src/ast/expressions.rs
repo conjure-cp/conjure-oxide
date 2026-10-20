@@ -286,6 +286,12 @@ pub enum Expression {
     #[compatible(JsonInput, SMT)]
     Lt(Metadata, Moo<Expression>, Moo<Expression>),
 
+    #[compatible(JsonInput)]
+    Pred(Metadata, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    Succ(Metadata, Moo<Expression>),
+
     /// `s subsequence t` tests whether the list of values taken by s occurs in the same order
     /// in the list of values taken by t
     #[compatible(JsonInput)]
@@ -1234,6 +1240,34 @@ impl Expression {
                 })
                 .or_else(|| matrix_element_domain(e))
             }
+            Expression::Pred(_, operand) | Expression::Succ(_, operand) => {
+                let domain = operand.domain_of()?.resolve().ok()?;
+                if !matches!(domain.as_ref(), GroundDomain::EnumeratedType(_, _)) {
+                    return None;
+                }
+                let values = domain
+                    .values()
+                    .ok()?
+                    .filter_map(|value| {
+                        let Literal::EnumVariant(value) = value else {
+                            return None;
+                        };
+                        let neighbour = if matches!(self, Expression::Pred(_, _)) {
+                            value.pred()
+                        } else {
+                            value.succ()
+                        };
+                        neighbour.map(Literal::EnumVariant)
+                    })
+                    .collect::<Vec<_>>();
+                if values.is_empty() {
+                    Some(Domain::empty(operand.return_type()))
+                } else {
+                    GroundDomain::from_literal_vec(&values)
+                        .ok()
+                        .map(DomainPtr::from)
+                }
+            }
             Expression::UnsafeDiv(_, a, b) => a
                 .domain_of()?
                 .resolve()
@@ -1853,6 +1887,8 @@ impl Expression {
             ToMSet,
             ToRelation,
             RelationProj,
+            Pred,
+            Succ,
             Card,
             Subsequence,
             Substring,
@@ -1885,6 +1921,8 @@ impl Expression {
                     | Expression::UnsafeIndex(_, _, _)
                     | Expression::Bubble(_, _, _)
                     | Expression::UnsafeSlice(_, _, _)
+                    | Expression::Pred(_, _)
+                    | Expression::Succ(_, _)
             ) || matches!(expr, Expression::Image(_, subject, argument)
                 if image_can_be_undefined(subject, argument))
         })
@@ -2153,7 +2191,7 @@ impl Expression {
     pub fn try_return_type(&self) -> Option<ReturnType> {
         let has_untyped_reference = self.any_expression(|expr| {
             matches!(expr, Expression::Atomic(_, Atom::Reference(reference))
-                if reference.domain().is_none() && reference.resolve_constant().is_none())
+                if reference.domain().is_none())
         });
 
         (!has_untyped_reference).then(|| self.return_type())
@@ -2753,6 +2791,8 @@ impl Display for Expression {
                     .join(", ");
                 write!(f, "{relation}({projections_str})")
             }
+            Expression::Pred(_, ev) => write!(f, "Pred({})", ev),
+            Expression::Succ(_, ev) => write!(f, "Succ({})", ev),
         }
     }
 }
@@ -2765,6 +2805,8 @@ fn minus_operand_return_type(expr: &Expression) -> ReturnType {
                 DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => {
                     var.return_type()
                 }
+                DeclarationKind::EnumeratedType(ty) => ReturnType::EnumeratedType(ty),
+                DeclarationKind::UnnamedType(_) => reference.ptr.return_type(),
                 DeclarationKind::Given(domain)
                 | DeclarationKind::DomainLetting(domain) => domain.return_type(),
                 DeclarationKind::Quantified(inner) => inner.domain().return_type(),
@@ -3104,6 +3146,8 @@ impl Typeable for Expression {
                     ),
                 }
             }
+            Expression::Pred(_, ev) => ev.return_type(),
+            Expression::Succ(_, ev) => ev.return_type(),
             Expression::Card(..) => ReturnType::Int,
             Expression::Subsequence(_, _, _) => ReturnType::Bool,
             Expression::Substring(_, _, _) => ReturnType::Bool,
@@ -3201,6 +3245,8 @@ impl Expression {
             | Expression::ToSet(_, m1)
             | Expression::ToMSet(_, m1)
             | Expression::ToRelation(_, m1)
+            | Expression::Pred(_, m1)
+            | Expression::Succ(_, m1)
             | Expression::Card(_, m1)
             | Expression::RecordField(_, m1, _)
             | Expression::Active(_, m1, _) => {
@@ -3522,6 +3568,8 @@ impl Expression {
             | Expression::ToSet(_, m1)
             | Expression::ToMSet(_, m1)
             | Expression::ToRelation(_, m1)
+            | Expression::Pred(_, m1)
+            | Expression::Succ(_, m1)
             | Expression::Card(_, m1) => {
                 child_hash(child_hashes).hash(&mut hasher);
             }

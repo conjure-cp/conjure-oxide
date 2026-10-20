@@ -6,7 +6,13 @@ find q: bool
 
 such that
 
-(z[y] = 1) <-> (q)
+(z[y] = 1) <-> (q),
+y >= 2,
+y <= 4,
+z[2] <= 1,
+z[4] <= 1,
+z[6] = 0,
+z[8] = 0
 
 --
 
@@ -18,6 +24,54 @@ new variables:
   find z#components_2: int(0..10)
   find z#components_3: int(0..10)
   find z#components_4: int(0..10)
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+
+--
+
+z[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+z#components_1
+
+--
+
+z[4]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+z#components_2
+
+--
+
+z[6]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+z#components_3
+
+--
+
+z[8]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+z#components_4
 
 --
 
@@ -64,6 +118,18 @@ __0
 (and([SafeIndex([z#components_1,z#components_2,z#components_3,z#components_4;int(1..)],[sum([__0,1;int(1..)])]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)])) <-> (q)
    ~~> iff_to_eq ([("Minion", 4400)])
 Reify(and([SafeIndex([z#components_1,z#components_2,z#components_3,z#components_4;int(1..)],[sum([__0,1;int(1..)])]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)]), q)
+
+--
+
+z#components_3 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z#components_3,0)
+
+--
+
+z#components_4 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z#components_4,0)
 
 --
 
@@ -141,6 +207,30 @@ __minion_element_one([z#components_1,z#components_2,z#components_3,z#components_
 
 --
 
+y >= 2
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(2, y, 0)
+
+--
+
+y <= 4
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(y, 4, 0)
+
+--
+
+z#components_1 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(z#components_1, 1, 0)
+
+--
+
+z#components_2 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(z#components_2, 1, 0)
+
+--
+
 !(__1)
    ~~> not_literal_to_wliteral ([("Minion", 4100)])
 WatchedLiteral(__1,false)
@@ -163,6 +253,12 @@ findAux __2: int(1..4)
 such that
 
 Reify(and([__minion_element_one([z#components_1,z#components_2,z#components_3,z#components_4],__2,1),__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]);int(1..)]), q),
+Ineq(2, y, 0),
+Ineq(y, 4, 0),
+Ineq(z#components_1, 1, 0),
+Ineq(z#components_2, 1, 0),
+WatchedLiteral(z#components_3,0),
+WatchedLiteral(z#components_4,0),
 or([and([WatchedLiteral(y,2),WatchedLiteral(__0,0);int(1..)]),and([WatchedLiteral(y,4),WatchedLiteral(__0,1);int(1..)]),WatchedLiteral(__1,false);int(1..)]),
 Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __1),
 and([SumLeq([1, __0], __2),SumGeq([1, __0], __2);int(1..)])

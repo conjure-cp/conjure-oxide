@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use crate::ast::enumerated::EnumVariant;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationKind, Expression as Expr, Field, Literal as Lit, Metadata,
     Moo,
@@ -35,6 +36,10 @@ fn eval_constant_set(expr: &Expr) -> Option<Vec<Lit>> {
 /// direct evaluator calls on unlike primitive or abstract literal kinds safely unevaluable.
 fn equal_constant_literals(lhs: &Lit, rhs: &Lit) -> Option<bool> {
     match (lhs, rhs) {
+        (Lit::EnumVariant(lhs), Lit::EnumVariant(rhs)) if lhs.ty == rhs.ty => {
+            Some(lhs.variant == rhs.variant)
+        }
+        (Lit::Unnamed(lhs), Lit::Unnamed(rhs)) if lhs.ty == rhs.ty => Some(lhs.value == rhs.value),
         (Lit::Int(_), Lit::Int(_)) | (Lit::Bool(_), Lit::Bool(_)) => {
             Some(lhs.essence_cmp(rhs) == CmpOrdering::Equal)
         }
@@ -919,7 +924,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                     return None;
                 };
                 match x {
-                    Lit::Int(_) | Lit::Bool(_) => {
+                    Lit::Int(_) | Lit::Bool(_) | Lit::EnumVariant(_) | Lit::Unnamed(_) => {
                         if lits.contains(x) {
                             return Some(Lit::Bool(false));
                         } else {
@@ -939,7 +944,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 };
 
                 match x {
-                    Lit::Int(_) | Lit::Bool(_) => {
+                    Lit::Int(_) | Lit::Bool(_) | Lit::EnumVariant(_) | Lit::Unnamed(_) => {
                         if lits.contains(x) {
                             return Some(Lit::Bool(false));
                         } else {
@@ -1225,6 +1230,14 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                     .unwrap_or(a_len <= b_len)
             })?;
             Some(lt.into())
+        }
+        Expr::Pred(_, expr) => {
+            let ev = unwrap_expr::<EnumVariant>(expr)?;
+            ev.pred().map(Lit::EnumVariant)
+        }
+        Expr::Succ(_, expr) => {
+            let ev = unwrap_expr::<EnumVariant>(expr)?;
+            ev.succ().map(Lit::EnumVariant)
         }
         Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) | Expr::IndexOf(_, _, _) => {
             None
