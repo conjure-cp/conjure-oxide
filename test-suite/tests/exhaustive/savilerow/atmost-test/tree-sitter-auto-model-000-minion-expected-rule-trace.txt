@@ -6,7 +6,10 @@ find cards: matrix indexed by [int(1..5)] of int(0..10)
 such that
 
 atMost(M, [0;int(1..1)], [0;int(1..1)]),
-or([atMost([M[1],M[2],M[3],M[4],M[5],3,3,3,1;int(1..9)], [2;int(1..1)], [1;int(1..1)]),atMost([M[1],M[2],M[3],M[4],M[5],3,3,3,1,1,1;int(1..11)], [2;int(1..1)], [1;int(1..1)]);int(1..)])
+or([atMost([M[1],M[2],M[3],M[4],M[5],3,3,3,1;int(1..9)], [2;int(1..1)], [1;int(1..1)]),atMost([M[1],M[2],M[3],M[4],M[5],3,3,3,1,1,1;int(1..11)], [2;int(1..1)], [1;int(1..1)]);int(1..)]),
+cards[1] <= 1,
+cards[2] <= 1,
+and([ cards[i] = 0 | i : int(3..5) ])
 
 --
 
@@ -27,71 +30,9 @@ new variables:
 
 --
 
-M
+cards
    ~~> select_representation ([("ReprGeneral", 10000)])
-M
-
---
-
-M
-   ~~> select_representation ([("ReprGeneral", 10000)])
-M
-
---
-
-M
-   ~~> select_representation ([("ReprGeneral", 10000)])
-M
-
---
-
-M
-   ~~> select_representation ([("ReprGeneral", 10000)])
-M
-
---
-
-M
-   ~~> select_representation ([("ReprGeneral", 10000)])
-M
-
---
-
-M
-   ~~> select_representation ([("ReprGeneral", 10000)])
-M
-
---
-
-M
-   ~~> select_representation ([("ReprGeneral", 10000)])
-M
-
---
-
-M
-   ~~> select_representation ([("ReprGeneral", 10000)])
-M
-
---
-
-M
-   ~~> select_representation ([("ReprGeneral", 10000)])
-M
-
---
-
-M
-   ~~> select_representation ([("ReprGeneral", 10000)])
-M
-
---
-
-atMost(M, [0;int(1..1)], [0;int(1..1)]),
-or([atMost([M[1],M[2],M[3],M[4],M[5],3,3,3,1;int(1..9)], [2;int(1..1)], [1;int(1..1)]),atMost([M[1],M[2],M[3],M[4],M[5],3,3,3,1,1,1;int(1..11)], [2;int(1..1)], [1;int(1..1)]);int(1..)])
-   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-atMost(M, [0;int(1..1)], [0;int(1..1)]),
-or([atMost([M[1],M[2],M[3],M[4],M[5],3,3,3,1;int(1..9)], [2;int(1..1)], [1;int(1..1)]),atMost([M[1],M[2],M[3],M[4],M[5],3,3,3,1,1,1;int(1..11)], [2;int(1..1)], [1;int(1..1)]);int(1..)])
+cards
 new variables:
   find cards#components_1: int(0..10)
   find cards#components_2: int(0..10)
@@ -101,6 +42,84 @@ new variables:
 
 --
 
+cards
+   ~~> select_representation ([("ReprGeneral", 10000)])
+cards
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+cards[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+cards#components_1
+
+--
+
+cards[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+cards#components_2
+
+--
+
 M[1]
    ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
 M#components_2
@@ -158,12 +177,48 @@ M#components_5
 M[5]
    ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
 M#components_6
+
+--
+
+cards#components_1 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(cards#components_1, 1, 0)
+
+--
+
+cards#components_2 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(cards#components_2, 1, 0)
 
 --
 
 atMost(M, [0;int(1..1)], [0;int(1..1)])
    ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
 atMost([M#components_1,M#components_2,M#components_3,M#components_4,M#components_5,M#components_6,M#components_7,M#components_8,M#components_9,M#components_10;int(0..9)], [0;int(1..1)], [0;int(1..1)])
+
+--
+
+[ cards[i] = 0 | i : int(3..5) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[cards#components_3 = 0,cards#components_4 = 0,cards#components_5 = 0;int(1..)]
+
+--
+
+cards#components_3 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(cards#components_3,0)
+
+--
+
+cards#components_4 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(cards#components_4,0)
+
+--
+
+cards#components_5 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(cards#components_5,0)
 
 --
 
@@ -208,5 +263,8 @@ find cards#components_5: int(0..10)
 such that
 
 atMost([M#components_1,M#components_2,M#components_3,M#components_4,M#components_5,M#components_6,M#components_7,M#components_8,M#components_9,M#components_10;int(0..9)], [0;int(1..)], [0;int(1..)]),
-or([atMost([M#components_2,M#components_3,M#components_4,M#components_5,M#components_6,3,3,3,1;int(1..)], [2;int(1..)], [1;int(1..)]),atMost([M#components_2,M#components_3,M#components_4,M#components_5,M#components_6,3,3,3,1,1,1;int(1..)], [2;int(1..)], [1;int(1..)]);int(1..)])
+or([atMost([M#components_2,M#components_3,M#components_4,M#components_5,M#components_6,3,3,3,1;int(1..)], [2;int(1..)], [1;int(1..)]),atMost([M#components_2,M#components_3,M#components_4,M#components_5,M#components_6,3,3,3,1,1,1;int(1..)], [2;int(1..)], [1;int(1..)]);int(1..)]),
+Ineq(cards#components_1, 1, 0),
+Ineq(cards#components_2, 1, 0),
+and([WatchedLiteral(cards#components_3,0),WatchedLiteral(cards#components_4,0),WatchedLiteral(cards#components_5,0);int(1..)])
 

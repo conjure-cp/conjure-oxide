@@ -4,7 +4,11 @@ find x: matrix indexed by [int(1..10)] of int(0..10)
 
 such that
 
-or([allDifferentExcept(x, 0),x[3] = 5;int(1..)])
+or([allDifferentExcept(x, 0),x[3] = 5;int(1..)]),
+x[1] <= 2,
+x[2] <= 2,
+or([x[3] <= 2,x[3] = 5;int(1..)]),
+and([ x[i] = 0 | i : int(4..10) ])
 
 --
 
@@ -31,6 +35,54 @@ x
 
 --
 
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+x#components_1
+
+--
+
+x[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+x#components_2
+
+--
+
+x[3]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+x#components_3
+
+--
+
+x[3]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+x#components_3
+
+--
+
 x[3]
    ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
 x#components_3
@@ -40,6 +92,78 @@ x#components_3
 x#components_3 = 5
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#components_3,5)
+
+--
+
+x#components_3 = 5
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_3,5)
+
+--
+
+x#components_1 <= 2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#components_1, 2, 0)
+
+--
+
+x#components_2 <= 2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#components_2, 2, 0)
+
+--
+
+x#components_3 <= 2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#components_3, 2, 0)
+
+--
+
+[ x[i] = 0 | i : int(4..10) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[x#components_4 = 0,x#components_5 = 0,x#components_6 = 0,x#components_7 = 0,x#components_8 = 0,x#components_9 = 0,x#components_10 = 0;int(1..)]
+
+--
+
+x#components_4 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_4,0)
+
+--
+
+x#components_5 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_5,0)
+
+--
+
+x#components_6 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_6,0)
+
+--
+
+x#components_7 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_7,0)
+
+--
+
+x#components_8 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_8,0)
+
+--
+
+x#components_9 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_9,0)
+
+--
+
+x#components_10 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_10,0)
 
 --
 
@@ -98,5 +222,9 @@ findAux __9: bool
 
 such that
 
-or([gccweak([x#components_1,x#components_2,x#components_3,x#components_4,x#components_5,x#components_6,x#components_7,x#components_8,x#components_9,x#components_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [__0,__1,__2,__3,__4,__5,__6,__7,__8,__9;int(1..)]),WatchedLiteral(x#components_3,5);int(1..)])
+or([gccweak([x#components_1,x#components_2,x#components_3,x#components_4,x#components_5,x#components_6,x#components_7,x#components_8,x#components_9,x#components_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [__0,__1,__2,__3,__4,__5,__6,__7,__8,__9;int(1..)]),WatchedLiteral(x#components_3,5);int(1..)]),
+Ineq(x#components_1, 2, 0),
+Ineq(x#components_2, 2, 0),
+or([Ineq(x#components_3, 2, 0),WatchedLiteral(x#components_3,5);int(1..)]),
+and([WatchedLiteral(x#components_4,0),WatchedLiteral(x#components_5,0),WatchedLiteral(x#components_6,0),WatchedLiteral(x#components_7,0),WatchedLiteral(x#components_8,0),WatchedLiteral(x#components_9,0),WatchedLiteral(x#components_10,0);int(1..)])
 
