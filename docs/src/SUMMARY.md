@@ -21,6 +21,35 @@
   - [Logging](users-guide/command-line-guide/logging.md)
 - [Common Problems]()
 
+# Essence Reference
+
+- [Statements](reference/statements/statements.md)
+  - [Language](reference/statements/language.md)
+  - [Letting](reference/statements/letting.md)
+  - [Given](reference/statements/given.md)
+  - [Find](reference/statements/find.md)
+  - [Such That](reference/statements/such-that.md)
+  - [Where](reference/statements/where.md)
+  - [Dominance Relations](reference/statements/dominance-relations.md)
+  - [Branching](reference/statements/branching.md)
+- [Domains](./reference/domains/domains.md)
+  - [Primitive Domains](./reference/domains/concrete.md)
+  - [Sets](./reference/domains/sets.md)
+  - [Multisets](./reference/domains/multisets.md)
+  - [Tuples](./reference/domains/tuples.md)
+  - [Matrices](./reference/domains/matrices.md)
+  - [Partitions](./reference/domains/partitions.md)
+  - [Functions](./reference/domains/functions.md)
+  - [Relations](./reference/domains/relations.md)
+  - [Sequences](./reference/domains/sequences.md)
+  - [Records](./reference/domains/records.md)
+  - [Variants](./reference/domains/variants.md)
+  - [Permutations](./reference/domains/permutations.md)
+
+- [Expressions](./reference/expressions/expressions.md)
+  - [Boolean](./reference/expressions/boolean.md)
+  - [Comprehensions](./reference/expressions/comprehensions.md)
+
 # Contributor's Guide
 
 - [Overview](contributors-guide/index.md)
