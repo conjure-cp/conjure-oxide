@@ -924,6 +924,60 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
     Some((min, max))
 }
 
+/// Sound floor-remainder bounds, computed from range endpoints rather than the
+/// Cartesian product of operand values. Inference is linear in the number of
+/// ranges, independent of their cardinality. Holes in the result are permitted:
+/// the modulo constraint, rather than its auxiliary domain, enforces exactness.
+fn modulo_domain(a: &Expression, b: &Expression, safe: bool) -> Option<DomainPtr> {
+    let a_domain = a.domain_of()?.resolve().ok()?;
+    let b_domain = b.domain_of()?.resolve().ok()?;
+    let ranges = |domain: &GroundDomain| match domain {
+        GroundDomain::Int(ranges, _) => Some(ranges.clone()),
+        GroundDomain::Empty(ReturnType::Int) => Some(Vec::new()),
+        _ => None,
+    };
+    let a_ranges = ranges(&a_domain)?;
+    let b_ranges = ranges(&b_domain)?;
+    let empty = || {
+        if safe {
+            Domain::int(vec![Range::Single(0)])
+        } else {
+            Domain::empty(ReturnType::Int)
+        }
+    };
+    if a_ranges.is_empty() || b_ranges.is_empty() {
+        return Some(empty());
+    }
+    let (a_min, a_max) = range_vec_bounds_i32(&a_ranges)?;
+    let (b_min, b_max) = range_vec_bounds_i32(&b_ranges)?;
+    if b_min == 0 && b_max == 0 {
+        return Some(empty());
+    }
+    // Keep constant inference exact, including MIN % -1 (which is zero).
+    if a_min == a_max && b_min == b_max {
+        let value = super::floor_mod(a_min, b_min)?;
+        let mut ranges = vec![Range::Single(value)];
+        if safe && value != 0 {
+            ranges.push(Range::Single(0));
+        }
+        return Some(Domain::int(ranges));
+    }
+    // For b > 0, 0 <= a mod b < b; for b < 0, b < a mod b <= 0.
+    // Add/subtract only on the corresponding sign branch, avoiding overflow
+    // even when an endpoint is i32::MIN or i32::MAX.
+    let lo = if b_min < 0 { b_min + 1 } else { 0 };
+    let hi = if b_max > 0 { b_max - 1 } else { 0 };
+    // If dividend and divisor have the same sign, the magnitude of the
+    // remainder cannot exceed the magnitude of the dividend either.
+    let mut lo = if a_max <= 0 { lo.max(a_min) } else { lo };
+    let mut hi = if a_min >= 0 { hi.min(a_max) } else { hi };
+    if safe {
+        lo = lo.min(0);
+        hi = hi.max(0);
+    }
+    Some(Domain::int(vec![Range::new(Some(lo), Some(hi))]))
+}
+
 /// Integer domain bounds for [`Expression::Sum`] over a comprehension.
 fn sum_domain_for_comprehension(expr: &Expression) -> Option<DomainPtr> {
     let Expression::Comprehension(_, comp) = expr else {
@@ -1306,31 +1360,8 @@ impl Expression {
                     bug!("Domain of {self} was not integer")
                 }
             }
-            Expression::UnsafeMod(_, a, b) => a
-                .domain_of()?
-                .resolve()
-                .ok()?
-                .apply_i32(super::floor_mod, b.domain_of()?.resolve().ok()?.as_ref())
-                .map(DomainPtr::from)
-                .ok(),
-            Expression::SafeMod(_, a, b) => {
-                let domain = a
-                    .domain_of()?
-                    .resolve()
-                    .ok()?
-                    .apply_i32(super::floor_mod, b.domain_of()?.resolve().ok()?.as_ref())
-                    .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
-
-                if let GroundDomain::Int(ranges, _) = domain {
-                    let mut ranges = ranges;
-                    ranges.push(Range::Single(0));
-                    Some(Domain::int(ranges))
-                } else if matches!(domain, GroundDomain::Empty(ReturnType::Int)) {
-                    Some(Domain::int(vec![Range::Single(0)]))
-                } else {
-                    bug!("Domain of {self} was not integer")
-                }
-            }
+            Expression::UnsafeMod(_, a, b) => modulo_domain(a, b, false),
+            Expression::SafeMod(_, a, b) => modulo_domain(a, b, true),
             Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => a
                 .domain_of()?
                 .resolve()
@@ -3848,6 +3879,148 @@ mod tests {
     use crate::matrix_expr;
 
     use super::*;
+
+    fn modulo_expression(a: DomainPtr, b: DomainPtr, safe: bool) -> Expression {
+        let variable = |name: &str, domain| {
+            Moo::new(Expression::Atomic(
+                Metadata::new(),
+                Atom::Reference(Reference::new(DeclarationPtr::new_find(
+                    Name::user(name),
+                    domain,
+                ))),
+            ))
+        };
+        let (a, b) = (variable("a", a), variable("b", b));
+        if safe {
+            Expression::SafeMod(Metadata::new(), a, b)
+        } else {
+            Expression::UnsafeMod(Metadata::new(), a, b)
+        }
+    }
+
+    #[test]
+    fn modulo_domain_bounds_contain_all_small_signed_results() {
+        // Exhaust all pairs of small intervals, including constants, mixed signs,
+        // zero-only divisors, and same-sign dividend tightening.
+        for a_min in -4..=4 {
+            for a_max in a_min..=4 {
+                for b_min in -4..=4 {
+                    for b_max in b_min..=4 {
+                        for safe in [false, true] {
+                            let domain = modulo_expression(
+                                Domain::int(vec![Range::Bounded(a_min, a_max)]),
+                                Domain::int(vec![Range::Bounded(b_min, b_max)]),
+                                safe,
+                            )
+                            .domain_of()
+                            .unwrap()
+                            .resolve()
+                            .unwrap();
+                            let expected: BTreeSet<_> = (a_min..=a_max)
+                                .flat_map(|a| {
+                                    (b_min..=b_max)
+                                        .filter_map(move |b| super::super::floor_mod(a, b))
+                                })
+                                .chain(safe.then_some(0))
+                                .collect();
+                            for value in &expected {
+                                assert!(
+                                    domain.contains(&Literal::Int(*value)).unwrap(),
+                                    "{a_min}..{a_max} mod {b_min}..{b_max}, safe={safe}: {value} missing from {domain}"
+                                );
+                            }
+                            if expected.is_empty() {
+                                assert_eq!(domain.len_usize().unwrap(), 0);
+                            }
+                            if a_min == a_max && b_min == b_max {
+                                assert_eq!(
+                                    domain
+                                        .values_i32()
+                                        .unwrap()
+                                        .into_iter()
+                                        .collect::<BTreeSet<_>>(),
+                                    expected
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn modulo_domain_bounds_handle_sparse_empty_and_unbounded_domains() {
+        let sparse = Domain::int(vec![Range::Single(-7), Range::Bounded(3, 5)]);
+        for safe in [false, true] {
+            let domain = modulo_expression(sparse.clone(), sparse.clone(), safe)
+                .domain_of()
+                .unwrap()
+                .resolve()
+                .unwrap();
+            for a in [-7, 3, 4, 5] {
+                for b in [-7, 3, 4, 5] {
+                    let value = super::super::floor_mod(a, b).unwrap();
+                    assert!(domain.contains(&Literal::Int(value)).unwrap());
+                }
+            }
+            for empty in [
+                Domain::empty(ReturnType::Int),
+                Domain::int(Vec::<Range<i32>>::new()),
+            ] {
+                for (a, b) in [(empty.clone(), sparse.clone()), (sparse.clone(), empty)] {
+                    let domain = modulo_expression(a, b, safe)
+                        .domain_of()
+                        .unwrap()
+                        .resolve()
+                        .unwrap();
+                    assert_eq!(
+                        domain.values_i32().unwrap(),
+                        if safe { vec![0] } else { vec![] }
+                    );
+                }
+            }
+            for (a, b) in [
+                (Domain::int(vec![Range::<i32>::Unbounded]), sparse.clone()),
+                (sparse.clone(), Domain::int(vec![Range::<i32>::Unbounded])),
+                (Domain::bool(), sparse.clone()),
+                (sparse.clone(), Domain::bool()),
+            ] {
+                assert_eq!(modulo_expression(a, b, safe).domain_of(), None);
+            }
+        }
+    }
+
+    #[test]
+    fn modulo_domain_bounds_do_not_enumerate_large_domains() {
+        // The previous Cartesian-product algorithm needed 400 million pairs for
+        // +/-10,000, and could not even allocate the full i32 domain below.
+        for bound in [100, 10_000, 1_000_000_000] {
+            let domain = Domain::int(vec![Range::Bounded(-bound, bound)]);
+            for safe in [false, true] {
+                assert_eq!(
+                    modulo_expression(domain.clone(), domain.clone(), safe).domain_of(),
+                    Some(Domain::int(vec![Range::Bounded(-bound + 1, bound - 1)]))
+                );
+            }
+        }
+        let full = Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]);
+        for safe in [false, true] {
+            assert_eq!(
+                modulo_expression(full.clone(), full.clone(), safe).domain_of(),
+                Some(Domain::int(vec![Range::Bounded(
+                    i32::MIN + 1,
+                    i32::MAX - 1
+                )]))
+            );
+            let min = Domain::int(vec![Range::Single(i32::MIN)]);
+            let minus_one = Domain::int(vec![Range::Single(-1)]);
+            assert_eq!(
+                modulo_expression(min, minus_one, safe).domain_of(),
+                Some(Domain::int(vec![Range::Single(0)]))
+            );
+        }
+    }
 
     #[test]
     fn test_domain_of_constant_sum() {
