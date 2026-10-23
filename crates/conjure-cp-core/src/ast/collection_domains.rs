@@ -252,8 +252,8 @@ pub(super) fn set_operation_domain(
             a_inner.return_type(),
         ))));
     }
-    let a_rep = super::expressions::selected_representation(a).or(a_attr.representation);
-    let b_rep = super::expressions::selected_representation(b).or(b_attr.representation);
+    let a_rep = super::expression_domains::selected_representation(a).or(a_attr.representation);
+    let b_rep = super::expression_domains::selected_representation(b).or(b_attr.representation);
     let representation = match op {
         SetOperation::Difference => a_rep,
         _ => match (a_rep, b_rep) {

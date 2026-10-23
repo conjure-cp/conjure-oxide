@@ -9,6 +9,7 @@ mod domains;
 pub mod enumerated;
 pub mod eval;
 mod expression_arena;
+mod expression_domains;
 mod expressions;
 mod function_domains;
 mod integer_arithmetic;
