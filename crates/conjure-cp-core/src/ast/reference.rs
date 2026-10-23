@@ -13,6 +13,7 @@ use uniplate::Uniplate;
 
 use super::{
     Atom, DeclarationKind, DomainPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
+    ReturnType,
     categories::{Category, CategoryOf},
     domains::HasDomain,
 };
@@ -246,6 +247,17 @@ impl Reference {
         None
     }
 
+    /// The formula named by this boolean value letting, when that formula is not an atom.
+    ///
+    /// Constants and aliases of decision variables return [`None`]: those names already stand for
+    /// a value. An alias of another value letting returns that reference, so the caller can follow
+    /// the chain. Unit `or`/`and` removal rewrites a singleton connective down to the remaining
+    /// name, and that name is still a connective.
+    pub fn boolean_formula_letting_body(&self) -> Option<Expression> {
+        let body = self.resolve_expression()?;
+        boolean_formula_letting(&body).then_some(body)
+    }
+
     /// Calls `inspect` with the expression behind a value-letting reference.
     ///
     /// The declaration is kept read-locked for the duration of `inspect`, allowing callers to ask
@@ -281,6 +293,34 @@ impl Reference {
             _ => None,
         })
         .flatten()
+    }
+}
+
+/// True when a value-letting body should be read as a boolean formula rather than as an atom.
+fn boolean_formula_letting(body: &Expression) -> bool {
+    match body {
+        Expression::Atomic(_, Atom::Reference(next)) => next.resolve_expression().is_some(),
+        Expression::Atomic(_, _) => false,
+        other => {
+            other.try_return_type() == Some(ReturnType::Bool)
+                || matches!(
+                    other,
+                    Expression::Not(_, _)
+                        | Expression::Or(_, _)
+                        | Expression::And(_, _)
+                        | Expression::Imply(_, _, _)
+                        | Expression::Iff(_, _, _)
+                        | Expression::Eq(_, _, _)
+                        | Expression::Neq(_, _, _)
+                        | Expression::Geq(_, _, _)
+                        | Expression::Leq(_, _, _)
+                        | Expression::Gt(_, _, _)
+                        | Expression::Lt(_, _, _)
+                        | Expression::FlatIneq(_, _, _, _)
+                        | Expression::MinionReify(_, _, _)
+                        | Expression::MinionReifyImply(_, _, _)
+                )
+        }
     }
 }
 

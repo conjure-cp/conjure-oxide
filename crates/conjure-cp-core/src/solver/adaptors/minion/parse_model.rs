@@ -523,51 +523,14 @@ fn load_constraint(
 }
 
 /// A boolean value letting used where Minion expects a constraint.
-///
-/// Constants and aliases of decision variables stay names. `parse_reference_atom` resolves those.
-/// An alias of another value letting is followed: unit `or`/`and` removal rewrites a singleton
-/// connective down to the remaining name, and stopping at that atom would ask Minion for a
-/// variable that is still a connective.
 fn boolean_constraint_letting(
     expr: &conjure_ast::Expression,
 ) -> Option<(conjure_ast::serde::ObjId, String, conjure_ast::Expression)> {
     let conjure_ast::Expression::Atomic(_, conjure_ast::Atom::Reference(reference)) = expr else {
         return None;
     };
-    let body = reference.resolve_expression()?;
-    if !inlinable_boolean_body(&body) {
-        return None;
-    }
+    let body = reference.boolean_formula_letting_body()?;
     Some((reference.id(), reference.name().to_string(), body))
-}
-
-fn inlinable_boolean_body(body: &conjure_ast::Expression) -> bool {
-    match body {
-        conjure_ast::Expression::Atomic(_, conjure_ast::Atom::Reference(next)) => {
-            next.resolve_expression().is_some()
-        }
-        conjure_ast::Expression::Atomic(_, _) => false,
-        other => {
-            other.try_return_type() == Some(conjure_ast::ReturnType::Bool)
-                || matches!(
-                    other,
-                    conjure_ast::Expression::Not(_, _)
-                        | conjure_ast::Expression::Or(_, _)
-                        | conjure_ast::Expression::And(_, _)
-                        | conjure_ast::Expression::Imply(_, _, _)
-                        | conjure_ast::Expression::Iff(_, _, _)
-                        | conjure_ast::Expression::Eq(_, _, _)
-                        | conjure_ast::Expression::Neq(_, _, _)
-                        | conjure_ast::Expression::Geq(_, _, _)
-                        | conjure_ast::Expression::Leq(_, _, _)
-                        | conjure_ast::Expression::Gt(_, _, _)
-                        | conjure_ast::Expression::Lt(_, _, _)
-                        | conjure_ast::Expression::FlatIneq(_, _, _, _)
-                        | conjure_ast::Expression::MinionReify(_, _, _)
-                        | conjure_ast::Expression::MinionReifyImply(_, _, _)
-                )
-        }
-    }
 }
 
 /// Parses a Conjure Oxide expression into a `minion_sys` constraint.
@@ -807,9 +770,7 @@ fn parse_expr_following_lettings(
             // `not` of a boolean reference becomes a watched literal before loading. A boolean
             // value letting has a bool domain, so that rule treats the letting name as a variable
             // and would ask Minion for a name that was never declared.
-            if let Some(body) = reference.resolve_expression()
-                && inlinable_boolean_body(&body)
-            {
+            if let Some(body) = reference.boolean_formula_letting_body() {
                 let id = reference.id();
                 let name = reference.name().to_string();
                 if !lettings.insert(id.clone()) {
