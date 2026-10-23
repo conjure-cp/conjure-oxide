@@ -447,17 +447,50 @@ impl GroundDomain {
                 Moo::new((*x).intersect(y)?),
             )),
 
-            (GroundDomain::Int(_, _), GroundDomain::Int(_, _)) => {
-                let mut v: BTreeSet<i32> = BTreeSet::new();
-
-                let v1 = self.values_i32()?;
-                let v2 = other.values_i32()?;
-                for value1 in v1.iter() {
-                    if v2.contains(value1) && !v.contains(value1) {
-                        v.insert(*value1);
+            (GroundDomain::Int(a, _), GroundDomain::Int(b, _)) => {
+                // Intersect intervals, not their expanded values. In particular,
+                // full machine-sized domains must not allocate billions of ints.
+                if a.iter().chain(b).any(|range| !range.is_finite()) {
+                    return Err(DomainOpError::Unbounded);
+                }
+                let mut intersections = Vec::new();
+                for left in a {
+                    for right in b {
+                        let lo = *left
+                            .low()
+                            .ok_or(DomainOpError::Unbounded)?
+                            .max(right.low().ok_or(DomainOpError::Unbounded)?);
+                        let hi = *left
+                            .high()
+                            .ok_or(DomainOpError::Unbounded)?
+                            .min(right.high().ok_or(DomainOpError::Unbounded)?);
+                        if lo <= hi {
+                            intersections.push((lo, hi));
+                        }
                     }
                 }
-                Ok(GroundDomain::from_set_i32(&v))
+                intersections.sort_unstable();
+                let mut merged: Vec<(i32, i32)> = Vec::new();
+                for (lo, hi) in intersections {
+                    if let Some(last) = merged.last_mut()
+                        && i64::from(lo) <= i64::from(last.1) + 1
+                    {
+                        last.1 = last.1.max(hi);
+                    } else {
+                        merged.push((lo, hi));
+                    }
+                }
+                if merged.is_empty() {
+                    Ok(GroundDomain::Empty(ReturnType::Int))
+                } else {
+                    Ok(GroundDomain::Int(
+                        merged
+                            .into_iter()
+                            .map(|(lo, hi)| Range::new(Some(lo), Some(hi)))
+                            .collect(),
+                        None,
+                    ))
+                }
             }
             (GroundDomain::Relation(_, _), GroundDomain::Relation(_, _)) => {
                 todo!("Relation union not yet supported")
@@ -2226,6 +2259,81 @@ mod tests {
     use super::*;
     use crate::ast::Name;
     use crate::{domain_int_ground, matrix_lit};
+
+    #[test]
+    fn integer_intersection_matches_all_small_sparse_sets() {
+        for a_mask in 0..128 {
+            let a = GroundDomain::Int(
+                (-3..=3)
+                    .filter(|i| a_mask & (1 << (i + 3)) != 0)
+                    .map(Range::Single)
+                    .collect(),
+                None,
+            );
+            for b_mask in 0..128 {
+                let b = GroundDomain::Int(
+                    (-3..=3)
+                        .filter(|i| b_mask & (1 << (i + 3)) != 0)
+                        .map(Range::Single)
+                        .collect(),
+                    None,
+                );
+                let expected: BTreeSet<_> = (-3..=3)
+                    .filter(|i| (a_mask & b_mask) & (1 << (i + 3)) != 0)
+                    .collect();
+                let actual = a
+                    .intersect(&b)
+                    .unwrap()
+                    .values_i32()
+                    .unwrap()
+                    .into_iter()
+                    .collect::<BTreeSet<_>>();
+                assert_eq!(actual, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn integer_intersection_handles_large_overlapping_and_empty_ranges() {
+        let full = GroundDomain::Int(vec![Range::Bounded(i32::MIN, i32::MAX)], None);
+        let positive = GroundDomain::Int(vec![Range::Bounded(0, i32::MAX)], None);
+        assert_eq!(full.intersect(&positive).unwrap(), positive);
+        assert_eq!(full.intersect(&full).unwrap(), full);
+        let empty = GroundDomain::Empty(ReturnType::Int);
+        assert_eq!(full.intersect(&empty).unwrap(), empty);
+        let unsorted = GroundDomain::Int(
+            vec![
+                Range::Bounded(5, 10),
+                Range::Bounded(-8, 6),
+                Range::Single(i32::MAX),
+            ],
+            None,
+        );
+        let overlap = GroundDomain::Int(
+            vec![
+                Range::Bounded(0, 12),
+                Range::Bounded(3, 8),
+                Range::Single(i32::MAX),
+            ],
+            None,
+        );
+        assert_eq!(
+            unsorted.intersect(&overlap).unwrap(),
+            GroundDomain::Int(vec![Range::Bounded(0, 10), Range::Single(i32::MAX)], None)
+        );
+        let negative = GroundDomain::Int(vec![Range::Bounded(i32::MIN, -1)], None);
+        assert_eq!(negative.intersect(&positive).unwrap(), empty);
+        let unbounded = GroundDomain::Int(vec![Range::Unbounded], None);
+        assert!(matches!(
+            full.intersect(&unbounded),
+            Err(DomainOpError::Unbounded)
+        ));
+        let no_ranges = GroundDomain::Int(Vec::new(), None);
+        assert!(matches!(
+            no_ranges.intersect(&unbounded),
+            Err(DomainOpError::Unbounded)
+        ));
+    }
 
     #[test]
     fn matrix_values_1d_bool_of_bool() {

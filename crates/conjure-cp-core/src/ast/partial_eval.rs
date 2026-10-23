@@ -114,9 +114,7 @@ fn simplify_in_domain(expr: &Expr, domain: &DomainPtr) -> Option<bool> {
         return Some(true);
     }
 
-    if let Ok(values_in_domain) = intersection.values_i32()
-        && values_in_domain.is_empty()
-    {
+    if intersection.return_type() == ReturnType::Int && intersection.length().ok() == Some(0) {
         return Some(false);
     }
 
@@ -523,8 +521,8 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                 // currently don't have a way to check whether other domain kinds are empty or not.
                 //
                 // we should expand this to cover more domain types in the future.
-                else if let Ok(values_in_domain) = intersection.values_i32()
-                    && values_in_domain.is_empty()
+                else if intersection.return_type() == ReturnType::Int
+                    && intersection.length().ok() == Some(0)
                 {
                     Ok(RuleEffect::pure(Expr::Atomic(
                         Metadata::new(),
@@ -1377,6 +1375,35 @@ mod tests {
 
     fn safe_pow(base: Expr, exponent: Expr) -> Expr {
         Expr::SafePow(Metadata::new(), Moo::new(base), Moo::new(exponent))
+    }
+
+    #[test]
+    fn in_domain_simplification_does_not_expand_large_integer_domains() {
+        let domain = Domain::int(vec![Range::Bounded(-1_000_000_000, 1_000_000_000)]);
+        let variable: Expr =
+            crate::ast::Reference::new(DeclarationPtr::new_find(Name::user("wide"), domain)).into();
+        for evaluate in [run_partial_evaluator, run_partial_evaluator_local] {
+            for (target, expected) in [
+                (Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]), true),
+                (
+                    Domain::int(vec![Range::Bounded(1_000_000_001, i32::MAX)]),
+                    false,
+                ),
+            ] {
+                let expression =
+                    Expr::InDomain(Metadata::new(), Moo::new(variable.clone()), target);
+                assert_eq!(
+                    evaluate(&expression).unwrap().new_expression,
+                    bool_lit(expected)
+                );
+            }
+            let expression = Expr::InDomain(
+                Metadata::new(),
+                Moo::new(variable.clone()),
+                Domain::int(vec![Range::Bounded(0, 1_000_000_000)]),
+            );
+            assert!(evaluate(&expression).is_err());
+        }
     }
 
     /// A power folds when both operands are singletons, taking the base from a declaration domain.
