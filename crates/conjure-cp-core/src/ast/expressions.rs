@@ -1038,6 +1038,71 @@ fn division_domain(a: &Expression, b: &Expression, safe: bool) -> Option<DomainP
     }
 }
 
+/// Power extrema occur at base interval endpoints or -1/0/1, and at the first
+/// and last exponent of each parity. This is independent of the number of base
+/// values or exponents; checked_pow also takes only logarithmic time in the
+/// exponent. Keep the existing defined-result semantics (negative exponents and
+/// 0**0 contribute no values), and decline inference on possible i32 overflow.
+fn power_integer_domain(a: &Expression, b: &Expression) -> Option<DomainPtr> {
+    let a = finite_integer_ranges(a)?;
+    let b = finite_integer_ranges(b)?;
+    let mut low = i32::MAX;
+    let mut high = i32::MIN;
+    for base in a {
+        let (lo, hi) = (*base.low()?, *base.high()?);
+        for exponent in &b {
+            let (first, last) = (
+                i64::from((*exponent.low()?).max(0)),
+                i64::from(*exponent.high()?),
+            );
+            for parity in [0, 1] {
+                let first = first + i64::from(first % 2 != parity);
+                let last = last - i64::from(last.rem_euclid(2) != parity);
+                if first > last {
+                    continue;
+                }
+                for power in [first, last] {
+                    let power = u32::try_from(power).ok()?;
+                    for value in [lo, hi, -1, 0, 1]
+                        .into_iter()
+                        .filter(|value| lo <= *value && *value <= hi)
+                    {
+                        if value == 0 && power == 0 {
+                            continue;
+                        }
+                        let result = value.checked_pow(power)?;
+                        low = low.min(result);
+                        high = high.max(result);
+                    }
+                }
+            }
+        }
+    }
+    if low > high {
+        Some(Domain::empty(ReturnType::Int))
+    } else {
+        Some(Domain::int(vec![Range::new(Some(low), Some(high))]))
+    }
+}
+
+/// Only 0!..12! are representable as i32. Validate endpoints before allocating
+/// any values, then inspect this fixed set to preserve the exact sparse result.
+fn factorial_domain(a: &Expression) -> Option<DomainPtr> {
+    let ranges = finite_integer_ranges(a)?;
+    if ranges.is_empty() {
+        return Some(Domain::empty(ReturnType::Int));
+    }
+    let (lo, hi) = range_vec_bounds_i32(&ranges)?;
+    if lo < 0 || hi > 12 {
+        return None;
+    }
+    let values = (0..=12)
+        .filter(|value| ranges.iter().any(|range| range.contains(value)))
+        .map(factorial_i32)
+        .collect::<Option<BTreeSet<_>>>()?;
+    Some(DomainPtr::from(GroundDomain::from_set_i32(&values)))
+}
+
 /// Sound floor-remainder bounds, computed from range endpoints rather than the
 /// Cartesian product of operand values. Inference is linear in the number of
 /// ranges, independent of their cardinality. Holes in the result are permitted:
@@ -1446,22 +1511,9 @@ impl Expression {
             Expression::SafeDiv(_, a, b) => division_domain(a, b, true),
             Expression::UnsafeMod(_, a, b) => modulo_domain(a, b, false),
             Expression::SafeMod(_, a, b) => modulo_domain(a, b, true),
-            Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => a
-                .domain_of()?
-                .resolve()
-                .ok()?
-                .apply_i32(
-                    |x, y| {
-                        if (x != 0 || y != 0) && y >= 0 {
-                            Some(x.pow(y as u32))
-                        } else {
-                            None
-                        }
-                    },
-                    b.domain_of()?.resolve().ok()?.as_ref(),
-                )
-                .map(DomainPtr::from)
-                .ok(),
+            Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => {
+                power_integer_domain(a, b)
+            }
             Expression::Root(_, _) => None,
             Expression::Bubble(_, inner, _) => inner.domain_of(),
             Expression::AuxDeclaration(_, _, _) => Some(Domain::bool()),
@@ -1476,19 +1528,7 @@ impl Expression {
             Expression::Leq(_, _, _) => Some(Domain::bool()),
             Expression::Gt(_, _, _) => Some(Domain::bool()),
             Expression::Lt(_, _, _) => Some(Domain::bool()),
-            Expression::Factorial(_, a) => {
-                let dom = a.domain_of()?.resolve().ok()?;
-                let GroundDomain::Int(_, _) = dom.as_ref() else {
-                    return None;
-                };
-                let values = dom.values_i32().ok()?;
-                let values = values
-                    .into_iter()
-                    .map(factorial_i32)
-                    .collect::<Option<BTreeSet<_>>>()?;
-
-                Some(DomainPtr::from(GroundDomain::from_set_i32(&values)))
-            }
+            Expression::Factorial(_, a) => factorial_domain(a),
             Expression::FlatAbsEq(_, _, _) => Some(Domain::bool()),
             Expression::FlatMinEq(_, _, _) => Some(Domain::bool()),
             Expression::FlatSumGeq(_, _, _) => Some(Domain::bool()),
@@ -4184,6 +4224,125 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn power_domain_bounds_cover_all_small_signed_results() {
+        for a_min in -3..=3 {
+            for a_max in a_min..=3 {
+                for b_min in -2..=5 {
+                    for b_max in b_min..=5 {
+                        for construct in [Expression::SafePow, Expression::UnsafePow] {
+                            let a =
+                                integer_variable(Domain::int(vec![Range::Bounded(a_min, a_max)]));
+                            let b =
+                                integer_variable(Domain::int(vec![Range::Bounded(b_min, b_max)]));
+                            let expr = construct(Metadata::new(), Moo::new(a), Moo::new(b));
+                            let domain = expr.domain_of().unwrap().resolve().unwrap();
+                            let expected: BTreeSet<_> = (a_min..=a_max)
+                                .flat_map(|a: i32| {
+                                    (b_min..=b_max).filter_map(move |b| {
+                                        if b >= 0 && (a != 0 || b != 0) {
+                                            a.checked_pow(b as u32)
+                                        } else {
+                                            None
+                                        }
+                                    })
+                                })
+                                .collect();
+                            for result in &expected {
+                                assert!(
+                                    domain.contains(&Literal::Int(*result)).unwrap(),
+                                    "{expr}: {result} missing from {domain}"
+                                );
+                            }
+                            // Besides containment, the extrema must be tight.
+                            let actual = domain.values_i32().unwrap();
+                            assert_eq!(actual.iter().min(), expected.iter().next());
+                            assert_eq!(actual.iter().max(), expected.iter().next_back());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn power_and_factorial_domains_do_not_materialise_large_operands() {
+        for construct in [Expression::SafePow, Expression::UnsafePow] {
+            let power = |base, exponent| {
+                construct(
+                    Metadata::new(),
+                    Moo::new(integer_variable(base)),
+                    Moo::new(integer_variable(exponent)),
+                )
+            };
+            let wide = Domain::int(vec![Range::Bounded(-1_000_000_000, 1_000_000_000)]);
+            let one = Domain::int(vec![Range::Single(1)]);
+            assert_eq!(
+                power(wide.clone(), one.clone()).domain_of(),
+                Some(wide.clone())
+            );
+            let huge_exponent = Domain::int(vec![Range::Bounded(-1_000_000_000, i32::MAX)]);
+            assert_eq!(
+                power(Domain::int(vec![Range::Bounded(-1, 1)]), huge_exponent).domain_of(),
+                Some(Domain::int(vec![Range::Bounded(-1, 1)]))
+            );
+            let thirty_one = Domain::int(vec![Range::Single(31)]);
+            assert_eq!(
+                power(Domain::int(vec![Range::Single(-2)]), thirty_one.clone()).domain_of(),
+                Some(Domain::int(vec![Range::Single(i32::MIN)]))
+            );
+            assert_eq!(
+                power(Domain::int(vec![Range::Single(2)]), thirty_one).domain_of(),
+                None
+            );
+            assert_eq!(
+                power(wide.clone(), Domain::int(vec![Range::Bounded(0, i32::MAX)])).domain_of(),
+                None
+            );
+            assert_eq!(
+                power(Domain::empty(ReturnType::Int), one).domain_of(),
+                Some(Domain::empty(ReturnType::Int))
+            );
+        }
+        let factorial =
+            |domain| Expression::Factorial(Metadata::new(), Moo::new(integer_variable(domain)));
+        for domain in [
+            Domain::int(vec![Range::Bounded(0, i32::MAX)]),
+            Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]),
+        ] {
+            assert_eq!(factorial(domain).domain_of(), None);
+        }
+        for low in 0..=12 {
+            for high in low..=12 {
+                let expected = (low..=high)
+                    .map(|n| factorial_i32(n).unwrap())
+                    .collect::<BTreeSet<_>>();
+                let result = factorial(Domain::int(vec![Range::Bounded(low, high)]))
+                    .domain_of()
+                    .unwrap()
+                    .resolve()
+                    .unwrap();
+                assert_eq!(
+                    result
+                        .values_i32()
+                        .unwrap()
+                        .into_iter()
+                        .collect::<BTreeSet<_>>(),
+                    expected
+                );
+            }
+        }
+        let sparse = Domain::int(vec![Range::Single(0), Range::Single(4), Range::Single(12)]);
+        let values = factorial(sparse)
+            .domain_of()
+            .unwrap()
+            .resolve()
+            .unwrap()
+            .values_i32()
+            .unwrap();
+        assert_eq!(values, vec![1, 24, 479001600]);
     }
 
     fn modulo_expression(a: DomainPtr, b: DomainPtr, safe: bool) -> Expression {
