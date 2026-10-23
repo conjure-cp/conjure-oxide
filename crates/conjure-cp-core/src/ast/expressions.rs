@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use std::collections::{BTreeSet, HashSet, VecDeque};
+use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -30,13 +30,20 @@ use crate::bug;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::collection_domains::{
-    SetOperation, SizeBounds, bounded_set, collection_size, distinct_size, min_known, mset_size,
+    SetOperation, SizeBounds, bounded_set, collection_size, distinct_size, mset_size,
     set_operation_domain,
 };
-use super::comprehension::{Comprehension, ComprehensionQualifier};
+use super::comprehension::Comprehension;
 use super::declaration::DeclarationKind;
 use super::domains::HasDomain as _;
-use super::eval::{eval_constant, factorial_i32};
+use super::eval::eval_constant;
+use super::expression_domains::{
+    absolute_integer_domain, binary_integer_domain,
+    bounded_i32_domain_for_matrix_literal_monotonic, division_domain,
+    empty_matrix_integer_element_domain, factorial_domain, get_function_codomain,
+    matrix_element_domain, modulo_domain, mset_union_result_domain, power_integer_domain,
+    sum_domain_of_child,
+};
 use super::function_domains::{
     defined_domain, function_size, image_set_domain, pre_image_domain, range_domain,
     restricted_domain,
@@ -48,7 +55,7 @@ use super::sat_encoding::SATIntEncoding;
 use super::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
     MSetAttr, Metadata, Model, Moo, Name, PartialityAttr, Range, Reference, RelAttr, ReturnType,
-    SetAttr, SymbolTable, SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
+    SetAttr, SymbolTable, SymbolTablePtr, Typeable, matrix,
 };
 
 // Ensure that this type doesn't get too big
@@ -781,290 +788,6 @@ pub enum Expression {
     Card(Metadata, Moo<Expression>),
 }
 
-// for the given matrix literal, return a bounded domain from the min to max of applying op to each
-// child expression.
-//
-// Op must be monotonic.
-//
-// Returns none if unbounded
-fn bounded_i32_domain_for_matrix_literal_monotonic(
-    e: &Expression,
-    op: fn(i32, i32) -> Option<i32>,
-) -> Option<DomainPtr> {
-    // only care about the elements, not the indices
-    let (mut exprs, _) = e.clone().unwrap_matrix_unchecked()?;
-    //
-    // here, I assume that op is monotone. This means that the bounds of op([a1,a2],[b1,b2])  for
-    // the ranges [a1,a2], [b1,b2] will be
-    // [min(op(a1,b1),op(a2,b1),op(a1,b2),op(a2,b2)),max(op(a1,b1),op(a2,b1),op(a1,b2),op(a2,b2))].
-    //
-    // We used to not assume this, and work out the bounds by applying op on the Cartesian product
-    // of A and B; however, this caused a combinatorial explosion and my computer to run out of
-    // memory (on the hakank_eprime_xkcd test)...
-    //Int
-    // For example, to find the bounds of the intervals [1,4], [1,5] combined using op, we used to do
-    //  [min(op(1,1), op(1,2),op(1,3),op(1,4),op(1,5),op(2,1)..
-    //
-    // +,-,/,* are all monotone, so this assumption should be fine for now...
-
-    let expr = exprs.pop()?;
-    let dom = expr.domain_of()?;
-    let resolved = dom.resolve().ok()?;
-    let GroundDomain::Int(ranges, _) = resolved.as_ref() else {
-        return None;
-    };
-
-    let (mut current_min, mut current_max) = range_vec_bounds_i32(ranges)?;
-
-    for expr in exprs {
-        let dom = expr.domain_of()?;
-        let resolved = dom.resolve().ok()?;
-        let GroundDomain::Int(ranges, _) = resolved.as_ref() else {
-            return None;
-        };
-
-        let (min, max) = range_vec_bounds_i32(ranges)?;
-
-        // all the possible new values for current_min / current_max
-        let minmax = op(min, current_max)?;
-        let minmin = op(min, current_min)?;
-        let maxmin = op(max, current_min)?;
-        let maxmax = op(max, current_max)?;
-        let vals = [minmax, minmin, maxmin, maxmax];
-
-        current_min = *vals
-            .iter()
-            .min()
-            .expect("vals iterator should not be empty, and should have a minimum.");
-        current_max = *vals
-            .iter()
-            .max()
-            .expect("vals iterator should not be empty, and should have a maximum.");
-    }
-
-    if current_min == current_max {
-        Some(Domain::int(vec![Range::Single(current_min)]))
-    } else {
-        Some(Domain::int(vec![Range::Bounded(current_min, current_max)]))
-    }
-}
-
-fn matrix_element_domain(e: &Expression) -> Option<DomainPtr> {
-    let (elem_domain, _) = e.domain_of()?.as_matrix()?;
-    elem_domain.as_ref().as_int()?;
-    Some(elem_domain)
-}
-
-fn empty_matrix_integer_element_domain(e: &Expression) -> Option<DomainPtr> {
-    match e {
-        Expression::TypeAnnotation(_, inner, domain) => {
-            if !Moo::unwrap_or_clone(inner.clone())
-                .unwrap_matrix_unchecked()
-                .is_some_and(|(elems, _)| elems.is_empty())
-            {
-                return None;
-            }
-            if let ReturnType::Matrix(elem_type) = domain.return_type()
-                && elem_type.as_ref() == &ReturnType::Int
-            {
-                Some(Domain::int_ground(vec![Range::Unbounded]))
-            } else {
-                None
-            }
-        }
-        Expression::DomainAnnotation(_, inner, domain) => {
-            if !Moo::unwrap_or_clone(inner.clone())
-                .unwrap_matrix_unchecked()
-                .is_some_and(|(elems, _)| elems.is_empty())
-            {
-                return None;
-            }
-            let (elem_domain, _) = domain.as_matrix()?;
-            elem_domain.as_ref().as_int()?;
-            Some(elem_domain)
-        }
-        _ => {
-            if !e
-                .clone()
-                .unwrap_matrix_unchecked()
-                .is_some_and(|(elems, _)| elems.is_empty())
-            {
-                return None;
-            }
-            matrix_element_domain(e)
-        }
-    }
-}
-
-// Returns none if unbounded
-fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
-    let mut min = i32::MAX;
-    let mut max = i32::MIN;
-    for r in ranges {
-        match r {
-            Range::Single(i) => {
-                if *i < min {
-                    min = *i;
-                }
-                if *i > max {
-                    max = *i;
-                }
-            }
-            Range::Bounded(i, j) => {
-                if *i < min {
-                    min = *i;
-                }
-                if *j > max {
-                    max = *j;
-                }
-            }
-            Range::UnboundedR(_) | Range::UnboundedL(_) | Range::Unbounded => return None,
-        }
-    }
-    Some((min, max))
-}
-
-/// Integer domain bounds for [`Expression::Sum`] over a comprehension.
-fn sum_domain_for_comprehension(expr: &Expression) -> Option<DomainPtr> {
-    let Expression::Comprehension(_, comp) = expr else {
-        return None;
-    };
-    let comp = comp.as_ref();
-    let resolved = comp.return_expression.domain_of()?.resolve().ok()?;
-    let GroundDomain::Int(return_ranges, _) = resolved.as_ref() else {
-        return None;
-    };
-    let (term_min, term_max) = range_vec_bounds_i32(return_ranges)?;
-
-    let mut term_count = 1i64;
-    for qual in &comp.qualifiers {
-        match qual {
-            ComprehensionQualifier::Generator { ptr } => {
-                let count = ptr.domain()?.resolve().ok()?.length().ok()?;
-                term_count = term_count.saturating_mul(count as i64);
-                if term_count > i32::MAX as i64 {
-                    return None;
-                }
-            }
-            ComprehensionQualifier::Condition(_)
-            | ComprehensionQualifier::ExpressionGenerator { .. } => {
-                return None;
-            }
-        }
-    }
-
-    if term_count == 0 {
-        return Some(Domain::int(vec![Range::Single(0)]));
-    }
-
-    let n = term_count as i32;
-    let sum_min = n.saturating_mul(term_min);
-    let sum_max = n.saturating_mul(term_max);
-    if sum_min == sum_max {
-        Some(Domain::int(vec![Range::Single(sum_min)]))
-    } else {
-        Some(Domain::int(vec![Range::Bounded(sum_min, sum_max)]))
-    }
-}
-
-fn sum_domain_of_child(child: &Expression) -> Option<DomainPtr> {
-    sum_domain_for_comprehension(child).or_else(|| {
-        let (elements, _) = child.clone().unwrap_matrix_unchecked()?;
-        if elements.len() == 1 {
-            sum_domain_for_comprehension(&elements[0])
-        } else {
-            None
-        }
-    })
-}
-
-/// The value-level union of two multisets adds their cardinalities and occurrence counts.
-///
-/// [`Domain::union`] instead computes a common type envelope and intentionally drops collection
-/// attributes, so it is too weak for the domain of an `a union b` expression.
-pub(super) fn selected_representation(expr: &Expression) -> Option<String> {
-    match expr {
-        Expression::Atomic(_, Atom::Reference(reference)) => reference
-            .repr
-            .map(|rule| rule.short_name().to_owned())
-            .or_else(|| {
-                reference
-                    .domain_of()
-                    .representation_preference()
-                    .map(str::to_owned)
-            }),
-        Expression::TypeAnnotation(_, inner, domain)
-        | Expression::DomainAnnotation(_, inner, domain) => domain
-            .representation_preference()
-            .map(str::to_owned)
-            .or_else(|| selected_representation(inner)),
-        _ => None,
-    }
-}
-
-fn mset_union_result_domain(lhs: &Expression, rhs: &Expression) -> Option<DomainPtr> {
-    let lhs_selected = selected_representation(lhs);
-    let rhs_selected = selected_representation(rhs);
-    let (lhs_attrs, lhs_inner) = lhs.domain_of()?.as_mset()?;
-    let (rhs_attrs, rhs_inner) = rhs.domain_of()?.as_mset()?;
-    let lhs_size = mset_size(&lhs_attrs, &lhs_inner);
-    let rhs_size = mset_size(&rhs_attrs, &rhs_inner);
-    if lhs_size.range().is_none() || rhs_size.range().is_none() {
-        return Some(Domain::empty(ReturnType::MSet(Box::new(
-            lhs_inner.return_type(),
-        ))));
-    }
-    let inner = if lhs_size.high == Some(0) {
-        rhs_inner
-    } else if rhs_size.high == Some(0) {
-        lhs_inner
-    } else {
-        lhs_inner.union(&rhs_inner).ok()?
-    };
-    let size = SizeBounds::new(
-        lhs_size.low.checked_add(rhs_size.low)?,
-        lhs_size
-            .high
-            .zip(rhs_size.high)
-            .and_then(|(a, b)| a.checked_add(b)),
-    )
-    .range()?;
-    let lhs_occurrence = min_known(
-        SizeBounds::from_size(&lhs_attrs.occurrence).high,
-        lhs_size.high,
-    );
-    let rhs_occurrence = min_known(
-        SizeBounds::from_size(&rhs_attrs.occurrence).high,
-        rhs_size.high,
-    );
-    let max_occurrence = lhs_occurrence
-        .zip(rhs_occurrence)
-        .and_then(|(a, b)| a.checked_add(b));
-    let occurrence = SizeBounds::new(0, max_occurrence).range()?;
-    // minOccur applies only to present values, including the empty multiset vacuously.
-    let occurrence = if max_occurrence == Some(0) {
-        occurrence
-    } else {
-        Range::new(Some(1), occurrence.high().copied())
-    };
-    let representation = match (
-        lhs_selected
-            .as_deref()
-            .or(lhs_attrs.representation.as_deref()),
-        rhs_selected
-            .as_deref()
-            .or(rhs_attrs.representation.as_deref()),
-    ) {
-        (Some(lhs), Some(rhs)) if lhs == rhs => Some(lhs.to_owned()),
-        (Some(preference), None) | (None, Some(preference)) => Some(preference.to_owned()),
-        _ => None,
-    };
-
-    let mut attrs = MSetAttr::new(size, occurrence);
-    attrs.representation = representation;
-    Some(Domain::mset(attrs, inner))
-}
-
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions.
     ///
@@ -1268,85 +991,19 @@ impl Expression {
                         .map(DomainPtr::from)
                 }
             }
-            Expression::UnsafeDiv(_, a, b) => a
-                .domain_of()?
-                .resolve()
-                .ok()?
-                .apply_i32(
-                    // rust integer division is truncating; however, we want to always round down,
-                    // including for negative numbers.
-                    super::floor_div,
-                    b.domain_of()?.resolve().ok()?.as_ref(),
-                )
-                .map(DomainPtr::from)
-                .ok(),
+            Expression::UnsafeDiv(_, a, b) => division_domain(a, b, false),
             // Either operand's value can survive, so the domain must cover both.
             Expression::CatchUndef(_, a, b) => {
                 let inner = a.domain_of()?;
                 let default = b.domain_of()?;
                 inner.union(&default).ok()
             }
-            Expression::SafeDiv(_, a, b) => {
-                // rust integer division is truncating; however, we want to always round down
-                // including for negative numbers.
-                let domain = a
-                    .domain_of()?
-                    .resolve()
-                    .ok()?
-                    .apply_i32(super::floor_div, b.domain_of()?.resolve().ok()?.as_ref())
-                    .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
-
-                if let GroundDomain::Int(ranges, _) = domain {
-                    let mut ranges = ranges;
-                    ranges.push(Range::Single(0));
-                    Some(Domain::int(ranges))
-                } else if matches!(domain, GroundDomain::Empty(ReturnType::Int)) {
-                    Some(Domain::int(vec![Range::Single(0)]))
-                } else {
-                    bug!("Domain of {self} was not integer")
-                }
+            Expression::SafeDiv(_, a, b) => division_domain(a, b, true),
+            Expression::UnsafeMod(_, a, b) => modulo_domain(a, b, false),
+            Expression::SafeMod(_, a, b) => modulo_domain(a, b, true),
+            Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => {
+                power_integer_domain(a, b)
             }
-            Expression::UnsafeMod(_, a, b) => a
-                .domain_of()?
-                .resolve()
-                .ok()?
-                .apply_i32(super::floor_mod, b.domain_of()?.resolve().ok()?.as_ref())
-                .map(DomainPtr::from)
-                .ok(),
-            Expression::SafeMod(_, a, b) => {
-                let domain = a
-                    .domain_of()?
-                    .resolve()
-                    .ok()?
-                    .apply_i32(super::floor_mod, b.domain_of()?.resolve().ok()?.as_ref())
-                    .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
-
-                if let GroundDomain::Int(ranges, _) = domain {
-                    let mut ranges = ranges;
-                    ranges.push(Range::Single(0));
-                    Some(Domain::int(ranges))
-                } else if matches!(domain, GroundDomain::Empty(ReturnType::Int)) {
-                    Some(Domain::int(vec![Range::Single(0)]))
-                } else {
-                    bug!("Domain of {self} was not integer")
-                }
-            }
-            Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => a
-                .domain_of()?
-                .resolve()
-                .ok()?
-                .apply_i32(
-                    |x, y| {
-                        if (x != 0 || y != 0) && y >= 0 {
-                            Some(x.pow(y as u32))
-                        } else {
-                            None
-                        }
-                    },
-                    b.domain_of()?.resolve().ok()?.as_ref(),
-                )
-                .map(DomainPtr::from)
-                .ok(),
             Expression::Root(_, _) => None,
             Expression::Bubble(_, inner, _) => inner.domain_of(),
             Expression::AuxDeclaration(_, _, _) => Some(Domain::bool()),
@@ -1361,19 +1018,7 @@ impl Expression {
             Expression::Leq(_, _, _) => Some(Domain::bool()),
             Expression::Gt(_, _, _) => Some(Domain::bool()),
             Expression::Lt(_, _, _) => Some(Domain::bool()),
-            Expression::Factorial(_, a) => {
-                let dom = a.domain_of()?.resolve().ok()?;
-                let GroundDomain::Int(_, _) = dom.as_ref() else {
-                    return None;
-                };
-                let values = dom.values_i32().ok()?;
-                let values = values
-                    .into_iter()
-                    .map(factorial_i32)
-                    .collect::<Option<BTreeSet<_>>>()?;
-
-                Some(DomainPtr::from(GroundDomain::from_set_i32(&values)))
-            }
+            Expression::Factorial(_, a) => factorial_domain(a),
             Expression::FlatAbsEq(_, _, _) => Some(Domain::bool()),
             Expression::FlatMinEq(_, _, _) => Some(Domain::bool()),
             Expression::FlatSumGeq(_, _, _) => Some(Domain::bool()),
@@ -1504,14 +1149,14 @@ impl Expression {
             Expression::Minus(_, a, b) => {
                 let a_resolved = a.domain_of()?.resolve().ok()?;
                 let b_resolved = b.domain_of()?.resolve().ok()?;
-
-                if matches!(a_resolved.as_ref(), GroundDomain::Int(_, _))
-                    && matches!(b_resolved.as_ref(), GroundDomain::Int(_, _))
-                {
-                    a_resolved
-                        .apply_i32(|x, y| Some(x - y), b_resolved.as_ref())
-                        .map(DomainPtr::from)
-                        .ok()
+                if matches!(
+                    a_resolved.as_ref(),
+                    GroundDomain::Int(_, _) | GroundDomain::Empty(ReturnType::Int)
+                ) && matches!(
+                    b_resolved.as_ref(),
+                    GroundDomain::Int(_, _) | GroundDomain::Empty(ReturnType::Int)
+                ) {
+                    binary_integer_domain(a, b, i32::checked_sub)
                 } else if matches!(a_resolved.as_ref(), GroundDomain::Set(_, _))
                     && matches!(b_resolved.as_ref(), GroundDomain::Set(_, _))
                 {
@@ -1525,36 +1170,15 @@ impl Expression {
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::bool()),
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::bool()),
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::bool()),
-            Expression::Abs(_, a) => a
-                .domain_of()?
-                .resolve()
-                .ok()?
-                .apply_i32(
-                    |a, _| Some(a.abs()),
-                    a.domain_of()?.resolve().ok()?.as_ref(),
-                )
-                .map(DomainPtr::from)
-                .ok(),
+            Expression::Abs(_, a) => absolute_integer_domain(a),
             Expression::MinionPow(_, _, _, _) => Some(Domain::bool()),
             Expression::ToInt(_, _) => Some(Domain::int(vec![Range::Bounded(0, 1)])),
             Expression::SatObjective(..) => Some(Domain::bool()),
             Expression::SATInt(_, _, _, (low, high)) => {
                 Some(Domain::int_ground(vec![Range::Bounded(*low, *high)]))
             }
-            Expression::PairwiseSum(_, a, b) => a
-                .domain_of()?
-                .resolve()
-                .ok()?
-                .apply_i32(|a, b| Some(a + b), b.domain_of()?.resolve().ok()?.as_ref())
-                .map(DomainPtr::from)
-                .ok(),
-            Expression::PairwiseProduct(_, a, b) => a
-                .domain_of()?
-                .resolve()
-                .ok()?
-                .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve().ok()?.as_ref())
-                .map(DomainPtr::from)
-                .ok(),
+            Expression::PairwiseSum(_, a, b) => binary_integer_domain(a, b, i32::checked_add),
+            Expression::PairwiseProduct(_, a, b) => binary_integer_domain(a, b, i32::checked_mul),
             Expression::Defined(_, function) => defined_domain(function),
             Expression::Range(_, function) => range_domain(function),
             Expression::Image(_, function, _) => get_function_codomain(function),
@@ -2256,33 +1880,6 @@ fn argument_always_in(argument: &Expression, domain: &GroundDomain) -> bool {
     argument_domain
         .intersect(domain)
         .is_ok_and(|intersection| intersection == *argument_domain.as_ref())
-}
-
-/// Also handles permutations: `image(perm, x)` returns a value from the permutation's own inner
-/// domain (a permutation's "codomain" is its domain), so this doubles as the codomain lookup for
-/// `Expression::Image`/`ImageSet` applied to either a function or a permutation.
-pub fn get_function_codomain(function: &Moo<Expression>) -> Option<DomainPtr> {
-    let function_domain = function.domain_of()?;
-    match function_domain.resolve().as_ref() {
-        Ok(d) => {
-            match d.as_ref() {
-                GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
-                GroundDomain::Permutation(_, inner) => Some(inner.clone().into()),
-                GroundDomain::Sequence(_, inner) => Some(inner.clone().into()),
-                // Not defined for anything other than a function, permutation or sequence
-                _ => None,
-            }
-        }
-        Err(_) => {
-            match function_domain.as_unresolved()? {
-                UnresolvedDomain::Function(_, _, codomain) => Some(codomain.clone()),
-                UnresolvedDomain::Permutation(_, inner) => Some(inner.clone()),
-                UnresolvedDomain::Sequence(_, inner) => Some(inner.clone()),
-                // Not defined for anything other than a function, permutation or sequence
-                _ => None,
-            }
-        }
-    }
 }
 
 impl TryFrom<&Expression> for i32 {
@@ -3848,82 +3445,6 @@ mod tests {
     use crate::matrix_expr;
 
     use super::*;
-
-    #[test]
-    fn test_domain_of_constant_sum() {
-        let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
-        let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2)));
-        let sum = Expression::Sum(Metadata::new(), Moo::new(matrix_expr![c1, c2]));
-        assert_eq!(sum.domain_of(), Some(Domain::int(vec![Range::Single(3)])));
-    }
-
-    #[test]
-    fn test_domain_of_constant_invalid_type() {
-        let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
-        let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
-        let sum = Expression::Sum(Metadata::new(), Moo::new(matrix_expr![c1, c2]));
-        assert_eq!(sum.domain_of(), None);
-    }
-
-    #[test]
-    fn test_domain_of_empty_sum() {
-        let sum = Expression::Sum(Metadata::new(), Moo::new(matrix_expr![]));
-        assert_eq!(sum.domain_of(), None);
-    }
-
-    /// Product domain inference must not panic when bound corner-products overflow i32.
-    #[test]
-    fn test_domain_of_product_overflow_returns_none() {
-        let mk_var = |name: &str| {
-            Expression::Atomic(
-                Metadata::new(),
-                Atom::Reference(Reference::new(DeclarationPtr::new_find(
-                    Name::User(name.into()),
-                    Domain::int(vec![Range::Bounded(0, 711)]),
-                ))),
-            )
-        };
-        let product = Expression::Product(
-            Metadata::new(),
-            Moo::new(matrix_expr![
-                mk_var("item1"),
-                mk_var("item2"),
-                mk_var("item3"),
-                mk_var("item4")
-            ]),
-        );
-        assert_eq!(product.domain_of(), None);
-    }
-
-    #[test]
-    fn mset_union_domain_adds_finite_operand_bounds() {
-        let lhs = DeclarationPtr::new_find(
-            Name::user("xs"),
-            Domain::mset(
-                MSetAttr::new_max_size(6).with_representation("counts"),
-                Domain::int(vec![Range::Bounded(1, 999)]),
-            ),
-        );
-        let rhs = Expression::AbstractLiteral(
-            Metadata::new(),
-            AbstractLiteral::MSet(vec![1.into(), 2.into()]),
-        );
-        let union = Expression::Union(
-            Metadata::new(),
-            Moo::new(Expression::from(Reference::new(lhs))),
-            Moo::new(rhs),
-        );
-
-        let domain = union.domain_of().expect("multiset union has a domain");
-        let (attrs, inner) = domain.as_mset_ground().expect("ground multiset domain");
-        assert_eq!(attrs.size, Range::Bounded(2, 8));
-        assert_eq!(attrs.occurrence, Range::Bounded(1, 8));
-        assert_eq!(attrs.representation.as_deref(), Some("counts"));
-        assert_eq!(
-            inner.as_ref(),
-            &GroundDomain::Int(vec![Range::Bounded(1, 999)], None)
-        );
-    }
 
     #[test]
     fn list_inspection_borrows_expression_elements_without_cloning_the_list() {
