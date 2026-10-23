@@ -326,9 +326,12 @@ pub fn get_solutions_with_timings(
     let structured_declarations: Vec<DeclarationPtr> = symbols
         .iter_local()
         .filter(|(name, declaration)| {
+            // `category_of` follows a value letting into its body, and from there into every
+            // letting that body names. Those declarations have no representations, so skip them
+            // before walking the chain.
             matches!(name, Name::User(_))
-                && declaration.category_of() >= Category::Decision
                 && !declaration.reprs().is_empty()
+                && declaration.category_of() >= Category::Decision
         })
         .map(|(_, declaration)| declaration.clone())
         .collect();
