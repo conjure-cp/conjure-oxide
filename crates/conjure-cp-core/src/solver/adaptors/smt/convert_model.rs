@@ -50,6 +50,11 @@ pub fn load_model_impl(
         }
         let (sym, ast, restriction) = var_to_ast(name, &var, int_theory_for(decl))?;
         store.insert(name.clone(), (decl.resolved_domain().unwrap(), ast, sym));
+        // findAux variables are part of the model, but a different assignment of one is not a
+        // different solution.
+        if !decl.is_find_auxiliary() {
+            store.block_solutions_on(name.clone());
+        }
         solver.assert(restriction);
     }
     for expr in model.iter() {
