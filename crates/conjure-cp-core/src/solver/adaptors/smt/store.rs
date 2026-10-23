@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use itertools::Itertools;
 use z3::{Context, Model, Solvable, SortKind, Symbol, Translate, ast::*};
@@ -15,12 +15,15 @@ use super::helpers::*;
 #[derive(Clone, Debug)]
 pub struct SymbolStore {
     map: BTreeMap<Name, (Moo<GroundDomain>, Dynamic, Symbol)>,
+    /// Primary `find` variables. Solution blocking ignores `findAux` variables.
+    blocking_vars: BTreeSet<Name>,
 }
 
 impl SymbolStore {
     pub fn new() -> Self {
         SymbolStore {
             map: BTreeMap::new(),
+            blocking_vars: BTreeSet::new(),
         }
     }
 
@@ -30,6 +33,11 @@ impl SymbolStore {
         val: (Moo<GroundDomain>, Dynamic, Symbol),
     ) -> Option<(Moo<GroundDomain>, Dynamic, Symbol)> {
         self.map.insert(name, val)
+    }
+
+    /// Include this variable when blocking solutions. `findAux` variables are omitted.
+    pub fn block_solutions_on(&mut self, name: Name) {
+        self.blocking_vars.insert(name);
     }
 
     pub fn get(&self, name: &Name) -> Option<&(Moo<GroundDomain>, Dynamic, Symbol)> {
@@ -112,11 +120,16 @@ impl Solvable for SymbolStore {
         let bools: Vec<_> = self
             .map
             .iter()
+            .filter(|(name, _)| self.blocking_vars.contains(name))
             .map(|(name, (domain, ast, _))| {
                 let (other, _) = model.map.get(name).unwrap();
                 domain_disequality(domain, ast, other)
             })
             .collect();
+        // No primary finds: the auxiliary assignment must not yield another solution.
+        if bools.is_empty() {
+            return Bool::from_bool(false);
+        }
         Bool::or(bools.as_slice())
     }
 }
@@ -129,7 +142,10 @@ unsafe impl Translate for SymbolStore {
             let new_sym = sym.clone(); // Symbols are not translated
             new_map.insert(name.clone(), (domain.clone(), new_ast, new_sym));
         }
-        SymbolStore { map: new_map }
+        SymbolStore {
+            map: new_map,
+            blocking_vars: self.blocking_vars.clone(),
+        }
     }
 }
 

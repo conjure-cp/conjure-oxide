@@ -52,7 +52,10 @@ pub struct Sat {
     // Ordered maps keep solution blocking clauses stable across solver runs.
     var_map: Option<BTreeMap<Name, Lit>>,
     solver_inst: SatSolver,
+    /// Primary finds. These are enumerated and used to block further solutions.
     decision_refs: Option<Vec<Name>>,
+    /// `findAux` booleans. Reported from one solver assignment, never used to block.
+    auxiliary_refs: Option<Vec<Name>>,
     objective: Option<super::objective::CompiledObjective>,
     cache: EncodingCache,
     dominance_expression: Option<Expression>,
@@ -78,6 +81,7 @@ impl Sat {
             var_map: None,
             model_inst: None,
             decision_refs: None,
+            auxiliary_refs: None,
             objective: None,
             cache: EncodingCache::default(),
             dominance_expression: None,
@@ -256,6 +260,24 @@ fn get_ref_sols(
     }
 
     solution
+}
+
+/// One assignment of each `findAux` variable.
+///
+/// A don't-care auxiliary is fixed to false rather than enumerated. Solution blocking uses
+/// primary finds only, so either value would otherwise become its own solution.
+fn single_auxiliary_assignment(
+    names: &[Name],
+    sol: &Assignment,
+    var_map: &BTreeMap<Name, Lit>,
+) -> BTreeMap<Name, Literal> {
+    let mut assignment = get_ref_sols(names.to_vec(), sol.clone(), var_map.clone());
+    for value in assignment.values_mut() {
+        if *value == Literal::Int(2) {
+            *value = Literal::Int(0);
+        }
+    }
+    assignment
 }
 
 // Representation names retain their original source through every nesting level.
@@ -483,20 +505,28 @@ impl SolverAdaptor for Sat {
                 sol.clone(),
                 var_map.clone(),
             );
+            // One assignment of each findAux. Don't-care values are not searched.
+            let auxiliary_assignment = single_auxiliary_assignment(
+                self.auxiliary_refs.as_deref().unwrap_or(&[]),
+                &sol,
+                &var_map,
+            );
 
             tracing::info!("old solution {:#?}", sol_old);
 
             let solutions = enumerate_all_solutions(sol_old);
 
             for solution in solutions {
-                tracing::info!("completed solution: {:#?}", solution);
+                let mut reported = solution.clone();
+                reported.extend(auxiliary_assignment.clone());
+                tracing::info!("completed solution: {:#?}", reported);
                 if budget.expired() {
                     return Ok(SolveSuccess {
                         stats: SolverStats::default(),
                         status: SearchStatus::Incomplete(solver::SearchIncomplete::Timeout),
                     });
                 }
-                if !callback(solution.clone().into_iter().collect()) {
+                if !callback(reported.clone().into_iter().collect()) {
                     // callback false
                     return Ok(SolveSuccess {
                         stats: SolverStats {
@@ -546,7 +576,7 @@ impl SolverAdaptor for Sat {
                     })?;
                 }
                 let mut dominance_solution = full_assignment_solution.clone();
-                dominance_solution.extend(solution.clone());
+                dominance_solution.extend(reported.clone());
                 if let Some(model_template) = dominance_model_template.as_ref() {
                     add_represented_decision_values(&mut dominance_solution, model_template);
                 }
@@ -603,6 +633,7 @@ impl SolverAdaptor for Sat {
             let mut inst = SatInstance::new();
             inst.add_clause(Clause::new());
             self.decision_refs = Some(Vec::new());
+            self.auxiliary_refs = Some(Vec::new());
             self.var_map = Some(BTreeMap::new());
             self.model_inst = Some(inst);
             return Ok(());
@@ -611,6 +642,7 @@ impl SolverAdaptor for Sat {
         let sym_tab = model.symbols().deref().clone();
 
         let mut finds: Vec<Name> = Vec::new();
+        let mut auxiliaries: Vec<Name> = Vec::new();
         let mut var_map: BTreeMap<Name, Lit> = BTreeMap::new();
 
         for (name, decl) in sym_tab.into_iter_local() {
@@ -640,13 +672,19 @@ impl SolverAdaptor for Sat {
             }
             // Only expose non-internal boolean variables in solver solutions. Machine names are
             // auxiliaries introduced during rewriting and can create huge powersets of don't-care
-            // assignments without changing the semantic solution.
+            // assignments without changing the semantic solution. `findAux` variables stay in the
+            // model, but solution blocking uses primary finds only.
             if domain.as_ref() == &GroundDomain::Bool && is_user_visible_solution_var(&name) {
-                finds.push(name);
+                if decl.is_find_auxiliary() {
+                    auxiliaries.push(name);
+                } else {
+                    finds.push(name);
+                }
             }
         }
 
         self.decision_refs = Some(finds.clone());
+        self.auxiliary_refs = Some(auxiliaries.clone());
 
         let model_objective_required = model.objective.is_some();
         let m_clone = model;
@@ -666,7 +704,8 @@ impl SolverAdaptor for Sat {
 
         let mut inst = SatInstance::new();
         finds.sort_by_key(ToString::to_string);
-        for name in finds {
+        auxiliaries.sort_by_key(ToString::to_string);
+        for name in finds.into_iter().chain(auxiliaries) {
             var_map.insert(name, inst.new_lit());
         }
         compile_decisions_with_cache(decisions, &mut inst, &mut var_map, &mut self.cache)?;
@@ -794,6 +833,8 @@ mod tests {
         for &backend in <SatBackend as clap::ValueEnum>::value_variants() {
             let x = Name::User("x".into());
             let y = Name::User("y".into());
+            let aux_x = x.clone();
+            let aux_y = y.clone();
             let mut inst = SatInstance::default();
             let x_lit = inst.new_lit();
             let y_lit = inst.new_lit();
@@ -830,6 +871,49 @@ mod tests {
                     "{backend}"
                 );
             }
+
+            // y is findAux: x \/ y has two solutions, not one for each value of y.
+            let mut sat = Sat::new(backend);
+            sat.model_inst = Some(inst.clone());
+            sat.var_map = Some(BTreeMap::from([
+                (aux_x.clone(), x_lit),
+                (aux_y.clone(), y_lit),
+            ]));
+            sat.decision_refs = Some(vec![aux_x.clone()]);
+            sat.auxiliary_refs = Some(vec![aux_y.clone()]);
+            let solutions = Arc::new(Mutex::new(Vec::new()));
+            let collected = solutions.clone();
+            let result = sat
+                .solve(
+                    Box::new(move |solution| {
+                        collected
+                            .lock()
+                            .unwrap()
+                            .push((solution[&aux_x].clone(), solution[&aux_y].clone()));
+                        true
+                    }),
+                    private::Internal,
+                )
+                .unwrap();
+            assert_eq!(
+                result.status,
+                SearchStatus::Complete(solver::SearchComplete::HasSolutions),
+                "{backend}"
+            );
+            let solutions = solutions.lock().unwrap();
+            assert_eq!(solutions.len(), 2, "{backend}");
+            assert!(
+                solutions.contains(&(Literal::Int(0), Literal::Int(1))),
+                "{backend}"
+            );
+            assert_eq!(
+                solutions
+                    .iter()
+                    .filter(|(x, _)| *x == Literal::Int(1))
+                    .count(),
+                1,
+                "{backend}"
+            );
 
             inst.add_clause([x_lit].into_iter().collect());
             inst.add_clause([!x_lit].into_iter().collect());
