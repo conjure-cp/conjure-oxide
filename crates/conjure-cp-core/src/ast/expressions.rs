@@ -924,6 +924,71 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
     Some((min, max))
 }
 
+/// Integer ranges without expanding their values. Typed empty domains are
+/// accepted so arithmetic over an empty operand remains empty.
+fn finite_integer_ranges(expr: &Expression) -> Option<Vec<Range<i32>>> {
+    let domain = expr.domain_of()?.resolve().ok()?;
+    match domain.as_ref() {
+        GroundDomain::Int(ranges, _) if ranges.iter().all(Range::is_finite) => Some(ranges.clone()),
+        GroundDomain::Empty(ReturnType::Int) => Some(Vec::new()),
+        _ => None,
+    }
+}
+
+/// Bounds for operations whose extrema occur at the corners of two intervals.
+/// Overflow means we cannot supply a sound i32 domain, rather than silently
+/// omitting values or wrapping an endpoint.
+fn binary_integer_domain(
+    a: &Expression,
+    b: &Expression,
+    op: fn(i32, i32) -> Option<i32>,
+) -> Option<DomainPtr> {
+    let a = finite_integer_ranges(a)?;
+    let b = finite_integer_ranges(b)?;
+    if a.is_empty() || b.is_empty() {
+        return Some(Domain::empty(ReturnType::Int));
+    }
+    let (a_min, a_max) = range_vec_bounds_i32(&a)?;
+    let (b_min, b_max) = range_vec_bounds_i32(&b)?;
+    let corners = [
+        op(a_min, b_min)?,
+        op(a_min, b_max)?,
+        op(a_max, b_min)?,
+        op(a_max, b_max)?,
+    ];
+    Some(Domain::int(vec![Range::new(
+        corners.iter().min().copied(),
+        corners.iter().max().copied(),
+    )]))
+}
+
+/// Absolute value maps each input interval to one interval. Retain holes without
+/// enumerating the integers, and decline inference if abs(MIN) would overflow.
+fn absolute_integer_domain(a: &Expression) -> Option<DomainPtr> {
+    let mut result = Vec::new();
+    for range in finite_integer_ranges(a)? {
+        let (lo, hi) = (*range.low()?, *range.high()?);
+        let (a, b) = (lo.checked_abs()?, hi.checked_abs()?);
+        let lower = if lo <= 0 && hi >= 0 { 0 } else { a.min(b) };
+        result.push(Range::new(Some(lower), Some(a.max(b))));
+    }
+    if result.is_empty() {
+        return Some(Domain::empty(ReturnType::Int));
+    }
+    result.sort_unstable_by_key(|range| range.low().copied());
+    let mut merged: Vec<Range<i32>> = Vec::new();
+    for range in result {
+        if let Some(last) = merged.last_mut()
+            && let Some(joined) = last.join(&range)
+        {
+            *last = joined;
+        } else {
+            merged.push(range);
+        }
+    }
+    Some(Domain::int(merged))
+}
+
 /// Sound floor-remainder bounds, computed from range endpoints rather than the
 /// Cartesian product of operand values. Inference is linear in the number of
 /// ranges, independent of their cardinality. Holes in the result are permitted:
@@ -1535,14 +1600,14 @@ impl Expression {
             Expression::Minus(_, a, b) => {
                 let a_resolved = a.domain_of()?.resolve().ok()?;
                 let b_resolved = b.domain_of()?.resolve().ok()?;
-
-                if matches!(a_resolved.as_ref(), GroundDomain::Int(_, _))
-                    && matches!(b_resolved.as_ref(), GroundDomain::Int(_, _))
-                {
-                    a_resolved
-                        .apply_i32(|x, y| Some(x - y), b_resolved.as_ref())
-                        .map(DomainPtr::from)
-                        .ok()
+                if matches!(
+                    a_resolved.as_ref(),
+                    GroundDomain::Int(_, _) | GroundDomain::Empty(ReturnType::Int)
+                ) && matches!(
+                    b_resolved.as_ref(),
+                    GroundDomain::Int(_, _) | GroundDomain::Empty(ReturnType::Int)
+                ) {
+                    binary_integer_domain(a, b, i32::checked_sub)
                 } else if matches!(a_resolved.as_ref(), GroundDomain::Set(_, _))
                     && matches!(b_resolved.as_ref(), GroundDomain::Set(_, _))
                 {
@@ -1556,36 +1621,15 @@ impl Expression {
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::bool()),
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::bool()),
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::bool()),
-            Expression::Abs(_, a) => a
-                .domain_of()?
-                .resolve()
-                .ok()?
-                .apply_i32(
-                    |a, _| Some(a.abs()),
-                    a.domain_of()?.resolve().ok()?.as_ref(),
-                )
-                .map(DomainPtr::from)
-                .ok(),
+            Expression::Abs(_, a) => absolute_integer_domain(a),
             Expression::MinionPow(_, _, _, _) => Some(Domain::bool()),
             Expression::ToInt(_, _) => Some(Domain::int(vec![Range::Bounded(0, 1)])),
             Expression::SatObjective(..) => Some(Domain::bool()),
             Expression::SATInt(_, _, _, (low, high)) => {
                 Some(Domain::int_ground(vec![Range::Bounded(*low, *high)]))
             }
-            Expression::PairwiseSum(_, a, b) => a
-                .domain_of()?
-                .resolve()
-                .ok()?
-                .apply_i32(|a, b| Some(a + b), b.domain_of()?.resolve().ok()?.as_ref())
-                .map(DomainPtr::from)
-                .ok(),
-            Expression::PairwiseProduct(_, a, b) => a
-                .domain_of()?
-                .resolve()
-                .ok()?
-                .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve().ok()?.as_ref())
-                .map(DomainPtr::from)
-                .ok(),
+            Expression::PairwiseSum(_, a, b) => binary_integer_domain(a, b, i32::checked_add),
+            Expression::PairwiseProduct(_, a, b) => binary_integer_domain(a, b, i32::checked_mul),
             Expression::Defined(_, function) => defined_domain(function),
             Expression::Range(_, function) => range_domain(function),
             Expression::Image(_, function, _) => get_function_codomain(function),
@@ -3879,6 +3923,133 @@ mod tests {
     use crate::matrix_expr;
 
     use super::*;
+
+    fn integer_variable(domain: DomainPtr) -> Expression {
+        Reference::new(DeclarationPtr::new_find(Name::user("x"), domain)).into()
+    }
+
+    #[test]
+    fn interval_arithmetic_domains_cover_all_small_signed_results() {
+        type Binary = fn(Metadata, Moo<Expression>, Moo<Expression>) -> Expression;
+        type Operation = fn(i32, i32) -> Option<i32>;
+        let operations: [(Binary, Operation); 3] = [
+            (Expression::Minus, i32::checked_sub),
+            (Expression::PairwiseSum, i32::checked_add),
+            (Expression::PairwiseProduct, i32::checked_mul),
+        ];
+        for a_min in -3..=3 {
+            for a_max in a_min..=3 {
+                let a = integer_variable(Domain::int(vec![Range::Bounded(a_min, a_max)]));
+                let abs = Expression::Abs(Metadata::new(), Moo::new(a.clone()));
+                let absolute = abs.domain_of().unwrap().resolve().unwrap();
+                for value in a_min..=a_max {
+                    assert!(absolute.contains(&Literal::Int(value.abs())).unwrap());
+                }
+                for b_min in -3..=3 {
+                    for b_max in b_min..=3 {
+                        let b = integer_variable(Domain::int(vec![Range::Bounded(b_min, b_max)]));
+                        for (construct, operation) in operations {
+                            let expr = construct(
+                                Metadata::new(),
+                                Moo::new(a.clone()),
+                                Moo::new(b.clone()),
+                            );
+                            let domain = expr.domain_of().unwrap().resolve().unwrap();
+                            for x in a_min..=a_max {
+                                for y in b_min..=b_max {
+                                    let result = operation(x, y).unwrap();
+                                    assert!(
+                                        domain.contains(&Literal::Int(result)).unwrap(),
+                                        "{expr}: {result} missing from {domain}"
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn interval_arithmetic_handles_large_domains_empty_operands_and_overflow() {
+        let wide = integer_variable(Domain::int(vec![Range::Bounded(
+            -1_000_000_000,
+            1_000_000_000,
+        )]));
+        let two = integer_variable(Domain::int(vec![Range::Bounded(-2, 2)]));
+        for expr in [
+            Expression::Minus(
+                Metadata::new(),
+                Moo::new(wide.clone()),
+                Moo::new(wide.clone()),
+            ),
+            Expression::PairwiseSum(
+                Metadata::new(),
+                Moo::new(wide.clone()),
+                Moo::new(wide.clone()),
+            ),
+            Expression::PairwiseProduct(Metadata::new(), Moo::new(wide.clone()), Moo::new(two)),
+        ] {
+            assert_eq!(
+                expr.domain_of(),
+                Some(Domain::int(vec![Range::Bounded(
+                    -2_000_000_000,
+                    2_000_000_000
+                )]))
+            );
+        }
+        assert_eq!(
+            Expression::Abs(Metadata::new(), Moo::new(wide.clone())).domain_of(),
+            Some(Domain::int(vec![Range::Bounded(0, 1_000_000_000)]))
+        );
+        let sparse = integer_variable(Domain::int(vec![
+            Range::Bounded(-8, -5),
+            Range::Bounded(3, 4),
+            Range::Single(0),
+        ]));
+        assert_eq!(
+            Expression::Abs(Metadata::new(), Moo::new(sparse))
+                .domain_of()
+                .unwrap()
+                .resolve()
+                .unwrap()
+                .values_i32()
+                .unwrap(),
+            vec![0, 3, 4, 5, 6, 7, 8]
+        );
+        let min = integer_variable(Domain::int(vec![Range::Single(i32::MIN)]));
+        let max = integer_variable(Domain::int(vec![Range::Single(i32::MAX)]));
+        let one = integer_variable(Domain::int(vec![Range::Single(1)]));
+        assert_eq!(
+            Expression::Abs(Metadata::new(), Moo::new(min.clone())).domain_of(),
+            None
+        );
+        for expr in [
+            Expression::Minus(Metadata::new(), Moo::new(min), Moo::new(one.clone())),
+            Expression::PairwiseSum(Metadata::new(), Moo::new(max.clone()), Moo::new(one)),
+            Expression::PairwiseProduct(Metadata::new(), Moo::new(max.clone()), Moo::new(max)),
+        ] {
+            assert_eq!(expr.domain_of(), None);
+        }
+        let empty = integer_variable(Domain::empty(ReturnType::Int));
+        assert_eq!(
+            Expression::Abs(Metadata::new(), Moo::new(empty.clone())).domain_of(),
+            Some(Domain::empty(ReturnType::Int))
+        );
+        for construct in [
+            Expression::Minus,
+            Expression::PairwiseSum,
+            Expression::PairwiseProduct,
+        ] {
+            for (a, b) in [(empty.clone(), wide.clone()), (wide.clone(), empty.clone())] {
+                assert_eq!(
+                    construct(Metadata::new(), Moo::new(a), Moo::new(b)).domain_of(),
+                    Some(Domain::empty(ReturnType::Int))
+                );
+            }
+        }
+    }
 
     fn modulo_expression(a: DomainPtr, b: DomainPtr, safe: bool) -> Expression {
         let variable = |name: &str, domain| {
