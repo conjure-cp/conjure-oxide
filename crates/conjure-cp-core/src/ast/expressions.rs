@@ -989,6 +989,55 @@ fn absolute_integer_domain(a: &Expression) -> Option<DomainPtr> {
     Some(Domain::int(merged))
 }
 
+/// Floor division is monotonic on each side of zero. Only numerator endpoints
+/// and the endpoints of each nonzero divisor interval can be extrema. Widen the
+/// quotient calculation so MIN / -1 does not panic; out-of-i32 results are
+/// excluded, as in floor_div, without excluding representable neighbouring values.
+fn division_domain(a: &Expression, b: &Expression, safe: bool) -> Option<DomainPtr> {
+    let a = finite_integer_ranges(a)?;
+    let b = finite_integer_ranges(b)?;
+    let mut result = Vec::new();
+    if !a.is_empty() && !b.is_empty() {
+        let (a_min, a_max) = range_vec_bounds_i32(&a)?;
+        let mut low = i64::MAX;
+        let mut high = i64::MIN;
+        for range in b {
+            let (lo, hi) = (*range.low()?, *range.high()?);
+            // Splitting at zero is essential: checking only the outer endpoints
+            // of -N..N would miss the extreme quotients at -1 and 1.
+            let endpoints = [lo, hi.min(-1), lo.max(1), hi];
+            for divisor in endpoints
+                .into_iter()
+                .filter(|b| *b != 0 && lo <= *b && *b <= hi)
+            {
+                for dividend in [a_min, a_max] {
+                    let remainder = super::floor_mod(dividend, divisor)?;
+                    let quotient =
+                        (i64::from(dividend) - i64::from(remainder)) / i64::from(divisor);
+                    low = low.min(quotient);
+                    high = high.max(quotient);
+                }
+            }
+        }
+        let low = low.max(i64::from(i32::MIN));
+        let high = high.min(i64::from(i32::MAX));
+        if low <= high {
+            result.push(Range::new(
+                Some(i32::try_from(low).ok()?),
+                Some(i32::try_from(high).ok()?),
+            ));
+        }
+    }
+    if safe {
+        result.push(Range::Single(0));
+    }
+    if result.is_empty() {
+        Some(Domain::empty(ReturnType::Int))
+    } else {
+        Some(Domain::int(Range::squeeze(&result)))
+    }
+}
+
 /// Sound floor-remainder bounds, computed from range endpoints rather than the
 /// Cartesian product of operand values. Inference is linear in the number of
 /// ranges, independent of their cardinality. Holes in the result are permitted:
@@ -1387,44 +1436,14 @@ impl Expression {
                         .map(DomainPtr::from)
                 }
             }
-            Expression::UnsafeDiv(_, a, b) => a
-                .domain_of()?
-                .resolve()
-                .ok()?
-                .apply_i32(
-                    // rust integer division is truncating; however, we want to always round down,
-                    // including for negative numbers.
-                    super::floor_div,
-                    b.domain_of()?.resolve().ok()?.as_ref(),
-                )
-                .map(DomainPtr::from)
-                .ok(),
+            Expression::UnsafeDiv(_, a, b) => division_domain(a, b, false),
             // Either operand's value can survive, so the domain must cover both.
             Expression::CatchUndef(_, a, b) => {
                 let inner = a.domain_of()?;
                 let default = b.domain_of()?;
                 inner.union(&default).ok()
             }
-            Expression::SafeDiv(_, a, b) => {
-                // rust integer division is truncating; however, we want to always round down
-                // including for negative numbers.
-                let domain = a
-                    .domain_of()?
-                    .resolve()
-                    .ok()?
-                    .apply_i32(super::floor_div, b.domain_of()?.resolve().ok()?.as_ref())
-                    .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
-
-                if let GroundDomain::Int(ranges, _) = domain {
-                    let mut ranges = ranges;
-                    ranges.push(Range::Single(0));
-                    Some(Domain::int(ranges))
-                } else if matches!(domain, GroundDomain::Empty(ReturnType::Int)) {
-                    Some(Domain::int(vec![Range::Single(0)]))
-                } else {
-                    bug!("Domain of {self} was not integer")
-                }
-            }
+            Expression::SafeDiv(_, a, b) => division_domain(a, b, true),
             Expression::UnsafeMod(_, a, b) => modulo_domain(a, b, false),
             Expression::SafeMod(_, a, b) => modulo_domain(a, b, true),
             Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => a
@@ -4047,6 +4066,122 @@ mod tests {
                     construct(Metadata::new(), Moo::new(a), Moo::new(b)).domain_of(),
                     Some(Domain::empty(ReturnType::Int))
                 );
+            }
+        }
+    }
+
+    fn division_expression(a: DomainPtr, b: DomainPtr, safe: bool) -> Expression {
+        let (a, b) = (Moo::new(integer_variable(a)), Moo::new(integer_variable(b)));
+        if safe {
+            Expression::SafeDiv(Metadata::new(), a, b)
+        } else {
+            Expression::UnsafeDiv(Metadata::new(), a, b)
+        }
+    }
+
+    #[test]
+    fn division_domain_bounds_cover_all_small_signed_results() {
+        for a_min in -4..=4 {
+            for a_max in a_min..=4 {
+                for b_min in -4..=4 {
+                    for b_max in b_min..=4 {
+                        for safe in [false, true] {
+                            let expr = division_expression(
+                                Domain::int(vec![Range::Bounded(a_min, a_max)]),
+                                Domain::int(vec![Range::Bounded(b_min, b_max)]),
+                                safe,
+                            );
+                            let domain = expr.domain_of().unwrap().resolve().unwrap();
+                            let expected: BTreeSet<_> = (a_min..=a_max)
+                                .flat_map(|a| {
+                                    (b_min..=b_max)
+                                        .filter_map(move |b| super::super::floor_div(a, b))
+                                })
+                                .chain(safe.then_some(0))
+                                .collect();
+                            for value in &expected {
+                                assert!(
+                                    domain.contains(&Literal::Int(*value)).unwrap(),
+                                    "{expr}: {value} missing from {domain}"
+                                );
+                            }
+                            if expected.is_empty() || (a_min == a_max && b_min == b_max) {
+                                assert_eq!(
+                                    domain
+                                        .values_i32()
+                                        .unwrap()
+                                        .into_iter()
+                                        .collect::<BTreeSet<_>>(),
+                                    expected
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn division_domain_bounds_handle_large_sparse_empty_and_extreme_operands() {
+        let wide = Domain::int(vec![Range::Bounded(-1_000_000_000, 1_000_000_000)]);
+        let full = Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]);
+        for safe in [false, true] {
+            assert_eq!(
+                division_expression(wide.clone(), wide.clone(), safe).domain_of(),
+                Some(wide.clone())
+            );
+            assert_eq!(
+                division_expression(full.clone(), full.clone(), safe).domain_of(),
+                Some(full.clone())
+            );
+            for empty in [
+                Domain::empty(ReturnType::Int),
+                Domain::int(Vec::<Range<i32>>::new()),
+                Domain::int(vec![Range::Single(0)]),
+            ] {
+                let domain = division_expression(wide.clone(), empty, safe)
+                    .domain_of()
+                    .unwrap()
+                    .resolve()
+                    .unwrap();
+                assert_eq!(
+                    domain.values_i32().unwrap(),
+                    if safe { vec![0] } else { vec![] }
+                );
+            }
+            let min = Domain::int(vec![Range::Single(i32::MIN)]);
+            let minus_one = Domain::int(vec![Range::Single(-1)]);
+            let domain = division_expression(min, minus_one.clone(), safe)
+                .domain_of()
+                .unwrap()
+                .resolve()
+                .unwrap();
+            assert_eq!(
+                domain.values_i32().unwrap(),
+                if safe { vec![0] } else { vec![] }
+            );
+            let near_min = Domain::int(vec![Range::Bounded(i32::MIN, i32::MIN + 1)]);
+            let domain = division_expression(near_min, minus_one, safe)
+                .domain_of()
+                .unwrap()
+                .resolve()
+                .unwrap();
+            assert!(domain.contains(&Literal::Int(i32::MAX)).unwrap());
+            let sparse = Domain::int(vec![Range::Single(-9), Range::Bounded(3, 5)]);
+            let domain = division_expression(sparse.clone(), sparse, safe)
+                .domain_of()
+                .unwrap()
+                .resolve()
+                .unwrap();
+            for a in [-9, 3, 4, 5] {
+                for b in [-9, 3, 4, 5] {
+                    assert!(
+                        domain
+                            .contains(&Literal::Int(super::super::floor_div(a, b).unwrap()))
+                            .unwrap()
+                    );
+                }
             }
         }
     }
