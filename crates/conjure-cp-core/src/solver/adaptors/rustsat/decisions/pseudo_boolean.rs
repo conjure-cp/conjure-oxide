@@ -304,6 +304,7 @@ impl Compiler<'_> {
                     instance: self.instance,
                     variables: self.variables,
                     cache: None,
+                    lettings: std::collections::HashSet::new(),
                 };
                 one_shot.integer_relation(
                     algorithm,

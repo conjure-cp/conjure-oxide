@@ -10,6 +10,11 @@ impl Compiler<'_> {
         truth: bool,
         asserted: &mut HashSet<Lit>,
     ) -> Result<(), SolverError> {
+        if let Some(body) = self.value_letting_body(expression)? {
+            let result = self.collect_asserted_literals(&body, truth, asserted);
+            self.finish_value_letting(expression);
+            return result;
+        }
         match expression {
             Expression::Atomic(_, Atom::Reference(_)) => {
                 let term = self.encode(expression)?;
@@ -45,6 +50,11 @@ impl Compiler<'_> {
         expression: &Expression,
         truth: bool,
     ) -> Result<(), SolverError> {
+        if let Some(body) = self.value_letting_body(expression)? {
+            let result = self.assert_expression(&body, truth);
+            self.finish_value_letting(expression);
+            return result;
+        }
         match expression {
             Expression::Not(_, input) => self.assert_expression(input, !truth)?,
             Expression::And(_, inputs) if truth => {
@@ -90,6 +100,11 @@ impl Compiler<'_> {
         truth: bool,
         terms: &mut Vec<Term>,
     ) -> Result<(), SolverError> {
+        if let Some(body) = self.value_letting_body(expression)? {
+            let result = self.collect_disjunction(&body, truth, terms);
+            self.finish_value_letting(expression);
+            return result;
+        }
         match expression {
             Expression::Not(_, input) => self.collect_disjunction(input, !truth, terms)?,
             Expression::And(_, inputs) | Expression::Or(_, inputs)
@@ -115,6 +130,11 @@ impl Compiler<'_> {
         expression: &Expression,
         truth: bool,
     ) -> Result<Term, SolverError> {
+        if let Some(body) = self.value_letting_body(expression)? {
+            let term = self.encode_polarity(&body, truth);
+            self.finish_value_letting(expression);
+            return term;
+        }
         Ok(match expression {
             Expression::Not(_, input) => self.encode_polarity(input, !truth)?,
             Expression::And(_, inputs) | Expression::Or(_, inputs) => {

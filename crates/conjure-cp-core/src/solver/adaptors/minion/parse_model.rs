@@ -461,26 +461,98 @@ fn load_constraints(
     Ok(())
 }
 
-/// Adds `expr` to `minion_model`
+/// Adds `expr` to `minion_model`.
 fn load_expr(
     expr: conjure_ast::Expression,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    // Top-level `and` must already have been flattened into the root constraint list by
-    // `finish_root_evaluator_normalisation` after rewriting. Nested `and` is still lowered
-    // via `WatchedAnd` in `parse_expr`.
-    if matches!(expr, conjure_ast::Expression::And(_, _)) {
-        return Err(SolverError::ModelInvalid(
-            "top-level and must be flattened into the root constraint list before Minion loading"
-                .to_string(),
-        ));
+    load_constraint(expr, minion_model, &mut HashSet::new(), false)
+}
+
+/// Posts `expr`, following boolean value lettings as they are reached.
+///
+/// Rewriting lowers each letting body in place and leaves the use as a name. A root reference
+/// therefore still names that letting, whose body may be an `and` Minion would not accept as an
+/// atom. Inlining only while loading posts that body as constraints and does not copy it back into
+/// the model.
+///
+/// A top-level `and` that did not come from a letting is still rejected: root normalisation is
+/// supposed to have flattened it already. An `and` that is a letting body is the constraint list.
+fn load_constraint(
+    expr: conjure_ast::Expression,
+    minion_model: &mut MinionModel,
+    lettings: &mut HashSet<conjure_ast::serde::ObjId>,
+    inlined: bool,
+) -> Result<(), SolverError> {
+    if let Some((id, name, body)) = boolean_constraint_letting(&expr) {
+        if !lettings.insert(id.clone()) {
+            return Err(ModelInvalid(format!(
+                "cyclic value letting '{name}' in a Minion constraint"
+            )));
+        }
+        let loaded = load_constraint(body, minion_model, lettings, true);
+        lettings.remove(&id);
+        return loaded;
     }
-    minion_model.constraints.push(parse_expr(expr)?);
+
+    if let conjure_ast::Expression::And(_, matrix) = expr {
+        if !inlined {
+            return Err(SolverError::ModelInvalid(
+                "top-level and must be flattened into the root constraint list before Minion loading"
+                    .to_string(),
+            ));
+        }
+        let conjuncts = Moo::unwrap_or_clone(matrix)
+            .unwrap_matrix_unchecked()
+            .ok_or_else(|| {
+                SolverError::ModelFeatureNotSupported(
+                    "The inside of an and expression is not a matrix.".to_string(),
+                )
+            })?
+            .0;
+        for conjunct in conjuncts {
+            load_constraint(conjunct, minion_model, lettings, true)?;
+        }
+        return Ok(());
+    }
+
+    minion_model
+        .constraints
+        .push(parse_expr_following_lettings(expr, lettings)?);
     Ok(())
+}
+
+/// A boolean value letting used where Minion expects a constraint.
+fn boolean_constraint_letting(
+    expr: &conjure_ast::Expression,
+) -> Option<(conjure_ast::serde::ObjId, String, conjure_ast::Expression)> {
+    let conjure_ast::Expression::Atomic(_, conjure_ast::Atom::Reference(reference)) = expr else {
+        return None;
+    };
+    let body = reference.boolean_formula_letting_body()?;
+    Some((reference.id(), reference.name().to_string(), body))
 }
 
 /// Parses a Conjure Oxide expression into a `minion_sys` constraint.
 fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, SolverError> {
+    parse_expr_following_lettings(expr, &mut HashSet::new())
+}
+
+fn parse_expr_following_lettings(
+    expr: conjure_ast::Expression,
+    lettings: &mut HashSet<conjure_ast::serde::ObjId>,
+) -> Result<minion_ast::Constraint, SolverError> {
+    if let Some((id, name, body)) = boolean_constraint_letting(&expr) {
+        if !lettings.insert(id.clone()) {
+            return Err(ModelInvalid(format!(
+                "cyclic value letting '{name}' in a Minion constraint"
+            )));
+        }
+        let parsed = parse_expr_following_lettings(body, lettings);
+        lettings.remove(&id);
+        return parsed;
+    }
+
     match expr {
         conjure_ast::Expression::Atomic(_metadata, atom) => Ok(minion_ast::Constraint::WLiteral(
             parse_atom(atom)?,
@@ -489,7 +561,7 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
 
         // The Minion adaptor currently treats bools as integers anyways, so this is a no-op
         conjure_ast::Expression::ToInt(_metadata, inner_expr) => {
-            parse_expr(Moo::unwrap_or_clone(inner_expr))
+            parse_expr_following_lettings(Moo::unwrap_or_clone(inner_expr), lettings)
         }
 
         conjure_ast::Expression::FlatAllDiff(_metadata, atoms) => {
@@ -673,7 +745,7 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                 })?
                 .0
                 .iter()
-                .map(|x| parse_expr(x.to_owned()))
+                .map(|x| parse_expr_following_lettings(x.to_owned(), lettings))
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
         conjure_ast::Expression::And(_metadata, e) => Ok(minion_ast::Constraint::WatchedAnd(
@@ -686,7 +758,7 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                 })?
                 .0
                 .iter()
-                .map(|x| parse_expr(x.to_owned()))
+                .map(|x| parse_expr_following_lettings(x.to_owned(), lettings))
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
         conjure_ast::Expression::Eq(_metadata, a, b) => Ok(minion_ast::Constraint::Eq(
@@ -695,19 +767,62 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
         )),
 
         conjure_ast::Expression::FlatWatchedLiteral(_metadata, reference, k) => {
+            // `not` of a boolean reference becomes a watched literal before loading. A boolean
+            // value letting has a bool domain, so that rule treats the letting name as a variable
+            // and would ask Minion for a name that was never declared.
+            if let Some(body) = reference.boolean_formula_letting_body() {
+                let id = reference.id();
+                let name = reference.name().to_string();
+                if !lettings.insert(id.clone()) {
+                    return Err(ModelInvalid(format!(
+                        "cyclic value letting '{name}' in a Minion constraint"
+                    )));
+                }
+                let forced_true = match k {
+                    conjure_ast::Literal::Bool(value) => value,
+                    conjure_ast::Literal::Int(value) => value != 0,
+                    _ => {
+                        lettings.remove(&id);
+                        return Err(ModelInvalid(format!(
+                            "watched literal on value letting '{name}' has value {k}"
+                        )));
+                    }
+                };
+                let parsed = if forced_true {
+                    parse_expr_following_lettings(body, lettings)
+                } else {
+                    // `not(X) ~> reify(X, 0)`, the same encoding as `not_constraint_to_reify`.
+                    parse_expr_following_lettings(
+                        Expression::MinionReify(
+                            conjure_ast::Metadata::new(),
+                            Moo::new(body),
+                            Atom::Literal(conjure_ast::Literal::Bool(false)),
+                        ),
+                        lettings,
+                    )
+                };
+                lettings.remove(&id);
+                return parsed;
+            }
             Ok(minion_ast::Constraint::WLiteral(
-                parse_name(reference.ptr().name().clone())?,
+                parse_reference_atom(reference)?,
                 parse_literal(k)?,
             ))
         }
         conjure_ast::Expression::MinionReify(_metadata, e, v) => Ok(minion_ast::Constraint::Reify(
-            Box::new(parse_expr(Moo::unwrap_or_clone(e))?),
+            Box::new(parse_expr_following_lettings(
+                Moo::unwrap_or_clone(e),
+                lettings,
+            )?),
             parse_atom(v)?,
         )),
 
         conjure_ast::Expression::MinionReifyImply(_metadata, e, v) => {
             Ok(minion_ast::Constraint::ReifyImply(
-                Box::new(parse_expr(Moo::unwrap_or_clone(e))?),
+                Box::new(parse_expr_following_lettings(
+                    Moo::unwrap_or_clone(e),
+                    lettings,
+                )?),
                 parse_atom(v)?,
             ))
         }
@@ -1057,6 +1172,110 @@ mod tests {
         let err = load_expr(expr, &mut model).unwrap_err();
         assert!(matches!(err, SolverError::ModelInvalid(_)));
         assert!(model.constraints.is_empty());
+    }
+
+    #[test]
+    fn boolean_value_letting_constraint_is_inlined_for_minion() {
+        let x = DeclarationPtr::new_find(Name::user("x"), Domain::bool());
+        let inner = DeclarationPtr::new_value_letting(
+            Name::user("inner"),
+            Expression::Not(
+                Metadata::new(),
+                Moo::new(Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(crate::ast::Reference::new(x)),
+                )),
+            ),
+        );
+        let outer = DeclarationPtr::new_value_letting(
+            Name::user("outer"),
+            Expression::And(
+                Metadata::new(),
+                Moo::new(crate::into_matrix_expr!(vec![Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(crate::ast::Reference::new(inner)),
+                )])),
+            ),
+        );
+        let expr = Expression::Atomic(
+            Metadata::new(),
+            Atom::Reference(crate::ast::Reference::new(outer)),
+        );
+        let mut model = MinionModel::new();
+
+        load_expr(expr, &mut model).unwrap();
+
+        assert_eq!(model.constraints.len(), 1);
+        assert!(matches!(
+            &model.constraints[0],
+            minion_ast::Constraint::WLiteral(_, minion_ast::Constant::Integer(0))
+        ));
+    }
+
+    #[test]
+    fn boolean_value_letting_alias_is_inlined_for_minion() {
+        let x = DeclarationPtr::new_find(Name::user("x"), Domain::bool());
+        let inner = DeclarationPtr::new_value_letting(
+            Name::user("inner"),
+            Expression::Not(
+                Metadata::new(),
+                Moo::new(Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(crate::ast::Reference::new(x)),
+                )),
+            ),
+        );
+        let alias = DeclarationPtr::new_value_letting(
+            Name::user("alias"),
+            Expression::Atomic(
+                Metadata::new(),
+                Atom::Reference(crate::ast::Reference::new(inner)),
+            ),
+        );
+        let expr = Expression::Atomic(
+            Metadata::new(),
+            Atom::Reference(crate::ast::Reference::new(alias)),
+        );
+        let mut model = MinionModel::new();
+
+        load_expr(expr, &mut model).unwrap();
+
+        assert_eq!(model.constraints.len(), 1);
+        assert!(matches!(
+            &model.constraints[0],
+            minion_ast::Constraint::WLiteral(_, minion_ast::Constant::Integer(0))
+        ));
+    }
+
+    #[test]
+    fn negated_boolean_value_letting_is_reified_false() {
+        let x = DeclarationPtr::new_find(Name::user("x"), Domain::bool());
+        let inner = DeclarationPtr::new_value_letting(
+            Name::user("inner"),
+            Expression::Not(
+                Metadata::new(),
+                Moo::new(Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(crate::ast::Reference::new(x)),
+                )),
+            ),
+        );
+        let expr = Expression::FlatWatchedLiteral(
+            Metadata::new(),
+            crate::ast::Reference::new(inner),
+            Literal::Bool(false),
+        );
+
+        let constraint = parse_expr(expr).unwrap();
+
+        assert!(matches!(
+            constraint,
+            minion_ast::Constraint::Reify(ref inner, minion_ast::Var::ConstantAsVar(0))
+                if matches!(
+                    inner.as_ref(),
+                    minion_ast::Constraint::WLiteral(_, minion_ast::Constant::Integer(0))
+                )
+        ));
     }
 
     #[test]

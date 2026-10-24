@@ -91,6 +91,7 @@ impl Compiler<'_> {
                         instance: self.instance,
                         variables: self.variables,
                         cache: None,
+                        lettings: std::collections::HashSet::new(),
                     };
                     one_shot.cardinality_guarded(
                         algorithm,
