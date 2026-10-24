@@ -19,7 +19,7 @@ use rustsat::{
     instances::{Cnf, SatInstance},
     types::{Clause, Lit},
 };
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum Term {
@@ -50,6 +50,7 @@ pub(super) fn compile_decisions_with_cache(
         instance,
         variables,
         cache: Some(cache),
+        lettings: HashSet::new(),
     };
     // Direct assertions determine whether a relation needs an assertion or equivalence.
     // Keep their units in the model so output literals remain correctly constrained.
@@ -387,6 +388,7 @@ pub(super) fn compile_objective_terms(
         instance,
         variables,
         cache: Some(cache),
+        lettings: HashSet::new(),
     };
     let terms = value
         .terms
@@ -455,6 +457,8 @@ struct Compiler<'a> {
     instance: &'a mut SatInstance,
     variables: &'a mut BTreeMap<Name, Lit>,
     cache: Option<&'a mut EncodingCache>,
+    /// Value lettings currently being followed. A letting name is not a SAT variable.
+    lettings: HashSet<crate::ast::serde::ObjId>,
 }
 impl Compiler<'_> {
     fn assert_guarded(&mut self, term: Term, guard: Option<Lit>) {
@@ -547,7 +551,43 @@ impl Compiler<'_> {
         }
         Term::Literal(output)
     }
+    /// The expression a value letting stands for, while that name stays on the cycle stack.
+    ///
+    /// Rewriting updates the letting body in place and leaves uses as names. The compiled clauses
+    /// use the body, so a letting name never becomes a SAT variable. Call
+    /// [`Compiler::finish_value_letting`] after the recursive use of the body.
+    fn value_letting_body(
+        &mut self,
+        expression: &Expression,
+    ) -> Result<Option<Expression>, SolverError> {
+        let Expression::Atomic(_, Atom::Reference(reference)) = expression else {
+            return Ok(None);
+        };
+        let Some(body) = reference.resolve_expression() else {
+            return Ok(None);
+        };
+        if !self.lettings.insert(reference.id()) {
+            return Err(SolverError::ModelInvalid(format!(
+                "cyclic value letting '{}' in a SAT constraint",
+                reference.name()
+            )));
+        }
+        Ok(Some(body))
+    }
+
+    fn finish_value_letting(&mut self, expression: &Expression) {
+        let Expression::Atomic(_, Atom::Reference(reference)) = expression else {
+            return;
+        };
+        self.lettings.remove(&reference.id());
+    }
+
     fn encode(&mut self, expression: &Expression) -> Result<Term, SolverError> {
+        if let Some(body) = self.value_letting_body(expression)? {
+            let term = self.encode(&body);
+            self.finish_value_letting(expression);
+            return term;
+        }
         Ok(match expression {
             Expression::Atomic(_, Atom::Literal(Literal::Bool(value))) => Term::Constant(*value),
             Expression::Atomic(_, Atom::Reference(reference)) => {

@@ -6,69 +6,12 @@ use conjure_cp::rule_engine::{
 
 use conjure_cp::ast::AbstractLiteral::Matrix;
 use conjure_cp::ast::{Domain, SymbolTable};
-use std::collections::HashSet;
 
 // Atomic references can denote integers and compound values too. Those must reach their
 // representation's comparison rules rather than becoming Boolean gate inputs.
-//
-// A boolean value letting is also not a SAT literal. Its name has a bool domain, but the formula
-// is the letting body. Asserting the name would ignore that formula.
 fn is_literal(expr: &Expr) -> bool {
     crate::shared::utils::is_literal(expr)
         && expr.domain_of().is_some_and(|domain| domain.is_bool())
-        && !names_boolean_formula_letting(expr)
-}
-
-fn names_boolean_formula_letting(expr: &Expr) -> bool {
-    match expr {
-        Expr::Atomic(_, Atom::Reference(reference)) => {
-            reference.boolean_formula_letting_body().is_some()
-        }
-        Expr::Not(_, inner) => names_boolean_formula_letting(inner),
-        _ => false,
-    }
-}
-
-/// Copy boolean value lettings into the root constraint before SAT literal selection.
-///
-/// The letting declarations stay as they are. Only the root formula is expanded, so later SAT
-/// rules encode the formula instead of the name.
-#[register_rule("SAT", 26000, [Root])]
-fn expand_boolean_value_lettings(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Root(metadata, children) = expr else {
-        return Err(RuleNotApplicable);
-    };
-    let mut stack = HashSet::new();
-    let mut changed = false;
-    let mut expanded = Vec::with_capacity(children.len());
-    for child in children {
-        let (next, child_changed) = expand_lettings(child.clone(), &mut stack);
-        changed |= child_changed;
-        expanded.push(next);
-        stack.clear();
-    }
-    if !changed {
-        return Err(RuleNotApplicable);
-    }
-    Ok(RuleEffect::pure(Expr::Root(metadata.clone(), expanded)))
-}
-
-fn expand_lettings(expr: Expr, stack: &mut HashSet<conjure_cp::ast::serde::ObjId>) -> (Expr, bool) {
-    if let Expr::Atomic(_, Atom::Reference(reference)) = &expr
-        && let Some(body) = reference.boolean_formula_letting_body()
-    {
-        let id = reference.id();
-        if !stack.insert(id.clone()) {
-            return (expr, false);
-        }
-        let (expanded, _) = expand_lettings(body, stack);
-        stack.remove(&id);
-        let changed = expanded != expr;
-        return (expanded, changed);
-    }
-    let (rebuilt, changed_children) =
-        crate::shared::utils::rewrite_children(&expr, |child| expand_lettings(child, stack));
-    (rebuilt, changed_children > 0)
 }
 
 pub(super) fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
