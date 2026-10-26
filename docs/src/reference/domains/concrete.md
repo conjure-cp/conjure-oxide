@@ -41,12 +41,13 @@ given d: int(1, 3, 7)   $ d = 1 | d = 3 | d = 7
 given e: int(-2..)      $ e >= -2
 given f: int(-5..5)     $ -5 <= f < 5
 given g: int(1, 3..6)   $ g = 1 | 3 <= g < 6
+given h: int(x..y)      $ where x and y are integers
 ```
 
 Integer domains are instantiated with values in their range.
 
 ```bnf
-<Integer> ::= `[0-9]+`
+<Integer> ::= `-?[0-9]+`
 ```
 
 ```essence

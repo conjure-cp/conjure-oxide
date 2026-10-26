@@ -16,6 +16,10 @@ A partition is a datatype that splits some domain into parts.
                        | "regular"
 ```
 
+```essence
+letting a be domain partition (partSize 5, regular) from int(0..10)
+```
+
 ### Attributes
 
 | Attribute     | Domain     | Description                                   |
@@ -38,4 +42,8 @@ A partition is a datatype that splits some domain into parts.
 
 ```bnf
 <PartitionLiteral> ::= "partition" "(" [list(<SetLiteral>)] ")"
+```
+
+```essence
+letting a be partition({1, 2}, {3}, {4, 5, 6})
 ```

@@ -75,19 +75,11 @@
 
 `a <-> b` is `true` if both `a` and `b` are `true`, or both `a` and `b` are `false`.
 
+`a <-> b` is logically equivalent to `a = b`, but can **only** be applied to boolean expressions.
+
 | `a`     | `b`     | `a <-> b` |
 | ------- | ------- | --------- |
 | `true`  | `true`  | `true`    |
 | `true`  | `false` | `false`   |
 | `false` | `true`  | `false`   |
 | `false` | `false` | `true`    |
-
-## Quantifiers
-
-```bnf
-<QuantifierExpr> ::= ("forAll"
-| "exists") list(<identifier>
-| <tuple>) ("in" <Expression.Collection>
-| ":" <Domain>) ["," <Expression>] "." <Expression.Boolean>
-
-```

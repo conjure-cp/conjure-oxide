@@ -6,7 +6,7 @@
 
 ```bnf
 <RelationDomain> ::= "relation" ["(" list(<RelationAttribute>) ")"] "of" "(" <RelationDomainList> ")"
-<RelationDomainList> ::= <Domain> [{ "*" <domain> }]
+<RelationDomainList> ::= <Domain> [{ "*" <Domain> }]
 <RelationAttribute> ::= "size" <Expression.Integer>
                       | "minSize" <Expression.Integer>
                       | "maxSize" <Expression.Integer>
@@ -36,7 +36,18 @@ A relation is effectively a set of tuples which relate elements of different dom
 - Every tuple in the relation must have the same arity and internal domains.
 - If a relation is binary (arity 2) we can also add additional attributes to define properties of the relation.
 
+```essence
+$ binary relations
+letting a be domain relation of (int * bool)"
+letting b be domain relation (partialOrder) of (int(1..2) * int(1..2))"
+
+$ n-ary relation
+letting c be domain relation(int, int, int)
+```
+
 ### Attributes
+
+_N.B.: in this section `A ~ B` denotes "`A` is related to `B`", and `A !~ B` denotes `!(A ~ B)`._
 
 #### Size
 
@@ -48,29 +59,49 @@ A relation is effectively a set of tuples which relate elements of different dom
 
 A range of sizes may be specified using `maxSize x minSize y`.
 
-#### Binary
+#### Reflexivity
 
-Binary attributes determine properties of **binary relations only** (relations with tuple arity 2).
+Only applicable to relations of domain `D * D`.
 
-| Attribute       | Domain | Description |
-| --------------- | ------ | ----------- |
-| `reflexive`     | `bool` | TODO        |
-| `irreflexive`   | `bool` | TODO        |
-| `coreflexive`   | `bool` | TODO        |
-| `symmetric`     | `bool` | TODO        |
-| `antiSymmetric` | `bool` | TODO        |
-| `aSymmetric`    | `bool` | TODO        |
-| `transitive`    | `bool` | TODO        |
-| `total`         | `bool` | TODO        |
-| `connex`        | `bool` | TODO        |
-| `euclidean`     | `bool` | TODO        |
-| `serial`        | `bool` | TODO        |
-| `equivalence`   | `bool` | TODO        |
-| `partialOrder`  | `bool` | TODO        |
+| Attribute     | Domain | Description               |
+| ------------- | ------ | ------------------------- |
+| `reflexive`   | `bool` | For all `a`, `a ~ a`.     |
+| `irreflexive` | `bool` | For all `a`, `a !~ a`.    |
+| `coreflexive` | `bool` | If `a ~ b`, then `a = b`. |
+
+#### Symmetry
+
+TODO binary and categorisation
+
+| Attribute       | Domain | Description                             |
+| --------------- | ------ | --------------------------------------- |
+| `symmetric`     | `bool` | If `a ~ b`, then `b ~ a`.               |
+| `antiSymmetric` | `bool` | If `a ~ b` and `a != b`, then `b !~ a`. |
+| `aSymmetric`    | `bool` | If `a ~ b`, then `b !~ a`.              |
+
+#### Transitivity
+
+TODO binary and categorisation
+
+| Attribute      | Domain | Description                                                                           |
+| -------------- | ------ | ------------------------------------------------------------------------------------- |
+| `transitive`   | `bool` | If `a ~ b` and `b ~ c`, then `a ~ c`.                                                 |
+| `euclidean`    | `bool` | If `a ~ b` and `a ~ c`, then `b ~ c`.                                                 |
+| `total`        | `bool` | Every element of the first domain must be related to an element of the second domain. |
+| `connex`       | `bool` | All elements in either domain are related (TODO).                                     |
+| `serial`       | `bool` | TODO                                                                                  |
+| `equivalence`  | `bool` | Equivalent to setting both `reflexive` and `symmetric`.                               |
+| `partialOrder` | `bool` | Equivalent to setting both `reflective` and `antiSymmetric`.                          |
 
 ### Relation Literals
 
 ```bnf
 <RelationLiteral> ::= "relation" "(" [list(<RelationLiteralTuple>)] ")"
 <RelationLiteralTuple> ::= "(" list(<Expression>) ")"
+```
+
+```essence
+$ binary relation domains
+letting a be relation((1,1,0),(1,0,1),(0,1,1))
+letting b be relation((true, false), (false, true))
 ```

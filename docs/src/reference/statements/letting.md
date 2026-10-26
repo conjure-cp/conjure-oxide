@@ -1,24 +1,37 @@
 # Letting Statements
 
+Letting statements assign a value or domain to an [identifier](/docs/src/reference/identifiers.md).
+
 ```bnf
-; enum not included
 <LettingStatement> ::= "letting" list(<LettingVariableDeclaration>)
-<LettingVariableDeclaration> ::= list(<Identifier>) "be" (<Expression> |                                                       | <DomainDeclaration>
+<LettingVariableDeclaration> ::= list(<Identifier>) "be" (<Expression>
+                                                        | <DomainDeclaration>
                                                         | <EnumDeclaration>
                                                         | <UnnamedTypeDeclaration>)
 
-<DomainDeclaration>      ::= "domain" <Domain>
 ```
+
+## Value Declaration
 
 ```essence
 letting x be y + z
+letting a, b be 1    $ a <- 1, b <- 1
+```
+
+## Domain Declaration
+
+```bnf
+<DomainDeclaration> ::= "domain" <Domain>
+```
+
+```essence
 letting d be domain set of int(a..b)
 ```
 
 ## Enumerated Type Declaration
 
 ```bnf
-<EnumDeclaration>        ::= "new type enum" "{" list(<Identifier>) "}"
+<EnumDeclaration> ::= "new type enum" "{" list(<Identifier>) "}"
 ```
 
 The given-enum syntax defers the specification of actual values of the enumerated type until instantiation (which can be in a parameter file).
