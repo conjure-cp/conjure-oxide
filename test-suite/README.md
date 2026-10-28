@@ -10,6 +10,12 @@ Run the exhaustive tests from the repository root with:
 cargo nextest run -p test-suite
 ```
 
+You can run a subset of tests with a filter. The filter is a part of a test name, all tests containing that string as as substring will be run:
+
+```sh
+cargo nextest run -p test-suite tests_exhaustive_basic
+```
+
 ### How tests work
 
 Each test runs `conjure-oxide` on an `input.essence` file and checks that the rewritten AST and solver solutions match the expected output files stored in the test directory.
