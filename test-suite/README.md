@@ -10,7 +10,7 @@ Run the integration tests from the repository root with:
 cargo nextest run -p test-suite
 ```
 
-You can run a subset of tests with a filter:
+You can run a subset of tests with a filter. The filter is a part of a test name, all tests containing that string as as substring will be run:
 
 ```sh
 cargo nextest run -p test-suite tests_integration_basic
