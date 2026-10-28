@@ -1,6 +1,7 @@
 mod adaptor;
 mod backend;
-mod convs;
+mod decisions;
+mod objective;
 
 pub use adaptor::Sat;
 pub use backend::SatBackend;

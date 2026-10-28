@@ -6,12 +6,15 @@ use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 use ustr::Ustr;
 
+use super::collection_domains::{SizeBounds, bounded_set};
+use super::eval::eval_constant;
+
 use super::{
-    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, PartitionAttr,
-    PermutationAttr, Range, ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int,
-    records::Field,
+    Atom, Domain, DomainPtr, Expression, GroundDomain, Moo, PartitionAttr, PermutationAttr, Range,
+    ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int, records::Field,
 };
 use crate::ast::domains::{MSetAttr, SequenceAttr};
+use crate::ast::enumerated::EnumVariant;
 use crate::ast::pretty::pretty_vec;
 use crate::bug;
 use crate::bug_assert;
@@ -31,6 +34,8 @@ use uniplate::{Biplate, Tree, Uniplate};
 pub enum Literal {
     Int(i32),
     Bool(bool),
+    EnumVariant(EnumVariant),
+    Unnamed(crate::ast::unnamed::UnnamedValue),
     //abstract literal variant ends in Literal, but that's ok
     #[allow(clippy::enum_variant_names)]
     AbstractLiteral(AbstractLiteral<Literal>),
@@ -41,6 +46,12 @@ impl HasDomain for Literal {
         match self {
             Literal::Int(i) => Domain::int(vec![Range::Single(*i)]),
             Literal::Bool(_) => Domain::bool(),
+            Literal::EnumVariant(ev) => {
+                Domain::enumerated_ground(ev.ty.clone(), vec![Range::Single(ev.variant)])
+            }
+            Literal::Unnamed(value) => {
+                Moo::new(crate::ast::GroundDomain::UnnamedType(value.ty.clone())).into()
+            }
             Literal::AbstractLiteral(abstract_literal) => abstract_literal.domain_of(),
         }
     }
@@ -54,8 +65,17 @@ impl Literal {
     /// ascending element values (`false < true`).
     pub fn essence_cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
+            (Literal::Unnamed(lhs), Literal::Unnamed(rhs)) => {
+                (&lhs.ty.name, lhs.ty.size, lhs.value).cmp(&(&rhs.ty.name, rhs.ty.size, rhs.value))
+            }
             (Literal::Bool(lhs), Literal::Bool(rhs)) => lhs.cmp(rhs),
             (Literal::Int(lhs), Literal::Int(rhs)) => lhs.cmp(rhs),
+            (Literal::EnumVariant(lhs), Literal::EnumVariant(rhs)) => (
+                &lhs.ty.name,
+                &lhs.ty.variants,
+                lhs.variant,
+            )
+                .cmp(&(&rhs.ty.name, &rhs.ty.variants, rhs.variant)),
             (Literal::AbstractLiteral(lhs), Literal::AbstractLiteral(rhs)) => {
                 abstract_literal_essence_cmp(lhs, rhs)
             }
@@ -69,6 +89,8 @@ fn literal_kind(literal: &Literal) -> u8 {
         Literal::Bool(_) => 0,
         Literal::Int(_) => 1,
         Literal::AbstractLiteral(_) => 2,
+        Literal::EnumVariant(_) => 3,
+        Literal::Unnamed(_) => 4,
     }
 }
 
@@ -220,14 +242,14 @@ impl AbstractLiteralValue for Expression {
         let Domain::Ground(domain) = domain.as_ref() else {
             return false;
         };
-        matches!(domain.as_ref(), GroundDomain::Int(ranges) if ranges.as_slice() == [Range::UnboundedR(1)])
+        matches!(domain.as_ref(), GroundDomain::Int(ranges, _) if ranges.as_slice() == [Range::UnboundedR(1)])
     }
 }
 impl AbstractLiteralValue for Literal {
     type Dom = Moo<GroundDomain>;
 
     fn has_implied_list_domain(domain: &Self::Dom) -> bool {
-        matches!(domain.as_ref(), GroundDomain::Int(ranges) if ranges.as_slice() == [Range::UnboundedR(1)])
+        matches!(domain.as_ref(), GroundDomain::Int(ranges, _) if ranges.as_slice() == [Range::UnboundedR(1)])
     }
 }
 
@@ -283,6 +305,12 @@ impl AbstractLiteral<Expression> {
     pub fn domain_of(&self) -> Option<DomainPtr> {
         match self {
             AbstractLiteral::Set(items) => {
+                if items.is_empty() {
+                    return Some(Domain::set(
+                        SetAttr::new_size(0),
+                        Domain::empty(ReturnType::Unknown),
+                    ));
+                }
                 // ensure that all items have a domain, or return None
                 let item_domains: Vec<DomainPtr> = items
                     .iter()
@@ -292,10 +320,25 @@ impl AbstractLiteral<Expression> {
                 // union all item domains together
                 let item_domain = union_item_domains(item_domains, "set")?;
 
-                Some(Domain::set(SetAttr::<Int>::default(), item_domain))
+                let values = items.iter().map(eval_constant).collect::<Option<Vec<_>>>();
+                let high = i64::try_from(items.len()).ok()?;
+                let bounds = match values {
+                    Some(values) => {
+                        let n = i64::try_from(distinct_literal_count(&values)).ok()?;
+                        SizeBounds::new(n, Some(n))
+                    }
+                    None => SizeBounds::new(1, Some(high)),
+                };
+                Some(bounded_set(bounds, item_domain))
             }
 
             AbstractLiteral::MSet(items) => {
+                if items.is_empty() {
+                    return Some(Domain::mset(
+                        MSetAttr::new(Range::Single(0), Range::Single(0)),
+                        Domain::empty(ReturnType::Unknown),
+                    ));
+                }
                 let cardinality = i32::try_from(items.len()).ok()?;
                 // ensure that all items have a domain, or return None
                 let item_domains: Vec<DomainPtr> = items
@@ -377,31 +420,62 @@ impl AbstractLiteral<Expression> {
             }
 
             AbstractLiteral::Matrix(items, _) => {
-                // ensure that all items have a domain, or return None
                 let item_domains = items
                     .iter()
                     .map(|x| x.domain_of())
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
-                let item_domain = union_item_domains(item_domains, "matrix")?;
+                let mut item_domain = union_item_domains(item_domains, "matrix")?;
 
                 let mut new_index_domain = vec![];
 
                 // flatten index domains of n-d matrix into list
-                let mut e = Expression::AbstractLiteral(Metadata::new(), self.clone());
-                while let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, idx)) = e {
+                let mut matrix = self;
+                while let AbstractLiteral::Matrix(elems, idx) = matrix {
                     bug_assert!(
                         idx.as_matrix().is_none(),
                         "n-dimensional matrix literals should be represented as a matrix inside a matrix, got {idx}"
                     );
-                    new_index_domain.push(idx);
-                    e = elems[0].clone();
+                    new_index_domain.push(idx.clone());
+                    let Some(Expression::AbstractLiteral(_, inner @ AbstractLiteral::Matrix(..))) =
+                        elems.first()
+                    else {
+                        break;
+                    };
+                    matrix = inner;
+                }
+                // Each flattened literal dimension has already contributed to the row domain.
+                // Peel those dimensions so they are not represented twice. Matrix-valued
+                // expression leaves retain their own domains.
+                let mut remaining = new_index_domain.len() - 1;
+                while remaining > 0 {
+                    let (inner, indices) = item_domain.as_matrix()?;
+                    if indices.is_empty() {
+                        return None;
+                    }
+                    remaining = remaining.checked_sub(indices.len())?;
+                    item_domain = inner;
                 }
                 Some(Domain::matrix(item_domain, new_index_domain))
             }
-            AbstractLiteral::Tuple(_) => None,
-            AbstractLiteral::Record(_) => None,
+            AbstractLiteral::Tuple(items) => Some(Domain::tuple(
+                items
+                    .iter()
+                    .map(Expression::domain_of)
+                    .collect::<Option<Vec<_>>>()?,
+            )),
+            AbstractLiteral::Record(items) => Some(Domain::record(
+                items
+                    .iter()
+                    .map(|field| {
+                        Some(super::Field {
+                            name: field.name.clone(),
+                            value: field.value.domain_of()?,
+                        })
+                    })
+                    .collect::<Option<Vec<_>>>()?,
+            )),
             AbstractLiteral::Function(_) => None,
             AbstractLiteral::Variant(_) => None,
             AbstractLiteral::Relation(_) => None,
@@ -409,10 +483,36 @@ impl AbstractLiteral<Expression> {
     }
 }
 
+pub(super) fn distinct_literal_count(items: &[Literal]) -> usize {
+    let mut sorted = items.iter().collect::<Vec<_>>();
+    sorted.sort_by(|a, b| a.essence_cmp(b));
+    sorted.dedup_by(|a, b| a.essence_cmp(b).is_eq());
+    sorted.len()
+}
+
 impl HasDomain for AbstractLiteral<Literal> {
     fn domain_of(&self) -> DomainPtr {
-        Domain::from_literal_vec(&[Literal::AbstractLiteral(self.clone())])
-            .expect("abstract literals should be correctly typed")
+        let domain = Domain::from_literal_vec(&[Literal::AbstractLiteral(self.clone())])
+            .expect("abstract literals should be correctly typed");
+        match self {
+            AbstractLiteral::Set(items) => {
+                let (_, inner) = domain.as_set().expect("set literal domain");
+                let n =
+                    i64::try_from(distinct_literal_count(items)).expect("literal fits in memory");
+                bounded_set(SizeBounds::new(n, Some(n)), inner)
+            }
+            AbstractLiteral::MSet(items) => {
+                let (_, inner) = domain.as_mset().expect("multiset literal domain");
+                let n = i32::try_from(items.len()).expect("literal cardinality fits i32");
+                let occurrence = if n == 0 {
+                    Range::Single(0)
+                } else {
+                    Range::Bounded(1, n)
+                };
+                Domain::mset(MSetAttr::new(Range::Single(n), occurrence), inner)
+            }
+            _ => domain,
+        }
     }
 }
 
@@ -533,6 +633,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 for item in items {
                     item_types.push(item.clone().func_map(|x| x.return_type()));
                 }
+                item_types.sort();
                 ReturnType::Record(item_types)
             }
             AbstractLiteral::Function(items) => {
@@ -600,7 +701,10 @@ where
     ///
     /// This acts as a variable sized list.
     pub fn matrix_implied_indices(elems: Vec<T>) -> Self {
-        AbstractLiteral::Matrix(elems, GroundDomain::Int(vec![Range::UnboundedR(1)]).into())
+        AbstractLiteral::Matrix(
+            elems,
+            GroundDomain::Int(vec![Range::UnboundedR(1)], None).into(),
+        )
     }
 
     /// If the AbstractLiteral is a list, returns its elements.
@@ -1071,6 +1175,28 @@ impl TryFrom<&Literal> for bool {
     }
 }
 
+impl TryFrom<Literal> for EnumVariant {
+    type Error = &'static str;
+
+    fn try_from(value: Literal) -> Result<Self, Self::Error> {
+        match value {
+            Literal::EnumVariant(v) => Ok(v),
+            _ => Err("Cannot convert non-enum literal to enum variant"),
+        }
+    }
+}
+
+impl TryFrom<&Literal> for EnumVariant {
+    type Error = &'static str;
+
+    fn try_from(value: &Literal) -> Result<Self, Self::Error> {
+        match value {
+            Literal::EnumVariant(v) => Ok(v.clone()),
+            _ => Err("Cannot convert non-enum literal to enum variant"),
+        }
+    }
+}
+
 impl From<i32> for Literal {
     fn from(i: i32) -> Self {
         Literal::Int(i)
@@ -1276,6 +1402,8 @@ impl Display for Literal {
         match &self {
             Literal::Int(i) => write!(f, "{i}"),
             Literal::Bool(b) => write!(f, "{b}"),
+            Literal::EnumVariant(ev) => write!(f, "{}", ev.name()),
+            Literal::Unnamed(value) => write!(f, "{}_{}", value.ty.name, value.value),
             Literal::AbstractLiteral(l) => write!(f, "{l}"),
         }
     }
@@ -1286,7 +1414,7 @@ mod tests {
 
     use super::*;
     use crate::ast::matrix::{flatten, partial_flatten, shape_of};
-    use crate::ast::{DeclarationPtr, Name};
+    use crate::ast::{DeclarationPtr, Metadata, Name};
     use crate::{domain_int_ground, into_matrix, matrix, matrix_lit, range};
     use uniplate::Uniplate;
 
@@ -1329,10 +1457,10 @@ mod tests {
         let matrix = |values: &[i32]| {
             Literal::AbstractLiteral(AbstractLiteral::Matrix(
                 values.iter().copied().map(Literal::Int).collect(),
-                Moo::new(GroundDomain::Int(vec![Range::Bounded(
-                    1,
-                    values.len() as i32,
-                )])),
+                Moo::new(GroundDomain::Int(
+                    vec![Range::Bounded(1, values.len() as i32)],
+                    None,
+                )),
             ))
         };
         assert_eq!(
@@ -1364,7 +1492,10 @@ mod tests {
 
         assert_eq!(
             item_domain.resolve(),
-            Ok(Moo::new(GroundDomain::Int(vec![Range::Bounded(1, 999)])))
+            Ok(Moo::new(GroundDomain::Int(
+                vec![Range::Bounded(1, 999)],
+                None
+            )))
         );
     }
 

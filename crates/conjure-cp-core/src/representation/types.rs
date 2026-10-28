@@ -105,8 +105,19 @@ pub trait ReprRule: Send + Sync {
         true
     }
 
+    /// Integer encodings share a choice even when applied to a whole SMT matrix.
+    fn is_integer_encoding() -> bool {
+        false
+    }
+
     fn compactness_score(dom: DomainPtr) -> Result<usize, ReprInitError> {
         Ok(Self::DomainLevel::init(dom)?.compactness_score())
+    }
+
+    /// A domain-only probe for representations whose state can be expensive to construct.
+    /// Returning `None` retains the full instantiation check.
+    fn probe_score(_dom: DomainPtr) -> Result<Option<usize>, ReprInitError> {
+        Ok(None)
     }
 
     fn get_or_init_for(
@@ -127,14 +138,15 @@ pub trait ReprRule: Send + Sync {
         decl.get_repr::<Self>()
     }
 
-    fn init_for(decl: &mut DeclarationPtr) -> ReprResult {
+    /// Check declaration, backend and channelling requirements without allocating state.
+    fn domain_for(decl: &DeclarationPtr) -> Result<DomainPtr, ReprError> {
         if let Some(family) = crate::settings::try_current_solver_family()
             && !Self::applies_to(family)
         {
             return Err(ReprInitError::WrongSolverFamily(Self::NAME, family).into());
         }
 
-        if crate::settings::channelling() == crate::settings::Channelling::No {
+        if crate::settings::channelling() != crate::settings::Channelling::Yes {
             let existing_rule = decl.reprs().iter().next().map(|(_, state)| state.rule());
             if let Some(existing_rule) = existing_rule
                 && existing_rule.id() != Self::id()
@@ -157,7 +169,13 @@ pub trait ReprRule: Send + Sync {
         // handle them directly.
         let dom = dom.resolve().map(Into::into).unwrap_or(dom);
 
-        let dom_level = Self::DomainLevel::init(dom)?;
+        super::uniform::check_choice(&dom, Self::STORED)?;
+        Ok(dom)
+    }
+
+    fn init_for(decl: &mut DeclarationPtr) -> ReprResult {
+        let dom = Self::domain_for(decl)?;
+        let dom_level = Self::DomainLevel::init(dom.clone())?;
         let (state, symbols, mut constraints) = dom_level.instantiate(decl.clone())?;
 
         // save a copy `decl` so we can acquire a lock on the original
@@ -177,6 +195,7 @@ pub trait ReprRule: Send + Sync {
 
         // we acquire a write lock here so nothing else beyond this point should touch `decl`
         decl.reprs_mut().put::<Self>(state);
+        super::uniform::record_choice(&dom, Self::STORED);
         Ok((symbols, constraints))
     }
 

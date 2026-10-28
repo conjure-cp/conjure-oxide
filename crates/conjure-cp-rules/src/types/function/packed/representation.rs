@@ -40,7 +40,9 @@ register_representation!(
         /// The codomain value at a one-based `domain_values` position.
         ///
         /// Meaningless where the function defines nothing, so every use is guarded by
-        /// [`State::defined_expr`] at the same position.
+        /// [`State::defined_expr`] at the same position. It must still be well defined there:
+        /// flattening hoists the lookup out of that guard into a top-level element constraint,
+        /// so an out-of-bounds index would make every undefined position unsatisfiable.
         pub fn value_expr(&self, index: i32) -> Expression {
             let digit = self.digit_expr(index);
             let offset = i32::from(self.partial);
@@ -51,13 +53,16 @@ register_representation!(
                     shift => essence_expr!(&digit + &shift),
                 };
             }
-            let values = self
-                .values
-                .iter()
+            // A partial function's digit 0 means "undefined"; pad the lookup with a filler entry
+            // in front so that digit indexes it in bounds, and `digit + 1` serves both cases.
+            let filler = self.values.first().filter(|_| self.partial);
+            let values = filler
+                .into_iter()
+                .chain(self.values.iter())
                 .cloned()
                 .map(Expression::from)
                 .collect::<Vec<_>>();
-            let position = essence_expr!(&digit + 1 - &offset);
+            let position = essence_expr!(&digit + 1);
             Expression::SafeIndex(
                 Metadata::new(),
                 Moo::new(into_matrix_expr!(values)),

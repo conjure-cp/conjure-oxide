@@ -7,10 +7,11 @@ use crate::expression::parse_expression;
 use crate::parser::ParseContext;
 use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
+use conjure_cp_core::ast::Typeable;
 use conjure_cp_core::ast::{
-    Atom, BinaryAttr, DeclarationPtr, Domain, DomainPtr, Expression, Field, FuncAttr, IntVal,
-    JectivityAttr, Literal, MSetAttr, Moo, Name, PartialityAttr, PartitionAttr, PermutationAttr,
-    Range, Reference, RelAttr, SequenceAttr, SetAttr,
+    Atom, BinaryAttr, DeclarationPtr, Domain, DomainPtr, EnumVariantVal, Expression, Field,
+    FuncAttr, IntVal, JectivityAttr, Literal, MSetAttr, Moo, Name, PartialityAttr, PartitionAttr,
+    PermutationAttr, Range, Reference, RelAttr, SequenceAttr, SetAttr,
 };
 use tree_sitter::Node;
 
@@ -35,6 +36,7 @@ pub fn parse_domain(
             };
             parse_domain(ctx, inner)
         }
+        "enum_domain" => parse_enum_domain(ctx, domain),
         "bool_domain" => {
             ctx.add_span_and_doc_hover(&domain, "L_bool", SymbolKind::Domain, None, None);
             Ok(Some(Domain::bool()))
@@ -44,7 +46,13 @@ pub fn parse_domain(
             let Some(decl) = get_declaration_ptr_from_identifier(ctx, domain)? else {
                 return Ok(None);
             };
-            let Some(dom) = Domain::reference(decl) else {
+            let is_unnamed = decl.as_unnamed_type().is_some();
+            let type_domain = if is_unnamed {
+                decl.domain()
+            } else {
+                decl.as_enumerated_type().map(|ty| ty.to_domain())
+            };
+            let Some(dom) = type_domain.or_else(|| Domain::reference(decl)) else {
                 ctx.record_error(crate::errors::RecoverableParseError::new(
                     format!(
                         "The identifier '{}' is not a valid domain",
@@ -199,21 +207,57 @@ fn get_declaration_ptr_from_identifier(
     }
 }
 
-/// Parse an integer domain. Can be a single integer or a range.
+/// The representation named by a domain's `representation` attribute node, as in
+/// `int(representation order, 1..4)` or `matrix (representation packed) indexed by ...`.
+fn representation_field(ctx: &ParseContext, domain: Node) -> Option<String> {
+    let value = domain
+        .child_by_field_name("representation")?
+        .child_by_field_name("value")?;
+    Some(ctx.source_code[value.start_byte()..value.end_byte()].to_string())
+}
+
+/// The value of an attribute node in an attribute list, e.g. `packed` in `representation packed`.
+fn attribute_value_text(ctx: &ParseContext, attribute: Node) -> Option<String> {
+    let value = attribute.child_by_field_name("value")?;
+    Some(ctx.source_code[value.start_byte()..value.end_byte()].to_string())
+}
+
+/// Apply the preference written on a domain, if any, to the domain just built from it.
+fn with_representation(domain: DomainPtr, representation: Option<String>) -> DomainPtr {
+    match representation {
+        Some(representation) => domain.with_representation_preference(&representation),
+        None => domain,
+    }
+}
+
+/// Parse an integer domain. Can be a single integer or a range, optionally preceded by a
+/// representation preference: `int(representation order, 1..4)`.
 fn parse_int_domain(
     ctx: &mut ParseContext,
     int_domain: Node,
+) -> Result<Option<DomainPtr>, FatalParseError> {
+    let representation = representation_field(ctx, int_domain);
+    let Some(domain) = parse_int_domain_ranges(ctx, int_domain, representation.is_some())? else {
+        return Ok(None);
+    };
+    Ok(Some(match representation {
+        Some(representation) => domain.with_representation_preference(&representation),
+        None => domain,
+    }))
+}
+
+fn parse_int_domain_ranges(
+    ctx: &mut ParseContext,
+    int_domain: Node,
+    has_representation: bool,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let int_keyword_node = child!(int_domain, 0, "int");
 
     let Some(range_list) = int_domain.child_by_field_name("ranges") else {
         ctx.add_span_and_doc_hover(&int_keyword_node, "L_int", SymbolKind::Domain, None, None);
         let int_text = ctx.source_code[int_domain.start_byte()..int_domain.end_byte()].trim();
-        return if int_text == "int" {
-            Ok(Some(Domain::int(vec![Range::Bounded(
-                conjure_cp_core::ast::OXIDE_INT_MIN,
-                conjure_cp_core::ast::OXIDE_INT_MAX,
-            )])))
+        return if int_text == "int" || has_representation {
+            Ok(Some(Domain::int_ground(vec![Range::Unbounded])))
         } else {
             Ok(Some(Domain::int_ground(vec![])))
         };
@@ -381,7 +425,11 @@ fn parse_tuple_domain(
     tuple_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
+    let representation = representation_field(ctx, tuple_domain);
     for domain in named_children(&tuple_domain) {
+        if domain.kind() == "representation_attribute" {
+            continue;
+        }
         let Some(parsed_domain) = parse_domain(ctx, domain)? else {
             return Ok(None);
         };
@@ -396,7 +444,10 @@ fn parse_tuple_domain(
         ctx.add_span_and_doc_hover(&first, "L_tuple", SymbolKind::Domain, None, None);
     }
 
-    Ok(Some(Domain::tuple(domains)))
+    Ok(Some(with_representation(
+        Domain::tuple(domains),
+        representation,
+    )))
 }
 
 fn parse_matrix_domain(
@@ -404,6 +455,7 @@ fn parse_matrix_domain(
     matrix_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
+    let representation = representation_field(ctx, matrix_domain);
     let Some(index_domain_list) = field!(recover, ctx, matrix_domain, "index_domain_list") else {
         return Ok(None);
     };
@@ -429,7 +481,10 @@ fn parse_matrix_domain(
         None,
         None,
     );
-    Ok(Some(Domain::matrix(value_domain, domains)))
+    Ok(Some(with_representation(
+        Domain::matrix(value_domain, domains),
+        representation,
+    )))
 }
 
 fn parse_record_domain(
@@ -437,7 +492,11 @@ fn parse_record_domain(
     record_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut record_entries: Vec<Field<DomainPtr>> = Vec::new();
+    let representation = representation_field(ctx, record_domain);
     for record_entry in named_children(&record_domain) {
+        if record_entry.kind() == "representation_attribute" {
+            continue;
+        }
         let Some(name_node) = field!(recover, ctx, record_entry, "name") else {
             return Ok(None);
         };
@@ -460,7 +519,10 @@ fn parse_record_domain(
         None,
         None,
     );
-    Ok(Some(Domain::record(record_entries)))
+    Ok(Some(with_representation(
+        Domain::record(record_entries),
+        representation,
+    )))
 }
 
 fn parse_variant_domain(
@@ -468,7 +530,11 @@ fn parse_variant_domain(
     variant_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut entries = Vec::new();
+    let representation = representation_field(ctx, variant_domain);
     for entry in named_children(&variant_domain) {
+        if entry.kind() == "representation_attribute" {
+            continue;
+        }
         let Some(name_node) = field!(recover, ctx, entry, "name") else {
             return Ok(None);
         };
@@ -484,7 +550,10 @@ fn parse_variant_domain(
 
     let keyword = child!(variant_domain, 0, "variant");
     ctx.add_span_and_doc_hover(&keyword, "variant", SymbolKind::Domain, None, None);
-    Ok(Some(Domain::variant(entries)))
+    Ok(Some(with_representation(
+        Domain::variant(entries),
+        representation,
+    )))
 }
 
 fn parse_sequence_domain(
@@ -495,6 +564,7 @@ fn parse_sequence_domain(
     let mut min_size = None;
     let mut max_size = None;
     let mut jectivity = JectivityAttr::None;
+    let mut representation = None;
     let mut value_domain: Option<DomainPtr> = None;
 
     for child in named_children(&sequence_domain) {
@@ -526,6 +596,7 @@ fn parse_sequence_domain(
                         "injective" => jectivity = JectivityAttr::Injective,
                         "surjective" => jectivity = JectivityAttr::Surjective,
                         "bijective" => jectivity = JectivityAttr::Bijective,
+                        "representation" => representation = attribute_value_text(ctx, attribute),
                         _ => return Ok(None),
                     }
                 }
@@ -565,7 +636,7 @@ fn parse_sequence_domain(
     let attrs = SequenceAttr {
         size,
         jectivity,
-        representation: None,
+        representation,
     };
     Ok(Some(Domain::sequence(attrs, value_domain)))
 }
@@ -582,6 +653,7 @@ fn parse_function_domain(
     let mut max_size = None;
     let mut partiality = PartialityAttr::Partial;
     let mut jectivity = JectivityAttr::None;
+    let mut representation = None;
 
     for child in named_children(&function_domain) {
         if child.kind() == "function_attributes" {
@@ -609,6 +681,7 @@ fn parse_function_domain(
                     "injective" => jectivity = JectivityAttr::Injective,
                     "surjective" => jectivity = JectivityAttr::Surjective,
                     "bijective" => jectivity = JectivityAttr::Bijective,
+                    "representation" => representation = attribute_value_text(ctx, attribute),
                     _ => return Ok(None),
                 }
             }
@@ -660,6 +733,7 @@ fn parse_function_domain(
         size,
         partiality,
         jectivity,
+        representation,
     };
     Ok(Some(Domain::function(attrs, domain_from, domain_to)))
 }
@@ -675,6 +749,7 @@ fn parse_relation_domain(
     let mut min_size = None;
     let mut max_size = None;
     let mut binary = Vec::new();
+    let mut representation = None;
 
     for child in named_children(&relation_domain) {
         if child.kind() == "relation_attributes" {
@@ -698,6 +773,7 @@ fn parse_relation_domain(
                             _ => unreachable!(),
                         }
                     }
+                    "representation" => representation = attribute_value_text(ctx, attribute),
                     _ => {
                         let Some(bin_attr) = BinaryAttr::from_keyword(name) else {
                             return Ok(None);
@@ -739,7 +815,11 @@ fn parse_relation_domain(
         None,
     );
 
-    let attrs = RelAttr { size, binary };
+    let attrs = RelAttr {
+        size,
+        binary,
+        representation,
+    };
     Ok(Some(Domain::relation(attrs, columns)))
 }
 
@@ -754,6 +834,7 @@ fn parse_partition_domain(
     let mut min_part_len = None;
     let mut max_part_len = None;
     let mut is_regular = false;
+    let mut representation = None;
 
     for child in named_children(&partition_domain) {
         if child.kind() == "partition_attributes" {
@@ -782,6 +863,7 @@ fn parse_partition_domain(
                         }
                     }
                     "regular" => is_regular = true,
+                    "representation" => representation = attribute_value_text(ctx, attribute),
                     _ => return Ok(None),
                 }
             }
@@ -825,6 +907,7 @@ fn parse_partition_domain(
         num_parts,
         part_len,
         is_regular,
+        representation,
     };
     Ok(Some(Domain::partition(attrs, inner)))
 }
@@ -836,6 +919,7 @@ fn parse_permutation_domain(
     let mut num_moved = Range::Unbounded;
     let mut min_num_moved = None;
     let mut max_num_moved = None;
+    let mut representation = None;
 
     for child in named_children(&permutation_domain) {
         if child.kind() == "permutation_attributes" {
@@ -844,6 +928,10 @@ fn parse_permutation_domain(
                     .child_by_field_name("attribute")
                     .map(|node| &ctx.source_code[node.start_byte()..node.end_byte()])
                     .unwrap_or_default();
+                if name == "representation" {
+                    representation = attribute_value_text(ctx, attribute);
+                    continue;
+                }
                 let Some(value_node) = attribute.child_by_field_name("value") else {
                     return Ok(None);
                 };
@@ -885,7 +973,10 @@ fn parse_permutation_domain(
         None,
     );
 
-    let attrs = PermutationAttr { num_moved };
+    let attrs = PermutationAttr {
+        num_moved,
+        representation,
+    };
     Ok(Some(Domain::permutation(attrs, inner)))
 }
 
@@ -1008,4 +1099,81 @@ fn parse_collection_valued_expression(
             | conjure_cp_core::ast::ReturnType::Sequence(_)
     )
     .then_some(expr))
+}
+
+fn parse_enum_domain(
+    ctx: &mut ParseContext,
+    node: Node,
+) -> Result<Option<DomainPtr>, FatalParseError> {
+    let Some(name) = field!(recover, ctx, node, "name") else {
+        return Ok(None);
+    };
+    let Some(declaration) = get_declaration_ptr_from_identifier(ctx, name)? else {
+        return Ok(None);
+    };
+    let Some(ty) = declaration.as_enumerated_type().map(|ty| ty.clone()) else {
+        ctx.record_error(RecoverableParseError::new(
+            "Expected an enumerated type".to_owned(),
+            Some(name.range()),
+        ));
+        return Ok(None);
+    };
+    let Some(ranges_node) = field!(recover, ctx, node, "ranges") else {
+        return Ok(None);
+    };
+    let mut ranges = Vec::new();
+    for range in named_children(&ranges_node) {
+        let mut parse_bound = |bound| -> Result<Option<EnumVariantVal>, FatalParseError> {
+            let saved = ctx.typechecking_context;
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            let result = parse_expression(ctx, bound);
+            ctx.typechecking_context = saved;
+            let Some(expression) = result? else {
+                return Ok(None);
+            };
+            if let Expression::Atomic(_, Atom::Reference(reference)) = expression
+                && reference.return_type()
+                    == conjure_cp_core::ast::ReturnType::EnumeratedType(ty.clone())
+            {
+                return Ok(Some(EnumVariantVal(reference)));
+            }
+            ctx.record_error(RecoverableParseError::new(
+                "Expected a member of this enumerated type".to_owned(),
+                Some(bound.range()),
+            ));
+            Ok(None)
+        };
+        if range.kind() == "int_range" {
+            let lower = match range.child_by_field_name("lower") {
+                Some(bound) => {
+                    let Some(value) = parse_bound(bound)? else {
+                        return Ok(None);
+                    };
+                    Some(value)
+                }
+                None => None,
+            };
+            let upper = match range.child_by_field_name("upper") {
+                Some(bound) => {
+                    let Some(value) = parse_bound(bound)? else {
+                        return Ok(None);
+                    };
+                    Some(value)
+                }
+                None => None,
+            };
+            ranges.push(match (lower, upper) {
+                (Some(a), Some(b)) => Range::Bounded(a, b),
+                (Some(a), None) => Range::UnboundedR(a),
+                (None, Some(b)) => Range::UnboundedL(b),
+                (None, None) => Range::Unbounded,
+            });
+        } else {
+            let Some(value) = parse_bound(range)? else {
+                return Ok(None);
+            };
+            ranges.push(Range::Single(value));
+        }
+    }
+    Ok(Some(Domain::enumerated(ty, ranges)))
 }

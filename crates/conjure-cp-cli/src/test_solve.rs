@@ -1,5 +1,5 @@
+use crate::exit;
 use std::path::PathBuf;
-use std::process::exit;
 use std::sync::Arc;
 
 use crate::cli::GlobalArgs;
@@ -61,7 +61,7 @@ pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyh
 
     let solver = init_solver(&global_args)?;
 
-    // now we are stealing from the integration tester
+    // now we are stealing from the exhaustive tester
 
     let our_solutions = get_solutions(
         solver,

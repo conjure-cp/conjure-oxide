@@ -134,7 +134,7 @@ register_representation!(
         let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(dom.clone(), MatrixComponents::NAME, String::from(msg));
 
         let dom_gd = dom.resolve().ok().ok_or(domain_err("expected a ground domain"))?;
-        let GroundDomain::Matrix(elem_dom, _) = dom_gd.as_ref() else {
+        let GroundDomain::Matrix(elem_dom, _, _) = dom_gd.as_ref() else {
             return Err(domain_err("expected a matrix domain"));
         };
         let MatrixShape { size, dims, strides, idx_doms } = shape_of_dom(dom_gd.as_ref()).ok().ok_or(domain_err("expected a matrix domain"))?;

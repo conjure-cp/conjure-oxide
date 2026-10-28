@@ -1,51 +1,9 @@
-# Log Encoding Summation
+# Integer summation
 
-## Overview
+Linear sums compile through actual-value weighted views rather than materialised ripple-adder results. Each operand contributes its constant and signed Boolean terms. A comparison of the sum becomes an integer-relation or pseudo-Boolean decision, and the selected RustSAT or Pindakaas provider creates CNF in the adaptor.
 
-```text
-Sum(SATInt(a), SATInt(b), ...) ~> SATInt(c)
-```
+For example, `x + y <= k` combines the two views and subtracts their constant contributions from `k`. The adaptor folds constants, aggregates repeated literals and complements, and converts signed coefficients into positive weights over appropriately polarised literals. Guaranteed representation groups are retained for structured Pindakaas inputs where possible.
 
-## Rule Method
-- Determine the output range
-- Pad all operands to match the output bitwidth to prevent overflow
-- Split the expression into a series of 2-nary summations
-- Use an binary adder circuit to perform each summation
+When a sum is itself an operand of a nonlinear operation, Oxide introduces an integer auxiliary in the selected representation and a PB equality relating its view to the sum. Multiplication, division, remainder and power can then use the existing nonlinear bit circuits. Addition internal to those circuits remains circuit logic; ordinary model-level summation does not pass through that path.
 
-### 2-nary Summation Logic
-For two bitvectors that have been made the same length:
-
-$$
-\begin{align}
-A = [a_1, a_2, \dots, a_{n}],\\ 
-B = [b_1, b_2, \dots, b_{n}]
-\end{align}
-$$
-
-Specifying the output
-
-$$
-S = A + B = [s_1, s_2, \dots, s_{n}]
-$$
-
-**Carry**
-
-$$
-\begin{align}
-c_1 &= a_1 \land b_1 \\
-c_2 &= (a_2 \land b_2) \lor ((a_2 \oplus b_2) \land c_1) \\
-\vdots \\
-c_{n-1} &= (a_{n-1} \land b_{n-1}) \lor ((a_{n-1} \oplus b_{n-1}) \land c_{n-2})
-\end{align}
-$$
-
-**Sum**
-
-$$
-\begin{align}
-s_1 &\equiv \boxed{a_1 \oplus b_1} \\
-s_2 &\equiv \boxed{a_2 \oplus b_2 \oplus c_1} \\
-\vdots \\
-s_{n} &\equiv \boxed{a_{n} \oplus b_{n} \oplus c_{n-1}}
-\end{align}
-$$
+The relevant implementations are `backends/sat/pseudo_boolean.rs` and `backends/sat/linear.rs` in the rules crate, and `solver/adaptors/rustsat/decisions/pseudo_boolean.rs` in core.

@@ -1,0 +1,139 @@
+Model before rewriting:
+
+letting D1 be domain int(0..9)
+letting D2 be domain int(1..9)
+find m: matrix indexed by [D1] of D2
+
+such that
+
+and([ m[i] > 0 | i : int() ]),
+m[0] <= 2,
+m[9] <= 2,
+and([ m[i] = 1 | i : int(1..8) ])
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#components_1: int(1..9)
+  find m#components_10: int(1..9)
+  find m#components_2: int(1..9)
+  find m#components_3: int(1..9)
+  find m#components_4: int(1..9)
+  find m#components_5: int(1..9)
+  find m#components_6: int(1..9)
+  find m#components_7: int(1..9)
+  find m#components_8: int(1..9)
+  find m#components_9: int(1..9)
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+m[0]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+m#components_1
+
+--
+
+m[9]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+m#components_10
+
+--
+
+m#components_1 <= 2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(m#components_1, 2, 0)
+
+--
+
+m#components_10 <= 2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(m#components_10, 2, 0)
+
+--
+
+[ m[i] = 1 | i : int(1..8) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[m#components_2 = 1,m#components_3 = 1,m#components_4 = 1,m#components_5 = 1,m#components_6 = 1,m#components_7 = 1,m#components_8 = 1,m#components_9 = 1;int(1..)]
+
+--
+
+m#components_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#components_2,1)
+
+--
+
+m#components_3 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#components_3,1)
+
+--
+
+m#components_4 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#components_4,1)
+
+--
+
+m#components_5 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#components_5,1)
+
+--
+
+m#components_6 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#components_6,1)
+
+--
+
+m#components_7 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#components_7,1)
+
+--
+
+m#components_8 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#components_8,1)
+
+--
+
+m#components_9 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#components_9,1)
+
+--
+
+Final model:
+
+letting D1 be domain int(0..9)
+letting D2 be domain int(1..9)
+find m: matrix indexed by [D1] of D2
+find m#components_1: int(1..9)
+find m#components_2: int(1..9)
+find m#components_3: int(1..9)
+find m#components_4: int(1..9)
+find m#components_5: int(1..9)
+find m#components_6: int(1..9)
+find m#components_7: int(1..9)
+find m#components_8: int(1..9)
+find m#components_9: int(1..9)
+find m#components_10: int(1..9)
+
+such that
+
+true,
+Ineq(m#components_1, 2, 0),
+Ineq(m#components_10, 2, 0),
+and([WatchedLiteral(m#components_2,1),WatchedLiteral(m#components_3,1),WatchedLiteral(m#components_4,1),WatchedLiteral(m#components_5,1),WatchedLiteral(m#components_6,1),WatchedLiteral(m#components_7,1),WatchedLiteral(m#components_8,1),WatchedLiteral(m#components_9,1);int(1..)])
+

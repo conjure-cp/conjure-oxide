@@ -358,6 +358,6 @@ jobs:
         git tag nightly -am "Nightly release: $(date -I)"
         git push origin nightly
 
-        # create release
+        # Publish as a regular release so GitHub can mark the nightly as Latest.
         gh release delete nightly || true # ensure release doesn't exist (don't fail if it doesn't, as it may not!)
-        gh release create nightly --notes-from-tag --prerelease --title "nightly ($(date -I))" --verify-tag dist/*.zip
+        gh release create nightly --notes-from-tag --latest --title "nightly ($(date -I))" --verify-tag dist/*.zip

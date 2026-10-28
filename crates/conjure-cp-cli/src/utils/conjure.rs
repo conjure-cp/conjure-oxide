@@ -160,6 +160,16 @@ fn validate_solution_collection_options(model: &Model, num_sols: i32) -> Result<
     Ok(())
 }
 
+/// Wall-clock phases of collecting solutions from a compiled model.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct SolutionCollectionTimings {
+    pub backend_time_s: f64,
+    /// Time inside the solver call, including solution callbacks and solver-time rewrites.
+    pub search_time_s: f64,
+    pub solution_processing_time_s: f64,
+}
+
+/// Collect and reconstruct model solutions.
 pub fn get_solutions(
     solver: Solver,
     model: Model,
@@ -168,6 +178,26 @@ pub fn get_solutions(
     solver_input_file: &Option<PathBuf>,
     rule_trace_cdp: bool,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
+    get_solutions_with_timings(
+        solver,
+        model,
+        num_sols,
+        keep_intermediate_solutions,
+        solver_input_file,
+        rule_trace_cdp,
+    )
+    .map(|(solutions, _)| solutions)
+}
+
+/// Collect solutions together with measured backend, search and reconstruction times.
+pub fn get_solutions_with_timings(
+    solver: Solver,
+    model: Model,
+    num_sols: i32,
+    keep_intermediate_solutions: bool,
+    solver_input_file: &Option<PathBuf>,
+    rule_trace_cdp: bool,
+) -> Result<(Vec<BTreeMap<Name, Literal>>, SolutionCollectionTimings), anyhow::Error> {
     set_rule_trace_enabled(rule_trace_cdp && configured_rule_trace_enabled());
 
     validate_solution_collection_options(&model, num_sols)?;
@@ -186,7 +216,9 @@ pub fn get_solutions(
     // Create for later since we consume the model when loading it
     let symbols_ptr = model.symbols_ptr_unchecked().clone();
 
+    let backend_started_at = Instant::now();
     let solver = solver.load_model(model)?;
+    let backend_time_s = backend_started_at.elapsed().as_secs_f64();
 
     if let Some(solver_input_file) = solver_input_file {
         tracing::info!(target: "conjure::stage",
@@ -203,6 +235,7 @@ pub fn get_solutions(
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
 
+    let search_started_at = Instant::now();
     let solver = if is_optimisation {
         solver
             .solve(Box::new(move |sols| {
@@ -242,6 +275,8 @@ pub fn get_solutions(
             .map_err(|err| anyhow::anyhow!("solver failed while collecting solutions: {err}"))?
     };
 
+    let search_time_s = search_started_at.elapsed().as_secs_f64();
+    let processing_started_at = Instant::now();
     let search_status = solver.search_status();
     solver.save_stats_to_context();
 
@@ -291,9 +326,12 @@ pub fn get_solutions(
     let structured_declarations: Vec<DeclarationPtr> = symbols
         .iter_local()
         .filter(|(name, declaration)| {
+            // `category_of` follows a value letting into its body, and from there into every
+            // letting that body names. Those declarations have no representations, so skip them
+            // before walking the chain.
             matches!(name, Name::User(_))
-                && declaration.category_of() >= Category::Decision
                 && !declaration.reprs().is_empty()
+                && declaration.category_of() >= Category::Decision
         })
         .map(|(_, declaration)| declaration.clone())
         .collect();
@@ -351,7 +389,15 @@ pub fn get_solutions(
         *sols = pruned;
     }
 
-    Ok(sols.clone())
+    let solutions = sols.clone();
+    Ok((
+        solutions,
+        SolutionCollectionTimings {
+            backend_time_s,
+            search_time_s,
+            solution_processing_time_s: processing_started_at.elapsed().as_secs_f64(),
+        },
+    ))
 }
 
 #[derive(Clone, Debug, Default)]
@@ -568,6 +614,18 @@ pub fn solutions_to_essence(solutions: &[BTreeMap<Name, Literal>]) -> String {
     for (index, solution) in solutions.iter().enumerate() {
         writeln!(output, "$ Solution: {:06}", index + 1).unwrap();
         writeln!(output, "language Essence 1.3\n").unwrap();
+        let mut unnamed_types = BTreeMap::new();
+        for value in solution.values() {
+            for literal in value.universe() {
+                if let Literal::Unnamed(value) = literal {
+                    unnamed_types.insert(value.ty.name.clone(), value.ty.size);
+                }
+            }
+        }
+        for (name, size) in unnamed_types {
+            let members = (1..=size).map(|index| format!("{name}_{index}")).join(", ");
+            writeln!(output, "letting {name} be new type enum {{{members}}}").unwrap();
+        }
         for (name, value) in *solution {
             writeln!(output, "letting {name} be {value}").unwrap();
         }

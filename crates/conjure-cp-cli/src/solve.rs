@@ -4,10 +4,10 @@ use std::time::Duration;
 use std::{
     fs::File,
     path::{Path, PathBuf},
-    process::exit,
     sync::{Arc, RwLock},
 };
 
+use crate::exit;
 use anyhow::anyhow;
 use clap::ValueHint;
 use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
@@ -386,6 +386,12 @@ pub(crate) fn rewrite(
     set_heuristic_seed(global_args.seed);
     set_heuristic_responses(global_args.responses.clone());
     set_channelling(global_args.channelling);
+    conjure_cp::settings::set_amo_encoding(global_args.amo_encoding);
+    conjure_cp::settings::set_pb_encoding(global_args.pb_encoding);
+    conjure_cp::settings::set_element_encoding(global_args.element_encoding);
+    conjure_cp::settings::set_table_encoding(global_args.table_encoding);
+    conjure_cp::settings::set_alldifferent_encoding(global_args.alldifferent_encoding);
+    conjure_cp::settings::set_cardinality_encoding(global_args.cardinality_encoding);
     tracing::debug!(
         "Heuristic: {}, seed: {}, responses: {:?}, channelling: {}, solver seed: {}",
         global_args.heuristic,

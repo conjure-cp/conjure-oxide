@@ -3,8 +3,8 @@ use std::fmt;
 use rustsat::instances::Cnf;
 #[cfg(all(feature = "sat-cadical", not(target_family = "wasm")))]
 use rustsat::solvers::{ControlSignal, Terminate};
-use rustsat::solvers::{Solve, SolverResult};
-use rustsat::types::{Assignment, Clause, Var};
+use rustsat::solvers::{Solve, SolveIncremental, SolverResult};
+use rustsat::types::{Assignment, Clause, Lit, Var};
 
 use crate::solver::SolverError;
 use crate::solver::adaptors::SolveTimeBudget;
@@ -117,8 +117,8 @@ impl SatSolver {
         dispatch!(self, solver => solver.add_cnf(cnf))
     }
 
-    pub(super) fn solve(&mut self) -> anyhow::Result<SolverResult> {
-        dispatch!(self, solver => solver.solve())
+    pub(super) fn solve_assumps(&mut self, assumptions: &[Lit]) -> anyhow::Result<SolverResult> {
+        dispatch!(self, solver => solver.solve_assumps(assumptions))
     }
 
     pub(super) fn full_solution(&self) -> anyhow::Result<Assignment> {

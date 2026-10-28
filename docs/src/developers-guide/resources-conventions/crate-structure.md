@@ -7,7 +7,7 @@ This makes it easier to integrate them and test our entire project all at once.
 
 Our repository can be broken down into four key components:
 
-1. The user-facing `conjure-oxide` command line tool and library, and its integration tests.
+1. The user-facing `conjure-oxide` command line tool and library, and its exhaustive tests.
    This is stored in `conjure-oxide/conjure_oxide`.
 2. The AST type definitions, rewrite engine, and related implementation code.
    These are broken up into separate crates and stored in `conjure-oxide/crates/`.
@@ -32,11 +32,11 @@ Finally, for historical reasons, this folder contains some utility code that may
 
 ## Tests
 
-Our suite of integration tests runs automatically on every commit to the main repository.
+Our suite of exhaustive tests runs automatically on every commit to the main repository.
 It tests `conjure-oxide` end-to-end: parsing an example Essence file, running the rewriter, calling the solver, and validating the solution.
 
-The test files are stored in `conjure_oxide/tests/integration/`, sorted into sub-directories.
-Code to run our project on these files is contained in `integration_tests.rs`.
+The test files are stored in `test-suite/tests/exhaustive/`, sorted into sub-directories.
+Code to run our project on these files is contained in `exhaustive_tests.rs`.
 
 ## Crates
 

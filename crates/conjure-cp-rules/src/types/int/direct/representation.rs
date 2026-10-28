@@ -3,17 +3,17 @@
 //! `x` becomes one Boolean variable per value of its domain's span: bit `i` is true exactly when
 //! `x` takes the `i`th value. Equality and membership become a single literal, at the cost of a
 //! variable per value -- linear in the domain size, against
-//! [`IntLog`](super::super::IntLog)'s logarithmic.
+//! [`IntBinaryTwosComplement`](super::super::IntBinaryTwosComplement)'s logarithmic.
 
 use crate::shared::representation_prelude::*;
-use crate::types::int::{finite_int_bounds, int_domain_to_expr, int_ranges};
+use crate::types::int::shared::{PerValueLayout, per_value_layout};
 use conjure_cp::ast::{Domain, Moo, Reference, SATIntEncoding};
 use conjure_cp::into_matrix_expr;
 use conjure_cp::settings::SolverFamily;
 use std::collections::VecDeque;
 
 register_representation!(
-    IntDirect("int_direct")
+    IntDirect("direct")
     struct State<T> {
         /// Overall lower and upper bound of the represented domain.
         pub bounds: (i32, i32),
@@ -39,19 +39,7 @@ register_representation!(
         }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
-        let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(
-            dom.clone(),
-            IntDirect::NAME,
-            String::from(msg),
-        );
-
-        let ranges = int_ranges(&dom)
-            .ok_or_else(|| domain_err("expected a finite ground integer domain"))?;
-        let bounds @ (low, high) = finite_int_bounds(&ranges)
-            .ok_or_else(|| domain_err("expected a non-empty integer domain"))?;
-
-        let width = usize::try_from(i64::from(high) - i64::from(low) + 1)
-            .map_err(|_| domain_err("integer domain is too large for a one-hot encoding"))?;
+        let PerValueLayout { ranges, bounds, width } = per_value_layout(&dom, IntDirect::NAME)?;
         let bits = Moo::new(std::iter::repeat_n(Domain::bool(), width).collect());
         Ok(State { bounds, ranges, bits })
     }
@@ -62,22 +50,18 @@ register_representation!(
             .map(|declaration| Reference::new(declaration.clone()).into())
             .collect();
 
-        // At most one value is taken. Pairwise, matching what the encoding's operation rules
-        // assume when they read a bit as "x equals this value".
-        let mut constraints = Vec::new();
-        for (index, bit) in bits.iter().enumerate() {
-            for other in &bits[index + 1..] {
-                let bit = Expression::Not(Metadata::new(), Moo::new(bit.clone()));
-                let other = Expression::Not(Metadata::new(), Moo::new(other.clone()));
-                constraints.push(Expression::Or(
-                    Metadata::new(),
-                    Moo::new(into_matrix_expr!(vec![bit, other])),
-                ));
-            }
-        }
+        // Preserve cardinality semantics until the SAT backend chooses an AMO encoder.
+        let indicators = bits.iter().cloned().map(|bit| Expression::ToInt(Metadata::new(), Moo::new(bit))).collect::<Vec<_>>();
+        let count = Expression::Sum(Metadata::new(), Moo::new(into_matrix_expr!(indicators)));
+        let mut constraints = vec![Expression::Leq(Metadata::new(), Moo::new(count), Moo::new(1.into()))];
 
-        // ...and the value taken is one the domain allows, which also forces at least one bit.
-        constraints.push(int_domain_to_expr(state.sat_int_expr(), &state.ranges));
+        // One allowed indicator must be set independently of numeric equality encoding.
+        // Otherwise an all-false code can impersonate value zero in a weighted view.
+        let (low, high) = state.bounds;
+        let allowed = bits.iter().zip(low..=high)
+            .filter(|(_, value)| state.ranges.iter().any(|(lower, upper)| lower <= value && value <= upper))
+            .map(|(bit, _)| bit.clone()).collect::<Vec<_>>();
+        constraints.push(Expression::Or(Metadata::new(), Moo::new(into_matrix_expr!(allowed))));
         constraints
     }
     fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
@@ -126,6 +110,11 @@ register_representation!(
     fn compactness(state: &State<DomainPtr>) -> usize {
         1usize.checked_shl(state.bits.len() as u32).unwrap_or(usize::MAX)
     }
+    fn probe_score(dom: DomainPtr) -> Result<Option<usize>, ReprInitError> {
+        let PerValueLayout { width, .. } = per_value_layout(&dom, IntDirect::NAME)?;
+        Ok(Some(u32::try_from(width).ok().and_then(|width| 1usize.checked_shl(width)).unwrap_or(usize::MAX)))
+    }
+    fn integer_encoding() -> bool { true }
     fn applies(family: SolverFamily) -> bool {
         matches!(family, SolverFamily::Sat)
     }

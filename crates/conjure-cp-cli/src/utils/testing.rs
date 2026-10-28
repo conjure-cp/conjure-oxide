@@ -27,7 +27,7 @@ use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
 use conjure_cp::settings::SolverFamily;
 
-/// Limit how many lines of the rewrite serialisation we persist/compare in integration tests.
+/// Limit how many lines of the rewrite serialisation we persist/compare in exhaustive tests.
 pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
 
 /// Limit how many characters we persist/compare for large text snapshots.
@@ -318,13 +318,15 @@ pub fn normalize_solutions_for_comparison(
                 match v {
                     Literal::Bool(true) => updates.push((k, Literal::Int(1))),
                     Literal::Bool(false) => updates.push((k, Literal::Int(0))),
-                    Literal::Int(_) => {}
+                    Literal::Int(_) | Literal::EnumVariant(_) | Literal::Unnamed(_) => {}
                     Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) => {
                         // make all domains the same (this is just in the tester so the types dont
                         // actually matter)
 
-                        let mut matrix =
-                            AbstractLiteral::Matrix(elems, Moo::new(GroundDomain::Int(vec![])));
+                        let mut matrix = AbstractLiteral::Matrix(
+                            elems,
+                            Moo::new(GroundDomain::Int(vec![], None)),
+                        );
                         matrix = matrix.transform(&move |x: AbstractLiteral<Literal>| match x {
                             AbstractLiteral::Matrix(items, _) => {
                                 let items = items
@@ -336,7 +338,10 @@ pub fn normalize_solutions_for_comparison(
                                     })
                                     .collect_vec();
 
-                                AbstractLiteral::Matrix(items, Moo::new(GroundDomain::Int(vec![])))
+                                AbstractLiteral::Matrix(
+                                    items,
+                                    Moo::new(GroundDomain::Int(vec![], None)),
+                                )
                             }
                             x => x,
                         });

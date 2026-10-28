@@ -75,6 +75,8 @@ pub trait ReprRuleStored: Send + Sync {
     /// Whether this representation is available when targeting `family`.
     fn applies_to(&self, family: crate::settings::SolverFamily) -> bool;
 
+    fn is_integer_encoding(&self) -> bool;
+
     fn init_for(&self, decl: &mut DeclarationPtr) -> ReprResult;
 
     fn init_for_if_not_exists(&self, decl: &mut DeclarationPtr) -> ReprResult;
@@ -116,6 +118,10 @@ impl<R: ReprRule> ReprRuleStored for R {
         R::applies_to(family)
     }
 
+    fn is_integer_encoding(&self) -> bool {
+        R::is_integer_encoding()
+    }
+
     fn init_for(&self, decl: &mut DeclarationPtr) -> ReprResult {
         R::init_for(decl)
     }
@@ -125,13 +131,18 @@ impl<R: ReprRule> ReprRuleStored for R {
     }
 
     fn probe_for(&self, decl: &DeclarationPtr) -> Result<usize, ReprError> {
-        let domain = decl
-            .domain()
-            .ok_or_else(|| super::errors::ReprInstantiateError::NoDomain(decl.clone()))?;
-        let domain = domain.resolve().map(Into::into).unwrap_or(domain);
+        let domain = R::domain_for(decl)?;
+        // Value lettings still need `down` to check that their value can be represented.
+        if (decl.as_find().is_some() || decl.is_find_auxiliary())
+            && let Some(score) = R::probe_score(domain.clone())?
+        {
+            return Ok(score);
+        }
         let mut detached = decl.clone().detach();
-        R::init_for(&mut detached)?;
-        R::compactness_score(domain).map_err(Into::into)
+        super::uniform::probe(|| {
+            R::init_for(&mut detached)?;
+            R::compactness_score(domain).map_err(Into::into)
+        })
     }
 
     fn get_or_init_for<'a>(

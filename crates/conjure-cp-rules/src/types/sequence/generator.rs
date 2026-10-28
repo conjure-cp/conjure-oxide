@@ -51,7 +51,7 @@ fn lower_sequence_expression_generator(expr: &Expr, _: &SymbolTable) -> Applicat
     let position_domain = element_domain
         .as_ground()
         .and_then(|ground| match ground {
-            conjure_cp::ast::GroundDomain::Tuple(components) => components.first().cloned(),
+            conjure_cp::ast::GroundDomain::Tuple(components, _) => components.first().cloned(),
             _ => None,
         })
         .ok_or(RuleNotApplicable)?;

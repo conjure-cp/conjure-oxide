@@ -66,7 +66,11 @@ module.exports = grammar ({
 
     FALSE: $ => "false",
 
-    identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*'*/,
+    identifier: ($) => {
+      const emoji =
+        "\\p{Extended_Pictographic}[\\p{Emoji_Modifier}\\uFE0F]?(\\u200D\\p{Extended_Pictographic}[\\p{Emoji_Modifier}\\uFE0F]?)*";
+      return new RegExp(`([a-zA-Z_]|${emoji})([a-zA-Z0-9_]|${emoji})*'*`, "u");
+    },
 
     //meta-variable (aka template argument)
     metavar: $ => seq("&", field("identifier", $.identifier)),
@@ -97,6 +101,7 @@ module.exports = grammar ({
       field("bool_domain", $.bool_domain),
       field("int_domain", $.int_domain),
       field("variable_domain", $.identifier),
+      field("enum_domain", $.enum_domain),
       field("tuple_domain", $.tuple_domain),
       field("matrix_domain", $.matrix_domain),
       field("record_domain", $.record_domain),
@@ -109,15 +114,34 @@ module.exports = grammar ({
       field("partition_domain", $.partition_domain),
       field("permutation_domain", $.permutation_domain),
     ),
+    enum_domain: $ => seq(
+      field("name", $.identifier),
+      "(", field("ranges", $.range_list), ")"
+    ),
+
     bool_domain: $ => "bool",
 
+    // `int(1..4)`, or with a representation preference first: `int(representation order, 1..4)`.
+    // Attributes cannot go after the keyword as for `set (...) of`, since the parentheses already
+    // hold the ranges.
     int_domain: $ => seq(
       "int",
       optional(seq(
         "(",
-        optional(field("ranges", $.range_list)),
+        choice(
+          seq(
+            field("representation", $.representation_attribute),
+            optional(seq(",", field("ranges", $.range_list))),
+          ),
+          optional(field("ranges", $.range_list)),
+        ),
         ")"
       ))
+    ),
+
+    representation_attribute: $ => seq(
+      field("attribute", "representation"),
+      field("value", $.identifier)
     ),
 
     range_list: $ => prec(2, commaSep1(choice($.int_range, $.atom, $.arithmetic_expr))),
@@ -133,7 +157,13 @@ module.exports = grammar ({
       seq(
         "tuple",
         "(",
-        optional(commaSep1($.domain)),
+        choice(
+          seq(
+            field("representation", $.representation_attribute),
+            optional(seq(",", commaSep1($.domain))),
+          ),
+          optional(commaSep1($.domain)),
+        ),
         ")"
       ),
       // parenthesized form without 'tuple' is allowed only for arity >= 2
@@ -148,6 +178,7 @@ module.exports = grammar ({
 
     matrix_domain: $ => seq(
       "matrix",
+      optional(seq("(", field("representation", $.representation_attribute), ")")),
       optional("indexed"),
       optional("by"),
       optional("indexed"),
@@ -161,6 +192,7 @@ module.exports = grammar ({
 
     record_domain: $ => seq(
       "record",
+      optional(seq("(", field("representation", $.representation_attribute), ")")),
       "{",
       commaSep1(field("name_domain_pair", $.name_domain_pair)),
       "}"
@@ -168,6 +200,7 @@ module.exports = grammar ({
 
     variant_domain: $ => seq(
       "variant",
+      optional(seq("(", field("representation", $.representation_attribute), ")")),
       "{",
       commaSep1(field("name_domain_pair", $.name_domain_pair)),
       "}"
@@ -230,7 +263,8 @@ module.exports = grammar ({
       seq(field("attribute", "maxSize"), field("value", $._domain_attribute_value)),
       field("attribute", "injective"),
       field("attribute", "surjective"),
-      field("attribute", "bijective")
+      field("attribute", "bijective"),
+      seq(field("attribute", "representation"), field("value", $.identifier))
     ),
 
     // e.g. function int(1..3) --> int(1..3), function (total) bool --> int(13,17),
@@ -254,7 +288,8 @@ module.exports = grammar ({
       field("attribute", "total"),
       field("attribute", "injective"),
       field("attribute", "surjective"),
-      field("attribute", "bijective")
+      field("attribute", "bijective"),
+      seq(field("attribute", "representation"), field("value", $.identifier))
     ),
 
     // e.g. relation of (int(1..3) * bool), relation (size 2, irreflexive) of (int(0..5) * int(0..5)),
@@ -295,7 +330,8 @@ module.exports = grammar ({
       field("attribute", "linearOrder"),
       field("attribute", "weakOrder"),
       field("attribute", "preOrder"),
-      field("attribute", "strictPartialOrder")
+      field("attribute", "strictPartialOrder"),
+      seq(field("attribute", "representation"), field("value", $.identifier))
     ),
 
     // e.g. partition from int(1..3), partition (regular) from int(1..4),
@@ -316,7 +352,8 @@ module.exports = grammar ({
       seq(field("attribute", "partSize"), field("value", $.integer)),
       seq(field("attribute", "minPartSize"), field("value", $.integer)),
       seq(field("attribute", "maxPartSize"), field("value", $.integer)),
-      field("attribute", "regular")
+      field("attribute", "regular"),
+      seq(field("attribute", "representation"), field("value", $.identifier))
     ),
 
     // e.g. permutation of int(1..3), permutation (numMoved 2) of int(1..4),
@@ -336,11 +373,12 @@ module.exports = grammar ({
       seq(field("attribute", "numMoved"), field("value", $.integer)),
       seq(field("attribute", "minNumMoved"), field("value", $.integer)),
       seq(field("attribute", "maxNumMoved"), field("value", $.integer)),
+      seq(field("attribute", "representation"), field("value", $.identifier))
     ),
 
     set_literal: $ => seq(
       "{",
-      field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom))),
+      optional(field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom)))),
       "}"
     ),
 
@@ -598,6 +636,8 @@ module.exports = grammar ({
       field("variable_list", $.variable_list), 
       field("be", "be"), 
       choice(
+        field("expr_or_domain", $.enum_type_declaration),
+        field("expr_or_domain", $.unnamed_type_declaration),
         field("expr_or_domain", choice($.bool_expr, $.arithmetic_expr, $.atom)),
         seq(
           field("domain", "domain"),
@@ -606,7 +646,22 @@ module.exports = grammar ({
       )
     ),
 
-    // Constraints 
+    unnamed_type_declaration: $ => seq(
+      "new", "type", "of", "size",
+      field("size", choice($.arithmetic_expr, $.atom))
+    ),
+
+    enum_type_declaration: $ => seq(
+      "new", "type", "enum", "{",
+      field("members", $.variable_list), "}"
+    ),
+
+    enum_operator: $ => seq(
+      field("operator", choice("pred", "succ")),
+      "(", field("argument", choice($.arithmetic_expr, $.atom)), ")"
+    ),
+
+    // Constraints
     // boolean expressions require the operands to be boolean and return a boolean
     bool_expr: $ => prec(2, choice(
       field("not_expression", $.not_expr),
@@ -774,7 +829,7 @@ module.exports = grammar ({
       "(",
       field("matrix", choice($.matrix, $.identifier, $.index_or_slice, $.flatten, $.bool_expr, $.arithmetic_expr, $.atom)),
       ",",
-      field("except", choice($.identifier, $.constant, $.index_or_slice, $.sub_arith_expr, $.negative_expr, $.arithmetic_expr)),
+      field("except", choice($.identifier, $.constant, $.index_or_slice, $.sub_arith_expr, $.negative_expr, $.arithmetic_expr, $.atom)),
       ")"
     )),
 
@@ -813,6 +868,7 @@ module.exports = grammar ({
     )),
 
     atom: $ => prec(-1, choice(
+      $.enum_operator,
       field("sub_atom_expression", $.sub_atom_expr),
       field("constant", $.constant),
       field("variable", $.identifier),
@@ -836,6 +892,7 @@ module.exports = grammar ({
       field("element_id", $.element_id),
       field("table", $.table),
       field("negative_table", $.negative_table),
+      field("short_table", $.short_table),
       field("pareto_expression", $.pareto_expression),
       field("apply_expr", $.apply_expr),
       field("image_expr", $.image_expr),
@@ -1003,6 +1060,7 @@ module.exports = grammar ({
       field("bool_domain", $.bool_domain),
       field("int_domain", $.annotation_int_domain),
       field("variable_domain", $.identifier),
+      field("enum_domain", $.enum_domain),
       field("tuple_domain", $.annotation_tuple_domain),
       field("matrix_domain", $.annotation_matrix_domain),
       field("record_domain", $.annotation_record_domain),
@@ -1017,7 +1075,13 @@ module.exports = grammar ({
       "int",
       optional(seq(
         "(",
-        optional(field("ranges", $.annotation_range_list)),
+        choice(
+          seq(
+            field("representation", $.representation_attribute),
+            optional(seq(",", field("ranges", $.annotation_range_list))),
+          ),
+          optional(field("ranges", $.annotation_range_list)),
+        ),
         ")"
       ))
     ),
@@ -1034,7 +1098,13 @@ module.exports = grammar ({
       seq(
         "tuple",
         "(",
-        optional(commaSep1($.annotation_domain)),
+        choice(
+          seq(
+            field("representation", $.representation_attribute),
+            optional(seq(",", commaSep1($.annotation_domain))),
+          ),
+          optional(commaSep1($.annotation_domain)),
+        ),
         ")"
       ),
       seq(
@@ -1048,6 +1118,7 @@ module.exports = grammar ({
 
     annotation_matrix_domain: $ => seq(
       "matrix",
+      optional(seq("(", field("representation", $.representation_attribute), ")")),
       optional("indexed"),
       optional("by"),
       optional("indexed"),
@@ -1061,6 +1132,7 @@ module.exports = grammar ({
 
     annotation_record_domain: $ => seq(
       "record",
+      optional(seq("(", field("representation", $.representation_attribute), ")")),
       "{",
       commaSep1(field("name_domain_pair", $.annotation_name_domain_pair)),
       "}"
@@ -1068,6 +1140,7 @@ module.exports = grammar ({
 
     annotation_variant_domain: $ => seq(
       "variant",
+      optional(seq("(", field("representation", $.representation_attribute), ")")),
       "{",
       commaSep1(field("name_domain_pair", $.annotation_name_domain_pair)),
       "}"
@@ -1139,18 +1212,27 @@ module.exports = grammar ({
     table: $ => seq(
       "table",
       "(",
-      field("variables", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      field("variables", choice($.sequence_literal, $.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ",",
-      field("rows", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      field("rows", choice($.set_literal, $.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      ")"
+    ),
+
+    short_table: $ => seq(
+      "shortTable",
+      "(",
+      field("variables", choice($.sequence_literal, $.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      ",",
+      field("rows", choice($.set_literal, $.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ")"
     ),
 
     negative_table: $ => seq(
       choice("negativeTable", "negative_table"),
       "(",
-      field("variables", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      field("variables", choice($.sequence_literal, $.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ",",
-      field("rows", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      field("rows", choice($.set_literal, $.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ")"
     ),
 
