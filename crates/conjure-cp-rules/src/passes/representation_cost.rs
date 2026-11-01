@@ -78,9 +78,14 @@ pub(super) fn choose(
             "compact representation cost");
         estimates.push((rule, cost, old_score));
     }
-    let &(selected, _, _) = estimates
-        .iter()
-        .min_by_key(|(rule, cost, old_score)| (cost.key(), *old_score, rule.name()))?;
+    let &(selected, _, _) = estimates.iter().min_by_key(|(rule, cost, old_score)| {
+        (
+            cost.key(),
+            *old_score,
+            super::representation::representation_fallback_rank(*rule),
+            rule.name(),
+        )
+    })?;
     tracing::info!(declaration = %declaration.name(), representation = selected.name(),
         "compact selected representation");
     Some(selected)

@@ -303,24 +303,79 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
     }
 }
 
-/// Choose the lowest-scoring representation, with semantic tie-breaking for SMT integers.
+/// Stable preference order for breaking compactness ties, including scores saturated at
+/// `usize::MAX`. Each family lists its preferred layout or encoding first. Unknown extensions
+/// follow the built-ins and use their names as a final deterministic tie-break.
 ///
-/// Representation compactness scores saturate at [`usize::MAX`].  Large matrix domains can
-/// therefore make both `SmtLia` and the deliberately more expensive `SmtBv` score saturate, even
-/// though compact should still prefer LIA.  Falling back to the representation name picked BV in
-/// that case.  Keep the ordinary name-based tie-break for every other representation, but preserve
-/// the intended LIA-before-BV ordering when their scores collide.
+/// Prefer explicit function values over a packed integer or a relation graph, and mathematical
+/// SMT integers over bit vectors. These preferences apply whenever costs tie, without inspecting
+/// the declaration or treating overflow as a separate case.
+pub(super) fn representation_fallback_rank(rule: ReprRulePtr) -> usize {
+    use crate::types::{
+        function::{FunctionAsRelation, FunctionExplicit, FunctionPacked},
+        matrix::{MatrixArray, MatrixComponents, MatrixPacked},
+        mset::{MSetCounts, MSetOccurrence, MSetPacked, MSetRepetition},
+        partition::{PartitionAsSet, PartitionOccurrence, PartitionPacked},
+        permutation::PermutationAsFunction,
+        record::{RecordComponents, RecordPacked},
+        relation::{RelationAsSet, RelationOccurrence, RelationPacked},
+        sequence::{SequenceExplicit, SequencePacked},
+        set::{SetExplicit, SetOccurrence, SetPacked},
+        tuple::{TupleComponents, TuplePacked},
+        unnamed::UnnamedAsInt,
+        variant::{VariantComponents, VariantPacked},
+    };
+
+    let order = [
+        FunctionExplicit::id(),
+        FunctionPacked::id(),
+        FunctionAsRelation::id(),
+        IntBinaryOffset::id(),
+        IntBinaryRank::id(),
+        IntBinarySignMagnitude::id(),
+        IntBinaryTwosComplement::id(),
+        IntDirect::id(),
+        IntOrder::id(),
+        SmtLia::id(),
+        SmtBv::id(),
+        MatrixArray::id(),
+        MatrixComponents::id(),
+        MatrixPacked::id(),
+        MSetCounts::id(),
+        MSetOccurrence::id(),
+        MSetPacked::id(),
+        MSetRepetition::id(),
+        PartitionAsSet::id(),
+        PartitionOccurrence::id(),
+        PartitionPacked::id(),
+        PermutationAsFunction::id(),
+        RecordComponents::id(),
+        RecordPacked::id(),
+        RelationAsSet::id(),
+        RelationOccurrence::id(),
+        RelationPacked::id(),
+        SequenceExplicit::id(),
+        SequencePacked::id(),
+        SetExplicit::id(),
+        SetOccurrence::id(),
+        SetPacked::id(),
+        TupleComponents::id(),
+        TuplePacked::id(),
+        UnnamedAsInt::id(),
+        VariantComponents::id(),
+        VariantPacked::id(),
+    ];
+    order
+        .iter()
+        .position(|id| *id == rule.id())
+        .unwrap_or(usize::MAX)
+}
+
+/// Choose the lowest-scoring representation, using the built-in order when scores tie.
 fn compact_representation_choice(candidates: &[(ReprRulePtr, usize)]) -> Option<ReprRulePtr> {
     candidates
         .iter()
-        .min_by_key(|(rule, score)| {
-            let smt_integer_tie_break = match rule.id() {
-                id if id == SmtLia::id() => 0,
-                id if id == SmtBv::id() => 1,
-                _ => 0,
-            };
-            (*score, smt_integer_tie_break, rule.name())
-        })
+        .min_by_key(|(rule, score)| (*score, representation_fallback_rank(*rule), rule.name()))
         .map(|(rule, _)| *rule)
 }
 
