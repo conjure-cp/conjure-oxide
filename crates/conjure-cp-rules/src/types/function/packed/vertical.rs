@@ -18,8 +18,10 @@ fn membership_in_function_packed(expr: &Expr, _: &SymbolTable) -> ApplicationRes
     let Expr::In(_, member, collection) = expr else {
         return Err(RuleNotApplicable);
     };
-    let Expr::Defined(_, function) = collection.as_ref() else {
-        return Err(RuleNotApplicable);
+    let (function, range) = match collection.as_ref() {
+        Expr::Defined(_, function) => (function, false),
+        Expr::Range(_, function) => (function, true),
+        _ => return Err(RuleNotApplicable),
     };
     let Expr::Atomic(_, Atom::Reference(reference)) = function.as_ref() else {
         return Err(RuleNotApplicable);
@@ -32,7 +34,13 @@ fn membership_in_function_packed(expr: &Expr, _: &SymbolTable) -> ApplicationRes
         crate::types::function::horizontal::membership_from_positions(
             member,
             representation.domain_values.len(),
-            |index| Expr::from(representation.domain_values[(index - 1) as usize].clone()),
+            |index| {
+                if range {
+                    representation.value_expr(index)
+                } else {
+                    Expr::from(representation.domain_values[(index - 1) as usize].clone())
+                }
+            },
             |index| representation.defined_expr(index),
         ),
     ))

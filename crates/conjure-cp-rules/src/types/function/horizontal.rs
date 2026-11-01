@@ -36,7 +36,7 @@ fn defined_total_function(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 /// Membership in the defined entries of a position-based function layout. Undefined slots
-/// contribute nothing.
+/// contribute nothing, including their padding values when checking the function's range.
 pub(super) fn membership_from_positions(
     member: &Expr,
     count: usize,

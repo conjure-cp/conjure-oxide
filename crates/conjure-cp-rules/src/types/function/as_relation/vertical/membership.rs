@@ -10,8 +10,10 @@ fn membership_in_function_as_relation(expr: &Expr, _: &SymbolTable) -> Applicati
     let Expr::In(_, member, collection) = expr else {
         return Err(RuleNotApplicable);
     };
-    let Expr::Defined(_, function) = collection.as_ref() else {
-        return Err(RuleNotApplicable);
+    let (function, column) = match collection.as_ref() {
+        Expr::Defined(_, function) => (function, 1),
+        Expr::Range(_, function) => (function, 2),
+        _ => return Err(RuleNotApplicable),
     };
     let Expr::Atomic(_, Atom::Reference(reference)) = function.as_ref() else {
         return Err(RuleNotApplicable);
@@ -25,7 +27,7 @@ fn membership_in_function_as_relation(expr: &Expr, _: &SymbolTable) -> Applicati
         |entry| {
             Expr::Eq(
                 Metadata::new(),
-                Moo::new(tuple_field(entry, 1)),
+                Moo::new(tuple_field(entry, column)),
                 member.clone(),
             )
         },
