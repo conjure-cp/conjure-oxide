@@ -13,6 +13,31 @@ use conjure_cp::rule_engine::{
 use conjure_cp::{into_matrix_expr, matrix_expr};
 use parking_lot::MappedRwLockReadGuard;
 
+#[register_rule("Base", 8700, [In])]
+fn membership_in_function_packed(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::In(_, member, collection) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let Expr::Defined(_, function) = collection.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let Expr::Atomic(_, Atom::Reference(reference)) = function.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let representation = reference
+        .ptr()
+        .get_repr::<FunctionPacked>()
+        .ok_or(RuleNotApplicable)?;
+    Ok(Reduction::pure(
+        crate::types::function::horizontal::membership_from_positions(
+            member,
+            representation.domain_values.len(),
+            |index| Expr::from(representation.domain_values[(index - 1) as usize].clone()),
+            |index| representation.defined_expr(index),
+        ),
+    ))
+}
+
 // Packed functions are backend-neutral, so make their lowering rules available for every solver
 // family.
 register_rule_set!("ReprFunctionPacked", ("Base"), |_| true);
