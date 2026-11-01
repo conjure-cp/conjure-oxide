@@ -16,8 +16,9 @@ Each test runs `conjure-oxide` on an `input.essence` file and checks that the re
 
 `config.toml` may select one or several modelling heuristics with `heuristic = "f"` or
 `heuristic = ["f", "c", "r", "x"]`. The strategies mean first, compact, seeded random, and all
-respectively. Compact minimises representation-domain size for representation choices and resulting
-AST depth for equally-applicable rules. The default is `x`. Set `seed = 123` for random runs.
+respectively. Compact estimates structural work for supported Minion representation choices,
+falls back to representation-domain size elsewhere, and minimises resulting AST depth for
+equally-applicable rules. The default is `x`. Set `seed = 123` for random runs.
 Backend solver randomness is configured independently with `solver-seed = 123` and defaults to
 `0`. Both seed fields remain explicit in recorded stats. The `x` strategy
 replays every representation and equally-applicable-rule choice from a fresh parsed model and keeps
@@ -164,3 +165,26 @@ leave stale entries behind.
 The unified format replaces the former configuration-level `[[runs]]` and
 `[[model-runs]]` sections. Regenerate older exhaustive stats by deleting their
 `stats.toml` files and running `make test-accept`.
+
+### Compact representation cost
+
+Compact is the default heuristic. For supported Minion function, set and relation decision-variable
+choices with channelling disabled, it estimates structural work. Other choices use representation-domain
+cardinality. User representation preferences retain precedence. Use `conjure-oxide solve MODEL -v`
+to inspect the candidate costs and selected representation; `-hc` explicitly selects compact.
+
+The primary score is exactly **primitive variables + estimated expanded structural AST nodes**.
+Every variable and AST node contributes one unit; there are no fitted representation-specific
+weights. The estimator probes the structural constraints that a representation actually generates,
+adds estimated child representation costs, and multiplies comprehension body/guard nodes by
+generator extent upper bounds. It does not predict guard pruning, user constraints, simplification,
+backend propagation or search. Domain bits (the sum of rounded-up log2 cardinalities of primitive
+domains) break ties, followed by the domain-cardinality score and representation name.
+
+Matrix and tuple children are estimated using their ordinary component layouts. Collection children
+are estimated recursively, choosing their cheapest supported layout. No full rewriting or solving
+is performed while scoring. Per-candidate lookahead is bounded to physical extents of 256,
+depth 8, and 16,384 visits; these are resource limits rather than cost coefficients. If any applicable
+candidate cannot be estimated, the entire choice falls back to domain cardinality. Verbose logs show
+each candidate's variable count, structural nodes, bits, total units, selected representation,
+or the fallback. These counts are a hypothesis about translation work, not a runtime prediction.

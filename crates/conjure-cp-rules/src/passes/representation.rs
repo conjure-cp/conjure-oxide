@@ -298,7 +298,8 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
             .get(next_heuristic_random_index(candidates.len()))
             .map(|(rule, _)| *rule),
         Heuristic::Random => None,
-        Heuristic::Compact => compact_representation_choice(&candidates),
+        Heuristic::Compact => super::representation_cost::choose(decl, &candidates)
+            .or_else(|| compact_representation_choice(&candidates)),
     }
 }
 
