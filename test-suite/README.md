@@ -170,7 +170,8 @@ The unified format replaces the former configuration-level `[[runs]]` and
 
 Compact is the default heuristic. For supported Minion function, set and relation decision-variable
 choices with channelling disabled, it estimates structural work. Other choices use representation-domain
-cardinality. User representation preferences retain precedence. Use `conjure-oxide solve MODEL -v`
+cardinality, preferring any applicable non-packed layout over packed before comparing cardinalities.
+User representation preferences retain precedence. Use `conjure-oxide solve MODEL -v`
 to inspect the candidate costs and selected representation; `-hc` explicitly selects compact.
 
 The primary score is exactly **primitive variables + estimated expanded structural AST nodes**.
@@ -179,7 +180,8 @@ weights. The estimator probes the structural constraints that a representation a
 adds estimated child representation costs, and multiplies comprehension body/guard nodes by
 generator extent upper bounds. It does not predict guard pruning, user constraints, simplification,
 backend propagation or search. Domain bits (the sum of rounded-up log2 cardinalities of primitive
-domains) break ties, followed by the domain-cardinality score and representation name.
+domains) break ties. If both structural work and bits tie, non-packed layouts take precedence,
+followed by the domain-cardinality score, built-in representation order and representation name.
 
 Matrix and tuple children are estimated using their ordinary component layouts. Collection children
 are estimated recursively, choosing their cheapest supported layout. No full rewriting or solving

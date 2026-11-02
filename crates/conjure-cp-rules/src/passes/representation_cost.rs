@@ -81,6 +81,7 @@ pub(super) fn choose(
     let &(selected, _, _) = estimates.iter().min_by_key(|(rule, cost, old_score)| {
         (
             cost.key(),
+            rule.short_name() == "packed",
             *old_score,
             super::representation::representation_fallback_rank(*rule),
             rule.name(),

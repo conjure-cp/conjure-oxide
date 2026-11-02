@@ -328,8 +328,8 @@ pub(super) fn representation_fallback_rank(rule: ReprRulePtr) -> usize {
 
     let order = [
         FunctionExplicit::id(),
-        FunctionPacked::id(),
         FunctionAsRelation::id(),
+        FunctionPacked::id(),
         IntBinaryOffset::id(),
         IntBinaryRank::id(),
         IntBinarySignMagnitude::id(),
@@ -343,8 +343,8 @@ pub(super) fn representation_fallback_rank(rule: ReprRulePtr) -> usize {
         MatrixPacked::id(),
         MSetCounts::id(),
         MSetOccurrence::id(),
-        MSetPacked::id(),
         MSetRepetition::id(),
+        MSetPacked::id(),
         PartitionAsSet::id(),
         PartitionOccurrence::id(),
         PartitionPacked::id(),
@@ -371,11 +371,18 @@ pub(super) fn representation_fallback_rank(rule: ReprRulePtr) -> usize {
         .unwrap_or(usize::MAX)
 }
 
-/// Choose the lowest-scoring representation, using the built-in order when scores tie.
+/// Prefer non-packed layouts, then choose the lowest domain score and built-in tie-break rank.
 fn compact_representation_choice(candidates: &[(ReprRulePtr, usize)]) -> Option<ReprRulePtr> {
     candidates
         .iter()
-        .min_by_key(|(rule, score)| (*score, representation_fallback_rank(*rule), rule.name()))
+        .min_by_key(|(rule, score)| {
+            (
+                rule.short_name() == "packed",
+                *score,
+                representation_fallback_rank(*rule),
+                rule.name(),
+            )
+        })
         .map(|(rule, _)| *rule)
 }
 
@@ -615,21 +622,34 @@ mod tests {
     use conjure_cp::{domain_int, range};
 
     #[test]
-    fn compact_prefers_the_smallest_representation_domain() {
-        set_heuristic(Heuristic::Compact);
-        let mut symbols = SymbolTable::new();
-        let declaration = symbols.gen_find(&Domain::set(
-            SetAttr::new_min_max_size(1, 2),
-            domain_int!(1..3),
-        ));
-
-        assert_eq!(
-            choose_representation_rule(&declaration, &symbols)
-                .unwrap()
-                .name(),
-            "SetPacked"
-        );
-        set_heuristic(Heuristic::First);
+    fn compact_fallback_prefers_non_packed_even_with_a_larger_domain_score() {
+        let packed: Vec<_> = get_repr_rules()
+            .filter(|rule| rule.short_name() == "packed")
+            .collect();
+        let non_packed: Vec<_> = get_repr_rules()
+            .filter(|rule| rule.short_name() != "packed")
+            .collect();
+        assert!(!packed.is_empty() && !non_packed.is_empty());
+        for packed in packed {
+            for &other in &non_packed {
+                for score in [0, usize::MAX] {
+                    for candidates in [
+                        [(packed, score), (other, usize::MAX)],
+                        [(other, usize::MAX), (packed, score)],
+                    ] {
+                        assert_eq!(
+                            compact_representation_choice(&candidates).unwrap().id(),
+                            other.id()
+                        );
+                    }
+                }
+            }
+            assert_eq!(
+                compact_representation_choice(&[(packed, 0)]).unwrap().id(),
+                packed.id()
+            );
+        }
+        assert!(compact_representation_choice(&[]).is_none());
     }
 
     #[test]
