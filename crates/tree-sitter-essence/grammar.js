@@ -970,7 +970,7 @@ module.exports = grammar ({
     generator: $ => prec(30, choice(
       // i : int(1..5)
       seq(
-        field("variable", choice($.identifier, $.tuple)),
+        field("variable", commaSep1(choice($.identifier, $.tuple))),
         ":",
         field("domain", $.domain)
       ),
