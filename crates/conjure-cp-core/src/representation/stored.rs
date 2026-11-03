@@ -1,6 +1,6 @@
-use super::errors::ReprUpError;
+use super::errors::{ReprInstantiateError, ReprUpError};
 use super::types::{LookupFn, ReprAssignment, ReprDeclLevel, ReprGetOrInitResult, ReprResult};
-use crate::ast::{DeclarationPtr, Literal, Name};
+use crate::ast::{DeclarationPtr, DomainPtr, Expression, Literal, Name};
 use crate::representation::ReprRule;
 use conjure_cp_core::representation::ReprError;
 use parking_lot::MappedRwLockReadGuard;
@@ -10,6 +10,13 @@ use std::any::Any;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
+
+/// Detached representation structure for compact cost estimation.
+/// Probing must neither modify the declaration nor commit uniform choices.
+pub struct ReprStructureProbe {
+    pub domains: Vec<DomainPtr>,
+    pub constraints: Vec<Expression>,
+}
 
 pub trait ReprStateStored: Any + Send + Sync + Debug {
     fn rule(&self) -> &'static dyn ReprRuleStored;
@@ -85,6 +92,8 @@ pub trait ReprRuleStored: Send + Sync {
     /// score.
     fn probe_for(&self, decl: &DeclarationPtr) -> Result<usize, ReprError>;
 
+    fn probe_structure_for(&self, decl: &DeclarationPtr) -> Result<ReprStructureProbe, ReprError>;
+
     fn get_or_init_for<'a>(
         &self,
         decl: &'a mut DeclarationPtr,
@@ -142,6 +151,26 @@ impl<R: ReprRule> ReprRuleStored for R {
         super::uniform::probe(|| {
             R::init_for(&mut detached)?;
             R::compactness_score(domain).map_err(Into::into)
+        })
+    }
+
+    fn probe_structure_for(&self, decl: &DeclarationPtr) -> Result<ReprStructureProbe, ReprError> {
+        R::domain_for(decl)?;
+        let mut detached = decl.clone().detach();
+        super::uniform::probe(|| {
+            let (_, constraints) = R::init_for(&mut detached)?;
+            let state = R::get_for(&detached).expect("probe initialised representation");
+            let domains = ReprDeclLevel::repr_vars(&*state)
+                .iter()
+                .map(|var| {
+                    var.domain()
+                        .ok_or_else(|| ReprInstantiateError::NoDomain(var.clone()))
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(ReprStructureProbe {
+                domains,
+                constraints,
+            })
         })
     }
 

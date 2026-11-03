@@ -974,11 +974,11 @@ module.exports = grammar ({
         ":",
         field("domain", $.domain)
       ),
-      // i <- [1,2,3]
+      // The source is any expression; whether it is iterable is a semantic concern.
       seq(
         field("variable", choice($.identifier, $.tuple)),
         "<-",
-        field("collection", choice($.arithmetic_expr, $.identifier, $.matrix, $.set_operation))
+        field("collection", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr, $.atom, $.annotation_expr))
       )
     )),
 

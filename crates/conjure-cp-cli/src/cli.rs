@@ -160,8 +160,9 @@ pub struct GlobalArgs {
     /// Heuristic for selecting an answer when multiple modelling choices are applicable.
     ///
     /// Possible values: `f` (first), `r` (random), `c` (compact), `i` (interactive). Compact
-    /// minimises the representation-domain size for representation choices and the resulting AST
-    /// depth for equally-applicable rewrite rules. Interactive prompts on stderr, or uses
+    /// estimates structural work for supported Minion representation choices, falling back to
+    /// representation-domain size elsewhere, and minimises resulting AST depth for equally-applicable
+    /// rewrite rules. Use -v to inspect representation costs. Interactive prompts on stderr, or uses
     /// `--responses` when provided. `x` (all) is reserved for model generation and is not
     /// supported by the CLI yet.
     #[arg(

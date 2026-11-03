@@ -298,27 +298,90 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
             .get(next_heuristic_random_index(candidates.len()))
             .map(|(rule, _)| *rule),
         Heuristic::Random => None,
-        Heuristic::Compact => compact_representation_choice(&candidates),
+        Heuristic::Compact => super::representation_cost::choose(decl, &candidates)
+            .or_else(|| compact_representation_choice(&candidates)),
     }
 }
 
-/// Choose the lowest-scoring representation, with semantic tie-breaking for SMT integers.
+/// Stable preference order for breaking compactness ties, including scores saturated at
+/// `usize::MAX`. Each family lists its preferred layout or encoding first. Unknown extensions
+/// follow the built-ins and use their names as a final deterministic tie-break.
 ///
-/// Representation compactness scores saturate at [`usize::MAX`].  Large matrix domains can
-/// therefore make both `SmtLia` and the deliberately more expensive `SmtBv` score saturate, even
-/// though compact should still prefer LIA.  Falling back to the representation name picked BV in
-/// that case.  Keep the ordinary name-based tie-break for every other representation, but preserve
-/// the intended LIA-before-BV ordering when their scores collide.
+/// Prefer explicit function values over a packed integer or a relation graph, and mathematical
+/// SMT integers over bit vectors. These preferences apply whenever costs tie, without inspecting
+/// the declaration or treating overflow as a separate case.
+pub(super) fn representation_fallback_rank(rule: ReprRulePtr) -> usize {
+    use crate::types::{
+        function::{FunctionAsRelation, FunctionExplicit, FunctionPacked},
+        matrix::{MatrixArray, MatrixComponents, MatrixPacked},
+        mset::{MSetCounts, MSetOccurrence, MSetPacked, MSetRepetition},
+        partition::{PartitionAsSet, PartitionOccurrence, PartitionPacked},
+        permutation::PermutationAsFunction,
+        record::{RecordComponents, RecordPacked},
+        relation::{RelationAsSet, RelationOccurrence, RelationPacked},
+        sequence::{SequenceExplicit, SequencePacked},
+        set::{SetExplicit, SetOccurrence, SetPacked},
+        tuple::{TupleComponents, TuplePacked},
+        unnamed::UnnamedAsInt,
+        variant::{VariantComponents, VariantPacked},
+    };
+
+    let order = [
+        FunctionExplicit::id(),
+        FunctionAsRelation::id(),
+        FunctionPacked::id(),
+        IntBinaryOffset::id(),
+        IntBinaryRank::id(),
+        IntBinarySignMagnitude::id(),
+        IntBinaryTwosComplement::id(),
+        IntDirect::id(),
+        IntOrder::id(),
+        SmtLia::id(),
+        SmtBv::id(),
+        MatrixArray::id(),
+        MatrixComponents::id(),
+        MatrixPacked::id(),
+        MSetCounts::id(),
+        MSetOccurrence::id(),
+        MSetRepetition::id(),
+        MSetPacked::id(),
+        PartitionAsSet::id(),
+        PartitionOccurrence::id(),
+        PartitionPacked::id(),
+        PermutationAsFunction::id(),
+        RecordComponents::id(),
+        RecordPacked::id(),
+        RelationAsSet::id(),
+        RelationOccurrence::id(),
+        RelationPacked::id(),
+        SequenceExplicit::id(),
+        SequencePacked::id(),
+        SetExplicit::id(),
+        SetOccurrence::id(),
+        SetPacked::id(),
+        TupleComponents::id(),
+        TuplePacked::id(),
+        UnnamedAsInt::id(),
+        VariantComponents::id(),
+        VariantPacked::id(),
+    ];
+    order
+        .iter()
+        .position(|id| *id == rule.id())
+        .unwrap_or(usize::MAX)
+}
+
+/// Prefer non-packed layouts, then choose the lowest domain score and built-in tie-break rank.
 fn compact_representation_choice(candidates: &[(ReprRulePtr, usize)]) -> Option<ReprRulePtr> {
     candidates
         .iter()
         .min_by_key(|(rule, score)| {
-            let smt_integer_tie_break = match rule.id() {
-                id if id == SmtLia::id() => 0,
-                id if id == SmtBv::id() => 1,
-                _ => 0,
-            };
-            (*score, smt_integer_tie_break, rule.name())
+            (
+                rule.short_name() == "packed",
+                *score,
+                representation_fallback_rank(*rule),
+                rule.name(),
+            )
         })
         .map(|(rule, _)| *rule)
 }
@@ -559,21 +622,34 @@ mod tests {
     use conjure_cp::{domain_int, range};
 
     #[test]
-    fn compact_prefers_the_smallest_representation_domain() {
-        set_heuristic(Heuristic::Compact);
-        let mut symbols = SymbolTable::new();
-        let declaration = symbols.gen_find(&Domain::set(
-            SetAttr::new_min_max_size(1, 2),
-            domain_int!(1..3),
-        ));
-
-        assert_eq!(
-            choose_representation_rule(&declaration, &symbols)
-                .unwrap()
-                .name(),
-            "SetPacked"
-        );
-        set_heuristic(Heuristic::First);
+    fn compact_fallback_prefers_non_packed_even_with_a_larger_domain_score() {
+        let packed: Vec<_> = get_repr_rules()
+            .filter(|rule| rule.short_name() == "packed")
+            .collect();
+        let non_packed: Vec<_> = get_repr_rules()
+            .filter(|rule| rule.short_name() != "packed")
+            .collect();
+        assert!(!packed.is_empty() && !non_packed.is_empty());
+        for packed in packed {
+            for &other in &non_packed {
+                for score in [0, usize::MAX] {
+                    for candidates in [
+                        [(packed, score), (other, usize::MAX)],
+                        [(other, usize::MAX), (packed, score)],
+                    ] {
+                        assert_eq!(
+                            compact_representation_choice(&candidates).unwrap().id(),
+                            other.id()
+                        );
+                    }
+                }
+            }
+            assert_eq!(
+                compact_representation_choice(&[(packed, 0)]).unwrap().id(),
+                packed.id()
+            );
+        }
+        assert!(compact_representation_choice(&[]).is_none());
     }
 
     #[test]
