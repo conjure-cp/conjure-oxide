@@ -1363,7 +1363,7 @@ impl AbstractLiteral<Expression> {
             }
             AbstractLiteral::Function(entries) => {
                 let mut literals = vec![];
-                for (e1,e2) in entries {
+                for (e1, e2) in entries {
                     let literal1 = match e1 {
                         Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
                         Expression::AbstractLiteral(_, abslit) => {
@@ -1384,7 +1384,7 @@ impl AbstractLiteral<Expression> {
                 }
 
                 Some(AbstractLiteral::Function(literals))
-            },
+            }
             AbstractLiteral::Variant(entry) => {
                 let literal = match entry.value.clone() {
                     Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
