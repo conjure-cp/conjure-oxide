@@ -40,6 +40,15 @@ rust::Vec<uint8_t> solve_wrapper(rust::Slice<const uint8_t> model_proto_bytes,
       parameters.set_search_branching(sat::SatParameters::AUTOMATIC_SEARCH);
     }
 
+    // Use a single negated table constraint to block found assignments on decision variables
+    // without inflating the model with auxiliary variables or extra linear constraints.
+    auto* table_ct = model_proto.add_constraints();
+    auto* forbidden_table = table_ct->mutable_table();
+    forbidden_table->set_negated(true);
+    for (size_t dec_idx : decision_vars) {
+      forbidden_table->add_vars(static_cast<int>(dec_idx));
+    }
+
     sat::CpSolverResponse final_response;
 
     while (true) {
@@ -63,45 +72,11 @@ rust::Vec<uint8_t> solve_wrapper(rust::Slice<const uint8_t> model_proto_bytes,
         }
       }
 
-      // Add a solution-blocking constraint for decision variables
-      auto* ct = model_proto.add_constraints();
-      auto* bool_or = ct->mutable_bool_or();
-
+      // Append found values to the forbidden table
       for (size_t dec_idx : decision_vars) {
         int var = static_cast<int>(dec_idx);
-        if (var >= response.solution_size()) {
-          continue;
-        }
-        int64_t val = response.solution(var);
-        const auto& var_proto = model_proto.variables(var);
-
-        bool is_bool = (var_proto.domain_size() == 2 && var_proto.domain(0) == 0 && var_proto.domain(1) == 1);
-
-        if (is_bool) {
-          if (val == 1) {
-            bool_or->add_literals(sat::NegatedRef(var));
-          } else {
-            bool_or->add_literals(var);
-          }
-        } else {
-          int b_i = model_proto.variables_size();
-          auto* new_b = model_proto.add_variables();
-          new_b->set_name("__block_b");
-          new_b->add_domain(0);
-          new_b->add_domain(1);
-
-          auto* int_ct = model_proto.add_constraints();
-          int_ct->add_enforcement_literal(b_i);
-          auto* lin = int_ct->mutable_linear();
-          lin->add_vars(var);
-          lin->add_coeffs(1);
-          lin->add_domain(std::numeric_limits<int64_t>::min() / 2);
-          lin->add_domain(val - 1);
-          lin->add_domain(val + 1);
-          lin->add_domain(std::numeric_limits<int64_t>::max() / 2);
-
-          bool_or->add_literals(b_i);
-        }
+        int64_t val = (var < response.solution_size()) ? response.solution(var) : 0;
+        forbidden_table->add_values(val);
       }
     }
 

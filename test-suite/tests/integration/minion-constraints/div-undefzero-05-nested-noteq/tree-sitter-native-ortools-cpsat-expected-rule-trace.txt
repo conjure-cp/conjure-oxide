@@ -96,12 +96,6 @@ new constraints:
 
 --
 
-SafeDiv(y, z) = 0
-   ~~> introduce_diveq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
-DivEq(y, z, 0)
-
---
-
 SafeDiv(x, SafeDiv(y, z)) != 10
    ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
 __3 != 10
@@ -109,6 +103,12 @@ new variables:
   find __3: int(0..20)
 new constraints:
   __3 =aux SafeDiv(x, SafeDiv(y, z))
+
+--
+
+SafeDiv(y, z) = 0
+   ~~> introduce_diveq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+DivEq(y, z, 0)
 
 --
 

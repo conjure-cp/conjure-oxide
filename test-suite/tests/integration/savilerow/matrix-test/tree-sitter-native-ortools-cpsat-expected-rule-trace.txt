@@ -175,27 +175,27 @@ product([(SafeIndex([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_1_2,bibd#matrix
 
 --
 
-product([1,(y - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(y - 1);int(1..)])
-
---
-
-product([1,(y - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(y - 1);int(1..)])
-
---
-
 product([(SafeIndex([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_1,bibd#matrix_to_atom_3_2,bibd#matrix_to_atom_3_3;int(1..)],[sum([product([3,(x - 1);int(1..)]),product([1,(y - 1);int(1..)]),1;int(1..)])]) - 1);int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
 (SafeIndex([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_1,bibd#matrix_to_atom_3_2,bibd#matrix_to_atom_3_3;int(1..)],[sum([product([3,(x - 1);int(1..)]),product([1,(y - 1);int(1..)]),1;int(1..)])]) - 1)
 
 --
 
+product([1,(y - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(y - 1);int(1..)])
+
+--
+
 product([(y - 1);int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
 (y - 1)
+
+--
+
+product([1,(y - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(y - 1);int(1..)])
 
 --
 
@@ -226,30 +226,6 @@ product([(y - 1);int(1..)])
 product([(y - 1);int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
 (y - 1)
-
---
-
-(y - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([y,-(1);int(1..)])
-
---
-
-sum([product([3,(x - 1);int(1..)]),sum([y,-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([product([3,(x - 1);int(1..)]),y,-1,1;int(1..)])
-
---
-
-(y - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([y,-(1);int(1..)])
-
---
-
-sum([product([3,(x - 1);int(1..)]),sum([y,-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([product([3,(x - 1);int(1..)]),y,-1,1;int(1..)])
 
 --
 
@@ -265,21 +241,45 @@ sum([product([3,(SafeIndex([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_1_2,bibd
 
 --
 
-(x - 1)
+(y - 1)
    ~~> minus_to_sum ([("Base", 8400)])
-sum([x,-(1);int(1..)])
+sum([y,-(1);int(1..)])
 
 --
 
-(x - 1)
+sum([product([3,(x - 1);int(1..)]),sum([y,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,(x - 1);int(1..)]),y,-1,1;int(1..)])
+
+--
+
+(y - 1)
    ~~> minus_to_sum ([("Base", 8400)])
-sum([x,-(1);int(1..)])
+sum([y,-(1);int(1..)])
+
+--
+
+sum([product([3,(x - 1);int(1..)]),sum([y,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,(x - 1);int(1..)]),y,-1,1;int(1..)])
 
 --
 
 (SafeIndex([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_1,bibd#matrix_to_atom_3_2,bibd#matrix_to_atom_3_3;int(1..)],[sum([product([3,(x - 1);int(1..)]),(y - 1),1;int(1..)])]) - 1)
    ~~> minus_to_sum ([("Base", 8400)])
 sum([SafeIndex([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_1,bibd#matrix_to_atom_3_2,bibd#matrix_to_atom_3_3;int(1..)],[sum([product([3,(x - 1);int(1..)]),(y - 1),1;int(1..)])]),-(1);int(1..)])
+
+--
+
+(x - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([x,-(1);int(1..)])
+
+--
+
+(x - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([x,-(1);int(1..)])
 
 --
 
