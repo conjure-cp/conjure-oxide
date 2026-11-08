@@ -1,5 +1,6 @@
 //! conjure_oxide solve sub-command
 #![allow(clippy::unwrap_used)]
+use std::collections::{BTreeMap, BTreeSet};
 use std::time::{Duration, Instant};
 use std::{
     fs::File,
@@ -8,8 +9,10 @@ use std::{
 };
 
 use crate::exit;
+use crate::rule_trace_aggregates::RuleTraceAggregatesHandle;
 use anyhow::anyhow;
 use clap::ValueHint;
+use conjure_cp::ast::SatEncodingDecision;
 use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
 use conjure_cp::{
     Model,
@@ -142,7 +145,11 @@ pub struct Args {
     pub keep_intermediate_solutions: bool,
 }
 
-pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
+pub fn run_solve_command(
+    global_args: GlobalArgs,
+    solve_args: Args,
+    aggregates: Option<&RuleTraceAggregatesHandle>,
+) -> anyhow::Result<()> {
     let essence_file = solve_args.essence_file.clone();
     let param_file = solve_args.param_file.clone();
 
@@ -150,6 +157,11 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     // (e.g. testsolve) can reuse some of these steps.
 
     let context = init_context(&global_args, essence_file, param_file)?;
+
+    if solve_args.stats_toml_path.is_some() {
+        set_rule_trace_enabled(true);
+        set_rule_trace_aggregates_enabled(true);
+    }
 
     let ctx_lock = context.read().unwrap();
     let essence_file_name = ctx_lock
@@ -183,6 +195,11 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     drop(ctx_lock);
 
     let rewritten_model = rewrite(unified_model, &global_args, Arc::clone(&context))?;
+
+    // Capture representations and SAT encoding choices
+    let mut model_choices = RecordedRunStats::default();
+
+    record_model_choices(&rewritten_model, &mut model_choices);
 
     let translation_time = translation_started_at.elapsed().as_secs_f64();
 
@@ -245,7 +262,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
             .map(|s| s.to_string_lossy().into_owned())
             .unwrap_or_else(|| "input".to_owned());
 
-        let row = RecordedRunStats {
+        let mut row = RecordedRunStats {
             parser: config.parser.clone(),
             rewriter: config.rewriter.clone(),
             comprehension_expander: config.comprehension_expander.clone(),
@@ -254,6 +271,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
             seed: config.seed,
             solver_seed: config.solver_seed,
             solver: config.solver.clone(),
+            minion_discrete_threshold: global_args.minion_discrete_threshold,
 
             case_name,
             model_index: 0,
@@ -271,11 +289,146 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
             ..Default::default()
         };
 
+        row.representations = model_choices.representations;
+
+        row.sat_encoding_amo = model_choices.sat_encoding_amo;
+        row.sat_encoding_cardinality = model_choices.sat_encoding_cardinality;
+        row.sat_encoding_pb = model_choices.sat_encoding_pb;
+        row.sat_encoding_table = model_choices.sat_encoding_table;
+        row.sat_encoding_element = model_choices.sat_encoding_element;
+        row.sat_encoding_alldifferent = model_choices.sat_encoding_alldifferent;
+
+        // Read the same rewrite-attempt counters used by exhaustive testing.
+        let context_json = serde_json::to_value(context.read().unwrap().clone())?;
+
+        let attempt_counts: Vec<u64> = context_json
+            .get("stats")
+            .and_then(|stats| stats.get("rewriterRuns"))
+            .and_then(serde_json::Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(|run| {
+                run.get("rewriterRuleApplicationAttempts")
+                    .and_then(serde_json::Value::as_u64)
+            })
+            .collect();
+
+        if !attempt_counts.is_empty() {
+            row.rule_trace.total_rule_attempts = Some(attempt_counts.iter().sum());
+        }
+
+        if let Some(handle) = aggregates {
+            let counts = handle.snapshot();
+
+            row.rule_trace.total_rule_applications = Some(counts.values().copied().sum());
+
+            row.rule_trace.rules = counts;
+        }
+
+        // Write the completed statistics record only after all fields are populated.
         replace_config_run_stats(path, &config, vec![row])?;
     }
     Ok(())
 }
-
+fn record_model_choices(model: &Model, row: &mut RecordedRunStats) {
+    row.representations = model
+        .symbols()
+        .iter_local()
+        .flat_map(|(_, decl)| {
+            decl.reprs()
+                .iter()
+                .map(|(name, _)| name.to_owned())
+                .collect::<Vec<_>>()
+        })
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    let mut families: BTreeMap<&str, BTreeSet<String>> = BTreeMap::new();
+    macro_rules! record {
+        ($family:literal, $selection:expr) => {
+            if let Some(selection) = $selection {
+                families
+                    .entry($family)
+                    .or_default()
+                    .insert(selection.algorithm.to_string());
+            }
+        };
+    }
+    for decision in model.sat_decisions() {
+        match decision {
+            SatEncodingDecision::AtMostOne { encoding, .. } => record!("amo", encoding),
+            SatEncodingDecision::Cardinality { encoding, .. } => record!("cardinality", encoding),
+            SatEncodingDecision::CountRelation {
+                encoding,
+                amo_encoding,
+                ..
+            } => {
+                record!("cardinality", encoding);
+                record!("amo", amo_encoding);
+            }
+            SatEncodingDecision::PseudoBoolean { encoding, .. }
+            | SatEncodingDecision::IntegerRelation { encoding, .. }
+            | SatEncodingDecision::Objective { encoding, .. } => record!("pb", encoding),
+            SatEncodingDecision::AllDifferent {
+                encoding,
+                amo_encoding,
+                pb_encoding,
+                ..
+            } => {
+                record!("alldifferent", encoding);
+                record!("amo", amo_encoding);
+                record!("pb", pb_encoding);
+            }
+            SatEncodingDecision::Table {
+                encoding,
+                pb_encoding,
+                ..
+            } => {
+                record!("table", encoding);
+                record!("pb", pb_encoding);
+            }
+            SatEncodingDecision::Element {
+                encoding,
+                pb_encoding,
+                ..
+            } => {
+                record!("element", encoding);
+                record!("pb", pb_encoding);
+            }
+            _ => {}
+        }
+    }
+    row.sat_encoding_amo = families
+        .remove("amo")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_cardinality = families
+        .remove("cardinality")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_pb = families
+        .remove("pb")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_table = families
+        .remove("table")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_element = families
+        .remove("element")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_alldifferent = families
+        .remove("alldifferent")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+}
 /// Returns a new Context and Solver for solving.
 pub(crate) fn init_context(
     global_args: &GlobalArgs,

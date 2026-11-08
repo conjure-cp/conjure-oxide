@@ -157,11 +157,10 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<LoggingState> {
             }))
     });
 
-    let rule_trace_aggregates_handle = global_args
-        .rule_trace_aggregates
-        .clone()
-        .map(RuleTraceAggregatesHandle::new)
-        .transpose()?;
+    let rule_trace_aggregates_handle = Some(match global_args.rule_trace_aggregates.clone() {
+        Some(path) => RuleTraceAggregatesHandle::new(path)?,
+        None => RuleTraceAggregatesHandle::in_memory(),
+    });
 
     let rule_trace_aggregates_layer = rule_trace_aggregates_handle.as_ref().map(|handle| {
         handle
@@ -265,7 +264,13 @@ fn run_lsp_server() -> anyhow::Result<()> {
 fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
     let global_args = cli.global_args;
     match cli.subcommand {
-        cli::Command::Solve(solve_args) => run_solve_command(global_args, solve_args),
+        cli::Command::Solve(solve_args) => run_solve_command(
+            global_args,
+            solve_args,
+            LOGGING_STATE
+                .get()
+                .and_then(|state| state.rule_trace_aggregates.as_ref()),
+        ),
         cli::Command::TestSolve(local_args) => run_test_solve_command(global_args, local_args),
         cli::Command::PrintJsonSchema => run_print_info_schema_command(),
         cli::Command::Completion(completion_args) => run_completion_command(completion_args),
