@@ -1892,9 +1892,123 @@ fn translate_lex_comparison(
         });
     }
 
-    Err(SolverError::OpNotSupported(
-        "Matrix lex comparison too large for base encoding".into(),
-    ))
+    // Chain encoding for lexicographical comparison of arbitrary length
+    let (strict, l_vec, r_vec, len_l, len_r) = match op {
+        "<" => (true, elems_l, elems_r, n, m),
+        "<=" => (false, elems_l, elems_r, n, m),
+        ">" => (true, elems_r, elems_l, m, n),
+        ">=" => (false, elems_r, elems_l, m, n),
+        _ => {
+            return Err(SolverError::OpNotSupported(format!(
+                "Unsupported operator for large lex comparison: {}",
+                op
+            )));
+        }
+    };
+
+    let k = len_l.min(len_r);
+
+    // p[i] represents whether prefix of length i+1 is equal (for i in 0..k).
+    let mut p = Vec::with_capacity(k);
+    for _ in 0..k {
+        let p_var = cp_model.variables.len() as i32;
+        cp_model.variables.push(IntegerVariableProto {
+            name: format!("__lex_prefix_eq_{p_var}"),
+            domain: vec![0, 1],
+        });
+        p.push(p_var);
+    }
+
+    for i in 0..k {
+        let p_curr = p[i];
+        let diff = subtract_linear_exprs(l_vec[i].clone(), r_vec[i].clone());
+
+        if i == 0 {
+            // Under p[0]: l[0] == r[0]
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![p_curr],
+                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
+                    vars: diff.vars.clone(),
+                    coeffs: diff.coeffs.clone(),
+                    domain: vec![-diff.offset, -diff.offset],
+                })),
+            });
+
+            // Under not(p[0]): l[0] < r[0]  (l[0] - r[0] <= -1)
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![-p_curr - 1],
+                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
+                    vars: diff.vars,
+                    coeffs: diff.coeffs,
+                    domain: vec![ORTOOLS_MIN, -1 - diff.offset],
+                })),
+            });
+        } else {
+            let p_prev = p[i - 1];
+
+            // 1. p[i] => p[i-1]  <=>  not(p[i]) or p[i-1]
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![],
+                constraint: Some(constraint_proto::Constraint::BoolOr(BoolArgumentProto {
+                    literals: vec![-p_curr - 1, p_prev],
+                })),
+            });
+
+            // 2. Under p[i]: l[i] == r[i]
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![p_curr],
+                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
+                    vars: diff.vars.clone(),
+                    coeffs: diff.coeffs.clone(),
+                    domain: vec![-diff.offset, -diff.offset],
+                })),
+            });
+
+            // 3. Under p[i-1] and not(p[i]): l[i] < r[i]
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![p_prev, -p_curr - 1],
+                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
+                    vars: diff.vars,
+                    coeffs: diff.coeffs,
+                    domain: vec![ORTOOLS_MIN, -1 - diff.offset],
+                })),
+            });
+        }
+    }
+
+    let p_last = p[k - 1];
+    let allow_equal = if strict {
+        len_l < len_r
+    } else {
+        len_l <= len_r
+    };
+
+    if !allow_equal {
+        // Prefixes cannot be all equal! Enforce p[k-1] == 0.
+        Ok(ConstraintProto {
+            name: String::new(),
+            enforcement_literal: vec![],
+            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
+                vars: vec![p_last],
+                coeffs: vec![1],
+                domain: vec![0, 0],
+            })),
+        })
+    } else {
+        Ok(exact_linear_constraint(
+            LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            },
+            0,
+        ))
+    }
 }
 
 fn bind_reified_constraint(

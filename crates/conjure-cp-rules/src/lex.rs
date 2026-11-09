@@ -137,7 +137,7 @@ fn lex_represented_matrix_to_atoms(
         .map(Some)
 }
 
-#[register_rule("Minion", 2000, [LexLt, LexLeq])]
+#[register_rule(["Minion", "OrToolsCpSat"], 2000, [LexLt, LexLeq])]
 fn flatten_lex_lt_leq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (a, b),
@@ -189,7 +189,7 @@ fn flatten_lex_lt_leq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// If they are the same length, then the strictness of the comparison comes into effect.
 ///
 /// Must be applied before matrix_to_list since this enumerates over operand indices.
-#[register_rule(["Smt", "OrToolsCpSat"], 2001, [LexLt, LexLeq])]
+#[register_rule("Smt", 2001, [LexLt, LexLeq])]
 fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (a, b),
