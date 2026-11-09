@@ -1,4 +1,4 @@
-//! Integration tests for the `conjure-oxide solve --stats-toml-path` CLI flag.
+//! Integration tests for the `conjure-oxide solve --stats-path` CLI flag.
 //!
 //! Run with:
 //! cargo test -p conjure-cp-cli --test stats_toml_cli -- --nocapture
@@ -58,7 +58,7 @@ fn run_solve(
     let mut cmd = Command::new(env!("CARGO_BIN_EXE_conjure-oxide"));
     cmd.current_dir(&dir.0).args(global_args).arg("solve");
     if let Some(path) = stats_path {
-        cmd.arg("--stats-toml-path").arg(path);
+        cmd.arg("--stats-path").arg(path);
     }
     cmd.arg(model).output().expect("launch conjure-oxide")
 }

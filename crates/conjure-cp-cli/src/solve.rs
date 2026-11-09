@@ -32,7 +32,7 @@ use conjure_cp::{
 };
 use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
 use conjure_cp_cli::find_conjure::conjure_executable;
-use conjure_cp_cli::test_config::{RecordedRunConfig, RecordedRunStats, replace_config_run_stats};
+use conjure_cp_cli::stats_toml::{RecordedRunConfig, RecordedRunStats, replace_config_run_stats};
 use conjure_cp_cli::utils::conjure::{
     get_solutions_with_timings, solutions_to_essence, solutions_to_json,
 };
@@ -99,7 +99,7 @@ pub struct Args {
 
     /// Write execution statistics to a TOML file.
     #[arg(long, value_hint = ValueHint::FilePath)]
-    pub stats_toml_path: Option<PathBuf>,
+    pub stats_path: Option<PathBuf>,
 
     /// Do not run the solver.
     ///
@@ -158,7 +158,7 @@ pub fn run_solve_command(
 
     let context = init_context(&global_args, essence_file, param_file)?;
 
-    if solve_args.stats_toml_path.is_some() {
+    if solve_args.stats_path.is_some() {
         set_rule_trace_enabled(true);
         set_rule_trace_aggregates_enabled(true);
     }
@@ -244,7 +244,7 @@ pub fn run_solve_command(
         std::fs::write(path, format!("{pretty_json}\n"))?;
     }
 
-    if let Some(ref path) = solve_args.stats_toml_path {
+    if let Some(ref path) = solve_args.stats_path {
         let config = RecordedRunConfig {
             parser: global_args.parser.to_string(),
             rewriter: global_args.rewriter.to_string(),
