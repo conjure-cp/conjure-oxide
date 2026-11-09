@@ -347,8 +347,8 @@ impl<A: Display> Display for PermutationAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let size_str = fmt_size("numMoved", &self.num_moved);
         match &self.representation {
-            // Without a preference the size is printed bare, as it always has been.
-            None => write!(f, "{size_str}"),
+            None if size_str.is_empty() => Ok(()),
+            None => write!(f, "({size_str})"),
             Some(representation) if size_str.is_empty() => {
                 write!(f, "(representation {representation})")
             }
