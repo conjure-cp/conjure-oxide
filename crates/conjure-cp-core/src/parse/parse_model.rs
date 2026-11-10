@@ -1432,7 +1432,7 @@ fn parse_comprehension(
                         .and_then(Value::as_array)
                         .ok_or_else(|| fail("gen_inner.pointer(/0).as_array"))?;
                         let gen_names = gen_names_array.iter();
-                        
+
                         for gen_name in gen_names {
                             let name = gen_name
                                 .pointer("/Single/Name")
@@ -1460,18 +1460,29 @@ fn parse_comprehension(
                         comprehension
                     }
                     "GenInExpr" => {
-                        let name = gen_inner
-                            .pointer("/0/Single/Name")
-                            .and_then(Value::as_str)
-                            .ok_or_else(|| {
-                                fail("GenDomainNoRepr.pointer(/0/Single/Name).as_str")
-                            })?;
-                        let generator_expr = gen_inner
-                            .pointer("/1")
-                            .ok_or_else(|| fail("GenInExpr.pointer(/1)"))?;
-                        let expr = parse_expression(generator_expr, &scope)
-                            .map_err(|_| fail("GenInExpr.parse_expression"))?;
-                        comprehension.expression_generator(name.into(), expr)
+                        let gen_names_array = gen_inner
+                        .pointer("/0")
+                        .and_then(Value::as_array)
+                        .ok_or_else(|| fail("gen_inner.pointer(/0).as_array"))?;
+                        let gen_names = gen_names_array.iter();
+                        
+                        for gen_name in gen_names {
+                            let name = gen_name
+                                .pointer("/Single/Name")
+                                .and_then(Value::as_str)
+                                .ok_or_else(|| {
+                                    fail("GenDomainNoRepr.pointer(/Single/Name).as_str")
+                                })?;
+                            let generator_expr = gen_inner
+                                .pointer("/1")
+                                .ok_or_else(|| fail("GenInExpr.pointer(/1)"))?;
+                            let expr = parse_expression(generator_expr, &scope)
+                                .map_err(|_| fail("GenInExpr.parse_expression"))?;
+
+                            comprehension = comprehension.expression_generator(name.into(), expr)
+                        }
+
+                        comprehension
                     }
                     _ => {
                         bug!("unknown generator type inside comprehension {name}");
