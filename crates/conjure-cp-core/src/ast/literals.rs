@@ -1361,7 +1361,30 @@ impl AbstractLiteral<Expression> {
                         .collect(),
                 ))
             }
-            AbstractLiteral::Function(_) => todo!("Implement into_literals for functions"),
+            AbstractLiteral::Function(entries) => {
+                let mut literals = vec![];
+                for (e1, e2) in entries {
+                    let literal1 = match e1 {
+                        Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                        Expression::AbstractLiteral(_, abslit) => {
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                        }
+                        _ => None,
+                    }?;
+
+                    let literal2 = match e2 {
+                        Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                        Expression::AbstractLiteral(_, abslit) => {
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                        }
+                        _ => None,
+                    }?;
+
+                    literals.push((literal1, literal2));
+                }
+
+                Some(AbstractLiteral::Function(literals))
+            }
             AbstractLiteral::Variant(entry) => {
                 let literal = match entry.value.clone() {
                     Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),

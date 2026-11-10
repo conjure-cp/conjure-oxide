@@ -282,9 +282,9 @@ module.exports = grammar ({
     function_attributes: $ => commaSep1($.function_attribute),
 
     function_attribute: $ => choice(
-      seq(field("attribute", "size"), choice(field("value", $.integer), seq("(", field("value", $.integer), ")"))),
-      seq(field("attribute", "minSize"), choice(field("value", $.integer), seq("(", field("value", $.integer), ")"))),
-      seq(field("attribute", "maxSize"), choice(field("value", $.integer), seq("(", field("value", $.integer), ")"))),
+      seq(field("attribute", "size"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "minSize"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "maxSize"), field("value", $._domain_attribute_value)),
       field("attribute", "total"),
       field("attribute", "injective"),
       field("attribute", "surjective"),
@@ -309,9 +309,9 @@ module.exports = grammar ({
     relation_attributes: $ => commaSep1($.relation_attribute),
 
     relation_attribute: $ => choice(
-      seq(field("attribute", "size"), field("value", $.integer)),
-      seq(field("attribute", "minSize"), field("value", $.integer)),
-      seq(field("attribute", "maxSize"), field("value", $.integer)),
+      seq(field("attribute", "size"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "minSize"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "maxSize"), field("value", $._domain_attribute_value)),
       field("attribute", "reflexive"),
       field("attribute", "irreflexive"),
       field("attribute", "coreflexive"),
@@ -346,12 +346,12 @@ module.exports = grammar ({
     partition_attributes: $ => commaSep1($.partition_attribute),
 
     partition_attribute: $ => choice(
-      seq(field("attribute", "numParts"), field("value", $.integer)),
-      seq(field("attribute", "minNumParts"), field("value", $.integer)),
-      seq(field("attribute", "maxNumParts"), field("value", $.integer)),
-      seq(field("attribute", "partSize"), field("value", $.integer)),
-      seq(field("attribute", "minPartSize"), field("value", $.integer)),
-      seq(field("attribute", "maxPartSize"), field("value", $.integer)),
+      seq(field("attribute", "numParts"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "minNumParts"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "maxNumParts"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "partSize"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "minPartSize"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "maxPartSize"), field("value", $._domain_attribute_value)),
       field("attribute", "regular"),
       seq(field("attribute", "representation"), field("value", $.identifier))
     ),
@@ -370,9 +370,9 @@ module.exports = grammar ({
     permutation_attributes: $ => commaSep1($.permutation_attribute),
 
     permutation_attribute: $ => choice(
-      seq(field("attribute", "numMoved"), field("value", $.integer)),
-      seq(field("attribute", "minNumMoved"), field("value", $.integer)),
-      seq(field("attribute", "maxNumMoved"), field("value", $.integer)),
+      seq(field("attribute", "numMoved"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "minNumMoved"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "maxNumMoved"), field("value", $._domain_attribute_value)),
       seq(field("attribute", "representation"), field("value", $.identifier))
     ),
 
@@ -974,11 +974,11 @@ module.exports = grammar ({
         ":",
         field("domain", $.domain)
       ),
-      // i <- [1,2,3]
+      // The source is any expression; whether it is iterable is a semantic concern.
       seq(
         field("variable", choice($.identifier, $.tuple)),
         "<-",
-        field("collection", choice($.arithmetic_expr, $.identifier, $.matrix, $.set_operation))
+        field("collection", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr, $.atom, $.annotation_expr))
       )
     )),
 

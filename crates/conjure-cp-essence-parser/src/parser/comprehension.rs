@@ -3,7 +3,6 @@ use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
-use crate::parser::atom::parse_atom;
 use crate::parser::domain::parse_domain;
 use crate::util::{TypecheckingContext, named_children};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
@@ -14,26 +13,6 @@ use conjure_cp_core::ast::{
 };
 use tree_sitter::Node;
 use uniplate::Uniplate as _;
-
-fn parse_collection_expression(
-    ctx: &mut ParseContext,
-    collection_node: Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    match collection_node.kind() {
-        "arithmetic_expr" | "bool_expr" | "comparison_expr" => {
-            parse_expression(ctx, collection_node)
-        }
-        "atom" | "matrix" | "set_literal" | "tuple" | "record" | "identifier"
-        | "index_or_slice" | "set_operation" => parse_atom(ctx, &collection_node),
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!("Unexpected collection type: '{}'", collection_node.kind()),
-                Some(collection_node.range()),
-            ));
-            Ok(None)
-        }
-    }
-}
 
 /// Collects the names a generator pattern binds, each with its index path into the generator
 /// variable: `(i, _)` binds `i` at path `[1]`, and `(i, (j, k))` binds `k` at path `[2, 2]`.
@@ -162,9 +141,7 @@ fn parse_generator(
         let mut collection_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
         collection_ctx.typechecking_context = TypecheckingContext::Unknown;
         collection_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-        let Some(collection_expr) =
-            parse_collection_expression(&mut collection_ctx, collection_node)?
-        else {
+        let Some(collection_expr) = parse_expression(&mut collection_ctx, collection_node)? else {
             return Ok(None);
         };
         let collection_expr = substitute_lettings(collection_expr, lettings);
@@ -218,8 +195,7 @@ fn add_quantifier_generators_from_collection(
     let mut collection_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
     collection_ctx.typechecking_context = TypecheckingContext::Unknown;
     collection_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-    let Some(collection_expr) = parse_collection_expression(&mut collection_ctx, collection_node)?
-    else {
+    let Some(collection_expr) = parse_expression(&mut collection_ctx, collection_node)? else {
         return Ok(None);
     };
 

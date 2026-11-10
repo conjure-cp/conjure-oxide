@@ -1,4 +1,3 @@
-use super::atom::parse_int;
 use super::util::named_children;
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
@@ -667,7 +666,7 @@ fn parse_function_domain(
                         let Some(value_node) = attribute.child_by_field_name("value") else {
                             return Ok(None);
                         };
-                        let Some(value) = parse_int(ctx, &value_node) else {
+                        let Some(value) = parse_int_val(ctx, value_node)? else {
                             return Ok(None);
                         };
                         match name {
@@ -763,7 +762,7 @@ fn parse_relation_domain(
                         let Some(value_node) = attribute.child_by_field_name("value") else {
                             return Ok(None);
                         };
-                        let Some(value) = parse_int(ctx, &value_node) else {
+                        let Some(value) = parse_int_val(ctx, value_node)? else {
                             return Ok(None);
                         };
                         match name {
@@ -849,7 +848,7 @@ fn parse_partition_domain(
                         let Some(value_node) = attribute.child_by_field_name("value") else {
                             return Ok(None);
                         };
-                        let Some(value) = parse_int(ctx, &value_node) else {
+                        let Some(value) = parse_int_val(ctx, value_node)? else {
                             return Ok(None);
                         };
                         match name {
@@ -935,7 +934,7 @@ fn parse_permutation_domain(
                 let Some(value_node) = attribute.child_by_field_name("value") else {
                     return Ok(None);
                 };
-                let Some(value) = parse_int(ctx, &value_node) else {
+                let Some(value) = parse_int_val(ctx, value_node)? else {
                     return Ok(None);
                 };
                 match name {
