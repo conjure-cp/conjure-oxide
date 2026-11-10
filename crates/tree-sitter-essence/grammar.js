@@ -976,7 +976,7 @@ module.exports = grammar ({
       ),
       // The source is any expression; whether it is iterable is a semantic concern.
       seq(
-        field("variable", choice($.identifier, $.tuple)),
+        field("variable", commaSep1(choice($.identifier, $.tuple))),
         "<-",
         field("collection", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr, $.atom, $.annotation_expr))
       )
