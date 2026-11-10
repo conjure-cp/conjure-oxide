@@ -253,7 +253,7 @@ pub fn run_solve_command(
             channelling: global_args.channelling.to_string(),
             seed: global_args.seed,
             solver_seed: global_args.solver_seed,
-            solver: global_args.solver.as_str().to_owned(),
+            solver: global_args.solver.as_str(),
         };
 
         let case_name = solve_args
@@ -345,19 +345,23 @@ fn record_model_choices(model: &Model, row: &mut RecordedRunStats) {
         .collect();
     let mut families: BTreeMap<&str, BTreeSet<String>> = BTreeMap::new();
     macro_rules! record {
-        ($family:literal, $selection:expr) => {
-            if let Some(selection) = $selection {
+        ($family:expr, $selection:expr) => {{
+            $selection.iter().for_each(|selection| {
                 families
                     .entry($family)
                     .or_default()
                     .insert(selection.algorithm.to_string());
-            }
-        };
+            });
+        }};
     }
     for decision in model.sat_decisions() {
         match decision {
-            SatEncodingDecision::AtMostOne { encoding, .. } => record!("amo", encoding),
-            SatEncodingDecision::Cardinality { encoding, .. } => record!("cardinality", encoding),
+            SatEncodingDecision::AtMostOne { encoding, .. } => {
+                record!("amo", encoding);
+            }
+            SatEncodingDecision::Cardinality { encoding, .. } => {
+                record!("cardinality", encoding);
+            }
             SatEncodingDecision::CountRelation {
                 encoding,
                 amo_encoding,
