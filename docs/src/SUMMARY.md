@@ -48,6 +48,8 @@
   - [Records](reference/domains/records.md)
   - [Variants](reference/domains/variants.md)
   - [Permutations](reference/domains/permutations.md)
+  - [Enumerated Types](reference/domains/enumerated-types.md)
+  - [Unnamed Types](reference/domains/unnamed-types.md)
 
 - [Expressions](reference/expressions/expressions.md)
   - [Boolean](reference/expressions/boolean.md)

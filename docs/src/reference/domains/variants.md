@@ -6,7 +6,7 @@ However, unlike a [[record TODO]], a variant literal can only use one of these f
 
 ## Variant Domains
 
-```
+```bnf
 <VariantDomain> ::= "variant" "{" list(<NameDomainPair>) "}"
 <NameDomainPair> ::= <Identifier> ":" <Domain>
 ```
@@ -22,3 +22,11 @@ Variants take no attributes.
 ```
 
 ## Operators
+
+### active
+
+```rs
+active(v: variant, f: identifier): bool;
+```
+
+Returns true if field `f` is currently the field active in variant `v`.
