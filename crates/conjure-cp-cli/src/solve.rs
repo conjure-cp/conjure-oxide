@@ -9,7 +9,6 @@ use std::{
 };
 
 use crate::exit;
-use crate::rule_trace_aggregates::RuleTraceAggregatesHandle;
 use anyhow::anyhow;
 use clap::ValueHint;
 use conjure_cp::ast::SatEncodingDecision;
@@ -38,6 +37,7 @@ use conjure_cp_cli::stats::{
 use conjure_cp_cli::utils::conjure::{
     get_solutions_with_timings, solutions_to_essence, solutions_to_json,
 };
+use conjure_cp_cli::utils::rule_trace::RuleApplicationCounter;
 use conjure_cp_cli::utils::simplified_json::{
     domains_from_model, param_model_from_assignments, params_from_simplified_json_str,
     solution_to_simplified_json, solutions_to_simplified_json_string,
@@ -153,7 +153,7 @@ fn parse_stats_path(input: &str) -> Result<PathBuf, String> {
 pub fn run_solve_command(
     global_args: GlobalArgs,
     solve_args: Args,
-    aggregates: Option<&RuleTraceAggregatesHandle>,
+    rule_application_counts: &RuleApplicationCounter,
 ) -> anyhow::Result<()> {
     let essence_file = solve_args.essence_file.clone();
     let param_file = solve_args.param_file.clone();
@@ -162,11 +162,6 @@ pub fn run_solve_command(
     // (e.g. testsolve) can reuse some of these steps.
 
     let context = init_context(&global_args, essence_file, param_file)?;
-
-    if solve_args.stats.is_some() {
-        set_rule_trace_enabled(true);
-        set_rule_trace_aggregates_enabled(true);
-    }
 
     let ctx_lock = context.read().unwrap();
     let essence_file_name = ctx_lock
@@ -315,13 +310,9 @@ pub fn run_solve_command(
             row.rule_trace.total_rule_attempts = Some(attempt_counts.iter().sum());
         }
 
-        if let Some(handle) = aggregates {
-            let counts = handle.snapshot();
-
-            row.rule_trace.total_rule_applications = Some(counts.values().copied().sum());
-
-            row.rule_trace.rules = counts;
-        }
+        let counts = rule_application_counts.snapshot();
+        row.rule_trace.total_rule_applications = Some(counts.values().copied().sum());
+        row.rule_trace.rules = counts;
 
         // Write the completed statistics record only after all fields are populated.
         replace_config_run_stats(path, &config, vec![row])?;
@@ -439,19 +430,18 @@ pub(crate) fn init_context(
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
     let default_rule_trace_enabled = global_args.rule_trace.is_some();
     let rule_attempt_trace_enabled = global_args.rule_attempt_trace.is_some();
-    let rule_trace_aggregates_enabled = global_args.rule_trace_aggregates.is_some();
-    let rule_trace_enabled =
-        default_rule_trace_enabled || rule_attempt_trace_enabled || rule_trace_aggregates_enabled;
 
     set_current_parser(global_args.parser);
     set_current_rewriter(global_args.rewriter);
     set_comprehension_expander(global_args.comprehension_expander);
     set_current_solver_family(global_args.solver);
     set_minion_discrete_threshold(global_args.minion_discrete_threshold);
-    set_rule_trace_enabled(rule_trace_enabled);
+    // Count every translation's rule applications, regardless of which outputs
+    // were requested. Solver-time CDP tracing remains controlled separately.
+    set_rule_trace_enabled(true);
     set_default_rule_trace_enabled(default_rule_trace_enabled);
     set_rule_attempt_trace_enabled(rule_attempt_trace_enabled);
-    set_rule_trace_aggregates_enabled(rule_trace_aggregates_enabled);
+    set_rule_trace_aggregates_enabled(true);
 
     let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
@@ -752,4 +742,41 @@ fn per_solution_output_path(base: &Path, index: usize, format: OutputFormat) -> 
         OutputFormat::Json => "solution.json",
     };
     parent.join(format!("{stem}-{index:06}.{extension}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cli::{Cli, Command};
+    use clap::Parser;
+    use tracing_subscriber::layer::SubscriberExt as _;
+    use tracing_subscriber::{Layer, filter::FilterFn};
+
+    #[test]
+    fn collects_rule_applications_without_requesting_an_output_file() {
+        let directory = tempfile::tempdir().unwrap();
+        let model = directory.path().join("input.essence");
+        std::fs::write(&model, "find x : int(1..5)\nsuch that x + 1 = 3\n").unwrap();
+        let cli = Cli::try_parse_from([
+            "conjure-oxide",
+            "solve",
+            model.to_str().unwrap(),
+            "--no-run-solver",
+        ])
+        .unwrap();
+        let Command::Solve(args) = cli.subcommand else {
+            panic!("expected solve command");
+        };
+        let counts = RuleApplicationCounter::default();
+        let subscriber = tracing_subscriber::registry().with(counts.clone().with_filter(
+            FilterFn::new(|meta| meta.target() == "rule_engine_rule_trace_aggregates"),
+        ));
+
+        tracing::subscriber::with_default(subscriber, || {
+            run_solve_command(cli.global_args, args, &counts).unwrap();
+        });
+
+        assert!(counts.snapshot().values().sum::<u64>() > 0);
+        assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 1);
+    }
 }

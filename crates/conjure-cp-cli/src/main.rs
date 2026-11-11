@@ -10,15 +10,18 @@ mod print_info_schema;
 mod rule_trace_aggregates;
 mod solve;
 mod test_solve;
+use anyhow::Context as _;
 use clap::{CommandFactory, Parser};
 use clap_complete::generate;
 use cli::{Cli, GlobalArgs, LogDetail, LogFormat};
+use conjure_cp_cli::utils::rule_trace::RuleApplicationCounter;
 use pretty::run_pretty_command;
 use print_info_schema::run_print_info_schema_command;
-use rule_trace_aggregates::RuleTraceAggregatesHandle;
+use rule_trace_aggregates::write_rule_trace_aggregates;
 use solve::run_solve_command;
 use std::fs::File;
 use std::io;
+use std::path::PathBuf;
 use std::sync::{Arc, OnceLock};
 use test_solve::run_test_solve_command;
 
@@ -33,13 +36,15 @@ use tracing_subscriber::{EnvFilter, Layer, fmt};
 use conjure_cp_lsp::server;
 
 struct LoggingState {
-    rule_trace_aggregates: Option<RuleTraceAggregatesHandle>,
+    rule_application_counts: RuleApplicationCounter,
+    rule_trace_aggregates_path: Option<PathBuf>,
 }
 
 impl LoggingState {
     fn flush(&self) {
-        if let Some(handle) = &self.rule_trace_aggregates {
-            handle.flush();
+        if let Some(path) = &self.rule_trace_aggregates_path {
+            write_rule_trace_aggregates(path, &self.rule_application_counts.snapshot())
+                .expect("failed to write rule trace aggregates");
         }
     }
 }
@@ -85,9 +90,10 @@ pub fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     let logging_state = setup_logging(&cli.global_args)?;
+    let rule_application_counts = logging_state.rule_application_counts.clone();
     let _ = LOGGING_STATE.set(logging_state);
     let _flush = FlushLoggingOnDrop;
-    run_subcommand(cli)
+    run_subcommand(cli, &rule_application_counts)
 }
 
 fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<LoggingState> {
@@ -157,19 +163,20 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<LoggingState> {
             }))
     });
 
-    let rule_trace_aggregates_handle = Some(match global_args.rule_trace_aggregates.clone() {
-        Some(path) => RuleTraceAggregatesHandle::new(path)?,
-        None => RuleTraceAggregatesHandle::in_memory(),
-    });
+    // Validate an explicitly requested output before rewriting. Collection itself
+    // always happens in memory, independently of the output destination.
+    if let Some(path) = &global_args.rule_trace_aggregates {
+        File::create(path)
+            .with_context(|| format!("Unable to create aggregate trace file {}", path.display()))?;
+    }
 
-    let rule_trace_aggregates_layer = rule_trace_aggregates_handle.as_ref().map(|handle| {
-        handle
-            .layer()
-            .with_filter(EnvFilter::new("rule_engine_rule_trace_aggregates=trace"))
-            .with_filter(FilterFn::new(|meta| {
-                meta.target() == "rule_engine_rule_trace_aggregates"
-            }))
-    });
+    let rule_application_counts = RuleApplicationCounter::default();
+    let rule_trace_aggregates_layer = rule_application_counts
+        .clone()
+        .with_filter(EnvFilter::new("rule_engine_rule_trace_aggregates=trace"))
+        .with_filter(FilterFn::new(|meta| {
+            meta.target() == "rule_engine_rule_trace_aggregates"
+        }));
 
     let log_format = global_args.log_format.unwrap_or_default();
     let log_detail = global_args.log_detail.unwrap_or_default();
@@ -227,7 +234,8 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<LoggingState> {
         .init();
 
     Ok(LoggingState {
-        rule_trace_aggregates: rule_trace_aggregates_handle,
+        rule_application_counts,
+        rule_trace_aggregates_path: global_args.rule_trace_aggregates.clone(),
     })
 }
 
@@ -261,16 +269,15 @@ fn run_lsp_server() -> anyhow::Result<()> {
 }
 
 /// Runs the selected subcommand
-fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
+fn run_subcommand(
+    cli: Cli,
+    rule_application_counts: &RuleApplicationCounter,
+) -> anyhow::Result<()> {
     let global_args = cli.global_args;
     match cli.subcommand {
-        cli::Command::Solve(solve_args) => run_solve_command(
-            global_args,
-            solve_args,
-            LOGGING_STATE
-                .get()
-                .and_then(|state| state.rule_trace_aggregates.as_ref()),
-        ),
+        cli::Command::Solve(solve_args) => {
+            run_solve_command(global_args, solve_args, rule_application_counts)
+        }
         cli::Command::TestSolve(local_args) => run_test_solve_command(global_args, local_args),
         cli::Command::PrintJsonSchema => run_print_info_schema_command(),
         cli::Command::Completion(completion_args) => run_completion_command(completion_args),
