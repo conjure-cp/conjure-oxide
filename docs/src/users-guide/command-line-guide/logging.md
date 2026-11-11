@@ -98,6 +98,4 @@ The path must end in `.toml` or `.json`. An existing statistics file retains oth
 and replaces the rows for the current configuration. `--no-run-solver` records translation
 statistics without solver timings.
 
-`--stats` replaces `--stats-path` and `--info-json-path`. JSON now uses the same report structure
-as TOML rather than the previous context dump. Run `conjure-oxide print-json-schema` to inspect
-the JSON statistics schema.
+Run `conjure-oxide print-json-schema` to inspect the JSON statistics schema.
