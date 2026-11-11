@@ -1,6 +1,7 @@
 //! conjure_oxide solve sub-command
 #![allow(clippy::unwrap_used)]
-use std::time::Duration;
+use std::collections::{BTreeMap, BTreeSet};
+use std::time::{Duration, Instant};
 use std::{
     fs::File,
     path::{Path, PathBuf},
@@ -10,6 +11,7 @@ use std::{
 use crate::exit;
 use anyhow::anyhow;
 use clap::ValueHint;
+use conjure_cp::ast::SatEncodingDecision;
 use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
 use conjure_cp::{
     Model,
@@ -29,7 +31,13 @@ use conjure_cp::{
 };
 use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
 use conjure_cp_cli::find_conjure::conjure_executable;
-use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_essence, solutions_to_json};
+use conjure_cp_cli::stats::{
+    RecordedRunConfig, RecordedRunStats, StatsFormat, replace_config_run_stats,
+};
+use conjure_cp_cli::utils::conjure::{
+    get_solutions_with_timings, solutions_to_essence, solutions_to_json,
+};
+use conjure_cp_cli::utils::rule_trace::RuleApplicationCounter;
 use conjure_cp_cli::utils::simplified_json::{
     domains_from_model, param_model_from_assignments, params_from_simplified_json_str,
     solution_to_simplified_json, solutions_to_simplified_json_string,
@@ -87,9 +95,10 @@ pub struct Args {
     #[arg(value_name = "PARAM_ESSENCE", value_hint = ValueHint::FilePath)]
     pub param_file: Option<PathBuf>,
 
-    /// Save execution info as JSON to the given filepath.
-    #[arg(long ,value_hint=ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
-    pub info_json_path: Option<PathBuf>,
+    /// Write execution statistics; the .toml or .json extension selects the format.
+    #[arg(long, value_name = "PATH", value_hint = ValueHint::FilePath,
+        value_parser = parse_stats_path, help_heading = LOGGING_HELP_HEADING)]
+    pub stats: Option<PathBuf>,
 
     /// Do not run the solver.
     ///
@@ -135,7 +144,17 @@ pub struct Args {
     pub keep_intermediate_solutions: bool,
 }
 
-pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
+fn parse_stats_path(input: &str) -> Result<PathBuf, String> {
+    let path = PathBuf::from(input);
+    StatsFormat::from_path(&path).map_err(|err| err.to_string())?;
+    Ok(path)
+}
+
+pub fn run_solve_command(
+    global_args: GlobalArgs,
+    solve_args: Args,
+    rule_application_counts: &RuleApplicationCounter,
+) -> anyhow::Result<()> {
     let essence_file = solve_args.essence_file.clone();
     let param_file = solve_args.param_file.clone();
 
@@ -150,6 +169,8 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         .as_ref()
         .expect("context should contain the problem input file");
     let param_file_name = ctx_lock.param_file_name.as_ref();
+
+    let translation_started_at = Instant::now();
 
     // parse models
     let problem_model = parse(&global_args, Arc::clone(&context), essence_file_name)?;
@@ -175,35 +196,232 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
 
     let rewritten_model = rewrite(unified_model, &global_args, Arc::clone(&context))?;
 
+    // Capture representations and SAT encoding choices
+    let mut model_choices = RecordedRunStats::default();
+
+    record_model_choices(&rewritten_model, &mut model_choices);
+
+    let translation_time = translation_started_at.elapsed().as_secs_f64();
+
     let solver = init_solver(&global_args)?;
 
-    if solve_args.no_run_solver {
+    let solver_started_at = Instant::now();
+
+    let measured = if solve_args.no_run_solver {
         println!("{}", rewritten_model);
 
-        if let Some(path) = global_args.save_solver_input_file {
+        if let Some(ref path) = global_args.save_solver_input_file {
             let solver = solver.load_model(rewritten_model)?;
-            tracing::info!(
-                target: "conjure::stage",
-                path = %path.display(),
-                "writing solver input file"
-            );
+
             let mut file: Box<dyn std::io::Write> = Box::new(File::create(path)?);
+
             solver.write_solver_input_file(&mut file)?;
         }
-    } else {
-        run_solver(solver, &global_args, &solve_args, rewritten_model)?
-    }
 
-    // still do postamble even if we didn't run the solver
-    if let Some(ref path) = solve_args.info_json_path {
-        let context_obj = context.read().unwrap().clone();
-        let generated_json = &serde_json::to_value(context_obj)?;
-        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
-        std::fs::write(path, format!("{pretty_json}\n"))?;
+        None
+    } else {
+        Some(run_solver(
+            solver,
+            &global_args,
+            &solve_args,
+            rewritten_model,
+        )?)
+    };
+
+    let solve_time = measured
+        .as_ref()
+        .map(|_| solver_started_at.elapsed().as_secs_f64());
+
+    let backend_time = measured.as_ref().map(|t| t.0);
+    let search_time = measured.as_ref().map(|t| t.1);
+    let solution_processing_time = measured.as_ref().map(|t| t.2);
+
+    // Still write translation statistics when the solver was not run.
+    if let Some(ref path) = solve_args.stats {
+        let config = RecordedRunConfig {
+            parser: global_args.parser.to_string(),
+            rewriter: global_args.rewriter.to_string(),
+            comprehension_expander: global_args.comprehension_expander.to_string(),
+            heuristic: global_args.heuristic.to_string(),
+            channelling: global_args.channelling.to_string(),
+            seed: global_args.seed,
+            solver_seed: global_args.solver_seed,
+            solver: global_args.solver.as_str(),
+        };
+
+        let case_name = solve_args
+            .essence_file
+            .file_stem()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "input".to_owned());
+
+        let mut row = RecordedRunStats {
+            parser: config.parser.clone(),
+            rewriter: config.rewriter.clone(),
+            comprehension_expander: config.comprehension_expander.clone(),
+            heuristic: config.heuristic.clone(),
+            channelling: config.channelling.clone(),
+            seed: config.seed,
+            solver_seed: config.solver_seed,
+            solver: config.solver.clone(),
+            minion_discrete_threshold: global_args.minion_discrete_threshold,
+
+            case_name,
+            model_index: 0,
+            status: "ok".to_owned(),
+
+            solution_limit: (!solve_args.no_run_solver)
+                .then(|| solve_args.number_of_solutions.as_solver_limit()),
+
+            translation_time: Some(translation_time),
+            solve_time,
+            backend_time,
+            search_time,
+            solution_processing_time,
+
+            ..Default::default()
+        };
+
+        row.representations = model_choices.representations;
+
+        row.sat_encoding_amo = model_choices.sat_encoding_amo;
+        row.sat_encoding_cardinality = model_choices.sat_encoding_cardinality;
+        row.sat_encoding_pb = model_choices.sat_encoding_pb;
+        row.sat_encoding_table = model_choices.sat_encoding_table;
+        row.sat_encoding_element = model_choices.sat_encoding_element;
+        row.sat_encoding_alldifferent = model_choices.sat_encoding_alldifferent;
+
+        // Read the same rewrite-attempt counters used by exhaustive testing.
+        let context_json = serde_json::to_value(context.read().unwrap().clone())?;
+
+        let attempt_counts: Vec<u64> = context_json
+            .get("stats")
+            .and_then(|stats| stats.get("rewriterRuns"))
+            .and_then(serde_json::Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(|run| {
+                run.get("rewriterRuleApplicationAttempts")
+                    .and_then(serde_json::Value::as_u64)
+            })
+            .collect();
+
+        if !attempt_counts.is_empty() {
+            row.rule_trace.total_rule_attempts = Some(attempt_counts.iter().sum());
+        }
+
+        let counts = rule_application_counts.snapshot();
+        row.rule_trace.total_rule_applications = Some(counts.values().copied().sum());
+        row.rule_trace.rules = counts;
+
+        // Write the completed statistics record only after all fields are populated.
+        replace_config_run_stats(path, &config, vec![row])?;
     }
     Ok(())
 }
-
+fn record_model_choices(model: &Model, row: &mut RecordedRunStats) {
+    row.representations = model
+        .symbols()
+        .iter_local()
+        .flat_map(|(_, decl)| {
+            decl.reprs()
+                .iter()
+                .map(|(name, _)| name.to_owned())
+                .collect::<Vec<_>>()
+        })
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    let mut families: BTreeMap<&str, BTreeSet<String>> = BTreeMap::new();
+    macro_rules! record {
+        ($family:expr, $selection:expr) => {{
+            $selection.iter().for_each(|selection| {
+                families
+                    .entry($family)
+                    .or_default()
+                    .insert(selection.algorithm.to_string());
+            });
+        }};
+    }
+    for decision in model.sat_decisions() {
+        match decision {
+            SatEncodingDecision::AtMostOne { encoding, .. } => {
+                record!("amo", encoding);
+            }
+            SatEncodingDecision::Cardinality { encoding, .. } => {
+                record!("cardinality", encoding);
+            }
+            SatEncodingDecision::CountRelation {
+                encoding,
+                amo_encoding,
+                ..
+            } => {
+                record!("cardinality", encoding);
+                record!("amo", amo_encoding);
+            }
+            SatEncodingDecision::PseudoBoolean { encoding, .. }
+            | SatEncodingDecision::IntegerRelation { encoding, .. }
+            | SatEncodingDecision::Objective { encoding, .. } => record!("pb", encoding),
+            SatEncodingDecision::AllDifferent {
+                encoding,
+                amo_encoding,
+                pb_encoding,
+                ..
+            } => {
+                record!("alldifferent", encoding);
+                record!("amo", amo_encoding);
+                record!("pb", pb_encoding);
+            }
+            SatEncodingDecision::Table {
+                encoding,
+                pb_encoding,
+                ..
+            } => {
+                record!("table", encoding);
+                record!("pb", pb_encoding);
+            }
+            SatEncodingDecision::Element {
+                encoding,
+                pb_encoding,
+                ..
+            } => {
+                record!("element", encoding);
+                record!("pb", pb_encoding);
+            }
+            _ => {}
+        }
+    }
+    row.sat_encoding_amo = families
+        .remove("amo")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_cardinality = families
+        .remove("cardinality")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_pb = families
+        .remove("pb")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_table = families
+        .remove("table")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_element = families
+        .remove("element")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_alldifferent = families
+        .remove("alldifferent")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+}
 /// Returns a new Context and Solver for solving.
 pub(crate) fn init_context(
     global_args: &GlobalArgs,
@@ -212,19 +430,18 @@ pub(crate) fn init_context(
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
     let default_rule_trace_enabled = global_args.rule_trace.is_some();
     let rule_attempt_trace_enabled = global_args.rule_attempt_trace.is_some();
-    let rule_trace_aggregates_enabled = global_args.rule_trace_aggregates.is_some();
-    let rule_trace_enabled =
-        default_rule_trace_enabled || rule_attempt_trace_enabled || rule_trace_aggregates_enabled;
 
     set_current_parser(global_args.parser);
     set_current_rewriter(global_args.rewriter);
     set_comprehension_expander(global_args.comprehension_expander);
     set_current_solver_family(global_args.solver);
     set_minion_discrete_threshold(global_args.minion_discrete_threshold);
-    set_rule_trace_enabled(rule_trace_enabled);
+    // Count every translation's rule applications, regardless of which outputs
+    // were requested. Solver-time CDP tracing remains controlled separately.
+    set_rule_trace_enabled(true);
     set_default_rule_trace_enabled(default_rule_trace_enabled);
     set_rule_attempt_trace_enabled(rule_attempt_trace_enabled);
-    set_rule_trace_aggregates_enabled(rule_trace_aggregates_enabled);
+    set_rule_trace_aggregates_enabled(true);
 
     let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
@@ -416,9 +633,10 @@ fn run_solver(
     global_args: &GlobalArgs,
     cmd_args: &Args,
     model: Model,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<(f64, f64, f64)> {
     let domains = domains_from_model(&model);
-    let solutions = get_solutions(
+
+    let (solutions, measured) = get_solutions_with_timings(
         solver,
         model,
         cmd_args.number_of_solutions.as_solver_limit(),
@@ -426,11 +644,23 @@ fn run_solver(
         &global_args.save_solver_input_file,
         global_args.rule_trace_cdp,
     )?;
-    tracing::debug!(solutions = %solutions_to_json(&solutions), "solver solutions");
+
+    let output_started_at = Instant::now();
+
+    tracing::debug!(
+        solutions = %solutions_to_json(&solutions),
+        "solver solutions"
+    );
 
     let solutions = coerce_bools_in_solutions(&solutions, &domains);
+
     write_solutions(&solutions, cmd_args)?;
-    Ok(())
+
+    Ok((
+        measured.backend_time_s,
+        measured.search_time_s,
+        measured.solution_processing_time_s + output_started_at.elapsed().as_secs_f64(),
+    ))
 }
 
 /// Turn solver `0`/`1` assignments back into booleans when the find domain is bool, so JSON/Essence
