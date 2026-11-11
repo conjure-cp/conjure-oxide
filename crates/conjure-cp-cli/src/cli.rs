@@ -21,8 +21,6 @@ pub(crate) const MODELLING_HELP_HEADING: Option<&str> = Some("Modelling choices"
 pub enum Command {
     /// Solve a model
     Solve(solve::Args),
-    /// Print the JSON statistics schema for --stats
-    PrintJsonSchema,
     /// Tests whether the Essence model is solvable with Conjure Oxide, and whether it gets the
     /// same solutions as Conjure.
     ///

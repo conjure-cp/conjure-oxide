@@ -97,5 +97,3 @@ conjure-oxide solve model.essence --stats stats.json
 The path must end in `.toml` or `.json`. An existing statistics file retains other configurations
 and replaces the rows for the current configuration. `--no-run-solver` records translation
 statistics without solver timings.
-
-Run `conjure-oxide print-json-schema` to inspect the JSON statistics schema.

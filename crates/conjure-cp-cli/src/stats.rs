@@ -1,6 +1,5 @@
 //! Execution statistics shared by the CLI and exhaustive tests.
 
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io;
@@ -89,7 +88,7 @@ fn rule_trace_rules_by_count_desc(
 }
 
 /// Recorded exhaustive-run metadata for one test directory.
-#[derive(Deserialize, Serialize, JsonSchema, Debug, Default)]
+#[derive(Deserialize, Serialize, Debug, Default)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct TestRunStats {
@@ -115,7 +114,7 @@ pub struct TestRunStats {
 }
 
 /// Flat timing and resolved modelling choices for one actual exhaustive model.
-#[derive(Deserialize, Serialize, JsonSchema, Debug, Default)]
+#[derive(Deserialize, Serialize, Debug, Default)]
 #[serde(default, deny_unknown_fields, rename_all = "kebab-case")]
 pub struct RecordedRunStats {
     pub parser: String,
@@ -164,7 +163,7 @@ pub struct RecordedRunStats {
 }
 
 /// Recorded rule counts for one compiled model.
-#[derive(Deserialize, Serialize, JsonSchema, Debug, Default)]
+#[derive(Deserialize, Serialize, Debug, Default)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct RecordedRuleTraceStats {
@@ -199,7 +198,7 @@ pub fn read_stats_or_default(path: &Path) -> io::Result<TestRunStats> {
 }
 
 /// Recorded status and timings for one implementation in a test config.
-#[derive(Deserialize, Serialize, JsonSchema, Debug, Default)]
+#[derive(Deserialize, Serialize, Debug, Default)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct RecordedToolStats {
