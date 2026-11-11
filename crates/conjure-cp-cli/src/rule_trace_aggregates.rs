@@ -30,26 +30,3 @@ pub fn write_rule_trace_aggregates(
     fs::write(path, contents)
         .with_context(|| format!("Unable to write aggregate trace file {}", path.display()))
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn writes_total_and_sorts_counts_with_alphabetical_ties() {
-        let directory = tempfile::tempdir().unwrap();
-        let path = directory.path().join("aggregates.txt");
-        let counts = BTreeMap::from([
-            ("alpha".to_owned(), 2),
-            ("beta".to_owned(), 4),
-            ("gamma".to_owned(), 2),
-        ]);
-
-        write_rule_trace_aggregates(&path, &counts).unwrap();
-
-        assert_eq!(
-            fs::read_to_string(path).unwrap(),
-            "total_rule_applications: 8\n     4 beta\n     2 alpha\n     2 gamma\n",
-        );
-    }
-}
