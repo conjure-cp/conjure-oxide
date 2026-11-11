@@ -1,5 +1,7 @@
 # Permutations
 
+TODO what is a permutation?
+
 ## Permutation Domains
 
 ```bnf

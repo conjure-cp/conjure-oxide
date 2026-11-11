@@ -50,11 +50,12 @@
   - [Permutations](reference/domains/permutations.md)
   - [Enumerated Types](reference/domains/enumerated-types.md)
   - [Unnamed Types](reference/domains/unnamed-types.md)
-
 - [Expressions](reference/expressions/expressions.md)
   - [Boolean](reference/expressions/boolean.md)
   - [Arithmetic](reference/expressions/arithmetic.md)
   - [Comprehensions](reference/expressions/comprehensions.md)
+  - [Comparison](reference/expressions/comparison.md)
+  - [Aggregates & Quantifiers](reference/expressions/aggregates-and-quantifiers.md)
 
 # Contributor's Guide
 

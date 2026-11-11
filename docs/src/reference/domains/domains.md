@@ -19,7 +19,7 @@ A domain is the discrete and finite set of values that a variable or expression 
            | <PermutationDomain>
 ```
 
-An instantiation of a domain is known as a literal.
+An instantiation of a domain is known as a **literal**. A literal is a representation of _one_ specific value of a domain.
 
 ```bnf
 <Literal> ::= <Constant>

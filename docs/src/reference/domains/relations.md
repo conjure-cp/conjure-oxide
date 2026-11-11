@@ -1,12 +1,29 @@
 # Relations
 
-## Relation Domains
+A relation is effectively a set of tuples which relate elements of different domains.
 
-; QUESTION: should accept expressions? argue yes.
+- Every tuple in the relation must have the same arity and internal domains.
+- If a relation is binary (arity 2) we can also add additional attributes to define properties of the relation.
+
+## Relation Domains
 
 ```bnf
 <RelationDomain> ::= "relation" ["(" list(<RelationAttribute>) ")"] "of" "(" <RelationDomainList> ")"
 <RelationDomainList> ::= <Domain> [{ "*" <Domain> }]
+```
+
+```essence
+$ binary relations
+letting a be domain relation of (int * bool)
+letting b be domain relation (partialOrder) of (int(1..2) * int(1..2))"
+
+$ n-ary relation
+letting c be domain relation(int, int, int)
+```
+
+### Attributes
+
+```bnf
 <RelationAttribute> ::= "size" <Expression.Integer>
                       | "minSize" <Expression.Integer>
                       | "maxSize" <Expression.Integer>
@@ -30,22 +47,6 @@
                       | "preOrder"
                       | "strictPartialOrder"
 ```
-
-A relation is effectively a set of tuples which relate elements of different domains.
-
-- Every tuple in the relation must have the same arity and internal domains.
-- If a relation is binary (arity 2) we can also add additional attributes to define properties of the relation.
-
-```essence
-$ binary relations
-letting a be domain relation of (int * bool)"
-letting b be domain relation (partialOrder) of (int(1..2) * int(1..2))"
-
-$ n-ary relation
-letting c be domain relation(int, int, int)
-```
-
-### Attributes
 
 _N.B.: in this section `A ~ B` denotes "`A` is related to `B`", and `A !~ B` denotes `!(A ~ B)`._
 
@@ -102,6 +103,6 @@ TODO binary and categorisation
 
 ```essence
 $ binary relation domains
-letting a be relation((1,1,0),(1,0,1),(0,1,1))
-letting b be relation((true, false), (false, true))
+letting a be relation ((1, 1, 0), (1, 0, 1), (0, 1, 1))
+letting b be relation ((true, false), (false, true))
 ```

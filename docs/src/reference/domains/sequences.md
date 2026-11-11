@@ -8,7 +8,7 @@ A sequence is a datatype for storing a series of values, where values can occur 
 <SequenceDomain> ::= "sequence" ["(" list(<SequenceAttribute>) ")"] "of" <Domain>
 ```
 
-Unlike [matrices], sequences can have defined attributes; i.e. you can define a sequence to have varying lengths, and to restrict what values it can draw from it's inner domain.
+Unlike [matrices](./matrices.md), sequences can have defined attributes; i.e. you can define a sequence to have varying lengths, and to restrict what values it can draw from it's inner domain.
 
 ### Attributes
 

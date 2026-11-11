@@ -51,8 +51,6 @@ A range of sizes may be specified using `minSize x, maxSize y`. Using contradict
 
 ## Function Literals
 
-<!-- QUESTION: any constraints on possible types here? -->
-
 ```bnf
 <FunctionLiteral> ::= "function" "(" [list(<FunctionLiteralPair>)] ")"
 <FunctionLiteralPair> ::= <Expression> "-->" <Expression>

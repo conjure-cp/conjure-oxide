@@ -1,13 +1,14 @@
 # Multisets
+
 ## What Are Multisets
-A multiset is a datatype for storing a set of objects where objects can occur more than once, but the ordering of objects does not matter.
-Multisets have attributes and a single domain. A multiset can be defined for both `GroundDomain` and `UnresolvedDomain`.
+
+Please see the [Essence Reference](/reference/domains/multisets.md).
+
+A multiset can be defined for both `GroundDomain` and `UnresolvedDomain`.
 
 ## Attributes
-* A **cardinality** attribute, as a range; `size`, `minSize`, `maxSize`.
-* An **occurrence** attribute, as a range; `minOccur`, `maxOccur`.
 
-In the original conjure implementation, a multiset was _infinite_ without `size`, `maxSize`, or `maxOccur`. 
+In the original conjure implementation, a multiset was _infinite_ without `size`, `maxSize`, or `maxOccur`.
 In the new conjure-oxide implementation, a variable's domain is _ground_ if it is fully-bounded (i.e. has a `minSize` and `maxSize`).
 
 ```essence
@@ -22,6 +23,8 @@ find buzz: multiset (minSize 3) of int(1..10)   $ this is a lower bound, there i
 ```
 
 ## Operators
+
+TODO add to reference
 
 There are four operators which are defined on functions. These are represented as `Expressions` in Conjure-Oxide.
 

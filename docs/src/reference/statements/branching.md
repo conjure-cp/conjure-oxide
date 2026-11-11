@@ -1,7 +1,6 @@
 # Branching Statements
 
 ```bnf
-; TODO: not included in Essence docs
 <BranchingStatement> ::= "branching" "on" "[" list(<Identifier> | <Expression.Boolean>) "]"
 ```
 
