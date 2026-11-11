@@ -32,7 +32,9 @@ use conjure_cp::{
 };
 use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
 use conjure_cp_cli::find_conjure::conjure_executable;
-use conjure_cp_cli::stats_toml::{RecordedRunConfig, RecordedRunStats, replace_config_run_stats};
+use conjure_cp_cli::stats::{
+    RecordedRunConfig, RecordedRunStats, StatsFormat, replace_config_run_stats,
+};
 use conjure_cp_cli::utils::conjure::{
     get_solutions_with_timings, solutions_to_essence, solutions_to_json,
 };
@@ -93,13 +95,10 @@ pub struct Args {
     #[arg(value_name = "PARAM_ESSENCE", value_hint = ValueHint::FilePath)]
     pub param_file: Option<PathBuf>,
 
-    /// Save execution info as JSON to the given filepath.
-    #[arg(long ,value_hint=ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
-    pub info_json_path: Option<PathBuf>,
-
-    /// Write execution statistics to a TOML file.
-    #[arg(long, value_hint = ValueHint::FilePath)]
-    pub stats_path: Option<PathBuf>,
+    /// Write execution statistics; the .toml or .json extension selects the format.
+    #[arg(long, value_name = "PATH", value_hint = ValueHint::FilePath,
+        value_parser = parse_stats_path, help_heading = LOGGING_HELP_HEADING)]
+    pub stats: Option<PathBuf>,
 
     /// Do not run the solver.
     ///
@@ -145,6 +144,12 @@ pub struct Args {
     pub keep_intermediate_solutions: bool,
 }
 
+fn parse_stats_path(input: &str) -> Result<PathBuf, String> {
+    let path = PathBuf::from(input);
+    StatsFormat::from_path(&path).map_err(|err| err.to_string())?;
+    Ok(path)
+}
+
 pub fn run_solve_command(
     global_args: GlobalArgs,
     solve_args: Args,
@@ -158,7 +163,7 @@ pub fn run_solve_command(
 
     let context = init_context(&global_args, essence_file, param_file)?;
 
-    if solve_args.stats_path.is_some() {
+    if solve_args.stats.is_some() {
         set_rule_trace_enabled(true);
         set_rule_trace_aggregates_enabled(true);
     }
@@ -236,15 +241,8 @@ pub fn run_solve_command(
     let search_time = measured.as_ref().map(|t| t.1);
     let solution_processing_time = measured.as_ref().map(|t| t.2);
 
-    // still do postamble even if we didn't run the solver
-    if let Some(ref path) = solve_args.info_json_path {
-        let context_obj = context.read().unwrap().clone();
-        let generated_json = &serde_json::to_value(context_obj)?;
-        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
-        std::fs::write(path, format!("{pretty_json}\n"))?;
-    }
-
-    if let Some(ref path) = solve_args.stats_path {
+    // Still write translation statistics when the solver was not run.
+    if let Some(ref path) = solve_args.stats {
         let config = RecordedRunConfig {
             parser: global_args.parser.to_string(),
             rewriter: global_args.rewriter.to_string(),

@@ -21,7 +21,7 @@ pub(crate) const MODELLING_HELP_HEADING: Option<&str> = Some("Modelling choices"
 pub enum Command {
     /// Solve a model
     Solve(solve::Args),
-    /// Print the JSON info file schema
+    /// Print the JSON statistics schema for --stats
     PrintJsonSchema,
     /// Tests whether the Essence model is solvable with Conjure Oxide, and whether it gets the
     /// same solutions as Conjure.
@@ -433,6 +433,44 @@ fn parse_minion_variable_order(input: &str) -> Result<MinionVariableOrder, Strin
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn stats_accepts_toml_and_json_output_paths() {
+        for path in ["stats.toml", "stats.json"] {
+            let cli =
+                Cli::try_parse_from(["conjure-oxide", "solve", "model.essence", "--stats", path])
+                    .unwrap();
+            let Command::Solve(args) = cli.subcommand else {
+                panic!("expected solve command");
+            };
+            assert_eq!(args.stats, Some(PathBuf::from(path)));
+        }
+    }
+
+    #[test]
+    fn stats_rejects_missing_or_unsupported_extensions() {
+        for path in ["stats", "stats.txt"] {
+            let error =
+                Cli::try_parse_from(["conjure-oxide", "solve", "model.essence", "--stats", path])
+                    .unwrap_err();
+            assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+        }
+    }
+
+    #[test]
+    fn obsolete_stats_flags_are_rejected() {
+        for flag in ["--stats-path", "--info-json-path"] {
+            let error = Cli::try_parse_from([
+                "conjure-oxide",
+                "solve",
+                "model.essence",
+                flag,
+                "stats.json",
+            ])
+            .unwrap_err();
+            assert_eq!(error.kind(), clap::error::ErrorKind::UnknownArgument);
+        }
+    }
 
     #[test]
     fn sat_backend_defaults_to_available_native_backend() {

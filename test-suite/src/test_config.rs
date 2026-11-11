@@ -3,15 +3,15 @@
 use conjure_cp::settings::{
     Channelling, Heuristic, Parser, QuantifiedExpander, Rewriter, SolverFamily,
 };
-#[path = "../../crates/conjure-cp-cli/src/stats_toml.rs"]
-mod stats_toml;
+#[path = "../../crates/conjure-cp-cli/src/stats.rs"]
+mod stats;
 
-pub use self::stats_toml::{
+pub use self::stats::{
     RecordedRuleTraceStats, RecordedRunConfig, RecordedRunStats, RecordedToolStats, TestRunStats,
     read_stats_or_default, replace_config_run_stats,
 };
 
-use self::stats_toml::{deserialise_expected_time, update_canonical_stats, write_canonical_stats};
+use self::stats::{deserialise_expected_time, update_canonical_stats, write_canonical_stats};
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;

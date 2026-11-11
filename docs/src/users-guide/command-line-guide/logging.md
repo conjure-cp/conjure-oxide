@@ -83,3 +83,21 @@ cargo nextest run -E 'test(<test_name>)'
 ```
 
 This generates `.json` and `.txt` files containing rule traces, parsed Essence, solutions, and the rewritten model.
+
+## Execution statistics
+
+Use `--stats <PATH>` to save execution timings, configuration, modelling choices, and rewrite-rule
+counts. The filename extension selects TOML or JSON; both formats contain the same statistics:
+
+```sh
+conjure-oxide solve model.essence --stats stats.toml
+conjure-oxide solve model.essence --stats stats.json
+```
+
+The path must end in `.toml` or `.json`. An existing statistics file retains other configurations
+and replaces the rows for the current configuration. `--no-run-solver` records translation
+statistics without solver timings.
+
+`--stats` replaces `--stats-path` and `--info-json-path`. JSON now uses the same report structure
+as TOML rather than the previous context dump. Run `conjure-oxide print-json-schema` to inspect
+the JSON statistics schema.

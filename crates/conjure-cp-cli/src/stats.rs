@@ -1,9 +1,30 @@
-//! Canonical TOML statistics shared by the CLI and exhaustive tests.
+//! Execution statistics shared by the CLI and exhaustive tests.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io;
 use std::path::Path;
+
+/// The statistics format selected by an output file's extension.
+#[derive(Clone, Copy, Debug)]
+pub enum StatsFormat {
+    Toml,
+    Json,
+}
+
+impl StatsFormat {
+    pub fn from_path(path: &Path) -> io::Result<Self> {
+        match path.extension().and_then(|extension| extension.to_str()) {
+            Some("toml") => Ok(Self::Toml),
+            Some("json") => Ok(Self::Json),
+            _ => Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "statistics path must have a .toml or .json extension",
+            )),
+        }
+    }
+}
 
 fn quoted_toml_string(value: &str) -> String {
     toml::Value::String(value.to_string()).to_string()
@@ -68,22 +89,25 @@ fn rule_trace_rules_by_count_desc(
 }
 
 /// Recorded exhaustive-run metadata for one test directory.
-#[derive(Deserialize, Debug, Default)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Default)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct TestRunStats {
     /// Latest observed overall status, such as `ok`, `fail`, or `timeout(N)`.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
     /// Coarse expected wall time bucket used by MAX_EXPECTED_TIME test selection.
     #[serde(
         default,
         rename = "expected-time",
+        skip_serializing_if = "Option::is_none",
         deserialize_with = "deserialise_expected_time"
     )]
     pub expected_time: Option<u64>,
 
     /// Metadata recorded for the Conjure plus Savile Row reference run.
+    #[serde(skip_serializing_if = "RecordedToolStats::is_empty")]
     pub conjure: RecordedToolStats,
 
     /// One measured run per compiled model, including each expanded `x` choice.
@@ -91,7 +115,7 @@ pub struct TestRunStats {
 }
 
 /// Flat timing and resolved modelling choices for one actual exhaustive model.
-#[derive(Deserialize, Serialize, Debug, Default)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Default)]
 #[serde(default, deny_unknown_fields, rename_all = "kebab-case")]
 pub struct RecordedRunStats {
     pub parser: String,
@@ -109,6 +133,7 @@ pub struct RecordedRunStats {
     pub choices: Vec<String>,
     /// Distinct representation rules present in the compiled model.
     pub representations: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub minion_discrete_threshold: Option<usize>,
     pub sat_encoding_amo: Vec<String>,
     pub sat_encoding_cardinality: Vec<String>,
@@ -118,68 +143,106 @@ pub struct RecordedRunStats {
     pub sat_encoding_alldifferent: Vec<String>,
     pub status: String,
     /// Zero means all solutions; absent means translation only.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub solution_limit: Option<i32>,
     /// Wall time for parsing, instantiation and rewriting.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub translation_time: Option<f64>,
     /// Wall time for complete solution collection and output.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub solve_time: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub backend_time: Option<f64>,
     /// Solver-call wall time, including callbacks and solver-time rewrites.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub search_time: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub solution_processing_time: Option<f64>,
     /// Rule counts for this compiled model; written as dotted keys by the canonical writer.
-    #[serde(skip_serializing)]
+    #[serde(skip_serializing_if = "RecordedRuleTraceStats::is_empty")]
     pub rule_trace: RecordedRuleTraceStats,
 }
 
 /// Recorded rule counts for one compiled model.
-#[derive(Deserialize, Debug, Default)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Default)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct RecordedRuleTraceStats {
-    #[serde(rename = "attempts")]
+    #[serde(rename = "attempts", skip_serializing_if = "Option::is_none")]
     pub total_rule_attempts: Option<u64>,
-    #[serde(rename = "applications")]
+    #[serde(rename = "applications", skip_serializing_if = "Option::is_none")]
     pub total_rule_applications: Option<u64>,
+    #[serde(skip_serializing_if = "std::collections::BTreeMap::is_empty")]
     pub rules: std::collections::BTreeMap<String, u64>,
+}
+
+impl RecordedRuleTraceStats {
+    fn is_empty(&self) -> bool {
+        self.total_rule_attempts.is_none()
+            && self.total_rule_applications.is_none()
+            && self.rules.is_empty()
+    }
 }
 
 pub fn read_stats_or_default(path: &Path) -> io::Result<TestRunStats> {
     if path.exists() {
         let contents = fs::read_to_string(path)?;
-        toml::from_str(&contents).map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))
+        match StatsFormat::from_path(path)? {
+            StatsFormat::Toml => toml::from_str(&contents)
+                .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err)),
+            StatsFormat::Json => serde_json::from_str(&contents)
+                .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err)),
+        }
     } else {
         Ok(TestRunStats::default())
     }
 }
 
 /// Recorded status and timings for one implementation in a test config.
-#[derive(Deserialize, Debug, Default)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Default)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct RecordedToolStats {
     /// Latest observed status, such as `ok`, `fail`, or `timeout(N)`.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
     /// Translation time in seconds.
-    #[serde(rename = "translation-time")]
+    #[serde(rename = "translation-time", skip_serializing_if = "Option::is_none")]
     pub translation_time: Option<f64>,
 
     /// Solver time in seconds.
-    #[serde(rename = "solve-time")]
+    #[serde(rename = "solve-time", skip_serializing_if = "Option::is_none")]
     pub solve_time: Option<f64>,
 
     /// Wall-clock time of the complete tool command, in seconds, when available.
-    #[serde(rename = "wall-clock-time")]
+    #[serde(rename = "wall-clock-time", skip_serializing_if = "Option::is_none")]
     pub wall_clock_time: Option<f64>,
 
     /// Conjure-only translation time in seconds, when available.
-    #[serde(rename = "conjure-translation-time")]
+    #[serde(
+        rename = "conjure-translation-time",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub conjure_translation_time: Option<f64>,
 
     /// Savile Row translation time in seconds, when available.
-    #[serde(rename = "savilerow-translation-time")]
+    #[serde(
+        rename = "savilerow-translation-time",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub savilerow_translation_time: Option<f64>,
+}
+
+impl RecordedToolStats {
+    fn is_empty(&self) -> bool {
+        self.status.is_none()
+            && self.translation_time.is_none()
+            && self.solve_time.is_none()
+            && self.wall_clock_time.is_none()
+            && self.conjure_translation_time.is_none()
+            && self.savilerow_translation_time.is_none()
+    }
 }
 
 /// Replace this configuration's model rows, removing stale portfolio entries.
@@ -233,7 +296,19 @@ pub fn update_canonical_stats(
 ) -> io::Result<()> {
     let mut stats = read_stats_or_default(path)?;
     update(&mut stats);
-    write_canonical_stats(path, &stats)
+    write_stats(path, &stats)
+}
+
+/// Write the same statistics schema as TOML or JSON, selected by the extension.
+pub fn write_stats(path: &Path, stats: &TestRunStats) -> io::Result<()> {
+    match StatsFormat::from_path(path)? {
+        StatsFormat::Toml => write_canonical_stats(path, stats),
+        StatsFormat::Json => {
+            let contents = serde_json::to_string_pretty(stats)
+                .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
+            fs::write(path, format!("{contents}\n"))
+        }
+    }
 }
 
 fn push_optional_float(contents: &mut String, key: &str, value: Option<f64>) {
@@ -256,13 +331,7 @@ pub fn write_canonical_stats(path: &Path, stats: &TestRunStats) -> io::Result<()
     }
 
     let conjure = &stats.conjure;
-    let has_conjure_stats = conjure.status.is_some()
-        || conjure.translation_time.is_some()
-        || conjure.solve_time.is_some()
-        || conjure.wall_clock_time.is_some()
-        || conjure.conjure_translation_time.is_some()
-        || conjure.savilerow_translation_time.is_some();
-    if has_conjure_stats {
+    if !conjure.is_empty() {
         if !contents.is_empty() {
             contents.push('\n');
         }
@@ -287,9 +356,16 @@ pub fn write_canonical_stats(path: &Path, stats: &TestRunStats) -> io::Result<()
 
     for run in &stats.runs {
         contents.push_str("\n[[runs]]\n");
-        contents.push_str(
-            &toml::to_string(run).map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?,
-        );
+        let rendered =
+            toml::to_string(run).map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
+        let mut document: toml_edit::DocumentMut = rendered
+            .parse()
+            .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
+        // Keep the canonical dotted rule keys below, while the shared data type
+        // serializes rule counts normally for JSON and its schema.
+        document.remove("rule-trace");
+        contents.push_str(document.to_string().trim_end());
+        contents.push('\n');
 
         if run.rule_trace.total_rule_attempts.is_some()
             || run.rule_trace.total_rule_applications.is_some()
@@ -312,4 +388,97 @@ pub fn write_canonical_stats(path: &Path, stats: &TestRunStats) -> io::Result<()
     }
 
     fs::write(path, contents)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn json_and_toml_preserve_the_same_report_including_rule_counts() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let stats = TestRunStats {
+            status: Some("ok".to_owned()),
+            expected_time: Some(1),
+            conjure: RecordedToolStats {
+                status: Some("ok".to_owned()),
+                translation_time: Some(0.25),
+                ..Default::default()
+            },
+            runs: vec![RecordedRunStats {
+                parser: "tree-sitter".to_owned(),
+                solver: "minion".to_owned(),
+                status: "ok".to_owned(),
+                translation_time: Some(0.125),
+                rule_trace: RecordedRuleTraceStats {
+                    total_rule_attempts: Some(8),
+                    total_rule_applications: Some(3),
+                    rules: BTreeMap::from([
+                        ("rule_a".to_owned(), 2),
+                        ("rule.with.dots".to_owned(), 1),
+                    ]),
+                },
+                ..Default::default()
+            }],
+        };
+        let expected = serde_json::to_value(&stats).unwrap();
+
+        for extension in ["toml", "json"] {
+            let path = temp_dir.path().join(format!("stats.{extension}"));
+            write_stats(&path, &stats).unwrap();
+            let contents = fs::read_to_string(&path).unwrap();
+            let actual: serde_json::Value = match extension {
+                "toml" => {
+                    assert!(contents.contains("rule-trace.applications = 3\n"));
+                    toml::from_str(&contents).unwrap()
+                }
+                _ => serde_json::from_str(&contents).unwrap(),
+            };
+            assert_eq!(actual, expected, "different {extension} output");
+            assert_eq!(
+                serde_json::to_value(read_stats_or_default(&path).unwrap()).unwrap(),
+                expected,
+            );
+        }
+    }
+
+    #[test]
+    fn replacing_json_and_toml_runs_preserves_other_configurations() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        for extension in ["toml", "json"] {
+            let path = temp_dir.path().join(format!("stats.{extension}"));
+            let mut config = RecordedRunConfig {
+                parser: "tree-sitter".to_owned(),
+                rewriter: "optimised".to_owned(),
+                comprehension_expander: "auto".to_owned(),
+                heuristic: "c".to_owned(),
+                channelling: "no".to_owned(),
+                seed: 0,
+                solver_seed: 0,
+                solver: "minion".to_owned(),
+            };
+            for (seed, status) in [(0, "fail"), (1, "ok"), (0, "ok")] {
+                config.seed = seed;
+                let row = RecordedRunStats {
+                    parser: config.parser.clone(),
+                    rewriter: config.rewriter.clone(),
+                    comprehension_expander: config.comprehension_expander.clone(),
+                    heuristic: config.heuristic.clone(),
+                    channelling: config.channelling.clone(),
+                    seed,
+                    solver_seed: config.solver_seed,
+                    solver: config.solver.clone(),
+                    status: status.to_owned(),
+                    ..Default::default()
+                };
+                replace_config_run_stats(&path, &config, vec![row]).unwrap();
+            }
+            let stats = read_stats_or_default(&path).unwrap();
+            assert_eq!(stats.runs.len(), 2);
+            assert_eq!(stats.runs[0].seed, 0);
+            assert_eq!(stats.runs[1].seed, 1);
+            assert!(stats.runs.iter().all(|run| run.status == "ok"));
+        }
+    }
 }
