@@ -3,7 +3,7 @@ mod attribute_as_constraint_fallback;
 mod base;
 mod bubble;
 mod catch_undef;
-mod comprehensions;
+pub(crate) mod comprehensions;
 mod element_id;
 mod lex;
 mod normalisers;
