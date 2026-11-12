@@ -141,13 +141,13 @@ find d: set of int(1..4)
 
 such that
 
-sum([ sum([i,j;int(1..2)]) | i <- (a union b), j <- (c union d) ]) = 10
+sum([ sum([i,j;int(1..)]) | i <- (a union b), j <- (c union d) ]) = 10
 
 --
 
-sum([ sum([i,j;int(1..2)]) | i <- (a union b), j <- (c union d) ]) = 10
+sum([ sum([i,j;int(1..)]) | i <- (a union b), j <- (c union d) ]) = 10
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-sum([ sum([i,j;int(1..2)]) | i <- (a union b), j <- (c union d) ]) = 10
+sum([ sum([i,j;int(1..)]) | i <- (a union b), j <- (c union d) ]) = 10
 new variables:
   find a#occurrence_1: bool
   find a#occurrence_2: bool
@@ -173,15 +173,15 @@ new constraints:
 
 --
 
-[ sum([i,j;int(1..2)]) | i <- (a union b), j <- (c union d) ]
+[ sum([i,j;int(1..)]) | i <- (a union b), j <- (c union d) ]
    ~~> lower_occurrence_union_expression_generator ([("ReprGeneral", 8750)])
-[ sum([i,j;int(1..2)]) | i : int(1..4), or([i in a,i in b;int(1..)]), j <- (c union d) ]
+[ sum([i,j;int(1..)]) | i : int(1..4), or([i in a,i in b;int(1..)]), j <- (c union d) ]
 
 --
 
-[ sum([i,j;int(1..2)]) | i : int(1..4), or([i in a,i in b;int(1..)]), j <- (c union d) ]
+[ sum([i,j;int(1..)]) | i : int(1..4), or([i in a,i in b;int(1..)]), j <- (c union d) ]
    ~~> lower_occurrence_union_expression_generator ([("ReprGeneral", 8750)])
-[ sum([i,j;int(1..2)]) | i : int(1..4), or([i in a,i in b;int(1..)]), j : int(1..4), or([j in c,j in d;int(1..)]) ]
+[ sum([i,j;int(1..)]) | i : int(1..4), or([i in a,i in b;int(1..)]), j : int(1..4), or([j in c,j in d;int(1..)]) ]
 
 --
 
@@ -233,7 +233,7 @@ SumLeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 4)
 
 --
 
-[ sum([i,j;int(1..2)]) | i : int(1..4), or([i in a,i in b;int(1..)]), j : int(1..4), or([j in c,j in d;int(1..)]) ]
+[ sum([i,j;int(1..)]) | i : int(1..4), or([i in a,i in b;int(1..)]), j : int(1..4), or([j in c,j in d;int(1..)]) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [product([toInt(or([1 in a,1 in b;int(1..)])),sum([product([toInt(or([1 in c,1 in d;int(1..)])),2;int(1..)]),product([toInt(or([2 in c,2 in d;int(1..)])),3;int(1..)]),product([toInt(or([3 in c,3 in d;int(1..)])),4;int(1..)]),product([toInt(or([4 in c,4 in d;int(1..)])),5;int(1..)]);int(1..)]);int(1..)]),product([toInt(or([2 in a,2 in b;int(1..)])),sum([product([toInt(or([1 in c,1 in d;int(1..)])),3;int(1..)]),product([toInt(or([2 in c,2 in d;int(1..)])),4;int(1..)]),product([toInt(or([3 in c,3 in d;int(1..)])),5;int(1..)]),product([toInt(or([4 in c,4 in d;int(1..)])),6;int(1..)]);int(1..)]);int(1..)]),product([toInt(or([3 in a,3 in b;int(1..)])),sum([product([toInt(or([1 in c,1 in d;int(1..)])),4;int(1..)]),product([toInt(or([2 in c,2 in d;int(1..)])),5;int(1..)]),product([toInt(or([3 in c,3 in d;int(1..)])),6;int(1..)]),product([toInt(or([4 in c,4 in d;int(1..)])),7;int(1..)]);int(1..)]);int(1..)]),product([toInt(or([4 in a,4 in b;int(1..)])),sum([product([toInt(or([1 in c,1 in d;int(1..)])),5;int(1..)]),product([toInt(or([2 in c,2 in d;int(1..)])),6;int(1..)]),product([toInt(or([3 in c,3 in d;int(1..)])),7;int(1..)]),product([toInt(or([4 in c,4 in d;int(1..)])),8;int(1..)]);int(1..)]);int(1..)]);int(1..)]
 

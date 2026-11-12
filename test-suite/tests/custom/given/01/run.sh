@@ -1,1 +1,1 @@
-conjure-oxide --parser=via-conjure --solver minion solve model.essence model.param
+conjure-oxide --solver minion solve model.essence model.param

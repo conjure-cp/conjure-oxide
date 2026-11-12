@@ -1,4 +1,4 @@
-conjure-oxide --log-file conjure_oxide_test.data --log-format json solve --parser=via-conjure model.eprime --number-of-solutions=all
+conjure-oxide --log-file conjure_oxide_test.data --log-format json solve model.eprime --number-of-solutions=all
 
 [ -f "./conjure_oxide_test.data" ] && echo "./conjure_oxide_test.data found" || echo "./conjure_oxide_test.data is missing"
 
