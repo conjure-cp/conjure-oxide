@@ -20,7 +20,7 @@ letting x be domain matrix indexed by [int] of int
 letting x be [0,1]
 ```
 
-Matriced defined without an explicit index domain will default to `int`for 1D matrices, `int, int` for 2D matrices, etc.
+Matrices defined without an explicit index domain will default to `int`for 1D matrices, `int, int` for 2D matrices, etc.
 
 Alternatively, define the index domain as follows:
 
