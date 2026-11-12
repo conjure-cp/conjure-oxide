@@ -1,3 +1,5 @@
+use std::vec;
+
 use crate::RecoverableParseError;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
@@ -118,21 +120,34 @@ fn parse_generator(
     generator_node: &Node,
     lettings: &mut Vec<(DeclarationPtr, Expression)>,
 ) -> Result<Option<ComprehensionBuilder>, FatalParseError> {
-    let Some(var_node) = field!(recover, ctx, generator_node, "variable") else {
-        return Ok(None);
-    };
-    let var_name_str = &ctx.source_code[var_node.start_byte()..var_node.end_byte()];
-    let var_name = Name::user(var_name_str);
+    let mut names = Vec::new();
+    for var_node in named_children(generator_node) {
+        let var_name_str;
+        let var_name;
+        match var_node.kind() {
+            "identifier" | "tuple" => {
+                var_name_str = &ctx.source_code[var_node.start_byte()..var_node.end_byte()];
+                var_name = Name::user(var_name_str);
+
+                names.push((var_node, var_name));
+            }
+            _ => {
+                continue;
+            }
+        }
+    }
 
     if let Some(domain_node) = generator_node.child_by_field_name("domain") {
         let mut domain_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
         let Some(var_domain) = parse_domain(&mut domain_ctx, domain_node)? else {
             return Ok(None);
         };
-        let decl = DeclarationPtr::new_find(var_name.clone(), var_domain);
-        let mut builder = builder.generator(decl);
-        if !bind_generator_pattern(ctx, &mut builder, &var_node, &var_name, lettings) {
-            return Ok(None);
+        for (var_node, var_name) in names {
+            let decl = DeclarationPtr::new_find(var_name.clone(), var_domain.clone());
+            builder = builder.generator(decl);
+            if !bind_generator_pattern(ctx, &mut builder, &var_node, &var_name, lettings) {
+                return Ok(None);
+            }
         }
         return Ok(Some(builder));
     }
@@ -145,19 +160,21 @@ fn parse_generator(
             return Ok(None);
         };
         let collection_expr = substitute_lettings(collection_expr, lettings);
-        let mut builder = builder.expression_generator(var_name.clone(), collection_expr);
-        if !bind_generator_pattern(ctx, &mut builder, &var_node, &var_name, lettings) {
-            return Ok(None);
+        for (var_node, var_name) in names {
+            builder = builder.expression_generator(var_name.clone(), collection_expr.clone());
+            if !bind_generator_pattern(ctx, &mut builder, &var_node, &var_name, lettings) {
+                return Ok(None);
+            }
         }
         return Ok(Some(builder));
     }
 
     ctx.record_error(RecoverableParseError::new(
-        format!(
-            "Generator requires either a domain or collection (e.g. `{var_name} : domain` or `{var_name} <- expr`)"
-        ),
-        Some(generator_node.range()),
-    ));
+            format!(
+                "Generator requires either a domain or collection (e.g. `i : domain` or `i <- expr`)"
+            ),
+            Some(generator_node.range()),
+        ));
     Ok(None)
 }
 
