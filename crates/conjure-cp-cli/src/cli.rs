@@ -336,6 +336,41 @@ pub struct GlobalArgs {
     pub log_detail: Option<LogDetail>,
 }
 
+impl GlobalArgs {
+    /// Convert command-line options into the library's modelling configuration.
+    pub(crate) fn library_config(&self) -> conjure_cp::pipeline::Config {
+        use conjure_cp::pipeline::{Config, TraceConfig};
+        Config {
+            parser: self.parser,
+            rewriter: self.rewriter,
+            comprehension_expander: self.comprehension_expander,
+            solver: self.solver,
+            extra_rule_sets: self.extra_rule_sets.clone(),
+            heuristic: self.heuristic,
+            seed: self.seed,
+            responses: self.responses.clone(),
+            channelling: self.channelling,
+            amo_encoding: self.amo_encoding,
+            cardinality_encoding: self.cardinality_encoding,
+            pb_encoding: self.pb_encoding,
+            element_encoding: self.element_encoding,
+            table_encoding: self.table_encoding,
+            alldifferent_encoding: self.alldifferent_encoding,
+            minion_discrete_threshold: self.minion_discrete_threshold,
+            minion_varorder: self.minion_varorder,
+            minion_valorder: self.minion_valorder,
+            sat_backend: self.sat_backend,
+            solver_seed: self.solver_seed,
+            solver_timeout: self.solver_timeout.map(std::time::Duration::from),
+            trace: TraceConfig {
+                rules: self.rule_trace.is_some(),
+                attempts: self.rule_attempt_trace.is_some(),
+                aggregates: self.rule_trace_aggregates.is_some(),
+            },
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, ValueEnum)]
 pub enum LogFormat {
     #[default]

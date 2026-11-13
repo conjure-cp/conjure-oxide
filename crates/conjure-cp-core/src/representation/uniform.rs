@@ -69,6 +69,10 @@ impl Scope {
     pub(crate) fn new() -> Self {
         Self(CHOICES.with(|choices| std::mem::take(&mut *choices.borrow_mut())))
     }
+
+    pub(crate) fn save() -> Self {
+        Self(CHOICES.with(|choices| choices.borrow().clone()))
+    }
 }
 impl Drop for Scope {
     fn drop(&mut self) {
@@ -81,7 +85,7 @@ pub(crate) fn probe<T>(f: impl FnOnce() -> T) -> T {
     if channelling() != Channelling::Uniform {
         return f();
     }
-    let _restore = Scope(CHOICES.with(|choices| choices.borrow().clone()));
+    let _restore = Scope::save();
     f()
 }
 

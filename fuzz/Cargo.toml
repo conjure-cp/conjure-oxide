@@ -10,6 +10,14 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 
+[dependencies.conjure-cp]
+path = "../crates/conjure-cp"
+default-features = false
+
+[dependencies.conjure-cp-rules]
+path = "../crates/conjure-cp-rules"
+default-features = false
+
 [dependencies.conjure-cp-essence-parser]
 path = "../crates/conjure-cp-essence-parser"
 default-features = false
@@ -17,6 +25,13 @@ default-features = false
 [[bin]]
 name = "detect_errors"
 path = "fuzz_targets/fuzz_detect_errors.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "compile"
+path = "fuzz_targets/fuzz_compile.rs"
 test = false
 doc = false
 bench = false
