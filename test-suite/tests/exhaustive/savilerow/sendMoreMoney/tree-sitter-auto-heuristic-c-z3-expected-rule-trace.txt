@@ -298,6 +298,60 @@ sum([product([10000,m#lia_1;int(1..)]),product([1000,o#lia_1;int(1..)]),product(
 
 --
 
+sum([product([1000,s#lia_1;int(1..)]),product([100,e#lia_1;int(1..)]),product([10,n#lia_1;int(1..)]),d#lia_1,product([1000,m#lia_1;int(1..)]),product([100,o#lia_1;int(1..)]),product([10,r#lia_1;int(1..)]),e#lia_1;int(1..)]) = sum([product([10000,m#lia_1;int(1..)]),product([1000,o#lia_1;int(1..)]),product([100,n#lia_1;int(1..)]),product([10,e#lia_1;int(1..)]),y#lia_1;int(1..)])
+   ~~> sum_comparison_to_zero ([("Base", 8800)])
+sum([product([1000,s#lia_1;int(1..)]),product([100,e#lia_1;int(1..)]),product([10,n#lia_1;int(1..)]),d#lia_1,product([1000,m#lia_1;int(1..)]),product([100,o#lia_1;int(1..)]),product([10,r#lia_1;int(1..)]),e#lia_1,-(product([10000,m#lia_1;int(1..)])),-(product([1000,o#lia_1;int(1..)])),-(product([100,n#lia_1;int(1..)])),-(product([10,e#lia_1;int(1..)])),-(y#lia_1);int(1..)]) = 0
+
+--
+
+-(product([10000,m#lia_1;int(1..)]))
+   ~~> simplify_negation_of_product ([("Base", 8400)])
+product([10000,m#lia_1,-1;int(1..)])
+
+--
+
+product([m#lia_1,-10000;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([-10000,m#lia_1;int(1..)])
+
+--
+
+-(product([100,n#lia_1;int(1..)]))
+   ~~> simplify_negation_of_product ([("Base", 8400)])
+product([100,n#lia_1,-1;int(1..)])
+
+--
+
+product([n#lia_1,-100;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([-100,n#lia_1;int(1..)])
+
+--
+
+-(product([1000,o#lia_1;int(1..)]))
+   ~~> simplify_negation_of_product ([("Base", 8400)])
+product([1000,o#lia_1,-1;int(1..)])
+
+--
+
+product([o#lia_1,-1000;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([-1000,o#lia_1;int(1..)])
+
+--
+
+-(product([10,e#lia_1;int(1..)]))
+   ~~> simplify_negation_of_product ([("Base", 8400)])
+product([10,e#lia_1,-1;int(1..)])
+
+--
+
+product([e#lia_1,-10;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([-10,e#lia_1;int(1..)])
+
+--
+
 allDifferent([s#lia_1,e#lia_1,n#lia_1,d#lia_1,m#lia_1,o#lia_1,r#lia_1,y#lia_1;int(1..8)])
    ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
 smtDistinct([s#lia_1,e#lia_1,n#lia_1,d#lia_1,m#lia_1,o#lia_1,r#lia_1,y#lia_1;int(1..8)])
@@ -333,6 +387,6 @@ find y#lia_1: int(0..9)
 
 such that
 
-sum([product([1000,s#lia_1;int(1..)]),product([100,e#lia_1;int(1..)]),product([10,n#lia_1;int(1..)]),d#lia_1,product([1000,m#lia_1;int(1..)]),product([100,o#lia_1;int(1..)]),product([10,r#lia_1;int(1..)]),e#lia_1;int(1..)]) = sum([product([10000,m#lia_1;int(1..)]),product([1000,o#lia_1;int(1..)]),product([100,n#lia_1;int(1..)]),product([10,e#lia_1;int(1..)]),y#lia_1;int(1..)]),
+sum([product([1000,s#lia_1;int(1..)]),product([100,e#lia_1;int(1..)]),product([10,n#lia_1;int(1..)]),d#lia_1,product([1000,m#lia_1;int(1..)]),product([100,o#lia_1;int(1..)]),product([10,r#lia_1;int(1..)]),e#lia_1,product([-10000,m#lia_1;int(1..)]),product([-1000,o#lia_1;int(1..)]),product([-100,n#lia_1;int(1..)]),product([-10,e#lia_1;int(1..)]),-(y#lia_1);int(1..)]) = 0,
 smtDistinct([s#lia_1,e#lia_1,n#lia_1,d#lia_1,m#lia_1,o#lia_1,r#lia_1,y#lia_1;int(1..)])
 

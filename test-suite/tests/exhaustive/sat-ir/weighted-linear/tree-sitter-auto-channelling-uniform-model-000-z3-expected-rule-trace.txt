@@ -43,6 +43,12 @@ x#bv_1
 
 --
 
+sum([(product([2,toInt(a);int(1..)]) - product([3,toInt(b);int(1..)])),product([4,toInt(c);int(1..)]);int(1..)]) = sum([2,toInt(a);int(1..)])
+   ~~> sum_comparison_to_zero ([("Base", 8800)])
+sum([(product([2,toInt(a);int(1..)]) - product([3,toInt(b);int(1..)])),product([4,toInt(c);int(1..)]),-(2),-(toInt(a));int(1..)]) = 0
+
+--
+
 (sum([product([3,toInt(a);int(1..)]),product([5,toInt(b);int(1..)]);int(1..)]) - product([2,toInt(c);int(1..)]))
    ~~> minus_to_sum ([("Base", 8400)])
 sum([sum([product([3,toInt(a);int(1..)]),product([5,toInt(b);int(1..)]);int(1..)]),-(product([2,toInt(c);int(1..)]));int(1..)])
@@ -55,15 +61,15 @@ sum([product([3,toInt(a);int(1..)]),product([5,toInt(b);int(1..)]),-(product([2,
 
 --
 
-(product([3,x#bv_1;int(1..)]) - product([2,y#bv_1;int(1..)]))
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([product([3,x#bv_1;int(1..)]),-(product([2,y#bv_1;int(1..)]));int(1..)])
-
---
-
 (product([2,toInt(a);int(1..)]) - product([3,toInt(b);int(1..)]))
    ~~> minus_to_sum ([("Base", 8400)])
 sum([product([2,toInt(a);int(1..)]),-(product([3,toInt(b);int(1..)]));int(1..)])
+
+--
+
+(product([3,x#bv_1;int(1..)]) - product([2,y#bv_1;int(1..)]))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([product([3,x#bv_1;int(1..)]),-(product([2,y#bv_1;int(1..)]));int(1..)])
 
 --
 
@@ -85,9 +91,9 @@ sum([product([3,x#bv_1;int(1..)]),-(product([2,y#bv_1;int(1..)])),product([5,toI
 
 --
 
-sum([sum([product([2,toInt(a);int(1..)]),-(product([3,toInt(b);int(1..)]));int(1..)]),product([4,toInt(c);int(1..)]);int(1..)])
+sum([sum([product([2,toInt(a);int(1..)]),-(product([3,toInt(b);int(1..)]));int(1..)]),product([4,toInt(c);int(1..)]),-2,-(toInt(a));int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([product([2,toInt(a);int(1..)]),-(product([3,toInt(b);int(1..)])),product([4,toInt(c);int(1..)]);int(1..)])
+sum([product([2,toInt(a);int(1..)]),-(product([3,toInt(b);int(1..)])),product([4,toInt(c);int(1..)]),-2,-(toInt(a));int(1..)])
 
 --
 
@@ -135,6 +141,6 @@ such that
 
 sum([product([3,x#bv_1;int(1..)]),product([-2,y#bv_1;int(1..)]),product([5,toInt(a);int(1..)]);int(1..)]) <= 1,
 sum([product([3,toInt(a);int(1..)]),product([5,toInt(b);int(1..)]),product([-2,toInt(c);int(1..)]);int(1..)]) >= 2,
-sum([product([2,toInt(a);int(1..)]),product([-3,toInt(b);int(1..)]),product([4,toInt(c);int(1..)]);int(1..)]) = sum([2,toInt(a);int(1..)]),
+sum([product([2,toInt(a);int(1..)]),product([-3,toInt(b);int(1..)]),product([4,toInt(c);int(1..)]),-2,-(toInt(a));int(1..)]) = 0,
 sum([toInt(a),toInt(a),toInt(!(a)),1;int(1..)]) < 4
 
