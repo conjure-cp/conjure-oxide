@@ -1,42 +1,22 @@
 //! conjure_oxide solve sub-command
 #![allow(clippy::unwrap_used)]
 use std::collections::{BTreeMap, BTreeSet};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use std::{
     fs::File,
     path::{Path, PathBuf},
-    sync::{Arc, RwLock},
 };
 
-use crate::exit;
-use anyhow::anyhow;
 use clap::ValueHint;
+use conjure_cp::Model;
 use conjure_cp::ast::SatEncodingDecision;
 use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
-use conjure_cp::{
-    Model,
-    context::Context,
-    defaults::DEFAULT_RULE_SETS,
-    rule_engine::{resolve_rule_sets, rewrite_model},
-    settings::{
-        Rewriter, set_channelling, set_comprehension_expander, set_current_parser,
-        set_current_rewriter, set_current_solver_family, set_default_rule_trace_enabled,
-        set_heuristic, set_heuristic_responses, set_heuristic_seed, set_minion_discrete_threshold,
-        set_rule_attempt_trace_enabled, set_rule_trace_aggregates_enabled, set_rule_trace_enabled,
-    },
-    solver::Solver,
-};
-use conjure_cp::{
-    parse::conjure_json::model_from_json, rule_engine::get_rules, settings::SolverFamily,
-};
-use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
-use conjure_cp_cli::find_conjure::conjure_executable;
+use conjure_cp::pipeline::Pipeline;
+use conjure_cp::solutions::SolutionOptions;
 use conjure_cp_cli::stats::{
     RecordedRunConfig, RecordedRunStats, StatsFormat, replace_config_run_stats,
 };
-use conjure_cp_cli::utils::conjure::{
-    get_solutions_with_timings, solutions_to_essence, solutions_to_json,
-};
+use conjure_cp_cli::utils::conjure::{solutions_to_essence, solutions_to_json};
 use conjure_cp_cli::utils::rule_trace::RuleApplicationCounter;
 use conjure_cp_cli::utils::simplified_json::{
     domains_from_model, param_model_from_assignments, params_from_simplified_json_str,
@@ -155,46 +135,45 @@ pub fn run_solve_command(
     solve_args: Args,
     rule_application_counts: &RuleApplicationCounter,
 ) -> anyhow::Result<()> {
+    let pipeline = Pipeline::new(global_args.library_config())?;
+    pipeline
+        .with_settings(|| run_solve(&pipeline, global_args, solve_args, rule_application_counts))
+}
+
+fn run_solve(
+    pipeline: &Pipeline,
+    global_args: GlobalArgs,
+    solve_args: Args,
+    rule_application_counts: &RuleApplicationCounter,
+) -> anyhow::Result<()> {
     let essence_file = solve_args.essence_file.clone();
     let param_file = solve_args.param_file.clone();
 
-    // each step is in its own method so that similar commands
-    // (e.g. testsolve) can reuse some of these steps.
-
-    let context = init_context(&global_args, essence_file, param_file)?;
-
-    let ctx_lock = context.read().unwrap();
-    let essence_file_name = ctx_lock
-        .essence_file_name
-        .as_ref()
-        .expect("context should contain the problem input file");
-    let param_file_name = ctx_lock.param_file_name.as_ref();
+    let context = pipeline.context();
+    {
+        let mut context = context.write().unwrap();
+        context.essence_file_name = Some(essence_file.to_string_lossy().into_owned());
+        context.param_file_name = param_file
+            .as_ref()
+            .map(|path| path.to_string_lossy().into_owned());
+    }
 
     let translation_started_at = Instant::now();
-
-    // parse models
-    let problem_model = parse(&global_args, Arc::clone(&context), essence_file_name)?;
-
-    // unify models
-    let unified_model = match param_file_name {
-        Some(param_file_name) => {
-            let param_model = parse_param(
-                &global_args,
-                Arc::clone(&context),
-                param_file_name,
-                &problem_model,
-            )?;
-            instantiate_model(problem_model, param_model)?
+    let unified_model = pipeline.with_settings(|| -> anyhow::Result<Model> {
+        let problem_model = pipeline.parse_file(&essence_file)?;
+        match param_file {
+            Some(param_file) => {
+                let param_model = parse_param(pipeline, &param_file, &problem_model)?;
+                Ok(instantiate_model(problem_model, param_model)?)
+            }
+            None => {
+                let mut problem_model = problem_model;
+                validate_instantiation_conditions(&mut problem_model)?;
+                Ok(problem_model)
+            }
         }
-        None => {
-            let mut problem_model = problem_model;
-            validate_instantiation_conditions(&mut problem_model)?;
-            problem_model
-        }
-    };
-    drop(ctx_lock);
-
-    let rewritten_model = rewrite(unified_model, &global_args, Arc::clone(&context))?;
+    })?;
+    let rewritten_model = pipeline.rewrite(unified_model)?;
 
     // Capture representations and SAT encoding choices
     let mut model_choices = RecordedRunStats::default();
@@ -203,25 +182,24 @@ pub fn run_solve_command(
 
     let translation_time = translation_started_at.elapsed().as_secs_f64();
 
-    let solver = init_solver(&global_args)?;
-
     let solver_started_at = Instant::now();
 
     let measured = if solve_args.no_run_solver {
         println!("{}", rewritten_model);
 
         if let Some(ref path) = global_args.save_solver_input_file {
-            let solver = solver.load_model(rewritten_model)?;
-
-            let mut file: Box<dyn std::io::Write> = Box::new(File::create(path)?);
-
-            solver.write_solver_input_file(&mut file)?;
+            pipeline.with_settings(|| -> anyhow::Result<()> {
+                let solver = pipeline.solver()?.load_model(rewritten_model)?;
+                let mut file: Box<dyn std::io::Write> = Box::new(File::create(path)?);
+                solver.write_solver_input_file(&mut file)?;
+                Ok(())
+            })?;
         }
 
         None
     } else {
         Some(run_solver(
-            solver,
+            pipeline,
             &global_args,
             &solve_args,
             rewritten_model,
@@ -422,227 +400,43 @@ fn record_model_choices(model: &Model, row: &mut RecordedRunStats) {
         .into_iter()
         .collect();
 }
-/// Returns a new Context and Solver for solving.
-pub(crate) fn init_context(
-    global_args: &GlobalArgs,
-    essence_file: PathBuf,
-    param_file: Option<PathBuf>,
-) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
-    let default_rule_trace_enabled = global_args.rule_trace.is_some();
-    let rule_attempt_trace_enabled = global_args.rule_attempt_trace.is_some();
-
-    set_current_parser(global_args.parser);
-    set_current_rewriter(global_args.rewriter);
-    set_comprehension_expander(global_args.comprehension_expander);
-    set_current_solver_family(global_args.solver);
-    set_minion_discrete_threshold(global_args.minion_discrete_threshold);
-    // Count every translation's rule applications, regardless of which outputs
-    // were requested. Solver-time CDP tracing remains controlled separately.
-    set_rule_trace_enabled(true);
-    set_default_rule_trace_enabled(default_rule_trace_enabled);
-    set_rule_attempt_trace_enabled(rule_attempt_trace_enabled);
-    set_rule_trace_aggregates_enabled(true);
-
-    let target_family = global_args.solver;
-    let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
-    for rs in &global_args.extra_rule_sets {
-        extra_rule_sets.push(rs.as_str());
-    }
-
-    let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
-        Ok(rs) => rs,
-        Err(e) => {
-            tracing::error!("Error resolving rule sets: {}", e);
-            exit(1);
-        }
-    };
-
-    tracing::info!(
-        target: "conjure::stage",
-        count = rule_sets.len(),
-        "resolved rule sets"
-    );
-    tracing::debug!(
-        rule_sets = %rule_sets
-            .iter()
-            .map(|rule_set| rule_set.name)
-            .collect::<Vec<_>>()
-            .join(", "),
-        "enabled rule sets"
-    );
-
-    let rules = get_rules(&rule_sets)?.into_iter().collect::<Vec<_>>();
-    tracing::debug!(
-        "Rules: {}",
-        rules
-            .iter()
-            .map(|rd| format!("{rd}"))
-            .collect::<Vec<_>>()
-            .join("\n")
-    );
-    let context = Context::new_ptr(
-        target_family,
-        extra_rule_sets.iter().map(|rs| rs.to_string()).collect(),
-        rules,
-        rule_sets.clone(),
-    );
-
-    context.write().unwrap().essence_file_name = Some(essence_file.to_str().expect("").into());
-    if let Some(param_file) = param_file {
-        context.write().unwrap().param_file_name = Some(param_file.to_str().expect("").into());
-    }
-
-    Ok(context)
-}
-
-pub(crate) fn init_solver(global_args: &GlobalArgs) -> anyhow::Result<Solver> {
-    let family = global_args.solver;
-    let timeout = global_args.solver_timeout.map(Duration::from);
-
-    Ok(match family {
-        SolverFamily::Minion => Solver::new(
-            Minion::with_search_orders(global_args.minion_varorder, global_args.minion_valorder)
-                .with_solver_seed(global_args.solver_seed)
-                .with_timeout(timeout),
-        ),
-        SolverFamily::Sat => Solver::new(
-            Sat::new(global_args.sat_backend)
-                .with_solver_seed(global_args.solver_seed)
-                .with_timeout(timeout),
-        ),
-        #[cfg(feature = "z3")]
-        SolverFamily::Z3 => {
-            Solver::new(Smt::new(timeout).with_solver_seed(global_args.solver_seed))
-        }
-        #[cfg(not(feature = "z3"))]
-        SolverFamily::Z3 => {
-            anyhow::bail!("Z3 solver support was not compiled in (enable the `z3` feature).")
-        }
-    })
-}
-
-pub(crate) fn parse(
-    global_args: &GlobalArgs,
-    context: Arc<RwLock<Context<'static>>>,
-    file_path: &str,
-) -> anyhow::Result<Model> {
-    tracing::info!(target: "conjure::stage", path = %file_path, "parsing input model");
-
-    match global_args.parser {
-        conjure_cp::settings::Parser::TreeSitter => {
-            parse_essence_file_native(file_path, context.clone()).map_err(|e| e.into())
-        }
-        conjure_cp::settings::Parser::ViaConjure => parse_with_conjure(file_path, context.clone()),
-    }
-}
-
 /// Parse an Essence or simplified-JSON parameter file.
 pub(crate) fn parse_param(
-    global_args: &GlobalArgs,
-    context: Arc<RwLock<Context<'static>>>,
-    file_path: &str,
+    pipeline: &Pipeline,
+    file_path: &Path,
     problem_model: &Model,
 ) -> anyhow::Result<Model> {
-    if file_path.ends_with(".json") {
-        tracing::info!(target: "conjure::stage", path = %file_path, "parsing parameter file");
+    if file_path
+        .extension()
+        .is_some_and(|extension| extension == "json")
+    {
+        tracing::info!(target: "conjure::stage", path = %file_path.display(), "parsing parameter file");
         let text = std::fs::read_to_string(file_path)?;
         let given_domains = domains_from_model(problem_model);
         let params = params_from_simplified_json_str(&text, &given_domains)?;
         return Ok(param_model_from_assignments(
             params,
             &given_domains,
-            context,
+            pipeline.context(),
         ));
     }
-    parse(global_args, context, file_path)
-}
-
-pub(crate) fn parse_with_conjure(
-    input_file: &str,
-    context: Arc<RwLock<Context<'static>>>,
-) -> anyhow::Result<Model> {
-    conjure_executable().map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
-
-    let mut cmd = std::process::Command::new("conjure");
-    let output = cmd
-        .arg("pretty")
-        .arg("--output-format=astjson")
-        .arg(input_file)
-        .output()?;
-
-    if !output.status.success() {
-        println!("Parsing error: {}", String::from_utf8(output.stderr)?);
-    }
-
-    let astjson = String::from_utf8(output.stdout)?;
-
-    if cfg!(feature = "extra-rule-checks") {
-        tracing::debug!("extra-rule-checks: enabled");
-    } else {
-        tracing::debug!("extra-rule-checks: disabled");
-    }
-
-    model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
-}
-
-pub(crate) fn rewrite(
-    model: Model,
-    global_args: &GlobalArgs,
-    context: Arc<RwLock<Context<'static>>>,
-) -> anyhow::Result<Model> {
-    tracing::debug!(model = %model, "initial model");
-
-    let rewriter = global_args.rewriter;
-    set_current_rewriter(rewriter);
-
-    let comprehension_expander = global_args.comprehension_expander;
-    set_comprehension_expander(comprehension_expander);
-    tracing::debug!(%comprehension_expander, "configured comprehension expander");
-
-    set_heuristic(global_args.heuristic);
-    set_heuristic_seed(global_args.seed);
-    set_heuristic_responses(global_args.responses.clone());
-    set_channelling(global_args.channelling);
-    conjure_cp::settings::set_amo_encoding(global_args.amo_encoding);
-    conjure_cp::settings::set_pb_encoding(global_args.pb_encoding);
-    conjure_cp::settings::set_element_encoding(global_args.element_encoding);
-    conjure_cp::settings::set_table_encoding(global_args.table_encoding);
-    conjure_cp::settings::set_alldifferent_encoding(global_args.alldifferent_encoding);
-    conjure_cp::settings::set_cardinality_encoding(global_args.cardinality_encoding);
-    tracing::debug!(
-        "Heuristic: {}, seed: {}, responses: {:?}, channelling: {}, solver seed: {}",
-        global_args.heuristic,
-        global_args.seed,
-        global_args.responses,
-        global_args.channelling,
-        global_args.solver_seed
-    );
-
-    let rule_sets = context.read().unwrap().rule_sets.clone();
-
-    let Rewriter::Rewrite(config) = rewriter;
-    tracing::info!(target: "conjure::stage", %config, "rewriting model");
-    let new_model = rewrite_model(&model, &rule_sets, config)?;
-
-    tracing::debug!(model = %new_model, "rewritten model");
-    Ok(new_model)
+    pipeline.parse_file(file_path)
 }
 
 fn run_solver(
-    solver: Solver,
+    pipeline: &Pipeline,
     global_args: &GlobalArgs,
     cmd_args: &Args,
     model: Model,
 ) -> anyhow::Result<(f64, f64, f64)> {
-    let domains = domains_from_model(&model);
-
-    let (solutions, measured) = get_solutions_with_timings(
-        solver,
+    let (solutions, measured) = pipeline.solve_with_timings(
         model,
-        cmd_args.number_of_solutions.as_solver_limit(),
-        cmd_args.keep_intermediate_solutions,
-        &global_args.save_solver_input_file,
-        global_args.rule_trace_cdp,
+        &SolutionOptions {
+            number_of_solutions: cmd_args.number_of_solutions.as_solver_limit(),
+            keep_intermediate_solutions: cmd_args.keep_intermediate_solutions,
+            solver_input_file: global_args.save_solver_input_file.clone(),
+            rule_trace_cdp: global_args.rule_trace_cdp,
+        },
     )?;
 
     let output_started_at = Instant::now();
@@ -652,8 +446,6 @@ fn run_solver(
         "solver solutions"
     );
 
-    let solutions = coerce_bools_in_solutions(&solutions, &domains);
-
     write_solutions(&solutions, cmd_args)?;
 
     Ok((
@@ -661,34 +453,6 @@ fn run_solver(
         measured.search_time_s,
         measured.solution_processing_time_s + output_started_at.elapsed().as_secs_f64(),
     ))
-}
-
-/// Turn solver `0`/`1` assignments back into booleans when the find domain is bool, so JSON/Essence
-/// output matches Conjure's simplified JSON (`true`/`false`).
-fn coerce_bools_in_solutions(
-    solutions: &[std::collections::BTreeMap<conjure_cp::ast::Name, conjure_cp::ast::Literal>],
-    domains: &std::collections::BTreeMap<conjure_cp::ast::Name, conjure_cp::ast::DomainPtr>,
-) -> Vec<std::collections::BTreeMap<conjure_cp::ast::Name, conjure_cp::ast::Literal>> {
-    use conjure_cp::ast::{GroundDomain, Literal, Name};
-    solutions
-        .iter()
-        .map(|solution| {
-            solution
-                .iter()
-                .map(|(name, value)| {
-                    let value = match domains.get(name).and_then(|domain| domain.as_ground()) {
-                        Some(GroundDomain::Bool) => match value {
-                            Literal::Int(1) => Literal::Bool(true),
-                            Literal::Int(0) => Literal::Bool(false),
-                            other => other.clone(),
-                        },
-                        _ => value.clone(),
-                    };
-                    (name.clone(), value)
-                })
-                .collect::<std::collections::BTreeMap<Name, Literal>>()
-        })
-        .collect()
 }
 
 fn write_solutions(
