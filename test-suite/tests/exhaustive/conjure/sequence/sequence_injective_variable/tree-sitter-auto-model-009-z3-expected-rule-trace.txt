@@ -64,9 +64,9 @@ x#packed_1#lia_1
 
 --
 
-(x#packed_1#lia_1 / 9)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(x#packed_1#lia_1, 9) @ 9 != 0}
+sum([(x#packed_1#lia_1 / 3) % 3,1;int(1..)]) != sum([x#packed_1#lia_1 % 3,1;int(1..)])
+   ~~> sum_comparison_to_zero ([("Base", 8800)])
+sum([(x#packed_1#lia_1 / 3) % 3,1,-(x#packed_1#lia_1 % 3),-(1);int(1..)]) != 0
 
 --
 
@@ -76,15 +76,21 @@ x#packed_1#lia_1
 
 --
 
-x#packed_1#lia_1 % 3
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(x#packed_1#lia_1,3) @ 3 != 0}
+(x#packed_1#lia_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#packed_1#lia_1, 9) @ 9 != 0}
 
 --
 
 (x#packed_1#lia_1 / 3)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(x#packed_1#lia_1, 3) @ 3 != 0}
+
+--
+
+x#packed_1#lia_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x#packed_1#lia_1,3) @ 3 != 0}
 
 --
 
@@ -103,5 +109,5 @@ find x#packed_1#lia_1: int(0..26)
 such that
 
 true,
-or([1 > SafeDiv(x#packed_1#lia_1, 9),2 > SafeDiv(x#packed_1#lia_1, 9),sum([SafeMod(SafeDiv(x#packed_1#lia_1, 3),3),1;int(1..)]) != sum([SafeMod(x#packed_1#lia_1,3),1;int(1..)]);int(1..)])
+or([1 > SafeDiv(x#packed_1#lia_1, 9),2 > SafeDiv(x#packed_1#lia_1, 9),sum([SafeMod(SafeDiv(x#packed_1#lia_1, 3),3),-(SafeMod(x#packed_1#lia_1,3));int(1..)]) != 0;int(1..)])
 

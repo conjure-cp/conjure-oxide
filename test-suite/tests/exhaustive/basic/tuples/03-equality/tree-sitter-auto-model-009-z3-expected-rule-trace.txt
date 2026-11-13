@@ -88,15 +88,15 @@ x#packed_1#bv_1
 
 --
 
-(x#packed_1#bv_1 / 5)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(x#packed_1#bv_1, 5) @ 5 != 0}
+sum([(x#packed_1#bv_1 / 5),1;int(1..)]) = sum([(y#packed_1#lia_1 / 5),2;int(1..)])
+   ~~> sum_comparison_to_zero ([("Base", 8800)])
+sum([(x#packed_1#bv_1 / 5),1,-((y#packed_1#lia_1 / 5)),-(2);int(1..)]) = 0
 
 --
 
-(y#packed_1#lia_1 / 5)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(y#packed_1#lia_1, 5) @ 5 != 0}
+sum([x#packed_1#bv_1 % 5,1;int(1..)]) = sum([y#packed_1#lia_1 % 5,1;int(1..)])
+   ~~> sum_comparison_to_zero ([("Base", 8800)])
+sum([x#packed_1#bv_1 % 5,1,-(y#packed_1#lia_1 % 5),-(1);int(1..)]) = 0
 
 --
 
@@ -106,9 +106,21 @@ x#packed_1#bv_1 % 5
 
 --
 
+(x#packed_1#bv_1 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#packed_1#bv_1, 5) @ 5 != 0}
+
+--
+
 y#packed_1#lia_1 % 5
    ~~> mod_to_bubble ([("Bubble", 6000)])
 {SafeMod(y#packed_1#lia_1,5) @ 5 != 0}
+
+--
+
+(y#packed_1#lia_1 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(y#packed_1#lia_1, 5) @ 5 != 0}
 
 --
 
@@ -123,5 +135,5 @@ find y#packed_1#lia_1: int(0..19)
 
 such that
 
-and([sum([SafeDiv(x#packed_1#bv_1, 5),1;int(1..)]) = sum([SafeDiv(y#packed_1#lia_1, 5),2;int(1..)]),sum([SafeMod(x#packed_1#bv_1,5),1;int(1..)]) = sum([SafeMod(y#packed_1#lia_1,5),1;int(1..)]);int(1..)])
+and([sum([SafeDiv(x#packed_1#bv_1, 5),-(SafeDiv(y#packed_1#lia_1, 5)),-1;int(1..)]) = 0,sum([SafeMod(x#packed_1#bv_1,5),-(SafeMod(y#packed_1#lia_1,5));int(1..)]) = 0;int(1..)])
 
