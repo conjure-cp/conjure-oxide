@@ -29,7 +29,6 @@ use std::sync::RwLock;
 use conjure_cp::ast::{Literal, Model, Name, SatEncodingDecision};
 use conjure_cp::context::Context;
 use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
-use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
     Channelling, Heuristic, HeuristicChoice, Parser, QuantifiedExpander, Rewriter, SolverFamily,
@@ -776,7 +775,6 @@ fn exhaustive_test_inner_with_status(
 ///
 /// - **Parsing Stage**
 ///   - **Stage 1a (Default)**: Reads the Essence model file and verifies that it parses correctly using `parser = "tree-sitter"`.
-///   - **Stage 1b (Optional)**: Reads the Essence model file and verifies that it parses correctly using `parser = "via-conjure"`.
 ///
 /// - **Rewrite Stage**
 ///   - **Stage 2a**: Applies a set of rules to the parsed model and validates the result.
@@ -1509,7 +1507,6 @@ fn parse_unified_problem_model(
 
     let problem_model = match parser {
         Parser::TreeSitter => parse_essence_file_native(&file_path, context.clone())?,
-        Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
     };
 
     let Some(param_path) = param_file else {
@@ -1526,7 +1523,6 @@ fn parse_unified_problem_model(
     } else {
         match parser {
             Parser::TreeSitter => parse_essence_file_native(param_path, context)?,
-            Parser::ViaConjure => parse_essence_file(param_path, context)?,
         }
     };
 
@@ -1618,11 +1614,6 @@ fn try_capture_oxide_minion(
     let mut file: Box<dyn std::io::Write> = Box::new(File::create(&minion_path)?);
     solver.write_solver_input_file(&mut file)?;
     Ok(())
-}
-
-#[test]
-fn assert_conjure_present() {
-    conjure_cp_cli::find_conjure::conjure_executable().unwrap();
 }
 
 include!(concat!(env!("OUT_DIR"), "/gen_tests.rs"));

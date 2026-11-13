@@ -9,7 +9,6 @@ use std::{
 };
 
 use crate::exit;
-use anyhow::anyhow;
 use clap::ValueHint;
 use conjure_cp::ast::SatEncodingDecision;
 use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
@@ -26,11 +25,8 @@ use conjure_cp::{
     },
     solver::Solver,
 };
-use conjure_cp::{
-    parse::conjure_json::model_from_json, rule_engine::get_rules, settings::SolverFamily,
-};
 use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
-use conjure_cp_cli::find_conjure::conjure_executable;
+use conjure_cp::{rule_engine::get_rules, settings::SolverFamily};
 use conjure_cp_cli::stats::{
     RecordedRunConfig, RecordedRunStats, StatsFormat, replace_config_run_stats,
 };
@@ -532,7 +528,6 @@ pub(crate) fn parse(
         conjure_cp::settings::Parser::TreeSitter => {
             parse_essence_file_native(file_path, context.clone()).map_err(|e| e.into())
         }
-        conjure_cp::settings::Parser::ViaConjure => parse_with_conjure(file_path, context.clone()),
     }
 }
 
@@ -555,34 +550,6 @@ pub(crate) fn parse_param(
         ));
     }
     parse(global_args, context, file_path)
-}
-
-pub(crate) fn parse_with_conjure(
-    input_file: &str,
-    context: Arc<RwLock<Context<'static>>>,
-) -> anyhow::Result<Model> {
-    conjure_executable().map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
-
-    let mut cmd = std::process::Command::new("conjure");
-    let output = cmd
-        .arg("pretty")
-        .arg("--output-format=astjson")
-        .arg(input_file)
-        .output()?;
-
-    if !output.status.success() {
-        println!("Parsing error: {}", String::from_utf8(output.stderr)?);
-    }
-
-    let astjson = String::from_utf8(output.stdout)?;
-
-    if cfg!(feature = "extra-rule-checks") {
-        tracing::debug!("extra-rule-checks: enabled");
-    } else {
-        tracing::debug!("extra-rule-checks: disabled");
-    }
-
-    model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
 }
 
 pub(crate) fn rewrite(

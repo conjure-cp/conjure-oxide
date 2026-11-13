@@ -3,7 +3,7 @@ use conjure_cp::context::Context;
 use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
 use conjure_cp::parse::tree_sitter::errors::InstantiateModelError;
 use conjure_cp::parse::tree_sitter::errors::ParseErrorCollection;
-use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
+use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::settings::Parser;
 use conjure_cp_cli::utils::testing::{
     DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT, serialize_model, truncate_to_first_chars,
@@ -52,7 +52,6 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
         let case_name = parser.to_string();
         let parse = match parser {
             Parser::TreeSitter => parse_essence_file_native,
-            Parser::ViaConjure => parse_essence_file,
         };
         allowed_expected_files.extend(roundtrip_test_inner(
             path,

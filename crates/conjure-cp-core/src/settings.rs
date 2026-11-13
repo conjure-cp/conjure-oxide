@@ -309,14 +309,12 @@ fn prompt_heuristic_interactive_choice(option_count: usize) -> usize {
 pub enum Parser {
     #[default]
     TreeSitter,
-    ViaConjure,
 }
 
 impl Display for Parser {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Parser::TreeSitter => write!(f, "tree-sitter"),
-            Parser::ViaConjure => write!(f, "via-conjure"),
         }
     }
 }
@@ -327,9 +325,8 @@ impl FromStr for Parser {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.trim().to_ascii_lowercase().as_str() {
             "tree-sitter" => Ok(Parser::TreeSitter),
-            "via-conjure" => Ok(Parser::ViaConjure),
             other => Err(format!(
-                "unknown parser: {other}; expected one of: tree-sitter, via-conjure"
+                "unknown parser: {other}; expected one of: tree-sitter"
             )),
         }
     }
