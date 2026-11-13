@@ -165,10 +165,7 @@ pub fn get_solutions_from_conjure_with_stats(
     let timings = read_conjure_timings(output_dir.path(), conjure_solve_wall_time_s)?;
 
     Ok(ConjureSolutions {
-        solutions: solutions_set
-            .into_iter()
-            .filter(|x| !x.is_empty())
-            .collect(),
+        solutions: solutions_set,
         timings,
     })
 }
