@@ -10,6 +10,10 @@ pub mod representation;
 mod shared;
 mod types;
 
+/// Expand a finite comprehension without invoking a solver or rewriting a model.
+/// Callers retain responsibility for source grouping and expansion budgets.
+pub use passes::comprehensions::expansion::expand_native as expand_comprehension_native;
+
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that
 /// are too expensive to do normally, or are implicit in the rule priorities and application order.
 ///
