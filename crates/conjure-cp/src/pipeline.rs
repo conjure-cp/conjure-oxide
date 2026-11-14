@@ -2,7 +2,6 @@
 
 use std::cell::Cell;
 use std::collections::BTreeMap;
-use std::io::Write;
 use std::path::Path;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
@@ -235,11 +234,6 @@ impl Pipeline {
     pub fn parse(&self, source: &str) -> Result<Model> {
         self.with_settings(|| match self.config.parser {
             Parser::TreeSitter => self.parse_native(source, None),
-            Parser::ViaConjure => {
-                let mut file = tempfile::Builder::new().suffix(".essence").tempfile()?;
-                file.write_all(source.as_bytes())?;
-                self.parse_via_conjure(file.path())
-            }
         })
     }
 
@@ -253,7 +247,6 @@ impl Pipeline {
                     .with_context(|| format!("could not read {}", path.display()))?;
                 self.parse_native(&source, Some(path.to_string_lossy().into_owned()))
             }
-            Parser::ViaConjure => self.parse_via_conjure(path),
         })
     }
 
@@ -273,22 +266,6 @@ impl Pipeline {
             }
             Err(error) => Err(ParseErrorCollection::fatal(error).into()),
         }
-    }
-
-    fn parse_via_conjure(&self, path: &Path) -> Result<Model> {
-        crate::find_conjure::conjure_executable()
-            .context("Could not find correct conjure executable")?;
-        let output = std::process::Command::new("conjure")
-            .args(["pretty", "--output-format=astjson"])
-            .arg(path)
-            .output()?;
-        ensure!(
-            output.status.success(),
-            "Parsing error: {}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-        let astjson = String::from_utf8(output.stdout)?;
-        crate::parse::conjure_json::model_from_json(&astjson, self.context()).map_err(Into::into)
     }
 
     /// Parse, instantiate optional Essence parameters, and rewrite an in-memory problem.

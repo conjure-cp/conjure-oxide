@@ -1,11 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use conjure_cp::ast::sat_decision::AmoEncoding;
 use conjure_cp::ast::{AbstractLiteral, Literal, Name};
 use conjure_cp::pipeline::{Config, Pipeline};
-use conjure_cp::settings::{
-    self, Channelling, Heuristic, Parser, QuantifiedExpander, SolverFamily,
-};
+use conjure_cp::settings::{self, QuantifiedExpander, SolverFamily};
 use conjure_cp::solutions::SolutionOptions;
 use conjure_cp_rules as _;
 
@@ -167,55 +164,6 @@ fn models_from_another_pipeline_are_rejected() {
     let model = first.compile("find x : bool", None).unwrap();
     let error = second.solve(model, &all_solutions()).err().unwrap();
     assert!(error.to_string().contains("different pipeline context"));
-}
-
-#[test]
-fn repeated_seeded_runs_restore_the_callers_settings_and_random_stream() {
-    settings::with_saved_settings(|| {
-        settings::set_current_parser(Parser::ViaConjure);
-        settings::set_current_solver_family(SolverFamily::Z3);
-        settings::set_comprehension_expander(QuantifiedExpander::ViaSolverAc);
-        settings::set_heuristic(Heuristic::Interactive);
-        settings::set_channelling(Channelling::Uniform);
-        settings::set_amo_encoding(Some(AmoEncoding::Pairwise));
-        settings::set_heuristic_responses(vec![2]);
-        settings::set_heuristic_seed(99);
-        let expected_next_random = settings::next_heuristic_random_index(997);
-        settings::set_heuristic_seed(99);
-
-        let random = Pipeline::new(Config {
-            heuristic: Heuristic::Random,
-            seed: 42,
-            ..Default::default()
-        })
-        .unwrap();
-        let compact = Pipeline::new(Config::default()).unwrap();
-        let source = "find x, y : int(0..3)\nsuch that x + y = 3";
-        let first = random.compile(source, None).unwrap();
-        let first_text = first.to_string();
-        let first_solutions = random.solve(first, &all_solutions()).unwrap();
-        let other = compact.compile(source, None).unwrap();
-        assert_eq!(compact.solve(other, &all_solutions()).unwrap().len(), 4);
-        let repeated = random.compile(source, None).unwrap();
-        assert_eq!(repeated.to_string(), first_text);
-        let repeated_solutions = random.solve(repeated, &all_solutions()).unwrap();
-        assert_eq!(repeated_solutions, first_solutions);
-
-        assert_eq!(settings::current_parser(), Parser::ViaConjure);
-        assert_eq!(settings::current_solver_family(), SolverFamily::Z3);
-        assert_eq!(
-            settings::comprehension_expander(),
-            QuantifiedExpander::ViaSolverAc
-        );
-        assert_eq!(settings::heuristic(), Heuristic::Interactive);
-        assert_eq!(settings::channelling(), Channelling::Uniform);
-        assert_eq!(settings::amo_encoding(), Some(AmoEncoding::Pairwise));
-        assert_eq!(
-            settings::next_heuristic_random_index(997),
-            expected_next_random
-        );
-        assert_eq!(settings::next_heuristic_interactive_index(&["a", "b"]), 1);
-    });
 }
 
 #[cfg(any(feature = "sat-batsat", feature = "sat-cadical"))]

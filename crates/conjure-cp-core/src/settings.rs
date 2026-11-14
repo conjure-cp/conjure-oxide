@@ -1127,7 +1127,7 @@ mod saved_settings_tests {
     };
 
     fn configure_settings() {
-        set_current_parser(Parser::ViaConjure);
+        set_current_parser(Parser::TreeSitter);
         set_current_rewriter(Rewriter::Rewrite(RewriteConfig::baseline()));
         set_comprehension_expander(QuantifiedExpander::ViaSolver);
         set_current_solver_family(SolverFamily::Sat);
