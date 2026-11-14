@@ -4,7 +4,6 @@ use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditio
 use conjure_cp::parse::tree_sitter::errors::InstantiateModelError;
 use conjure_cp::parse::tree_sitter::errors::ParseErrorCollection;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
-use conjure_cp::settings::Parser;
 use conjure_cp_cli::utils::testing::{
     DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT, serialize_model, truncate_to_first_chars,
 };
@@ -15,7 +14,6 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
 use test_suite::AcceptMode;
-use test_suite::TestConfig;
 use test_suite::golden_files::assert_no_redundant_expected_files;
 
 /// Parser function used by roundtrip tests.
@@ -24,13 +22,6 @@ type ParseFn = fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, Box<Pars
 /// Runs a roundtrip parse test for one input model using the parsers configured in `config.toml`.
 fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let accept = AcceptMode::from_env().accepts_outputs();
-
-    let file_config: TestConfig =
-        if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
-            toml::from_str(&config_contents).unwrap()
-        } else {
-            Default::default()
-        };
 
     let param_file = fs::read_dir(path).ok().and_then(|entries| {
         entries
@@ -43,25 +34,16 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
         clean_test_dir_for_accept(path)?;
     }
 
-    let parsers = file_config
-        .configured_parsers()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
     let mut allowed_expected_files = BTreeSet::new();
 
-    for parser in parsers {
-        let case_name = parser.to_string();
-        let parse = match parser {
-            Parser::TreeSitter => parse_essence_file_native,
-        };
-        allowed_expected_files.extend(roundtrip_test_inner(
-            path,
-            filename,
-            &case_name,
-            extension,
-            parse,
-            param_file.as_deref(),
-        )?);
-    }
+    let parse = parse_essence_file_native;
+    allowed_expected_files.extend(roundtrip_test_inner(
+        path,
+        filename,
+        extension,
+        parse,
+        param_file.as_deref(),
+    )?);
 
     assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
 
@@ -122,7 +104,6 @@ fn clean_test_dir_for_accept(path: &str) -> Result<(), std::io::Error> {
 fn roundtrip_test_inner(
     path: &str,
     input_filename: &str,
-    case_name: &str,
     extension: &str,
     parse: ParseFn,
     param_file: Option<&str>,
@@ -167,23 +148,21 @@ fn roundtrip_test_inner(
     };
     match initial_parse {
         Ok(initial_model) => {
-            save_roundtrip_model_json(&initial_model, path, case_name, "generated")?;
-            save_essence(&initial_model, path, case_name, "generated")?;
+            save_roundtrip_model_json(&initial_model, path, "generated")?;
+            save_essence(&initial_model, path, "generated")?;
 
             if accept {
                 std::fs::copy(
-                    roundtrip_model_json_path(path, case_name, "generated"),
-                    roundtrip_model_json_path(path, case_name, "expected"),
+                    roundtrip_model_json_path(path, "generated"),
+                    roundtrip_model_json_path(path, "expected"),
                 )?;
                 std::fs::copy(
-                    roundtrip_essence_path(path, case_name, "generated"),
-                    roundtrip_essence_path(path, case_name, "expected"),
+                    roundtrip_essence_path(path, "generated"),
+                    roundtrip_essence_path(path, "expected"),
                 )?;
             }
 
-            if !accept
-                && !Path::new(&roundtrip_model_json_path(path, case_name, "expected")).exists()
-            {
+            if !accept && !Path::new(&roundtrip_model_json_path(path, "expected")).exists() {
                 return Err(Box::new(std::io::Error::new(
                     std::io::ErrorKind::NotFound,
                     format!(
@@ -193,41 +172,34 @@ fn roundtrip_test_inner(
                 )));
             }
 
-            let expected_model_json =
-                read_roundtrip_model_json_snapshot(path, case_name, "expected")?;
-            let generated_model_json =
-                read_roundtrip_model_json_snapshot(path, case_name, "generated")?;
+            let expected_model_json = read_roundtrip_model_json_snapshot(path, "expected")?;
+            let generated_model_json = read_roundtrip_model_json_snapshot(path, "generated")?;
             assert_eq!(generated_model_json, expected_model_json);
 
-            let expected_essence =
-                fs::read_to_string(roundtrip_essence_path(path, case_name, "expected"))?;
-            let generated_essence =
-                fs::read_to_string(roundtrip_essence_path(path, case_name, "generated"))?;
+            let expected_essence = fs::read_to_string(roundtrip_essence_path(path, "expected"))?;
+            let generated_essence = fs::read_to_string(roundtrip_essence_path(path, "generated"))?;
             assert_eq!(expected_essence, generated_essence);
 
-            let new_model = parse(
-                &roundtrip_essence_path(path, case_name, "generated"),
-                context.clone(),
-            )?;
-            save_essence(&new_model, path, case_name, "generated2")?;
+            let new_model = parse(&roundtrip_essence_path(path, "generated"), context.clone())?;
+            save_essence(&new_model, path, "generated2")?;
             let new_generated_essence =
-                fs::read_to_string(roundtrip_essence_path(path, case_name, "generated"))?;
+                fs::read_to_string(roundtrip_essence_path(path, "generated"))?;
             assert_eq!(generated_essence, new_generated_essence);
 
-            return Ok(expected_roundtrip_files_for_case(case_name, true));
+            return Ok(expected_roundtrip_files_for_case(true));
         }
 
         Err(parse_error) => {
-            save_parse_error(&parse_error, path, case_name, "generated")?;
+            save_parse_error(&parse_error, path, "generated")?;
 
             if accept {
                 std::fs::copy(
-                    roundtrip_error_path(path, case_name, "generated"),
-                    roundtrip_error_path(path, case_name, "expected"),
+                    roundtrip_error_path(path, "generated"),
+                    roundtrip_error_path(path, "expected"),
                 )?;
             }
 
-            if !accept && !Path::new(&roundtrip_error_path(path, case_name, "expected")).exists() {
+            if !accept && !Path::new(&roundtrip_error_path(path, "expected")).exists() {
                 return Err(Box::new(std::io::Error::new(
                     std::io::ErrorKind::NotFound,
                     format!(
@@ -237,41 +209,39 @@ fn roundtrip_test_inner(
                 )));
             }
 
-            let expected_error =
-                fs::read_to_string(roundtrip_error_path(path, case_name, "expected"))?;
-            let generated_error =
-                fs::read_to_string(roundtrip_error_path(path, case_name, "generated"))?;
+            let expected_error = fs::read_to_string(roundtrip_error_path(path, "expected"))?;
+            let generated_error = fs::read_to_string(roundtrip_error_path(path, "generated"))?;
             assert_eq!(expected_error, generated_error);
 
-            return Ok(expected_roundtrip_files_for_case(case_name, false));
+            return Ok(expected_roundtrip_files_for_case(false));
         }
     }
 }
 
 /// Returns the roundtrip model JSON path for a parser case and model type.
-fn roundtrip_model_json_path(path: &str, case_name: &str, file_type: &str) -> String {
-    format!("{path}/{case_name}.{file_type}.serialised.json")
+fn roundtrip_model_json_path(path: &str, file_type: &str) -> String {
+    format!("{path}/{file_type}.serialised.json")
 }
 
 /// Returns the roundtrip Essence path for a parser case and model type.
-fn roundtrip_essence_path(path: &str, case_name: &str, file_type: &str) -> String {
-    format!("{path}/{case_name}.{file_type}.essence")
+fn roundtrip_essence_path(path: &str, file_type: &str) -> String {
+    format!("{path}/{file_type}.essence")
 }
 
 /// Returns the roundtrip parser-error path for a parser case and model type.
-fn roundtrip_error_path(path: &str, case_name: &str, file_type: &str) -> String {
-    format!("{path}/{case_name}.{file_type}-error.txt")
+fn roundtrip_error_path(path: &str, file_type: &str) -> String {
+    format!("{path}/{file_type}-error.txt")
 }
 
 /// Returns the expected snapshot files for a roundtrip parser case outcome.
-fn expected_roundtrip_files_for_case(case_name: &str, parse_succeeded: bool) -> BTreeSet<String> {
+fn expected_roundtrip_files_for_case(parse_succeeded: bool) -> BTreeSet<String> {
     if parse_succeeded {
         BTreeSet::from([
-            format!("{case_name}.expected.serialised.json"),
-            format!("{case_name}.expected.essence"),
+            format!("expected.serialised.json"),
+            format!("expected.essence"),
         ])
     } else {
-        BTreeSet::from([format!("{case_name}.expected-error.txt")])
+        BTreeSet::from([format!("expected-error.txt")])
     }
 }
 
@@ -279,13 +249,13 @@ fn expected_roundtrip_files_for_case(case_name: &str, parse_succeeded: bool) -> 
 fn save_roundtrip_model_json(
     model: &Model,
     path: &str,
-    case_name: &str,
+
     file_type: &str,
 ) -> Result<(), std::io::Error> {
     let serialised = serialize_model(model).map_err(std::io::Error::other)?;
     let serialised = truncate_to_first_chars(&serialised, DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT);
     fs::write(
-        roundtrip_model_json_path(path, case_name, file_type),
+        roundtrip_model_json_path(path, file_type),
         format!("{serialised}\n"),
     )?;
     Ok(())
@@ -294,10 +264,9 @@ fn save_roundtrip_model_json(
 /// Reads a saved roundtrip model JSON snapshot.
 fn read_roundtrip_model_json_snapshot(
     path: &str,
-    case_name: &str,
     file_type: &str,
 ) -> Result<String, std::io::Error> {
-    let serialised = fs::read_to_string(roundtrip_model_json_path(path, case_name, file_type))?;
+    let serialised = fs::read_to_string(roundtrip_model_json_path(path, file_type))?;
     Ok(truncate_to_first_chars(
         &serialised,
         DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT,
@@ -305,13 +274,8 @@ fn read_roundtrip_model_json_snapshot(
 }
 
 /// Saves a model as an Essence file.
-fn save_essence(
-    model: &Model,
-    path: &str,
-    test_name: &str,
-    file_type: &str,
-) -> Result<(), std::io::Error> {
-    let filename = roundtrip_essence_path(path, test_name, file_type);
+fn save_essence(model: &Model, path: &str, file_type: &str) -> Result<(), std::io::Error> {
+    let filename = roundtrip_essence_path(path, file_type);
     fs::write(filename, format!("{model}\n"))?;
     Ok(())
 }
@@ -320,10 +284,9 @@ fn save_essence(
 fn save_parse_error(
     error: &ParseErrorCollection,
     path: &str,
-    test_name: &str,
     file_type: &str,
 ) -> Result<(), std::io::Error> {
-    let filename = roundtrip_error_path(path, test_name, file_type);
+    let filename = roundtrip_error_path(path, file_type);
     fs::write(filename, format!("{error}\n"))?;
     Ok(())
 }

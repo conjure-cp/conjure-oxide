@@ -67,7 +67,6 @@ where
 /// Identifies one configured exhaustive-test run.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RecordedRunConfig {
-    pub parser: String,
     pub rewriter: String,
     pub comprehension_expander: String,
     pub heuristic: String,
@@ -117,7 +116,6 @@ pub struct TestRunStats {
 #[derive(Deserialize, Serialize, Debug, Default)]
 #[serde(default, deny_unknown_fields, rename_all = "kebab-case")]
 pub struct RecordedRunStats {
-    pub parser: String,
     pub rewriter: String,
     pub comprehension_expander: String,
     pub heuristic: String,
@@ -252,8 +250,7 @@ pub fn replace_config_run_stats(
 ) -> io::Result<()> {
     update_canonical_stats(path, |stats| {
         stats.runs.retain(|row| {
-            !(row.parser == config.parser
-                && row.rewriter == config.rewriter
+            !(row.rewriter == config.rewriter
                 && row.comprehension_expander == config.comprehension_expander
                 && row.heuristic == config.heuristic
                 && row.channelling == config.channelling
@@ -264,7 +261,6 @@ pub fn replace_config_run_stats(
         stats.runs.extend(rows);
         stats.runs.sort_by(|a, b| {
             (
-                &a.parser,
                 &a.rewriter,
                 &a.comprehension_expander,
                 &a.heuristic,
@@ -275,7 +271,6 @@ pub fn replace_config_run_stats(
                 a.model_index,
             )
                 .cmp(&(
-                    &b.parser,
                     &b.rewriter,
                     &b.comprehension_expander,
                     &b.heuristic,

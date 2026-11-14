@@ -57,9 +57,6 @@ Options:
   --create-if-empty
       If the test name/path matches but the test has no config.toml, create an empty one
 
-  --parser tree-sitter
-      If set, enable only this parser in [parser]
-
   --rewriter baseline|optimised|baseline+prefilter|baseline+worklist
       If set, enable only this rewriter in [rewriter]
 
@@ -507,12 +504,6 @@ while [[ $# -gt 0 ]]; do
     --create-if-empty)
       create_if_empty="true"
       shift
-      ;;
-    --parser)
-      [[ $# -ge 2 ]] || err "--parser requires a value"
-      parser_opt="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')"
-      validate_choice "parser" "$parser_opt" "tree-sitter"
-      shift 2
       ;;
     --rewriter)
       [[ $# -ge 2 ]] || err "--rewriter requires a value"

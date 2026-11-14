@@ -19,9 +19,7 @@ use crate::defaults::DEFAULT_RULE_SETS;
 use crate::instantiate::{instantiate_model, validate_instantiation_conditions};
 use crate::parse::tree_sitter::errors::ParseErrorCollection;
 use crate::rule_engine::{get_rules, resolve_rule_sets, rewrite_model};
-use crate::settings::{
-    self, Channelling, Heuristic, Parser, QuantifiedExpander, Rewriter, SolverFamily,
-};
+use crate::settings::{self, Channelling, Heuristic, QuantifiedExpander, Rewriter, SolverFamily};
 use crate::solutions::{SolutionCollectionTimings, SolutionOptions, get_solutions_with_timings};
 use crate::solver::Solver;
 use crate::solver::adaptors::*;
@@ -41,8 +39,6 @@ impl Drop for ActivePipelineGuard {
 /// Modelling and solver options shared by library callers and the CLI.
 #[derive(Clone, Debug)]
 pub struct Config {
-    /// Input parser; the native parser needs no external executable.
-    pub parser: Parser,
     /// Rewrite engine configuration.
     pub rewriter: Rewriter,
     /// Strategy for expanding comprehensions.
@@ -94,7 +90,6 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            parser: Parser::default(),
             rewriter: Rewriter::default(),
             comprehension_expander: QuantifiedExpander::Auto,
             solver: SolverFamily::Minion,
@@ -137,7 +132,6 @@ pub struct TraceConfig {
 
 impl Config {
     fn apply(&self) {
-        settings::set_current_parser(self.parser);
         settings::set_current_rewriter(self.rewriter);
         settings::set_comprehension_expander(self.comprehension_expander);
         settings::set_current_solver_family(self.solver);
@@ -232,21 +226,17 @@ impl Pipeline {
 
     /// Parse Essence source in memory using the configured parser.
     pub fn parse(&self, source: &str) -> Result<Model> {
-        self.with_settings(|| match self.config.parser {
-            Parser::TreeSitter => self.parse_native(source, None),
-        })
+        self.with_settings(|| self.parse_native(source, None))
     }
 
     /// Parse a file using the configured parser without requiring a UTF-8 path.
     pub fn parse_file(&self, path: impl AsRef<Path>) -> Result<Model> {
         let path = path.as_ref();
         tracing::info!(target: "conjure::stage", path = %path.display(), "parsing input model");
-        self.with_settings(|| match self.config.parser {
-            Parser::TreeSitter => {
-                let source = std::fs::read_to_string(path)
-                    .with_context(|| format!("could not read {}", path.display()))?;
-                self.parse_native(&source, Some(path.to_string_lossy().into_owned()))
-            }
+        self.with_settings(|| {
+            let source = std::fs::read_to_string(path)
+                .with_context(|| format!("could not read {}", path.display()))?;
+            self.parse_native(&source, Some(path.to_string_lossy().into_owned()))
         })
     }
 

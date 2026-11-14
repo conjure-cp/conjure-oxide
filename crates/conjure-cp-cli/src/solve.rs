@@ -217,7 +217,6 @@ fn run_solve(
     // Still write translation statistics when the solver was not run.
     if let Some(ref path) = solve_args.stats {
         let config = RecordedRunConfig {
-            parser: global_args.parser.to_string(),
             rewriter: global_args.rewriter.to_string(),
             comprehension_expander: global_args.comprehension_expander.to_string(),
             heuristic: global_args.heuristic.to_string(),
@@ -234,7 +233,6 @@ fn run_solve(
             .unwrap_or_else(|| "input".to_owned());
 
         let mut row = RecordedRunStats {
-            parser: config.parser.clone(),
             rewriter: config.rewriter.clone(),
             comprehension_expander: config.comprehension_expander.clone(),
             heuristic: config.heuristic.clone(),

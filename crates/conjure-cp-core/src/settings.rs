@@ -305,53 +305,6 @@ fn prompt_heuristic_interactive_choice(option_count: usize) -> usize {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
-pub enum Parser {
-    #[default]
-    TreeSitter,
-}
-
-impl Display for Parser {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Parser::TreeSitter => write!(f, "tree-sitter"),
-        }
-    }
-}
-
-impl FromStr for Parser {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.trim().to_ascii_lowercase().as_str() {
-            "tree-sitter" => Ok(Parser::TreeSitter),
-            other => Err(format!(
-                "unknown parser: {other}; expected one of: tree-sitter"
-            )),
-        }
-    }
-}
-
-thread_local! {
-    /// Thread-local setting for which parser is currently active.
-    ///
-    /// Must be explicitly set before use.
-    static CURRENT_PARSER: Cell<Option<Parser>> = const { Cell::new(None) };
-}
-
-pub fn set_current_parser(parser: Parser) {
-    CURRENT_PARSER.with(|current| current.set(Some(parser)));
-}
-
-pub fn current_parser() -> Parser {
-    CURRENT_PARSER.with(|current| {
-        current.get().unwrap_or_else(|| {
-            // loud failure on purpose, so we don't end up using the default
-            bug!("current parser not set for this thread; call set_current_parser first")
-        })
-    })
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct RewriteConfig {
     /// Skip rules whose declared expression discriminants cannot match.
@@ -795,7 +748,6 @@ pub struct SolverArgs {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct SavedSettings {
-    parser: Option<Parser>,
     rewriter: Option<Rewriter>,
     expander: Option<QuantifiedExpander>,
     solver_family: Option<SolverFamily>,
@@ -820,7 +772,6 @@ struct SavedSettings {
 impl SavedSettings {
     fn capture() -> Self {
         Self {
-            parser: CURRENT_PARSER.with(Cell::get),
             rewriter: CURRENT_REWRITER.with(Cell::get),
             expander: COMPREHENSION_EXPANDER.with(Cell::get),
             solver_family: CURRENT_SOLVER_FAMILY.with(Cell::get),
@@ -844,7 +795,6 @@ impl SavedSettings {
     }
 
     fn restore(self) {
-        CURRENT_PARSER.with(|current| current.set(self.parser));
         CURRENT_REWRITER.with(|current| current.set(self.rewriter));
         COMPREHENSION_EXPANDER.with(|current| current.set(self.expander));
         CURRENT_SOLVER_FAMILY.with(|current| current.set(self.solver_family));
@@ -1127,7 +1077,6 @@ mod saved_settings_tests {
     };
 
     fn configure_settings() {
-        set_current_parser(Parser::TreeSitter);
         set_current_rewriter(Rewriter::Rewrite(RewriteConfig::baseline()));
         set_comprehension_expander(QuantifiedExpander::ViaSolver);
         set_current_solver_family(SolverFamily::Sat);
@@ -1157,7 +1106,6 @@ mod saved_settings_tests {
             let outer = SavedSettings::capture();
 
             let result = with_saved_settings(|| {
-                set_current_parser(Parser::TreeSitter);
                 set_current_rewriter(Rewriter::default());
                 set_comprehension_expander(QuantifiedExpander::Native);
                 set_current_solver_family(SolverFamily::Minion);
