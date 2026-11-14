@@ -1,0 +1,58 @@
+Model before rewriting:
+
+find p: matrix indexed by [int(5..7)] of int(1..2)
+find q: matrix indexed by [int(5..7)] of int(1..2)
+
+such that
+
+(p <lex q)
+
+--
+
+p
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p
+new variables:
+  find p#components_1: int(1..2)
+  find p#components_2: int(1..2)
+  find p#components_3: int(1..2)
+
+--
+
+(p <lex q)
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+(p <lex q)
+new variables:
+  find q#components_1: int(1..2)
+  find q#components_2: int(1..2)
+  find q#components_3: int(1..2)
+
+--
+
+(p <lex q)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+([p#components_1,p#components_2,p#components_3;int(5..7)] <lex [q#components_1,q#components_2,q#components_3;int(5..7)])
+
+--
+
+([p#components_1,p#components_2,p#components_3;int(5..7)] <lex [q#components_1,q#components_2,q#components_3;int(5..7)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([p#components_1, p#components_2, p#components_3], [q#components_1, q#components_2, q#components_3])
+
+--
+
+Final model:
+
+find p: matrix indexed by [int(5..7)] of int(1..2)
+find q: matrix indexed by [int(5..7)] of int(1..2)
+find p#components_1: int(1..2)
+find p#components_2: int(1..2)
+find p#components_3: int(1..2)
+find q#components_1: int(1..2)
+find q#components_2: int(1..2)
+find q#components_3: int(1..2)
+
+such that
+
+FlatLexLt([p#components_1, p#components_2, p#components_3], [q#components_1, q#components_2, q#components_3])
+

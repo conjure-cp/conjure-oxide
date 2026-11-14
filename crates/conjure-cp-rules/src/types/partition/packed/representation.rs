@@ -219,7 +219,7 @@ register_representation!(
             num_parts_decl: Literal::Int(num_parts_val),
             part_sizes_decl: Literal::AbstractLiteral(AbstractLiteral::Matrix(
                 part_sizes_vals.into_iter().map(Literal::Int).collect(),
-                Moo::new(GroundDomain::Int(vec![Range::new(Some(1), Some(state.max_num_parts))])),
+                Moo::new(GroundDomain::Int(vec![Range::new(Some(1), Some(state.max_num_parts))], None)),
             )),
             elements: state.elements.clone(),
             part_index_domain: state.part_index_domain.clone(),

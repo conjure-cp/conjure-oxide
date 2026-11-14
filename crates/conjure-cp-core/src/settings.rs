@@ -22,7 +22,7 @@ pub enum Heuristic {
     Compact,
     /// Prompt on stdin, or consume values from [`set_heuristic_responses`].
     Interactive,
-    /// Enumerate every applicable choice. This is supported by the integration model generator,
+    /// Enumerate every applicable choice. This is supported by the exhaustive model generator,
     /// but is not accepted by the command-line interface yet.
     All,
 }
@@ -62,6 +62,8 @@ pub enum Channelling {
     #[default]
     No,
     Yes,
+    /// One representation kind per type family throughout a model, without channelling.
+    Uniform,
 }
 
 impl Display for Channelling {
@@ -69,6 +71,7 @@ impl Display for Channelling {
         f.write_str(match self {
             Self::No => "no",
             Self::Yes => "yes",
+            Self::Uniform => "uniform",
         })
     }
 }
@@ -80,8 +83,9 @@ impl FromStr for Channelling {
         match value.trim().to_ascii_lowercase().as_str() {
             "no" => Ok(Self::No),
             "yes" => Ok(Self::Yes),
+            "uniform" => Ok(Self::Uniform),
             other => Err(format!(
-                "unknown channelling setting '{other}'; expected yes or no"
+                "unknown channelling setting '{other}'; expected yes, no, or uniform"
             )),
         }
     }
@@ -90,6 +94,12 @@ impl FromStr for Channelling {
 pub const DEFAULT_HEURISTIC_SEED: u64 = 0;
 
 thread_local! {
+    static ELEMENT_ENCODING: Cell<Option<crate::ast::sat_decision::ElementEncoding>> = const { Cell::new(None) };
+    static TABLE_ENCODING: Cell<Option<crate::ast::sat_decision::TableEncoding>> = const { Cell::new(None) };
+    static ALLDIFFERENT_ENCODING: Cell<Option<crate::ast::sat_decision::AllDifferentEncoding>> = const { Cell::new(None) };
+    static PB_ENCODING: Cell<Option<crate::ast::sat_decision::PbEncoding>> = const { Cell::new(None) };
+    static CARDINALITY_ENCODING: Cell<Option<crate::ast::sat_decision::CardinalityEncoding>> = const { Cell::new(None) };
+    static AMO_ENCODING: Cell<Option<crate::ast::sat_decision::AmoEncoding>> = const { Cell::new(None) };
     static HEURISTIC: Cell<Heuristic> = const { Cell::new(Heuristic::Compact) };
     static CHANNELLING: Cell<Channelling> = const { Cell::new(Channelling::No) };
     static HEURISTIC_RANDOM_STATE: Cell<u64> = const { Cell::new(DEFAULT_HEURISTIC_SEED) };
@@ -105,7 +115,7 @@ pub struct HeuristicChoice {
     pub options: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct AllChoicesState {
     requested: Vec<usize>,
     decisions: Vec<HeuristicChoice>,
@@ -130,6 +140,7 @@ pub fn heuristic() -> Heuristic {
 
 pub fn set_channelling(channelling: Channelling) {
     CHANNELLING.with(|current| current.set(channelling));
+    crate::representation::uniform::reset();
 }
 
 pub fn channelling() -> Channelling {
@@ -618,8 +629,7 @@ thread_local! {
     ///
     /// If an int domain size is <= this threshold, the Minion adaptor uses `DISCRETE`; otherwise
     /// it uses `BOUND`, unless another constraint requires `DISCRETE`.
-    static MINION_DISCRETE_THRESHOLD: Cell<usize> =
-        const { Cell::new(DEFAULT_MINION_DISCRETE_THRESHOLD) };
+    static MINION_DISCRETE_THRESHOLD: Cell<Option<usize>> = const { Cell::new(None) };
 
     /// Thread-local setting controlling whether rule-trace outputs are active in this phase.
     ///
@@ -694,12 +704,30 @@ pub fn ints_need_representation() -> bool {
     )
 }
 
-pub fn set_minion_discrete_threshold(threshold: usize) {
+/// Pins Minion's domain threshold, or leaves it to the modelling heuristic.
+pub fn set_minion_discrete_threshold(threshold: Option<usize>) {
     MINION_DISCRETE_THRESHOLD.with(|current| current.set(threshold));
 }
 
-pub fn minion_discrete_threshold() -> usize {
-    MINION_DISCRETE_THRESHOLD.with(|current| current.get())
+/// Selects one threshold for a Minion model: the default, all bound, or all discrete.
+/// Constraints requiring discrete variables still override the threshold.
+pub fn select_minion_discrete_threshold() -> usize {
+    if let Some(threshold) = MINION_DISCRETE_THRESHOLD.with(Cell::get) {
+        return threshold;
+    }
+    let thresholds = [DEFAULT_MINION_DISCRETE_THRESHOLD, 0, usize::MAX];
+    let labels = [
+        "minion-discrete-threshold=10",
+        "minion-discrete-threshold=0",
+        "minion-discrete-threshold=unlimited",
+    ];
+    let index = match heuristic() {
+        Heuristic::First | Heuristic::Compact => 0,
+        Heuristic::Random => next_heuristic_random_index(thresholds.len()),
+        Heuristic::Interactive => next_heuristic_interactive_index(&labels),
+        Heuristic::All => next_heuristic_all_index(&labels),
+    };
+    thresholds[index]
 }
 
 pub fn set_rule_trace_enabled(enabled: bool) {
@@ -768,6 +796,100 @@ pub struct SolverArgs {
     pub timeout_ms: Option<u64>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct SavedSettings {
+    parser: Option<Parser>,
+    rewriter: Option<Rewriter>,
+    expander: Option<QuantifiedExpander>,
+    solver_family: Option<SolverFamily>,
+    heuristic: Heuristic,
+    channelling: Channelling,
+    random_state: u64,
+    all_choices: AllChoicesState,
+    responses: VecDeque<usize>,
+    minion_discrete_threshold: Option<usize>,
+    element_encoding: Option<crate::ast::sat_decision::ElementEncoding>,
+    table_encoding: Option<crate::ast::sat_decision::TableEncoding>,
+    alldifferent_encoding: Option<crate::ast::sat_decision::AllDifferentEncoding>,
+    pb_encoding: Option<crate::ast::sat_decision::PbEncoding>,
+    cardinality_encoding: Option<crate::ast::sat_decision::CardinalityEncoding>,
+    amo_encoding: Option<crate::ast::sat_decision::AmoEncoding>,
+    rule_trace: bool,
+    default_rule_trace: bool,
+    rule_attempt_trace: bool,
+    rule_trace_aggregates: bool,
+}
+
+impl SavedSettings {
+    fn capture() -> Self {
+        Self {
+            parser: CURRENT_PARSER.with(Cell::get),
+            rewriter: CURRENT_REWRITER.with(Cell::get),
+            expander: COMPREHENSION_EXPANDER.with(Cell::get),
+            solver_family: CURRENT_SOLVER_FAMILY.with(Cell::get),
+            heuristic: HEURISTIC.with(Cell::get),
+            channelling: CHANNELLING.with(Cell::get),
+            random_state: HEURISTIC_RANDOM_STATE.with(Cell::get),
+            all_choices: HEURISTIC_ALL_CHOICES.with(|state| state.borrow().clone()),
+            responses: HEURISTIC_RESPONSES.with(|state| state.borrow().clone()),
+            minion_discrete_threshold: MINION_DISCRETE_THRESHOLD.with(Cell::get),
+            element_encoding: ELEMENT_ENCODING.with(Cell::get),
+            table_encoding: TABLE_ENCODING.with(Cell::get),
+            alldifferent_encoding: ALLDIFFERENT_ENCODING.with(Cell::get),
+            pb_encoding: PB_ENCODING.with(Cell::get),
+            cardinality_encoding: CARDINALITY_ENCODING.with(Cell::get),
+            amo_encoding: AMO_ENCODING.with(Cell::get),
+            rule_trace: RULE_TRACE_ENABLED.with(Cell::get),
+            default_rule_trace: DEFAULT_RULE_TRACE_ENABLED.with(Cell::get),
+            rule_attempt_trace: RULE_ATTEMPT_TRACE_ENABLED.with(Cell::get),
+            rule_trace_aggregates: RULE_TRACE_AGGREGATES_ENABLED.with(Cell::get),
+        }
+    }
+
+    fn restore(self) {
+        CURRENT_PARSER.with(|current| current.set(self.parser));
+        CURRENT_REWRITER.with(|current| current.set(self.rewriter));
+        COMPREHENSION_EXPANDER.with(|current| current.set(self.expander));
+        CURRENT_SOLVER_FAMILY.with(|current| current.set(self.solver_family));
+        HEURISTIC.with(|current| current.set(self.heuristic));
+        CHANNELLING.with(|current| current.set(self.channelling));
+        HEURISTIC_RANDOM_STATE.with(|current| current.set(self.random_state));
+        HEURISTIC_ALL_CHOICES.with(|current| *current.borrow_mut() = self.all_choices);
+        HEURISTIC_RESPONSES.with(|current| *current.borrow_mut() = self.responses);
+        MINION_DISCRETE_THRESHOLD.with(|current| current.set(self.minion_discrete_threshold));
+        ELEMENT_ENCODING.with(|current| current.set(self.element_encoding));
+        TABLE_ENCODING.with(|current| current.set(self.table_encoding));
+        ALLDIFFERENT_ENCODING.with(|current| current.set(self.alldifferent_encoding));
+        PB_ENCODING.with(|current| current.set(self.pb_encoding));
+        CARDINALITY_ENCODING.with(|current| current.set(self.cardinality_encoding));
+        AMO_ENCODING.with(|current| current.set(self.amo_encoding));
+        RULE_TRACE_ENABLED.with(|current| current.set(self.rule_trace));
+        DEFAULT_RULE_TRACE_ENABLED.with(|current| current.set(self.default_rule_trace));
+        RULE_ATTEMPT_TRACE_ENABLED.with(|current| current.set(self.rule_attempt_trace));
+        RULE_TRACE_AGGREGATES_ENABLED.with(|current| current.set(self.rule_trace_aggregates));
+    }
+}
+
+struct SettingsGuard(Option<SavedSettings>);
+
+impl Drop for SettingsGuard {
+    fn drop(&mut self) {
+        if let Some(settings) = self.0.take() {
+            settings.restore();
+        }
+    }
+}
+
+/// Runs `f`, restoring the calling thread's settings afterwards, including on panic.
+///
+/// Changes inside the closure stay local to the scope. Random state, pending heuristic answers,
+/// recorded choices and uniform representations are restored along with configuration values.
+pub fn with_saved_settings<T>(f: impl FnOnce() -> T) -> T {
+    let _uniform = crate::representation::uniform::Scope::save();
+    let _settings = SettingsGuard(Some(SavedSettings::capture()));
+    f()
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
@@ -808,6 +930,8 @@ mod tests {
         assert_eq!(Heuristic::from_str("x"), Ok(Heuristic::All));
         assert_eq!(Channelling::from_str("no"), Ok(Channelling::No));
         assert_eq!(Channelling::from_str("yes"), Ok(Channelling::Yes));
+        assert_eq!(Channelling::from_str("uniform"), Ok(Channelling::Uniform));
+        assert_eq!(Channelling::Uniform.to_string(), "uniform");
     }
 
     #[test]
@@ -940,5 +1064,182 @@ mod tests {
         assert!(Rewriter::from_str("+dirty").is_err());
         assert!(Rewriter::from_str("dirty").is_err());
         assert!(Rewriter::from_str("baseline+dirty").is_err());
+    }
+}
+
+/// Pin the AMO algorithm, or allow the modelling heuristic to choose.
+pub fn set_amo_encoding(encoding: Option<crate::ast::sat_decision::AmoEncoding>) {
+    AMO_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit AMO algorithm override for this compilation thread.
+pub fn amo_encoding() -> Option<crate::ast::sat_decision::AmoEncoding> {
+    AMO_ENCODING.with(Cell::get)
+}
+
+/// Pin a cardinality provider/algorithm, or let the heuristic select it.
+pub fn set_cardinality_encoding(encoding: Option<crate::ast::sat_decision::CardinalityEncoding>) {
+    CARDINALITY_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit cardinality encoder override for this compilation thread.
+pub fn cardinality_encoding() -> Option<crate::ast::sat_decision::CardinalityEncoding> {
+    CARDINALITY_ENCODING.with(Cell::get)
+}
+
+/// Pin a pseudo-Boolean provider/algorithm, or let the heuristic select it.
+pub fn set_pb_encoding(encoding: Option<crate::ast::sat_decision::PbEncoding>) {
+    PB_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit pseudo-Boolean encoder override for this compilation thread.
+pub fn pb_encoding() -> Option<crate::ast::sat_decision::PbEncoding> {
+    PB_ENCODING.with(Cell::get)
+}
+
+/// Pin the allDifferent strategy, or let the heuristic choose an applicable composition.
+pub fn set_alldifferent_encoding(encoding: Option<crate::ast::sat_decision::AllDifferentEncoding>) {
+    ALLDIFFERENT_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit allDifferent strategy override for this compilation thread.
+pub fn alldifferent_encoding() -> Option<crate::ast::sat_decision::AllDifferentEncoding> {
+    ALLDIFFERENT_ENCODING.with(Cell::get)
+}
+
+/// Pin the table composition, or let the modelling heuristic select it.
+pub fn set_table_encoding(encoding: Option<crate::ast::sat_decision::TableEncoding>) {
+    TABLE_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit table strategy override for this compilation thread.
+pub fn table_encoding() -> Option<crate::ast::sat_decision::TableEncoding> {
+    TABLE_ENCODING.with(Cell::get)
+}
+
+/// Pin the element composition, or let the modelling heuristic select it.
+pub fn set_element_encoding(encoding: Option<crate::ast::sat_decision::ElementEncoding>) {
+    ELEMENT_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit element strategy override for this compilation thread.
+pub fn element_encoding() -> Option<crate::ast::sat_decision::ElementEncoding> {
+    ELEMENT_ENCODING.with(Cell::get)
+}
+
+#[cfg(test)]
+mod saved_settings_tests {
+    use super::*;
+    use crate::ast::sat_decision::{
+        AllDifferentEncoding, AmoEncoding, CardinalityEncoding, ElementEncoding, PbEncoding,
+        TableEncoding,
+    };
+
+    fn configure_settings() {
+        set_current_parser(Parser::ViaConjure);
+        set_current_rewriter(Rewriter::Rewrite(RewriteConfig::baseline()));
+        set_comprehension_expander(QuantifiedExpander::ViaSolver);
+        set_current_solver_family(SolverFamily::Sat);
+        set_heuristic(Heuristic::Random);
+        set_channelling(Channelling::Uniform);
+        set_heuristic_seed(42);
+        set_heuristic_responses(vec![2, 1]);
+        begin_heuristic_all_choices(vec![1, 0]);
+        next_heuristic_all_index(&["left", "right"]);
+        set_minion_discrete_threshold(Some(123));
+        set_element_encoding(Some(ElementEncoding::Support));
+        set_table_encoding(Some(TableEncoding::Mdd));
+        set_alldifferent_encoding(Some(AllDifferentEncoding::ValueAmo));
+        set_pb_encoding(Some(PbEncoding::PindakaasBdd));
+        set_cardinality_encoding(Some(CardinalityEncoding::PindakaasSortingNetwork));
+        set_amo_encoding(Some(AmoEncoding::Ladder));
+        set_rule_trace_enabled(true);
+        set_default_rule_trace_enabled(true);
+        set_rule_attempt_trace_enabled(true);
+        set_rule_trace_aggregates_enabled(true);
+    }
+
+    #[test]
+    fn saved_settings_restore_nested_configuration() {
+        with_saved_settings(|| {
+            configure_settings();
+            let outer = SavedSettings::capture();
+
+            let result = with_saved_settings(|| {
+                set_current_parser(Parser::TreeSitter);
+                set_current_rewriter(Rewriter::default());
+                set_comprehension_expander(QuantifiedExpander::Native);
+                set_current_solver_family(SolverFamily::Minion);
+                set_heuristic(Heuristic::Compact);
+                set_channelling(Channelling::No);
+                set_heuristic_seed(99);
+                clear_heuristic_responses();
+                begin_heuristic_all_choices(vec![]);
+                set_minion_discrete_threshold(None);
+                set_element_encoding(None);
+                set_table_encoding(None);
+                set_alldifferent_encoding(None);
+                set_pb_encoding(None);
+                set_cardinality_encoding(None);
+                set_amo_encoding(None);
+                set_rule_trace_enabled(false);
+                set_default_rule_trace_enabled(false);
+                set_rule_attempt_trace_enabled(false);
+                set_rule_trace_aggregates_enabled(false);
+                let inner = SavedSettings::capture();
+
+                with_saved_settings(configure_settings);
+
+                assert_eq!(SavedSettings::capture(), inner);
+                7
+            });
+
+            assert_eq!(result, 7);
+            assert_eq!(SavedSettings::capture(), outer);
+        });
+    }
+
+    #[test]
+    fn saved_settings_restore_unset_configuration_after_panic() {
+        std::thread::spawn(|| {
+            let before = SavedSettings::capture();
+            assert_eq!(try_current_solver_family(), None);
+
+            let result = std::panic::catch_unwind(|| {
+                with_saved_settings(|| {
+                    configure_settings();
+                    panic!("interrupted library run");
+                });
+            });
+
+            assert!(result.is_err());
+            assert_eq!(SavedSettings::capture(), before);
+        })
+        .join()
+        .unwrap();
+    }
+
+    #[test]
+    fn saved_settings_preserve_heuristic_progress() {
+        with_saved_settings(|| {
+            set_heuristic_seed(42);
+            let expected: Vec<_> = (0..3).map(|_| next_heuristic_random_index(997)).collect();
+            set_heuristic_seed(42);
+            assert_eq!(next_heuristic_random_index(997), expected[0]);
+            set_heuristic_responses(vec![2, 1]);
+            assert_eq!(next_heuristic_interactive_index(&["left", "right"]), 1);
+            begin_heuristic_all_choices(vec![1, 1]);
+            assert_eq!(next_heuristic_all_index(&["left", "right"]), 1);
+
+            with_saved_settings(|| {
+                for _ in 0..10 {
+                    next_heuristic_random_index(997);
+                }
+                assert_eq!(next_heuristic_interactive_index(&["a", "b"]), 0);
+                begin_heuristic_all_choices(vec![]);
+                assert_eq!(next_heuristic_all_index(&["a", "b"]), 0);
+            });
+
+            assert_eq!(next_heuristic_random_index(997), expected[1]);
+            assert_eq!(next_heuristic_random_index(997), expected[2]);
+            assert_eq!(next_heuristic_interactive_index(&["left", "right"]), 0);
+            assert_eq!(heuristic_all_choices().len(), 1);
+            assert_eq!(next_heuristic_all_index(&["a", "b"]), 1);
+            assert_eq!(heuristic_all_choices()[0].options, ["left", "right"]);
+        });
     }
 }

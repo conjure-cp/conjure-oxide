@@ -1,7 +1,5 @@
-use conjure_cp::essence_expr;
-
 use conjure_cp::ast::Metadata;
-use conjure_cp::ast::{Atom, CnfClause, Expression as Expr, Literal, Moo};
+use conjure_cp::ast::{Atom, Expression as Expr, Moo, SatEncodingDecision};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
@@ -9,9 +7,14 @@ use conjure_cp::rule_engine::{
 use conjure_cp::ast::AbstractLiteral::Matrix;
 use conjure_cp::ast::{Domain, SymbolTable};
 
-use crate::shared::utils::is_literal;
+// Atomic references can denote integers and compound values too. Those must reach their
+// representation's comparison rules rather than becoming Boolean gate inputs.
+fn is_literal(expr: &Expr) -> bool {
+    crate::shared::utils::is_literal(expr)
+        && expr.domain_of().is_some_and(|domain| domain.is_bool())
+}
 
-fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
+pub(super) fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
     let name = symbols.gen_find_auxiliary(&Domain::bool());
 
     symbols.insert(name.clone());
@@ -22,302 +25,191 @@ fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
     )
 }
 
-fn create_clause(exprs: Vec<Expr>) -> Option<CnfClause> {
-    let mut new_terms = vec![];
-    for expr in exprs {
-        if let Expr::Atomic(_, Atom::Literal(Literal::Bool(x))) = expr {
-            // true ~~> entire or is true
-            // false ~~> remove false from the or
-            if x {
-                return None;
-            }
-        } else if let Expr::Not(_, ref inner) = expr {
-            if let Expr::Atomic(_, Atom::Literal(Literal::Bool(x))) = inner.as_ref() {
-                // check for nested literal
-                if !x {
-                    return None;
-                }
-            } else {
-                new_terms.push(expr);
-            }
-        } else {
-            new_terms.push(expr);
-        }
+/// Boolean order is false before true and shares the existing gate decisions.
+#[register_rule("SAT", 18500, [Lt, Gt, Leq, Geq])]
+fn boolean_order(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let (left, right, strict) = match expr {
+        Expr::Lt(_, left, right) => (left, right, true),
+        Expr::Gt(_, left, right) => (right, left, true),
+        Expr::Leq(_, left, right) => (left, right, false),
+        Expr::Geq(_, left, right) => (right, left, false),
+        _ => return Err(RuleNotApplicable),
+    };
+    if [left, right]
+        .iter()
+        .any(|operand| !operand.domain_of().is_some_and(|domain| domain.is_bool()))
+    {
+        return Err(RuleNotApplicable);
     }
-
-    Some(CnfClause::new(new_terms))
+    Ok(RuleEffect::pure(if strict {
+        Expr::And(
+            Metadata::new(),
+            Moo::new(conjure_cp::into_matrix_expr!(vec![
+                Expr::Not(Metadata::new(), left.clone()),
+                (**right).clone(),
+            ])),
+        )
+    } else {
+        Expr::Imply(Metadata::new(), left.clone(), right.clone())
+    }))
 }
 
-// TODO: Optimize all logic operators for constants
-// TODO: If a clause simplifies to false, it should skip the solver and give no solutions
-
-/// Applies the Tseytin and transformation to series of variables, returns the new expression, symbol table and clauses
+/// Record an AND gate without generating clauses.
 pub fn tseytin_and(
-    exprs: &Vec<Expr>,
-    clauses: &mut Vec<CnfClause>,
+    exprs: &[Expr],
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Expr {
-    let new_expr = create_bool_aux(symbols);
-
-    let mut full_conj: Vec<Expr> = vec![new_expr.clone()];
-
-    for x in exprs {
-        clauses.extend(create_clause(vec![
-            Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-            x.clone(),
-        ]));
-        full_conj.push(Expr::Not(Metadata::new(), Moo::new(x.clone())));
-    }
-    clauses.extend(create_clause(full_conj));
-
-    new_expr
+    gate(
+        Expr::And(
+            Metadata::new(),
+            Moo::new(conjure_cp::into_matrix_expr!(exprs.to_vec())),
+        ),
+        decisions,
+        symbols,
+    )
 }
 
-/// Applies the Tseytin not transformation to a variable, returns the new expression, symbol table and clauses
-pub fn tseytin_not(x: Expr, clauses: &mut Vec<CnfClause>, symbols: &mut SymbolTable) -> Expr {
-    let new_expr = create_bool_aux(symbols);
-
-    clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(x.clone())),
-        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-    ]));
-    clauses.extend(create_clause(vec![x, new_expr.clone()]));
-
-    new_expr
+/// Record a NOT gate without generating clauses.
+pub fn tseytin_not(
+    x: Expr,
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    gate(Expr::Not(Metadata::new(), Moo::new(x)), decisions, symbols)
 }
 
-/// Applies the Tseytin or transformation to series of variables, returns the new expression, symbol table and clauses
+/// Record an OR gate without generating clauses.
 pub fn tseytin_or(
-    exprs: &Vec<Expr>,
-    clauses: &mut Vec<CnfClause>,
+    exprs: &[Expr],
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Expr {
-    let new_expr = create_bool_aux(symbols);
-
-    let mut full_conj: Vec<Expr> = vec![Expr::Not(Metadata::new(), Moo::new(new_expr.clone()))];
-
-    for x in exprs {
-        clauses.extend(create_clause(vec![
-            Expr::Not(Metadata::new(), Moo::new(x.clone())),
-            new_expr.clone(),
-        ]));
-        full_conj.push(x.clone());
-    }
-
-    clauses.extend(create_clause(full_conj));
-
-    new_expr
+    gate(
+        Expr::Or(
+            Metadata::new(),
+            Moo::new(conjure_cp::into_matrix_expr!(exprs.to_vec())),
+        ),
+        decisions,
+        symbols,
+    )
 }
 
-/// Applies the Tseytin iff transformation to two variables, returns the new expression, symbol table and clauses
+/// Record a Boolean equivalence gate.
 pub fn tseytin_iff(
     x: Expr,
     y: Expr,
-    clauses: &mut Vec<CnfClause>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Expr {
-    let new_expr = create_bool_aux(symbols);
-
-    clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(x.clone())),
-        Expr::Not(Metadata::new(), Moo::new(y.clone())),
-        new_expr.clone(),
-    ]));
-    clauses.extend(create_clause(vec![x.clone(), y.clone(), new_expr.clone()]));
-    clauses.extend(create_clause(vec![
-        x.clone(),
-        Expr::Not(Metadata::new(), Moo::new(y.clone())),
-        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-    ]));
-    clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(x)),
-        y,
-        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-    ]));
-
-    new_expr
+    gate(
+        Expr::Iff(Metadata::new(), Moo::new(x), Moo::new(y)),
+        decisions,
+        symbols,
+    )
 }
 
-/// Applies the Tseytin imply transformation to two variables, returns the new expression, symbol table and clauses
+/// Record a Boolean implication gate.
 pub fn tseytin_imply(
     x: Expr,
     y: Expr,
-    clauses: &mut Vec<CnfClause>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Expr {
-    let new_expr = create_bool_aux(symbols);
-
-    clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-        Expr::Not(Metadata::new(), Moo::new(x.clone())),
-        y.clone(),
-    ]));
-    clauses.extend(create_clause(vec![new_expr.clone(), x]));
-    clauses.extend(create_clause(vec![
-        new_expr.clone(),
-        Expr::Not(Metadata::new(), Moo::new(y)),
-    ]));
-
-    new_expr
+    gate(
+        Expr::Imply(Metadata::new(), Moo::new(x), Moo::new(y)),
+        decisions,
+        symbols,
+    )
 }
 
-/// Applies the Tseytin multiplex transformation
-/// cond ? b : a
-///
-/// cond = 1 => b
-/// cond = 0 => a
+/// Record a conditional Boolean choice.
 #[allow(dead_code)]
 pub fn tseytin_mux(
     cond: Expr,
     a: Expr,
     b: Expr,
-    clauses: &mut Vec<CnfClause>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Expr {
-    let new_expr = create_bool_aux(symbols);
-
-    clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-        cond.clone(),
-        a.clone(),
-    ]));
-    clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-        Expr::Not(Metadata::new(), Moo::new(cond.clone())),
-        b.clone(),
-    ]));
-    clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-        a.clone(),
-        b.clone(),
-    ]));
-
-    clauses.extend(create_clause(vec![
-        new_expr.clone(),
-        cond.clone(),
-        Expr::Not(Metadata::new(), Moo::new(a.clone())),
-    ]));
-    clauses.extend(create_clause(vec![
-        new_expr.clone(),
-        Expr::Not(Metadata::new(), Moo::new(cond)),
-        Expr::Not(Metadata::new(), Moo::new(b.clone())),
-    ]));
-    clauses.extend(create_clause(vec![
-        new_expr.clone(),
-        Expr::Not(Metadata::new(), Moo::new(a)),
-        Expr::Not(Metadata::new(), Moo::new(b)),
-    ]));
-
-    new_expr
+    let when_true = Expr::And(
+        Metadata::new(),
+        Moo::new(conjure_cp::into_matrix_expr!(vec![cond.clone(), b])),
+    );
+    let when_false = Expr::And(
+        Metadata::new(),
+        Moo::new(conjure_cp::into_matrix_expr!(vec![
+            Expr::Not(Metadata::new(), Moo::new(cond)),
+            a
+        ])),
+    );
+    gate(
+        Expr::Or(
+            Metadata::new(),
+            Moo::new(conjure_cp::into_matrix_expr!(vec![when_true, when_false])),
+        ),
+        decisions,
+        symbols,
+    )
 }
 
-/// Applies the Tseytin xor transformation to two variables, returns the new expression, symbol table and clauses
+/// Record a Boolean exclusive-or gate.
 #[allow(dead_code)]
 pub fn tseytin_xor(
     x: Expr,
     y: Expr,
-    clauses: &mut Vec<CnfClause>,
+    decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Expr {
-    let new_expr = create_bool_aux(symbols);
-
-    clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(x.clone())),
-        Expr::Not(Metadata::new(), Moo::new(y.clone())),
-        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-    ]));
-    clauses.extend(create_clause(vec![
-        x.clone(),
-        y.clone(),
-        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-    ]));
-    clauses.extend(create_clause(vec![
-        x.clone(),
-        Expr::Not(Metadata::new(), Moo::new(y.clone())),
-        new_expr.clone(),
-    ]));
-    clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(x)),
-        y,
-        new_expr.clone(),
-    ]));
-
-    new_expr
+    gate(
+        Expr::Not(
+            Metadata::new(),
+            Moo::new(Expr::Iff(Metadata::new(), Moo::new(x), Moo::new(y))),
+        ),
+        decisions,
+        symbols,
+    )
 }
 
-/// Converts a single boolean atom to a clause
-///
-/// ```text
-///  a
-///  ~~>
-///  
-///  new clauses:
-///  clause(a)
-/// ```
-#[register_rule("SAT", 8400, [Root])]
-fn remove_single_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    // The single atom must not be within another expression
-    let Expr::Root(_, children) = expr else {
-        return Err(RuleNotApplicable);
-    };
+fn gate(
+    expression: Expr,
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    let output = create_bool_aux(symbols);
+    decisions.push(SatEncodingDecision::Boolean {
+        output: output.clone(),
+        expression,
+    });
+    output
+}
 
-    // Find the position of the first reference atom with boolean domain
-    let Some(pos) = children.iter().position(
-        |e| matches!(e, Expr::Atomic(_, Atom::Reference(x)) if x.domain().is_some_and(|d| d.is_bool())),
-    ) else {
-        return Err(RuleNotApplicable);
-    };
+/// Preserve ready assertions before the ordinary equivalence-gate rules consume them.
+#[register_rule("SAT", 18000, [Root])]
+fn select_asserted_boolean(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    super::asserted::select_asserted(expr, symbols, |child| {
+        (child != &true.into() && ready_boolean(child))
+            .then(|| SatEncodingDecision::Assert(child.clone()))
+    })
+}
 
-    // Clone the children since expr is borrowed immutably
-    let mut new_children = children.clone();
-
-    let removed = new_children.remove(pos);
-
-    let new_clauses = vec![CnfClause::new(vec![removed])];
-
-    // If now empty, replace with `true`
-    if new_children.is_empty() {
-        new_children.push(essence_expr!(true));
+fn ready_boolean(expr: &Expr) -> bool {
+    match expr {
+        Expr::Atomic(..) => is_literal(expr),
+        Expr::Not(_, input) => ready_boolean(input),
+        Expr::And(_, inputs) | Expr::Or(_, inputs) => {
+            matches!(inputs.as_ref(), Expr::AbstractLiteral(_, Matrix(entries, _))
+                if entries.iter().all(ready_boolean))
+        }
+        Expr::Imply(_, left, right)
+        | Expr::Iff(_, left, right)
+        | Expr::Eq(_, left, right)
+        | Expr::Neq(_, left, right) => ready_boolean(left) && ready_boolean(right),
+        _ => false,
     }
-
-    let new_expr = Expr::Root(Metadata::new(), new_children);
-
-    Ok(RuleEffect::cnf(new_expr, new_clauses, symbols.clone()))
 }
 
-/// Converts an and/or expression to an aux variable, using the tseytin transformation
-///
-/// ```text
-///  and(a, b, c, ...)
-///  ~~>
-///  __0
-///
-///  new variables:
-///  find __0: bool
-///
-///  new clauses:
-///  clause(__0, not(a), not(b), not(c), ...)
-///  clause(not(__0), a)
-///  clause(not(__0), b)
-///  clause(not(__0), c)
-///  ...
-///
-///  ---------------------------------------
-///
-///  clause(a, b, c, ...)
-///  ~~>
-///  __0
-///
-///  new variables:
-///  find __0: bool
-///
-///  new clauses:
-///  clause(not(__0), a, b, c, ...)
-///  clause(__0, not(a))
-///  clause(__0, not(b))
-///  clause(__0, not(c))
-///  ...
-/// ```
+/// Lower the Boolean operation to a semantic SAT gate decision.
 #[register_rule("SAT", 8500, [And, Or])]
 fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let exprs = match expr {
@@ -336,36 +228,23 @@ fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     }
 
     let new_expr;
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
     let mut new_symbols = symbols.clone();
 
     match expr {
         Expr::And(_, _) => {
-            new_expr = tseytin_and(exprs_list, &mut new_clauses, &mut new_symbols);
+            new_expr = tseytin_and(exprs_list, &mut new_sat_decisions, &mut new_symbols);
         }
         Expr::Or(_, _) => {
-            new_expr = tseytin_or(exprs_list, &mut new_clauses, &mut new_symbols);
+            new_expr = tseytin_or(exprs_list, &mut new_sat_decisions, &mut new_symbols);
         }
         _ => return Err(RuleNotApplicable),
     };
 
-    Ok(RuleEffect::cnf(new_expr, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
 }
 
-/// Converts a not expression to an aux variable, using the tseytin transformation
-///
-/// ```text
-///  not(a)
-///  ~~>
-///  __0
-///
-///  new variables:
-///  find __0: bool
-///
-///  new clauses:
-///  clause(__0, a)
-///  clause(not(__0), not(a))
-/// ```
+/// Lower the Boolean operation to a semantic SAT gate decision.
 #[register_rule("SAT", 9005, [Not])]
 fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Not(_, x) = expr else {
@@ -380,31 +259,15 @@ fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
     let mut new_symbols = symbols.clone();
 
-    let new_expr = tseytin_not(x.as_ref().clone(), &mut new_clauses, &mut new_symbols);
+    let new_expr = tseytin_not(x.as_ref().clone(), &mut new_sat_decisions, &mut new_symbols);
 
-    Ok(RuleEffect::cnf(new_expr, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
 }
 
-/// Converts an iff/boolean equality expression to an aux variable, using the tseytin transformation
-///
-/// ```text
-/// find a, b : bool
-///  a <-> b OR a = b
-///  ~~>
-///  __0
-///
-///  new clauses:
-///  find __0: bool
-///
-///  new clauses:
-///  clause(not(a), not(b), __0)
-///  clause(a, b, __0)
-///  clause(a, not(b), not(__0))
-///  clause(not(a), b, not(__0))
-/// ```
+/// Lower the Boolean operation to a semantic SAT gate decision.
 #[register_rule("SAT", 8500, [Iff, Eq])]
 fn apply_tseytin_iff_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // Check for iff or eq
@@ -417,34 +280,20 @@ fn apply_tseytin_iff_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         return Err(RuleNotApplicable);
     };
 
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
     let mut new_symbols = symbols.clone();
 
     let new_expr = tseytin_iff(
         x.as_ref().clone(),
         y.as_ref().clone(),
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
 
-    Ok(RuleEffect::cnf(new_expr, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
 }
 
-/// Converts an implication expression to an aux variable, using the tseytin transformation
-///
-/// ```text
-///  a -> b
-///  ~~>
-///  __0
-///
-///  new variables:
-///  find __0: bool
-///
-///  new clauses:
-///  clause(not(__0), not(a), b)
-///  clause(__0, a)
-///  clause(__0, not(b))
-/// ```
+/// Lower the Boolean operation to a semantic SAT gate decision.
 #[register_rule("SAT", 8500, [Imply])]
 fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(_, x, y) = expr else {
@@ -456,36 +305,20 @@ fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
     };
 
     let new_expr;
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
     let mut new_symbols = symbols.clone();
 
     new_expr = tseytin_imply(
         x.as_ref().clone(),
         y.as_ref().clone(),
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
 
-    Ok(RuleEffect::cnf(new_expr, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
 }
 
-/// Converts a boolean != expression to an aux variable, using the tseytin transformation
-///
-/// ```text
-///  find a, b : bool
-///  a != b
-///  ~~>
-///  __0
-///
-///  new clauses:
-///  find __0: bool
-///
-///  new clauses:
-///  clause(not(a), not(b), not(__0))
-///  clause(a, b, not(__0))
-///  clause(a, not(b), __0)
-///  clause(not(a), b, __0)
-/// ```
+/// Lower the Boolean operation to a semantic SAT gate decision.
 #[register_rule("SAT", 8500, [Neq])]
 fn apply_tseytin_xor_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, x, y) = expr else {
@@ -496,15 +329,85 @@ fn apply_tseytin_xor_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
         return Err(RuleNotApplicable);
     };
 
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
     let mut new_symbols = symbols.clone();
 
     let new_expr = tseytin_xor(
         x.as_ref().clone(),
         y.as_ref().clone(),
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
 
-    Ok(RuleEffect::cnf(new_expr, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
+}
+
+/// Shared recognition keeps asserted Boolean counts in their own encoding family.
+pub(super) fn count_inputs(sum: &Expr) -> Option<Vec<Expr>> {
+    let Expr::AbstractLiteral(_, Matrix(terms, _)) = sum else {
+        return None;
+    };
+    terms
+        .iter()
+        .map(|term| match term {
+            Expr::ToInt(_, input)
+                if is_literal(input)
+                    && input.domain_of().is_some_and(|domain| domain.is_bool()) =>
+            {
+                Some(input.as_ref().clone())
+            }
+            Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(value)))
+                if *value == 0 || *value == 1 =>
+            {
+                Some((*value == 1).into())
+            }
+            _ => None,
+        })
+        .collect::<Option<Vec<_>>>()
+}
+
+/// Preserve asserted Boolean counts until a library encoder is selected.
+#[register_rule("SAT", 20000, [Root])]
+fn select_cardinality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    use conjure_cp::ast::sat_decision::CardinalityRelation;
+    super::asserted::select_asserted(expr, symbols, |child| {
+        let (left, right, mut relation) = match child {
+            Expr::Leq(_, left, right) => (left, right, CardinalityRelation::AtMost),
+            Expr::Geq(_, left, right) => (left, right, CardinalityRelation::AtLeast),
+            Expr::Eq(_, left, right) => (left, right, CardinalityRelation::Exactly),
+            _ => return None,
+        };
+        let (sum, bound) = match (left.as_ref(), right.as_ref()) {
+            (
+                Expr::Sum(_, terms),
+                Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(bound))),
+            ) => (terms, *bound),
+            (
+                Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(bound))),
+                Expr::Sum(_, terms),
+            ) => {
+                relation = match relation {
+                    CardinalityRelation::AtMost => CardinalityRelation::AtLeast,
+                    CardinalityRelation::AtLeast => CardinalityRelation::AtMost,
+                    other => other,
+                };
+                (terms, *bound)
+            }
+            _ => return None,
+        };
+        let inputs = count_inputs(sum)?;
+        Some(if relation == CardinalityRelation::AtMost && bound == 1 {
+            SatEncodingDecision::AtMostOne {
+                inputs,
+                encoding: None,
+            }
+        } else {
+            SatEncodingDecision::Cardinality {
+                inputs,
+                relation,
+                bound: i64::from(bound),
+                encoding: None,
+            }
+        })
+    })
 }

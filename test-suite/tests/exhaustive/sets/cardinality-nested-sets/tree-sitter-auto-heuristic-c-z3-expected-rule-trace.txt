@@ -1,0 +1,164 @@
+Model before rewriting:
+
+find a: set of int(1..2)
+find b: set of int(1..2)
+
+such that
+
+|(a intersect (b union {1}))| = 1
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#occurrence_1: bool
+  find a#occurrence_2: bool
+new constraints:
+  and([sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) >= 0,sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#occurrence_1: bool
+  find b#occurrence_2: bool
+new constraints:
+  and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) >= 0,sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+|(a intersect (b union {1}))|
+   ~~> cardinality_set_expression ([("Base", 8500)])
+sum([ 1 | __0 <- (a intersect (b union {1})) ])
+
+--
+
+[ 1 | __0 <- (a intersect (b union {1})) ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ 1 | __0 : int(1..2), __0 in (a intersect (b union {1})) ]
+
+--
+
+[ 1 | __0 : int(1..2), __0 in (a intersect (b union {1})) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(1 in (a intersect (b union {1}))),1;int(1..)]),product([toInt(2 in (a intersect (b union {1}))),1;int(1..)]);int(1..)]
+new variables:
+  findAux __0: int(1)
+  findAux __1: int(2)
+
+--
+
+product([toInt(1 in (a intersect (b union {1}))),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(1 in (a intersect (b union {1})));int(1..)])
+
+--
+
+product([toInt(2 in (a intersect (b union {1}))),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(2 in (a intersect (b union {1})));int(1..)])
+
+--
+
+product([toInt(1 in (a intersect (b union {1})));int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(1 in (a intersect (b union {1})))
+
+--
+
+product([toInt(2 in (a intersect (b union {1})));int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(2 in (a intersect (b union {1})))
+
+--
+
+sum([toInt(1 in (a intersect (b union {1}))),toInt(2 in (a intersect (b union {1})));int(1..)]) = 1,
+and([sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) >= 0,sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) <= 2;int(1..)]),
+and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) >= 0,sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+sum([toInt(1 in (a intersect (b union {1}))),toInt(2 in (a intersect (b union {1})));int(1..)]) = 1,
+and([sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) >= 0,sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) <= 2;int(1..)]),
+and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) >= 0,sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+new variables:
+  findAux __0#lia_1: int(1)
+  findAux __1#lia_1: int(2)
+
+--
+
+1 in (a intersect (b union {1}))
+   ~~> membership_in_intersection ([("Base", 8700)])
+and([1 in a,1 in (b union {1});int(1..)])
+
+--
+
+1 in a
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+a#occurrence_1
+
+--
+
+2 in (a intersect (b union {1}))
+   ~~> membership_in_intersection ([("Base", 8700)])
+and([2 in a,2 in (b union {1});int(1..)])
+
+--
+
+2 in a
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+a#occurrence_2
+
+--
+
+1 in (b union {1})
+   ~~> membership_in_union ([("Base", 8700)])
+or([1 in b,1 in {1};int(1..)])
+
+--
+
+2 in (b union {1})
+   ~~> membership_in_union ([("Base", 8700)])
+or([2 in b,2 in {1};int(1..)])
+
+--
+
+2 in b
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+b#occurrence_2
+
+--
+
+and([a#occurrence_1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+a#occurrence_1
+
+--
+
+or([b#occurrence_2;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+b#occurrence_2
+
+--
+
+Final model:
+
+find a: set (representation occurrence) of int(1..2)
+find b: set (representation occurrence) of int(1..2)
+find a#occurrence_1: bool
+find a#occurrence_2: bool
+find b#occurrence_1: bool
+find b#occurrence_2: bool
+findAux __0: int(1)
+findAux __1: int(2)
+findAux __0#lia_1: int(1)
+findAux __1#lia_1: int(2)
+
+such that
+
+sum([toInt(a#occurrence_1),toInt(and([a#occurrence_2,b#occurrence_2;int(1..)]));int(1..)]) = 1,
+and([sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) >= 0,sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) <= 2;int(1..)]),
+and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) >= 0,sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+

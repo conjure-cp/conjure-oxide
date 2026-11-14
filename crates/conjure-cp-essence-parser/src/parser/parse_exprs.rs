@@ -228,10 +228,7 @@ mod test {
             panic!("expected domain annotation");
         };
         assert_eq!(domain.representation_preference(), Some("packed"));
-        assert_eq!(
-            domain.to_string(),
-            "set (representation packed) of int(-2147483647..2147483647)"
-        );
+        assert_eq!(domain.to_string(), "set (representation packed) of int");
 
         let type_ann = parse_expr(
             "x :: set (representation occurrence) of int",
@@ -262,7 +259,7 @@ mod test {
         assert_eq!(inner.representation_preference(), Some("occurrence"));
         assert_eq!(
             nested_domain.to_string(),
-            "set (representation explicit) of set (representation occurrence) of int(-2147483647..2147483647)"
+            "set (representation explicit) of set (representation occurrence) of int"
         );
     }
 
@@ -316,7 +313,7 @@ mod test {
         let terms = (*terms).clone().unwrap_list().unwrap();
         assert_eq!(terms.len(), 2);
         assert!(matches!(terms[1], Expression::DomainAnnotation(_, _, _)));
-        assert_eq!(terms[1].to_string(), "1 : int(-2147483647..2147483647)");
+        assert_eq!(terms[1].to_string(), "1 : int");
 
         let symbols = SymbolTablePtr::new();
         let x = DeclarationPtr::new_find(

@@ -2,7 +2,7 @@
 #
 # ./update-test-configs.sh
 #
-# DESCRIPTION: bulk manipulate the config.toml files of integration tests
+# DESCRIPTION: bulk manipulate the config.toml files of exhaustive tests
 #
 # USAGE:
 #   See the "usage" message below. Run script with --help to print it.
@@ -17,7 +17,7 @@
 set -euo pipefail
 
 ROOT="test-suite/tests"
-ALLOWED_PATHS_DESC="test-suite/tests/{integration,roundtrip}"
+ALLOWED_PATHS_DESC="test-suite/tests/{exhaustive,roundtrip}"
 
 usage() {
   cat <<'EOF'
@@ -26,11 +26,11 @@ Usage:
 
 Input:
   Test selectors are read from stdin, one per line, as either:
-    - test names, e.g. tests_integration_basic_div_04
-    - globbed test names, e.g. tests_integration_cnf*
+    - test names, e.g. tests_exhaustive_basic_div_04
+    - globbed test names, e.g. tests_exhaustive_cnf*
     - paths (absolute or relative to repo root), e.g.
-      ./test-suite/tests/integration/basic/comprehension/set-fixed-size-sum
-  Paths outside <repo root>/test-suite/tests/{integration,roundtrip} are ignored.
+      ./test-suite/tests/exhaustive/basic/comprehension/set-fixed-size-sum
+  Paths outside <repo root>/test-suite/tests/{exhaustive,roundtrip} are ignored.
   If no input is given, your default editor will be opened so you can type in the paths;
   This behaviour is disabled when the script is not ran interactively (e.g input is piped from another command)
 
@@ -310,8 +310,8 @@ is_allowed_config_path() {
   local candidate
   candidate="$(realpath -m "$1")"
   case "$candidate" in
-    "${REPO_ROOT}/${ROOT}/integration/config.toml" | \
-    "${REPO_ROOT}/${ROOT}/integration/"*/config.toml | \
+    "${REPO_ROOT}/${ROOT}/exhaustive/config.toml" | \
+    "${REPO_ROOT}/${ROOT}/exhaustive/"*/config.toml | \
     "${REPO_ROOT}/${ROOT}/roundtrip/config.toml" | \
     "${REPO_ROOT}/${ROOT}/roundtrip/"*/config.toml)
       return 0
@@ -327,9 +327,9 @@ name_to_config_path() {
   local suite rel
 
   case "$test_name" in
-    tests_integration_*)
-      suite="integration"
-      rel="${test_name#tests_integration_}"
+    tests_exhaustive_*)
+      suite="exhaustive"
+      rel="${test_name#tests_exhaustive_}"
       ;;
     tests_roundtrip_*)
       suite="roundtrip"
@@ -395,7 +395,7 @@ config_path_to_glob_key() {
   rel="${rel#*/}"
 
   case "$suite" in
-    integration|roundtrip) ;;
+    exhaustive|roundtrip) ;;
     *) return 1 ;;
   esac
 
@@ -445,7 +445,7 @@ resolve_test_input_paths() {
   local input="$1"
 
   if is_glob_pattern "$input"; then
-    [[ "$input" == tests_integration_* || "$input" == tests_roundtrip_* ]] || return 1
+    [[ "$input" == tests_exhaustive_* || "$input" == tests_roundtrip_* ]] || return 1
     local p key
     for p in "${ALL_CONFIGS[@]}"; do
       key="$(config_path_to_glob_key "$p" || true)"
@@ -556,7 +556,7 @@ cd "$REPO_ROOT"
 
 mapfile -t ALL_CONFIGS < <(
   {
-    find "${REPO_ROOT}/${ROOT}/integration" -type f -name config.toml 2>/dev/null
+    find "${REPO_ROOT}/${ROOT}/exhaustive" -type f -name config.toml 2>/dev/null
     find "${REPO_ROOT}/${ROOT}/roundtrip" -type f -name config.toml 2>/dev/null
   } | sort
 )
@@ -592,7 +592,7 @@ for t in "${test_names[@]}"; do
     elif is_path_input "$t"; then
       echo "WARN: Ignoring path outside ${ALLOWED_PATHS_DESC}: $t" >&2
     else
-      echo "WARN: Invalid test selector (expected tests_integration_... / tests_roundtrip_... or /path/to/test...): $t" >&2
+      echo "WARN: Invalid test selector (expected tests_exhaustive_... / tests_roundtrip_... or /path/to/test...): $t" >&2
     fi
     ((skipped+=1))
     continue

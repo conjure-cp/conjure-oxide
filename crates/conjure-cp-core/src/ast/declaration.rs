@@ -1,3 +1,5 @@
+use crate::ast::enumerated::EnumeratedType;
+
 use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
@@ -369,6 +371,20 @@ impl DeclarationPtr {
         DeclarationPtr::new(name, kind)
     }
 
+    /// Creates a new enumerated type declaration
+    /// TODO: Example
+    pub fn new_enumerated(name: Name, ty: Moo<EnumeratedType>) -> DeclarationPtr {
+        let kind = DeclarationKind::EnumeratedType(ty);
+        DeclarationPtr::new(name, kind)
+    }
+
+    /// Creates a new unnamed type declaration
+    /// TODO: Example
+    pub fn new_unnamed(name: Name, size: u32) -> DeclarationPtr {
+        let kind = DeclarationKind::UnnamedType(size);
+        DeclarationPtr::new(name, kind)
+    }
+
     /**********************************************/
     /*        Declaration accessor methods        */
     /**********************************************/
@@ -383,15 +399,16 @@ impl DeclarationPtr {
     /// // find a: int(1..5)
     /// let declaration = DeclarationPtr::new_find(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
     ///
-    /// assert!(declaration.domain().is_some_and(|x| x.as_ground().unwrap() == &GroundDomain::Int(vec![Range::Bounded(1,5)])))
+    /// assert!(declaration.domain().is_some_and(|x| x.as_ground().unwrap() == &GroundDomain::Int(vec![Range::Bounded(1,5)], None)))
     ///
     /// ```
     pub fn domain(&self) -> Option<DomainPtr> {
+        let declaration = self.read();
         // Expressions stored inside a declaration (as opposed to the constraint tree the rewrite
         // engine walks) can be mutated in place by substitution utilities that never touch
         // the constraint-tree metadata cache, so `domain_of`'s cache would go stale silently for
         // them. Use the uncached path here.
-        match &self.kind() as &DeclarationKind {
+        match &declaration.kind {
             DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => {
                 Some(var.domain_of())
             }
@@ -403,6 +420,16 @@ impl DeclarationPtr {
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
             DeclarationKind::QuantifiedExpr(expr) => expr.domain_of_uncached()?.element_domain(),
+            DeclarationKind::EnumeratedType(et) => Some(et.to_domain()),
+            DeclarationKind::UnnamedType(size) => Some(
+                Moo::new(crate::ast::GroundDomain::UnnamedType(Moo::new(
+                    crate::ast::unnamed::UnnamedType {
+                        name: declaration.name.clone(),
+                        size: *size,
+                    },
+                )))
+                .into(),
+            ),
         }
     }
 
@@ -582,6 +609,58 @@ impl DeclarationPtr {
         .map(DeclarationMutGuard::new)
     }
 
+    /// This declaration as an enumerated type, if it is one.
+    pub fn as_enumerated_type(&self) -> Option<MappedRwLockReadGuard<'_, Moo<EnumeratedType>>> {
+        RwLockReadGuard::try_map(self.read(), |x| {
+            if let DeclarationKind::EnumeratedType(e) = &x.kind {
+                Some(e)
+            } else {
+                None
+            }
+        })
+        .ok()
+    }
+
+    /// This declaration as a mutable enumerated type, if it is one.
+    pub fn as_enumerated_type_mut(
+        &mut self,
+    ) -> Option<DeclarationMutGuard<'_, Moo<EnumeratedType>>> {
+        RwLockWriteGuard::try_map(self.write(), |x| {
+            if let DeclarationKind::EnumeratedType(e) = &mut x.kind {
+                Some(e)
+            } else {
+                None
+            }
+        })
+        .ok()
+        .map(DeclarationMutGuard::new)
+    }
+
+    /// This declaration as an unnamed type, if it is one.
+    pub fn as_unnamed_type(&self) -> Option<MappedRwLockReadGuard<'_, u32>> {
+        RwLockReadGuard::try_map(self.read(), |x| {
+            if let DeclarationKind::UnnamedType(e) = &x.kind {
+                Some(e)
+            } else {
+                None
+            }
+        })
+        .ok()
+    }
+
+    /// This declaration as a mutable unnamed type, if it is one.
+    pub fn as_unnamed_type_mut(&mut self) -> Option<DeclarationMutGuard<'_, u32>> {
+        RwLockWriteGuard::try_map(self.write(), |x| {
+            if let DeclarationKind::UnnamedType(e) = &mut x.kind {
+                Some(e)
+            } else {
+                None
+            }
+        })
+        .ok()
+        .map(DeclarationMutGuard::new)
+    }
+
     /// Changes the name in this declaration, returning the old one.
     ///
     /// # Examples
@@ -747,6 +826,9 @@ impl CategoryOf for DeclarationPtr {
             DeclarationKind::Given(_) => Category::Parameter,
             DeclarationKind::Quantified(..) => Category::Quantified,
             DeclarationKind::QuantifiedExpr(..) => Category::Quantified,
+            DeclarationKind::EnumeratedType(_) | DeclarationKind::UnnamedType(_) => {
+                Category::Constant
+            }
         }
     }
 }
@@ -773,7 +855,8 @@ impl DefaultWithId for DeclarationPtr {
 
 impl Typeable for DeclarationPtr {
     fn return_type(&self) -> ReturnType {
-        match &self.kind() as &DeclarationKind {
+        let declaration = self.read();
+        match &declaration.kind {
             DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => var.return_type(),
             DeclarationKind::ValueLetting(expression, _)
             | DeclarationKind::TemporaryValueLetting(expression) => expression.return_type(),
@@ -781,6 +864,13 @@ impl Typeable for DeclarationPtr {
             DeclarationKind::Given(domain) => domain.return_type(),
             DeclarationKind::Quantified(inner) => inner.domain.return_type(),
             DeclarationKind::QuantifiedExpr(expr) => expr.return_type(),
+            DeclarationKind::EnumeratedType(ty) => ReturnType::EnumeratedType(ty.clone()),
+            DeclarationKind::UnnamedType(size) => {
+                ReturnType::UnnamedType(Moo::new(crate::ast::unnamed::UnnamedType {
+                    name: declaration.name.clone(),
+                    size: *size,
+                }))
+            }
         }
     }
 }
@@ -966,6 +1056,9 @@ fn biplate_declaration_kind_references(
                 Box::new(move |x| DeclarationKind::QuantifiedExpr(recons_expr(x))),
             )
         }
+        kind @ (DeclarationKind::EnumeratedType(_) | DeclarationKind::UnnamedType(_)) => {
+            (Tree::Zero, Box::new(move |_| kind.clone()))
+        }
     }
 }
 
@@ -1064,6 +1157,11 @@ pub enum DeclarationKind {
     ///
     /// Unlike `ValueLetting`, this is not intended to represent a user-visible top-level `letting`.
     TemporaryValueLetting(Expression),
+
+    /// An enumerated type.
+    EnumeratedType(Moo<EnumeratedType>),
+    /// An unnamed type.
+    UnnamedType(u32),
 }
 
 impl DeclarationKind {
@@ -1100,6 +1198,8 @@ impl DeclarationKind {
                 expr.cached_content_hash().hash(state);
                 expr.to_string().hash(state);
             }
+            DeclarationKind::EnumeratedType(ty) => ty.hash(state),
+            DeclarationKind::UnnamedType(size) => size.hash(state),
             DeclarationKind::ValueLetting(expr, domain) => {
                 expr.cached_content_hash().hash(state);
                 expr.to_string().hash(state);

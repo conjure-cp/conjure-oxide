@@ -1,0 +1,362 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find f: bool
+find amo: bool
+find duplicate: bool
+find eq: bool
+find ge: bool
+find gt: bool
+find le: bool
+find lt: bool
+find ne: bool
+find reversed: bool
+
+such that
+
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 1) <-> (amo),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 2) <-> (le),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) < 2) <-> (lt),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) = 2) <-> (eq),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) != 2) <-> (ne),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) >= 2) <-> (ge),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) > 2) <-> (gt),
+(2 >= sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])) <-> (reversed),
+(sum([toInt(a),toInt(a),toInt(!(b)),1,0;int(1..5)]) = 2) <-> (duplicate)
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) < 2
+   ~~> lt_to_leq ([("Minion", 8400)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= sum([2,-1;int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) > 2
+   ~~> gt_to_geq ([("Minion", 8400)])
+sum([sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]),-1;int(1..)]) >= 2
+
+--
+
+sum([sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]),-1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f),-1;int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f),-1;int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, a, b, c, d, e, f], 2)
+
+--
+
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 1) <-> (amo)
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 1, amo)
+
+--
+
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 2) <-> (le)
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 2, le)
+
+--
+
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 1) <-> (lt)
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 1, lt)
+
+--
+
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) = 2) <-> (eq)
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) = 2, eq)
+
+--
+
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) != 2) <-> (ne)
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) != 2, ne)
+
+--
+
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) >= 2) <-> (ge)
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) >= 2, ge)
+
+--
+
+(SumGeq([-1, a, b, c, d, e, f], 2)) <-> (gt)
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(SumGeq([-1, a, b, c, d, e, f], 2), gt)
+
+--
+
+(2 >= sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])) <-> (reversed)
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(2 >= sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]), reversed)
+
+--
+
+(sum([toInt(a),toInt(a),toInt(!(b)),1,0;int(1..5)]) = 2) <-> (duplicate)
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(sum([toInt(a),toInt(a),toInt(!(b)),1,0;int(1..5)]) = 2, duplicate)
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 2
+   ~~> flatten_generic ([("Minion", 4200)])
+__0 <= 2
+new variables:
+  findAux __0: int(0..6)
+new constraints:
+  __0 =aux sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 1
+   ~~> flatten_generic ([("Minion", 4200)])
+__1 <= 1
+new variables:
+  findAux __1: int(0..6)
+new constraints:
+  __1 =aux sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) != 2
+   ~~> flatten_generic ([("Minion", 4200)])
+__2 != 2
+new variables:
+  findAux __2: int(0..6)
+new constraints:
+  __2 =aux sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) >= 2
+   ~~> flatten_generic ([("Minion", 4200)])
+__3 >= 2
+new variables:
+  findAux __3: int(0..6)
+new constraints:
+  __3 =aux sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+
+--
+
+2 >= sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> flatten_generic ([("Minion", 4200)])
+2 >= __4
+new variables:
+  findAux __4: int(0..6)
+new constraints:
+  __4 =aux sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 1
+   ~~> flatten_generic ([("Minion", 4200)])
+__5 <= 1
+new variables:
+  findAux __5: int(0..6)
+new constraints:
+  __5 =aux sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+
+--
+
+toInt(!(b))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__6)
+new variables:
+  findAux __6: bool
+new constraints:
+  __6 =aux !(b)
+
+--
+
+__6 =aux !(b)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(!(b), __6)
+
+--
+
+__0 <= 2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__0, 2, 0)
+
+--
+
+__1 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__1, 1, 0)
+
+--
+
+__3 >= 2
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(2, __3, 0)
+
+--
+
+2 >= __4
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(__4, 2, 0)
+
+--
+
+__5 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__5, 1, 0)
+
+--
+
+!(b)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(b,false)
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(a),toInt(__6),1,0;int(1..5)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(a),toInt(__6),1,0;int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+__0 =aux sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([a, b, c, d, e, f], __0),SumGeq([a, b, c, d, e, f], __0);int(1..)])
+
+--
+
+__1 =aux sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([a, b, c, d, e, f], __1),SumGeq([a, b, c, d, e, f], __1);int(1..)])
+
+--
+
+__2 =aux sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([a, b, c, d, e, f], __2),SumGeq([a, b, c, d, e, f], __2);int(1..)])
+
+--
+
+__3 =aux sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([a, b, c, d, e, f], __3),SumGeq([a, b, c, d, e, f], __3);int(1..)])
+
+--
+
+__4 =aux sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([a, b, c, d, e, f], __4),SumGeq([a, b, c, d, e, f], __4);int(1..)])
+
+--
+
+__5 =aux sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([a, b, c, d, e, f], __5),SumGeq([a, b, c, d, e, f], __5);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([a, b, c, d, e, f], 2),SumGeq([a, b, c, d, e, f], 2);int(1..)])
+
+--
+
+sum([toInt(a),toInt(a),toInt(__6),1;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, 1, 2],[1, __6, a],2),FlatWeightedSumGeq([1, 1, 2],[1, __6, a],2);int(1..)])
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find f: bool
+find amo: bool
+find duplicate: bool
+find eq: bool
+find ge: bool
+find gt: bool
+find le: bool
+find lt: bool
+find ne: bool
+find reversed: bool
+findAux __0: int(0..6)
+findAux __1: int(0..6)
+findAux __2: int(0..6)
+findAux __3: int(0..6)
+findAux __4: int(0..6)
+findAux __5: int(0..6)
+findAux __6: bool
+
+such that
+
+Reify(Ineq(__5, 1, 0), amo),
+Reify(Ineq(__0, 2, 0), le),
+Reify(Ineq(__1, 1, 0), lt),
+Reify(and([SumLeq([a, b, c, d, e, f], 2),SumGeq([a, b, c, d, e, f], 2);int(1..)]), eq),
+Reify(__2 != 2, ne),
+Reify(Ineq(2, __3, 0), ge),
+Reify(SumGeq([-1, a, b, c, d, e, f], 2), gt),
+Reify(Ineq(__4, 2, 0), reversed),
+Reify(and([FlatWeightedSumLeq([1, 1, 2],[1, __6, a],2),FlatWeightedSumGeq([1, 1, 2],[1, __6, a],2);int(1..)]), duplicate),
+and([SumLeq([a, b, c, d, e, f], __0),SumGeq([a, b, c, d, e, f], __0);int(1..)]),
+and([SumLeq([a, b, c, d, e, f], __1),SumGeq([a, b, c, d, e, f], __1);int(1..)]),
+and([SumLeq([a, b, c, d, e, f], __2),SumGeq([a, b, c, d, e, f], __2);int(1..)]),
+and([SumLeq([a, b, c, d, e, f], __3),SumGeq([a, b, c, d, e, f], __3);int(1..)]),
+and([SumLeq([a, b, c, d, e, f], __4),SumGeq([a, b, c, d, e, f], __4);int(1..)]),
+and([SumLeq([a, b, c, d, e, f], __5),SumGeq([a, b, c, d, e, f], __5);int(1..)]),
+Reify(WatchedLiteral(b,false), __6)
+

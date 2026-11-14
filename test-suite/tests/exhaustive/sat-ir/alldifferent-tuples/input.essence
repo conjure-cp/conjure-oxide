@@ -1,0 +1,11 @@
+language Essence 1.3
+find x, y, exception : (bool, (bool, int(-2,3)))
+find ordinary, allowed, repeated, negative, fixed : bool
+such that
+  alldifferent_except([x,y,(false, (false, -2))], exception),
+  ordinary <-> allDiff([x,y]),
+  allowed <-> alldifferent_except([x,y], exception),
+  repeated <-> alldifferent_except([x,x,y], exception),
+  negative <-> !allDiff([x,y]),
+  fixed <-> alldifferent_except([x,y], (false, (false, -2))),
+  alldifferent_except([x,y], exception) \/ !allDiff([x,y])

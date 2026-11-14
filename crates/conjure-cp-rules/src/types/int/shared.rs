@@ -1,6 +1,6 @@
 //! Helpers shared by the SAT integer representations.
 //!
-//! The three encodings differ in how they lay out bits, but agree on which domains they accept
+//! The encodings differ in how they lay out bits, but agree on which domains they accept
 //! and on how a domain is restated as a constraint over the encoded value.
 
 use conjure_cp::ast::{DomainPtr, Expression, GroundDomain, Metadata, Moo, Range};
@@ -9,17 +9,14 @@ use conjure_cp::into_matrix_expr;
 
 /// The inclusive intervals of a finite ground integer domain.
 ///
-/// Returns `None` for anything that is not an integer domain, and for integer domains with an
-/// unbounded range: every SAT encoding needs to know how many values it is laying out.
+/// Returns `None` for anything that is not an integer domain. Missing endpoints use the
+/// default machine limits at this encoding boundary; the original domain remains unbounded.
 pub(crate) fn int_ranges(dom: &DomainPtr) -> Option<Vec<(i32, i32)>> {
-    let GroundDomain::Int(ranges) = dom.as_ground()? else {
+    let GroundDomain::Int(ranges, _) = dom.as_ground()? else {
         return None;
     };
 
-    ranges
-        .iter()
-        .map(|range| Some((*range.low()?, *range.high()?)))
-        .collect()
+    Some(ranges.iter().map(Range::int_bounds_with_defaults).collect())
 }
 
 /// The overall lower and upper bound of a set of inclusive intervals.
@@ -62,4 +59,46 @@ pub(crate) fn as_ranges(bounds: &[(i32, i32)]) -> Vec<Range<i32>> {
             }
         })
         .collect()
+}
+
+/// Bounds and Boolean count for a per-value encoding, without constructing its bit vector.
+pub(super) struct PerValueLayout {
+    pub ranges: Vec<(i32, i32)>,
+    pub bounds: (i32, i32),
+    pub width: usize,
+}
+
+pub(super) fn per_value_layout(
+    dom: &DomainPtr,
+    representation: &'static str,
+) -> Result<PerValueLayout, conjure_cp::representation::ReprInitError> {
+    let error = || {
+        conjure_cp::representation::ReprInitError::UnsupportedDomain(
+            dom.clone(),
+            representation,
+            "expected a non-empty finite ground integer domain".into(),
+        )
+    };
+    // Direct/order encodings require explicit endpoints. The machine defaults used by
+    // binary encodings must not turn an unbounded domain into billions of Boolean bits.
+    if dom
+        .as_int()
+        .is_some_and(|ranges| ranges.iter().any(|range| !range.is_finite()))
+    {
+        return Err(
+            conjure_cp::representation::ReprInitError::UnsupportedDomain(
+                dom.clone(),
+                representation,
+                "per-value encoding requires explicit integer bounds".into(),
+            ),
+        );
+    }
+    let ranges = int_ranges(dom).ok_or_else(error)?;
+    let bounds @ (low, high) = finite_int_bounds(&ranges).ok_or_else(error)?;
+    let width = usize::try_from(i64::from(high) - i64::from(low) + 1).map_err(|_| error())?;
+    Ok(PerValueLayout {
+        ranges,
+        bounds,
+        width,
+    })
 }

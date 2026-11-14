@@ -126,10 +126,13 @@ fn variant_components_and_packed_round_trip() {
 
 #[test]
 fn packed_matrix_round_trips_primitive_values_and_weird_indices() {
-    let inner_indices = GroundDomain::Int(vec![
-        conjure_cp::ast::Range::Single(1),
-        conjure_cp::ast::Range::Single(3),
-    ]);
+    let inner_indices = GroundDomain::Int(
+        vec![
+            conjure_cp::ast::Range::Single(1),
+            conjure_cp::ast::Range::Single(3),
+        ],
+        None,
+    );
     let domain = Domain::matrix(
         domain_int!(2..4),
         vec![Domain::bool(), Domain::from(inner_indices.clone()).into()],
@@ -183,9 +186,10 @@ fn packed_matrix_orders_booleans_false_before_true() {
     );
     let value = Literal::AbstractLiteral(AbstractLiteral::Matrix(
         vec![Literal::Bool(true), Literal::Bool(false)],
-        Moo::new(GroundDomain::Int(vec![conjure_cp::ast::Range::Bounded(
-            1, 2,
-        )])),
+        Moo::new(GroundDomain::Int(
+            vec![conjure_cp::ast::Range::Bounded(1, 2)],
+            None,
+        )),
     ));
     let assignment = state.down(value.clone()).unwrap();
     assert_eq!(assignment.packed, Literal::Int(2));
@@ -801,6 +805,7 @@ fn explicit_sequence_rejects_unbounded_size() {
 fn relation_as_set_round_trips_binary_pairs() {
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(2),
             binary: vec![],
         },
@@ -822,6 +827,7 @@ fn relation_as_set_round_trips_ternary_relations() {
     // etc) require exactly two columns, checked separately below.
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(1),
             binary: vec![],
         },
@@ -842,6 +848,7 @@ fn relation_as_set_round_trips_ternary_relations() {
 fn relation_as_set_rejects_binary_attributes_on_a_ternary_relation() {
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(1),
             binary: vec![BinaryAttr::Reflexive],
         },
@@ -854,6 +861,7 @@ fn relation_as_set_rejects_binary_attributes_on_a_ternary_relation() {
 fn relation_as_set_rejects_binary_attributes_when_columns_differ() {
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(1),
             binary: vec![BinaryAttr::Reflexive],
         },
@@ -866,6 +874,7 @@ fn relation_as_set_rejects_binary_attributes_when_columns_differ() {
 fn relation_as_set_reflexive_builds_one_structural_constraint() {
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(3),
             binary: vec![BinaryAttr::Reflexive],
         },
@@ -880,6 +889,7 @@ fn relation_as_set_reflexive_builds_one_structural_constraint() {
 fn binary_attr_constraint_count(binary: Vec<BinaryAttr>) -> usize {
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(3),
             binary,
         },
@@ -922,6 +932,7 @@ fn relation_derived_binary_attrs_expand_to_their_base_formula_count() {
 fn relation_occurrence_round_trips_binary_pairs() {
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(2),
             binary: vec![],
         },
@@ -941,6 +952,7 @@ fn relation_occurrence_round_trips_binary_pairs() {
 fn relation_occurrence_round_trips_ternary_relations() {
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(1),
             binary: vec![],
         },
@@ -962,6 +974,7 @@ fn relation_occurrence_rejects_a_compound_column() {
     // A set-typed column can't index a matrix; only `RelationAsSet` supports it.
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(1),
             binary: vec![],
         },
@@ -977,6 +990,7 @@ fn relation_occurrence_rejects_a_compound_column() {
 fn relation_occurrence_reflexive_and_symmetric_build_two_structural_constraints_plus_cardinality() {
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: conjure_cp::ast::Range::<i32>::Unbounded,
             binary: vec![BinaryAttr::Reflexive, BinaryAttr::Symmetric],
         },
@@ -994,6 +1008,7 @@ fn relation_occurrence_reflexive_and_symmetric_build_two_structural_constraints_
 fn relation_occurrence_fixed_size_builds_an_equality_cardinality_constraint() {
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(2),
             binary: vec![],
         },
@@ -1009,6 +1024,7 @@ fn relation_occurrence_fixed_size_builds_an_equality_cardinality_constraint() {
 fn relation_packed_round_trips_binary_pairs() {
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(2),
             binary: vec![],
         },
@@ -1030,6 +1046,7 @@ fn relation_packed_round_trips_a_set_typed_column() {
     // matrix-indexable ones, as long as the combined cartesian product stays small.
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(2),
             binary: vec![],
         },
@@ -1059,6 +1076,7 @@ fn relation_packed_rejects_a_too_large_cartesian_product() {
     // 6 columns of int(1..3) is 3^6 = 729 possible tuples, far over the 30-bit cap.
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(2),
             binary: vec![],
         },
@@ -1074,6 +1092,7 @@ fn relation_packed_reflexive_builds_a_cardinality_and_a_structural_constraint() 
     // fixed size plus one binary attribute gives two constraints, not one.
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(3),
             binary: vec![BinaryAttr::Reflexive],
         },
@@ -1092,6 +1111,7 @@ fn relation_packed_is_more_compact_than_occurrence_for_a_bounded_size() {
     // bounded narrowly enough for the binomial sum to undercut 2^n.
     let domain = Domain::relation(
         RelAttr {
+            representation: None,
             size: range!(2),
             binary: vec![],
         },
@@ -1109,6 +1129,7 @@ fn func_attr(
     jectivity: JectivityAttr,
 ) -> FuncAttr {
     FuncAttr {
+        representation: None,
         size,
         partiality,
         jectivity,
@@ -1270,6 +1291,7 @@ fn partition_attr(
     is_regular: bool,
 ) -> PartitionAttr {
     PartitionAttr {
+        representation: None,
         num_parts,
         part_len,
         is_regular,
@@ -1632,7 +1654,10 @@ fn partition_packed_is_more_compact_than_occurrence_for_a_bounded_size() {
 }
 
 fn permutation_attr(num_moved: conjure_cp::ast::Range<i32>) -> PermutationAttr {
-    PermutationAttr { num_moved }
+    PermutationAttr {
+        representation: None,
+        num_moved,
+    }
 }
 
 #[test]

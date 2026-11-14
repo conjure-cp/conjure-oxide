@@ -4,24 +4,23 @@ use clap::{ArgAction, Args, Parser, Subcommand, ValueEnum};
 
 use clap_complete::Shell;
 use conjure_cp::settings::{
-    Channelling, DEFAULT_HEURISTIC_SEED, DEFAULT_MINION_DISCRETE_THRESHOLD, Heuristic,
-    Parser as InputParser, QuantifiedExpander, Rewriter, SolverFamily,
+    Channelling, DEFAULT_HEURISTIC_SEED, Heuristic, Parser as InputParser, QuantifiedExpander,
+    Rewriter, SolverFamily,
 };
-use conjure_cp::solver::adaptors::{MinionValueOrder, MinionVariableOrder};
+use conjure_cp::solver::adaptors::{MinionValueOrder, MinionVariableOrder, SatBackend};
 use git_version::git_version;
 
 use crate::{pretty, solve, test_solve};
 
 pub(crate) const LOGGING_HELP_HEADING: Option<&str> = Some("Logging & Output");
 pub(crate) const CONFIGURATION_HELP_HEADING: Option<&str> = Some("Configuration");
+pub(crate) const MODELLING_HELP_HEADING: Option<&str> = Some("Modelling choices");
 
 /// All subcommands of conjure-oxide
 #[derive(Clone, Debug, Subcommand)]
 pub enum Command {
     /// Solve a model
     Solve(solve::Args),
-    /// Print the JSON info file schema
-    PrintJsonSchema,
     /// Tests whether the Essence model is solvable with Conjure Oxide, and whether it gets the
     /// same solutions as Conjure.
     ///
@@ -96,7 +95,7 @@ pub struct GlobalArgs {
 
     /// Output file for aggregated rule-application counts.
     ///
-    /// The file is updated incrementally in the format:
+    /// Counts are kept in memory and written when the program exits, in the format:
     /// `total_rule_applications: N`, followed by one line per rule.
     #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
     pub rule_trace_aggregates: Option<PathBuf>,
@@ -152,15 +151,16 @@ pub struct GlobalArgs {
         default_value_t = QuantifiedExpander::Auto,
         value_parser = parse_comprehension_expander,
         global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
+        help_heading = MODELLING_HELP_HEADING
     )]
     pub comprehension_expander: QuantifiedExpander,
 
     /// Heuristic for selecting an answer when multiple modelling choices are applicable.
     ///
     /// Possible values: `f` (first), `r` (random), `c` (compact), `i` (interactive). Compact
-    /// minimises the representation-domain size for representation choices and the resulting AST
-    /// depth for equally-applicable rewrite rules. Interactive prompts on stderr, or uses
+    /// estimates structural work for supported Minion representation choices, falling back to
+    /// representation-domain size elsewhere, and minimises resulting AST depth for equally-applicable
+    /// rewrite rules. Use -v to inspect representation costs. Interactive prompts on stderr, or uses
     /// `--responses` when provided. `x` (all) is reserved for model generation and is not
     /// supported by the CLI yet.
     #[arg(
@@ -169,7 +169,7 @@ pub struct GlobalArgs {
         default_value_t = Heuristic::Compact,
         value_parser = parse_cli_heuristic,
         global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
+        help_heading = MODELLING_HELP_HEADING
     )]
     pub heuristic: Heuristic,
 
@@ -182,7 +182,7 @@ pub struct GlobalArgs {
         value_name = "INTS",
         value_delimiter = ',',
         global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
+        help_heading = MODELLING_HELP_HEADING
     )]
     pub responses: Vec<usize>,
 
@@ -191,7 +191,7 @@ pub struct GlobalArgs {
         long,
         default_value_t = DEFAULT_HEURISTIC_SEED,
         global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
+        help_heading = MODELLING_HELP_HEADING
     )]
     pub seed: u64,
 
@@ -206,7 +206,8 @@ pub struct GlobalArgs {
 
     /// Whether multiple representations of the same declaration may be channelled together.
     ///
-    /// Possible values: `no`, `yes`. Channelling is disabled by default. Enable `yes` to allow
+    /// Possible values: `no`, `yes`, `uniform`. Channelling is disabled by default.
+    /// `uniform` uses one representation kind per type family throughout the model. Enable `yes` for
     /// different representations of the same variable at different call sites, e.g.
     /// `1 in (x :: set (representation packed) of int) /\ 2 in (x :: set (representation occurrence) of int)`.
     #[arg(
@@ -214,9 +215,35 @@ pub struct GlobalArgs {
         default_value_t = Channelling::No,
         value_parser = parse_cli_channelling,
         global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
+        help_heading = MODELLING_HELP_HEADING
     )]
     pub channelling: Channelling,
+
+    /// Pin the SAT element composition: implication or support.
+    #[arg(long = "sat-encoding-element", global = true, help_heading = MODELLING_HELP_HEADING)]
+    pub element_encoding: Option<conjure_cp::ast::sat_decision::ElementEncoding>,
+
+    /// Pin the SAT table composition: tuple, mdd or binary-support (constant two-column relations).
+    #[arg(long = "sat-encoding-table", global = true, help_heading = MODELLING_HELP_HEADING)]
+    pub table_encoding: Option<conjure_cp::ast::sat_decision::TableEncoding>,
+
+    /// Pin allDifferent: pairwise, or value-amo (requires Direct or Boolean value indicators).
+    #[arg(long = "sat-encoding-alldifferent", global = true, help_heading = MODELLING_HELP_HEADING)]
+    pub alldifferent_encoding: Option<conjure_cp::ast::sat_decision::AllDifferentEncoding>,
+
+    /// Pin the SAT AMO encoder: pairwise, ladder, bitwise, commander, bimander, two-product,
+    /// pindakaas-pairwise, pindakaas-ladder or pindakaas-bitwise.
+    /// If omitted, compact chooses per constraint; portfolio heuristics share one family choice.
+    #[arg(long = "sat-encoding-amo", global = true, help_heading = MODELLING_HELP_HEADING)]
+    pub amo_encoding: Option<conjure_cp::ast::sat_decision::AmoEncoding>,
+
+    /// Pin the SAT cardinality encoder: rustsat-totalizer or pindakaas-sorting-network.
+    #[arg(long = "sat-encoding-cardinality", global = true, help_heading = MODELLING_HELP_HEADING)]
+    pub cardinality_encoding: Option<conjure_cp::ast::sat_decision::CardinalityEncoding>,
+
+    /// Pin the SAT weighted encoder: rustsat-generalized-totalizer, rustsat-binary-adder, pindakaas-bdd, rustsat-dynamic-poly-watchdog, or pindakaas-swc.
+    #[arg(long = "sat-encoding-pb", global = true, help_heading = MODELLING_HELP_HEADING)]
+    pub pb_encoding: Option<conjure_cp::ast::sat_decision::PbEncoding>,
 
     /// Solver to use.
     ///
@@ -237,16 +264,22 @@ pub struct GlobalArgs {
     )]
     pub solver: SolverFamily,
 
-    /// Int-domain size threshold for using Minion `DISCRETE` variables.
+    /// SAT backend to use with --solver sat (only compiled backends are available).
+    #[arg(long, value_enum, default_value_t = SatBackend::default(), global = true,
+        help_heading = CONFIGURATION_HELP_HEADING)]
+    pub sat_backend: SatBackend,
+
+    /// Pin the int-domain span threshold for using Minion `DISCRETE` variables.
     ///
-    /// If an int domain has size <= this value, Conjure Oxide emits `DISCRETE`; otherwise `BOUND`.
+    /// If maximum - minimum + 1 <= this value, emit `DISCRETE`; otherwise `BOUND`.
+    /// Constraints requiring `DISCRETE` override this choice. If omitted, the heuristic chooses
+    /// between 10, zero (all `BOUND`), and unlimited (all `DISCRETE`). Compact chooses 10.
     #[arg(
         long,
-        default_value_t = DEFAULT_MINION_DISCRETE_THRESHOLD,
         global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
+        help_heading = MODELLING_HELP_HEADING
     )]
-    pub minion_discrete_threshold: usize,
+    pub minion_discrete_threshold: Option<usize>,
 
     /// Override Minion variable ordering.
     ///
@@ -303,6 +336,41 @@ pub struct GlobalArgs {
     pub log_detail: Option<LogDetail>,
 }
 
+impl GlobalArgs {
+    /// Convert command-line options into the library's modelling configuration.
+    pub(crate) fn library_config(&self) -> conjure_cp::pipeline::Config {
+        use conjure_cp::pipeline::{Config, TraceConfig};
+        Config {
+            parser: self.parser,
+            rewriter: self.rewriter,
+            comprehension_expander: self.comprehension_expander,
+            solver: self.solver,
+            extra_rule_sets: self.extra_rule_sets.clone(),
+            heuristic: self.heuristic,
+            seed: self.seed,
+            responses: self.responses.clone(),
+            channelling: self.channelling,
+            amo_encoding: self.amo_encoding,
+            cardinality_encoding: self.cardinality_encoding,
+            pb_encoding: self.pb_encoding,
+            element_encoding: self.element_encoding,
+            table_encoding: self.table_encoding,
+            alldifferent_encoding: self.alldifferent_encoding,
+            minion_discrete_threshold: self.minion_discrete_threshold,
+            minion_varorder: self.minion_varorder,
+            minion_valorder: self.minion_valorder,
+            sat_backend: self.sat_backend,
+            solver_seed: self.solver_seed,
+            solver_timeout: self.solver_timeout.map(std::time::Duration::from),
+            trace: TraceConfig {
+                rules: self.rule_trace.is_some(),
+                attempts: self.rule_attempt_trace.is_some(),
+                aggregates: self.rule_trace_aggregates.is_some(),
+            },
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, ValueEnum)]
 pub enum LogFormat {
     #[default]
@@ -356,7 +424,11 @@ fn parse_rewriter(input: &str) -> Result<Rewriter, String> {
 }
 
 fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
-    input.parse()
+    let family = input.parse()?;
+    if family == SolverFamily::Z3 && !cfg!(feature = "z3") {
+        return Err("Z3 solver support was not compiled in (enable the `z3` feature).".into());
+    }
+    Ok(family)
 }
 
 fn parse_parser(input: &str) -> Result<InputParser, String> {
@@ -394,6 +466,56 @@ fn parse_minion_variable_order(input: &str) -> Result<MinionVariableOrder, Strin
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sat_backend_defaults_to_available_native_backend() {
+        let cli =
+            Cli::try_parse_from(["conjure-oxide", "solve", "model.essence", "--solver", "sat"])
+                .unwrap();
+        #[cfg(all(feature = "sat-cadical", not(target_family = "wasm")))]
+        assert_eq!(cli.global_args.sat_backend, SatBackend::Cadical);
+        #[cfg(not(all(feature = "sat-cadical", not(target_family = "wasm"))))]
+        assert_eq!(cli.global_args.sat_backend, SatBackend::Batsat);
+    }
+
+    #[test]
+    fn sat_backend_option_accepts_only_compiled_backends() {
+        for name in ["cadical", "batsat"] {
+            let result = Cli::try_parse_from([
+                "conjure-oxide",
+                "solve",
+                "model.essence",
+                "--solver",
+                "sat",
+                "--sat-backend",
+                name,
+            ]);
+            let available = SatBackend::value_variants()
+                .iter()
+                .find(|backend| backend.to_string() == name);
+            match available {
+                Some(backend) => assert_eq!(result.unwrap().global_args.sat_backend, *backend),
+                None => assert_eq!(
+                    result.unwrap_err().kind(),
+                    clap::error::ErrorKind::InvalidValue
+                ),
+            }
+        }
+    }
+
+    #[cfg(not(feature = "z3"))]
+    #[test]
+    fn selecting_z3_without_support_reports_the_missing_feature() {
+        let error =
+            Cli::try_parse_from(["conjure-oxide", "solve", "model.essence", "--solver", "z3"])
+                .unwrap_err();
+        assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+        assert!(
+            error
+                .to_string()
+                .contains("Z3 solver support was not compiled in")
+        );
+    }
 
     /// Regression test for #1631: `--version` used to fail as it requires a subcommand.
     #[test]

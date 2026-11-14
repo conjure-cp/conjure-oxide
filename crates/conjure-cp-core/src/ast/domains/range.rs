@@ -1,4 +1,7 @@
-use crate::ast::{DomainOpError, domains::Int};
+use crate::ast::{
+    DomainOpError,
+    domains::{Int, OXIDE_INT_MAX, OXIDE_INT_MIN},
+};
 use funcmap::{FuncMap, TryFuncMap};
 use num_traits::Num;
 use polyquine::Quine;
@@ -13,6 +16,17 @@ pub enum Range<A = Int> {
     UnboundedL(A),
     UnboundedR(A),
     Unbounded,
+}
+
+impl Range<Int> {
+    /// Effective endpoints for a finite integer solver. Missing endpoints use the default
+    /// machine limits without replacing the unbounded range stored in the model.
+    pub fn int_bounds_with_defaults(&self) -> (Int, Int) {
+        (
+            *self.low().unwrap_or(&OXIDE_INT_MIN),
+            *self.high().unwrap_or(&OXIDE_INT_MAX),
+        )
+    }
 }
 
 impl<A> Range<A> {
@@ -177,18 +191,18 @@ impl<A: Num + Ord + Clone> Range<A> {
     /// Returns true if this interval touches another one on the left
     /// E.g: [1, 2] touches_left  [3, 4]
     pub fn touches_left(&self, other: &Range<A>) -> bool {
-        self.high().is_some_and(|ra| {
-            let ra = ra.clone() + A::one();
-            other.low().is_some_and(|lb| ra.eq(lb))
+        self.high().zip(other.low()).is_some_and(|(ra, lb)| {
+            // The strict ordering rules out overflowing at the largest endpoint.
+            ra < lb && ra.clone() + A::one() == *lb
         })
     }
 
     /// Returns true if this interval touches another one on the right
     /// E.g: [3, 4] touches_right  [1, 2]
     pub fn touches_right(&self, other: &Range<A>) -> bool {
-        self.low().is_some_and(|la| {
-            let la = la.clone() - A::one();
-            other.high().is_some_and(|rb| la.eq(rb))
+        self.low().zip(other.high()).is_some_and(|(la, rb)| {
+            // The strict ordering rules out overflowing at the smallest endpoint.
+            la > rb && la.clone() - A::one() == *rb
         })
     }
 

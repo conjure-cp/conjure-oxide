@@ -106,6 +106,64 @@ pub fn tuple_expr_entries(expr: &Expr) -> Option<Vec<Expr>> {
     }
 }
 
+/// Resolve a value letting used as a table operand.
+pub fn table_operand(expr: &Expr) -> Expr {
+    if let Expr::Atomic(_, Atom::Reference(reference)) = expr {
+        if let Some(value) = reference.resolve_expression() {
+            return value;
+        }
+        if let Some(value) = reference.resolve_constant() {
+            return value.into();
+        }
+    }
+    expr.clone()
+}
+
+/// Read an ordered table input or dense row. Sets deliberately have no positional meaning.
+pub fn table_ordered_entries(expr: &Expr) -> Option<Vec<Expr>> {
+    match table_operand(expr) {
+        Expr::AbstractLiteral(_, AbstractLiteral::Sequence(entries)) => Some(entries),
+        Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Sequence(entries))),
+        ) => Some(entries.into_iter().map(Expr::from).collect()),
+        expr => expr.unwrap_matrix_unchecked().map(|(entries, _)| entries),
+    }
+}
+
+/// Read an unordered table relation, retaining matrix syntax for existing models.
+pub fn table_rows(expr: &Expr) -> Option<Vec<Expr>> {
+    match table_operand(expr) {
+        Expr::AbstractLiteral(_, AbstractLiteral::Set(entries)) => Some(entries),
+        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Set(entries)))) => {
+            Some(entries.into_iter().map(Expr::from).collect())
+        }
+        expr => expr.unwrap_matrix_unchecked().map(|(entries, _)| entries),
+    }
+}
+
+/// Read a sparse row of tuple pairs; sets permit different row sizes without ragged matrices.
+pub fn short_table_row_entries(expr: &Expr) -> Option<Vec<Expr>> {
+    let (entries, is_set) = match table_operand(expr) {
+        Expr::AbstractLiteral(_, AbstractLiteral::Set(entries)) => (entries, true),
+        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Set(entries)))) => {
+            (entries.into_iter().map(Expr::from).collect(), true)
+        }
+        expr => (table_ordered_entries(&expr)?, false),
+    };
+    if !is_set {
+        return Some(entries);
+    }
+    // Repeated members of a set must not become repeated position assignments.
+    let mut unique = Vec::with_capacity(entries.len());
+    for entry in entries {
+        if !unique.contains(&entry) {
+            unique.push(entry);
+        }
+    }
+    Some(unique)
+}
+
 pub fn as_eq_or_neq(expr: &Expr) -> Result<(&Expr, &Expr, bool), ApplicationError> {
     match expr {
         Expr::Eq(_, left, right) => Ok((left.as_ref(), right.as_ref(), false)),
@@ -372,7 +430,7 @@ fn is_element_lowerable_subject(expr: &Expr) -> bool {
         _ => return false,
     };
 
-    let GroundDomain::Int(ranges) = index_domain.as_ref() else {
+    let GroundDomain::Int(ranges, _) = index_domain.as_ref() else {
         return false;
     };
     Range::is_contiguous(ranges)
@@ -438,7 +496,7 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
             && categories.contains(&Category::Decision)
             && categories.contains(&Category::Constant))
     {
-        if let Expr::ElementId(_, _, value) = expr {
+        if let Expr::ElementId(_, _, value) | Expr::IndexOf(_, _, value) = expr {
             let value_categories = value.universe_categories();
             if !(value_categories.len() == 1 && value_categories.contains(&Category::Decision)
                 || value_categories.len() == 2
@@ -471,7 +529,7 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
     if let Expr::SafeIndex(_, subject, indices) = expr {
         let index_has_element_id = indices
             .iter()
-            .any(|index| matches!(index, Expr::ElementId(..)));
+            .any(|index| matches!(index, Expr::ElementId(..) | Expr::IndexOf(..)));
         let can_lower_via_element = is_element_lowerable_subject(subject)
             && indices.iter().all(|i| matches!(i, Expr::Atomic(_, _)));
 
@@ -782,4 +840,26 @@ fn unpack_compound_literal_digit(digit: &Expr, values: &[Literal]) -> Option<Exp
         }
         _ => None,
     }
+}
+
+/// Validate sparse tuple assignments and convert Essence positions to zero-based offsets.
+pub(crate) fn checked_short_table_row(expr: &Expr, width: usize) -> Option<Vec<(usize, Expr)>> {
+    let mut positions = std::collections::HashSet::new();
+    short_table_row_entries(expr)?
+        .into_iter()
+        .map(|pair| {
+            let entries = tuple_expr_entries(&pair)?;
+            let [position, value] = entries.as_slice() else {
+                return None;
+            };
+            let Literal::Int(position) = conjure_cp::ast::eval_constant(position)? else {
+                return None;
+            };
+            let position = usize::try_from(position.checked_sub(1)?).ok()?;
+            if position >= width || !positions.insert(position) {
+                return None;
+            }
+            Some((position, value.clone()))
+        })
+        .collect()
 }

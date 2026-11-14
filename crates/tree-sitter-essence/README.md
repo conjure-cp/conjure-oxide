@@ -5,7 +5,7 @@
 The grammar defines how Essence source is parsed into a concrete syntax tree, including the core language structure: declarations (for example `find`, `given`, and `letting`), domains, expressions, constraints, comprehensions, and literals. The grammar is based on the [Essence Docs](https://conjure.readthedocs.io/en/latest/essence.html#) and is not complete. This parse tree is then used by higher-level parser code (in the `conjure-cp-essence-parser` crate) to build semantic model representations.
 
 ## Usage
-After making changes to the `grammar.js` file, run `tree-sitter generate` and commit the generated files to save your changes. 
+After changing `grammar.js`, run `tree-sitter generate --abi 15` using CLI version 0.26.7 and commit the generated files. The exact CLI version is pinned in `package.json` and CI to keep generation reproducible. Run `tree-sitter test` to check the grammar corpus.
 
 ### Licence
 

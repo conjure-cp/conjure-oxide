@@ -24,7 +24,7 @@ pub(crate) fn is_compile_time_test_input(path: &Path) -> bool {
     }
 
     match suite_or_file.to_str() {
-        Some("integration") => {
+        Some("exhaustive") => {
             matches!(file_name, Some("config.toml" | "stats.toml"))
                 || path.extension().is_some_and(|ext| ext == "essence")
         }
@@ -42,14 +42,14 @@ mod tests {
     #[test]
     fn watches_files_used_to_generate_tests() {
         for path in [
-            "tests/integration/example/input.essence",
-            "tests/integration/example/config.toml",
-            "tests/integration/example/stats.toml",
+            "tests/exhaustive/example/input.essence",
+            "tests/exhaustive/example/config.toml",
+            "tests/exhaustive/example/stats.toml",
             "tests/custom/example/run.sh",
             "tests/custom/example/config.toml",
             "tests/roundtrip/example/input.essence",
             "tests/roundtrip/example/config.toml",
-            "tests/integration_test_template",
+            "tests/exhaustive_test_template",
             "tests/custom_test_template",
             "tests/roundtrip_test_template",
         ] {
@@ -60,9 +60,9 @@ mod tests {
     #[test]
     fn ignores_runtime_outputs() {
         for path in [
-            "tests/integration/example/input.param",
-            "tests/integration/example/model.expected.solutions",
-            "tests/integration/example/model-generated-rule-trace.txt",
+            "tests/exhaustive/example/input.param",
+            "tests/exhaustive/example/model.expected.solutions",
+            "tests/exhaustive/example/model-generated-rule-trace.txt",
             "tests/custom/example/expected-output",
             "tests/roundtrip/example/tree-sitter.generated.essence",
             "tests/roundtrip/example/tree-sitter.expected.essence",

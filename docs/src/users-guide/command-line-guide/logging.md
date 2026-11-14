@@ -71,7 +71,7 @@ This will show:
 + Tseytin transformations
 + All rules that were tried and applied
 
-> Which integer encoding each variable gets -- `int_log`, `int_direct` or `int_order` -- is a
+> Which integer encoding each variable gets -- `direct`, `order`, `twos_complement`, `sign_magnitude`, `offset` or `rank` -- is a
 > representation choice made per declaration rather than part of the solver name. Use
 > `--heuristic` to steer it: `-h i` prompts for each choice, and `-h c` (the default) takes the
 > most compact.
@@ -83,3 +83,17 @@ cargo nextest run -E 'test(<test_name>)'
 ```
 
 This generates `.json` and `.txt` files containing rule traces, parsed Essence, solutions, and the rewritten model.
+
+## Execution statistics
+
+Use `--stats <PATH>` to save execution timings, configuration, modelling choices, and rewrite-rule
+counts. The filename extension selects TOML or JSON; both formats contain the same statistics:
+
+```sh
+conjure-oxide solve model.essence --stats stats.toml
+conjure-oxide solve model.essence --stats stats.json
+```
+
+The path must end in `.toml` or `.json`. An existing statistics file retains other configurations
+and replaces the rows for the current configuration. `--no-run-solver` records translation
+statistics without solver timings.

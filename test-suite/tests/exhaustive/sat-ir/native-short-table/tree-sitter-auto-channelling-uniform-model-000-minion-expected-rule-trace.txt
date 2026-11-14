@@ -1,0 +1,94 @@
+Model before rewriting:
+
+find x: int(-1..1)
+find y: int(-1..1)
+find empty: bool
+find impossible: bool
+find match: bool
+find universal: bool
+
+such that
+
+(match) <-> (shortTable(sequence(x,y), {{(1,y)},{(2,-1)}})),
+(impossible) <-> (shortTable(sequence(x,x), {{(1,-1),(2,1)}})),
+(universal) <-> (shortTable(sequence(x,y), {{}})),
+(empty) <-> (shortTable(sequence(x,y), {}))
+
+--
+
+(match) <-> (shortTable(sequence(x,y), {{(1,y)},{(2,-1)}}))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(shortTable(sequence(x,y), {{(1,y)},{(2,-1)}}), match)
+
+--
+
+(impossible) <-> (shortTable(sequence(x,x), {{(1,-1),(2,1)}}))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(shortTable(sequence(x,x), {{(1,-1),(2,1)}}), impossible)
+
+--
+
+(universal) <-> (shortTable(sequence(x,y), {{}}))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(shortTable(sequence(x,y), {{}}), universal)
+
+--
+
+(empty) <-> (shortTable(sequence(x,y), {}))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(shortTable(sequence(x,y), {}), empty)
+
+--
+
+shortTable(sequence(x,x), {{(1,-1),(2,1)}})
+   ~~> flatten_short_table ([("Minion", 4050)])
+FlatShortTable([x, x], [[(0, -1), (1, 1)]])
+
+--
+
+shortTable(sequence(x,y), {{}})
+   ~~> flatten_short_table ([("Minion", 4050)])
+FlatShortTable([x, y], [[]])
+
+--
+
+shortTable(sequence(x,y), {})
+   ~~> flatten_short_table ([("Minion", 4050)])
+FlatShortTable([x, y], [])
+
+--
+
+shortTable(sequence(x,y), {{(1,y)},{(2,-1)}})
+   ~~> flatten_short_table ([("Minion", 4050)])
+FlatShortTable([x, y, __0], [[(2, 1)], [(1, -1)]])
+new variables:
+  findAux __0: bool
+new constraints:
+  __0 =aux x = y
+
+--
+
+__0 =aux x = y
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x = y, __0)
+
+--
+
+Final model:
+
+find x: int(-1..1)
+find y: int(-1..1)
+find empty: bool
+find impossible: bool
+find match: bool
+find universal: bool
+findAux __0: bool
+
+such that
+
+Reify(FlatShortTable([x, y, __0], [[(2, 1)], [(1, -1)]]), match),
+Reify(FlatShortTable([x, x], [[(0, -1), (1, 1)]]), impossible),
+Reify(FlatShortTable([x, y], [[]]), universal),
+Reify(FlatShortTable([x, y], []), empty),
+Reify(x = y, __0)
+

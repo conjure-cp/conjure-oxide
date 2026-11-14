@@ -3,7 +3,7 @@
 
 # ./test-summary.sh
 #
-# DESCRIPTION: print the status of each conjure oxide integration test.
+# DESCRIPTION: print the status of each conjure oxide exhaustive test.
 #   Statuses are pass, fail, and disabled.
 #
 #   Unlike cargo test, this script reports the number of disabled tests.
@@ -36,7 +36,7 @@ FAILED_TESTS=$(jq -sr '.[] | select(.event | contains("failed"))? | .name' < "$T
 PASSED_TESTS=$(jq -sr '.[] | select(.event | contains("ok"))? | .name' < "$TMP")
 
 
-cd tests/integration
+cd tests/exhaustive
 DISABLED_ESSENCE_TESTS=$(find -iname '*.essence.disabled' -exec dirname "{}" \; | sed 's/^\.\///' | sed 's/\//_/g' | sed 's/-/_/g' )
 DISABLED_EPRIME_TESTS=$(find -iname '*.eprime.disabled' -exec dirname "{}" \; | sed 's/^\.\///' | sed 's/\//_/g' | sed 's/-/_/g' )
 
@@ -47,14 +47,14 @@ clear
 # put a dummy field at the beginning without colour then remove it, as sort doesnt like ansi codes
 {
   for test in $FAILED_TESTS; do 
-    test_p=$(sed 's/tests_integration_\(.*\)/\1/' <<< $test)
+    test_p=$(sed 's/tests_exhaustive_\(.*\)/\1/' <<< $test)
     echo -e "$test_p , \033[0;31m$test_p, fail\033[0m\n"
   done
 
   if  [ $failonly = false ]; then
 
     for test in $PASSED_TESTS; do
-      test_p=$(sed 's/tests_integration_\(.*\)/\1/' <<< $test)
+      test_p=$(sed 's/tests_exhaustive_\(.*\)/\1/' <<< $test)
       echo -e "$test_p , \033[0;32m$test_p, pass\033[0m\n"
     done
 

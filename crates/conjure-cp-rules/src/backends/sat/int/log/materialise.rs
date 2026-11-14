@@ -4,7 +4,9 @@ use conjure_cp::rule_engine::{
     register_rule,
 };
 
-use crate::types::int::IntLog;
+use crate::types::int::{
+    IntBinaryOffset, IntBinaryRank, IntBinarySignMagnitude, IntBinaryTwosComplement,
+};
 
 /// Normalise logarithmic SAT integer operands to a common bit width.
 pub(super) fn validate_log_int_operands(
@@ -42,7 +44,9 @@ fn integer_decision_representation_log(expr: &Expr, _: &SymbolTable) -> Applicat
     let Expr::Atomic(_, Atom::Reference(reference)) = expr else {
         return Err(RuleNotApplicable);
     };
-    let state = reference.get_repr_as::<IntLog>().ok_or(RuleNotApplicable)?;
+    let state = reference
+        .get_repr_as::<IntBinaryTwosComplement>()
+        .ok_or(RuleNotApplicable)?;
     Ok(RuleEffect::pure(state.sat_int_expr()))
 }
 
@@ -63,4 +67,22 @@ pub(super) fn match_bits_length(mut lhs: Vec<Expr>, mut rhs: Vec<Expr>) -> (Vec<
         rhs.resize(lhs.len(), rhs.last().cloned().unwrap());
     }
     (lhs, rhs)
+}
+
+/// Materialise unsigned codes without treating rank as the semantic numeric value.
+#[register_rule("SAT", 9500, [Atomic])]
+fn integer_decision_representation_unsigned(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Atomic(_, Atom::Reference(reference)) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let represented = if let Some(state) = reference.get_repr_as::<IntBinaryOffset>() {
+        state.sat_int_expr()
+    } else if let Some(state) = reference.get_repr_as::<IntBinaryRank>() {
+        state.sat_int_expr()
+    } else if let Some(state) = reference.get_repr_as::<IntBinarySignMagnitude>() {
+        state.sat_int_expr()
+    } else {
+        return Err(RuleNotApplicable);
+    };
+    Ok(RuleEffect::pure(represented))
 }

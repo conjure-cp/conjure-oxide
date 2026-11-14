@@ -1,0 +1,1357 @@
+Model before rewriting:
+
+letting n be 3
+letting abelian be true
+letting rank3 be true
+letting D be domain int(1..n)
+letting diagonal be [1,1,1;int(1..3)]
+find M: matrix indexed by [D, D] of D
+find occurrences: matrix indexed by [D] of int(1..(product([n,n;int(1..)])))
+findAux __0: int(1..(product([n,n;int(1..)])))
+
+such that
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+(rank3) -> (and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ])),
+(abelian) -> (and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])),
+__0 =aux occurrences[(n - 1)]
+
+--
+
+__0 =aux occurrences[2]
+   ~~> select_aux_declaration_representation ([("ReprGeneral", 10000)])
+__0 =aux occurrences[2]
+new variables:
+  findAux __0#bv_1: int(1..9)
+
+--
+
+occurrences
+   ~~> select_representation ([("ReprGeneral", 10000)])
+occurrences
+new variables:
+  find occurrences#components_1: int(1..9)
+  find occurrences#components_2: int(1..9)
+  find occurrences#components_3: int(1..9)
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2]
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2]
+new variables:
+  find M#components_1: int(1..3)
+  find M#components_2: int(1..3)
+  find M#components_3: int(1..3)
+  find M#components_4: int(1..3)
+  find M#components_5: int(1..3)
+  find M#components_6: int(1..3)
+  find M#components_7: int(1..3)
+  find M#components_8: int(1..3)
+  find M#components_9: int(1..3)
+  find occurrences#components_1#bv_1: int(1..9)
+  find occurrences#components_2#bv_1: int(1..9)
+  find occurrences#components_3#bv_1: int(1..9)
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2]
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2]
+new variables:
+  find M#components_1#bv_1: int(1..3)
+  find M#components_2#bv_1: int(1..3)
+  find M#components_3#bv_1: int(1..3)
+  find M#components_4#bv_1: int(1..3)
+  find M#components_5#bv_1: int(1..3)
+  find M#components_6#bv_1: int(1..3)
+  find M#components_7#bv_1: int(1..3)
+  find M#components_8#bv_1: int(1..3)
+  find M#components_9#bv_1: int(1..3)
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2]
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2]
+
+--
+
+occurrences[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+occurrences#components_2
+
+--
+
+occurrences#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+occurrences#components_2
+
+--
+
+occurrences#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+occurrences#components_2#bv_1
+
+--
+
+__0 =aux occurrences#components_2#bv_1
+   ~~> aux_declaration_is_equality ([("Smt", 2000)])
+__0 = occurrences#components_2#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+[ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([M#components_1,1;int(1..)]) = product([1,M#components_1;int(1..)]),product([M#components_1,2;int(1..)]) = product([1,M#components_2;int(1..)]),product([M#components_1,3;int(1..)]) = product([1,M#components_3;int(1..)]),product([M#components_2,1;int(1..)]) = product([1,M#components_4;int(1..)]),product([M#components_2,2;int(1..)]) = product([1,M#components_5;int(1..)]),product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]
+
+--
+
+M#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_1
+
+--
+
+M#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_1
+
+--
+
+M#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_1
+
+--
+
+M#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_2
+
+--
+
+M#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_1
+
+--
+
+M#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_3
+
+--
+
+M#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_2
+
+--
+
+M#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_4
+
+--
+
+M#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_2
+
+--
+
+M#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_5
+
+--
+
+M#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_2
+
+--
+
+M#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_6
+
+--
+
+M#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_3
+
+--
+
+M#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_7
+
+--
+
+M#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_3
+
+--
+
+M#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_8
+
+--
+
+M#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_3
+
+--
+
+M#components_9
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_9
+
+--
+
+M#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_4
+
+--
+
+M#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_1
+
+--
+
+M#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_4
+
+--
+
+M#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_2
+
+--
+
+M#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_4
+
+--
+
+M#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_3
+
+--
+
+M#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_5
+
+--
+
+M#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_4
+
+--
+
+M#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_5
+
+--
+
+M#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_5
+
+--
+
+M#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_5
+
+--
+
+M#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_6
+
+--
+
+M#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_6
+
+--
+
+M#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_7
+
+--
+
+M#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_6
+
+--
+
+M#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_8
+
+--
+
+M#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_6
+
+--
+
+M#components_9
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_9
+
+--
+
+M#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_7
+
+--
+
+M#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_1
+
+--
+
+M#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_7
+
+--
+
+M#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_2
+
+--
+
+M#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_7
+
+--
+
+M#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_3
+
+--
+
+M#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_8
+
+--
+
+M#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_4
+
+--
+
+M#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_8
+
+--
+
+M#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_5
+
+--
+
+M#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_8
+
+--
+
+M#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_6
+
+--
+
+M#components_9
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_9
+
+--
+
+M#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_7
+
+--
+
+M#components_9
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_9
+
+--
+
+M#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_8
+
+--
+
+M#components_9
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_9
+
+--
+
+M#components_9
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_9
+
+--
+
+M#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_1#bv_1
+
+--
+
+M#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_1#bv_1
+
+--
+
+M#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_2#bv_1
+
+--
+
+M#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_1#bv_1
+
+--
+
+M#components_3
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_3#bv_1
+
+--
+
+M#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_2#bv_1
+
+--
+
+M#components_4
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_4#bv_1
+
+--
+
+M#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_2#bv_1
+
+--
+
+M#components_5
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_5#bv_1
+
+--
+
+M#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_2#bv_1
+
+--
+
+M#components_6
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_6#bv_1
+
+--
+
+M#components_3
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_3#bv_1
+
+--
+
+M#components_7
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_7#bv_1
+
+--
+
+M#components_3
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_3#bv_1
+
+--
+
+M#components_8
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_8#bv_1
+
+--
+
+M#components_3
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_3#bv_1
+
+--
+
+M#components_9
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_9#bv_1
+
+--
+
+M#components_4
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_4#bv_1
+
+--
+
+M#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_1#bv_1
+
+--
+
+M#components_4
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_4#bv_1
+
+--
+
+M#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_2#bv_1
+
+--
+
+M#components_4
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_4#bv_1
+
+--
+
+M#components_3
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_3#bv_1
+
+--
+
+M#components_5
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_5#bv_1
+
+--
+
+M#components_4
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_4#bv_1
+
+--
+
+M#components_5
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_5#bv_1
+
+--
+
+M#components_5
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_5#bv_1
+
+--
+
+M#components_5
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_5#bv_1
+
+--
+
+M#components_6
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_6#bv_1
+
+--
+
+M#components_6
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_6#bv_1
+
+--
+
+M#components_7
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_7#bv_1
+
+--
+
+M#components_6
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_6#bv_1
+
+--
+
+M#components_8
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_8#bv_1
+
+--
+
+M#components_6
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_6#bv_1
+
+--
+
+M#components_9
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_9#bv_1
+
+--
+
+M#components_7
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_7#bv_1
+
+--
+
+M#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_1#bv_1
+
+--
+
+M#components_7
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_7#bv_1
+
+--
+
+M#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_2#bv_1
+
+--
+
+M#components_7
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_7#bv_1
+
+--
+
+M#components_3
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_3#bv_1
+
+--
+
+M#components_8
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_8#bv_1
+
+--
+
+M#components_4
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_4#bv_1
+
+--
+
+M#components_8
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_8#bv_1
+
+--
+
+M#components_5
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_5#bv_1
+
+--
+
+M#components_8
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_8#bv_1
+
+--
+
+M#components_6
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_6#bv_1
+
+--
+
+M#components_9
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_9#bv_1
+
+--
+
+M#components_7
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_7#bv_1
+
+--
+
+M#components_9
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_9#bv_1
+
+--
+
+M#components_8
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_8#bv_1
+
+--
+
+M#components_9
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_9#bv_1
+
+--
+
+M#components_9
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_9#bv_1
+
+--
+
+M#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_1#bv_1
+
+--
+
+product([M#components_1#bv_1,1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_1#bv_1;int(1..)])
+
+--
+
+product([1,M#components_1#bv_1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_1#bv_1;int(1..)])
+
+--
+
+product([M#components_1#bv_1,2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#components_1#bv_1;int(1..)])
+
+--
+
+product([1,M#components_2#bv_1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_2#bv_1;int(1..)])
+
+--
+
+product([M#components_1#bv_1,3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#components_1#bv_1;int(1..)])
+
+--
+
+product([1,M#components_3#bv_1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_3#bv_1;int(1..)])
+
+--
+
+product([M#components_2#bv_1,1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_2#bv_1;int(1..)])
+
+--
+
+product([1,M#components_4#bv_1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_4#bv_1;int(1..)])
+
+--
+
+product([M#components_2#bv_1,2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#components_2#bv_1;int(1..)])
+
+--
+
+product([1,M#components_5#bv_1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_5#bv_1;int(1..)])
+
+--
+
+product([M#components_2#bv_1,3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#components_2#bv_1;int(1..)])
+
+--
+
+product([1,M#components_6#bv_1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_6#bv_1;int(1..)])
+
+--
+
+product([M#components_3#bv_1,1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_3#bv_1;int(1..)])
+
+--
+
+product([1,M#components_7#bv_1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_7#bv_1;int(1..)])
+
+--
+
+product([M#components_3#bv_1,2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#components_3#bv_1;int(1..)])
+
+--
+
+product([1,M#components_8#bv_1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_8#bv_1;int(1..)])
+
+--
+
+product([M#components_3#bv_1,3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#components_3#bv_1;int(1..)])
+
+--
+
+product([1,M#components_9#bv_1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_9#bv_1;int(1..)])
+
+--
+
+product([M#components_4#bv_1,1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_4#bv_1;int(1..)])
+
+--
+
+product([M#components_4#bv_1,2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#components_4#bv_1;int(1..)])
+
+--
+
+product([M#components_4#bv_1,3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#components_4#bv_1;int(1..)])
+
+--
+
+product([M#components_5#bv_1,1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_5#bv_1;int(1..)])
+
+--
+
+product([M#components_5#bv_1,2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#components_5#bv_1;int(1..)])
+
+--
+
+product([M#components_5#bv_1,3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#components_5#bv_1;int(1..)])
+
+--
+
+product([M#components_6#bv_1,1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_6#bv_1;int(1..)])
+
+--
+
+product([M#components_6#bv_1,2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#components_6#bv_1;int(1..)])
+
+--
+
+product([M#components_6#bv_1,3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#components_6#bv_1;int(1..)])
+
+--
+
+product([M#components_7#bv_1,1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_7#bv_1;int(1..)])
+
+--
+
+product([M#components_7#bv_1,2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#components_7#bv_1;int(1..)])
+
+--
+
+product([M#components_7#bv_1,3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#components_7#bv_1;int(1..)])
+
+--
+
+product([M#components_8#bv_1,1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_8#bv_1;int(1..)])
+
+--
+
+product([M#components_8#bv_1,2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#components_8#bv_1;int(1..)])
+
+--
+
+product([M#components_8#bv_1,3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#components_8#bv_1;int(1..)])
+
+--
+
+product([M#components_9#bv_1,1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_9#bv_1;int(1..)])
+
+--
+
+product([M#components_9#bv_1,2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#components_9#bv_1;int(1..)])
+
+--
+
+product([M#components_9#bv_1,3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#components_9#bv_1;int(1..)])
+
+--
+
+product([M#components_1#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_1#bv_1
+
+--
+
+product([M#components_1#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_1#bv_1
+
+--
+
+product([M#components_2#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_2#bv_1
+
+--
+
+product([M#components_3#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_3#bv_1
+
+--
+
+product([M#components_2#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_2#bv_1
+
+--
+
+product([M#components_4#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_4#bv_1
+
+--
+
+product([M#components_5#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_5#bv_1
+
+--
+
+product([M#components_6#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_6#bv_1
+
+--
+
+product([M#components_3#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_3#bv_1
+
+--
+
+product([M#components_7#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_7#bv_1
+
+--
+
+product([M#components_8#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_8#bv_1
+
+--
+
+product([M#components_9#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_9#bv_1
+
+--
+
+product([M#components_4#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_4#bv_1
+
+--
+
+product([M#components_5#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_5#bv_1
+
+--
+
+product([M#components_6#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_6#bv_1
+
+--
+
+product([M#components_7#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_7#bv_1
+
+--
+
+product([M#components_8#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_8#bv_1
+
+--
+
+product([M#components_9#bv_1;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#components_9#bv_1
+
+--
+
+[ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[M#components_2 = M#components_4,M#components_3 = M#components_7,M#components_4 = M#components_2,M#components_6 = M#components_8,M#components_7 = M#components_3,M#components_8 = M#components_6;int(1..)]
+
+--
+
+M#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_2
+
+--
+
+M#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_4
+
+--
+
+M#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_3
+
+--
+
+M#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_7
+
+--
+
+M#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_4
+
+--
+
+M#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_2
+
+--
+
+M#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_6
+
+--
+
+M#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_8
+
+--
+
+M#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_7
+
+--
+
+M#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_3
+
+--
+
+M#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_8
+
+--
+
+M#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_6
+
+--
+
+M#components_4
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_4#bv_1
+
+--
+
+M#components_3
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_3#bv_1
+
+--
+
+M#components_7
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_7#bv_1
+
+--
+
+M#components_4
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_4#bv_1
+
+--
+
+M#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_2#bv_1
+
+--
+
+M#components_6
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_6#bv_1
+
+--
+
+M#components_8
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_8#bv_1
+
+--
+
+M#components_7
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_7#bv_1
+
+--
+
+M#components_3
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_3#bv_1
+
+--
+
+M#components_8
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_8#bv_1
+
+--
+
+M#components_6
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_6#bv_1
+
+--
+
+M#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_2#bv_1
+
+--
+
+[ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[false;int(1..)]
+
+--
+
+[ M[i, i] = diagonal[i] | i : D ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[M#components_1 = 1,M#components_5 = 1,M#components_9 = 1;int(1..)]
+
+--
+
+M#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_1
+
+--
+
+M#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_5
+
+--
+
+M#components_9
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_9
+
+--
+
+M#components_5
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_5#bv_1
+
+--
+
+M#components_9
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_9#bv_1
+
+--
+
+M#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_1#bv_1
+
+--
+
+Final model:
+
+letting n be 3
+letting abelian be true
+letting rank3 be true
+letting D be domain int(1..n)
+letting diagonal be [1,1,1;int(1..3)]
+find M: matrix indexed by [D, D] of D
+find occurrences: matrix indexed by [D] of int(1..(product([n,n;int(1..)])))
+findAux __0: int(1..(product([n,n;int(1..)])))
+findAux __0#bv_1: int(1..9)
+find occurrences#components_1: int(1..9)
+find occurrences#components_2: int(1..9)
+find occurrences#components_3: int(1..9)
+find M#components_1: int(1..3)
+find M#components_2: int(1..3)
+find M#components_3: int(1..3)
+find M#components_4: int(1..3)
+find M#components_5: int(1..3)
+find M#components_6: int(1..3)
+find M#components_7: int(1..3)
+find M#components_8: int(1..3)
+find M#components_9: int(1..3)
+find occurrences#components_1#bv_1: int(1..9)
+find occurrences#components_2#bv_1: int(1..9)
+find occurrences#components_3#bv_1: int(1..9)
+find M#components_1#bv_1: int(1..3)
+find M#components_2#bv_1: int(1..3)
+find M#components_3#bv_1: int(1..3)
+find M#components_4#bv_1: int(1..3)
+find M#components_5#bv_1: int(1..3)
+find M#components_6#bv_1: int(1..3)
+find M#components_7#bv_1: int(1..3)
+find M#components_8#bv_1: int(1..3)
+find M#components_9#bv_1: int(1..3)
+letting diagonal#components_1 be 1
+letting diagonal#components_2 be 1
+letting diagonal#components_3 be 1
+
+such that
+
+and([M#components_1#bv_1 = 1,M#components_5#bv_1 = 1,M#components_9#bv_1 = 1;int(1..)]),
+and([product([2,M#components_1#bv_1;int(1..)]) = M#components_2#bv_1,product([3,M#components_1#bv_1;int(1..)]) = M#components_3#bv_1,M#components_2#bv_1 = M#components_4#bv_1,product([2,M#components_2#bv_1;int(1..)]) = M#components_5#bv_1,product([3,M#components_2#bv_1;int(1..)]) = M#components_6#bv_1,M#components_3#bv_1 = M#components_7#bv_1,product([2,M#components_3#bv_1;int(1..)]) = M#components_8#bv_1,product([3,M#components_3#bv_1;int(1..)]) = M#components_9#bv_1,M#components_4#bv_1 = product([2,M#components_1#bv_1;int(1..)]),product([2,M#components_4#bv_1;int(1..)]) = product([2,M#components_2#bv_1;int(1..)]),product([3,M#components_4#bv_1;int(1..)]) = product([2,M#components_3#bv_1;int(1..)]),M#components_5#bv_1 = product([2,M#components_4#bv_1;int(1..)]),product([2,M#components_5#bv_1;int(1..)]) = product([2,M#components_5#bv_1;int(1..)]),product([3,M#components_5#bv_1;int(1..)]) = product([2,M#components_6#bv_1;int(1..)]),M#components_6#bv_1 = product([2,M#components_7#bv_1;int(1..)]),product([2,M#components_6#bv_1;int(1..)]) = product([2,M#components_8#bv_1;int(1..)]),product([3,M#components_6#bv_1;int(1..)]) = product([2,M#components_9#bv_1;int(1..)]),M#components_7#bv_1 = product([3,M#components_1#bv_1;int(1..)]),product([2,M#components_7#bv_1;int(1..)]) = product([3,M#components_2#bv_1;int(1..)]),product([3,M#components_7#bv_1;int(1..)]) = product([3,M#components_3#bv_1;int(1..)]),M#components_8#bv_1 = product([3,M#components_4#bv_1;int(1..)]),product([2,M#components_8#bv_1;int(1..)]) = product([3,M#components_5#bv_1;int(1..)]),product([3,M#components_8#bv_1;int(1..)]) = product([3,M#components_6#bv_1;int(1..)]),M#components_9#bv_1 = product([3,M#components_7#bv_1;int(1..)]),product([2,M#components_9#bv_1;int(1..)]) = product([3,M#components_8#bv_1;int(1..)]),product([3,M#components_9#bv_1;int(1..)]) = product([3,M#components_9#bv_1;int(1..)]);int(1..)]),
+false,
+and([M#components_2#bv_1 = M#components_4#bv_1,M#components_3#bv_1 = M#components_7#bv_1,M#components_4#bv_1 = M#components_2#bv_1,M#components_6#bv_1 = M#components_8#bv_1,M#components_7#bv_1 = M#components_3#bv_1,M#components_8#bv_1 = M#components_6#bv_1;int(1..)]),
+__0#bv_1 = occurrences#components_2#bv_1
+

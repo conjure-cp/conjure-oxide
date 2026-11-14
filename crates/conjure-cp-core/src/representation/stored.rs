@@ -1,6 +1,6 @@
-use super::errors::ReprUpError;
+use super::errors::{ReprInstantiateError, ReprUpError};
 use super::types::{LookupFn, ReprAssignment, ReprDeclLevel, ReprGetOrInitResult, ReprResult};
-use crate::ast::{DeclarationPtr, Literal, Name};
+use crate::ast::{DeclarationPtr, DomainPtr, Expression, Literal, Name};
 use crate::representation::ReprRule;
 use conjure_cp_core::representation::ReprError;
 use parking_lot::MappedRwLockReadGuard;
@@ -10,6 +10,13 @@ use std::any::Any;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
+
+/// Detached representation structure for compact cost estimation.
+/// Probing must neither modify the declaration nor commit uniform choices.
+pub struct ReprStructureProbe {
+    pub domains: Vec<DomainPtr>,
+    pub constraints: Vec<Expression>,
+}
 
 pub trait ReprStateStored: Any + Send + Sync + Debug {
     fn rule(&self) -> &'static dyn ReprRuleStored;
@@ -75,6 +82,8 @@ pub trait ReprRuleStored: Send + Sync {
     /// Whether this representation is available when targeting `family`.
     fn applies_to(&self, family: crate::settings::SolverFamily) -> bool;
 
+    fn is_integer_encoding(&self) -> bool;
+
     fn init_for(&self, decl: &mut DeclarationPtr) -> ReprResult;
 
     fn init_for_if_not_exists(&self, decl: &mut DeclarationPtr) -> ReprResult;
@@ -82,6 +91,8 @@ pub trait ReprRuleStored: Send + Sync {
     /// Checks applicability without mutating the source declaration and returns its compactness
     /// score.
     fn probe_for(&self, decl: &DeclarationPtr) -> Result<usize, ReprError>;
+
+    fn probe_structure_for(&self, decl: &DeclarationPtr) -> Result<ReprStructureProbe, ReprError>;
 
     fn get_or_init_for<'a>(
         &self,
@@ -116,6 +127,10 @@ impl<R: ReprRule> ReprRuleStored for R {
         R::applies_to(family)
     }
 
+    fn is_integer_encoding(&self) -> bool {
+        R::is_integer_encoding()
+    }
+
     fn init_for(&self, decl: &mut DeclarationPtr) -> ReprResult {
         R::init_for(decl)
     }
@@ -125,13 +140,38 @@ impl<R: ReprRule> ReprRuleStored for R {
     }
 
     fn probe_for(&self, decl: &DeclarationPtr) -> Result<usize, ReprError> {
-        let domain = decl
-            .domain()
-            .ok_or_else(|| super::errors::ReprInstantiateError::NoDomain(decl.clone()))?;
-        let domain = domain.resolve().map(Into::into).unwrap_or(domain);
+        let domain = R::domain_for(decl)?;
+        // Value lettings still need `down` to check that their value can be represented.
+        if (decl.as_find().is_some() || decl.is_find_auxiliary())
+            && let Some(score) = R::probe_score(domain.clone())?
+        {
+            return Ok(score);
+        }
         let mut detached = decl.clone().detach();
-        R::init_for(&mut detached)?;
-        R::compactness_score(domain).map_err(Into::into)
+        super::uniform::probe(|| {
+            R::init_for(&mut detached)?;
+            R::compactness_score(domain).map_err(Into::into)
+        })
+    }
+
+    fn probe_structure_for(&self, decl: &DeclarationPtr) -> Result<ReprStructureProbe, ReprError> {
+        R::domain_for(decl)?;
+        let mut detached = decl.clone().detach();
+        super::uniform::probe(|| {
+            let (_, constraints) = R::init_for(&mut detached)?;
+            let state = R::get_for(&detached).expect("probe initialised representation");
+            let domains = ReprDeclLevel::repr_vars(&*state)
+                .iter()
+                .map(|var| {
+                    var.domain()
+                        .ok_or_else(|| ReprInstantiateError::NoDomain(var.clone()))
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(ReprStructureProbe {
+                domains,
+                constraints,
+            })
+        })
     }
 
     fn get_or_init_for<'a>(

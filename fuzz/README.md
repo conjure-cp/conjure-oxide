@@ -3,6 +3,28 @@
 A fuzz tester from the [cargo fuzz library](https://rust-fuzz.github.io/book/introduction.html) that invokes [libFuzzer](https://llvm.org/docs/LibFuzzer.html), for testing robustness of target functions in `conjure-oxide`.
 
 ### Usage
+
+The `detect_errors` target checks parser diagnostics. The `compile` target uses
+the public `conjure_cp::pipeline::Pipeline` API to parse and rewrite UTF-8 Essence
+inputs in memory, with native comprehension expansion. It links
+`conjure-cp-rules` explicitly and needs no CLI arguments or external Conjure
+process. Expected parse and modelling errors are ignored; panics remain findings.
+Each input gets a fresh pipeline so statistics do not accumulate across inputs.
+
+Seed the compilation target with a small model and run it with input and time
+limits:
+
+```sh
+mkdir -p fuzz/corpus/compile
+printf 'find x : int(1..3)\nsuch that x > 1\n' > fuzz/corpus/compile/simple.essence
+cargo fuzz run compile -- -max_len=4096 -timeout=10 -max_total_time=3600
+```
+
+`-timeout` bounds each input: short source strings can still describe large
+comprehensions. The target stops after rewriting and does not run the final
+solver. See the [library README](../crates/conjure-cp/README.md) for parameterised
+compilation and reconstructed solutions.
+
 Create directory for test corpus file ``` mkdir fuzz/corpus/{test_name}```
 
 Copy Essence files from codebase to corpus before running fuzz tester ```find . -name "*.essence" -type f -exec cp {} fuzz/corpus/{test_name}/ \;```

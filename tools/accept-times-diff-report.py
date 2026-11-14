@@ -20,6 +20,7 @@ RUN_CONFIG_FIELDS = (
     "heuristic",
     "channelling",
     "seed",
+    "solver-seed",
     "solver",
 )
 
@@ -232,12 +233,17 @@ def build_row(
     }
 
 
+def run_config_key(run: dict[str, Any]) -> tuple[Any, ...]:
+    return tuple(run.get(field, 0 if field in ("seed", "solver-seed") else None)
+                 for field in RUN_CONFIG_FIELDS)
+
+
 def run_keys(stats_file: dict[str, Any]) -> set[tuple[Any, ...]]:
     runs = stats_file.get("runs")
     if not isinstance(runs, list):
         return set()
     return {
-        tuple(run.get(field) for field in RUN_CONFIG_FIELDS)
+        run_config_key(run)
         for run in runs
         if isinstance(run, dict)
         if isinstance(run.get("comprehension-expander"), str)
@@ -251,14 +257,36 @@ def run_stats(
         return stats_file
 
     runs = stats_file.get("runs")
-    if isinstance(runs, list):
-        for run in runs:
-            if (
-                isinstance(run, dict)
-                and tuple(run.get(field) for field in RUN_CONFIG_FIELDS) == run_key
-            ):
-                return run
-    return {}
+    if not isinstance(runs, list):
+        return {}
+    matches = [run for run in runs
+               if isinstance(run, dict) and run_config_key(run) == run_key]
+    if not matches:
+        return {}
+
+    # Older snapshots already contain one aggregate row; new snapshots contain
+    # one row per compiled model. Sum each configuration for comparable totals.
+    statuses = [status for run in matches
+                if (status := string_value(run.get("status"))) is not None]
+    result: dict[str, Any] = {
+        "status": next((status for status in statuses if status != "ok"),
+                       statuses[0] if statuses else None),
+    }
+    for field in ("translation-time", "solve-time"):
+        values = [value for run in matches
+                  if (value := numeric_value(run.get(field))) is not None]
+        if values:
+            result[field] = sum(values)
+    trace_totals = {}
+    for field in ("attempts", "applications"):
+        values = [value for run in matches
+                  if isinstance(trace := run.get("rule-trace"), dict)
+                  if (value := integer_value(trace.get(field))) is not None]
+        if values:
+            trace_totals[field] = sum(values)
+    if trace_totals:
+        result["rule-trace"] = trace_totals
+    return result
 
 
 def config_name(run_key: tuple[Any, ...] | None) -> str | None:

@@ -1,11 +1,16 @@
+use crate::ast::enumerated::{EnumVariant, EnumeratedType};
+use crate::ast::{DeclarationKind, Literal, eval_constant};
 use std::fmt::{Display, Formatter};
 use std::iter::zip;
+use std::ops::Deref;
 
 use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::PartitionAttr;
 use crate::ast::domains::attrs::PermutationAttr;
 use crate::ast::domains::attrs::SetAttr;
-use crate::ast::domains::ground::FieldGround;
+use crate::ast::domains::ground::{
+    FieldGround, int_type_string, representation_attribute, write_int_domain,
+};
 use crate::ast::records::Field;
 use crate::ast::{
     DomainOpError, Expression, FuncAttr, Moo, Reference, RelAttr, ReturnType, SequenceAttr,
@@ -20,6 +25,74 @@ use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use uniplate::Uniplate;
+
+fn eval_expr_to_enum_variant(expr: &Expression, expected: &Moo<EnumeratedType>) -> Option<u32> {
+    let Literal::EnumVariant(EnumVariant { ty, variant }) = eval_constant(expr)? else {
+        bug!("Expected enum variant expression, got: {expr}");
+    };
+
+    if ty != *expected {
+        bug!("Expected variant of enum {expected}, got {ty}:");
+    }
+
+    Some(variant)
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=Reference)]
+pub struct EnumVariantVal(pub Reference);
+
+impl EnumVariantVal {
+    fn resolve(&self, expected: &Moo<EnumeratedType>) -> Option<u32> {
+        let re = &self.0;
+        match re.ptr.kind().deref() {
+            DeclarationKind::ValueLetting(expr, _)
+            | DeclarationKind::TemporaryValueLetting(expr)
+            | DeclarationKind::QuantifiedExpr(expr) => eval_expr_to_enum_variant(expr, expected),
+            // If this is an int given we will be able to resolve it eventually, but not yet
+            DeclarationKind::Given(_) => None,
+            DeclarationKind::Quantified(inner) => {
+                if let Some(generator) = inner.generator()
+                    && let Some(expr) = generator.as_value_letting()
+                {
+                    eval_expr_to_enum_variant(&expr, expected)
+                } else {
+                    None
+                }
+            }
+            // Decision variables inside domains are unresolved until solving.
+            DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => None,
+            DeclarationKind::DomainLetting(_)
+            | DeclarationKind::EnumeratedType(_)
+            | DeclarationKind::UnnamedType(_) => {
+                bug!("Expected integer expression, given, or letting inside enum domain; Got: {re}")
+            }
+        }
+    }
+}
+
+impl Range<EnumVariantVal> {
+    pub fn resolve(&self, expected: &Moo<EnumeratedType>) -> Option<Range<u32>> {
+        match self {
+            Range::Single(x) => Some(Range::Single(x.resolve(expected)?)),
+            Range::Bounded(l, r) => {
+                Some(Range::Bounded(l.resolve(expected)?, r.resolve(expected)?))
+            }
+            Range::UnboundedL(r) => Some(Range::UnboundedL(r.resolve(expected)?)),
+            Range::UnboundedR(l) => Some(Range::UnboundedR(l.resolve(expected)?)),
+            Range::Unbounded => Some(Range::Unbounded),
+        }
+    }
+}
+
+impl Display for EnumVariantVal {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+        // TODO: Better
+        // write!(f, "{}", resolve_constant(self.0))
+    }
+}
 
 pub(super) type FieldUnresolved = Field<DomainPtr>;
 
@@ -44,20 +117,23 @@ impl TryFrom<FieldUnresolved> for FieldGround {
 #[biplate(to=DomainPtr)]
 /// Variants use the project-wide type/domain ordering; keep broad matches in the same order.
 pub enum UnresolvedDomain {
-    Int(Vec<Range<IntVal>>),
+    /// An integer domain with an optional representation preference
+    Int(Vec<Range<IntVal>>, Option<String>),
     /// An integer domain given by the values of a collection, as in `int([i | i <- nums])`.
     ///
     /// The collection may be built from `given` declarations, so it stays an expression until
     /// those are instantiated and it can be evaluated.
     IntFromValues(Moo<Expression>),
-    /// A tuple of N elements, each with its own domain
-    Tuple(Vec<DomainPtr>),
-    /// A record
-    Record(Vec<FieldUnresolved>),
-    /// A variant domain with its domain options (reusing field entries)
-    Variant(Vec<FieldUnresolved>),
-    /// A n-dimensional matrix with a value domain and n-index domains
-    Matrix(DomainPtr, Vec<DomainPtr>),
+    /// A tuple of N elements, each with its own domain, and an optional representation preference
+    Tuple(Vec<DomainPtr>, Option<String>),
+    /// A record, with an optional representation preference
+    Record(Vec<FieldUnresolved>, Option<String>),
+    /// A variant domain with its domain options (reusing field entries), and an optional
+    /// representation preference
+    Variant(Vec<FieldUnresolved>, Option<String>),
+    /// A n-dimensional matrix with a value domain and n-index domains, and an optional
+    /// representation preference
+    Matrix(DomainPtr, Vec<DomainPtr>, Option<String>),
     Sequence(SequenceAttr<IntVal>, DomainPtr),
     /// A set of elements drawn from the inner domain
     Set(SetAttr<IntVal>, DomainPtr),
@@ -67,6 +143,12 @@ pub enum UnresolvedDomain {
     /// A relation as a set of tuples
     Relation(RelAttr<IntVal>, Vec<DomainPtr>),
     Partition(PartitionAttr<IntVal>, DomainPtr),
+    /// An enumerated type
+    #[polyquine_skip]
+    EnumeratedType(Moo<EnumeratedType>, Vec<Range<EnumVariantVal>>),
+    /// An unnamed type
+    #[polyquine_skip]
+    UnnamedType(Reference),
     Permutation(PermutationAttr<IntVal>, DomainPtr),
     /// A reference to a domain letting
     #[polyquine_skip]
@@ -76,22 +158,30 @@ pub enum UnresolvedDomain {
 impl UnresolvedDomain {
     pub(super) fn from_ground(domain: &GroundDomain) -> Option<UnresolvedDomain> {
         let unresolved = match domain {
-            GroundDomain::Empty(_) | GroundDomain::Bool => return None,
-            GroundDomain::Int(ranges) => {
-                UnresolvedDomain::Int(ranges.iter().cloned().map(Into::into).collect())
-            }
-            GroundDomain::Tuple(inners) => {
-                UnresolvedDomain::Tuple(inners.iter().map(DomainPtr::from).collect())
-            }
-            GroundDomain::Record(fields) => {
-                UnresolvedDomain::Record(fields.iter().cloned().map(Into::into).collect())
-            }
-            GroundDomain::Variant(fields) => {
-                UnresolvedDomain::Variant(fields.iter().cloned().map(Into::into).collect())
-            }
-            GroundDomain::Matrix(inner, indices) => UnresolvedDomain::Matrix(
+            GroundDomain::Empty(_)
+            | GroundDomain::Bool
+            | GroundDomain::EnumeratedType(_, _)
+            | GroundDomain::UnnamedType(_) => return None,
+            GroundDomain::Int(ranges, representation) => UnresolvedDomain::Int(
+                ranges.iter().cloned().map(Into::into).collect(),
+                representation.clone(),
+            ),
+            GroundDomain::Tuple(inners, representation) => UnresolvedDomain::Tuple(
+                inners.iter().map(DomainPtr::from).collect(),
+                representation.clone(),
+            ),
+            GroundDomain::Record(fields, representation) => UnresolvedDomain::Record(
+                fields.iter().cloned().map(Into::into).collect(),
+                representation.clone(),
+            ),
+            GroundDomain::Variant(fields, representation) => UnresolvedDomain::Variant(
+                fields.iter().cloned().map(Into::into).collect(),
+                representation.clone(),
+            ),
+            GroundDomain::Matrix(inner, indices, representation) => UnresolvedDomain::Matrix(
                 DomainPtr::from(inner),
                 indices.iter().map(DomainPtr::from).collect(),
+                representation.clone(),
             ),
             GroundDomain::Sequence(attributes, inner) => {
                 UnresolvedDomain::Sequence(attributes.clone().into(), DomainPtr::from(inner))
@@ -129,14 +219,14 @@ impl UnresolvedDomain {
     pub fn has_int_from_values(&self) -> bool {
         match self {
             UnresolvedDomain::IntFromValues(_) => true,
-            UnresolvedDomain::Int(_) => false,
-            UnresolvedDomain::Tuple(inners) | UnresolvedDomain::Relation(_, inners) => {
+            UnresolvedDomain::Int(_, _) => false,
+            UnresolvedDomain::Tuple(inners, _) | UnresolvedDomain::Relation(_, inners) => {
                 inners.iter().any(domain_has_int_from_values)
             }
-            UnresolvedDomain::Record(entries) | UnresolvedDomain::Variant(entries) => entries
+            UnresolvedDomain::Record(entries, _) | UnresolvedDomain::Variant(entries, _) => entries
                 .iter()
                 .any(|entry| domain_has_int_from_values(&entry.value)),
-            UnresolvedDomain::Matrix(value, indices) => {
+            UnresolvedDomain::Matrix(value, indices, _) => {
                 domain_has_int_from_values(value) || indices.iter().any(domain_has_int_from_values)
             }
             UnresolvedDomain::Sequence(_, inner)
@@ -147,7 +237,9 @@ impl UnresolvedDomain {
             UnresolvedDomain::Function(_, from, to) => {
                 domain_has_int_from_values(from) || domain_has_int_from_values(to)
             }
-            UnresolvedDomain::Reference(_) => false,
+            UnresolvedDomain::Reference(_)
+            | UnresolvedDomain::EnumeratedType(_, _)
+            | UnresolvedDomain::UnnamedType(_) => false,
         }
     }
 
@@ -163,9 +255,9 @@ impl UnresolvedDomain {
                     };
                     ranges.push(Range::Single(value));
                 }
-                Ok(GroundDomain::Int(Range::squeeze(&ranges)))
+                Ok(GroundDomain::Int(Range::squeeze(&ranges), None))
             }
-            UnresolvedDomain::Int(rngs) => rngs
+            UnresolvedDomain::Int(rngs, representation) => rngs
                 .iter()
                 .map(Range::<IntVal>::resolve)
                 .collect::<Result<Vec<_>, _>>()
@@ -176,14 +268,14 @@ impl UnresolvedDomain {
                             |range| !matches!(range, Range::Bounded(lower, upper) if lower > upper),
                         )
                         .collect::<Vec<_>>();
-                    GroundDomain::Int(Range::squeeze(&ranges))
+                    GroundDomain::Int(Range::squeeze(&ranges), representation.clone())
                 }),
-            UnresolvedDomain::Tuple(inners) => inners
+            UnresolvedDomain::Tuple(inners, representation) => inners
                 .iter()
                 .map(DomainPtr::resolve)
                 .collect::<Result<_, _>>()
-                .map(GroundDomain::Tuple),
-            UnresolvedDomain::Record(entries) => entries
+                .map(|inners| GroundDomain::Tuple(inners, representation.clone())),
+            UnresolvedDomain::Record(entries, representation) => entries
                 .iter()
                 .map(|f| {
                     f.value.resolve().map(|gd| FieldGround {
@@ -192,8 +284,8 @@ impl UnresolvedDomain {
                     })
                 })
                 .collect::<Result<_, _>>()
-                .map(GroundDomain::Record),
-            UnresolvedDomain::Variant(entries) => entries
+                .map(|entries| GroundDomain::Record(entries, representation.clone())),
+            UnresolvedDomain::Variant(entries, representation) => entries
                 .iter()
                 .map(|f| {
                     f.value.resolve().map(|gd| FieldGround {
@@ -202,14 +294,14 @@ impl UnresolvedDomain {
                     })
                 })
                 .collect::<Result<_, _>>()
-                .map(GroundDomain::Variant),
-            UnresolvedDomain::Matrix(inner, idx_doms) => {
+                .map(|entries| GroundDomain::Variant(entries, representation.clone())),
+            UnresolvedDomain::Matrix(inner, idx_doms, representation) => {
                 let inner_gd = inner.resolve()?;
                 idx_doms
                     .iter()
                     .map(DomainPtr::resolve)
                     .collect::<Result<_, _>>()
-                    .map(|idx| GroundDomain::Matrix(inner_gd, idx))
+                    .map(|idx| GroundDomain::Matrix(inner_gd, idx, representation.clone()))
             }
             UnresolvedDomain::Sequence(attr, inner) => {
                 Ok(GroundDomain::Sequence(attr.resolve()?, inner.resolve()?))
@@ -247,6 +339,30 @@ impl UnresolvedDomain {
                 })
                 .resolve()
                 .map(Moo::unwrap_or_clone),
+            UnresolvedDomain::EnumeratedType(et, ranges) => {
+                let ranges: Vec<_> = ranges
+                    .clone()
+                    .into_iter()
+                    .map(|r| r.resolve(et))
+                    .collect::<Option<Vec<_>>>()
+                    .ok_or(DomainOpError::NotGround)?;
+                Ok(GroundDomain::EnumeratedType(et.clone(), ranges))
+            }
+            UnresolvedDomain::UnnamedType(decl) => {
+                let ut = *decl
+                    .ptr
+                    .as_unnamed_type()
+                    .unwrap_or_else(|| {
+                        bug!("Unnamed type domain should point to an unnamed type declaration, but got {decl}")
+                    });
+
+                Ok(GroundDomain::UnnamedType(Moo::new(
+                    crate::ast::unnamed::UnnamedType {
+                        name: decl.ptr.name().clone(),
+                        size: ut,
+                    },
+                )))
+            }
         }
     }
 
@@ -257,34 +373,38 @@ impl UnresolvedDomain {
         // Keep implemented variants before unsupported variants so mixed-domain unions report the
         // established error. Each group uses declaration order.
         match (self, other) {
-            (UnresolvedDomain::Int(lhs), UnresolvedDomain::Int(rhs)) => {
+            (UnresolvedDomain::Int(lhs, _), UnresolvedDomain::Int(rhs, _)) => {
                 let merged = lhs.iter().chain(rhs.iter()).cloned().collect_vec();
-                Ok(UnresolvedDomain::Int(merged))
+                Ok(UnresolvedDomain::Int(merged, None))
             }
             (UnresolvedDomain::IntFromValues(_), _) | (_, UnresolvedDomain::IntFromValues(_)) => {
                 Err(DomainOpError::NotGround)
             }
-            (UnresolvedDomain::Int(_), _) | (_, UnresolvedDomain::Int(_)) => {
+            (UnresolvedDomain::Int(_, _), _) | (_, UnresolvedDomain::Int(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
-            (UnresolvedDomain::Tuple(lhs), UnresolvedDomain::Tuple(rhs))
+            (UnresolvedDomain::Tuple(lhs, _), UnresolvedDomain::Tuple(rhs, _))
                 if lhs.len() == rhs.len() =>
             {
                 let mut merged = Vec::new();
                 for (l, r) in zip(lhs, rhs) {
                     merged.push(l.union(r)?)
                 }
-                Ok(UnresolvedDomain::Tuple(merged))
+                Ok(UnresolvedDomain::Tuple(merged, None))
             }
-            (UnresolvedDomain::Tuple(_), _) | (_, UnresolvedDomain::Tuple(_)) => {
+            (UnresolvedDomain::Tuple(_, _), _) | (_, UnresolvedDomain::Tuple(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
-            (UnresolvedDomain::Matrix(in1, idx1), UnresolvedDomain::Matrix(in2, idx2))
+            (UnresolvedDomain::Matrix(in1, idx1, _), UnresolvedDomain::Matrix(in2, idx2, _))
                 if idx1 == idx2 =>
             {
-                Ok(UnresolvedDomain::Matrix(in1.union(in2)?, idx1.clone()))
+                Ok(UnresolvedDomain::Matrix(
+                    in1.union(in2)?,
+                    idx1.clone(),
+                    None,
+                ))
             }
-            (UnresolvedDomain::Matrix(_, _), _) | (_, UnresolvedDomain::Matrix(_, _)) => {
+            (UnresolvedDomain::Matrix(_, _, _), _) | (_, UnresolvedDomain::Matrix(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
             (UnresolvedDomain::Set(_, in1), UnresolvedDomain::Set(_, in2)) => {
@@ -311,11 +431,11 @@ impl UnresolvedDomain {
             }
             // TODO: Could we define semantics for merging record domains?
             #[allow(unreachable_patterns)]
-            (UnresolvedDomain::Record(_), _) | (_, UnresolvedDomain::Record(_)) => {
+            (UnresolvedDomain::Record(_, _), _) | (_, UnresolvedDomain::Record(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
             #[allow(unreachable_patterns)]
-            (UnresolvedDomain::Variant(_), _) | (_, UnresolvedDomain::Variant(_)) => {
+            (UnresolvedDomain::Variant(_, _), _) | (_, UnresolvedDomain::Variant(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
             #[allow(unreachable_patterns)]
@@ -323,6 +443,12 @@ impl UnresolvedDomain {
                 Err(DomainOpError::WrongType)
             }
             #[allow(unreachable_patterns)]
+            (UnresolvedDomain::EnumeratedType(_, _), _)
+            | (_, UnresolvedDomain::EnumeratedType(_, _)) => Err(DomainOpError::WrongType),
+            #[allow(unreachable_patterns)]
+            (UnresolvedDomain::UnnamedType(_), _) | (_, UnresolvedDomain::UnnamedType(_)) => {
+                Err(DomainOpError::WrongType)
+            }
             (UnresolvedDomain::Function(_, _, _), _) | (_, UnresolvedDomain::Function(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
@@ -344,7 +470,7 @@ impl UnresolvedDomain {
 
     pub fn element_domain(&self) -> Option<DomainPtr> {
         match self {
-            UnresolvedDomain::Matrix(inner, _) => Some(inner.clone()),
+            UnresolvedDomain::Matrix(inner, _, _) => Some(inner.clone()),
             // A sequence is a function from int(1..|s|), and iterating a function yields its
             // pairs, so iterating a sequence yields (position, value). Mirrors
             // `GroundDomain::element_domain`.
@@ -356,10 +482,10 @@ impl UnresolvedDomain {
                     Range::UnboundedR(_) | Range::Unbounded => return None,
                 };
                 let positions = Moo::new(crate::ast::Domain::Unresolved(Moo::new(
-                    UnresolvedDomain::Int(vec![Range::Bounded(IntVal::new_const(1), max)]),
+                    UnresolvedDomain::Int(vec![Range::Bounded(IntVal::new_const(1), max)], None),
                 )));
                 Some(Moo::new(crate::ast::Domain::Unresolved(Moo::new(
-                    UnresolvedDomain::Tuple(vec![positions, inner_dom.clone()]),
+                    UnresolvedDomain::Tuple(vec![positions, inner_dom.clone()], None),
                 ))))
             }
             UnresolvedDomain::Set(_, inner_dom) => Some(inner_dom.clone()),
@@ -370,18 +496,28 @@ impl UnresolvedDomain {
     /// True if any domain in this tree has a representation preference.
     pub fn has_representation_preference(&self) -> bool {
         match self {
-            UnresolvedDomain::Int(_) | UnresolvedDomain::IntFromValues(_) => false,
-            UnresolvedDomain::Tuple(inners) => {
-                inners.iter().any(|d| d.has_representation_preference())
+            UnresolvedDomain::Int(_, representation) => representation.is_some(),
+            UnresolvedDomain::IntFromValues(_)
+            | UnresolvedDomain::EnumeratedType(_, _)
+            | UnresolvedDomain::UnnamedType(_) => false,
+            UnresolvedDomain::Tuple(inners, representation) => {
+                representation.is_some() || inners.iter().any(|d| d.has_representation_preference())
             }
-            UnresolvedDomain::Record(entries) => entries
-                .iter()
-                .any(|f| f.value.has_representation_preference()),
-            UnresolvedDomain::Variant(entries) => entries
-                .iter()
-                .any(|f| f.value.has_representation_preference()),
-            UnresolvedDomain::Matrix(inner, idxs) => {
-                inner.has_representation_preference()
+            UnresolvedDomain::Record(entries, representation) => {
+                representation.is_some()
+                    || entries
+                        .iter()
+                        .any(|f| f.value.has_representation_preference())
+            }
+            UnresolvedDomain::Variant(entries, representation) => {
+                representation.is_some()
+                    || entries
+                        .iter()
+                        .any(|f| f.value.has_representation_preference())
+            }
+            UnresolvedDomain::Matrix(inner, idxs, representation) => {
+                representation.is_some()
+                    || inner.has_representation_preference()
                     || idxs.iter().any(|d| d.has_representation_preference())
             }
             UnresolvedDomain::Sequence(attr, inner) => {
@@ -393,14 +529,21 @@ impl UnresolvedDomain {
             UnresolvedDomain::MSet(attr, inner) => {
                 attr.representation.is_some() || inner.has_representation_preference()
             }
-            UnresolvedDomain::Function(_, dom, cdom) => {
-                dom.has_representation_preference() || cdom.has_representation_preference()
+            UnresolvedDomain::Function(attr, dom, cdom) => {
+                attr.representation.is_some()
+                    || dom.has_representation_preference()
+                    || cdom.has_representation_preference()
             }
-            UnresolvedDomain::Relation(_, inners) => {
-                inners.iter().any(|d| d.has_representation_preference())
+            UnresolvedDomain::Relation(attr, inners) => {
+                attr.representation.is_some()
+                    || inners.iter().any(|d| d.has_representation_preference())
             }
-            UnresolvedDomain::Partition(_, inner) => inner.has_representation_preference(),
-            UnresolvedDomain::Permutation(_, inner) => inner.has_representation_preference(),
+            UnresolvedDomain::Partition(attr, inner) => {
+                attr.representation.is_some() || inner.has_representation_preference()
+            }
+            UnresolvedDomain::Permutation(attr, inner) => {
+                attr.representation.is_some() || inner.has_representation_preference()
+            }
             UnresolvedDomain::Reference(re) => re
                 .domain()
                 .is_some_and(|d| d.has_representation_preference()),
@@ -410,34 +553,51 @@ impl UnresolvedDomain {
     /// Format this domain in Essence type style, omitting size attributes and integer ranges.
     pub fn as_type_string(&self) -> String {
         match self {
-            UnresolvedDomain::Int(_) | UnresolvedDomain::IntFromValues(_) => "int".to_string(),
-            UnresolvedDomain::Tuple(inners) => {
+            UnresolvedDomain::Int(_, representation) => int_type_string(representation.as_deref()),
+            UnresolvedDomain::IntFromValues(_) => "int".to_string(),
+            UnresolvedDomain::EnumeratedType(ty, _) => ty.to_string(),
+            UnresolvedDomain::UnnamedType(_) => "unnamed type".to_string(),
+            UnresolvedDomain::Tuple(inners, representation) => {
+                let args = representation
+                    .iter()
+                    .map(|r| format!("representation {r}"))
+                    .chain(inners.iter().map(|d| d.as_type_string()))
+                    .join(", ");
+                format!("tuple ({args})")
+            }
+            UnresolvedDomain::Record(entries, representation) => {
+                let inners = entries
+                    .iter()
+                    .map(|f| format!("{}: {}", f.name, f.value.as_type_string()))
+                    .join(", ");
                 format!(
-                    "tuple ({})",
-                    inners.iter().map(|d| d.as_type_string()).join(", ")
+                    "record{} {{{inners}}}",
+                    representation_attribute(representation)
                 )
             }
-            UnresolvedDomain::Record(entries) => {
+            UnresolvedDomain::Variant(entries, representation) => {
                 let inners = entries
                     .iter()
                     .map(|f| format!("{}: {}", f.name, f.value.as_type_string()))
                     .join(", ");
-                format!("record {{{inners}}}")
+                format!(
+                    "variant{} {{{inners}}}",
+                    representation_attribute(representation)
+                )
             }
-            UnresolvedDomain::Variant(entries) => {
-                let inners = entries
-                    .iter()
-                    .map(|f| format!("{}: {}", f.name, f.value.as_type_string()))
-                    .join(", ");
-                format!("variant {{{inners}}}")
-            }
-            UnresolvedDomain::Matrix(inner, idxs) => {
+            UnresolvedDomain::Matrix(inner, idxs, representation) => {
                 let idxs = idxs.iter().map(|d| d.as_type_string()).join(", ");
-                format!("matrix indexed by [{idxs}] of {}", inner.as_type_string())
+                format!(
+                    "matrix{} indexed by [{idxs}] of {}",
+                    representation_attribute(representation),
+                    inner.as_type_string()
+                )
             }
-            UnresolvedDomain::Sequence(_, inner) => {
-                format!("sequence of {}", inner.as_type_string())
-            }
+            UnresolvedDomain::Sequence(attrs, inner) => format!(
+                "sequence{} of {}",
+                representation_attribute(&attrs.representation),
+                inner.as_type_string()
+            ),
             UnresolvedDomain::Set(attrs, inner) => {
                 let mut out = String::from("set");
                 if let Some(repr) = &attrs.representation {
@@ -460,24 +620,34 @@ impl UnresolvedDomain {
                 out.push_str(&inner.as_type_string());
                 out
             }
-            UnresolvedDomain::Function(_, dom, cdom) => {
+            UnresolvedDomain::Function(attr, dom, cdom) => {
                 format!(
-                    "function {} --> {}",
+                    "function{} {} --> {}",
+                    representation_attribute(&attr.representation),
                     dom.as_type_string(),
                     cdom.as_type_string()
                 )
             }
-            UnresolvedDomain::Relation(_, inners) => {
+            UnresolvedDomain::Relation(attr, inners) => {
                 format!(
-                    "relation of ({})",
+                    "relation{} of ({})",
+                    representation_attribute(&attr.representation),
                     inners.iter().map(|d| d.as_type_string()).join(" * ")
                 )
             }
-            UnresolvedDomain::Partition(_, inner) => {
-                format!("partition from {}", inner.as_type_string())
+            UnresolvedDomain::Partition(attr, inner) => {
+                format!(
+                    "partition{} from {}",
+                    representation_attribute(&attr.representation),
+                    inner.as_type_string()
+                )
             }
-            UnresolvedDomain::Permutation(_, inner) => {
-                format!("permutation of {}", inner.as_type_string())
+            UnresolvedDomain::Permutation(attr, inner) => {
+                format!(
+                    "permutation{} of {}",
+                    representation_attribute(&attr.representation),
+                    inner.as_type_string()
+                )
             }
             UnresolvedDomain::Reference(re) => re.to_string(),
         }
@@ -487,29 +657,30 @@ impl UnresolvedDomain {
 impl Typeable for UnresolvedDomain {
     fn return_type(&self) -> ReturnType {
         match self {
-            UnresolvedDomain::Int(_) | UnresolvedDomain::IntFromValues(_) => ReturnType::Int,
-            UnresolvedDomain::Tuple(inners) => {
+            UnresolvedDomain::Int(_, _) | UnresolvedDomain::IntFromValues(_) => ReturnType::Int,
+            UnresolvedDomain::Tuple(inners, _) => {
                 let mut inner_types = Vec::new();
                 for inner in inners {
                     inner_types.push(inner.return_type());
                 }
                 ReturnType::Tuple(inner_types)
             }
-            UnresolvedDomain::Record(entries) => {
+            UnresolvedDomain::Record(entries, _) => {
                 let mut entry_types = Vec::new();
                 for entry in entries {
                     entry_types.push(entry.clone().func_map(|x| x.return_type()));
                 }
+                entry_types.sort();
                 ReturnType::Record(entry_types)
             }
-            UnresolvedDomain::Variant(entries) => {
+            UnresolvedDomain::Variant(entries, _) => {
                 let mut entry_types = Vec::new();
                 for entry in entries {
                     entry_types.push(entry.clone().func_map(|x| x.return_type()));
                 }
                 ReturnType::Variant(entry_types)
             }
-            UnresolvedDomain::Matrix(inner, _idx) => {
+            UnresolvedDomain::Matrix(inner, _idx, _) => {
                 ReturnType::Matrix(Box::new(inner.return_type()))
             }
             UnresolvedDomain::Sequence(_attr, inner) => {
@@ -527,6 +698,8 @@ impl Typeable for UnresolvedDomain {
                 }
                 ReturnType::Relation(inner_types)
             }
+            UnresolvedDomain::EnumeratedType(et, _) => ReturnType::EnumeratedType(et.clone()),
+            UnresolvedDomain::UnnamedType(reference) => reference.ptr.return_type(),
             UnresolvedDomain::Partition(_, inner) => {
                 ReturnType::Partition(Box::new(inner.return_type()))
             }
@@ -547,30 +720,38 @@ impl Display for FieldUnresolved {
 impl Display for UnresolvedDomain {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            UnresolvedDomain::Int(ranges) => {
-                if ranges.iter().all(Range::is_lower_or_upper_bounded) {
-                    let rngs: String = ranges.iter().map(|r| format!("{r}")).join(", ");
-                    write!(f, "int({})", rngs)
-                } else {
-                    write!(f, "int")
-                }
+            UnresolvedDomain::Int(ranges, representation) => {
+                write_int_domain(f, ranges, representation.as_deref())
             }
             UnresolvedDomain::IntFromValues(expr) => write!(f, "int({expr})"),
-            UnresolvedDomain::Tuple(domains) => {
-                write!(f, "tuple ({})", domains.iter().join(","))
+            UnresolvedDomain::Tuple(domains, representation) => {
+                // Members have always been printed without a space after the comma here.
+                let members = domains.iter().join(",");
+                match representation {
+                    Some(representation) if members.is_empty() => {
+                        write!(f, "tuple (representation {representation})")
+                    }
+                    Some(representation) => {
+                        write!(f, "tuple (representation {representation}, {members})")
+                    }
+                    None => write!(f, "tuple ({members})"),
+                }
             }
-            UnresolvedDomain::Record(entries) => {
+            UnresolvedDomain::Record(entries, representation) => {
                 let inners = entries.iter().map(|t| format!("{}", t)).join(", ");
-                write!(f, "record {{{inners}}}",)
+                let attrs = representation_attribute(representation);
+                write!(f, "record{attrs} {{{inners}}}",)
             }
-            UnresolvedDomain::Variant(entries) => {
+            UnresolvedDomain::Variant(entries, representation) => {
                 let inners = entries.iter().map(|t| format!("{}", t)).join(", ");
-                write!(f, "variant {{{inners}}}",)
+                let attrs = representation_attribute(representation);
+                write!(f, "variant{attrs} {{{inners}}}",)
             }
-            UnresolvedDomain::Matrix(value_domain, index_domains) => {
+            UnresolvedDomain::Matrix(value_domain, index_domains, representation) => {
                 write!(
                     f,
-                    "matrix indexed by {} of {value_domain}",
+                    "matrix{} indexed by {} of {value_domain}",
+                    representation_attribute(representation),
                     pretty_vec(&index_domains.iter().collect_vec())
                 )
             }
@@ -600,6 +781,17 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Relation(attrs, domains) => {
                 write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
+            }
+            UnresolvedDomain::EnumeratedType(ty, ranges) => {
+                if !ranges.is_empty() && ranges.iter().all(Range::is_lower_or_upper_bounded) {
+                    let rngs: String = ranges.iter().map(|r| format!("{r}")).join(", ");
+                    write!(f, "{}({})", ty.name, rngs)
+                } else {
+                    write!(f, "{}", ty.name)
+                }
+            }
+            UnresolvedDomain::UnnamedType(reference) => {
+                write!(f, "{reference}")
             }
             UnresolvedDomain::Partition(attrs, inner_dom) => {
                 write!(f, "partition {attrs} from {inner_dom}")

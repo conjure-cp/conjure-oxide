@@ -1,5 +1,7 @@
 # Log Encoding allDiff
 
+The pairwise formulation below is one selectable composition. The SAT IR also supports per-value AMO when every operand has an actual-value choice view. Both compositions retain full reification and support an exceptional value through allDifferentExcept.
+
 ## Overview
 
 ```text

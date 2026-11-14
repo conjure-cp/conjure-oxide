@@ -22,6 +22,46 @@ use uniplate::{Biplate, Uniplate};
 
 register_rule_set!("ReprMatrixComponents", ("Base"), |_: &SolverFamily| true);
 
+/// Whole matrix lookup values compare their corresponding component variables.
+#[register_rule("ReprMatrixComponents", 9400, [Eq, Neq])]
+fn matrix_components_var_eq_var(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    let (left, right, neq) = as_eq_or_neq(expr)?;
+    let (
+        Expression::Atomic(_, Atom::Reference(left)),
+        Expression::Atomic(_, Atom::Reference(right)),
+    ) = (left, right)
+    else {
+        return Err(RuleNotApplicable);
+    };
+    let left_domain = left.resolved_domain().ok_or(RuleNotApplicable)?;
+    let right_domain = right.resolved_domain().ok_or(RuleNotApplicable)?;
+    let (GroundDomain::Matrix(_, left_indices, _), GroundDomain::Matrix(_, right_indices, _)) =
+        (left_domain.as_ref(), right_domain.as_ref())
+    else {
+        return Err(RuleNotApplicable);
+    };
+    if left_indices != right_indices {
+        return Err(RuleNotApplicable);
+    }
+    let left = left
+        .get_repr_as::<MatrixComponents>()
+        .ok_or(RuleNotApplicable)?;
+    let right = right
+        .get_repr_as::<MatrixComponents>()
+        .ok_or(RuleNotApplicable)?;
+    if left.elements.len() != right.elements.len() {
+        return Err(RuleNotApplicable);
+    }
+    Ok(Reduction::pure(collect_eq_or_neq(
+        neq,
+        left.elements
+            .iter()
+            .cloned()
+            .map(Reference::new)
+            .zip(right.elements.iter().cloned().map(Reference::new)),
+    )))
+}
+
 /// Compare a component-represented matrix with a matrix literal element by element.
 #[register_rule("ReprMatrixComponents", 9400, [Eq, Neq])]
 fn matrix_components_var_eq_literal(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
@@ -320,7 +360,11 @@ fn index_matrix_components_impl(expr: &Expression, symbols: &SymbolTable) -> App
         }
     }
 
-    let view = components.slice_lit(&slices).unwrap_or_bug();
+    // A safe index can be visited before its false definedness guard simplifies. Leave invalid
+    // literal indices to bubbling instead of treating them as an internal representation error.
+    let view = components
+        .slice_lit(&slices)
+        .map_err(|_| RuleNotApplicable)?;
 
     // Flat slice of remaining elements to index
     let mut lhs_elems: Vec<Expression> = components.view_as_exprs(&view);
@@ -364,7 +408,7 @@ fn index_matrix_components_impl(expr: &Expression, symbols: &SymbolTable) -> App
             GroundDomain::Bool => {
                 idx_expr = essence_expr!(&off * toInt(&idx_expr));
             }
-            GroundDomain::Int(rngs) if Range::is_contiguous(rngs) => {
+            GroundDomain::Int(rngs, _) if Range::is_contiguous(rngs) => {
                 let lo = Range::low_of(rngs).expect("unbounded index");
                 idx_expr = essence_expr!(&off * (&idx_expr - &lo));
             }
@@ -720,7 +764,7 @@ mod tests {
         let _ = reference.select_repr::<MatrixComponents>().unwrap();
         let literal = Literal::AbstractLiteral(AbstractLiteral::Matrix(
             vec![Literal::Int(1), Literal::Int(2), Literal::Int(3)],
-            Moo::new(GroundDomain::Int(vec![Range::Bounded(1, 3)])),
+            Moo::new(GroundDomain::Int(vec![Range::Bounded(1, 3)], None)),
         ));
         let equality = Expression::Eq(
             Metadata::new(),

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Minimal Conjure Wasm example</title>
+
+<p><label for="essence">Essence</label><br>
+<textarea id="essence" rows="8" cols="60" spellcheck="false">given n : int(1..10)
+find x : int(1..n)
+such that x = n
+</textarea></p>
+
+<p><label for="params">Parameters (optional)</label><br>
+<textarea id="params" rows="4" cols="60" spellcheck="false">letting n be 3
+</textarea></p>
+
+<button id="submit" type="button">Submit</button>
+
+<p><label for="output">Output</label><br>
+<textarea id="output" rows="12" cols="60" readonly></textarea></p>
+
+<script type="module">
+import { run } from "./index.mjs";
+
+const essence = document.querySelector("#essence");
+const params = document.querySelector("#params");
+const output = document.querySelector("#output");
+const submit = document.querySelector("#submit");
+
+submit.onclick = async () => {
+  submit.disabled = true;
+  output.value = "Running…";
+  try {
+    const args = ["solve", "/model.essence"];
+    const files = { "/model.essence": essence.value };
+    if (params.value.trim()) {
+      args.push("/model.param");
+      files["/model.param"] = params.value;
+    }
+    // Ordinary CLI arguments: add e.g. "--solver", "sat" or "-n", "1000" here.
+    args.push("--output-format", "json", "-o", "/solutions.json");
+    const result = await run(args, files, { captureFiles: ["/solutions.json"] });
+    output.value = `Exit code: ${result.exitCode}\n\n${result.stdout}${result.stderr}`;
+    if (result.exitCode === 0) {
+      const solutions = JSON.parse(result.files["/solutions.json"]);
+      output.value += `\nJSON solutions:\n${JSON.stringify(solutions, null, 2)}`;
+    }
+  } catch (error) {
+    output.value = String(error);
+  } finally {
+    submit.disabled = false;
+  }
+};
+</script>
+</html>

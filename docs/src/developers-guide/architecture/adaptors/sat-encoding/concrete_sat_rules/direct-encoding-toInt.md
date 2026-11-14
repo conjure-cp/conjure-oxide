@@ -9,7 +9,7 @@ toInt(bool) ~> SATInt
 ## Method
 - Given a Boolean condition P, we want to set `r0` true when the condition does not hold: $r_0 \leftrightarrow ¬P$; and set `r1` true when condition P does hold: $r_1 \leftrightarrow P$.
 - Each of these biconditionals are encoded as two clauses: one for each direction of the biconditional.
-- We return a new CNF reduction with the vector `[r_0, r_1]` encoded as a direct SATInt.
+- The model retains the semantic indicators; the adaptor compiles their Boolean definitions into clauses.
 
 ## Example
 Consider the following problem -

@@ -26,7 +26,7 @@ pub fn domain_to_sort(domain: &GroundDomain, ints: IntTheory) -> SolverResult<(S
 
         // Return a disjunction of the restrictions each range of the domain enforces
         // I.e. `x: int(1, 3..5)` -> `or([x = 1, x >= 3 /\ x <= 5])`
-        (Lia, GroundDomain::Int(ranges)) => {
+        (Lia, GroundDomain::Int(ranges, _)) => {
             let ranges = ranges.clone();
             let restrict_fn = move |ast: &Dynamic| {
                 let int = ast.as_int().unwrap();
@@ -38,7 +38,7 @@ pub fn domain_to_sort(domain: &GroundDomain, ints: IntTheory) -> SolverResult<(S
             };
             Ok((Sort::int(), Box::new(restrict_fn)))
         }
-        (Bv, GroundDomain::Int(ranges)) => {
+        (Bv, GroundDomain::Int(ranges, _)) => {
             let ranges = ranges.clone();
             let restrict_fn = move |ast: &Dynamic| {
                 let bv = ast.as_bv().unwrap();
@@ -51,7 +51,7 @@ pub fn domain_to_sort(domain: &GroundDomain, ints: IntTheory) -> SolverResult<(S
             Ok((Sort::bitvector(BV_SIZE), Box::new(restrict_fn)))
         }
 
-        (_, GroundDomain::Matrix(val_domain, idx_domains)) => {
+        (_, GroundDomain::Matrix(val_domain, idx_domains, _)) => {
             // We constrain the inner values of the domain recursively
             // I.e. every way to index the array must give a value in the correct domain
 
@@ -59,7 +59,8 @@ pub fn domain_to_sort(domain: &GroundDomain, ints: IntTheory) -> SolverResult<(S
                 [_] => domain_to_sort(val_domain, ints),
                 [_, tail @ ..] => {
                     // Treat as a matrix containing (n-1)-dimensional matrices
-                    let inner_domain = GroundDomain::Matrix(val_domain.clone(), tail.to_vec());
+                    let inner_domain =
+                        GroundDomain::Matrix(val_domain.clone(), tail.to_vec(), None);
                     domain_to_sort(&inner_domain, ints)
                 }
                 [] => Err(SolverError::ModelInvalid(
@@ -134,27 +135,23 @@ pub fn domain_to_ast_vec(ints: IntTheory, domain: &GroundDomain) -> SolverResult
 
 /// Returns a boolean expression restricting the given integer variable to the given range.
 pub fn int_range_to_int_restriction(var: &Int, range: &Range<i32>) -> Bool {
-    match range {
-        Range::Single(n) => var.eq(Int::from(*n)),
-        Range::UnboundedL(r) => var.le(Int::from(*r)),
-        Range::UnboundedR(l) => var.ge(Int::from(*l)),
-        Range::Bounded(l, r) => Bool::and(&[var.ge(Int::from(*l)), var.le(Int::from(*r))]),
-        _ => bug!("int ranges should not be unbounded"),
+    if let Range::Single(n) = range {
+        return var.eq(Int::from(*n));
     }
+    let (low, high) = range.int_bounds_with_defaults();
+    Bool::and(&[var.ge(Int::from(low)), var.le(Int::from(high))])
 }
 
 /// Returns a boolean expression restricting the given bitvector variable to the given integer range.
 pub fn int_range_to_bv_restriction(var: &BV, range: &Range<i32>) -> Bool {
-    match range {
-        Range::Single(n) => var.eq(BV::from_i64(*n as i64, BV_SIZE)),
-        Range::UnboundedL(r) => var.bvsle(BV::from_i64(*r as i64, BV_SIZE)),
-        Range::UnboundedR(l) => var.bvsge(BV::from_i64(*l as i64, BV_SIZE)),
-        Range::Bounded(l, r) => Bool::and(&[
-            var.bvsge(BV::from_i64(*l as i64, BV_SIZE)),
-            var.bvsle(BV::from_i64(*r as i64, BV_SIZE)),
-        ]),
-        _ => bug!("int ranges should not be unbounded"),
+    if let Range::Single(n) = range {
+        return var.eq(BV::from_i64(*n as i64, BV_SIZE));
     }
+    let (low, high) = range.int_bounds_with_defaults();
+    Bool::and(&[
+        var.bvsge(BV::from_i64(low as i64, BV_SIZE)),
+        var.bvsle(BV::from_i64(high as i64, BV_SIZE)),
+    ])
 }
 
 pub fn name_to_symbol(name: &Name) -> SolverResult<Symbol> {

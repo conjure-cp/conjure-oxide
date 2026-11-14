@@ -1,25 +1,26 @@
 #![allow(clippy::unwrap_used)]
 
+#[cfg(feature = "mimalloc")]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 mod cli;
 mod pretty;
-mod print_info_schema;
 mod rule_trace_aggregates;
 mod solve;
 mod test_solve;
+use anyhow::Context as _;
 use clap::{CommandFactory, Parser};
 use clap_complete::generate;
 use cli::{Cli, GlobalArgs, LogDetail, LogFormat};
+use conjure_cp_cli::utils::rule_trace::RuleApplicationCounter;
 use pretty::run_pretty_command;
-use print_info_schema::run_print_info_schema_command;
-use rule_trace_aggregates::RuleTraceAggregatesHandle;
+use rule_trace_aggregates::write_rule_trace_aggregates;
 use solve::run_solve_command;
 use std::fs::File;
 use std::io;
-use std::process::exit;
-use std::sync::Arc;
+use std::path::PathBuf;
+use std::sync::{Arc, OnceLock};
 use test_solve::run_test_solve_command;
 
 use conjure_cp_rules as _;
@@ -29,17 +30,44 @@ use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer, fmt};
 
+#[cfg(feature = "lsp")]
 use conjure_cp_lsp::server;
 
 struct LoggingState {
-    rule_trace_aggregates: Option<RuleTraceAggregatesHandle>,
+    rule_application_counts: RuleApplicationCounter,
+    rule_trace_aggregates_path: Option<PathBuf>,
 }
 
 impl LoggingState {
     fn flush(&self) {
-        if let Some(handle) = &self.rule_trace_aggregates {
-            handle.flush();
+        if let Some(path) = &self.rule_trace_aggregates_path {
+            write_rule_trace_aggregates(path, &self.rule_application_counts.snapshot())
+                .expect("failed to write rule trace aggregates");
         }
+    }
+}
+
+static LOGGING_STATE: OnceLock<LoggingState> = OnceLock::new();
+
+/// Writes buffered log outputs, such as the final rule-trace aggregates.
+fn flush_logging() {
+    if let Some(state) = LOGGING_STATE.get() {
+        state.flush();
+    }
+}
+
+/// Flushes buffered log outputs, then exits. Use instead of [`std::process::exit`].
+pub(crate) fn exit(code: i32) -> ! {
+    flush_logging();
+    std::process::exit(code)
+}
+
+/// Flushes on return and while unwinding from a panic.
+struct FlushLoggingOnDrop;
+
+impl Drop for FlushLoggingOnDrop {
+    fn drop(&mut self) {
+        flush_logging();
     }
 }
 
@@ -60,9 +88,10 @@ pub fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     let logging_state = setup_logging(&cli.global_args)?;
-    let result = run_subcommand(cli);
-    logging_state.flush();
-    result
+    let rule_application_counts = logging_state.rule_application_counts.clone();
+    let _ = LOGGING_STATE.set(logging_state);
+    let _flush = FlushLoggingOnDrop;
+    run_subcommand(cli, &rule_application_counts)
 }
 
 fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<LoggingState> {
@@ -132,20 +161,20 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<LoggingState> {
             }))
     });
 
-    let rule_trace_aggregates_handle = global_args
-        .rule_trace_aggregates
-        .clone()
-        .map(RuleTraceAggregatesHandle::new)
-        .transpose()?;
+    // Validate an explicitly requested output before rewriting. Collection itself
+    // always happens in memory, independently of the output destination.
+    if let Some(path) = &global_args.rule_trace_aggregates {
+        File::create(path)
+            .with_context(|| format!("Unable to create aggregate trace file {}", path.display()))?;
+    }
 
-    let rule_trace_aggregates_layer = rule_trace_aggregates_handle.as_ref().map(|handle| {
-        handle
-            .layer()
-            .with_filter(EnvFilter::new("rule_engine_rule_trace_aggregates=trace"))
-            .with_filter(FilterFn::new(|meta| {
-                meta.target() == "rule_engine_rule_trace_aggregates"
-            }))
-    });
+    let rule_application_counts = RuleApplicationCounter::default();
+    let rule_trace_aggregates_layer = rule_application_counts
+        .clone()
+        .with_filter(EnvFilter::new("rule_engine_rule_trace_aggregates=trace"))
+        .with_filter(FilterFn::new(|meta| {
+            meta.target() == "rule_engine_rule_trace_aggregates"
+        }));
 
     let log_format = global_args.log_format.unwrap_or_default();
     let log_detail = global_args.log_detail.unwrap_or_default();
@@ -203,7 +232,8 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<LoggingState> {
         .init();
 
     Ok(LoggingState {
-        rule_trace_aggregates: rule_trace_aggregates_handle,
+        rule_application_counts,
+        rule_trace_aggregates_path: global_args.rule_trace_aggregates.clone(),
     })
 }
 
@@ -227,17 +257,26 @@ fn run_completion_command(completion_args: cli::CompletionArgs) -> anyhow::Resul
 }
 
 fn run_lsp_server() -> anyhow::Result<()> {
-    server::main();
-    Ok(())
+    #[cfg(feature = "lsp")]
+    {
+        server::main();
+        Ok(())
+    }
+    #[cfg(not(feature = "lsp"))]
+    anyhow::bail!("Language server support was not compiled in (enable the `lsp` feature).");
 }
 
 /// Runs the selected subcommand
-fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
+fn run_subcommand(
+    cli: Cli,
+    rule_application_counts: &RuleApplicationCounter,
+) -> anyhow::Result<()> {
     let global_args = cli.global_args;
     match cli.subcommand {
-        cli::Command::Solve(solve_args) => run_solve_command(global_args, solve_args),
+        cli::Command::Solve(solve_args) => {
+            run_solve_command(global_args, solve_args, rule_application_counts)
+        }
         cli::Command::TestSolve(local_args) => run_test_solve_command(global_args, local_args),
-        cli::Command::PrintJsonSchema => run_print_info_schema_command(),
         cli::Command::Completion(completion_args) => run_completion_command(completion_args),
         cli::Command::Pretty(pretty_args) => run_pretty_command(global_args, pretty_args),
         cli::Command::ServerLSP => run_lsp_server(),
@@ -248,6 +287,17 @@ fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
 mod tests {
     use conjure_cp::parse::conjure_json::{get_example_model, get_example_model_by_path};
 
+    #[cfg(not(feature = "lsp"))]
+    #[test]
+    fn language_server_without_support_reports_the_missing_feature() {
+        let error = super::run_lsp_server().unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("Language server support was not compiled in")
+        );
+    }
+
     #[test]
     fn test_get_example_model_success() {
         let filename = "input";
@@ -256,7 +306,7 @@ mod tests {
 
     #[test]
     fn test_get_example_model_by_filepath() {
-        let filepath = "../../test-suite/tests/integration/basic/misc/xyz/input.essence";
+        let filepath = "../../test-suite/tests/exhaustive/basic/misc/xyz/input.essence";
         get_example_model_by_path(filepath).unwrap();
     }
 

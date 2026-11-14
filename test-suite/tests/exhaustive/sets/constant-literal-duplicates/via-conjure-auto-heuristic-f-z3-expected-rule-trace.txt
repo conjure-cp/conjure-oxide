@@ -1,0 +1,114 @@
+Model before rewriting:
+
+letting duplicate be {1,1}
+find a: set (size 1) of int(1..2)
+
+such that
+
+a = duplicate,
+|duplicate| = 1,
+|{1,1}| = 1
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#explicit_1: matrix indexed by [int(1..1)] of int(1..2)
+new constraints:
+  or([1 <= 1,SafeIndex(a#explicit_1,[1]) = 1;int(1..)])
+
+--
+
+a = {1},
+true,
+true,
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+a = {1},
+true,
+true,
+true
+new variables:
+  find a#explicit_1#array_1: matrix indexed by [int(1..1)] of int(1..2)
+
+--
+
+a = {1},
+true,
+true,
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+a = {1},
+true,
+true,
+true
+new variables:
+  find a#explicit_1#array_1#bv_1: matrix indexed by [int(1..1)] of int(1..2)
+
+--
+
+a = {1}
+   ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
+and([1 = 1,or([and([1 <= 1,SafeIndex(a#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+a#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1
+
+--
+
+a#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_1#array_1#bv_1
+
+--
+
+and([or([and([SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+or([and([SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1;int(1..)]);int(1..)])
+
+--
+
+or([and([SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1;int(1..)])
+
+--
+
+and([SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1
+
+--
+
+Final model:
+
+letting duplicate be {1}
+find a: set (representation explicit, size 1) of int(1..2)
+find a#explicit_1: matrix indexed by [int(1..1)] of int(1..2)
+find a#explicit_1#array_1: matrix indexed by [int(1..1)] of int(1..2)
+find a#explicit_1#array_1#bv_1: matrix indexed by [int(1..1)] of int(1..2)
+
+such that
+
+SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1,
+true,
+true,
+true
+

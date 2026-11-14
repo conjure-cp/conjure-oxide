@@ -183,7 +183,7 @@ pub fn snapshot_symbols_after_effect(
     snapshot_variable_declarations(&merged)
 }
 
-/// Logs, to the main log, and the human readable traces used by the integration tester, that the
+/// Logs, to the main log, and the human readable traces used by the exhaustive tester, that the
 /// rule has been applied to the expression
 pub fn log_rule_application(
     result: &RuleResult,
@@ -203,7 +203,7 @@ pub fn log_rule_application(
         let new_top = if !red.new_top.is_empty() {
             pretty_vec(&red.new_top)
         } else {
-            pretty_vec(&red.new_clauses)
+            pretty_vec(&red.new_sat_decisions)
         };
 
         debug!(
@@ -225,13 +225,13 @@ pub fn log_rule_application(
             }
             let exprs = exprs.iter().join("\n");
             format!("new constraints:\n{exprs}\n")
-        } else if !red.new_clauses.is_empty() {
+        } else if !red.new_sat_decisions.is_empty() {
             let mut exprs: Vec<String> = vec![];
-            for clause in &red.new_clauses {
+            for clause in &red.new_sat_decisions {
                 exprs.push(format!("  {clause}"));
             }
             let exprs = exprs.iter().join("\n");
-            format!("new clauses:\n{exprs}\n")
+            format!("new SAT encoding decisions:\n{exprs}\n")
         } else {
             String::new()
         };
@@ -336,7 +336,7 @@ pub(crate) fn try_rewrite_value_letting_once<O: RuleAttemptObserver>(
                 let ctx = ctx.clone();
 
                 for rd in rules {
-                    match (rd.rule.application)(&expr, &symbols) {
+                    match rd.rule.apply(&expr, &symbols) {
                         Ok(effect) => {
                             observer.attempted(*priority, rd, &expr, RuleAttemptStatus::Success);
                             results.push((
@@ -394,6 +394,8 @@ pub(crate) fn try_rewrite_value_letting_once<O: RuleAttemptObserver>(
 /// Represents errors that can occur during the model rewriting process.
 #[derive(Debug, Error)]
 pub enum RewriteError {
+    #[error("{0}")]
+    UniformRepresentation(String),
     #[error("Error resolving rules {0}")]
     ResolveRulesError(ResolveRulesError),
 }

@@ -17,4 +17,5 @@ pub use error::DomainOpError;
 pub use ground::GroundDomain;
 pub use int_val::IntVal;
 pub use range::Range;
+pub use unresolved::EnumVariantVal;
 pub use unresolved::UnresolvedDomain;

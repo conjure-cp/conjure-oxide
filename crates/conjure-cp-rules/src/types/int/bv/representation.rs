@@ -54,6 +54,7 @@ register_representation!(
         conjure_cp::representation::default_impls::domain_size(&state.value)
             .saturating_mul(1 << 16)
     }
+    fn integer_encoding() -> bool { true }
     fn applies(family: SolverFamily) -> bool {
         matches!(family, SolverFamily::Z3)
     }
@@ -68,8 +69,8 @@ register_representation!(
 fn holds_integers(dom: &DomainPtr) -> bool {
     fn ground_holds_integers(dom: &GroundDomain) -> bool {
         match dom {
-            GroundDomain::Int(_) => true,
-            GroundDomain::Matrix(inner, _) => ground_holds_integers(inner),
+            GroundDomain::Int(_, _) => true,
+            GroundDomain::Matrix(inner, _, _) => ground_holds_integers(inner),
             _ => false,
         }
     }

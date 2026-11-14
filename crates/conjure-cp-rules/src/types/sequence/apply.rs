@@ -49,7 +49,7 @@ fn index_in_active_prefix(index: &Expr, min_length: i32) -> bool {
     if min_length <= 0 {
         return false;
     }
-    let prefix = GroundDomain::Int(vec![Range::Bounded(1, min_length)]);
+    let prefix = GroundDomain::Int(vec![Range::Bounded(1, min_length)], None);
     if let Some(lit) = eval_constant(index) {
         return prefix.contains(&lit).unwrap_or(false);
     }

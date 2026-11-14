@@ -1,0 +1,87 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find f: bool
+find g: bool
+find h: bool
+find x: bool
+find y: bool
+
+such that
+
+!((!(x)) -> (!(y))),
+(!(a)) -> (!(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+
+--
+
+!((!(x)) -> (!(y))),
+(!(a)) -> (!(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(!(a)) -> (!(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+new SAT encoding decisions:
+  assert(!((!(x)) -> (!(y)))) using tseitin
+
+--
+
+(!(a)) -> (!(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+new SAT encoding decisions:
+  assert((!(a)) -> (!(b))) using tseitin
+
+--
+
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+((h) -> (f)) -> ((h) -> (g))
+new SAT encoding decisions:
+  assert((c) -> ((d) -> (e))) using tseitin
+
+--
+
+((h) -> (f)) -> ((h) -> (g))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(((h) -> (f)) -> ((h) -> (g))) using tseitin
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find f: bool
+find g: bool
+find h: bool
+find x: bool
+find y: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+assert(!((!(x)) -> (!(y)))) using tseitin,
+assert((!(a)) -> (!(b))) using tseitin,
+assert((c) -> ((d) -> (e))) using tseitin,
+assert(((h) -> (f)) -> ((h) -> (g))) using tseitin
+

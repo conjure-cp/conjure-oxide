@@ -1,8 +1,11 @@
 use crate::ast::Field;
+use crate::ast::unnamed::UnnamedType;
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+
+use crate::ast::{Moo, enumerated::EnumeratedType};
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Hash, Quine)]
 /// Variants use the project-wide type/domain ordering; keep broad matches in the same order.
@@ -23,6 +26,8 @@ pub enum ReturnType {
     Function(Box<ReturnType>, Box<ReturnType>),
     Relation(Vec<ReturnType>),
     Partition(Box<ReturnType>),
+    EnumeratedType(Moo<EnumeratedType>),
+    UnnamedType(Moo<UnnamedType>),
     Permutation(Box<ReturnType>),
 }
 
@@ -81,6 +86,8 @@ impl Display for ReturnType {
                 write!(f, "relation of ({inners})")
             }
             ReturnType::Partition(inner) => write!(f, "partition of {inner}"),
+            ReturnType::EnumeratedType(et) => write!(f, "{}", et),
+            ReturnType::UnnamedType(ty) => write!(f, "{}", ty.name),
             ReturnType::Permutation(inner) => write!(f, "permutation of {inner}"),
         }
     }

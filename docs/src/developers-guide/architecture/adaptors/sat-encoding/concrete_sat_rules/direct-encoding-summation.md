@@ -1,14 +1,5 @@
-# Direct Encoding SAT Summation
+# Direct encoding summation
 
-## Overview
+A direct-encoded operand contributes one weighted indicator for each actual domain value. A sum combines these weighted views and uses the chosen PB provider, rather than enumerating every pair of possible summands into a new direct-encoded result.
 
-```text
-Sum(SATInt(a), SATInt(b), ...) ~> SATInt(c)
-```
-
-## What this rule does
-
-- Normalises all operands to a shared value range.
-- Builds the sum pairwise, using `tseytin_and` for each value pair and `tseytin_or` to accumulate matching terms.
-- Propagates the resulting range after every addition step.
-- Handles the empty-input case by returning the constant zero.
+When the sum needs an integer result for a nonlinear operation, a represented auxiliary and a PB equality connect that result to the weighted sum. See [integer summation](log-encoding-summation.md) for the shared lowering path.

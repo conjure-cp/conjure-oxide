@@ -10,8 +10,8 @@ use itertools::Itertools;
 pub(crate) fn symmetry_values(domain: &GroundDomain) -> Option<Vec<Literal>> {
     match domain {
         GroundDomain::Bool => Some(vec![Literal::Bool(false), Literal::Bool(true)]),
-        GroundDomain::Int(_) => domain.values().ok().map(Iterator::collect),
-        GroundDomain::Tuple(fields) => {
+        GroundDomain::Int(_, _) => domain.values().ok().map(Iterator::collect),
+        GroundDomain::Tuple(fields, _) => {
             let fields = fields
                 .iter()
                 .map(|field| symmetry_values(field))
@@ -24,7 +24,7 @@ pub(crate) fn symmetry_values(domain: &GroundDomain) -> Option<Vec<Literal>> {
                     .collect(),
             )
         }
-        GroundDomain::Record(fields) => {
+        GroundDomain::Record(fields, _) => {
             let mut fields = fields.clone();
             fields.sort_by(|lhs, rhs| lhs.name.cmp(&rhs.name));
             let names = fields
@@ -51,7 +51,7 @@ pub(crate) fn symmetry_values(domain: &GroundDomain) -> Option<Vec<Literal>> {
                     .collect(),
             )
         }
-        GroundDomain::Variant(fields) => {
+        GroundDomain::Variant(fields, _) => {
             let alternatives = fields
                 .iter()
                 .map(|field| {

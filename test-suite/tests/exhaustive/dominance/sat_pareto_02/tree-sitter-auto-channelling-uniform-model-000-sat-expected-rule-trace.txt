@@ -1,0 +1,34 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+or([or([x,y;int(1..)]),z;int(1..)])
+
+--
+
+or([or([x,y;int(1..)]),z;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(or([or([x,y;int(1..)]),z;int(1..)])) using tseitin
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+assert(or([or([x,y;int(1..)]),z;int(1..)])) using tseitin
+

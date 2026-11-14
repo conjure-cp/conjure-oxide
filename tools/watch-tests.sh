@@ -2,7 +2,7 @@
 #
 # ./watch-tests.sh.
 #
-# DESCRIPTION: give a live-updating summary of integration test passes and failures.
+# DESCRIPTION: give a live-updating summary of exhaustive test passes and failures.
 #
 # USAGE: 
 #   Environment variables such as ACCEPT and ALLTESTS are passed directly

@@ -49,7 +49,7 @@ register_representation!(
             dom.clone(), TuplePacked::NAME, message.to_owned());
         let resolved = dom.resolve().ok()
             .ok_or_else(|| domain_err("expected a ground tuple domain"))?;
-        let GroundDomain::Tuple(fields) = resolved.as_ref() else {
+        let GroundDomain::Tuple(fields, _) = resolved.as_ref() else {
             return Err(domain_err("expected a tuple domain"));
         };
 

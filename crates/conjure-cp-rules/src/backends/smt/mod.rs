@@ -1,4 +1,4 @@
 mod alldiff;
 mod int_theory;
-mod lex;
+pub(crate) mod lex;
 mod rules;

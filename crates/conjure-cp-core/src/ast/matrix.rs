@@ -86,7 +86,7 @@ pub fn shape_of_matrix_expr(expr: &Expr) -> Option<MatrixShape<DomainPtr>> {
 pub fn shape_of_dom(
     matrix_dom_gd: &GroundDomain,
 ) -> Result<MatrixShape<Moo<GroundDomain>>, DomainOpError> {
-    let GroundDomain::Matrix(_, idx_doms) = matrix_dom_gd else {
+    let GroundDomain::Matrix(_, idx_doms, _) = matrix_dom_gd else {
         return Err(DomainOpError::WrongType);
     };
 
@@ -273,7 +273,7 @@ pub fn resolved_index_domains(
 /// ```
 /// use std::collections::HashSet;
 /// use conjure_cp_core::ast::{GroundDomain,Moo,Range,Literal,matrix};
-/// let index_domains = vec![Moo::new(GroundDomain::Bool),Moo::new(GroundDomain::Int(vec![Range::Bounded(1,2)]))];
+/// let index_domains = vec![Moo::new(GroundDomain::Bool),Moo::new(GroundDomain::Int(vec![Range::Bounded(1,2)], None))];
 ///
 /// let expected_indices = HashSet::from([
 ///   vec![Literal::Bool(false),Literal::Int(1)],
@@ -385,7 +385,7 @@ pub fn flat_index_to_full_index(index_domains: &[Moo<GroundDomain>], index: u64)
 /// expression's resolved domain.
 pub fn bound_index_domains_of_expr(expr: &Expr) -> Option<Vec<Moo<GroundDomain>>> {
     let dom = expr.domain_of().and_then(|dom| dom.resolve().ok())?;
-    let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
+    let GroundDomain::Matrix(_, index_domains, _) = dom.as_ref() else {
         return None;
     };
 
@@ -470,7 +470,7 @@ fn expr_matrix_dimension_lengths(expr: &Expr) -> Option<Vec<usize>> {
 #[inline]
 fn bound_index_domain_from_length(mut domain: Moo<GroundDomain>, len: usize) -> Moo<GroundDomain> {
     match Moo::make_mut(&mut domain) {
-        GroundDomain::Int(ranges) if ranges.len() == 1 && len > 0 => {
+        GroundDomain::Int(ranges, _) if ranges.len() == 1 && len > 0 => {
             ranges[0] = match &ranges[0] {
                 Range::UnboundedR(start) => Range::Bounded(*start, start + (len as i32 - 1)),
                 Range::Unbounded | Range::UnboundedL(_) => Range::Bounded(1, len as i32),

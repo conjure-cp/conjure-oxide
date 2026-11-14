@@ -38,12 +38,15 @@ impl ConstantBoundOp {
 /// Normalises integer ranges so equivalent domains compare structurally equal.
 fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
     match domain {
-        GroundDomain::Int(ranges) => GroundDomain::Int(Range::squeeze(
-            &ranges
-                .iter()
-                .map(|range| Range::new(range.low().copied(), range.high().copied()))
-                .collect::<Vec<_>>(),
-        )),
+        GroundDomain::Int(ranges, representation) => GroundDomain::Int(
+            Range::squeeze(
+                &ranges
+                    .iter()
+                    .map(|range| Range::new(range.low().copied(), range.high().copied()))
+                    .collect::<Vec<_>>(),
+            ),
+            representation.clone(),
+        ),
         _ => domain.clone(),
     }
 }
@@ -59,6 +62,8 @@ fn is_semantically_safe(expr: &Expr) -> bool {
                 | Expr::UnsafeIndex(_, _, _)
                 | Expr::Bubble(_, _, _)
                 | Expr::UnsafeSlice(_, _, _)
+                | Expr::Pred(_, _)
+                | Expr::Succ(_, _)
         ) {
             return false;
         }
@@ -109,9 +114,7 @@ fn simplify_in_domain(expr: &Expr, domain: &DomainPtr) -> Option<bool> {
         return Some(true);
     }
 
-    if let Ok(values_in_domain) = intersection.values_i32()
-        && values_in_domain.is_empty()
-    {
+    if intersection.return_type() == ReturnType::Int && intersection.length().ok() == Some(0) {
         return Some(false);
     }
 
@@ -125,7 +128,7 @@ fn singleton_int_value(expr: &Expr) -> Option<i32> {
     }
 
     let domain = resolved_ground_domain_of_for_partial_eval(expr)?;
-    let GroundDomain::Int(ranges) = domain.as_ref() else {
+    let GroundDomain::Int(ranges, _) = domain.as_ref() else {
         return None;
     };
     let [range] = ranges.as_slice() else {
@@ -149,7 +152,7 @@ fn cheap_singleton_int_value(expr: &Expr) -> Option<i32> {
         Expr::Atomic(_, Atom::Literal(Lit::Int(value))) => Some(*value),
         Expr::Atomic(_, Atom::Reference(reference)) => {
             let domain = reference.domain()?.resolve().ok()?;
-            let GroundDomain::Int(ranges) = domain.as_ref() else {
+            let GroundDomain::Int(ranges, _) = domain.as_ref() else {
                 return None;
             };
             let [range] = ranges.as_slice() else {
@@ -165,23 +168,30 @@ fn cheap_singleton_int_value(expr: &Expr) -> Option<i32> {
 }
 
 fn matrix_index_offset(index_domain: &DomainPtr, index: i32) -> Option<usize> {
-    let ranges = index_domain.as_int_ground()?;
-    let [range] = ranges.as_slice() else {
-        return None;
-    };
-    let from = *range.low()?;
-    usize::try_from(index.checked_sub(from)?).ok()
+    integer_index_offset(index_domain.as_int_ground()?, index)
 }
 
 fn ground_matrix_index_offset(index_domain: &GroundDomain, index: i32) -> Option<usize> {
-    let GroundDomain::Int(ranges) = index_domain else {
+    let GroundDomain::Int(ranges, _) = index_domain else {
         return None;
     };
-    let [range] = ranges.as_slice() else {
-        return None;
-    };
-    let from = *range.low()?;
-    usize::try_from(index.checked_sub(from)?).ok()
+    integer_index_offset(ranges, index)
+}
+
+/// Locate a label by its domain position, including gaps, without enumerating ranges.
+fn integer_index_offset(ranges: &[Range<i32>], index: i32) -> Option<usize> {
+    let mut offset = 0usize;
+    for range in ranges {
+        let lower = i64::from(*range.low()?);
+        let index = i64::from(index);
+        let upper = range.high().map(|value| i64::from(*value));
+        if index >= lower && upper.is_none_or(|upper| index <= upper) {
+            return offset.checked_add(usize::try_from(index - lower).ok()?);
+        }
+        let length = (upper? - lower + 1).max(0);
+        offset = offset.checked_add(usize::try_from(length).ok()?)?;
+    }
+    None
 }
 
 /// Selects one element from a matrix literal, including a referenced constant matrix.
@@ -228,7 +238,7 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
     match expr {
         Expr::SafeIndex(_, subject, _) => {
             let subject_domain = resolved_ground_domain_of_for_partial_eval(subject)?;
-            let GroundDomain::Matrix(elem_domain, _) = subject_domain.as_ref() else {
+            let GroundDomain::Matrix(elem_domain, _, _) = subject_domain.as_ref() else {
                 return None;
             };
 
@@ -236,7 +246,8 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
         }
         Expr::SafeSlice(_, subject, indices) => {
             let subject_domain = resolved_ground_domain_of_for_partial_eval(subject)?;
-            let GroundDomain::Matrix(elem_domain, index_domains) = subject_domain.as_ref() else {
+            let GroundDomain::Matrix(elem_domain, index_domains, _) = subject_domain.as_ref()
+            else {
                 return None;
             };
             let sliced_dimension = indices.iter().position(Option::is_none);
@@ -245,6 +256,7 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
                 Some(dimension) => Some(Moo::new(GroundDomain::Matrix(
                     elem_domain.clone(),
                     vec![index_domains[dimension].clone()],
+                    None,
                 ))),
                 None => Some(elem_domain.clone()),
             }
@@ -256,18 +268,19 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
 
 /// Whether `expr` is an undefined value whose domain is empty.
 ///
-/// `min`/`max` of an empty collection is the only unsafe shape that carries an empty domain, so it
-/// is the only one for which [`simplify_comparison_with_literal`] derives a domain despite the
-/// expression not being semantically safe.
+/// `min`/`max` of an empty collection carries an empty domain despite being unsafe.
+/// Enum neighbours also carry useful partial domains and are handled separately below.
 fn is_empty_min_max(expr: &Expr) -> bool {
     matches!(expr, Expr::Min(_, values) | Expr::Max(_, values) if is_empty_matrix_operand(values))
 }
 
-/// Whether `expr` is unsafe in a way that still leaves its domain worth deriving: it can be
-/// undefined, but every value it *can* take is a real one, so a literal outside that set decides
-/// the equality regardless.
-fn can_be_undefined_but_not_empty(expr: &Expr) -> bool {
-    matches!(expr, Expr::Image(_, _, _))
+/// Whether an unsafe expression's domain still describes all values it can take.
+/// An empty domain rules out both equality and disequality under relational semantics.
+fn can_derive_unsafe_domain(expr: &Expr) -> bool {
+    matches!(
+        expr,
+        Expr::Image(_, _, _) | Expr::Pred(_, _) | Expr::Succ(_, _)
+    )
 }
 
 /// Tries to decide `expr = lit` and `expr != lit` from the resolved domain of `expr`.
@@ -285,7 +298,7 @@ fn simplify_comparison_with_literal(
     // `min`/`max`, or a literal its domain cannot hold -- but nothing else can, so a safe
     // expression is worth the lookup unconditionally and an unsafe one only for those shapes.
     let is_safe = is_semantically_safe(expr);
-    if !is_safe && !is_empty_min_max(expr) && !can_be_undefined_but_not_empty(expr) {
+    if !is_safe && !is_empty_min_max(expr) && !can_derive_unsafe_domain(expr) {
         return None;
     }
 
@@ -318,7 +331,7 @@ fn simplify_comparison_with_literal(
 
     match (expr_domain.as_ref(), lit) {
         (GroundDomain::Bool, Lit::Bool(_)) => None,
-        (GroundDomain::Int(ranges), Lit::Int(value)) => {
+        (GroundDomain::Int(ranges, _), Lit::Int(value)) => {
             let [range] = ranges.as_slice() else {
                 return None;
             };
@@ -447,8 +460,10 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::Metavar(_, _) => Err(RuleNotApplicable),
         Expr::UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
-        Expr::Table(_, _, _) => Err(RuleNotApplicable),
-        Expr::NegativeTable(_, _, _) => Err(RuleNotApplicable),
+        Expr::Table(_, _, _) | Expr::FlatTable(..) | Expr::FlatShortTable(..) => {
+            Err(RuleNotApplicable)
+        }
+        Expr::NegativeTable(_, _, _) | Expr::ShortTable(_, _, _) => Err(RuleNotApplicable),
         Expr::AtLeast(_, _, _, _) => Err(RuleNotApplicable),
         Expr::AtMost(_, _, _, _) => Err(RuleNotApplicable),
         Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => Err(RuleNotApplicable),
@@ -506,8 +521,8 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                 // currently don't have a way to check whether other domain kinds are empty or not.
                 //
                 // we should expand this to cover more domain types in the future.
-                else if let Ok(values_in_domain) = intersection.values_i32()
-                    && values_in_domain.is_empty()
+                else if intersection.return_type() == ReturnType::Int
+                    && intersection.length().ok() == Some(0)
                 {
                     Ok(RuleEffect::pure(Expr::Atomic(
                         Metadata::new(),
@@ -1070,6 +1085,10 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::Leq(_, _, _) => Err(RuleNotApplicable),
         Expr::Gt(_, _, _) => Err(RuleNotApplicable),
         Expr::Lt(_, _, _) => Err(RuleNotApplicable),
+
+        Expr::Pred(_, _) => Err(RuleNotApplicable),
+        Expr::Succ(_, _) => Err(RuleNotApplicable),
+
         Expr::SafeDiv(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
         Expr::Flatten(_, _, _) => Err(RuleNotApplicable), // TODO: check if anything can be done here
@@ -1138,7 +1157,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionWInSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
-        Expr::SATInt(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::SatObjective(..) | Expr::SATInt(_, _, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseSum(_, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseProduct(_, _, _) => Err(RuleNotApplicable),
         Expr::Active(m, variant, alternative) => {
@@ -1188,7 +1207,11 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::LexGeq(_, _, _) => Err(RuleNotApplicable),
         Expr::FlatLexLt(_, _, _) => Err(RuleNotApplicable),
         Expr::FlatLexLeq(_, _, _) => Err(RuleNotApplicable),
-        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) => Err(RuleNotApplicable),
+        Expr::AllDifferentExcept(_, _, _)
+        | Expr::ElementId(_, _, _)
+        | Expr::IndexOf(_, _, _)
+        | Expr::SatElement(_, _, _, _)
+        | Expr::SatAllDifferentComparisons(_, _) => Err(RuleNotApplicable),
     }
 }
 
@@ -1352,6 +1375,35 @@ mod tests {
 
     fn safe_pow(base: Expr, exponent: Expr) -> Expr {
         Expr::SafePow(Metadata::new(), Moo::new(base), Moo::new(exponent))
+    }
+
+    #[test]
+    fn in_domain_simplification_does_not_expand_large_integer_domains() {
+        let domain = Domain::int(vec![Range::Bounded(-1_000_000_000, 1_000_000_000)]);
+        let variable: Expr =
+            crate::ast::Reference::new(DeclarationPtr::new_find(Name::user("wide"), domain)).into();
+        for evaluate in [run_partial_evaluator, run_partial_evaluator_local] {
+            for (target, expected) in [
+                (Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]), true),
+                (
+                    Domain::int(vec![Range::Bounded(1_000_000_001, i32::MAX)]),
+                    false,
+                ),
+            ] {
+                let expression =
+                    Expr::InDomain(Metadata::new(), Moo::new(variable.clone()), target);
+                assert_eq!(
+                    evaluate(&expression).unwrap().new_expression,
+                    bool_lit(expected)
+                );
+            }
+            let expression = Expr::InDomain(
+                Metadata::new(),
+                Moo::new(variable.clone()),
+                Domain::int(vec![Range::Bounded(0, 1_000_000_000)]),
+            );
+            assert!(evaluate(&expression).is_err());
+        }
     }
 
     /// A power folds when both operands are singletons, taking the base from a declaration domain.

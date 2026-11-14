@@ -258,7 +258,7 @@ impl Smt {
 
         let mut dominance_model = model_template.clone();
         dominance_model.replace_constraints(vec![]);
-        dominance_model.replace_clauses(vec![]);
+        dominance_model.replace_sat_decisions(vec![]);
         dominance_model.dominance = None;
         dominance_model.add_constraint(rewritten_dominance);
 
@@ -399,6 +399,11 @@ impl SolverAdaptor for Smt {
     }
 
     fn load_model(&mut self, model: Model, _: private::Internal) -> Result<(), SolverError> {
+        if !model.sat_decisions().is_empty() {
+            return Err(SolverError::ModelFeatureNotSupported(
+                "SAT encoding decisions must be loaded by the SAT adaptor".into(),
+            ));
+        }
         // Fail fast if an older system or precompiled Z3 was linked in.
         ensure_supported_z3_runtime()?;
         self.dominance_expression = model.dominance.as_ref().map(|expr| match expr {
@@ -551,7 +556,7 @@ where
 ///
 /// `unknown` is not evidence that the model is unsatisfiable. In particular, Z3 returns it when a
 /// configured timeout expires or an in-progress check is interrupted. Treating iterator exhaustion
-/// as `NoSolutions` in that case lets an interrupted integration test pass with an empty solution
+/// as `NoSolutions` in that case lets an interrupted exhaustive test pass with an empty solution
 /// file.
 fn search_status_from_terminal_result(
     found_solution: bool,

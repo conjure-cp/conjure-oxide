@@ -1,0 +1,32 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+
+such that
+
+or([a,b = or([ product([m,m;int(1..)]) = 4 | m : int(0..3) ]);int(1..)])
+
+--
+
+or([a,b;int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(or([a,b;int(1..)])) using tseitin
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+assert(or([a,b;int(1..)])) using tseitin
+

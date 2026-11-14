@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find x: int(-2..2)
+find y: int(0, 2, 5)
+find z: int(1..3)
+
+such that
+
+sum([x,z;int(1..)]) = y,
+x != z
+
+--
+
+sum([x,z;int(1..)]) = y
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x, z], y),SumGeq([x, z], y);int(1..)])
+
+--
+
+Final model:
+
+find x: int(-2..2)
+find y: int(0, 2, 5)
+find z: int(1..3)
+
+such that
+
+and([SumLeq([x, z], y),SumGeq([x, z], y);int(1..)]),
+x != z
+

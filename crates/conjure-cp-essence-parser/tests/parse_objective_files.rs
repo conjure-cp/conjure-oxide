@@ -16,15 +16,15 @@ fn parse_savilerow_objective_models() {
     let context = Arc::new(RwLock::new(Context::default()));
     let cases = [
         (
-            workspace_path("test-suite/tests/integration/savilerow/diet/input.essence"),
+            workspace_path("test-suite/tests/exhaustive/savilerow/diet/input.essence"),
             OptimiseDirection::Minimising,
         ),
         (
-            workspace_path("test-suite/tests/integration/savilerow/knapsack/input.essence"),
+            workspace_path("test-suite/tests/exhaustive/savilerow/knapsack/input.essence"),
             OptimiseDirection::Maximising,
         ),
         (
-            workspace_path("test-suite/tests/integration/savilerow/graphColouring/input.essence"),
+            workspace_path("test-suite/tests/exhaustive/savilerow/graphColouring/input.essence"),
             OptimiseDirection::Minimising,
         ),
     ];

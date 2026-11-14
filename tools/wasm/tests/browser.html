@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Conjure Wasm browser tests</title>
+<h1>Conjure Wasm browser tests</h1>
+<pre id="output">Running…</pre>
+<script type="module">
+import { runCaptureSuite, runSuite } from "./api-suite.mjs";
+const output = document.querySelector("#output");
+try {
+  const packagePath = new URLSearchParams(location.search).get("package") ?? "../../../target/wasm-package/index.mjs";
+  const { run } = await import(packagePath);
+  output.textContent = "";
+  await runCaptureSuite(run, message => { output.textContent += message + "\n"; });
+  await runSuite(run, message => { output.textContent += message + "\n"; });
+  // The source JS directory has no built engine, so its worker must report startup failure.
+  const { run: brokenRun } = await import("../index.mjs");
+  let startupFailed = false;
+  try { await brokenRun(["--help"]); }
+  catch (error) {
+    startupFailed = error.message.includes("worker.mjs") && error.message.includes("complete Wasm package");
+  }
+  if (!startupFailed) throw new Error("Worker startup error needs package context.");
+  output.textContent += "PASS: worker startup failure\n";
+  output.textContent += "ALL TESTS PASSED\n";
+  document.title = "PASS: Conjure Wasm browser tests";
+} catch (error) {
+  output.textContent += String(error.stack || error);
+  document.title = "FAIL: Conjure Wasm browser tests";
+}
+</script>
+</html>
