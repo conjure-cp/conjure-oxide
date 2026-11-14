@@ -8,5 +8,5 @@ echo ""
 echo ""
 echo ""
 
-conjure-oxide --parser=via-conjure solve model.essence
+conjure-oxide solve model.essence
 conjure-oxide solve model.essence

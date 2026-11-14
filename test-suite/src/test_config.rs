@@ -416,7 +416,7 @@ impl Default for TestConfig {
     fn default() -> Self {
         Self {
             skip: String::new(),
-            parser: vec!["tree-sitter".to_string(), "via-conjure".to_string()],
+            parser: vec!["tree-sitter".to_string()],
             rewriter: vec!["optimised".to_string()],
             comprehension_expander: vec!["auto".to_string()],
             heuristic: vec!["x".to_string()],
