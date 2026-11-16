@@ -4,8 +4,7 @@ use clap::{ArgAction, Args, Parser, Subcommand, ValueEnum};
 
 use clap_complete::Shell;
 use conjure_cp::settings::{
-    Channelling, DEFAULT_HEURISTIC_SEED, Heuristic, Parser as InputParser, QuantifiedExpander,
-    Rewriter, SolverFamily,
+    Channelling, DEFAULT_HEURISTIC_SEED, Heuristic, QuantifiedExpander, Rewriter, SolverFamily,
 };
 use conjure_cp::solver::adaptors::{MinionValueOrder, MinionVariableOrder, SatBackend};
 use git_version::git_version;
@@ -116,18 +115,6 @@ pub struct GlobalArgs {
         help_heading=LOGGING_HELP_HEADING
     )]
     pub rule_attempt_trace: Option<PathBuf>,
-
-    /// Which parser to use.
-    ///
-    /// Possible values: `tree-sitter`, `via-conjure`.
-    #[arg(
-        long,
-        default_value_t = InputParser::default(),
-        value_parser = parse_parser,
-        global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
-    )]
-    pub parser: InputParser,
 
     /// Which rewriter to use.
     ///
@@ -341,7 +328,6 @@ impl GlobalArgs {
     pub(crate) fn library_config(&self) -> conjure_cp::pipeline::Config {
         use conjure_cp::pipeline::{Config, TraceConfig};
         Config {
-            parser: self.parser,
             rewriter: self.rewriter,
             comprehension_expander: self.comprehension_expander,
             solver: self.solver,
@@ -429,10 +415,6 @@ fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
         return Err("Z3 solver support was not compiled in (enable the `z3` feature).".into());
     }
     Ok(family)
-}
-
-fn parse_parser(input: &str) -> Result<InputParser, String> {
-    input.parse()
 }
 
 fn parse_minion_value_order(input: &str) -> Result<MinionValueOrder, String> {

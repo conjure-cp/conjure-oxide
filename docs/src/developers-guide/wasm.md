@@ -71,8 +71,8 @@ The generated `conjure.mjs` exposes Emscripten's `FS` and `callMain` to
 `worker.mjs`, which writes the input files, runs the standard `main`, and captures
 stdout and stderr. There is no dedicated Wasm Rust executable. CLI parsing,
 parameters, solution limits, output formats, and help use the same code as native
-builds. Commands that launch external programs, such as `--parser via-conjure`,
-compile but return an operating-system error in a browser.
+builds. Commands that launch external programs, compile but return an operating-system 
+error in a browser.
 
 ## Library backend features
 

@@ -1,8 +1,6 @@
 #![allow(unused)]
 
-use conjure_cp::settings::{
-    Channelling, Heuristic, Parser, QuantifiedExpander, Rewriter, SolverFamily,
-};
+use conjure_cp::settings::{Channelling, Heuristic, QuantifiedExpander, Rewriter, SolverFamily};
 #[path = "../../crates/conjure-cp-cli/src/stats.rs"]
 mod stats;
 
@@ -305,13 +303,6 @@ pub struct SolverOptions {
 pub struct TestConfig {
     #[serde(
         default,
-        rename = "parser",
-        deserialize_with = "deserialize_string_or_vec"
-    )]
-    pub parser: Vec<String>, // Stage 1a: list of parsers (tree-sitter or via-conjure)
-
-    #[serde(
-        default,
         rename = "rewriter",
         deserialize_with = "deserialize_string_or_vec"
     )]
@@ -416,7 +407,6 @@ impl Default for TestConfig {
     fn default() -> Self {
         Self {
             skip: String::new(),
-            parser: vec!["tree-sitter".to_string(), "via-conjure".to_string()],
             rewriter: vec!["optimised".to_string()],
             comprehension_expander: vec!["auto".to_string()],
             heuristic: vec!["x".to_string()],
@@ -461,10 +451,6 @@ impl TestConfig {
         } else {
             Some(self.skip.as_str())
         }
-    }
-
-    pub fn configured_parsers(&self) -> Result<Vec<Parser>, String> {
-        parse_values(&self.parser)
     }
 
     pub fn configured_rewriters(&self) -> Result<Vec<Rewriter>, String> {
@@ -580,7 +566,6 @@ mod tests {
 
         for (solver, translation_time) in [("minion", 1.0), ("sat-log", 2.0)] {
             let config = RecordedRunConfig {
-                parser: "tree-sitter".to_string(),
                 rewriter: "optimised".to_string(),
                 comprehension_expander: "auto".to_string(),
                 heuristic: "x".to_string(),
@@ -591,7 +576,6 @@ mod tests {
             };
             let rows = (0..2)
                 .map(|model_index| RecordedRunStats {
-                    parser: config.parser.clone(),
                     rewriter: config.rewriter.clone(),
                     comprehension_expander: config.comprehension_expander.clone(),
                     heuristic: config.heuristic.clone(),
@@ -645,7 +629,6 @@ mod tests {
         let temp_dir = tempfile::tempdir().unwrap();
         let path = temp_dir.path().join(STATS_FILE_NAME);
         let config = RecordedRunConfig {
-            parser: "tree-sitter".to_owned(),
             solver: "minion".to_owned(),
             rewriter: "optimised".to_owned(),
             comprehension_expander: "auto".to_owned(),
@@ -655,7 +638,6 @@ mod tests {
             solver_seed: 7,
         };
         let row = |model_index| RecordedRunStats {
-            parser: config.parser.clone(),
             solver: config.solver.clone(),
             rewriter: config.rewriter.clone(),
             comprehension_expander: config.comprehension_expander.clone(),

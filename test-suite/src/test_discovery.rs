@@ -3,9 +3,9 @@ use std::path::{Component, Path};
 pub(crate) fn is_roundtrip_model_input(path: &Path) -> bool {
     path.extension().is_some_and(|ext| ext == "essence")
         && path
-            .file_stem()
-            .and_then(|stem| stem.to_str())
-            .is_some_and(|stem| !stem.contains(".generated") && !stem.contains(".expected"))
+            .file_name()
+            .and_then(|name| name.to_str())
+            .is_some_and(|name| !matches!(name, "generated.essence" | "expected.essence"))
 }
 
 /// Returns whether a test-suite file can affect the generated Rust test list or attributes.
@@ -64,10 +64,12 @@ mod tests {
             "tests/exhaustive/example/model.expected.solutions",
             "tests/exhaustive/example/model-generated-rule-trace.txt",
             "tests/custom/example/expected-output",
-            "tests/roundtrip/example/tree-sitter.generated.essence",
-            "tests/roundtrip/example/tree-sitter.expected.essence",
-            "tests/roundtrip/example/tree-sitter.generated.serialised.json",
-            "tests/roundtrip/example/tree-sitter.expected.serialised.json",
+            "tests/roundtrip/example/generated.essence",
+            "tests/roundtrip/example/expected.essence",
+            "tests/roundtrip/example/generated.serialised.json",
+            "tests/roundtrip/example/expected.serialised.json",
+            "tests/roundtrip/example/generated-error.txt",
+            "tests/roundtrip/example/expected-error.txt",
         ] {
             assert!(!is_compile_time_test_input(Path::new(path)), "{path}");
         }
@@ -75,17 +77,18 @@ mod tests {
 
     #[test]
     fn selects_only_roundtrip_source_models() {
-        assert!(is_roundtrip_model_input(Path::new(
-            "tests/roundtrip/example/input.essence"
-        )));
+        for name in [
+            "input.essence",
+            "model.generated.essence",
+            "model.expected.essence",
+        ] {
+            assert!(is_roundtrip_model_input(Path::new(name)), "{name}");
+        }
         assert!(!is_roundtrip_model_input(Path::new(
             "tests/roundtrip/example/config.toml"
         )));
-        assert!(!is_roundtrip_model_input(Path::new(
-            "tests/roundtrip/example/tree-sitter.generated.essence"
-        )));
-        assert!(!is_roundtrip_model_input(Path::new(
-            "tests/roundtrip/example/tree-sitter.expected.essence"
-        )));
+        for name in ["generated.essence", "expected.essence"] {
+            assert!(!is_roundtrip_model_input(Path::new(name)), "{name}");
+        }
     }
 }

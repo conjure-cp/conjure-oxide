@@ -24,7 +24,6 @@ run_case() {
     first_case=0
 
     conjure-oxide solve \
-        --parser tree-sitter \
         --rewriter optimised \
         --solver z3 \
         --no-run-solver \
