@@ -35,7 +35,8 @@ merge_reports as $coverage_by_file
 | (if $total > 0 then ((100 * $with_examples / $total) | round) else 0 end) as $percentage_examples
 | (if $total > 0 then ((100 * $with_docs / $total) | round) else 0 end) as $percentage_docs
 | "\($percentage_examples)% with examples, \($percentage_docs)% documented -- \($with_examples)/\($with_docs)/\($total)"
-EOF)
+EOF
+)
 
 while IFS=$'\t' read -r crate flag1 flag2; do
   flags=()
@@ -50,7 +51,7 @@ while IFS=$'\t' read -r crate flag1 flag2; do
   # Cargo supplies an output directory to rustdoc, so current nightlies write
   # coverage JSON to files instead of stdout. Discover those files through
   # Cargo's machine-readable artifact messages.
-  RUSTDOCFLAGS='-Z unstable-options --show-coverage' \
+  RUSTDOCFLAGS='-Z unstable-options --coverage' \
     cargo +nightly -Z unstable-options doc \
       --output-format=json \
       --message-format=json \

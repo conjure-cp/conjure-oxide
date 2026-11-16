@@ -4,8 +4,7 @@ use clap::{ArgAction, Args, Parser, Subcommand, ValueEnum};
 
 use clap_complete::Shell;
 use conjure_cp::settings::{
-    Channelling, DEFAULT_HEURISTIC_SEED, Heuristic, Parser as InputParser, QuantifiedExpander,
-    Rewriter, SolverFamily,
+    Channelling, DEFAULT_HEURISTIC_SEED, Heuristic, QuantifiedExpander, Rewriter, SolverFamily,
 };
 use conjure_cp::solver::adaptors::{MinionValueOrder, MinionVariableOrder, SatBackend};
 use git_version::git_version;
@@ -21,8 +20,6 @@ pub(crate) const MODELLING_HELP_HEADING: Option<&str> = Some("Modelling choices"
 pub enum Command {
     /// Solve a model
     Solve(solve::Args),
-    /// Print the JSON info file schema
-    PrintJsonSchema,
     /// Tests whether the Essence model is solvable with Conjure Oxide, and whether it gets the
     /// same solutions as Conjure.
     ///
@@ -118,18 +115,6 @@ pub struct GlobalArgs {
         help_heading=LOGGING_HELP_HEADING
     )]
     pub rule_attempt_trace: Option<PathBuf>,
-
-    /// Which parser to use.
-    ///
-    /// Possible values: `tree-sitter`, `via-conjure`.
-    #[arg(
-        long,
-        default_value_t = InputParser::default(),
-        value_parser = parse_parser,
-        global = true,
-        help_heading = CONFIGURATION_HELP_HEADING
-    )]
-    pub parser: InputParser,
 
     /// Which rewriter to use.
     ///
@@ -338,6 +323,40 @@ pub struct GlobalArgs {
     pub log_detail: Option<LogDetail>,
 }
 
+impl GlobalArgs {
+    /// Convert command-line options into the library's modelling configuration.
+    pub(crate) fn library_config(&self) -> conjure_cp::pipeline::Config {
+        use conjure_cp::pipeline::{Config, TraceConfig};
+        Config {
+            rewriter: self.rewriter,
+            comprehension_expander: self.comprehension_expander,
+            solver: self.solver,
+            extra_rule_sets: self.extra_rule_sets.clone(),
+            heuristic: self.heuristic,
+            seed: self.seed,
+            responses: self.responses.clone(),
+            channelling: self.channelling,
+            amo_encoding: self.amo_encoding,
+            cardinality_encoding: self.cardinality_encoding,
+            pb_encoding: self.pb_encoding,
+            element_encoding: self.element_encoding,
+            table_encoding: self.table_encoding,
+            alldifferent_encoding: self.alldifferent_encoding,
+            minion_discrete_threshold: self.minion_discrete_threshold,
+            minion_varorder: self.minion_varorder,
+            minion_valorder: self.minion_valorder,
+            sat_backend: self.sat_backend,
+            solver_seed: self.solver_seed,
+            solver_timeout: self.solver_timeout.map(std::time::Duration::from),
+            trace: TraceConfig {
+                rules: self.rule_trace.is_some(),
+                attempts: self.rule_attempt_trace.is_some(),
+                aggregates: self.rule_trace_aggregates.is_some(),
+            },
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, ValueEnum)]
 pub enum LogFormat {
     #[default]
@@ -396,10 +415,6 @@ fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
         return Err("Z3 solver support was not compiled in (enable the `z3` feature).".into());
     }
     Ok(family)
-}
-
-fn parse_parser(input: &str) -> Result<InputParser, String> {
-    input.parse()
 }
 
 fn parse_minion_value_order(input: &str) -> Result<MinionValueOrder, String> {

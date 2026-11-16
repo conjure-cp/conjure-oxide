@@ -20,7 +20,7 @@ This is useful when pushing unfinished work, for example, to document what isn't
 - name: Calculate PR doc coverage
   id: prddoc
   run: |
-    RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspace --no-deps > coverage.md
+    RUSTDOCFLAGS='-Z unstable-options --coverage' cargo +nightly doc --workspace --no-deps > coverage.md
     echo 'coverage<<EOFABC' >> $GITHUB_OUTPUT
     echo "$(cat coverage.md)" >> $GITHUB_OUTPUT
     echo 'EOFABC' >> $GITHUB_OUTPUT```

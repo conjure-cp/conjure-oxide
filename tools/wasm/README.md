@@ -264,8 +264,7 @@ The script compiles `conjure-cp-cli` with
 `--no-default-features --features wasm-target`. This selects BatSat and omits
 CaDiCaL, Z3, the language server, mimalloc, and extra rule checks. Requesting Z3
 or `server-lsp` gives an ordinary error explaining that the feature was not
-compiled in. Commands that launch external programs, such as
-`--parser via-conjure`, compile but fail normally in a browser.
+compiled in. Commands that launch external programs, compile but fail normally in a browser.
 
 Model support and output are those of the standard CLI. Search completion
 metadata, richer errors, streaming, and reusable workers can be student projects.

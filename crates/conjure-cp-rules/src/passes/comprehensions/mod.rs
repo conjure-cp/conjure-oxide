@@ -1,4 +1,4 @@
 //! Comprehension rules
 
-mod expansion;
+pub(crate) mod expansion;
 mod normalise;

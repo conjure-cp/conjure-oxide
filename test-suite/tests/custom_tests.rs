@@ -113,9 +113,4 @@ fn expected_custom_files_for_case(
     expected_files
 }
 
-#[test]
-fn assert_conjure_present() {
-    conjure_cp_cli::find_conjure::conjure_executable().unwrap();
-}
-
 include!(concat!(env!("OUT_DIR"), "/gen_tests_custom.rs"));

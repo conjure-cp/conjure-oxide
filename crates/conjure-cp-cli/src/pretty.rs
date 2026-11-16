@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Arc};
+use std::path::PathBuf;
 
 use anyhow::anyhow;
 use clap::ValueHint;
@@ -6,7 +6,7 @@ use clap::ValueHint;
 use conjure_cp_cli::utils::testing::{serialize_domains, serialize_model};
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
-use crate::solve::{init_context, parse};
+use conjure_cp::pipeline::Pipeline;
 
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
@@ -20,15 +20,10 @@ pub struct Args {
 }
 
 pub fn run_pretty_command(global_args: GlobalArgs, pretty_args: Args) -> anyhow::Result<()> {
-    // Preamble
-    let input_file = pretty_args.input_file.clone();
-    let context = init_context(&global_args, input_file, None)?;
-
-    // Get the file path back from the context
-    let ctx_lock = context.read().unwrap();
-    let file = ctx_lock.essence_file_name.as_ref().unwrap();
-
-    let model = parse(&global_args, Arc::clone(&context), file)?;
+    let pipeline = Pipeline::new(global_args.library_config())?;
+    pipeline.context().write().unwrap().essence_file_name =
+        Some(pretty_args.input_file.to_string_lossy().into_owned());
+    let model = pipeline.parse_file(&pretty_args.input_file)?;
 
     // Running the correct method to acquire pretty string
     let output = match pretty_args.output_format.as_str() {

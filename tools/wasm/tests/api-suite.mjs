@@ -103,7 +103,6 @@ export async function runSuite(run, log = () => {}) {
   for (const [args, context] of [
     [["solve", "/model.essence", "--solver", "z3"], "not compiled in"],
     [["server-lsp"], "not compiled in"],
-    [["solve", "/model.essence", "--parser", "via-conjure"], "Could not find correct conjure executable"],
     [["unknown-command"], "unrecognized subcommand"],
   ]) {
     const result = await run(args, { "/model.essence": booleans });

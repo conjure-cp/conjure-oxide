@@ -8,12 +8,19 @@ conjure-cp-core = { version = "0.0.1", path = "../conjure-cp-core", default-feat
 conjure-cp-essence-macros = { version = "0.1.0", path = "../conjure-cp-essence-macros" }
 conjure-cp-essence-parser = { version = "0.1.0", path = "../conjure-cp-essence-parser", default-features = false }
 
+anyhow = { workspace = true }
+tempfile = { workspace = true }
+tracing = { workspace = true }
+uniplate = { workspace = true }
+versions = { workspace = true }
+
 [features]
 default = ["sat-batsat", "sat-cadical", "z3"]
 sat-cadical = ["conjure-cp-core/sat-cadical", "conjure-cp-essence-parser/sat-cadical"]
 sat-batsat = ["conjure-cp-core/sat-batsat", "conjure-cp-essence-parser/sat-batsat"]
 z3 = ["conjure-cp-core/z3"]
 z3-bundled = [
+    "z3",
     "conjure-cp-core/z3-bundled",
     "conjure-cp-essence-macros/z3-bundled",
     "conjure-cp-essence-parser/z3-bundled",
@@ -30,4 +37,3 @@ defile = { workspace = true }
 itertools = { workspace = true }
 pretty_assertions = { workspace = true }
 serde_json = { workspace = true }
-uniplate = { workspace = true }
