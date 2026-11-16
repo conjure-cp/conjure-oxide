@@ -73,7 +73,7 @@ fn clean_test_dir_for_accept(path: &str) -> Result<(), std::io::Error> {
                 .and_then(|ext| ext.to_str())
                 .is_some_and(|ext| ext == "essence" || ext == "param");
             let is_generated_or_expected =
-                file_name.contains(".generated") || file_name.contains(".expected");
+                matches!(file_name.as_ref(), "generated.essence" | "expected.essence");
             is_model_file && !is_generated_or_expected
         };
 
@@ -180,11 +180,9 @@ fn roundtrip_test_inner(
             let generated_essence = fs::read_to_string(roundtrip_essence_path(path, "generated"))?;
             assert_eq!(expected_essence, generated_essence);
 
-            let new_model = parse(&roundtrip_essence_path(path, "generated"), context.clone())?;
-            save_essence(&new_model, path, "generated2")?;
-            let new_generated_essence =
-                fs::read_to_string(roundtrip_essence_path(path, "generated"))?;
-            assert_eq!(generated_essence, new_generated_essence);
+            let reparsed_model =
+                parse(&roundtrip_essence_path(path, "generated"), context.clone())?;
+            assert_eq!(generated_essence, format!("{reparsed_model}\n"));
 
             return Ok(expected_roundtrip_files_for_case(true));
         }
