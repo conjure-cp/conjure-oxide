@@ -1428,9 +1428,9 @@ fn parse_comprehension(
                 match name.as_str() {
                     "GenDomainNoRepr" => {
                         let gen_names_array = gen_inner
-                        .pointer("/0")
-                        .and_then(Value::as_array)
-                        .ok_or_else(|| fail("gen_inner.pointer(/0).as_array"))?;
+                            .pointer("/0")
+                            .and_then(Value::as_array)
+                            .ok_or_else(|| fail("gen_inner.pointer(/0).as_array"))?;
                         let gen_names = gen_names_array.iter();
 
                         for gen_name in gen_names {
@@ -1453,19 +1453,20 @@ fn parse_comprehension(
                                 domain_value,
                                 &mut generator_symboltable.write(),
                             )?;
-                            
-                            comprehension = comprehension.generator(DeclarationPtr::new_find(name.into(), domain))
+
+                            comprehension = comprehension
+                                .generator(DeclarationPtr::new_find(name.into(), domain))
                         }
 
                         comprehension
                     }
                     "GenInExpr" => {
                         let gen_names_array = gen_inner
-                        .pointer("/0")
-                        .and_then(Value::as_array)
-                        .ok_or_else(|| fail("gen_inner.pointer(/0).as_array"))?;
+                            .pointer("/0")
+                            .and_then(Value::as_array)
+                            .ok_or_else(|| fail("gen_inner.pointer(/0).as_array"))?;
                         let gen_names = gen_names_array.iter();
-                        
+
                         for gen_name in gen_names {
                             let name = gen_name
                                 .pointer("/Single/Name")

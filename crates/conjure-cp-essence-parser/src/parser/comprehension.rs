@@ -170,11 +170,11 @@ fn parse_generator(
     }
 
     ctx.record_error(RecoverableParseError::new(
-            format!(
-                "Generator requires either a domain or collection (e.g. `i : domain` or `i <- expr`)"
-            ),
-            Some(generator_node.range()),
-        ));
+        format!(
+            "Generator requires either a domain or collection (e.g. `i : domain` or `i <- expr`)"
+        ),
+        Some(generator_node.range()),
+    ));
     Ok(None)
 }
 
