@@ -1,0 +1,16 @@
+language ESSENCE' 1.0
+
+$ Regression for #1227; both original quasigroup fixtures use this instance.
+$ There are exactly two solutions. Sorting matrix values hid misplaced entries.
+letting n be 4
+letting mat be [
+    [0, 1, 0, 0],
+    [0, 0, 2, 0],
+    [0, 3, 0, 0],
+    [0, 0, 0, 4]
+]
+
+find x : matrix indexed by [int(1..n), int(1..n)] of int(1..n)
+such that
+    (forAll i,j : int(1..n) . (0 < mat[i,j]) -> (x[i,j] = mat[i,j])),
+    (forAll i : int(1..n) . (allDiff(x[i,..]) /\ allDiff(x[..,i])))
