@@ -36,6 +36,7 @@ mod tests {
     fn card_lowers_to_a_sum_over_the_inner_domain() {
         let domain = Domain::permutation(
             PermutationAttr::<i32> {
+                representation: None,
                 num_moved: Range::Unbounded,
             },
             domain_int!(1..3),

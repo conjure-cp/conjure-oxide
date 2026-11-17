@@ -5,7 +5,15 @@ use crate::AcceptMode;
 
 /// Returns whether a file name represents an expected golden artifact.
 fn is_expected_golden_file(file_name: &str) -> bool {
-    file_name.contains(".expected") || file_name.contains("-expected-")
+    matches!(
+        file_name,
+        "expected.essence"
+            | "expected.serialised.json"
+            | "expected-error.txt"
+            | "stdout.expected"
+            | "stderr.expected"
+    ) || file_name.ends_with(".expected.solutions")
+        || file_name.ends_with("-expected-rule-trace.txt")
 }
 
 /// Lists expected snapshot files in `path` that are not present in `allowed_expected_files`.

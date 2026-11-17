@@ -1,3 +1,4 @@
+mod cardinality;
 mod concat;
 mod difference;
 mod equals;

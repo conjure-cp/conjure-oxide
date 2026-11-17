@@ -1,0 +1,58 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+a = ({1,2} subsetEq {1,2,3}),
+b = ({1,2,3} subsetEq {1,2,3}),
+c = ({4} subsetEq {1,2,3})
+
+--
+
+a,
+b,
+c = false
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+b,
+c = false
+new SAT encoding decisions:
+  assert(a) using tseitin
+
+--
+
+b,
+c = false
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+c = false
+new SAT encoding decisions:
+  assert(b) using tseitin
+
+--
+
+c = false
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(c = false) using tseitin
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+assert(a) using tseitin,
+assert(b) using tseitin,
+assert(c = false) using tseitin
+

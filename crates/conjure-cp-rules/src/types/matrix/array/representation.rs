@@ -26,8 +26,8 @@ use std::collections::VecDeque;
 /// can choose its ordinary abstract-type representation.
 fn has_native_z3_sort(domain: &GroundDomain) -> bool {
     match domain {
-        GroundDomain::Bool | GroundDomain::Int(_) => true,
-        GroundDomain::Matrix(value, indices) => {
+        GroundDomain::Bool | GroundDomain::Int(_, _) => true,
+        GroundDomain::Matrix(value, indices, _) => {
             has_native_z3_sort(value)
                 && indices
                     .iter()
@@ -94,18 +94,22 @@ mod tests {
     use conjure_cp::ast::{Moo, Range};
 
     fn int_domain(range: Range<i32>) -> GroundDomain {
-        GroundDomain::Int(vec![range])
+        GroundDomain::Int(vec![range], None)
     }
 
     #[test]
     fn native_z3_sort_rejects_a_matrix_of_tuples() {
-        let tuple = GroundDomain::Tuple(vec![
-            int_domain(Range::Single(1)).into(),
-            int_domain(Range::Bounded(2, 4)).into(),
-        ]);
+        let tuple = GroundDomain::Tuple(
+            vec![
+                int_domain(Range::Single(1)).into(),
+                int_domain(Range::Bounded(2, 4)).into(),
+            ],
+            None,
+        );
         let matrix = GroundDomain::Matrix(
             Moo::new(tuple),
             vec![Moo::new(int_domain(Range::Bounded(1, 3)))],
+            None,
         );
 
         assert!(!has_native_z3_sort(&matrix));
@@ -120,6 +124,7 @@ mod tests {
         let matrix = GroundDomain::Matrix(
             Moo::new(set),
             vec![Moo::new(int_domain(Range::Bounded(1, 2)))],
+            None,
         );
 
         assert!(has_native_z3_sort(&matrix));

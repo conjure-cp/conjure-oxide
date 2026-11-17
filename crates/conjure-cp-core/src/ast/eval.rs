@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use crate::ast::enumerated::EnumVariant;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationKind, Expression as Expr, Field, Literal as Lit, Metadata,
     Moo,
@@ -35,6 +36,10 @@ fn eval_constant_set(expr: &Expr) -> Option<Vec<Lit>> {
 /// direct evaluator calls on unlike primitive or abstract literal kinds safely unevaluable.
 fn equal_constant_literals(lhs: &Lit, rhs: &Lit) -> Option<bool> {
     match (lhs, rhs) {
+        (Lit::EnumVariant(lhs), Lit::EnumVariant(rhs)) if lhs.ty == rhs.ty => {
+            Some(lhs.variant == rhs.variant)
+        }
+        (Lit::Unnamed(lhs), Lit::Unnamed(rhs)) if lhs.ty == rhs.ty => Some(lhs.value == rhs.value),
         (Lit::Int(_), Lit::Int(_)) | (Lit::Bool(_), Lit::Bool(_)) => {
             Some(lhs.essence_cmp(rhs) == CmpOrdering::Equal)
         }
@@ -45,6 +50,17 @@ fn equal_constant_literals(lhs: &Lit, rhs: &Lit) -> Option<bool> {
         }
         _ => None,
     }
+}
+
+/// Preserve already-distinct literal order; constant duplicates denote the same set member.
+fn normalise_constant_set(mut literal: Lit) -> Lit {
+    if let Lit::AbstractLiteral(AbstractLiteral::Set(items)) = &mut literal
+        && super::literals::distinct_literal_count(items) != items.len()
+    {
+        items.sort_by(Lit::essence_cmp);
+        items.dedup_by(|a, b| a.essence_cmp(b).is_eq());
+    }
+    literal
 }
 
 /// Simplify an expression to a constant using only constants already present at this node.
@@ -207,6 +223,8 @@ fn constraint_skips_deep_root_normalisation(expr: &Expr) -> bool {
         | Expr::FlatMinusEq(_, _, _)
         | Expr::FlatAbsEq(_, _, _)
         | Expr::FlatAllDiff(_, _)
+        | Expr::FlatTable(..)
+        | Expr::FlatShortTable(..)
         | Expr::SmtDistinct(_, _)
         | Expr::FlatWeightedSumLeq(_, _, _, _)
         | Expr::FlatWeightedSumGeq(_, _, _, _)
@@ -546,9 +564,13 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             domain.contains(lit).ok().map(Into::into)
         }
-        Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
-        Expr::Atomic(_, Atom::Reference(reference)) => reference.resolve_constant(),
-        Expr::AbstractLiteral(_, a) => Some(Lit::AbstractLiteral(a.clone().into_literals()?)),
+        Expr::Atomic(_, Atom::Literal(c)) => Some(normalise_constant_set(c.clone())),
+        Expr::Atomic(_, Atom::Reference(reference)) => {
+            reference.resolve_constant().map(normalise_constant_set)
+        }
+        Expr::AbstractLiteral(_, a) => Some(normalise_constant_set(Lit::AbstractLiteral(
+            a.clone().into_literals()?,
+        ))),
         Expr::Comprehension(_, comprehension) => {
             eval_constant_comprehension(comprehension.as_ref())
         }
@@ -685,8 +707,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::And(_, e) => {
             vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
         }
-        Expr::Table(_, _, _) => None,
-        Expr::NegativeTable(_, _, _) => None,
+        Expr::Table(_, _, _) | Expr::FlatTable(..) | Expr::FlatShortTable(..) => None,
+        Expr::NegativeTable(_, _, _) | Expr::ShortTable(_, _, _) => None,
         Expr::AtLeast(_, _, _, _) => None,
         Expr::AtMost(_, _, _, _) => None,
         Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => None,
@@ -752,17 +774,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             opt_vec_lit_op::<i32, i32>(|e| e.iter().max().copied(), e.as_ref()).map(Lit::Int)
         }
         Expr::UnsafeDiv(_, a, b) | Expr::SafeDiv(_, a, b) => {
-            if unwrap_expr::<i32>(b)? == 0 {
-                return None;
-            }
-            bin_op::<i32, i32>(|a, b| ((a as f32) / (b as f32)).floor() as i32, a, b).map(Lit::Int)
+            super::floor_div(unwrap_expr::<i32>(a)?, unwrap_expr::<i32>(b)?).map(Lit::Int)
         }
         Expr::UnsafeMod(_, a, b) | Expr::SafeMod(_, a, b) => {
-            if unwrap_expr::<i32>(b)? == 0 {
-                return None;
-            }
-            bin_op::<i32, i32>(|a, b| a - b * (a as f32 / b as f32).floor() as i32, a, b)
-                .map(Lit::Int)
+            super::floor_mod(unwrap_expr::<i32>(a)?, unwrap_expr::<i32>(b)?).map(Lit::Int)
         }
         Expr::Substring(_, s, t) => match (s.as_ref(), t.as_ref()) {
             (
@@ -849,7 +864,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 return None;
             }
 
-            let modulo = a - b * (a as f32 / b as f32).floor() as i32;
+            let modulo = super::floor_mod(a, b)?;
             Some(Lit::Bool(modulo == c))
         }
         Expr::MinionPow(_, a, b, c) => {
@@ -909,7 +924,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                     return None;
                 };
                 match x {
-                    Lit::Int(_) | Lit::Bool(_) => {
+                    Lit::Int(_) | Lit::Bool(_) | Lit::EnumVariant(_) | Lit::Unnamed(_) => {
                         if lits.contains(x) {
                             return Some(Lit::Bool(false));
                         } else {
@@ -929,7 +944,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 };
 
                 match x {
-                    Lit::Int(_) | Lit::Bool(_) => {
+                    Lit::Int(_) | Lit::Bool(_) | Lit::EnumVariant(_) | Lit::Unnamed(_) => {
                         if lits.contains(x) {
                             return Some(Lit::Bool(false));
                         } else {
@@ -1023,6 +1038,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 _ => None,
             }
         }
+        Expr::SatObjective(..) => None,
         Expr::SATInt(_, _, _, _) => {
             // TODO: If this SATInt is composed of literals, we should evaluate it back to an
             // integer literal.
@@ -1143,8 +1159,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 return None;
             };
             let length = match collection {
-                AbstractLiteral::Set(values)
-                | AbstractLiteral::MSet(values)
+                AbstractLiteral::Set(values) => super::literals::distinct_literal_count(&values),
+                AbstractLiteral::MSet(values)
                 | AbstractLiteral::Sequence(values)
                 | AbstractLiteral::Matrix(values, _) => values.len(),
                 AbstractLiteral::Function(entries) => entries.len(),
@@ -1215,10 +1231,22 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             })?;
             Some(lt.into())
         }
-        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) => None,
+        Expr::Pred(_, expr) => {
+            let ev = unwrap_expr::<EnumVariant>(expr)?;
+            ev.pred().map(Lit::EnumVariant)
+        }
+        Expr::Succ(_, expr) => {
+            let ev = unwrap_expr::<EnumVariant>(expr)?;
+            ev.succ().map(Lit::EnumVariant)
+        }
+        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) | Expr::IndexOf(_, _, _) => {
+            None
+        }
         // Needs the target's domain to expand, which this function has no access to; the
         // fallback rewrite rule (passes::attribute_as_constraint) handles expansion instead.
-        Expr::AttributeAsConstraint(_, _, _, _) => None,
+        Expr::AttributeAsConstraint(_, _, _, _)
+        | Expr::SatElement(_, _, _, _)
+        | Expr::SatAllDifferentComparisons(_, _) => None,
     }
 }
 
@@ -1576,6 +1604,28 @@ mod tests {
         let cardinality = Expr::Card(Metadata::new(), Moo::new(set));
 
         assert_eq!(eval_constant(&cardinality), Some(Lit::Int(2)));
+    }
+
+    #[test]
+    fn constant_set_duplicates_are_normalised_before_cardinality() {
+        let literal = Lit::AbstractLiteral(AbstractLiteral::Set(vec![1.into(), 1.into()]));
+        let atomic = Expr::from(literal);
+        let expression = Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Set(vec![1.into(), 1.into()]),
+        );
+        for set in [atomic, expression] {
+            let cardinality = Expr::Card(Metadata::new(), Moo::new(set));
+            assert_eq!(eval_constant(&cardinality), Some(Lit::Int(1)));
+        }
+        let multiset = Expr::from(Lit::AbstractLiteral(AbstractLiteral::MSet(vec![
+            1.into(),
+            1.into(),
+        ])));
+        assert_eq!(
+            eval_constant(&Expr::Card(Metadata::new(), Moo::new(multiset))),
+            Some(Lit::Int(2))
+        );
     }
 
     #[test]

@@ -97,7 +97,7 @@ pub fn parse_atom(
         }
         "flatten" => parse_flatten(ctx, node),
         "element_id" => parse_element_id(ctx, node),
-        "table" | "negative_table" => parse_table(ctx, node),
+        "table" | "negative_table" | "short_table" => parse_table(ctx, node),
         "index_or_slice" => parse_index_or_slice(ctx, node),
         "annotation_expr" => parse_annotation_expression(ctx, node),
         // for now, assume is binary since powerset isn't implemented
@@ -106,6 +106,35 @@ pub fn parse_atom(
         "comprehension" => parse_comprehension(ctx, node),
         "defined_expr" | "range_expr" | "to_set_expr" | "to_mset_expr" | "to_relation_expr"
         | "perm_inverse_expr" => parse_function_unary_operator(ctx, node),
+        "enum_operator" => {
+            let Some(argument) = field!(recover, ctx, node, "argument") else {
+                return Ok(None);
+            };
+            let saved = ctx.typechecking_context;
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            let parsed = parse_expression(ctx, argument);
+            ctx.typechecking_context = saved;
+            let Some(expression) = parsed? else {
+                return Ok(None);
+            };
+            if !matches!(expression.return_type(), ReturnType::EnumeratedType(_)) {
+                ctx.record_error(RecoverableParseError::new(
+                    "Expected an enum member".to_owned(),
+                    Some(argument.range()),
+                ));
+                return Ok(None);
+            }
+            let Some(operator) = field!(recover, ctx, node, "operator") else {
+                return Ok(None);
+            };
+            let constructor =
+                if &ctx.source_code[operator.start_byte()..operator.end_byte()] == "pred" {
+                    Expression::Pred
+                } else {
+                    Expression::Succ
+                };
+            Ok(Some(constructor(Metadata::new(), Moo::new(expression))))
+        }
         "apply_expr" => parse_apply_expr(ctx, node),
         "image_expr" | "image_set_expr" | "pre_image_expr" | "inverse_expr" | "compose_expr" => {
             parse_function_binary_operator(ctx, node)
@@ -207,6 +236,11 @@ fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
             Moo::new(variables),
             Moo::new(rows),
         ))),
+        "short_table" => Ok(Some(Expression::ShortTable(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(rows),
+        ))),
         "negative_table" => Ok(Some(Expression::NegativeTable(
             Metadata::new(),
             Moo::new(variables),
@@ -271,7 +305,7 @@ fn parse_element_id(
         ctx.typechecking_context = saved_context;
         return Ok(None);
     };
-    let Some(value) = parse_table_operand(ctx, &value_node)? else {
+    let Some(value) = parse_expression(ctx, value_node)? else {
         ctx.typechecking_context = saved_context;
         return Ok(None);
     };
@@ -901,7 +935,14 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
                 DeclarationKind::DomainLetting(_) => SymbolKind::LettingVar,
                 DeclarationKind::Quantified(..) => SymbolKind::FindVar,
                 DeclarationKind::QuantifiedExpr(..) => SymbolKind::FindVar,
-                &_ => todo!(),
+                DeclarationKind::EnumeratedType(_) | DeclarationKind::UnnamedType(_) => {
+                    ctx.record_error(RecoverableParseError::new(
+                        format!("The identifier '{name}' is a type, not a value"),
+                        Some(node.range()),
+                    ));
+                    return Ok(None);
+                }
+                _ => SymbolKind::LettingVar,
             };
 
             let hover = HoverInfo {
@@ -976,17 +1017,19 @@ fn typecheck_variable(
     let actual = match ground_domain.as_ref() {
         GroundDomain::Empty(_) => "empty",
         GroundDomain::Bool => "bool",
-        GroundDomain::Int(_) => "int",
-        GroundDomain::Tuple(_) => "tuple",
-        GroundDomain::Record(_) => "record",
-        GroundDomain::Variant(_) => "variant",
-        GroundDomain::Matrix(_, _) => "matrix",
+        GroundDomain::Int(_, _) => "int",
+        GroundDomain::Tuple(_, _) => "tuple",
+        GroundDomain::Record(_, _) => "record",
+        GroundDomain::Variant(_, _) => "variant",
+        GroundDomain::Matrix(_, _, _) => "matrix",
         GroundDomain::Sequence(_, _) => "sequence",
         GroundDomain::Set(_, _) => "set",
         GroundDomain::MSet(_, _) => "mset",
         GroundDomain::Function(_, _, _) => "function",
         GroundDomain::Relation(_, _) => "relation",
         GroundDomain::Partition(_, _) => "partition",
+        GroundDomain::EnumeratedType(_, _) => "enum",
+        GroundDomain::UnnamedType(_) => "unnamed",
         GroundDomain::Permutation(_, _) => "permutation",
     };
 
@@ -1073,6 +1116,8 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         let actual = match &lit {
             Literal::Bool(_) => "bool",
             Literal::Int(_) => "int",
+            Literal::EnumVariant(_) => "enum",
+            Literal::Unnamed(_) => "unnamed",
             Literal::AbstractLiteral(_) => return Ok(None), // Abstract literals aren't type-checked here
         };
 

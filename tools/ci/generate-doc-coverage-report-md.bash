@@ -59,7 +59,8 @@ merge_reports
   ]) as $rows
 | $cols, $rows[] | @csv
 
-EOF)
+EOF
+)
 
 while IFS=$'\t' read -r crate flag1 flag2; do
   flags=()
@@ -75,7 +76,7 @@ while IFS=$'\t' read -r crate flag1 flag2; do
   # Cargo supplies an output directory to rustdoc, so current nightlies write
   # coverage JSON to files instead of stdout. Discover those files through
   # Cargo's machine-readable artifact messages.
-  RUSTDOCFLAGS='-Z unstable-options --show-coverage' \
+  RUSTDOCFLAGS='-Z unstable-options --coverage' \
     cargo +nightly -Z unstable-options doc \
       --output-format=json \
       --message-format=json \

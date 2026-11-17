@@ -1,0 +1,518 @@
+Model before rewriting:
+
+find a: int(representation order, 1..4)
+find b: int(representation twos_complement, 0..5)
+find c: int(1..3)
+find d: int(representation sign_magnitude, -3..2)
+
+such that
+
+sum([a,b;int(1..)]) > 7,
+c < a,
+d < 0,
+sum([d,c;int(1..)]) > 0
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+new variables:
+  find c#offset_1: bool
+  find c#offset_2: bool
+new constraints:
+  or([!(c#offset_2),and([!(c#offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [c#offset_1,c#offset_2;int(1..)] [1, 3]) >= 1,SATInt(Offset, [c#offset_1,c#offset_2;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [c#offset_1,c#offset_2;int(1..)] [1, 3]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*c#offset_1, 2*c#offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+
+--
+
+SATInt(Offset, [c#offset_1,c#offset_2;int(1..)] [1, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*c#offset_1, 2*c#offset_2) LessEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }]
+
+--
+
+sum([a,b;int(1..)]) > 7,
+c < a,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+or([!(c#offset_2),and([!(c#offset_1);int(1..)]);int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([a,b;int(1..)]) > 7,
+c < a,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+or([and([__0,__1;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(or([!(c#offset_2),and([!(c#offset_1);int(1..)]);int(1..)])) using tseitin
+
+--
+
+sum([a,b;int(1..)]) > 7,
+c < a,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([a,b;int(1..)]) > 7,
+c < a,
+d < 0,
+sum([d,c;int(1..)]) > 0
+new SAT encoding decisions:
+  assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#order_1: bool
+  find a#order_2: bool
+  find a#order_3: bool
+  find a#order_4: bool
+new constraints:
+  a#order_1
+  or([!(a#order_2),a#order_1;int(1..)])
+  or([!(a#order_3),a#order_2;int(1..)])
+  or([!(a#order_4),a#order_3;int(1..)])
+  or([and([SATInt(Order, [a#order_1,a#order_2,a#order_3,a#order_4;int(1..)] [1, 4]) >= 1,SATInt(Order, [a#order_1,a#order_2,a#order_3,a#order_4;int(1..)] [1, 4]) <= 4;int(1..)]);int(1..)])
+
+--
+
+c < a
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*c#offset_1, 2*c#offset_2, -1*a#order_2, -1*a#order_3, -1*a#order_4) Less 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 5, structure: Chain }]
+
+--
+
+SATInt(Order, [a#order_1,a#order_2,a#order_3,a#order_4;int(1..)] [1, 4]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*a#order_2, 1*a#order_3, 1*a#order_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
+
+--
+
+SATInt(Order, [a#order_1,a#order_2,a#order_3,a#order_4;int(1..)] [1, 4]) <= 4
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*a#order_2, 1*a#order_3, 1*a#order_4) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }]
+
+--
+
+sum([a,b;int(1..)]) > 7,
+__2,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+a#order_1,
+or([!(a#order_2),a#order_1;int(1..)]),
+or([!(a#order_3),a#order_2;int(1..)]),
+or([!(a#order_4),a#order_3;int(1..)]),
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([a,b;int(1..)]) > 7,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+a#order_1,
+or([!(a#order_2),a#order_1;int(1..)]),
+or([!(a#order_3),a#order_2;int(1..)]),
+or([!(a#order_4),a#order_3;int(1..)]),
+or([and([__3,__4;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+sum([a,b;int(1..)]) > 7,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+a#order_1,
+or([!(a#order_2),a#order_1;int(1..)]),
+or([!(a#order_3),a#order_2;int(1..)]),
+or([!(a#order_4),a#order_3;int(1..)]),
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([a,b;int(1..)]) > 7,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+or([!(a#order_2),a#order_1;int(1..)]),
+or([!(a#order_3),a#order_2;int(1..)]),
+or([!(a#order_4),a#order_3;int(1..)]),
+or([and([__3,__4;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(a#order_1) using tseitin
+
+--
+
+sum([a,b;int(1..)]) > 7,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+or([!(a#order_2),a#order_1;int(1..)]),
+or([!(a#order_3),a#order_2;int(1..)]),
+or([!(a#order_4),a#order_3;int(1..)]),
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([a,b;int(1..)]) > 7,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+or([!(a#order_3),a#order_2;int(1..)]),
+or([!(a#order_4),a#order_3;int(1..)]),
+or([and([__3,__4;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(or([!(a#order_2),a#order_1;int(1..)])) using tseitin
+
+--
+
+sum([a,b;int(1..)]) > 7,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+or([!(a#order_3),a#order_2;int(1..)]),
+or([!(a#order_4),a#order_3;int(1..)]),
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([a,b;int(1..)]) > 7,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+or([!(a#order_4),a#order_3;int(1..)]),
+or([and([__3,__4;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(or([!(a#order_3),a#order_2;int(1..)])) using tseitin
+
+--
+
+sum([a,b;int(1..)]) > 7,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+or([!(a#order_4),a#order_3;int(1..)]),
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([a,b;int(1..)]) > 7,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+or([and([__3,__4;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(or([!(a#order_4),a#order_3;int(1..)])) using tseitin
+
+--
+
+sum([a,b;int(1..)]) > 7,
+d < 0,
+sum([d,c;int(1..)]) > 0,
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([a,b;int(1..)]) > 7,
+d < 0,
+sum([d,c;int(1..)]) > 0
+new SAT encoding decisions:
+  assert(or([and([__3,__4;int(1..)]);int(1..)])) using tseitin
+
+--
+
+d
+   ~~> select_representation ([("ReprGeneral", 10000)])
+d
+new variables:
+  find d#sign_magnitude_1: bool
+  find d#sign_magnitude_2: bool
+  find d#sign_magnitude_3: bool
+new constraints:
+  or([!(d#sign_magnitude_2),or([!(d#sign_magnitude_1),true;int(1..)]);int(1..)])
+  (d#sign_magnitude_3) -> (or([!(d#sign_magnitude_2),or([!(d#sign_magnitude_1),true;int(1..)]);int(1..)]))
+  (!(d#sign_magnitude_3)) -> (or([!(d#sign_magnitude_2),and([!(d#sign_magnitude_1),true;int(1..)]);int(1..)]))
+  (d#sign_magnitude_3) -> (or([d#sign_magnitude_1,d#sign_magnitude_2;int(1..)]))
+  or([and([SATInt(SignMagnitude, [d#sign_magnitude_1,d#sign_magnitude_2,d#sign_magnitude_3;int(1..)] [-3, 2]) >= -3,SATInt(SignMagnitude, [d#sign_magnitude_1,d#sign_magnitude_2,d#sign_magnitude_3;int(1..)] [-3, 2]) <= 2;int(1..)]);int(1..)])
+
+--
+
+d < 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(1*d#sign_magnitude_1, -2*and([d#sign_magnitude_3,d#sign_magnitude_1;int(1..)]), 2*d#sign_magnitude_2, -4*and([d#sign_magnitude_3,d#sign_magnitude_2;int(1..)])) Less 0) using None with []
+
+--
+
+SATInt(SignMagnitude, [d#sign_magnitude_1,d#sign_magnitude_2,d#sign_magnitude_3;int(1..)] [-3, 2]) >= -3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*d#sign_magnitude_1, -2*and([d#sign_magnitude_3,d#sign_magnitude_1;int(1..)]), 2*d#sign_magnitude_2, -4*and([d#sign_magnitude_3,d#sign_magnitude_2;int(1..)])) GreaterEqual -3) using None with []
+
+--
+
+SATInt(SignMagnitude, [d#sign_magnitude_1,d#sign_magnitude_2,d#sign_magnitude_3;int(1..)] [-3, 2]) <= 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> integer-weighted(1*d#sign_magnitude_1, -2*and([d#sign_magnitude_3,d#sign_magnitude_1;int(1..)]), 2*d#sign_magnitude_2, -4*and([d#sign_magnitude_3,d#sign_magnitude_2;int(1..)])) LessEqual 2) using None with []
+
+--
+
+sum([a,b;int(1..)]) > 7,
+__5,
+sum([d,c;int(1..)]) > 0,
+true,
+true,
+(!(d#sign_magnitude_3)) -> (or([!(d#sign_magnitude_2),and([!(d#sign_magnitude_1);int(1..)]);int(1..)])),
+(d#sign_magnitude_3) -> (or([d#sign_magnitude_1,d#sign_magnitude_2;int(1..)])),
+or([and([__6,__7;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([a,b;int(1..)]) > 7,
+sum([d,c;int(1..)]) > 0,
+true,
+true,
+(!(d#sign_magnitude_3)) -> (or([!(d#sign_magnitude_2),and([!(d#sign_magnitude_1);int(1..)]);int(1..)])),
+(d#sign_magnitude_3) -> (or([d#sign_magnitude_1,d#sign_magnitude_2;int(1..)])),
+or([and([__6,__7;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(__5) using tseitin
+
+--
+
+sum([a,b;int(1..)]) > 7,
+sum([d,c;int(1..)]) > 0,
+true,
+true,
+(!(d#sign_magnitude_3)) -> (or([!(d#sign_magnitude_2),and([!(d#sign_magnitude_1);int(1..)]);int(1..)])),
+(d#sign_magnitude_3) -> (or([d#sign_magnitude_1,d#sign_magnitude_2;int(1..)])),
+or([and([__6,__7;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([a,b;int(1..)]) > 7,
+sum([d,c;int(1..)]) > 0,
+true,
+true,
+(d#sign_magnitude_3) -> (or([d#sign_magnitude_1,d#sign_magnitude_2;int(1..)])),
+or([and([__6,__7;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert((!(d#sign_magnitude_3)) -> (or([!(d#sign_magnitude_2),and([!(d#sign_magnitude_1);int(1..)]);int(1..)]))) using tseitin
+
+--
+
+sum([a,b;int(1..)]) > 7,
+sum([d,c;int(1..)]) > 0,
+true,
+true,
+(d#sign_magnitude_3) -> (or([d#sign_magnitude_1,d#sign_magnitude_2;int(1..)])),
+or([and([__6,__7;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([a,b;int(1..)]) > 7,
+sum([d,c;int(1..)]) > 0,
+true,
+true,
+or([and([__6,__7;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert((d#sign_magnitude_3) -> (or([d#sign_magnitude_1,d#sign_magnitude_2;int(1..)]))) using tseitin
+
+--
+
+sum([a,b;int(1..)]) > 7,
+sum([d,c;int(1..)]) > 0,
+true,
+true,
+or([and([__6,__7;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([a,b;int(1..)]) > 7,
+sum([d,c;int(1..)]) > 0,
+true,
+true
+new SAT encoding decisions:
+  assert(or([and([__6,__7;int(1..)]);int(1..)])) using tseitin
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#twos_complement_1: bool
+  find b#twos_complement_2: bool
+  find b#twos_complement_3: bool
+  find b#twos_complement_4: bool
+new constraints:
+  or([and([SATInt(Log, [b#twos_complement_1,b#twos_complement_2,b#twos_complement_3,b#twos_complement_4;int(1..)] [0, 5]) >= 0,SATInt(Log, [b#twos_complement_1,b#twos_complement_2,b#twos_complement_3,b#twos_complement_4;int(1..)] [0, 5]) <= 5;int(1..)]);int(1..)])
+
+--
+
+sum([a,b;int(1..)]) > 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> integer-weighted(1*a#order_2, 1*a#order_3, 1*a#order_4, 1*b#twos_complement_1, 2*b#twos_complement_2, 4*b#twos_complement_3, -8*b#twos_complement_4) Greater 6) using None with [PbTermGroup { start: 0, end: 3, structure: Chain }, PbTermGroup { start: 3, end: 7, structure: BoundedBinary { lower: 0, upper: 5 } }]
+
+--
+
+SATInt(Log, [b#twos_complement_1,b#twos_complement_2,b#twos_complement_3,b#twos_complement_4;int(1..)] [0, 5]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> integer-weighted(1*b#twos_complement_1, 2*b#twos_complement_2, 4*b#twos_complement_3, -8*b#twos_complement_4) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 5 } }]
+
+--
+
+SATInt(Log, [b#twos_complement_1,b#twos_complement_2,b#twos_complement_3,b#twos_complement_4;int(1..)] [0, 5]) <= 5
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(1*b#twos_complement_1, 2*b#twos_complement_2, 4*b#twos_complement_3, -8*b#twos_complement_4) LessEqual 5) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 5 } }]
+
+--
+
+__8,
+sum([d,c;int(1..)]) > 0,
+true,
+true,
+or([and([__9,__10;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([d,c;int(1..)]) > 0,
+true,
+true,
+or([and([__9,__10;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  assert(__8) using tseitin
+
+--
+
+sum([d,c;int(1..)]) > 0,
+true,
+true,
+or([and([__9,__10;int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+sum([d,c;int(1..)]) > 0,
+true,
+true
+new SAT encoding decisions:
+  assert(or([and([__9,__10;int(1..)]);int(1..)])) using tseitin
+
+--
+
+d
+   ~~> select_representation ([("ReprGeneral", 10000)])
+d
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+
+--
+
+sum([d,c;int(1..)]) > 0,
+true,
+true
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+true,
+true
+new SAT encoding decisions:
+  weighted(1*d#sign_magnitude_1, -2*and([d#sign_magnitude_3,d#sign_magnitude_1;int(1..)]), 2*d#sign_magnitude_2, -4*and([d#sign_magnitude_3,d#sign_magnitude_2;int(1..)]), 1*c#offset_1, 2*c#offset_2) AtLeast 0 using None with [PbTermGroup { start: 4, end: 6, structure: BoundedBinary { lower: 0, upper: 2 } }]
+
+--
+
+Final model:
+
+find a: int(representation order, 1..4)
+find b: int(representation twos_complement, 0..5)
+find c: int(1..3)
+find d: int(representation sign_magnitude, -3..2)
+find c#offset_1: bool
+find c#offset_2: bool
+findAux __0: bool
+findAux __1: bool
+find a#order_1: bool
+find a#order_2: bool
+find a#order_3: bool
+find a#order_4: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+find d#sign_magnitude_1: bool
+find d#sign_magnitude_2: bool
+find d#sign_magnitude_3: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+find b#twos_complement_1: bool
+find b#twos_complement_2: bool
+find b#twos_complement_3: bool
+find b#twos_complement_4: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*c#offset_1, 2*c#offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+define(__1 <-> integer-weighted(1*c#offset_1, 2*c#offset_2) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }],
+assert(or([!(c#offset_2),and([!(c#offset_1);int(1..)]);int(1..)])) using tseitin,
+assert(or([and([__0,__1;int(1..)]);int(1..)])) using tseitin,
+define(__2 <-> integer-weighted(1*c#offset_1, 2*c#offset_2, -1*a#order_2, -1*a#order_3, -1*a#order_4) Less 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 2 } }, PbTermGroup { start: 2, end: 5, structure: Chain }],
+define(__3 <-> integer-weighted(1*a#order_2, 1*a#order_3, 1*a#order_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
+define(__4 <-> integer-weighted(1*a#order_2, 1*a#order_3, 1*a#order_4) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }],
+assert(__2) using tseitin,
+assert(a#order_1) using tseitin,
+assert(or([!(a#order_2),a#order_1;int(1..)])) using tseitin,
+assert(or([!(a#order_3),a#order_2;int(1..)])) using tseitin,
+assert(or([!(a#order_4),a#order_3;int(1..)])) using tseitin,
+assert(or([and([__3,__4;int(1..)]);int(1..)])) using tseitin,
+define(__5 <-> integer-weighted(1*d#sign_magnitude_1, -2*and([d#sign_magnitude_3,d#sign_magnitude_1;int(1..)]), 2*d#sign_magnitude_2, -4*and([d#sign_magnitude_3,d#sign_magnitude_2;int(1..)])) Less 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [],
+define(__6 <-> integer-weighted(1*d#sign_magnitude_1, -2*and([d#sign_magnitude_3,d#sign_magnitude_1;int(1..)]), 2*d#sign_magnitude_2, -4*and([d#sign_magnitude_3,d#sign_magnitude_2;int(1..)])) GreaterEqual -3) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [],
+define(__7 <-> integer-weighted(1*d#sign_magnitude_1, -2*and([d#sign_magnitude_3,d#sign_magnitude_1;int(1..)]), 2*d#sign_magnitude_2, -4*and([d#sign_magnitude_3,d#sign_magnitude_2;int(1..)])) LessEqual 2) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [],
+assert(__5) using tseitin,
+assert((!(d#sign_magnitude_3)) -> (or([!(d#sign_magnitude_2),and([!(d#sign_magnitude_1);int(1..)]);int(1..)]))) using tseitin,
+assert((d#sign_magnitude_3) -> (or([d#sign_magnitude_1,d#sign_magnitude_2;int(1..)]))) using tseitin,
+assert(or([and([__6,__7;int(1..)]);int(1..)])) using tseitin,
+define(__8 <-> integer-weighted(1*a#order_2, 1*a#order_3, 1*a#order_4, 1*b#twos_complement_1, 2*b#twos_complement_2, 4*b#twos_complement_3, -8*b#twos_complement_4) Greater 6) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Chain }, PbTermGroup { start: 3, end: 7, structure: BoundedBinary { lower: 0, upper: 5 } }],
+define(__9 <-> integer-weighted(1*b#twos_complement_1, 2*b#twos_complement_2, 4*b#twos_complement_3, -8*b#twos_complement_4) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 5 } }],
+define(__10 <-> integer-weighted(1*b#twos_complement_1, 2*b#twos_complement_2, 4*b#twos_complement_3, -8*b#twos_complement_4) LessEqual 5) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 0, upper: 5 } }],
+assert(__8) using tseitin,
+assert(or([and([__9,__10;int(1..)]);int(1..)])) using tseitin,
+weighted(1*d#sign_magnitude_1, -2*and([d#sign_magnitude_3,d#sign_magnitude_1;int(1..)]), 2*d#sign_magnitude_2, -4*and([d#sign_magnitude_3,d#sign_magnitude_2;int(1..)]), 1*c#offset_1, 2*c#offset_2) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 4, end: 6, structure: BoundedBinary { lower: 0, upper: 2 } }]
+

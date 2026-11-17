@@ -1,0 +1,58 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+x = partition({-1}) = partition({-2}),
+y = partition({1}) = partition({2}),
+z = partition({1}) = partition({1})
+
+--
+
+x = false,
+y = false,
+z
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+y = false,
+z
+new SAT encoding decisions:
+  assert(x = false) using tseitin
+
+--
+
+y = false,
+z
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+z
+new SAT encoding decisions:
+  assert(y = false) using tseitin
+
+--
+
+z
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(z) using tseitin
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+assert(x = false) using tseitin,
+assert(y = false) using tseitin,
+assert(z) using tseitin
+

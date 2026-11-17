@@ -1,3 +1,3 @@
 mod representation;
 
-pub use representation::IntLog;
+pub use representation::IntBinaryTwosComplement;

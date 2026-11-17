@@ -1,6 +1,9 @@
 use crate::guard;
 use crate::shared::utils::as_cmp_or_lex_op;
-use crate::types::int::{IntDirect, IntLog, IntOrder, SmtBv, SmtLia};
+use crate::types::int::{
+    IntBinaryOffset, IntBinaryRank, IntBinarySignMagnitude, IntBinaryTwosComplement, IntDirect,
+    IntOrder, SmtBv, SmtLia,
+};
 use conjure_cp::ast::pretty::pretty_find_with_representation;
 use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
 use conjure_cp::representation::ReprRule;
@@ -206,7 +209,7 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
         return None;
     }
 
-    if channelling() == Channelling::No
+    if channelling() != Channelling::Yes
         && let Some(existing) = decl.reprs().iter().next().map(|(_, state)| state.rule())
     {
         return Some(existing);
@@ -237,6 +240,20 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
         // per entry under `components`, a single packed integer under `packed`, or the matrix
         // itself under `array`. Offering both questions at once would make them look like one.
         candidates.retain(|(rule, _)| !is_encoding_repr(*rule));
+    }
+
+    if channelling() == Channelling::Uniform
+        && let Some(dom) = decl.domain()
+        && let Some(selected) = conjure_cp::representation::uniform::selected(
+            &dom,
+            settled_layout || is_int_domain(&dom),
+        )
+    {
+        // Do not silently fall back when the model's choice cannot represent this domain.
+        return candidates
+            .iter()
+            .find(|(rule, _)| rule.id() == selected.id())
+            .map(|(rule, _)| *rule);
     }
 
     // User-specified representation preference on the domain (e.g. set (representation packed)) defaults the choice
@@ -281,27 +298,90 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
             .get(next_heuristic_random_index(candidates.len()))
             .map(|(rule, _)| *rule),
         Heuristic::Random => None,
-        Heuristic::Compact => compact_representation_choice(&candidates),
+        Heuristic::Compact => super::representation_cost::choose(decl, &candidates)
+            .or_else(|| compact_representation_choice(&candidates)),
     }
 }
 
-/// Choose the lowest-scoring representation, with semantic tie-breaking for SMT integers.
+/// Stable preference order for breaking compactness ties, including scores saturated at
+/// `usize::MAX`. Each family lists its preferred layout or encoding first. Unknown extensions
+/// follow the built-ins and use their names as a final deterministic tie-break.
 ///
-/// Representation compactness scores saturate at [`usize::MAX`].  Large matrix domains can
-/// therefore make both `SmtLia` and the deliberately more expensive `SmtBv` score saturate, even
-/// though compact should still prefer LIA.  Falling back to the representation name picked BV in
-/// that case.  Keep the ordinary name-based tie-break for every other representation, but preserve
-/// the intended LIA-before-BV ordering when their scores collide.
+/// Prefer explicit function values over a packed integer or a relation graph, and mathematical
+/// SMT integers over bit vectors. These preferences apply whenever costs tie, without inspecting
+/// the declaration or treating overflow as a separate case.
+pub(super) fn representation_fallback_rank(rule: ReprRulePtr) -> usize {
+    use crate::types::{
+        function::{FunctionAsRelation, FunctionExplicit, FunctionPacked},
+        matrix::{MatrixArray, MatrixComponents, MatrixPacked},
+        mset::{MSetCounts, MSetOccurrence, MSetPacked, MSetRepetition},
+        partition::{PartitionAsSet, PartitionOccurrence, PartitionPacked},
+        permutation::PermutationAsFunction,
+        record::{RecordComponents, RecordPacked},
+        relation::{RelationAsSet, RelationOccurrence, RelationPacked},
+        sequence::{SequenceExplicit, SequencePacked},
+        set::{SetExplicit, SetOccurrence, SetPacked},
+        tuple::{TupleComponents, TuplePacked},
+        unnamed::UnnamedAsInt,
+        variant::{VariantComponents, VariantPacked},
+    };
+
+    let order = [
+        FunctionExplicit::id(),
+        FunctionAsRelation::id(),
+        FunctionPacked::id(),
+        IntBinaryOffset::id(),
+        IntBinaryRank::id(),
+        IntBinarySignMagnitude::id(),
+        IntBinaryTwosComplement::id(),
+        IntDirect::id(),
+        IntOrder::id(),
+        SmtLia::id(),
+        SmtBv::id(),
+        MatrixArray::id(),
+        MatrixComponents::id(),
+        MatrixPacked::id(),
+        MSetCounts::id(),
+        MSetOccurrence::id(),
+        MSetRepetition::id(),
+        MSetPacked::id(),
+        PartitionAsSet::id(),
+        PartitionOccurrence::id(),
+        PartitionPacked::id(),
+        PermutationAsFunction::id(),
+        RecordComponents::id(),
+        RecordPacked::id(),
+        RelationAsSet::id(),
+        RelationOccurrence::id(),
+        RelationPacked::id(),
+        SequenceExplicit::id(),
+        SequencePacked::id(),
+        SetExplicit::id(),
+        SetOccurrence::id(),
+        SetPacked::id(),
+        TupleComponents::id(),
+        TuplePacked::id(),
+        UnnamedAsInt::id(),
+        VariantComponents::id(),
+        VariantPacked::id(),
+    ];
+    order
+        .iter()
+        .position(|id| *id == rule.id())
+        .unwrap_or(usize::MAX)
+}
+
+/// Prefer non-packed layouts, then choose the lowest domain score and built-in tie-break rank.
 fn compact_representation_choice(candidates: &[(ReprRulePtr, usize)]) -> Option<ReprRulePtr> {
     candidates
         .iter()
         .min_by_key(|(rule, score)| {
-            let smt_integer_tie_break = match rule.id() {
-                id if id == SmtLia::id() => 0,
-                id if id == SmtBv::id() => 1,
-                _ => 0,
-            };
-            (*score, smt_integer_tie_break, rule.name())
+            (
+                rule.short_name() == "packed",
+                *score,
+                representation_fallback_rank(*rule),
+                rule.name(),
+            )
         })
         .map(|(rule, _)| *rule)
 }
@@ -317,7 +397,10 @@ fn is_encoding_repr(rule: ReprRulePtr) -> bool {
     [
         SmtLia::id(),
         SmtBv::id(),
-        IntLog::id(),
+        IntBinaryTwosComplement::id(),
+        IntBinaryOffset::id(),
+        IntBinaryRank::id(),
+        IntBinarySignMagnitude::id(),
         IntDirect::id(),
         IntOrder::id(),
     ]
@@ -409,8 +492,13 @@ fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationRes
         return Err(RuleNotApplicable);
     }
 
+    // A representation written on the declaration's domain is the user's choice; matching the
+    // other side must not override it.
+    let has_preference =
+        |re: &conjure_cp::ast::Reference| re.domain_of().representation_preference().is_some();
+
     match (lhs_re.get_repr(), rhs_re.get_repr()) {
-        (Some((lhs_rule, _)), None) => {
+        (Some((lhs_rule, _)), None) if !has_preference(rhs_re) => {
             let mut new_rhs = rhs_re.clone();
             let (_, symbols, constraints) = new_rhs
                 .select_or_init_repr_via(lhs_rule)
@@ -419,7 +507,7 @@ fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationRes
                 expr.with_children(VecDeque::from([lhs.as_ref().clone(), new_rhs.into()]));
             Ok(Reduction::new(new_expr, constraints, symbols))
         }
-        (None, Some((rhs_rule, _))) => {
+        (None, Some((rhs_rule, _))) if !has_preference(lhs_re) => {
             let mut new_lhs = lhs_re.clone();
             let (_, symbols, constraints) = new_lhs
                 .select_or_init_repr_via(rhs_rule)
@@ -487,11 +575,11 @@ pub(crate) fn is_abstract_domain(domain: &DomainPtr) -> bool {
     match domain.as_ref() {
         Domain::Ground(gd) => match gd.as_ref() {
             // These domains are concrete for all solvers
-            GroundDomain::Empty(..) | GroundDomain::Bool | GroundDomain::Int(_) => false,
+            GroundDomain::Empty(..) | GroundDomain::Bool | GroundDomain::Int(_, _) => false,
             // Represent matrices if they have abstract types inside them;
             // Matrices of concrete types are handled separately by the
             // `ReprMatrixComponents`rule set
-            GroundDomain::Matrix(inner_dom, idx_doms) => {
+            GroundDomain::Matrix(inner_dom, idx_doms, _) => {
                 is_abstract_domain(&inner_dom.into())
                     || any(idx_doms, |d| is_abstract_domain(&d.into()))
             }
@@ -503,7 +591,7 @@ pub(crate) fn is_abstract_domain(domain: &DomainPtr) -> bool {
             // Represent matrices if they have abstract types inside them;
             // Matrices of concrete types are handled separately by the
             // `ReprMatrixComponents`rule set
-            UnresolvedDomain::Matrix(inner_dom, idx_doms) => {
+            UnresolvedDomain::Matrix(inner_dom, idx_doms, _) => {
                 is_abstract_domain(inner_dom) || any(idx_doms, is_abstract_domain)
             }
             // Recurse into domain letting
@@ -517,7 +605,7 @@ pub(crate) fn is_abstract_domain(domain: &DomainPtr) -> bool {
 /// True if this domain is an integer one, following domain lettings.
 fn is_int_domain(domain: &DomainPtr) -> bool {
     match domain.as_ref() {
-        Domain::Ground(gd) => matches!(gd.as_ref(), GroundDomain::Int(_)),
+        Domain::Ground(gd) => matches!(gd.as_ref(), GroundDomain::Int(_, _)),
         Domain::Unresolved(ud) => match ud.as_ref() {
             UnresolvedDomain::Int(..) => true,
             UnresolvedDomain::Reference(re) => is_int_domain(&re.domain_of()),
@@ -534,21 +622,34 @@ mod tests {
     use conjure_cp::{domain_int, range};
 
     #[test]
-    fn compact_prefers_the_smallest_representation_domain() {
-        set_heuristic(Heuristic::Compact);
-        let mut symbols = SymbolTable::new();
-        let declaration = symbols.gen_find(&Domain::set(
-            SetAttr::new_min_max_size(1, 2),
-            domain_int!(1..3),
-        ));
-
-        assert_eq!(
-            choose_representation_rule(&declaration, &symbols)
-                .unwrap()
-                .name(),
-            "SetPacked"
-        );
-        set_heuristic(Heuristic::First);
+    fn compact_fallback_prefers_non_packed_even_with_a_larger_domain_score() {
+        let packed: Vec<_> = get_repr_rules()
+            .filter(|rule| rule.short_name() == "packed")
+            .collect();
+        let non_packed: Vec<_> = get_repr_rules()
+            .filter(|rule| rule.short_name() != "packed")
+            .collect();
+        assert!(!packed.is_empty() && !non_packed.is_empty());
+        for packed in packed {
+            for &other in &non_packed {
+                for score in [0, usize::MAX] {
+                    for candidates in [
+                        [(packed, score), (other, usize::MAX)],
+                        [(other, usize::MAX), (packed, score)],
+                    ] {
+                        assert_eq!(
+                            compact_representation_choice(&candidates).unwrap().id(),
+                            other.id()
+                        );
+                    }
+                }
+            }
+            assert_eq!(
+                compact_representation_choice(&[(packed, 0)]).unwrap().id(),
+                packed.id()
+            );
+        }
+        assert!(compact_representation_choice(&[]).is_none());
     }
 
     #[test]

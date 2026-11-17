@@ -1,0 +1,13 @@
+language Essence 1.3
+
+$ Range contains the actual images, not the keys or the whole codomain.
+$ Repeated images count once in the sum; an empty partial function has an empty range.
+find f : function (total) int(10,20) --> int(1..2)
+find bound : int(0..3)
+find has_one, has_two : bool
+such that
+    sum([v | v <- range(f)]) <= bound,
+    has_one <-> (1 in range(f)),
+    has_two <-> (2 in range(f)),
+    !(0 in range(f)),
+    !(3 in range(f))

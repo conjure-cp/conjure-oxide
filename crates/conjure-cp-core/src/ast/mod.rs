@@ -2,13 +2,17 @@ pub mod ac_operators;
 pub mod assertions;
 mod atom;
 pub mod categories;
-mod cnf_clause;
+mod collection_domains;
 pub mod comprehension;
 pub mod declaration;
 mod domains;
+pub mod enumerated;
 pub mod eval;
 mod expression_arena;
+mod expression_domains;
 mod expressions;
+mod function_domains;
+mod integer_arithmetic;
 mod literals;
 pub mod matrix;
 mod metadata;
@@ -18,10 +22,12 @@ mod objective;
 pub mod pretty;
 pub mod records;
 mod reference;
+pub mod sat_decision;
 mod sat_encoding;
 pub mod serde;
 mod symbol_table;
 mod types;
+pub mod unnamed;
 mod variables;
 mod versioned_cache;
 
@@ -29,13 +35,12 @@ mod moo;
 mod partial_eval;
 
 pub use atom::Atom;
-pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::domain_has_int_from_values;
 pub use domains::{
-    BinaryAttr, Domain, DomainOpError, DomainPtr, FuncAttr, GroundDomain, HasDomain, IntVal,
-    JectivityAttr, MSetAttr, OXIDE_INT_MAX, OXIDE_INT_MIN, PartialityAttr, PartitionAttr,
-    PermutationAttr, Range, RelAttr, SequenceAttr, SetAttr, UnresolvedDomain,
+    BinaryAttr, Domain, DomainOpError, DomainPtr, EnumVariantVal, FuncAttr, GroundDomain,
+    HasDomain, IntVal, JectivityAttr, MSetAttr, OXIDE_INT_MAX, OXIDE_INT_MIN, PartialityAttr,
+    PartitionAttr, PermutationAttr, Range, RelAttr, SequenceAttr, SetAttr, UnresolvedDomain,
 };
 pub use eval::generator_values_from_expr;
 pub use eval::{
@@ -45,6 +50,7 @@ pub use eval::{
 };
 pub use expression_arena::{ExpressionArena, ExpressionNodeId};
 pub use expressions::{Expression, discriminant_from_value, print_hash_stats};
+pub use integer_arithmetic::{floor_div, floor_mod};
 pub use literals::AbstractLiteral;
 pub use literals::Literal;
 pub use metadata::Metadata;
@@ -57,6 +63,7 @@ pub use partial_eval::{
 };
 pub use records::Field;
 pub use reference::Reference;
+pub use sat_decision::SatEncodingDecision;
 pub use sat_encoding::SATIntEncoding;
 pub use symbol_table::{SymbolTable, SymbolTablePtr};
 pub use types::*;

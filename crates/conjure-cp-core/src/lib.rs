@@ -1,3 +1,6 @@
+#[cfg(all(target_family = "wasm", not(feature = "sat-batsat")))]
+compile_error!("Wasm requires sat-batsat; use --no-default-features --features sat-batsat.");
+
 #[doc(hidden)]
 pub extern crate self as conjure_cp_core;
 
@@ -53,7 +56,7 @@ macro_rules! domain_int_ground {
     // when parsing expressions, rust groups 1..2 into a single token tree, (1..2)
     // however, we want it to be three seperate token trees [1,..,2] for parsing.
     // use defile to turn it back into 3 token trees
-    ($($e:expr),+ $(,)?) => {::defile::defile! { $crate::ast::GroundDomain::Int(vec![$($crate::range!(@$e)),+]).into() } };
+    ($($e:expr),+ $(,)?) => {::defile::defile! { $crate::ast::GroundDomain::Int(vec![$($crate::range!(@$e)),+], None).into() } };
 }
 
 /// Creates a [`Range`](ast::Range).

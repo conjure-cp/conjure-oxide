@@ -22,10 +22,10 @@ fn main() -> io::Result<()> {
 
     let out_dir = var("OUT_DIR").map_err(io::Error::other)?; // wrapping in a std::io::Error to match main's error type
 
-    // Integration Tests
+    // Exhaustive Tests
     let dest = Path::new(&out_dir).join("gen_tests.rs");
     let mut f = File::create(dest)?;
-    let test_dir = "tests/integration";
+    let test_dir = "tests/exhaustive";
 
     for subdir in WalkDir::new(test_dir) {
         let subdir = subdir?;
@@ -55,7 +55,7 @@ fn main() -> io::Result<()> {
                 .collect();
 
             let essence_files: Vec<(String, String)> = std::iter::zip(stems, exts).collect();
-            write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
+            write_exhaustive_test(&mut f, subdir.path().display().to_string(), essence_files)?;
         }
     }
 
@@ -188,7 +188,7 @@ fn get_ignore_attr(
     }
 }
 
-fn write_integration_test(
+fn write_exhaustive_test(
     file: &mut File,
     path: String,
     essence_files: Vec<(String, String)>,
@@ -201,7 +201,7 @@ fn write_integration_test(
 
         write!(
             file,
-            include_str!("./tests/integration_test_template"),
+            include_str!("./tests/exhaustive_test_template"),
             // TODO: better sanitisation of paths to function names
             test_name = path.replace("./", "").replace(['/', '-'], "_"),
             test_dir = path,

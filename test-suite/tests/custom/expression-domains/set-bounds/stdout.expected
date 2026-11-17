@@ -1,0 +1,42 @@
+(|(a union b)| >= 0) : bool
+ |(a union b)| : int(2..3)
+  ((a union b)) : set (minSize 2, maxSize 3) of int(1..3)
+   a : set (size 2) of int(1..3)
+   b : set (size 2) of int(1..3)
+ 0 : int(0)
+(|(a intersect b)| >= 0) : bool
+ |(a intersect b)| : int(1..2)
+  ((a intersect b)) : set (minSize 1, maxSize 2) of int(1..3)
+   a : set (size 2) of int(1..3)
+   b : set (size 2) of int(1..3)
+ 0 : int(0)
+(|(a - b)| >= 0) : bool
+ |(a - b)| : int(0..2)
+  (a - b) : set (minSize 0, maxSize 2) of int(1..3)
+   a : set (size 2) of int(1..3)
+   b : set (size 2) of int(1..3)
+ 0 : int(0)
+(|(a union c)| >= 0) : bool
+ |(a union c)| : int(3)
+  ((a union c)) : set (size 3) of int(1..3, 8..9)
+   a : set (size 2) of int(1..3)
+   c : set (size 1) of int(8..9)
+ 0 : int(0)
+(|(a intersect c)| >= 0) : bool
+ |(a intersect c)| : int(0)
+  ((a intersect c)) : set (size 0) of int()
+   a : set (size 2) of int(1..3)
+   c : set (size 1) of int(8..9)
+ 0 : int(0)
+(|(a - c)| >= 0) : bool
+ |(a - c)| : int(2)
+  (a - c) : set (size 2) of int(1..3)
+   a : set (size 2) of int(1..3)
+   c : set (size 1) of int(8..9)
+ 0 : int(0)
+(|(a - a)| >= 0) : bool
+ |(a - a)| : int(0)
+  (a - a) : set (size 0) of int(1..3)
+   a : set (size 2) of int(1..3)
+   a : set (size 2) of int(1..3)
+ 0 : int(0)

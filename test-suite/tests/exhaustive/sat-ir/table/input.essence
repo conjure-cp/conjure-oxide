@@ -1,0 +1,10 @@
+language ESSENCE' 1.0
+find x, y : int(-2, 0, 3)
+find b, c, inside, notInside, booleanInside : bool
+such that
+    inside <-> table([x, y, x, 0],
+        [[-2, 0, -2, 0], [3, -2, 3, 0], [3, -2, 3, 0], [7, 0, 7, 0]]),
+    notInside <-> !table([x, y], [[0, 0], [3, 3]]),
+    booleanInside <-> table([toInt(b), toInt(c)], [[0, 1], [1, 0]]),
+    !table([x, x], [[-2, 0], [0, 3]]),
+    table([0], [[0], [0]])

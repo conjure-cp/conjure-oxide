@@ -50,10 +50,16 @@ pub fn load_model_impl(
         }
         let (sym, ast, restriction) = var_to_ast(name, &var, int_theory_for(decl))?;
         store.insert(name.clone(), (decl.resolved_domain().unwrap(), ast, sym));
+        // findAux variables are part of the model, but a different assignment of one is not a
+        // different solution.
+        if !decl.is_find_auxiliary() {
+            store.block_solutions_on(name.clone());
+        }
         solver.assert(restriction);
     }
+    let mut lettings = HashSet::new();
     for expr in model.iter() {
-        let bool: Bool = expr_to_ast(store, expr)?;
+        let bool: Bool = expr_to_ast(store, &mut lettings, expr)?;
         solver.assert(bool);
     }
     Ok(())
@@ -97,10 +103,37 @@ fn var_to_ast(
 
 /// Converts a Conjure Oxide Expression to an AST node for Z3.
 /// The generic type parameter lets us cast the result to a specific return type.
-fn expr_to_ast<Out>(store: &SymbolStore, expr: &Expression) -> SolverResult<Out>
+///
+/// `lettings` are the boolean value lettings currently being expanded. Rewriting leaves a use as
+/// a name, so a constraint can still be a reference whose body is a formula. That formula is
+/// converted in place. A cycle among those names is rejected.
+fn expr_to_ast<Out>(
+    store: &SymbolStore,
+    lettings: &mut HashSet<crate::ast::serde::ObjId>,
+    expr: &Expression,
+) -> SolverResult<Out>
 where
     Out: TryFrom<Dynamic, Error: std::fmt::Display>,
 {
+    if let Expression::Atomic(_, Atom::Reference(reference)) = expr
+        && let Some(body) = reference.boolean_formula_letting_body()
+    {
+        let id = reference.id();
+        if !lettings.insert(id.clone()) {
+            return Err(SolverError::ModelInvalid(format!(
+                "cyclic value letting '{}' in a Z3 constraint",
+                reference.name()
+            )));
+        }
+        let ast: SolverResult<Dynamic> = expr_to_ast(store, lettings, &body);
+        lettings.remove(&id);
+        return ast?.try_into().map_err(|err| {
+            SolverError::ModelInvalid(format!(
+                "expression has incorrect type for conversion: {err}"
+            ))
+        });
+    }
+
     let ast = match expr {
         Expression::Atomic(_, atom) => atom_to_ast(store, atom),
 
@@ -112,51 +145,64 @@ where
         // The two sides can be in different integer theories -- that is what a `lia`/`bv`
         // channelling constraint looks like -- so they are brought into a common one first.
         Expression::Eq(_, a, b) => {
-            let [a, b] = aligned_operands(store, [a.as_ref(), b.as_ref()])?;
+            let [a, b] = aligned_operands(store, lettings, [a.as_ref(), b.as_ref()])?;
             Ok(a.eq(b).into())
         }
         Expression::Neq(_, a, b) => {
-            let [a, b] = aligned_operands(store, [a.as_ref(), b.as_ref()])?;
+            let [a, b] = aligned_operands(store, lettings, [a.as_ref(), b.as_ref()])?;
             Ok(a.ne(b).into())
         }
 
         // === Boolean Expressions ===
-        Expression::Not(_, a) => unary_op(store, a, |a: Bool| a.not()),
-        Expression::Imply(_, a, b) => binary_op(store, a, b, |a: Bool, b: Bool| a.implies(b)),
-        Expression::Iff(_, a, b) => binary_op(store, a, b, |a: Bool, b: Bool| a.iff(b)),
-        Expression::Or(_, a) => list_op(store, a, |asts: &[Bool]| Bool::or(asts)),
-        Expression::And(_, a) => list_op(store, a, |asts: &[Bool]| Bool::and(asts)),
+        Expression::Not(_, a) => unary_op(store, lettings, a, |a: Bool| a.not()),
+        Expression::Imply(_, a, b) => {
+            binary_op(store, lettings, a, b, |a: Bool, b: Bool| a.implies(b))
+        }
+        Expression::Iff(_, a, b) => binary_op(store, lettings, a, b, |a: Bool, b: Bool| a.iff(b)),
+        Expression::Or(_, a) => list_op(store, lettings, a, |asts: &[Bool]| Bool::or(asts)),
+        Expression::And(_, a) => list_op(store, lettings, a, |asts: &[Bool]| Bool::and(asts)),
 
         // === Expressions over integers ===
         // Which theory each of these lands in is decided by the operands, not by a setting: a
         // variable represented as a bit-vector drags the operation into the bit-vector theory,
         // and everything else in the operation is converted to match.
-        Expression::Neg(_, a) => {
-            int_unary_op(store, a, |a: Int| a.unary_minus(), |a: BV| a.bvneg())
-        }
+        Expression::Neg(_, a) => int_unary_op(
+            store,
+            lettings,
+            a,
+            |a: Int| a.unary_minus(),
+            |a: BV| a.bvneg(),
+        ),
         Expression::Abs(_, a) => int_unary_op(
             store,
+            lettings,
             a,
             |a: Int| a.lt(Int::from(0)).ite(&a.unary_minus(), &a),
             |a: BV| a.bvslt(BV::from_i64(0, BV_SIZE)).ite(&a.bvneg(), &a),
         ),
         // A Boolean has no theory of its own to follow, so this always produces a mathematical
         // integer; an enclosing bit-vector operation converts it along with everything else.
-        Expression::ToInt(_, a) => {
-            unary_op(store, a, |a: Bool| a.ite(&Int::from(1), &Int::from(0)))
-        }
+        Expression::ToInt(_, a) => unary_op(store, lettings, a, |a: Bool| {
+            a.ite(&Int::from(1), &Int::from(0))
+        }),
 
         // Essence division floors, which is what Z3's integer `div` and `mod` already do. The
         // bit-vector theory offers truncating division instead (`bvsdiv` rounds toward zero, and
         // `bvsrem` takes the dividend's sign), so the two theories would disagree on negative
         // operands unless the floored forms are built explicitly.
-        Expression::SafeDiv(_, a, b) => {
-            int_binary_op(store, a, b, |a: Int, b: Int| a.div(b), bv_floor_div)
-        }
+        Expression::SafeDiv(_, a, b) => int_binary_op(
+            store,
+            lettings,
+            a,
+            b,
+            |a: Int, b: Int| a.div(b),
+            bv_floor_div,
+        ),
         Expression::SafeMod(_, a, b) => {
             // `bvsmod` already takes the divisor's sign, which is the floored remainder.
             int_binary_op(
                 store,
+                lettings,
                 a,
                 b,
                 |a: Int, b: Int| a.modulo(b),
@@ -165,6 +211,7 @@ where
         }
         Expression::Gt(_, a, b) => int_binary_op(
             store,
+            lettings,
             a,
             b,
             |a: Int, b: Int| a.gt(b),
@@ -172,6 +219,7 @@ where
         ),
         Expression::Lt(_, a, b) => int_binary_op(
             store,
+            lettings,
             a,
             b,
             |a: Int, b: Int| a.lt(b),
@@ -179,6 +227,7 @@ where
         ),
         Expression::Geq(_, a, b) => int_binary_op(
             store,
+            lettings,
             a,
             b,
             |a: Int, b: Int| a.ge(b),
@@ -186,6 +235,7 @@ where
         ),
         Expression::Leq(_, a, b) => int_binary_op(
             store,
+            lettings,
             a,
             b,
             |a: Int, b: Int| a.le(b),
@@ -193,6 +243,7 @@ where
         ),
         Expression::PairwiseSum(_, a, b) => int_binary_op(
             store,
+            lettings,
             a,
             b,
             |a: Int, b: Int| Int::add(&[a, b]),
@@ -200,6 +251,7 @@ where
         ),
         Expression::PairwiseProduct(_, a, b) => int_binary_op(
             store,
+            lettings,
             a,
             b,
             |a: Int, b: Int| Int::mul(&[a, b]),
@@ -210,30 +262,34 @@ where
         // being rewritten into `PairwiseSum` chains beforehand.
         Expression::Sum(_, a) => int_list_op(
             store,
+            lettings,
             a,
             |asts: &[Int]| Int::add(asts),
             |asts: &[BV]| fold_bvs(asts, |a, b| a.bvadd(b)),
         ),
         Expression::Product(_, a) => int_list_op(
             store,
+            lettings,
             a,
             |asts: &[Int]| Int::mul(asts),
             |asts: &[BV]| fold_bvs(asts, |a, b| a.bvmul(b)),
         ),
 
         // Exponentiation has no bit-vector counterpart in Z3, so this one stays integer-only.
-        Expression::SafePow(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.power(b)),
+        Expression::SafePow(_, a, b) => {
+            binary_op(store, lettings, a, b, |a: Int, b: Int| a.power(b))
+        }
 
         // === Expressions involving matrices ===
         // A matrix literal becomes a Z3 array, which is what makes indexing one by a variable
         // work. Components-represented matrices are rebuilt as literal lists during rewriting, so
         // this is the path a variable index into them takes.
         Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elements, index_domain)) => {
-            matrix_literal_to_array(store, elements, index_domain)
+            matrix_literal_to_array(store, lettings, elements, index_domain)
         }
         Expression::SafeIndex(_, m, idxs) => {
-            let arr: Dynamic = expr_to_ast(store, m)?;
-            slice_op(store, idxs, move |idxs: &[Dynamic]| {
+            let arr: Dynamic = expr_to_ast(store, lettings, m)?;
+            slice_op(store, lettings, idxs, move |idxs: &[Dynamic]| {
                 idxs.iter().fold(arr, |cur_arr, idx| {
                     // Array indices are always in the integer theory, whatever the elements are.
                     let idx = coerce_to(idx.clone(), Some(IntTheory::Lia));
@@ -246,12 +302,14 @@ where
         Expression::SmtDistinct(_, a) => {
             let elements = list_elements(a)?;
             let refs: Vec<&Expression> = elements.iter().collect();
-            let asts = aligned_operand_vec(store, &refs)?;
+            let asts = aligned_operand_vec(store, lettings, &refs)?;
             Ok(Dynamic::distinct(&asts).into())
         }
 
         // === Expressions involving sets
-        Expression::In(_, x, s) => binary_op(store, x, s, |x: Dynamic, s: Set| s.member(&x)),
+        Expression::In(_, x, s) => {
+            binary_op(store, lettings, x, s, |x: Dynamic, s: Set| s.member(&x))
+        }
 
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "expression type not implemented: {expr}"
@@ -271,12 +329,13 @@ where
 /// the index domain allows, which `SafeIndex` has already restricted by this point.
 fn matrix_literal_to_array(
     store: &SymbolStore,
+    lettings: &mut HashSet<crate::ast::serde::ObjId>,
     elements: &[Expression],
     index_domain: &DomainPtr,
 ) -> SolverResult<Dynamic> {
     let asts: Vec<Dynamic> = elements
         .iter()
-        .map(|element| expr_to_ast(store, element))
+        .map(|element| expr_to_ast(store, lettings, element))
         .collect::<SolverResult<_>>()?;
 
     let Some(_) = asts.first() else {
@@ -373,10 +432,14 @@ fn coerce_to(ast: Dynamic, theory: Option<IntTheory>) -> Dynamic {
 ///
 /// Bit-vectors win: converting a mathematical integer to a machine word is exact for values that
 /// fit, whereas the reverse would have to pick a signedness for values that may have wrapped.
-fn aligned_operand_vec(store: &SymbolStore, exprs: &[&Expression]) -> SolverResult<Vec<Dynamic>> {
+fn aligned_operand_vec(
+    store: &SymbolStore,
+    lettings: &mut HashSet<crate::ast::serde::ObjId>,
+    exprs: &[&Expression],
+) -> SolverResult<Vec<Dynamic>> {
     let asts: Vec<Dynamic> = exprs
         .iter()
-        .map(|expr| expr_to_ast(store, expr))
+        .map(|expr| expr_to_ast(store, lettings, expr))
         .collect::<SolverResult<_>>()?;
 
     let target = asts
@@ -393,10 +456,11 @@ fn aligned_operand_vec(store: &SymbolStore, exprs: &[&Expression]) -> SolverResu
 /// [`aligned_operand_vec`] for a fixed number of operands.
 fn aligned_operands<const N: usize>(
     store: &SymbolStore,
+    lettings: &mut HashSet<crate::ast::serde::ObjId>,
     exprs: [&Expression; N],
 ) -> SolverResult<[Dynamic; N]> {
     let refs: Vec<&Expression> = exprs.to_vec();
-    let asts = aligned_operand_vec(store, &refs)?;
+    let asts = aligned_operand_vec(store, lettings, &refs)?;
     asts.try_into().map_err(|_| {
         SolverError::ModelInvalid("wrong number of operands after alignment".to_owned())
     })
@@ -405,6 +469,7 @@ fn aligned_operands<const N: usize>(
 /// Applies whichever of the two operations matches the theory the operand landed in.
 fn int_unary_op<OutInt, OutBv>(
     store: &SymbolStore,
+    lettings: &mut HashSet<crate::ast::serde::ObjId>,
     a: &Expression,
     lia: impl FnOnce(Int) -> OutInt,
     bv: impl FnOnce(BV) -> OutBv,
@@ -413,7 +478,7 @@ where
     OutInt: Into<Dynamic>,
     OutBv: Into<Dynamic>,
 {
-    let ast: Dynamic = expr_to_ast(store, a)?;
+    let ast: Dynamic = expr_to_ast(store, lettings, a)?;
     match int_theory_of(&ast) {
         Some(IntTheory::Bv) => Ok((bv)(ast.as_bv().expect("just checked the sort")).into()),
         _ => Ok((lia)(ast.as_int().ok_or_else(|| {
@@ -426,6 +491,7 @@ where
 /// Applies whichever of the two operations matches the theory the operands were aligned into.
 fn int_binary_op<OutInt, OutBv>(
     store: &SymbolStore,
+    lettings: &mut HashSet<crate::ast::serde::ObjId>,
     a: &Expression,
     b: &Expression,
     lia: impl FnOnce(Int, Int) -> OutInt,
@@ -435,7 +501,7 @@ where
     OutInt: Into<Dynamic>,
     OutBv: Into<Dynamic>,
 {
-    let [a_ast, b_ast] = aligned_operands(store, [a, b])?;
+    let [a_ast, b_ast] = aligned_operands(store, lettings, [a, b])?;
     match int_theory_of(&a_ast) {
         Some(IntTheory::Bv) => Ok((bv)(
             a_ast.as_bv().expect("just checked the sort"),
@@ -456,6 +522,7 @@ where
 /// Applies whichever of the two operations matches the theory the list was aligned into.
 fn int_list_op<OutInt, OutBv>(
     store: &SymbolStore,
+    lettings: &mut HashSet<crate::ast::serde::ObjId>,
     expr: &Expression,
     lia: impl FnOnce(&[Int]) -> OutInt,
     bv: impl FnOnce(&[BV]) -> OutBv,
@@ -466,7 +533,7 @@ where
 {
     let elements = list_elements(expr)?;
     let refs: Vec<&Expression> = elements.iter().collect();
-    let asts = aligned_operand_vec(store, &refs)?;
+    let asts = aligned_operand_vec(store, lettings, &refs)?;
 
     if asts
         .iter()
@@ -493,6 +560,7 @@ where
 /// Interprets an expression as an AST and returns the result of the given operation over it.
 fn unary_op<A, Out>(
     store: &SymbolStore,
+    lettings: &mut HashSet<crate::ast::serde::ObjId>,
     a: &Expression,
     op: impl FnOnce(A) -> Out,
 ) -> SolverResult<Dynamic>
@@ -500,13 +568,14 @@ where
     A: TryFrom<Dynamic, Error: std::fmt::Display>,
     Out: Into<Dynamic>,
 {
-    let a_ast: A = expr_to_ast(store, a)?;
+    let a_ast: A = expr_to_ast(store, lettings, a)?;
     Ok((op)(a_ast).into())
 }
 
 /// Interprets two expressions as ASTs and returns the result of the given operation over them.
 fn binary_op<A, B, Out>(
     store: &SymbolStore,
+    lettings: &mut HashSet<crate::ast::serde::ObjId>,
     a: &Expression,
     b: &Expression,
     op: impl FnOnce(A, B) -> Out,
@@ -516,14 +585,15 @@ where
     B: TryFrom<Dynamic, Error: std::fmt::Display>,
     Out: Into<Dynamic>,
 {
-    let a_ast: A = expr_to_ast(store, a)?;
-    let b_ast: B = expr_to_ast(store, b)?;
+    let a_ast: A = expr_to_ast(store, lettings, a)?;
+    let b_ast: B = expr_to_ast(store, lettings, b)?;
     Ok((op)(a_ast, b_ast).into())
 }
 
 /// Transforms a list expression into separate ASTs and returns the result of the given operation over them.
 fn list_op<A, Out>(
     store: &SymbolStore,
+    lettings: &mut HashSet<crate::ast::serde::ObjId>,
     expr: &Expression,
     op: impl FnOnce(&[A]) -> Out,
 ) -> SolverResult<Dynamic>
@@ -533,7 +603,7 @@ where
 {
     let exprs = list_elements(expr)?;
 
-    slice_op(store, &exprs, op)
+    slice_op(store, lettings, &exprs, op)
 }
 
 /// Extracts the elements of a list-like expression.
@@ -569,7 +639,7 @@ fn list_elements(expr: &Expression) -> SolverResult<Vec<Expression>> {
             ))
         })?;
 
-    let GroundDomain::Matrix(_, index_domains) = subject_domain.as_ref() else {
+    let GroundDomain::Matrix(_, index_domains, _) = subject_domain.as_ref() else {
         return Err(SolverError::ModelFeatureNotImplemented(format!(
             "slice subject must have matrix domain: {expr}"
         )));
@@ -611,6 +681,7 @@ fn list_elements(expr: &Expression) -> SolverResult<Vec<Expression>> {
 /// Transforms a slice of expressions into ASTs and returns the result of the given operation over it.
 fn slice_op<A, Out>(
     store: &SymbolStore,
+    lettings: &mut HashSet<crate::ast::serde::ObjId>,
     exprs: &[Expression],
     op: impl FnOnce(&[A]) -> Out,
 ) -> SolverResult<Dynamic>
@@ -619,7 +690,10 @@ where
     Out: Into<Dynamic>,
 {
     // Result implements FromIter, collecting into either the full collection or an error
-    let asts_res: SolverResult<Vec<_>> = exprs.iter().map(|e| expr_to_ast(store, e)).collect();
+    let asts_res: SolverResult<Vec<_>> = exprs
+        .iter()
+        .map(|e| expr_to_ast(store, lettings, e))
+        .collect();
     let asts = asts_res?;
 
     Ok((op)(asts.as_slice()).into())

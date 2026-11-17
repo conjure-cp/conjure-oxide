@@ -198,6 +198,10 @@
             "named": true
           },
           {
+            "type": "atom",
+            "named": true
+          },
+          {
             "type": "constant",
             "named": true
           },
@@ -339,6 +343,16 @@
         "types": [
           {
             "type": "bool_domain",
+            "named": true
+          }
+        ]
+      },
+      "enum_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "enum_domain",
             "named": true
           }
         ]
@@ -513,6 +527,16 @@
             "named": true
           }
         ]
+      },
+      "representation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "representation_attribute",
+            "named": true
+          }
+        ]
       }
     }
   },
@@ -564,6 +588,16 @@
           },
           {
             "type": "annotation_domain",
+            "named": true
+          }
+        ]
+      },
+      "representation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "representation_attribute",
             "named": true
           }
         ]
@@ -665,6 +699,16 @@
         "types": [
           {
             "type": "annotation_name_domain_pair",
+            "named": true
+          }
+        ]
+      },
+      "representation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "representation_attribute",
             "named": true
           }
         ]
@@ -809,7 +853,18 @@
   {
     "type": "annotation_tuple_domain",
     "named": true,
-    "fields": {},
+    "fields": {
+      "representation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "representation_attribute",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": false,
@@ -831,6 +886,16 @@
         "types": [
           {
             "type": "annotation_name_domain_pair",
+            "named": true
+          }
+        ]
+      },
+      "representation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "representation_attribute",
             "named": true
           }
         ]
@@ -1433,6 +1498,16 @@
           }
         ]
       },
+      "short_table": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "short_table",
+            "named": true
+          }
+        ]
+      },
       "sub_atom_expression": {
         "multiple": false,
         "required": false,
@@ -1523,6 +1598,16 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "enum_operator",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -2062,6 +2147,16 @@
           }
         ]
       },
+      "enum_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "enum_domain",
+            "named": true
+          }
+        ]
+      },
       "function_domain": {
         "multiple": false,
         "required": false,
@@ -2314,6 +2409,82 @@
           },
           {
             "type": "sub_arith_expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "enum_domain",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "ranges": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "range_list",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "enum_operator",
+    "named": true,
+    "fields": {
+      "argument": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "pred",
+            "named": false
+          },
+          {
+            "type": "succ",
+            "named": false
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "enum_type_declaration",
+    "named": true,
+    "fields": {
+      "members": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "variable_list",
             "named": true
           }
         ]
@@ -2577,6 +2748,10 @@
             "named": false
           },
           {
+            "type": "representation",
+            "named": false
+          },
+          {
             "type": "size",
             "named": false
           },
@@ -2595,7 +2770,15 @@
         "required": false,
         "types": [
           {
-            "type": "integer",
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          },
+          {
+            "type": "identifier",
             "named": true
           }
         ]
@@ -2724,19 +2907,23 @@
         "required": false,
         "types": [
           {
+            "type": "annotation_expr",
+            "named": true
+          },
+          {
             "type": "arithmetic_expr",
             "named": true
           },
           {
-            "type": "identifier",
+            "type": "atom",
             "named": true
           },
           {
-            "type": "matrix",
+            "type": "bool_expr",
             "named": true
           },
           {
-            "type": "set_operation",
+            "type": "comparison_expr",
             "named": true
           }
         ]
@@ -3151,6 +3338,16 @@
             "named": true
           }
         ]
+      },
+      "representation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "representation_attribute",
+            "named": true
+          }
+        ]
       }
     }
   },
@@ -3294,6 +3491,14 @@
           },
           {
             "type": "domain",
+            "named": true
+          },
+          {
+            "type": "enum_type_declaration",
+            "named": true
+          },
+          {
+            "type": "unnamed_type_declaration",
             "named": true
           }
         ]
@@ -3502,6 +3707,16 @@
         "types": [
           {
             "type": "index_domain_list",
+            "named": true
+          }
+        ]
+      },
+      "representation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "representation_attribute",
             "named": true
           }
         ]
@@ -3773,6 +3988,10 @@
           {
             "type": "matrix",
             "named": true
+          },
+          {
+            "type": "set_literal",
+            "named": true
           }
         ]
       },
@@ -3794,6 +4013,10 @@
           },
           {
             "type": "matrix",
+            "named": true
+          },
+          {
+            "type": "sequence_literal",
             "named": true
           }
         ]
@@ -4051,6 +4274,10 @@
           {
             "type": "regular",
             "named": false
+          },
+          {
+            "type": "representation",
+            "named": false
           }
         ]
       },
@@ -4059,7 +4286,15 @@
         "required": false,
         "types": [
           {
-            "type": "integer",
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          },
+          {
+            "type": "identifier",
             "named": true
           }
         ]
@@ -4220,6 +4455,10 @@
           {
             "type": "numMoved",
             "named": false
+          },
+          {
+            "type": "representation",
+            "named": false
           }
         ]
       },
@@ -4228,7 +4467,15 @@
         "required": true,
         "types": [
           {
-            "type": "integer",
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          },
+          {
+            "type": "identifier",
             "named": true
           }
         ]
@@ -4727,6 +4974,16 @@
             "named": true
           }
         ]
+      },
+      "representation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "representation_attribute",
+            "named": true
+          }
+        ]
       }
     }
   },
@@ -4795,6 +5052,10 @@
             "named": false
           },
           {
+            "type": "representation",
+            "named": false
+          },
+          {
             "type": "rightTotal",
             "named": false
           },
@@ -4833,7 +5094,15 @@
         "required": false,
         "types": [
           {
-            "type": "integer",
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          },
+          {
+            "type": "identifier",
             "named": true
           }
         ]
@@ -4949,6 +5218,32 @@
     }
   },
   {
+    "type": "representation_attribute",
+    "named": true,
+    "fields": {
+      "attribute": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "representation",
+            "named": false
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "restrict_expr",
     "named": true,
     "fields": {
@@ -5003,6 +5298,10 @@
             "named": false
           },
           {
+            "type": "representation",
+            "named": false
+          },
+          {
             "type": "size",
             "named": false
           },
@@ -5022,6 +5321,10 @@
           },
           {
             "type": "atom",
+            "named": true
+          },
+          {
+            "type": "identifier",
             "named": true
           }
         ]
@@ -5310,7 +5613,7 @@
     "fields": {
       "element": {
         "multiple": true,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": ",",
@@ -5370,6 +5673,64 @@
         "types": [
           {
             "type": "atom",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "short_table",
+    "named": true,
+    "fields": {
+      "rows": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flatten",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          },
+          {
+            "type": "matrix",
+            "named": true
+          },
+          {
+            "type": "set_literal",
+            "named": true
+          }
+        ]
+      },
+      "variables": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flatten",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          },
+          {
+            "type": "matrix",
+            "named": true
+          },
+          {
+            "type": "sequence_literal",
             "named": true
           }
         ]
@@ -5507,6 +5868,10 @@
           {
             "type": "matrix",
             "named": true
+          },
+          {
+            "type": "set_literal",
+            "named": true
           }
         ]
       },
@@ -5528,6 +5893,10 @@
           },
           {
             "type": "matrix",
+            "named": true
+          },
+          {
+            "type": "sequence_literal",
             "named": true
           }
         ]
@@ -5693,7 +6062,18 @@
   {
     "type": "tuple_domain",
     "named": true,
-    "fields": {},
+    "fields": {
+      "representation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "representation_attribute",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": false,
@@ -5735,6 +6115,26 @@
         "types": [
           {
             "type": "annotation_domain",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "unnamed_type_declaration",
+    "named": true,
+    "fields": {
+      "size": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
             "named": true
           }
         ]
@@ -5818,6 +6218,16 @@
         "types": [
           {
             "type": "name_domain_pair",
+            "named": true
+          }
+        ]
+      },
+      "representation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "representation_attribute",
             "named": true
           }
         ]
@@ -6141,6 +6551,10 @@
     "named": false
   },
   {
+    "type": "enum",
+    "named": false
+  },
+  {
     "type": "equivalence",
     "named": false
   },
@@ -6326,6 +6740,10 @@
     "named": false
   },
   {
+    "type": "new",
+    "named": false
+  },
+  {
     "type": "numMoved",
     "named": false
   },
@@ -6386,6 +6804,10 @@
     "named": false
   },
   {
+    "type": "pred",
+    "named": false
+  },
+  {
     "type": "product",
     "named": false
   },
@@ -6434,6 +6856,10 @@
     "named": false
   },
   {
+    "type": "shortTable",
+    "named": false
+  },
+  {
     "type": "single_line_comment",
     "named": true,
     "extra": true
@@ -6460,6 +6886,10 @@
   },
   {
     "type": "substring",
+    "named": false
+  },
+  {
+    "type": "succ",
     "named": false
   },
   {
@@ -6520,6 +6950,10 @@
   },
   {
     "type": "tuple",
+    "named": false
+  },
+  {
+    "type": "type",
     "named": false
   },
   {

@@ -1,0 +1,204 @@
+Model before rewriting:
+
+find x: int(-3, -1, 2)
+find y: int(0, 2, 4)
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+sum([(product([3,x;int(1..)]) - product([2,y;int(1..)])),product([5,toInt(a);int(1..)]);int(1..)]) <= 1,
+(sum([product([3,toInt(a);int(1..)]),product([5,toInt(b);int(1..)]);int(1..)]) - product([2,toInt(c);int(1..)])) >= 2,
+sum([(product([2,toInt(a);int(1..)]) - product([3,toInt(b);int(1..)])),product([4,toInt(c);int(1..)]);int(1..)]) = sum([2,toInt(a);int(1..)]),
+sum([toInt(a),toInt(a),toInt(!(a)),1,0;int(1..5)]) < 4
+
+--
+
+sum([toInt(a),toInt(a),toInt(!(a)),1,0;int(1..5)]) < 4
+   ~~> lt_to_leq ([("Minion", 8400)])
+sum([toInt(a),toInt(a),toInt(!(a)),1,0;int(1..5)]) <= sum([4,-1;int(1..)])
+
+--
+
+(sum([product([3,toInt(a);int(1..)]),product([5,toInt(b);int(1..)]);int(1..)]) - product([2,toInt(c);int(1..)]))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([sum([product([3,toInt(a);int(1..)]),product([5,toInt(b);int(1..)]);int(1..)]),-(product([2,toInt(c);int(1..)]));int(1..)])
+
+--
+
+sum([sum([product([3,toInt(a);int(1..)]),product([5,toInt(b);int(1..)]);int(1..)]),-(product([2,toInt(c);int(1..)]));int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,toInt(a);int(1..)]),product([5,toInt(b);int(1..)]),-(product([2,toInt(c);int(1..)]));int(1..)])
+
+--
+
+(product([3,x;int(1..)]) - product([2,y;int(1..)]))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([product([3,x;int(1..)]),-(product([2,y;int(1..)]));int(1..)])
+
+--
+
+(product([2,toInt(a);int(1..)]) - product([3,toInt(b);int(1..)]))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([product([2,toInt(a);int(1..)]),-(product([3,toInt(b);int(1..)]));int(1..)])
+
+--
+
+-(product([2,toInt(c);int(1..)]))
+   ~~> simplify_negation_of_product ([("Base", 8400)])
+product([2,toInt(c),-1;int(1..)])
+
+--
+
+product([toInt(c),-2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([-2,toInt(c);int(1..)])
+
+--
+
+sum([sum([product([3,x;int(1..)]),-(product([2,y;int(1..)]));int(1..)]),product([5,toInt(a);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,x;int(1..)]),-(product([2,y;int(1..)])),product([5,toInt(a);int(1..)]);int(1..)])
+
+--
+
+sum([sum([product([2,toInt(a);int(1..)]),-(product([3,toInt(b);int(1..)]));int(1..)]),product([4,toInt(c);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([2,toInt(a);int(1..)]),-(product([3,toInt(b);int(1..)])),product([4,toInt(c);int(1..)]);int(1..)])
+
+--
+
+-(product([2,y;int(1..)]))
+   ~~> simplify_negation_of_product ([("Base", 8400)])
+product([2,y,-1;int(1..)])
+
+--
+
+product([y,-2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([-2,y;int(1..)])
+
+--
+
+-(product([3,toInt(b);int(1..)]))
+   ~~> simplify_negation_of_product ([("Base", 8400)])
+product([3,toInt(b),-1;int(1..)])
+
+--
+
+product([toInt(b),-3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([-3,toInt(b);int(1..)])
+
+--
+
+sum([product([3,x;int(1..)]),product([-2,y;int(1..)]),product([5,toInt(a);int(1..)]);int(1..)]) <= 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+FlatWeightedSumLeq([5, 3, -2],[a, x, y],1)
+
+--
+
+sum([product([3,toInt(a);int(1..)]),product([5,toInt(b);int(1..)]),product([-2,toInt(c);int(1..)]);int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+FlatWeightedSumGeq([3, 5, -2],[a, b, c],2)
+
+--
+
+sum([toInt(a),toInt(a),toInt(!(a)),1,0;int(1..5)]) <= 3
+   ~~> flatten_generic ([("Minion", 4200)])
+__0 <= 3
+new variables:
+  findAux __0: int(1..4)
+new constraints:
+  __0 =aux sum([toInt(a),toInt(a),toInt(!(a)),1,0;int(1..5)])
+
+--
+
+sum([product([2,toInt(a);int(1..)]),product([-3,toInt(b);int(1..)]),product([4,toInt(c);int(1..)]);int(1..)]) = sum([2,toInt(a);int(1..)])
+   ~~> flatten_eq ([("Minion", 4200)])
+__1 = __2
+new variables:
+  findAux __1: int(-3..6)
+  findAux __2: int(2..3)
+new constraints:
+  __1 =aux sum([product([2,toInt(a);int(1..)]),product([-3,toInt(b);int(1..)]),product([4,toInt(c);int(1..)]);int(1..)])
+  __2 =aux sum([2,toInt(a);int(1..)])
+
+--
+
+__1 =aux sum([product([2,toInt(a);int(1..)]),product([-3,toInt(b);int(1..)]),product([4,toInt(c);int(1..)]);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([2, -3, 4],[a, b, c],__1),FlatWeightedSumGeq([2, -3, 4],[a, b, c],__1);int(1..)])
+
+--
+
+__2 =aux sum([2,toInt(a);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([2, a], __2),SumGeq([2, a], __2);int(1..)])
+
+--
+
+toInt(!(a))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__3)
+new variables:
+  findAux __3: bool
+new constraints:
+  __3 =aux !(a)
+
+--
+
+__3 =aux !(a)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(!(a), __3)
+
+--
+
+__0 <= 3
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__0, 3, 0)
+
+--
+
+!(a)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(a,false)
+
+--
+
+sum([toInt(a),toInt(a),toInt(__3),1,0;int(1..5)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(a),toInt(__3),1,0;int(1..)])
+
+--
+
+__0 =aux sum([toInt(a),toInt(a),toInt(__3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, 1, 2],[1, __3, a],__0),FlatWeightedSumGeq([1, 1, 2],[1, __3, a],__0);int(1..)])
+
+--
+
+Final model:
+
+find x: int(-3, -1, 2)
+find y: int(0, 2, 4)
+find a: bool
+find b: bool
+find c: bool
+findAux __0: int(1..4)
+findAux __1: int(-3..6)
+findAux __2: int(2..3)
+findAux __3: bool
+
+such that
+
+FlatWeightedSumLeq([5, 3, -2],[a, x, y],1),
+FlatWeightedSumGeq([3, 5, -2],[a, b, c],2),
+__1 = __2,
+Ineq(__0, 3, 0),
+and([FlatWeightedSumLeq([1, 1, 2],[1, __3, a],__0),FlatWeightedSumGeq([1, 1, 2],[1, __3, a],__0);int(1..)]),
+and([FlatWeightedSumLeq([2, -3, 4],[a, b, c],__1),FlatWeightedSumGeq([2, -3, 4],[a, b, c],__1);int(1..)]),
+and([SumLeq([2, a], __2),SumGeq([2, a], __2);int(1..)]),
+Reify(WatchedLiteral(a,false), __3)
+

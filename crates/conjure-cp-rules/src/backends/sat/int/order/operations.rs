@@ -5,7 +5,7 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
-use crate::backends::sat::boolean::{tseytin_and, tseytin_iff, tseytin_not, tseytin_or};
+use crate::backends::sat::boolean::tseytin_not;
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::Moo;
 use conjure_cp::into_matrix_expr;
@@ -67,146 +67,6 @@ pub fn validate_order_int_operands(
     Ok((out, global_min, global_max))
 }
 
-/// Encodes a < b for order integers.
-///
-/// `x < y` iff `exists i . (NOT x_i AND y_i)`
-fn sat_order_lt(
-    a_bits: Vec<Expr>,
-    b_bits: Vec<Expr>,
-    clauses: &mut Vec<conjure_cp::ast::CnfClause>,
-    symbols: &mut SymbolTable,
-) -> Expr {
-    let mut result = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
-
-    for (a_i, b_i) in a_bits.iter().zip(b_bits.iter()) {
-        // (NOT a_i AND b_i)
-        let not_a_i = tseytin_not(a_i.clone(), clauses, symbols);
-        let current_term = tseytin_and(&vec![not_a_i, b_i.clone()], clauses, symbols);
-
-        // accumulate (NOT a_i AND b_i) into OR term
-        result = tseytin_or(&vec![result, current_term], clauses, symbols);
-    }
-    result
-}
-
-/// Builds CNF for equality between two order SATInt bit-vectors.
-/// This function is used by both eq and neq rules, with the output negated for neq.
-/// Returns (expr, clauses, symbols).
-fn sat_order_eq_expr(
-    lhs_bits: &[Expr],
-    rhs_bits: &[Expr],
-    symbols: &SymbolTable,
-) -> (Expr, Vec<conjure_cp::ast::CnfClause>, SymbolTable) {
-    let bit_count = lhs_bits.len();
-
-    let mut output = true.into();
-    let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
-
-    for i in 0..bit_count {
-        let comparison = tseytin_iff(
-            lhs_bits[i].clone(),
-            rhs_bits[i].clone(),
-            &mut new_clauses,
-            &mut new_symbols,
-        );
-        output = tseytin_and(
-            &vec![comparison, output],
-            &mut new_clauses,
-            &mut new_symbols,
-        );
-    }
-
-    (output, new_clauses, new_symbols)
-}
-
-/// Converts a = expression between two order SATInts to a boolean expression in cnf
-///
-/// ```text
-/// SATInt(a) = SATInt(b) ~> Bool
-/// ```
-#[register_rule("SAT", 9100, [Eq])]
-fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Eq(_, lhs, rhs) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    let (binding, _, _) =
-        validate_order_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
-    let [lhs_bits, rhs_bits] = binding.as_slice() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let (output, new_clauses, new_symbols) = sat_order_eq_expr(lhs_bits, rhs_bits, symbols);
-
-    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
-}
-
-/// Converts a != expression between two order SATInts to a boolean expression in cnf
-#[register_rule("SAT", 9100, [Neq])]
-fn neq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Neq(_, lhs, rhs) = expr else {
-        return Err(RuleNotApplicable);
-    }; // considered covered
-
-    let (binding, _, _) =
-        validate_order_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
-    let [lhs_bits, rhs_bits] = binding.as_slice() else {
-        return Err(RuleNotApplicable); // consider covered
-    };
-
-    let (mut output, mut new_clauses, mut new_symbols) =
-        sat_order_eq_expr(lhs_bits, rhs_bits, symbols);
-
-    output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
-
-    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
-}
-
-/// Converts a </>/<=/>= expression between two order SATInts to a boolean expression in cnf
-///
-/// ```text
-/// SATInt(a) </>/<=/>= SATInt(b) ~> Bool
-///
-/// ```
-/// Note: < and <= are rewritten by swapping operands to reuse lt logic.
-#[register_rule("SAT", 9100, [Lt, Gt, Leq, Geq])]
-fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let (lhs, rhs, negate) = match expr {
-        // A < B -> sat_order_lt(A, B)
-        Expr::Lt(_, x, y) => (x, y, false),
-        // A > B -> sat_order_lt(B, A)
-        Expr::Gt(_, x, y) => (y, x, false),
-        // A <= B -> NOT (B < A)
-        Expr::Leq(_, x, y) => (y, x, true),
-        // A >= B -> NOT (A < B)
-        Expr::Geq(_, x, y) => (x, y, true),
-        _ => return Err(RuleNotApplicable),
-    };
-
-    let (binding, _, _) =
-        validate_order_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
-    let [lhs_bits, rhs_bits] = binding.as_slice() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
-
-    let mut output = sat_order_lt(
-        lhs_bits.clone(),
-        rhs_bits.clone(),
-        &mut new_clauses,
-        &mut new_symbols,
-    );
-
-    if negate {
-        output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
-    }
-
-    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
-}
-
 /// Converts a - expression for a SATInt to a new SATInt
 ///
 /// ```text
@@ -231,25 +91,25 @@ fn neg_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut out: Vec<Expr> = Vec::with_capacity(n);
 
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
 
     let ff = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
-    out.push(tseytin_not(ff, &mut new_clauses, &mut new_symbols));
+    out.push(tseytin_not(ff, &mut new_sat_decisions, &mut new_symbols));
 
     for i in 1..n {
         let src = val_bits[n - i].clone();
-        let neg_bit = tseytin_not(src, &mut new_clauses, &mut new_symbols);
+        let neg_bit = tseytin_not(src, &mut new_sat_decisions, &mut new_symbols);
         out.push(neg_bit);
     }
 
-    Ok(RuleEffect::cnf(
+    Ok(RuleEffect::sat(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Order,
             Moo::new(into_matrix_expr!(out)),
             (new_min, new_max),
         ),
-        new_clauses,
+        new_sat_decisions,
         new_symbols,
     ))
 }

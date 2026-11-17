@@ -248,8 +248,7 @@ mod test {
     use crate::parse_essence;
     #[allow(unused_imports)]
     use conjure_cp_core::ast::{
-        Atom, DeclarationKind, Expression, Metadata, Moo, Name, OXIDE_INT_MAX, OXIDE_INT_MIN,
-        ReturnType, Typeable,
+        Atom, DeclarationKind, Expression, Metadata, Moo, Name, ReturnType, Typeable,
     };
     #[allow(unused_imports)]
     use conjure_cp_core::{domain_int, matrix_expr, range};
@@ -307,13 +306,18 @@ mod test {
     }
 
     #[test]
-    pub fn test_parse_bare_int_domain_is_full() {
+    pub fn test_parse_bare_int_domain_is_unbounded() {
         let src = "given a : int";
         let (model, _source_map) = parse_essence(src).unwrap();
 
         let st = model.symbols();
         let a = st.lookup(&Name::user("a")).unwrap();
-        assert_eq!(a.domain(), Some(domain_int!(OXIDE_INT_MIN..OXIDE_INT_MAX)));
+        assert_eq!(
+            a.domain(),
+            Some(conjure_cp_core::ast::Domain::int_ground(vec![
+                conjure_cp_core::ast::Range::Unbounded
+            ]))
+        );
     }
 
     #[test]

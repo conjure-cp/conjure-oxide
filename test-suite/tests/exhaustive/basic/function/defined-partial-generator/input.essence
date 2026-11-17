@@ -1,0 +1,12 @@
+language Essence 1.3
+
+$ A partial function may define no keys, some keys, or every key. Undefined keys do not
+$ participate in the generator; an empty function therefore permits every bound.
+find f : function int(1..2) --> int(10,20)
+find bound : int(0..2)
+find at_two : bool
+such that
+    and([i <= bound | i <- defined(f)]),
+    at_two <-> (2 in defined(f)),
+    !(0 in defined(f)),
+    !(3 in defined(f))

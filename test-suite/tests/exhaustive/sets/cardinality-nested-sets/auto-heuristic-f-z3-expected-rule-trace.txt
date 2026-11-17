@@ -1,0 +1,731 @@
+Model before rewriting:
+
+find a: set of int(1..2)
+find b: set of int(1..2)
+
+such that
+
+|(a intersect (b union {1}))| = 1
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#explicit_1: matrix indexed by [int(1..2)] of int(1..2)
+  find a#explicit_2: int(0..2)
+new constraints:
+  or([a#explicit_2 < 2,([SafeIndex(a#explicit_1,[1]);int(1..)] <lex [SafeIndex(a#explicit_1,[2]);int(1..)]);int(1..)])
+  or([1 <= a#explicit_2,SafeIndex(a#explicit_1,[1]) = 1;int(1..)])
+  or([2 <= a#explicit_2,SafeIndex(a#explicit_1,[2]) = 1;int(1..)])
+
+--
+
+a#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_2
+new variables:
+  find a#explicit_2#bv_1: int(0..2)
+
+--
+
+a#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_2
+
+--
+
+a#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_2
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#explicit_1: matrix indexed by [int(1..2)] of int(1..2)
+  find b#explicit_2: int(0..2)
+new constraints:
+  or([b#explicit_2 < 2,([SafeIndex(b#explicit_1,[1]);int(1..)] <lex [SafeIndex(b#explicit_1,[2]);int(1..)]);int(1..)])
+  or([1 <= b#explicit_2,SafeIndex(b#explicit_1,[1]) = 1;int(1..)])
+  or([2 <= b#explicit_2,SafeIndex(b#explicit_1,[2]) = 1;int(1..)])
+
+--
+
+b#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_2
+new variables:
+  find b#explicit_2#bv_1: int(0..2)
+
+--
+
+b#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_2
+
+--
+
+b#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_2
+
+--
+
+a#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1
+new variables:
+  find a#explicit_1#array_1: matrix indexed by [int(1..2)] of int(1..2)
+
+--
+
+a#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1
+
+--
+
+b#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_1
+new variables:
+  find b#explicit_1#array_1: matrix indexed by [int(1..2)] of int(1..2)
+
+--
+
+b#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_1
+
+--
+
+a#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1
+
+--
+
+a#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1
+
+--
+
+b#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_1
+
+--
+
+b#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_1
+
+--
+
+|(a intersect (b union {1}))| = 1,
+or([a#explicit_2 < 2,([SafeIndex(a#explicit_1,[1]);int(1..)] <lex [SafeIndex(a#explicit_1,[2]);int(1..)]);int(1..)]),
+or([1 <= a#explicit_2,SafeIndex(a#explicit_1,[1]) = 1;int(1..)]),
+or([2 <= a#explicit_2,SafeIndex(a#explicit_1,[2]) = 1;int(1..)]),
+or([b#explicit_2 < 2,([SafeIndex(b#explicit_1,[1]);int(1..)] <lex [SafeIndex(b#explicit_1,[2]);int(1..)]);int(1..)]),
+or([1 <= b#explicit_2,SafeIndex(b#explicit_1,[1]) = 1;int(1..)]),
+or([2 <= b#explicit_2,SafeIndex(b#explicit_1,[2]) = 1;int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+|(a intersect (b union {1}))| = 1,
+or([a#explicit_2 < 2,([SafeIndex(a#explicit_1,[1]);int(1..)] <lex [SafeIndex(a#explicit_1,[2]);int(1..)]);int(1..)]),
+or([1 <= a#explicit_2,SafeIndex(a#explicit_1,[1]) = 1;int(1..)]),
+or([2 <= a#explicit_2,SafeIndex(a#explicit_1,[2]) = 1;int(1..)]),
+or([b#explicit_2 < 2,([SafeIndex(b#explicit_1,[1]);int(1..)] <lex [SafeIndex(b#explicit_1,[2]);int(1..)]);int(1..)]),
+or([1 <= b#explicit_2,SafeIndex(b#explicit_1,[1]) = 1;int(1..)]),
+or([2 <= b#explicit_2,SafeIndex(b#explicit_1,[2]) = 1;int(1..)])
+new variables:
+  find a#explicit_1#array_1#bv_1: matrix indexed by [int(1..2)] of int(1..2)
+  find b#explicit_1#array_1#bv_1: matrix indexed by [int(1..2)] of int(1..2)
+
+--
+
+a#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_2
+
+--
+
+b#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_2
+
+--
+
+b#explicit_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#explicit_2#bv_1
+
+--
+
+a#explicit_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_2#bv_1
+
+--
+
+a#explicit_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_2#bv_1
+
+--
+
+a#explicit_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_2#bv_1
+
+--
+
+b#explicit_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#explicit_2#bv_1
+
+--
+
+b#explicit_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#explicit_2#bv_1
+
+--
+
+a#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1#array_1
+
+--
+
+b#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+b#explicit_1#array_1
+
+--
+
+b#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_1#array_1
+
+--
+
+b#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+b#explicit_1#array_1
+
+--
+
+b#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_1#array_1#bv_1
+
+--
+
+a#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_1#array_1#bv_1
+
+--
+
+b#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#explicit_1#array_1#bv_1
+
+--
+
+b#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#explicit_1#array_1#bv_1
+
+--
+
+a#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1#array_1
+
+--
+
+b#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+b#explicit_1#array_1
+
+--
+
+b#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_1#array_1
+
+--
+
+b#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+b#explicit_1#array_1
+
+--
+
+b#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_1#array_1#bv_1
+
+--
+
+a#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_1#array_1#bv_1
+
+--
+
+b#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#explicit_1#array_1#bv_1
+
+--
+
+b#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#explicit_1#array_1#bv_1
+
+--
+
+|(a intersect (b union {1}))|
+   ~~> cardinality_set_expression ([("Base", 8500)])
+sum([ 1 | __0 <- (a intersect (b union {1})) ])
+
+--
+
+[ 1 | __0 <- (a intersect (b union {1})) ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ 1 | __0 : int(1..2), __0 in (a intersect (b union {1})) ]
+
+--
+
+([SafeIndex(a#explicit_1#array_1#bv_1,[1]);int(1..)] <lex [SafeIndex(a#explicit_1#array_1#bv_1,[2]);int(1..)])
+   ~~> expand_lex_lt_leq ([("Smt", 2001)])
+or([SafeIndex(a#explicit_1#array_1#bv_1,[1]) < SafeIndex(a#explicit_1#array_1#bv_1,[2]),and([SafeIndex(a#explicit_1#array_1#bv_1,[1]) = SafeIndex(a#explicit_1#array_1#bv_1,[2]),false;int(1..)]);int(1..)])
+
+--
+
+or([SafeIndex(a#explicit_1#array_1#bv_1,[1]) < SafeIndex(a#explicit_1#array_1#bv_1,[2]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+SafeIndex(a#explicit_1#array_1#bv_1,[1]) < SafeIndex(a#explicit_1#array_1#bv_1,[2])
+
+--
+
+([SafeIndex(b#explicit_1#array_1#bv_1,[1]);int(1..)] <lex [SafeIndex(b#explicit_1#array_1#bv_1,[2]);int(1..)])
+   ~~> expand_lex_lt_leq ([("Smt", 2001)])
+or([SafeIndex(b#explicit_1#array_1#bv_1,[1]) < SafeIndex(b#explicit_1#array_1#bv_1,[2]),and([SafeIndex(b#explicit_1#array_1#bv_1,[1]) = SafeIndex(b#explicit_1#array_1#bv_1,[2]),false;int(1..)]);int(1..)])
+
+--
+
+or([SafeIndex(b#explicit_1#array_1#bv_1,[1]) < SafeIndex(b#explicit_1#array_1#bv_1,[2]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+SafeIndex(b#explicit_1#array_1#bv_1,[1]) < SafeIndex(b#explicit_1#array_1#bv_1,[2])
+
+--
+
+[ 1 | __0 : int(1..2), __0 in (a intersect (b union {1})) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(1 in (a intersect (b union {1}))),1;int(1..)]),product([toInt(2 in (a intersect (b union {1}))),1;int(1..)]);int(1..)]
+new variables:
+  findAux __0: int(1)
+  findAux __1: int(2)
+
+--
+
+product([toInt(1 in (a intersect (b union {1}))),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(1 in (a intersect (b union {1})));int(1..)])
+
+--
+
+product([toInt(2 in (a intersect (b union {1}))),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(2 in (a intersect (b union {1})));int(1..)])
+
+--
+
+product([toInt(1 in (a intersect (b union {1})));int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(1 in (a intersect (b union {1})))
+
+--
+
+product([toInt(2 in (a intersect (b union {1})));int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(2 in (a intersect (b union {1})))
+
+--
+
+sum([toInt(1 in (a intersect (b union {1}))),toInt(2 in (a intersect (b union {1})));int(1..)]) = 1,
+or([a#explicit_2#bv_1 < 2,SafeIndex(a#explicit_1#array_1#bv_1,[1]) < SafeIndex(a#explicit_1#array_1#bv_1,[2]);int(1..)]),
+or([1 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1;int(1..)]),
+or([2 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[2]) = 1;int(1..)]),
+or([b#explicit_2#bv_1 < 2,SafeIndex(b#explicit_1#array_1#bv_1,[1]) < SafeIndex(b#explicit_1#array_1#bv_1,[2]);int(1..)]),
+or([1 <= b#explicit_2#bv_1,SafeIndex(b#explicit_1#array_1#bv_1,[1]) = 1;int(1..)]),
+or([2 <= b#explicit_2#bv_1,SafeIndex(b#explicit_1#array_1#bv_1,[2]) = 1;int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+sum([toInt(1 in (a intersect (b union {1}))),toInt(2 in (a intersect (b union {1})));int(1..)]) = 1,
+or([a#explicit_2#bv_1 < 2,SafeIndex(a#explicit_1#array_1#bv_1,[1]) < SafeIndex(a#explicit_1#array_1#bv_1,[2]);int(1..)]),
+or([1 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1;int(1..)]),
+or([2 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[2]) = 1;int(1..)]),
+or([b#explicit_2#bv_1 < 2,SafeIndex(b#explicit_1#array_1#bv_1,[1]) < SafeIndex(b#explicit_1#array_1#bv_1,[2]);int(1..)]),
+or([1 <= b#explicit_2#bv_1,SafeIndex(b#explicit_1#array_1#bv_1,[1]) = 1;int(1..)]),
+or([2 <= b#explicit_2#bv_1,SafeIndex(b#explicit_1#array_1#bv_1,[2]) = 1;int(1..)])
+new variables:
+  findAux __0#bv_1: int(1)
+  findAux __1#bv_1: int(2)
+
+--
+
+1 in (a intersect (b union {1}))
+   ~~> membership_in_intersection ([("Base", 8700)])
+and([1 in a,1 in (b union {1});int(1..)])
+
+--
+
+1 in a
+   ~~> in_explicit ([("ReprGeneral", 9500)])
+or([and([1 <= a#explicit_2,SafeIndex(a#explicit_1,[1]) = 1;int(1..)]),and([2 <= a#explicit_2,SafeIndex(a#explicit_1,[2]) = 1;int(1..)]);int(1..)])
+
+--
+
+a#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_2
+
+--
+
+a#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_2
+
+--
+
+a#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1
+
+--
+
+a#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1
+
+--
+
+a#explicit_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_2#bv_1
+
+--
+
+a#explicit_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_2#bv_1
+
+--
+
+a#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_1#array_1#bv_1
+
+--
+
+a#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_1#array_1#bv_1
+
+--
+
+2 in (a intersect (b union {1}))
+   ~~> membership_in_intersection ([("Base", 8700)])
+and([2 in a,2 in (b union {1});int(1..)])
+
+--
+
+2 in a
+   ~~> in_explicit ([("ReprGeneral", 9500)])
+or([and([1 <= a#explicit_2,SafeIndex(a#explicit_1,[1]) = 2;int(1..)]),and([2 <= a#explicit_2,SafeIndex(a#explicit_1,[2]) = 2;int(1..)]);int(1..)])
+
+--
+
+a#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_2
+
+--
+
+a#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_2
+
+--
+
+a#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1
+
+--
+
+a#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1
+
+--
+
+a#explicit_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_2#bv_1
+
+--
+
+a#explicit_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_2#bv_1
+
+--
+
+a#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#explicit_1#array_1
+
+--
+
+a#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_1#array_1#bv_1
+
+--
+
+a#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#explicit_1#array_1#bv_1
+
+--
+
+1 in (b union {1})
+   ~~> membership_in_union ([("Base", 8700)])
+or([1 in b,1 in {1};int(1..)])
+
+--
+
+2 in (b union {1})
+   ~~> membership_in_union ([("Base", 8700)])
+or([2 in b,2 in {1};int(1..)])
+
+--
+
+2 in b
+   ~~> in_explicit ([("ReprGeneral", 9500)])
+or([and([1 <= b#explicit_2,SafeIndex(b#explicit_1,[1]) = 2;int(1..)]),and([2 <= b#explicit_2,SafeIndex(b#explicit_1,[2]) = 2;int(1..)]);int(1..)])
+
+--
+
+b#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_2
+
+--
+
+b#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_2
+
+--
+
+b#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_1
+
+--
+
+b#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_1
+
+--
+
+b#explicit_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#explicit_2#bv_1
+
+--
+
+b#explicit_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#explicit_2#bv_1
+
+--
+
+b#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+b#explicit_1#array_1
+
+--
+
+b#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_1#array_1
+
+--
+
+b#explicit_1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+b#explicit_1#array_1
+
+--
+
+b#explicit_1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#explicit_1#array_1
+
+--
+
+b#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#explicit_1#array_1#bv_1
+
+--
+
+b#explicit_1#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#explicit_1#array_1#bv_1
+
+--
+
+or([or([and([1 <= b#explicit_2#bv_1,SafeIndex(b#explicit_1#array_1#bv_1,[1]) = 2;int(1..)]),and([2 <= b#explicit_2#bv_1,SafeIndex(b#explicit_1#array_1#bv_1,[2]) = 2;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([and([1 <= b#explicit_2#bv_1,SafeIndex(b#explicit_1#array_1#bv_1,[1]) = 2;int(1..)]),and([2 <= b#explicit_2#bv_1,SafeIndex(b#explicit_1#array_1#bv_1,[2]) = 2;int(1..)]);int(1..)])
+
+--
+
+and([or([and([1 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1;int(1..)]),and([2 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[2]) = 1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+or([and([1 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1;int(1..)]),and([2 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[2]) = 1;int(1..)]);int(1..)])
+
+--
+
+Final model:
+
+find a: set (representation explicit) of int(1..2)
+find b: set (representation explicit) of int(1..2)
+find a#explicit_1: matrix indexed by [int(1..2)] of int(1..2)
+find a#explicit_2: int(0..2)
+find a#explicit_2#bv_1: int(0..2)
+find b#explicit_1: matrix indexed by [int(1..2)] of int(1..2)
+find b#explicit_2: int(0..2)
+find b#explicit_2#bv_1: int(0..2)
+find a#explicit_1#array_1: matrix indexed by [int(1..2)] of int(1..2)
+find b#explicit_1#array_1: matrix indexed by [int(1..2)] of int(1..2)
+find a#explicit_1#array_1#bv_1: matrix indexed by [int(1..2)] of int(1..2)
+find b#explicit_1#array_1#bv_1: matrix indexed by [int(1..2)] of int(1..2)
+findAux __0: int(1)
+findAux __1: int(2)
+findAux __0#bv_1: int(1)
+findAux __1#bv_1: int(2)
+
+such that
+
+sum([toInt(or([and([1 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1;int(1..)]),and([2 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[2]) = 1;int(1..)]);int(1..)])),toInt(and([or([and([1 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 2;int(1..)]),and([2 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[2]) = 2;int(1..)]);int(1..)]),or([and([1 <= b#explicit_2#bv_1,SafeIndex(b#explicit_1#array_1#bv_1,[1]) = 2;int(1..)]),and([2 <= b#explicit_2#bv_1,SafeIndex(b#explicit_1#array_1#bv_1,[2]) = 2;int(1..)]);int(1..)]);int(1..)]));int(1..)]) = 1,
+or([a#explicit_2#bv_1 < 2,SafeIndex(a#explicit_1#array_1#bv_1,[1]) < SafeIndex(a#explicit_1#array_1#bv_1,[2]);int(1..)]),
+or([1 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[1]) = 1;int(1..)]),
+or([2 <= a#explicit_2#bv_1,SafeIndex(a#explicit_1#array_1#bv_1,[2]) = 1;int(1..)]),
+or([b#explicit_2#bv_1 < 2,SafeIndex(b#explicit_1#array_1#bv_1,[1]) < SafeIndex(b#explicit_1#array_1#bv_1,[2]);int(1..)]),
+or([1 <= b#explicit_2#bv_1,SafeIndex(b#explicit_1#array_1#bv_1,[1]) = 1;int(1..)]),
+or([2 <= b#explicit_2#bv_1,SafeIndex(b#explicit_1#array_1#bv_1,[2]) = 1;int(1..)])
+

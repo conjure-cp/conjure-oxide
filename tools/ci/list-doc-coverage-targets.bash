@@ -6,6 +6,7 @@ cargo metadata --format-version=1 --no-deps | jq -r '
   [
     .packages[]
     | select(.name != "test-suite")
+    | .targets |= map(select(.doc))
     | {
         name: .name,
         has_lib: any(.targets[]; (.kind | index("lib")) or (.kind | index("proc-macro"))),

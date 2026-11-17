@@ -132,6 +132,8 @@ fn parse_record(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    let saved_ctx = ctx.typechecking_context;
+    let saved_inner_ctx = ctx.inner_typechecking_context;
     let mut values = Vec::new();
     let mut had_error = false;
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
@@ -145,25 +147,19 @@ fn parse_record(
             return Ok(None);
         };
 
-        // Parse value with inner typechecking context
-        let saved_ctx = ctx.typechecking_context;
-        ctx.typechecking_context = ctx.inner_typechecking_context;
+        // Record fields are heterogeneous, just like tuple positions.
+        ctx.typechecking_context = TypecheckingContext::Unknown;
         ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-
         let Some(value) = parse_expression(ctx, value_node)? else {
             had_error = true;
-            ctx.typechecking_context = saved_ctx;
-            ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-            continue; // continue parsing other elements
+            continue;
         };
-
-        // Reset contexts
-        ctx.inner_typechecking_context = ctx.typechecking_context;
-        ctx.typechecking_context = saved_ctx;
 
         values.push(conjure_cp_core::ast::records::Field { name, value });
     }
 
+    ctx.typechecking_context = saved_ctx;
+    ctx.inner_typechecking_context = saved_inner_ctx;
     if had_error {
         Ok(None)
     } else {

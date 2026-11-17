@@ -12,6 +12,8 @@ use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
 use conjure_cp_core::ast::DeclarationPtr;
+use conjure_cp_core::ast::enumerated::{EnumVariant, EnumeratedType};
+use conjure_cp_core::ast::{Atom, Metadata};
 use conjure_cp_core::ast::{
     Domain, DomainPtr, Expression, IntVal, Literal, Moo, Name, Range, ReturnType, SymbolTable,
     Typeable, eval_constant,
@@ -28,9 +30,8 @@ use conjure_cp_core::ast::{
 ///   interval evaluation, also works when those declarations currently have unbounded or
 ///   full-width (`int`) domains.
 ///
-/// Eager `Expression::domain_of` must not run here for non-constant integers: arithmetic
-/// over bare `int` givens would materialise Cartesian products of
-/// `OXIDE_INT_MIN..OXIDE_INT_MAX` via `GroundDomain::apply_i32` during parse
+/// Eager `Expression::domain_of` must not run here for non-constant integers: domains of
+/// parameter-dependent arithmetic may remain unresolved until instantiation
 /// (e.g. BIBD `letting b be (l*v*(v-1))/(k*(k-1))`).
 fn value_letting_domain(expr: &Expression) -> Option<DomainPtr> {
     match expr.return_type() {
@@ -139,7 +140,65 @@ pub fn parse_letting_statement(
             return Ok(None);
         };
 
-        if variable_decl.child_by_field_name("domain").is_some() {
+        if expr_or_domain.kind() == "unnamed_type_declaration" {
+            let Some(size_node) = field!(recover, ctx, expr_or_domain, "size") else {
+                return Ok(None);
+            };
+            let Some(size_expr) = parse_expression(ctx, size_node)? else {
+                return Ok(None);
+            };
+            let Some(Literal::Int(size)) = eval_constant(&size_expr) else {
+                ctx.record_error(RecoverableParseError::new(
+                    "Unnamed type size must be a constant integer".to_string(),
+                    Some(size_node.range()),
+                ));
+                return Ok(None);
+            };
+            if size < 1 {
+                ctx.record_error(RecoverableParseError::new(
+                    "Unnamed type size must be positive".to_string(),
+                    Some(size_node.range()),
+                ));
+                return Ok(None);
+            }
+            for name in temp_symbols {
+                symbol_table.insert(DeclarationPtr::new_unnamed(Name::user(name), size as u32));
+            }
+        } else if expr_or_domain.kind() == "enum_type_declaration" {
+            let Some(members) = field!(recover, ctx, expr_or_domain, "members") else {
+                return Ok(None);
+            };
+            let variants = named_children(&members)
+                .map(|node| Name::user(&ctx.source_code[node.start_byte()..node.end_byte()]))
+                .collect::<Vec<_>>();
+            for name in temp_symbols {
+                let ty = Moo::new(EnumeratedType::new(Name::user(name), variants.clone()));
+                for (index, variant) in variants.iter().enumerate() {
+                    if symbol_table.lookup(variant).is_some()
+                        || ctx
+                            .symbols
+                            .as_ref()
+                            .is_some_and(|symbols| symbols.read().lookup(variant).is_some())
+                        || variant == &ty.name
+                    {
+                        ctx.record_error(RecoverableParseError::new(
+                            format!("Enum member '{variant}' is already declared"),
+                            Some(members.range()),
+                        ));
+                        continue;
+                    }
+                    let value = Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Literal(Literal::EnumVariant(EnumVariant::new(
+                            ty.clone(),
+                            index as u32,
+                        ))),
+                    );
+                    symbol_table.insert(DeclarationPtr::new_value_letting(variant.clone(), value));
+                }
+                symbol_table.insert(DeclarationPtr::new_enumerated(Name::user(name), ty));
+            }
+        } else if variable_decl.child_by_field_name("domain").is_some() {
             for name in temp_symbols {
                 let Some(domain) = parse_domain(ctx, expr_or_domain)? else {
                     continue;

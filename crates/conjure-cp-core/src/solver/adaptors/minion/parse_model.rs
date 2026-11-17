@@ -4,7 +4,7 @@ use crate::Model as ConjureModel;
 use crate::ast::{
     self as conjure_ast, Atom, Expression, HasDomain, Moo, Name, OptimiseDirection, Range,
 };
-use crate::settings::{SolverFamily, minion_discrete_threshold};
+use crate::settings::{SolverFamily, select_minion_discrete_threshold};
 use crate::solver::SolverError::{
     ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
 };
@@ -29,7 +29,28 @@ pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> 
     let mut minion_model = MinionModel::new();
     minion_model.optimise = optimise;
     let discrete_vars = collect_discrete_required_variables(&model);
-    load_symbol_table(&model, &discrete_vars, &mut minion_model)?;
+    let has_optional_integer = {
+        let symbols = model.symbols();
+        symbols.iter_local().any(|(name, decl)| {
+            !discrete_vars.contains(name)
+                && decl.reprs().is_empty()
+                && symbols
+                    .representations_for(name)
+                    .is_none_or(|reprs| reprs.is_empty())
+                && decl.as_find().is_some_and(|var| {
+                    matches!(
+                        var.domain_of().resolve().as_deref(),
+                        Ok(conjure_ast::GroundDomain::Int(_, _))
+                    )
+                })
+        })
+    };
+    let threshold = if has_optional_integer {
+        select_minion_discrete_threshold()
+    } else {
+        crate::settings::DEFAULT_MINION_DISCRETE_THRESHOLD
+    };
+    load_symbol_table(&model, &discrete_vars, threshold, &mut minion_model)?;
     load_constraints(&model, &mut minion_model)?;
     Ok(minion_model)
 }
@@ -61,6 +82,7 @@ fn resolve_optimisation(model: &ConjureModel) -> Result<Option<Optimise>, Solver
 fn load_symbol_table(
     conjure_model: &ConjureModel,
     discrete_vars: &HashSet<conjure_ast::Name>,
+    threshold: usize,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     if let Some(ref vars) = conjure_model.search_order {
@@ -86,7 +108,14 @@ fn load_symbol_table(
                 if !search_vars.insert(leaf_name.clone()) {
                     continue;
                 }
-                load_var(&leaf_name, &var, true, discrete_vars, minion_model)?;
+                load_var(
+                    &leaf_name,
+                    &var,
+                    true,
+                    discrete_vars,
+                    threshold,
+                    minion_model,
+                )?;
             }
         }
 
@@ -95,7 +124,7 @@ fn load_symbol_table(
             if search_vars.contains(name) {
                 return Ok(());
             }
-            load_var(name, var, false, discrete_vars, minion_model)
+            load_var(name, var, false, discrete_vars, threshold, minion_model)
         })?;
     } else {
         for_each_unrepresented_var(conjure_model, |name, var, decl| {
@@ -103,7 +132,14 @@ fn load_symbol_table(
             // must not be branched on: they would otherwise create many duplicate user solutions.
             let is_search_var =
                 !decl.is_find_auxiliary() && !matches!(name, conjure_ast::Name::Machine(_));
-            load_var(name, var, is_search_var, discrete_vars, minion_model)
+            load_var(
+                name,
+                var,
+                is_search_var,
+                discrete_vars,
+                threshold,
+                minion_model,
+            )
         })?;
     }
     Ok(())
@@ -157,6 +193,8 @@ fn collect_table_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast:
             | conjure_ast::Expression::NegativeTable(_, tuple_expr, _) => {
                 Some(Moo::unwrap_or_clone(tuple_expr))
             }
+            flat @ (conjure_ast::Expression::FlatTable(..)
+            | conjure_ast::Expression::FlatShortTable(..)) => Some(flat),
             _ => None,
         })
         .flat_map(|tuple_expr| Biplate::<conjure_ast::Reference>::universe_bi(&tuple_expr))
@@ -277,15 +315,21 @@ fn load_var(
     var: &conjure_ast::DecisionVariable,
     search_var: bool,
     table_vars: &HashSet<conjure_ast::Name>,
+    threshold: usize,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let resolved_domain = var.domain_of().resolve();
     let force_discrete = table_vars.contains(name);
     match resolved_domain.as_deref() {
         Ok(conjure_ast::GroundDomain::Bool) => load_booldomain_var(name, search_var, minion_model),
-        Ok(conjure_ast::GroundDomain::Int(ranges)) => {
-            load_intdomain_var(name, ranges, search_var, force_discrete, minion_model)
-        }
+        Ok(conjure_ast::GroundDomain::Int(ranges, _)) => load_intdomain_var(
+            name,
+            ranges,
+            search_var,
+            force_discrete,
+            threshold,
+            minion_model,
+        ),
         x => Err(ModelFeatureNotSupported(format!(
             "variable {name} has unsupported domain {x:?}"
         ))),
@@ -298,6 +342,7 @@ fn load_intdomain_var(
     ranges: &[conjure_ast::Range<i32>],
     search_var: bool,
     force_discrete: bool,
+    threshold: usize,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let str_name = name_to_string(name.to_owned());
@@ -320,18 +365,15 @@ fn load_intdomain_var(
     }
     let range = Range::spanning(ranges);
 
-    let (low, high) = match range {
-        Range::Bounded(x, y) => Ok((x.to_owned(), y.to_owned())),
-        Range::Single(x) => Ok((x.to_owned(), x.to_owned())),
-        #[allow(unreachable_patterns)]
-        x => Err(ModelFeatureNotSupported(format!(
-            "variable {name} has a non-finite int domain: {x:?}"
-        ))),
-    }?;
+    if ranges.is_empty() {
+        return Err(ModelFeatureNotSupported(format!(
+            "variable {name} has an empty int domain"
+        )));
+    }
+    let (low, high) = range.int_bounds_with_defaults();
 
     let size = i64::from(high) - i64::from(low) + 1;
-    let threshold = minion_discrete_threshold() as i64;
-    let use_discrete = force_discrete || size <= threshold;
+    let use_discrete = force_discrete || size as u128 <= threshold as u128;
 
     let domain = if use_discrete {
         minion_ast::VarDomain::Discrete(low, high)
@@ -419,26 +461,98 @@ fn load_constraints(
     Ok(())
 }
 
-/// Adds `expr` to `minion_model`
+/// Adds `expr` to `minion_model`.
 fn load_expr(
     expr: conjure_ast::Expression,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    // Top-level `and` must already have been flattened into the root constraint list by
-    // `finish_root_evaluator_normalisation` after rewriting. Nested `and` is still lowered
-    // via `WatchedAnd` in `parse_expr`.
-    if matches!(expr, conjure_ast::Expression::And(_, _)) {
-        return Err(SolverError::ModelInvalid(
-            "top-level and must be flattened into the root constraint list before Minion loading"
-                .to_string(),
-        ));
+    load_constraint(expr, minion_model, &mut HashSet::new(), false)
+}
+
+/// Posts `expr`, following boolean value lettings as they are reached.
+///
+/// Rewriting lowers each letting body in place and leaves the use as a name. A root reference
+/// therefore still names that letting, whose body may be an `and` Minion would not accept as an
+/// atom. Inlining only while loading posts that body as constraints and does not copy it back into
+/// the model.
+///
+/// A top-level `and` that did not come from a letting is still rejected: root normalisation is
+/// supposed to have flattened it already. An `and` that is a letting body is the constraint list.
+fn load_constraint(
+    expr: conjure_ast::Expression,
+    minion_model: &mut MinionModel,
+    lettings: &mut HashSet<conjure_ast::serde::ObjId>,
+    inlined: bool,
+) -> Result<(), SolverError> {
+    if let Some((id, name, body)) = boolean_constraint_letting(&expr) {
+        if !lettings.insert(id.clone()) {
+            return Err(ModelInvalid(format!(
+                "cyclic value letting '{name}' in a Minion constraint"
+            )));
+        }
+        let loaded = load_constraint(body, minion_model, lettings, true);
+        lettings.remove(&id);
+        return loaded;
     }
-    minion_model.constraints.push(parse_expr(expr)?);
+
+    if let conjure_ast::Expression::And(_, matrix) = expr {
+        if !inlined {
+            return Err(SolverError::ModelInvalid(
+                "top-level and must be flattened into the root constraint list before Minion loading"
+                    .to_string(),
+            ));
+        }
+        let conjuncts = Moo::unwrap_or_clone(matrix)
+            .unwrap_matrix_unchecked()
+            .ok_or_else(|| {
+                SolverError::ModelFeatureNotSupported(
+                    "The inside of an and expression is not a matrix.".to_string(),
+                )
+            })?
+            .0;
+        for conjunct in conjuncts {
+            load_constraint(conjunct, minion_model, lettings, true)?;
+        }
+        return Ok(());
+    }
+
+    minion_model
+        .constraints
+        .push(parse_expr_following_lettings(expr, lettings)?);
     Ok(())
+}
+
+/// A boolean value letting used where Minion expects a constraint.
+fn boolean_constraint_letting(
+    expr: &conjure_ast::Expression,
+) -> Option<(conjure_ast::serde::ObjId, String, conjure_ast::Expression)> {
+    let conjure_ast::Expression::Atomic(_, conjure_ast::Atom::Reference(reference)) = expr else {
+        return None;
+    };
+    let body = reference.boolean_formula_letting_body()?;
+    Some((reference.id(), reference.name().to_string(), body))
 }
 
 /// Parses a Conjure Oxide expression into a `minion_sys` constraint.
 fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, SolverError> {
+    parse_expr_following_lettings(expr, &mut HashSet::new())
+}
+
+fn parse_expr_following_lettings(
+    expr: conjure_ast::Expression,
+    lettings: &mut HashSet<conjure_ast::serde::ObjId>,
+) -> Result<minion_ast::Constraint, SolverError> {
+    if let Some((id, name, body)) = boolean_constraint_letting(&expr) {
+        if !lettings.insert(id.clone()) {
+            return Err(ModelInvalid(format!(
+                "cyclic value letting '{name}' in a Minion constraint"
+            )));
+        }
+        let parsed = parse_expr_following_lettings(body, lettings);
+        lettings.remove(&id);
+        return parsed;
+    }
+
     match expr {
         conjure_ast::Expression::Atomic(_metadata, atom) => Ok(minion_ast::Constraint::WLiteral(
             parse_atom(atom)?,
@@ -447,7 +561,7 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
 
         // The Minion adaptor currently treats bools as integers anyways, so this is a no-op
         conjure_ast::Expression::ToInt(_metadata, inner_expr) => {
-            parse_expr(Moo::unwrap_or_clone(inner_expr))
+            parse_expr_following_lettings(Moo::unwrap_or_clone(inner_expr), lettings)
         }
 
         conjure_ast::Expression::FlatAllDiff(_metadata, atoms) => {
@@ -499,19 +613,53 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atomic_expr(Moo::unwrap_or_clone(a))?,
             parse_atomic_expr(Moo::unwrap_or_clone(b))?,
         )),
-        conjure_ast::Expression::Table(_metadata, tuple_expr, allowed_rows_expr) => {
-            parse_table_constraint(
-                TableConstraintKind::Table,
-                Moo::unwrap_or_clone(tuple_expr),
-                Moo::unwrap_or_clone(allowed_rows_expr),
-            )
+        conjure_ast::Expression::FlatShortTable(_, inputs, rows) => {
+            let vars = inputs
+                .into_iter()
+                .map(parse_atom)
+                .collect::<Result<Vec<_>, _>>()?;
+            for row in &rows {
+                let mut positions = HashSet::new();
+                if row
+                    .iter()
+                    .any(|(position, _)| *position >= vars.len() || !positions.insert(*position))
+                {
+                    return Err(ModelInvalid(
+                        "FlatShortTable positions must be distinct and in range".into(),
+                    ));
+                }
+            }
+            let rows = rows
+                .into_iter()
+                .map(|row| {
+                    row.into_iter()
+                        .map(|(position, value)| (position, minion_ast::Constant::Integer(value)))
+                        .collect()
+                })
+                .collect();
+            Ok(minion_ast::Constraint::ShortStr2(vars, rows))
         }
-        conjure_ast::Expression::NegativeTable(_metadata, tuple_expr, forbidden_rows_expr) => {
-            parse_table_constraint(
-                TableConstraintKind::NegativeTable,
-                Moo::unwrap_or_clone(tuple_expr),
-                Moo::unwrap_or_clone(forbidden_rows_expr),
-            )
+        conjure_ast::Expression::FlatTable(_, inputs, rows, negative) => {
+            let kind = if negative {
+                TableConstraintKind::NegativeTable
+            } else {
+                TableConstraintKind::Table
+            };
+            let vars = inputs
+                .into_iter()
+                .map(parse_atom)
+                .collect::<Result<Vec<_>, _>>()?;
+            if rows.iter().any(|row| row.len() != vars.len()) {
+                return Err(ModelInvalid(
+                    "FlatTable row width does not match inputs".into(),
+                ));
+            }
+            Ok(kind.into_constraint(
+                vars,
+                rows.into_iter()
+                    .map(|row| row.into_iter().map(minion_ast::Constant::Integer).collect())
+                    .collect(),
+            ))
         }
         conjure_ast::Expression::AtLeast(_metadata, vars_expr, counts_expr, values_expr) => {
             parse_global_cardinality_constraint(
@@ -597,7 +745,7 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                 })?
                 .0
                 .iter()
-                .map(|x| parse_expr(x.to_owned()))
+                .map(|x| parse_expr_following_lettings(x.to_owned(), lettings))
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
         conjure_ast::Expression::And(_metadata, e) => Ok(minion_ast::Constraint::WatchedAnd(
@@ -610,7 +758,7 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                 })?
                 .0
                 .iter()
-                .map(|x| parse_expr(x.to_owned()))
+                .map(|x| parse_expr_following_lettings(x.to_owned(), lettings))
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
         conjure_ast::Expression::Eq(_metadata, a, b) => Ok(minion_ast::Constraint::Eq(
@@ -619,19 +767,62 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
         )),
 
         conjure_ast::Expression::FlatWatchedLiteral(_metadata, reference, k) => {
+            // `not` of a boolean reference becomes a watched literal before loading. A boolean
+            // value letting has a bool domain, so that rule treats the letting name as a variable
+            // and would ask Minion for a name that was never declared.
+            if let Some(body) = reference.boolean_formula_letting_body() {
+                let id = reference.id();
+                let name = reference.name().to_string();
+                if !lettings.insert(id.clone()) {
+                    return Err(ModelInvalid(format!(
+                        "cyclic value letting '{name}' in a Minion constraint"
+                    )));
+                }
+                let forced_true = match k {
+                    conjure_ast::Literal::Bool(value) => value,
+                    conjure_ast::Literal::Int(value) => value != 0,
+                    _ => {
+                        lettings.remove(&id);
+                        return Err(ModelInvalid(format!(
+                            "watched literal on value letting '{name}' has value {k}"
+                        )));
+                    }
+                };
+                let parsed = if forced_true {
+                    parse_expr_following_lettings(body, lettings)
+                } else {
+                    // `not(X) ~> reify(X, 0)`, the same encoding as `not_constraint_to_reify`.
+                    parse_expr_following_lettings(
+                        Expression::MinionReify(
+                            conjure_ast::Metadata::new(),
+                            Moo::new(body),
+                            Atom::Literal(conjure_ast::Literal::Bool(false)),
+                        ),
+                        lettings,
+                    )
+                };
+                lettings.remove(&id);
+                return parsed;
+            }
             Ok(minion_ast::Constraint::WLiteral(
-                parse_name(reference.ptr().name().clone())?,
+                parse_reference_atom(reference)?,
                 parse_literal(k)?,
             ))
         }
         conjure_ast::Expression::MinionReify(_metadata, e, v) => Ok(minion_ast::Constraint::Reify(
-            Box::new(parse_expr(Moo::unwrap_or_clone(e))?),
+            Box::new(parse_expr_following_lettings(
+                Moo::unwrap_or_clone(e),
+                lettings,
+            )?),
             parse_atom(v)?,
         )),
 
         conjure_ast::Expression::MinionReifyImply(_metadata, e, v) => {
             Ok(minion_ast::Constraint::ReifyImply(
-                Box::new(parse_expr(Moo::unwrap_or_clone(e))?),
+                Box::new(parse_expr_following_lettings(
+                    Moo::unwrap_or_clone(e),
+                    lettings,
+                )?),
                 parse_atom(v)?,
             ))
         }
@@ -704,13 +895,6 @@ enum TableConstraintKind {
 }
 
 impl TableConstraintKind {
-    fn name(self) -> &'static str {
-        match self {
-            Self::Table => "table",
-            Self::NegativeTable => "negativeTable",
-        }
-    }
-
     fn into_constraint(
         self,
         vars: Vec<minion_ast::Var>,
@@ -721,56 +905,6 @@ impl TableConstraintKind {
             Self::NegativeTable => minion_ast::Constraint::NegativeTable(vars, tuples),
         }
     }
-}
-
-fn parse_table_constraint(
-    kind: TableConstraintKind,
-    tuple_expr: conjure_ast::Expression,
-    rows_expr: conjure_ast::Expression,
-) -> Result<minion_ast::Constraint, SolverError> {
-    let (tuple_elems, _) = tuple_expr
-        .unwrap_matrix_unchecked()
-        .ok_or_else(|| ModelInvalid(format!("{} first argument is not a matrix", kind.name())))?;
-    let (rows, _) = rows_expr
-        .unwrap_matrix_unchecked()
-        .ok_or_else(|| ModelInvalid(format!("{} second argument is not a matrix", kind.name())))?;
-
-    let vars = tuple_elems
-        .into_iter()
-        .map(parse_atomic_expr)
-        .collect::<Result<Vec<_>, SolverError>>()?;
-
-    let mut tuples = Vec::with_capacity(rows.len());
-    for row_expr in rows {
-        let (row_elems, _) = row_expr
-            .unwrap_matrix_unchecked()
-            .ok_or_else(|| ModelInvalid(format!("{} row is not a matrix", kind.name())))?;
-
-        if row_elems.len() != vars.len() {
-            return Err(ModelInvalid(format!(
-                "{} row width does not match tuple width",
-                kind.name()
-            )));
-        }
-
-        let tuple = row_elems
-            .into_iter()
-            .map(|row_val_expr| {
-                conjure_ast::eval_constant(&row_val_expr)
-                    .ok_or_else(|| {
-                        ModelInvalid(format!(
-                            "{} row contains a non-constant expression",
-                            kind.name()
-                        ))
-                    })
-                    .and_then(parse_literal)
-            })
-            .collect::<Result<Vec<_>, SolverError>>()?;
-
-        tuples.push(tuple);
-    }
-
-    Ok(kind.into_constraint(vars, tuples))
 }
 
 #[derive(Clone, Copy)]
@@ -1038,6 +1172,110 @@ mod tests {
         let err = load_expr(expr, &mut model).unwrap_err();
         assert!(matches!(err, SolverError::ModelInvalid(_)));
         assert!(model.constraints.is_empty());
+    }
+
+    #[test]
+    fn boolean_value_letting_constraint_is_inlined_for_minion() {
+        let x = DeclarationPtr::new_find(Name::user("x"), Domain::bool());
+        let inner = DeclarationPtr::new_value_letting(
+            Name::user("inner"),
+            Expression::Not(
+                Metadata::new(),
+                Moo::new(Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(crate::ast::Reference::new(x)),
+                )),
+            ),
+        );
+        let outer = DeclarationPtr::new_value_letting(
+            Name::user("outer"),
+            Expression::And(
+                Metadata::new(),
+                Moo::new(crate::into_matrix_expr!(vec![Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(crate::ast::Reference::new(inner)),
+                )])),
+            ),
+        );
+        let expr = Expression::Atomic(
+            Metadata::new(),
+            Atom::Reference(crate::ast::Reference::new(outer)),
+        );
+        let mut model = MinionModel::new();
+
+        load_expr(expr, &mut model).unwrap();
+
+        assert_eq!(model.constraints.len(), 1);
+        assert!(matches!(
+            &model.constraints[0],
+            minion_ast::Constraint::WLiteral(_, minion_ast::Constant::Integer(0))
+        ));
+    }
+
+    #[test]
+    fn boolean_value_letting_alias_is_inlined_for_minion() {
+        let x = DeclarationPtr::new_find(Name::user("x"), Domain::bool());
+        let inner = DeclarationPtr::new_value_letting(
+            Name::user("inner"),
+            Expression::Not(
+                Metadata::new(),
+                Moo::new(Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(crate::ast::Reference::new(x)),
+                )),
+            ),
+        );
+        let alias = DeclarationPtr::new_value_letting(
+            Name::user("alias"),
+            Expression::Atomic(
+                Metadata::new(),
+                Atom::Reference(crate::ast::Reference::new(inner)),
+            ),
+        );
+        let expr = Expression::Atomic(
+            Metadata::new(),
+            Atom::Reference(crate::ast::Reference::new(alias)),
+        );
+        let mut model = MinionModel::new();
+
+        load_expr(expr, &mut model).unwrap();
+
+        assert_eq!(model.constraints.len(), 1);
+        assert!(matches!(
+            &model.constraints[0],
+            minion_ast::Constraint::WLiteral(_, minion_ast::Constant::Integer(0))
+        ));
+    }
+
+    #[test]
+    fn negated_boolean_value_letting_is_reified_false() {
+        let x = DeclarationPtr::new_find(Name::user("x"), Domain::bool());
+        let inner = DeclarationPtr::new_value_letting(
+            Name::user("inner"),
+            Expression::Not(
+                Metadata::new(),
+                Moo::new(Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(crate::ast::Reference::new(x)),
+                )),
+            ),
+        );
+        let expr = Expression::FlatWatchedLiteral(
+            Metadata::new(),
+            crate::ast::Reference::new(inner),
+            Literal::Bool(false),
+        );
+
+        let constraint = parse_expr(expr).unwrap();
+
+        assert!(matches!(
+            constraint,
+            minion_ast::Constraint::Reify(ref inner, minion_ast::Var::ConstantAsVar(0))
+                if matches!(
+                    inner.as_ref(),
+                    minion_ast::Constraint::WLiteral(_, minion_ast::Constant::Integer(0))
+                )
+        ));
     }
 
     #[test]

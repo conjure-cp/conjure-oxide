@@ -117,7 +117,9 @@ impl IntVal {
                     _ => Err(DomainOpError::WrongType),
                 }
             }
-            DeclarationKind::DomainLetting(_) => Err(DomainOpError::WrongType),
+            DeclarationKind::DomainLetting(_)
+            | DeclarationKind::EnumeratedType(_)
+            | DeclarationKind::UnnamedType(_) => Err(DomainOpError::WrongType),
         }
     }
 
@@ -152,7 +154,10 @@ impl IntVal {
                 DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => {
                     Err(DomainOpError::NotGround)
                 }
-                DeclarationKind::DomainLetting(_) | DeclarationKind::QuantifiedExpr(_) => bug!(
+                DeclarationKind::DomainLetting(_)
+                | DeclarationKind::EnumeratedType(_)
+                | DeclarationKind::UnnamedType(_)
+                | DeclarationKind::QuantifiedExpr(_) => bug!(
                     "Expected integer expression, given, or letting inside int domain; Got: {re}"
                 ),
             },

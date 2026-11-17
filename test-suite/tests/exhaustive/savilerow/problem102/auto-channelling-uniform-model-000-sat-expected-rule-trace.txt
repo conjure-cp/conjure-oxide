@@ -1,0 +1,81 @@
+Model before rewriting:
+
+find unused: bool
+
+such that
+
+[false,false;int(1..2)][5 % 1 % 0]
+
+--
+
+[false,false;int(1..2)][5 % 1 % 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([false,false;int(1..2)],[5 % 1 % 0])
+
+--
+
+SafeIndex([false,false;int(1..2)],[5 % 1 % 0])
+   ~~> introduce_element ([("SAT", 18400)])
+__0
+new variables:
+  findAux __0: bool
+new constraints:
+  satElement([false,false;int(1..2)], 5 % 1 % 0, __0)
+
+--
+
+__0,
+satElement([false,false;int(1..2)], 5 % 1 % 0, __0)
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+satElement([false,false;int(1..2)], 5 % 1 % 0, __0)
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+1 % 0
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(1,0) @ 0 != 0}
+
+--
+
+5 % {SafeMod(1,0) @ false}
+   ~~> bubble_up ([("Bubble", 8800)])
+{5 % SafeMod(1,0) @ false}
+
+--
+
+satElement([false,false;int(1..2)], {5 % SafeMod(1,0) @ false}, __0)
+   ~~> bubble_up ([("Bubble", 8800)])
+{satElement([false,false;int(1..2)], 5 % SafeMod(1,0), __0) @ false}
+
+--
+
+{satElement([false,false;int(1..2)], 5 % SafeMod(1,0), __0) @ false}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([satElement([false,false;int(1..2)], 5 % SafeMod(1,0), __0),false;int(1..)])
+
+--
+
+false
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(false) using tseitin
+
+--
+
+Final model:
+
+find unused: bool
+findAux __0: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+assert(__0) using tseitin,
+assert(false) using tseitin
+

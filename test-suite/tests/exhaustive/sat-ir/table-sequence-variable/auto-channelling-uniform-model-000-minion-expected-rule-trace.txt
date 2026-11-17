@@ -1,0 +1,161 @@
+Model before rewriting:
+
+find s: sequence (size 2) of int(0..1)
+
+such that
+
+table(s, {sequence(0,1),sequence(1,0),sequence(1,1)}),
+negativeTable(s, {sequence(1,1)}),
+shortTable(s, {{(1,0)},{(2,0)}})
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+new variables:
+  find s#explicit_1: matrix indexed by [int(1..2)] of int(0..1)
+new constraints:
+  or([1 <= 2,SafeIndex(s#explicit_1,[1]) = 0;int(1..)])
+  or([2 <= 2,SafeIndex(s#explicit_1,[2]) = 0;int(1..)])
+
+--
+
+table(s, {sequence(0,1),sequence(1,0),sequence(1,1)})
+   ~~> fixed_sequence_table_inputs ([("Base", 25100)])
+table(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(0,1),sequence(1,0),sequence(1,1)})
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+new variables:
+  find s#explicit_1#components_1: int(0..1)
+  find s#explicit_1#components_2: int(0..1)
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+negativeTable(s, {sequence(1,1)})
+   ~~> fixed_sequence_table_inputs ([("Base", 25100)])
+negativeTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {sequence(1,1)})
+
+--
+
+shortTable(s, {{(1,0)},{(2,0)}})
+   ~~> fixed_sequence_table_inputs ([("Base", 25100)])
+shortTable(sequence(SafeIndex(s#explicit_1,[1]),SafeIndex(s#explicit_1,[2])), {{(1,0)},{(2,0)}})
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+SafeIndex(s#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_1
+
+--
+
+SafeIndex(s#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_2
+
+--
+
+SafeIndex(s#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_1
+
+--
+
+SafeIndex(s#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_2
+
+--
+
+SafeIndex(s#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_1
+
+--
+
+SafeIndex(s#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_2
+
+--
+
+table(sequence(s#explicit_1#components_1,s#explicit_1#components_2), {sequence(0,1),sequence(1,0),sequence(1,1)})
+   ~~> flatten_table ([("Minion", 4050)])
+FlatTable([s#explicit_1#components_1, s#explicit_1#components_2], [[0, 1], [1, 0], [1, 1]], false)
+
+--
+
+negativeTable(sequence(s#explicit_1#components_1,s#explicit_1#components_2), {sequence(1,1)})
+   ~~> flatten_table ([("Minion", 4050)])
+FlatTable([s#explicit_1#components_1, s#explicit_1#components_2], [[1, 1]], true)
+
+--
+
+shortTable(sequence(s#explicit_1#components_1,s#explicit_1#components_2), {{(1,0)},{(2,0)}})
+   ~~> flatten_short_table ([("Minion", 4050)])
+FlatShortTable([s#explicit_1#components_1, s#explicit_1#components_2], [[(0, 0)], [(1, 0)]])
+
+--
+
+Final model:
+
+find s: sequence (size 2) of int(0..1)
+find s#explicit_1: matrix indexed by [int(1..2)] of int(0..1)
+find s#explicit_1#components_1: int(0..1)
+find s#explicit_1#components_2: int(0..1)
+
+such that
+
+FlatTable([s#explicit_1#components_1, s#explicit_1#components_2], [[0, 1], [1, 0], [1, 1]], false),
+FlatTable([s#explicit_1#components_1, s#explicit_1#components_2], [[1, 1]], true),
+FlatShortTable([s#explicit_1#components_1, s#explicit_1#components_2], [[(0, 0)], [(1, 0)]]),
+true,
+true
+

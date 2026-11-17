@@ -7,7 +7,7 @@ use thiserror::Error;
 
 use crate::Model;
 use crate::ast::{
-    CnfClause, DeclarationKind, DeclarationPtr, Expression, Metadata, Name, SymbolTable,
+    DeclarationKind, DeclarationPtr, Expression, Metadata, Name, SatEncodingDecision, SymbolTable,
 };
 
 #[derive(Debug, Error)]
@@ -42,7 +42,7 @@ pub enum ApplicationError {
 /// - [`RuleEffect::pure`]: Creates an effect with only a new expression and no side-effects on the symbol table or constraints.
 /// - [`RuleEffect::with_symbols`]: Creates an effect with a new expression and symbol table modifications, but no top-level constraint.
 /// - [`RuleEffect::with_top`]: Creates an effect with a new expression and a top-level constraint, but no symbol table modifications.
-/// - [`RuleEffect::cnf`]: Creates an effect with a new expression, cnf clauses and symbol modifications, but no top-level constraints.
+/// - [`RuleEffect::sat`]: Creates an effect with a new expression, SAT encoding decisions and symbol modifications, but no top-level constraints.
 ///
 /// The `apply` method allows for applying the changes represented by the `RuleEffect` to a [`Model`].
 ///
@@ -60,10 +60,11 @@ pub struct RuleEffect {
     pub new_expression: Expression,
     pub new_top: Vec<Expression>,
     pub symbols: SymbolTable,
-    pub new_clauses: Vec<CnfClause>,
+    pub new_sat_decisions: Vec<SatEncodingDecision>,
     /// Shared declarations to update if this effect is selected.
     pub(crate) declaration_updates: Vec<DeclarationUpdate>,
     materialise: Option<DeferredRuleEffect>,
+    pub(crate) uniform_choices: crate::representation::uniform::Choices,
 }
 
 /// An in-place update to a shared declaration, applied only after its rule is selected.
@@ -111,7 +112,7 @@ impl Debug for RuleEffect {
             .field("new_expression", &self.new_expression)
             .field("new_top", &self.new_top)
             .field("symbols", &self.symbols)
-            .field("new_clauses", &self.new_clauses)
+            .field("new_sat_decisions", &self.new_sat_decisions)
             .field("declaration_updates", &self.declaration_updates)
             .field("is_deferred", &self.materialise.is_some())
             .finish()
@@ -124,9 +125,10 @@ impl RuleEffect {
             new_expression,
             new_top,
             symbols,
-            new_clauses: Vec::new(),
+            new_sat_decisions: Vec::new(),
             declaration_updates: Vec::new(),
             materialise: None,
+            uniform_choices: Default::default(),
         }
     }
 
@@ -136,9 +138,10 @@ impl RuleEffect {
             new_expression,
             new_top: Vec::new(),
             symbols: SymbolTable::new(),
-            new_clauses: Vec::new(),
+            new_sat_decisions: Vec::new(),
             declaration_updates: Vec::new(),
             materialise: None,
+            uniform_choices: Default::default(),
         }
     }
 
@@ -148,9 +151,10 @@ impl RuleEffect {
             new_expression,
             new_top: Vec::new(),
             symbols,
-            new_clauses: Vec::new(),
+            new_sat_decisions: Vec::new(),
             declaration_updates: Vec::new(),
             materialise: None,
+            uniform_choices: Default::default(),
         }
     }
 
@@ -160,25 +164,27 @@ impl RuleEffect {
             new_expression,
             new_top,
             symbols: SymbolTable::new(),
-            new_clauses: Vec::new(),
+            new_sat_decisions: Vec::new(),
             declaration_updates: Vec::new(),
             materialise: None,
+            uniform_choices: Default::default(),
         }
     }
 
-    /// Represents an effect that also adds clauses to the model.
-    pub fn cnf(
+    /// Represents an effect that adds semantic SAT encoding decisions.
+    pub fn sat(
         new_expression: Expression,
-        new_clauses: Vec<CnfClause>,
+        new_sat_decisions: Vec<SatEncodingDecision>,
         symbols: SymbolTable,
     ) -> Self {
         Self {
             new_expression,
             new_top: Vec::new(),
             symbols,
-            new_clauses,
+            new_sat_decisions,
             declaration_updates: Vec::new(),
             materialise: None,
+            uniform_choices: Default::default(),
         }
     }
 
@@ -194,18 +200,20 @@ impl RuleEffect {
             new_expression: Expression::Root(Metadata::new(), Vec::new()),
             new_top: Vec::new(),
             symbols: SymbolTable::new(),
-            new_clauses: Vec::new(),
+            new_sat_decisions: Vec::new(),
             declaration_updates: Vec::new(),
             materialise: Some(Arc::new(materialise)),
+            uniform_choices: Default::default(),
         }
     }
 
     /// Returns the concrete effect for the current symbol table.
     ///
     /// This consumes the selected effect: cloning a concrete effect can duplicate its expression,
-    /// top-level constraints, clauses, and speculative symbol table. Before returning, the symbol
+    /// top-level constraints, SAT encoding decisions, and speculative symbol table. Before returning, the symbol
     /// snapshot is reduced to the bindings that the effect actually changes.
     pub fn materialise(mut self, symbols: &SymbolTable) -> Self {
+        crate::representation::uniform::commit(std::mem::take(&mut self.uniform_choices));
         if let Some(materialise) = self.materialise.take() {
             return materialise(symbols).materialise(symbols);
         }
@@ -244,7 +252,8 @@ impl RuleEffect {
     }
 
     /// Applies side-effects (e.g. symbol table updates)
-    pub fn apply(self, model: &mut Model) {
+    pub fn apply(mut self, model: &mut Model) {
+        crate::representation::uniform::commit(std::mem::take(&mut self.uniform_choices));
         debug_assert!(
             self.materialise.is_none(),
             "deferred rule effects must be materialised before being applied"
@@ -254,7 +263,7 @@ impl RuleEffect {
         }
         model.symbols_mut().extend(self.symbols); // Add new assignments to the symbol table
         model.add_constraints(self.new_top);
-        model.add_clauses(self.new_clauses);
+        model.add_sat_decisions(self.new_sat_decisions);
     }
 
     /// Gets symbols added by this effect.
@@ -377,7 +386,7 @@ impl<'a> Rule<'a> {
     }
 
     pub fn apply(&self, expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
-        (self.application)(expr, symbols)
+        crate::representation::uniform::attempt(|| (self.application)(expr, symbols))
     }
 }
 

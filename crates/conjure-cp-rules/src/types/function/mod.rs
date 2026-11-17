@@ -1,5 +1,6 @@
 mod as_relation;
 mod explicit;
+mod horizontal;
 mod packed;
 
 pub use as_relation::FunctionAsRelation;
