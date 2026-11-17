@@ -30,6 +30,7 @@ Create directory for test corpus file ``` mkdir fuzz/corpus/{test_name}```
 Copy Essence files from codebase to corpus before running fuzz tester ```find . -name "*.essence" -type f -exec cp {} fuzz/corpus/{test_name}/ \;```
 
 Run `cargo fuzz run {testname}`, for example: `cargo fuzz run detect_errors -- -max_len=4096 -max_total_time=3600`
+If you have a specific version of cargo set as default, add the `+nightly` flag after cargo line to run the fuzzer
 
 Minimise found error test cases with `cargo fuzz tmin {testname} fuzz/artifacts/{testname}/crash-{crashID}`
 
