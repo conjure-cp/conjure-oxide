@@ -499,7 +499,7 @@ impl SolverAdaptor for Sat {
             }
 
             has_sol = true;
-            let sol_old = get_ref_sols(find_refs.clone(), sol.clone(), var_map.clone());
+            let sol_old = get_ref_sols(find_refs, sol.clone(), var_map.clone());
             let full_assignment_solution = get_ref_sols(
                 var_map.keys().cloned().collect(),
                 sol.clone(),

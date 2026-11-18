@@ -438,7 +438,7 @@ fn parse_domain(
             let mut value_domain = parse_domain(value_domain_name, value_domain_value, symbols)?;
             while let Some((new_value_domain, mut indices)) = value_domain.as_matrix() {
                 index_domains.append(&mut indices);
-                value_domain = new_value_domain.clone()
+                value_domain = new_value_domain
             }
 
             Ok(Domain::matrix(value_domain, index_domains))
@@ -1300,10 +1300,7 @@ fn parse_abs_record(abs_record: &Value, scope: &SymbolTablePtr) -> Result<Expres
 
         let value = parse_expression(&entry[1], scope)?;
 
-        let rec_entry = Field {
-            name: name.clone(),
-            value,
-        };
+        let rec_entry = Field { name, value };
         rec.push(rec_entry);
     }
 

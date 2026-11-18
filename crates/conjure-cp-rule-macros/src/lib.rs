@@ -911,13 +911,13 @@ impl Parse for RuleSetArgs {
 }
 
 /**
-* Register a rule set with the given name, dependencies, and metadata.
-*
-* # Example
-* ```rust
+ * Register a rule set with the given name, dependencies, and metadata.
+ *
+ * # Example
+ * ```rust
  * use conjure_cp_rule_macros::register_rule_set;
  * register_rule_set!("MyRuleSet", ("DependencyRuleSet", "AnotherRuleSet"));
-* ```
+ * ```
  */
 #[proc_macro]
 pub fn register_rule_set(args: TokenStream) -> TokenStream {

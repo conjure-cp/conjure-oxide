@@ -76,7 +76,7 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                             for e in and_exprs {
                                 // ToDo: Cloning everything may be a bit inefficient - discuss
                                 let mut new_or_contents = rest.clone();
-                                new_or_contents.push(e.clone());
+                                new_or_contents.push(e);
                                 new_and_contents.push(Expr::Or(
                                     metadata.clone(),
                                     Moo::new(into_matrix_expr![new_or_contents]),
