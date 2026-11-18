@@ -1,12 +1,12 @@
 use std::vec;
 
-use crate::RecoverableParseError;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::field;
-use crate::parser::ParseContext;
 use crate::parser::domain::parse_domain;
-use crate::util::{TypecheckingContext, named_children};
+use crate::parser::ParseContext;
+use crate::util::{named_children, TypecheckingContext};
+use crate::RecoverableParseError;
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
 use conjure_cp_core::ast::comprehension::ComprehensionBuilder;
 use conjure_cp_core::ast::serde::HasId as _;
@@ -170,9 +170,7 @@ fn parse_generator(
     }
 
     ctx.record_error(RecoverableParseError::new(
-        format!(
-            "Generator requires either a domain or collection (e.g. `i : domain` or `i <- expr`)"
-        ),
+        "Generator requires either a domain or collection (e.g. `i : domain` or `i <- expr`)".to_string(),
         Some(generator_node.range()),
     ));
     Ok(None)
