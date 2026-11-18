@@ -915,7 +915,7 @@ impl Parse for RuleSetArgs {
  *
  * # Example
  * ```rust
- * use conjure_cp_rule_macros::register_rule_set;
+ * use conjure_cp::rule_engine::register_rule_set;
  * register_rule_set!("MyRuleSet", ("DependencyRuleSet", "AnotherRuleSet"));
  * ```
  */
