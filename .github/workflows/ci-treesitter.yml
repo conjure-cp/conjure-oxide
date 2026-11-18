@@ -44,17 +44,23 @@ jobs:
 
     - name: free_disk_space.sh
       run: repo/.github/workflows/tools/free_disk_space.sh
-      # the tree-sitter actions expect this!
-    - name: Make tree-sitter-essence the root directory
-      run: cp -r repo/crates/tree-sitter-essence/* .
 
     - name: Set up tree-sitter
       uses: tree-sitter/setup-action/cli@v2
       with:
         tree-sitter-ref: v0.26.7
 
+    - name: Verify generated parser
+      shell: bash
+      working-directory: repo/crates/tree-sitter-essence
+      run: |-
+        tree-sitter generate --abi 15
+        git diff --exit-code -- src/parser.c src/grammar.json src/node-types.json src/tree-sitter
+
     - name: Run parser tests
-      uses: tree-sitter/parser-test-action@v3
+      shell: bash
+      working-directory: repo/crates/tree-sitter-essence
+      run: tree-sitter test
 
     # Rust bindings inherit dependencies and patches from the original workspace.
     - name: Set up Rust
