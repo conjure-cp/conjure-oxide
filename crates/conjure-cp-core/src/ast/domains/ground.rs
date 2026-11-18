@@ -274,6 +274,19 @@ impl GroundDomain {
         // error instead of entering an unsupported implementation. Each group uses declaration
         // order.
         match (self, other) {
+            (GroundDomain::EnumeratedType(lhs, r1), GroundDomain::EnumeratedType(rhs, r2))
+                if lhs == rhs =>
+            {
+                // An empty range list denotes the full enum domain.
+                let ranges = if r1.is_empty() || r2.is_empty() {
+                    Vec::new()
+                } else {
+                    let mut ranges = r1.clone();
+                    ranges.extend_from_slice(r2);
+                    Range::squeeze(&ranges)
+                };
+                Ok(GroundDomain::EnumeratedType(lhs.clone(), ranges))
+            }
             (GroundDomain::UnnamedType(lhs), GroundDomain::UnnamedType(rhs)) if lhs == rhs => {
                 Ok(self.clone())
             }
