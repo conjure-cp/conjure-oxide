@@ -442,6 +442,18 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Sequence(_, _), _) | (_, UnresolvedDomain::Sequence(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
+            (
+                UnresolvedDomain::EnumeratedType(lhs, r1),
+                UnresolvedDomain::EnumeratedType(rhs, r2),
+            ) if lhs == rhs => {
+                // An empty range list denotes the full enum domain.
+                let ranges = if r1.is_empty() || r2.is_empty() {
+                    Vec::new()
+                } else {
+                    r1.iter().chain(r2).cloned().collect()
+                };
+                Ok(UnresolvedDomain::EnumeratedType(lhs.clone(), ranges))
+            }
             #[allow(unreachable_patterns)]
             (UnresolvedDomain::EnumeratedType(_, _), _)
             | (_, UnresolvedDomain::EnumeratedType(_, _)) => Err(DomainOpError::WrongType),

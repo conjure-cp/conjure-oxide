@@ -1137,6 +1137,16 @@ impl Domain {
                 Ok(Domain::Unresolved(Moo::new(a.union_unresolved(b)?)))
             }
             (Domain::Unresolved(u), Domain::Ground(g))
+            | (Domain::Ground(g), Domain::Unresolved(u))
+                if matches!(
+                    (u.as_ref(), g.as_ref()),
+                    (UnresolvedDomain::EnumeratedType(lhs, _), GroundDomain::EnumeratedType(rhs, _))
+                        if lhs == rhs
+                ) =>
+            {
+                Ok(Domain::Ground(Moo::new(u.resolve()?.union(g)?)))
+            }
+            (Domain::Unresolved(u), Domain::Ground(g))
             | (Domain::Ground(g), Domain::Unresolved(u)) => {
                 if let GroundDomain::Empty(ty) = g.as_ref() {
                     return if *ty == u.return_type() {
