@@ -332,7 +332,6 @@ pub(crate) fn try_rewrite_value_letting_once<O: RuleAttemptObserver>(
             };
 
             for (expr, ctx) in expression_ctx(letting_expr) {
-                let expr = expr.clone();
                 let ctx = ctx.clone();
 
                 for rd in rules {
