@@ -1,0 +1,33 @@
+Model before rewriting:
+
+find x: int(1..10)
+
+such that
+
+sum([ i | i : int(1..2), j : int(1..2) ]) = x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(1..10)
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+Final model:
+
+find x: int(1..10)
+find x#lia_1: int(1..10)
+
+such that
+
+6 = x#lia_1
+
