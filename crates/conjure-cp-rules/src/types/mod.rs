@@ -1,3 +1,4 @@
+pub(crate) mod enumerated;
 pub(crate) mod function;
 pub(crate) mod int;
 pub(crate) mod matrix;

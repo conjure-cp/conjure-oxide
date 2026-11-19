@@ -312,6 +312,7 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
 /// the declaration or treating overflow as a separate case.
 pub(super) fn representation_fallback_rank(rule: ReprRulePtr) -> usize {
     use crate::types::{
+        enumerated::EnumAsInt,
         function::{FunctionAsRelation, FunctionExplicit, FunctionPacked},
         matrix::{MatrixArray, MatrixComponents, MatrixPacked},
         mset::{MSetCounts, MSetOccurrence, MSetPacked, MSetRepetition},
@@ -327,6 +328,7 @@ pub(super) fn representation_fallback_rank(rule: ReprRulePtr) -> usize {
     };
 
     let order = [
+        EnumAsInt::id(),
         FunctionExplicit::id(),
         FunctionAsRelation::id(),
         FunctionPacked::id(),

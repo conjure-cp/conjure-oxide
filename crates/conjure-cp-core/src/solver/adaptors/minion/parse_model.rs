@@ -158,9 +158,7 @@ fn collect_discrete_required_variables(conjure_model: &ConjureModel) -> HashSet<
             | Expression::GccWeak(_, vars_expr, _, _)
             | Expression::AtMost(_, vars_expr, _, _)
             | Expression::AtLeast(_, vars_expr, _, _) => {
-                vars.extend(references_in_expression(Moo::unwrap_or_clone(
-                    vars_expr.clone(),
-                )));
+                vars.extend(references_in_expression(Moo::unwrap_or_clone(vars_expr)));
             }
             Expression::FlatAllDiff(_, atoms) => {
                 for atom in atoms {
