@@ -24,11 +24,11 @@ name: Nightly CI
 # Build Artifacts
 # ---------------
 #
-# For each platform, this CI creates the following archives:
+# For each native platform, this CI creates the following archives:
 #
-#   - conjure-oxide-nightly-PLATFORM-standalone.zip - just conjure oxide
-#   - conjure-oxide-nightly-PLATFORM-with-conjure.zip - just conjure oxide and conjure
-#   - conjure-oxide-nightly-PLATFORM-with-solvers.zip - conjure oxide,
+#   - PLATFORM-conjure-oxide-nightly-standalone.zip - just conjure oxide
+#   - PLATFORM-conjure-oxide-nightly-with-conjure.zip - just conjure oxide and conjure
+#   - PLATFORM-conjure-oxide-nightly-with-solvers.zip - conjure oxide,
 #   conjure, savilerow, and all solvers (as provided by conjure's with-solvers
 #   release)
 #
@@ -36,7 +36,8 @@ name: Nightly CI
 #
 #     - aarch64-darwin
 #     - x86_64-linux-gnu
-#     - x86_64-darwin
+#
+# The browser package is released as wasm32-unknown-emscripten-conjure-oxide-nightly.zip.
 #
 # Linux builds are performed in a manylinux (github.com/pypa/manylinux)
 # container to ensure compatibility with the older glibc versions, such as
@@ -327,22 +328,38 @@ jobs:
         name: artifact-${{ env.release_prefix }}
         path: dist/*.zip
 
+  build_nightly_wasm:
+    needs: check_date
+    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+    uses: ./.github/workflows/wasm.yml
+
   create_release:
     runs-on: ubuntu-latest
     name: Create release
     needs:
     - build_nightly_mac
     - build_nightly_linux
+    - build_nightly_wasm
     steps:
     - uses: actions/checkout@v7
     - run: mkdir dist
 
-    # download all artifacts made in this workflow (i.e. all the different builds)
-    - uses: actions/download-artifact@v8
+    - name: Download native release archives
+      uses: actions/download-artifact@v8
       with:
         merge-multiple: true # put all releases in the same folder
         path: dist/
         pattern: artifact-*
+
+    - name: Download Wasm package
+      uses: actions/download-artifact@v8
+      with:
+        name: conjure-wasm
+        path: wasm-package
+
+    - name: Archive Wasm package
+      working-directory: wasm-package
+      run: zip -r ../dist/wasm32-unknown-emscripten-conjure-oxide-nightly.zip .
 
     - name: Publish nightly release
       env:
