@@ -198,6 +198,15 @@ fn run_solve(
 
         None
     } else {
+        run_solver(solanyhow::Resultver, &global_args, &solve_args, rewritten_model)?
+    }
+
+    // still do postamble even if we didn't run the solver
+    if let Some(ref path) = solve_args.info_json_path {
+        let context_obj = context.read().unwrap().clone();
+        let generated_json = &serde_json::to_value(context_obj)?;
+        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
+        std::fs::write(path, format!("{pretty_json}\n"))?;
         Some(run_solver(
             pipeline,
             &global_args,
