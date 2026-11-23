@@ -3,7 +3,6 @@ use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
-use crate::parser::atom::parse_atom;
 use crate::parser::domain::parse_domain;
 use crate::util::{TypecheckingContext, named_children};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
@@ -15,25 +14,25 @@ use conjure_cp_core::ast::{
 use tree_sitter::Node;
 use uniplate::Uniplate as _;
 
-fn parse_collection_expression(
-    ctx: &mut ParseContext,
-    collection_node: Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    match collection_node.kind() {
-        "arithmetic_expr" | "bool_expr" | "comparison_expr" => {
-            parse_expression(ctx, collection_node)
-        }
-        "atom" | "matrix" | "set_literal" | "tuple" | "record" | "identifier"
-        | "index_or_slice" | "set_operation" => parse_atom(ctx, &collection_node),
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!("Unexpected collection type: '{}'", collection_node.kind()),
-                Some(collection_node.range()),
-            ));
-            Ok(None)
-        }
-    }
-}
+// fn parse_collection_expression(
+//     ctx: &mut ParseContext,
+//     collection_node: Node,
+// ) -> Result<Expression, FatalParseError> {
+//     match collection_node.kind() {
+//         "arithmetic_expr" | "bool_expr" | "comparison_expr" => {
+//             parse_expression(ctx, collection_node)
+//         }
+//         "atom" | "matrix" | "set_literal" | "tuple" | "record" | "identifier"
+//         | "index_or_slice" | "set_operation" => parse_atom(ctx, &collection_node),
+//         _ => {
+//             ctx.record_error(RecoverableParseError::new(
+//                 format!("Unexpected collection type: '{}'", collection_node.kind()),
+//                 Some(collection_node.range()),
+//             ));
+//             Ok(None)
+//         }
+//     }
+// }
 
 /// Collects the names a generator pattern binds, each with its index path into the generator
 /// variable: `(i, _)` binds `i` at path `[1]`, and `(i, (j, k))` binds `k` at path `[2, 2]`.
@@ -147,9 +146,7 @@ fn parse_generator(
 
     if let Some(domain_node) = generator_node.child_by_field_name("domain") {
         let mut domain_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
-        let Some(var_domain) = parse_domain(&mut domain_ctx, domain_node)? else {
-            return Ok(None);
-        };
+        let var_domain = parse_domain(&mut domain_ctx, domain_node)?;
         let decl = DeclarationPtr::new_find(var_name.clone(), var_domain);
         let mut builder = builder.generator(decl);
         if !bind_generator_pattern(ctx, &mut builder, &var_node, &var_name, lettings) {
@@ -159,14 +156,8 @@ fn parse_generator(
     }
 
     if let Some(collection_node) = generator_node.child_by_field_name("collection") {
-        let mut collection_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
-        collection_ctx.typechecking_context = TypecheckingContext::Unknown;
-        collection_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-        let Some(collection_expr) =
-            parse_collection_expression(&mut collection_ctx, collection_node)?
-        else {
-            return Ok(None);
-        };
+        // let mut collection_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
+        let collection_expr = parse_expression(ctx, collection_node)?;
         let collection_expr = substitute_lettings(collection_expr, lettings);
         let mut builder = builder.expression_generator(var_name.clone(), collection_expr);
         if !bind_generator_pattern(ctx, &mut builder, &var_node, &var_name, lettings) {
@@ -215,13 +206,7 @@ fn add_quantifier_generators_from_collection(
     collection_node: Node,
     lettings: &mut Vec<(DeclarationPtr, Expression)>,
 ) -> Result<Option<ComprehensionBuilder>, FatalParseError> {
-    let mut collection_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
-    collection_ctx.typechecking_context = TypecheckingContext::Unknown;
-    collection_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-    let Some(collection_expr) = parse_collection_expression(&mut collection_ctx, collection_node)?
-    else {
-        return Ok(None);
-    };
+    let collection_expr = parse_expression(ctx, collection_node)?;
 
     for (var_name, var_node) in variables {
         builder = builder.expression_generator(var_name.clone(), collection_expr.clone());
@@ -257,17 +242,6 @@ pub fn parse_comprehension(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    // If we're in a set context, add error and return early since comprehensions don't produce sets
-    if ctx.typechecking_context == crate::util::TypecheckingContext::Set {
-        ctx.record_error(crate::errors::RecoverableParseError::new(
-            format!(
-                "Type error: {}\n\tExpected: set\n\tGot: comprehension",
-                ctx.source_code[node.start_byte()..node.end_byte()].trim()
-            ),
-            Some(node.range()),
-        ));
-    }
-
     // Comprehensions require a symbol table passed in
     let symbols_ptr = match ctx.symbols.clone() {
         Some(s) => s,
@@ -312,9 +286,7 @@ pub fn parse_comprehension(
 
                 // Parse with a new context using the generator symbol table
                 let mut guard_ctx = ctx.with_new_symbols(Some(generator_symboltable));
-                let Some(guard_expr) = parse_expression(&mut guard_ctx, expr_node)? else {
-                    return Ok(None);
-                };
+                let guard_expr = parse_expression(&mut guard_ctx, expr_node)?;
 
                 // Add the condition as a guard
                 builder = builder.guard(substitute_lettings(guard_expr, &lettings));
@@ -331,9 +303,7 @@ pub fn parse_comprehension(
                 let mut letting_ctx = ctx.with_new_symbols(Some(generator_symboltable.clone()));
                 letting_ctx.typechecking_context = TypecheckingContext::Unknown;
                 letting_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-                let Some(value) = parse_expression(&mut letting_ctx, value_node)? else {
-                    return Ok(None);
-                };
+                let value = parse_expression(&mut letting_ctx, value_node)?;
                 let value = substitute_lettings(value, &lettings);
 
                 let name =
@@ -369,9 +339,7 @@ pub fn parse_comprehension(
     let mut return_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
     return_ctx.typechecking_context = saved_inner_ctx;
     return_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-    let Some(return_expr) = parse_expression(&mut return_ctx, return_expr_node)? else {
-        return Ok(None);
-    };
+    let return_expr = parse_expression(&mut return_ctx, return_expr_node)?;
 
     // Build the comprehension with the return expression
     let comprehension = builder.with_return_value(substitute_lettings(return_expr, &lettings));
@@ -456,19 +424,7 @@ pub fn parse_quantifier_or_aggregate_expr(
 
     // Add variables as generators
     if let Some(domain_node) = domain_node {
-        let saved_ctx = ctx.typechecking_context;
-        let saved_inner_ctx = ctx.inner_typechecking_context;
-        ctx.typechecking_context = TypecheckingContext::Unknown;
-        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-
-        let Some(domain) = parse_domain(ctx, domain_node)? else {
-            ctx.typechecking_context = saved_ctx;
-            ctx.inner_typechecking_context = saved_inner_ctx;
-            return Ok(None);
-        };
-
-        ctx.typechecking_context = saved_ctx;
-        ctx.inner_typechecking_context = saved_inner_ctx;
+        let domain = parse_domain(ctx, domain_node)?;
 
         for (var_name, var_node) in &variables {
             let decl = DeclarationPtr::new_find(var_name.clone(), domain.clone());
@@ -494,11 +450,7 @@ pub fn parse_quantifier_or_aggregate_expr(
     // A guard written between the generator and the `.`, e.g. `forAll (i, _) in s, i > 1 . ...`.
     if let Some(guard_node) = node.child_by_field_name("guard") {
         let mut guard_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
-        guard_ctx.typechecking_context = TypecheckingContext::Unknown;
-        guard_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-        let Some(guard) = parse_expression(&mut guard_ctx, guard_node)? else {
-            return Ok(None);
-        };
+        let guard = parse_expression(&mut guard_ctx, guard_node)?;
         builder = builder.guard(substitute_lettings(guard, &lettings));
     }
 
@@ -509,13 +461,8 @@ pub fn parse_quantifier_or_aggregate_expr(
 
     // Parse with a new context using the return expression symbol table
     // Prase using the inner typechecking context
-    let saved_inner_ctx = ctx.inner_typechecking_context;
     let mut expr_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
-    expr_ctx.typechecking_context = saved_inner_ctx;
-    expr_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-    let Some(expression) = parse_expression(&mut expr_ctx, expression_node)? else {
-        return Ok(None);
-    };
+    let expression = parse_expression(&mut expr_ctx, expression_node)?;
 
     // Build the comprehension
     let mut comprehension = builder.with_return_value(substitute_lettings(expression, &lettings));

@@ -25,16 +25,13 @@ pub fn parse_exprs(
     src: &str,
     symbols_ptr: SymbolTablePtr,
 ) -> Result<Vec<Expression>, FatalParseError> {
-    let Some((tree, source_code)) = get_expr_tree(src) else {
-        return Ok(Vec::new());
-    };
-
+    let (tree, program_src) = get_expr_tree(src)?;
     let root = tree.root_node();
     let mut source_map = SourceMap::default();
     let mut decl_spans = BTreeMap::new();
     let mut errors = Vec::new();
     let mut ctx = ParseContext::new(
-        &source_code,
+        program_src.as_ref(),
         &root,
         Some(symbols_ptr),
         &mut errors,
@@ -42,13 +39,10 @@ pub fn parse_exprs(
         &mut decl_spans,
     );
     let mut ans = Vec::new();
-    for expr in query_toplevel(&root, &node_is_expression) {
-        ctx.typechecking_context = TypecheckingContext::Unknown;
-        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-        let Some(expr) = parse_expression(&mut ctx, expr)? else {
-            continue;
-        };
-        ans.push(expr);
+
+    for expr in root.named_children(&mut root.walk()) {
+        let expression = parse_expression(&mut ctx, expr)?;
+        ans.push(expression);
     }
     Ok(ans)
 }

@@ -41,7 +41,6 @@ pub enum ComprehensionQualifier {
 #[biplate(to=Expression)]
 #[biplate(to=SymbolTable)]
 #[biplate(to=SymbolTablePtr)]
-#[non_exhaustive]
 pub struct Comprehension {
     pub return_expression: Expression,
     pub qualifiers: Vec<ComprehensionQualifier>,

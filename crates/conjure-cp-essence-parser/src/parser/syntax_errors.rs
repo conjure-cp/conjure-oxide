@@ -417,7 +417,7 @@ mod test {
     #[test]
     fn malformed_line() {
         let source = " a,a,b: int(1..3)";
-        let (tree, _) = get_tree(source).expect("Should parse");
+        let tree = get_tree(source).expect("Should parse");
         let root_node = tree.root_node();
 
         let error_node = WalkDFS::with_retract(&root_node, &|_node| false)
@@ -524,7 +524,7 @@ mod test {
     #[test]
     fn missing_domain() {
         let source = "find x:";
-        let (tree, _) = get_tree(source).expect("Should parse");
+        let tree = get_tree(source).expect("Should parse");
         let mut errors = vec![];
         detect_syntactic_errors(source, &tree, &mut errors);
         assert_eq!(errors.len(), 1, "Expected exactly one diagnostic");

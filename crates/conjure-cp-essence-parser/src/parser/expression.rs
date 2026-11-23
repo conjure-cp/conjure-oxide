@@ -1,1196 +1,493 @@
-use crate::diagnostics::diagnostics_api::SymbolKind;
+use std::cell::LazyCell;
+use std::collections::HashMap;
+
 use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::parser::ParseContext;
-use crate::parser::atom::{parse_atom, parse_table_operand};
-use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
+use crate::parser::atom::parse_constant;
 use crate::parser::domain::parse_domain;
-use crate::parser::global_constraints::{
-    ALL_DIFFERENT, ALL_DIFFERENT_EXCEPT, AT_LEAST, AT_MOST, GLOBAL_CARDINALITY,
-    is_all_different_except_operator, is_all_different_operator, is_at_least_operator,
-    is_at_most_operator, is_global_cardinality_operator,
-};
-use crate::util::TypecheckingContext;
-use crate::{child, field, named_child};
+use crate::parser::{ParseContext, parse_ident, parse_name};
+
+use crate::field;
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
+use conjure_cp_core::ast::comprehension::Comprehension;
 use conjure_cp_core::ast::{
-    Atom, Expression, GroundDomain, Literal, Metadata, Moo, ReturnType, Typeable,
+    AbstractLiteral, Atom, Domain, Expression, Field, IntVal, Metadata, Moo, Name, Range,
 };
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
 
-pub fn parse_expression(
-    ctx: &mut ParseContext,
-    node: Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    match node.kind() {
-        "atom"
-        | "primary_atom"
-        | "constant"
-        | "identifier"
-        | "metavar"
-        | "matrix"
-        | "record"
-        | "variant"
-        | "tuple"
-        | "set_literal"
-        | "mset_literal"
-        | "sequence_literal"
-        | "function_literal"
-        | "relation_literal"
-        | "partition_literal"
-        | "comprehension"
-        | "index_or_slice"
-        | "flatten"
-        | "element_id"
-        | "table"
-        | "negative_table"
-        | "apply_expr"
-        | "image_expr"
-        | "image_set_expr"
-        | "pre_image_expr"
-        | "inverse_expr"
-        | "restrict_expr"
-        | "defined_expr"
-        | "range_expr"
-        | "to_set_expr"
-        | "to_mset_expr"
-        | "to_relation_expr"
-        | "attribute_as_constraint_expr"
-        | "together_expr"
-        | "apart_expr"
-        | "party_expr"
-        | "parts_expr"
-        | "participants_expr" => parse_atom(ctx, &node),
-        "bool_expr" => {
-            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
-                ctx.record_error(RecoverableParseError::new(
-                    format!(
-                        "Type error: {}\n\tExpected: int\n\tGot: boolean expression",
-                        &ctx.source_code[node.start_byte()..node.end_byte()]
-                    ),
-                    Some(node.range()),
-                ));
-                return Ok(None);
-            }
-            parse_boolean_expression(ctx, &node)
+fn register(
+    builtin: &mut HashMap<&'static str, (u8, Builtin)>,
+    name: &'static str,
+    n_args: u8,
+    func: impl Into<Builtin>,
+) {
+    builtin.insert(name, (n_args, func.into()));
+}
+
+enum Builtin {
+    Unary(fn(Expression) -> Expression),
+    Binary(fn(Expression, Expression) -> Expression),
+    Ternary(fn(Expression, Expression, Expression) -> Expression),
+    Quaternary(fn(Expression, Expression, Expression, Expression) -> Expression),
+    OptBinary(fn(Option<Expression>, Expression) -> Expression),
+}
+
+#[rustfmt::skip]
+const BUILTIN_TABLE: LazyCell<HashMap<&'static str, Builtin>> = LazyCell::new(|| {
+    fn moo(a: Expression) -> Moo<Expression> { Moo::new(a) }
+
+    use Builtin as B;
+    use Expression as E;
+    use Metadata as M;
+
+    HashMap::from([
+        ("sum",                B::Unary(|a| E::Sum          (M::new(), moo(a)))),
+        ("product",            B::Unary(|a| E::Product      (M::new(), moo(a)))),
+        ("min",                B::Unary(|a| E::Min          (M::new(), moo(a)))),
+        ("max",                B::Unary(|a| E::Max          (M::new(), moo(a)))),
+        ("and",                B::Unary(|a| E::And          (M::new(), moo(a)))),
+        ("or",                 B::Unary(|a| E::Or           (M::new(), moo(a)))),
+        ("allDifferent",       B::Unary(|a| E::AllDiff      (M::new(), moo(a)))),
+        ("factorial",          B::Unary(|a| E::Factorial    (M::new(), moo(a)))),
+        ("parts",              B::Unary(|a| E::Parts        (M::new(), moo(a)))),
+        ("participants",       B::Unary(|a| E::Participants (M::new(), moo(a)))),
+        ("defined",            B::Unary(|a| E::Defined      (M::new(), moo(a)))),
+        ("range",              B::Unary(|a| E::Range        (M::new(), moo(a)))),
+        ("permInverse",        B::Unary(|a| E::PermInverse  (M::new(), moo(a)))),
+        ("toInt",              B::Unary(|a| E::ToInt        (M::new(), moo(a)))),
+        ("toSet",              B::Unary(|a| E::ToSet        (M::new(), moo(a)))),
+        ("toMSet",             B::Unary(|a| E::ToMSet       (M::new(), moo(a)))),
+        ("toRelation",         B::Unary(|a| E::ToRelation   (M::new(), moo(a)))),
+
+        ("allDifferentExcept", B::Binary(|a, b| E::AllDifferentExcept (M::new(), moo(a), moo(b)))),
+        ("catchUndef",         B::Binary(|a, b| E::CatchUndef         (M::new(), moo(a), moo(b)))),
+        ("together",           B::Binary(|a, b| E::Together           (M::new(), moo(a), moo(b)))),
+        ("apart",              B::Binary(|a, b| E::Apart              (M::new(), moo(a), moo(b)))),
+        ("party",              B::Binary(|a, b| E::Party              (M::new(), moo(a), moo(b)))),
+        ("image",              B::Binary(|a, b| E::Image              (M::new(), moo(a), moo(b)))),
+        ("imageSet",           B::Binary(|a, b| E::ImageSet           (M::new(), moo(a), moo(b)))),
+        ("preImage",           B::Binary(|a, b| E::PreImage           (M::new(), moo(a), moo(b)))),
+        ("inverse",            B::Binary(|a, b| E::Inverse            (M::new(), moo(a), moo(b)))),
+        ("restrict",           B::Binary(|a, b| E::Restrict           (M::new(), moo(a), moo(b)))),
+        ("compose",            B::Binary(|a, b| E::Compose            (M::new(), moo(a), moo(b)))),
+        ("table",              B::Binary(|a, b| E::Table              (M::new(), moo(a), moo(b)))),
+        ("negativeTable",      B::Binary(|a, b| E::NegativeTable      (M::new(), moo(a), moo(b)))),
+
+        ("flatten",            B::OptBinary(|a, b| E::Flatten (M::new(), a.map(moo), moo(b)))),
+
+        ("gcc",                B::Ternary(|a, b, c| E::Gcc     (M::new(), moo(a), moo(b), moo(c)))),
+        ("atLeast",            B::Ternary(|a, b, c| E::AtLeast (M::new(), moo(a), moo(b), moo(c)))),
+        ("atMost",             B::Ternary(|a, b, c| E::AtMost  (M::new(), moo(a), moo(b), moo(c)))),
+
+        // ("pred",       B::Unary(|a|     E::Pred(      m(), Moo::new(a)))),
+        // ("succ",       B::Unary(|a|     E::Succ(      m(), Moo::new(a)))),
+    ])
+
+});
+
+pub fn parse_expression(ctx: &mut ParseContext, node: Node) -> Result<Expression, FatalParseError> {
+    let m = Metadata::new();
+    let expr = match node.kind() {
+        // basics
+        "identifier" => {
+            todo!()
+            // let Some(atom) = parse_variable(ctx, &node)? else {
+            //     todo!();
+            // };
+            // Expression::Atomic(Metadata::new(), atom)
         }
-        "arithmetic_expr" => {
-            if ctx.typechecking_context == TypecheckingContext::Boolean {
-                ctx.record_error(RecoverableParseError::new(
-                    format!(
-                        "Type error: {}\n\tExpected: bool\n\tGot: int",
-                        &ctx.source_code[node.start_byte()..node.end_byte()]
-                    ),
-                    Some(node.range()),
-                ));
-                return Ok(None);
-            }
-            parse_arithmetic_expression(ctx, &node)
+        "sub_expr" => parse_expression(ctx, field!(node, "expression"))?,
+
+        // literals
+        "constant" => {
+            let lit = parse_constant(ctx, &node)?;
+            Expression::Atomic(m, Atom::Literal(lit))
         }
-        "comparison_expr" => {
-            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
-                ctx.record_error(RecoverableParseError::new(
-                    format!(
-                        "Type error: {}\n\tExpected: int\n\tGot: comparison expression",
-                        &ctx.source_code[node.start_byte()..node.end_byte()]
-                    ),
-                    Some(node.range()),
-                ));
-                return Ok(None);
-            }
-            parse_comparison_expression(ctx, &node)
+        "tuple_literal" => {
+            let elems: Vec<_> = node
+                .named_children(&mut node.walk())
+                .map(|n| parse_expression(ctx, n))
+                .collect::<Result<_, _>>()?;
+
+            Expression::AbstractLiteral(m, AbstractLiteral::Tuple(elems))
         }
-        "all_diff_comparison" => {
-            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
-                ctx.record_error(RecoverableParseError::new(
-                    format!("Type error: {}\n\tExpected: arithmetic expression\n\tGot: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
-                    Some(node.range()),
-                ));
-                return Ok(None);
-            }
-            ctx.typechecking_context = TypecheckingContext::Matrix;
-            parse_all_diff_comparison(ctx, &node)
+        "matrix_literal" => {
+            let elems = node
+                .children_by_field_name("elements", &mut node.walk())
+                .filter(Node::is_named)
+                .map(|n| parse_expression(ctx, n))
+                .collect::<Result<_, _>>()?;
+
+            let index_domain = node
+                .child_by_field_name("domain")
+                .map(|n| parse_domain(ctx, n))
+                .transpose()?
+                .unwrap_or_else(|| Domain::int(Vec::<Range<IntVal>>::new()));
+
+            Expression::AbstractLiteral(m, AbstractLiteral::Matrix(elems, index_domain))
         }
-        "all_different_except_comparison" => {
-            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
-                ctx.record_error(RecoverableParseError::new(
-                    format!("Type error: {}\n\tExpected: arithmetic expression\n\tGot: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
-                    Some(node.range()),
-                ));
-                return Ok(None);
-            }
-            ctx.typechecking_context = TypecheckingContext::Matrix;
-            parse_all_different_except_comparison(ctx, &node)
+        "set_literal" => {
+            let elems = node
+                .named_children(&mut node.walk())
+                .map(|n| parse_expression(ctx, n))
+                .collect::<Result<_, _>>()?;
+            Expression::AbstractLiteral(m, AbstractLiteral::Set(elems))
         }
-        "global_cardinality_comparison" => {
-            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
-                ctx.record_error(RecoverableParseError::new(
-                    format!("Type error: {}\n\tExpected: arithmetic expression\n\tGot: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
-                    Some(node.range()),
-                ));
-                return Ok(None);
-            }
-            parse_global_cardinality_comparison(ctx, &node)
+        "mset_literal" => {
+            let elems = node
+                .named_children(&mut node.walk())
+                .map(|n| parse_expression(ctx, n))
+                .collect::<Result<_, _>>()?;
+            Expression::AbstractLiteral(m, AbstractLiteral::MSet(elems))
         }
-        "annotation_expr" | "type_annotation" | "domain_annotation" => {
-            parse_annotation_expression(ctx, &node)
+        "sequence_literal" => {
+            let elems = node
+                .named_children(&mut node.walk())
+                .map(|n| dbg!(parse_expression(ctx, dbg!(n))))
+                .collect::<Result<_, _>>()?;
+            Expression::AbstractLiteral(m, AbstractLiteral::Sequence(elems))
+        }
+        "function_literal" => {
+            let pairs = node
+                .named_children(&mut node.walk())
+                .map(|n| {
+                    Ok::<(_, _), FatalParseError>((
+                        parse_expression(ctx, field!(n, "key"))?,
+                        parse_expression(ctx, field!(n, "value"))?,
+                    ))
+                })
+                .collect::<Result<_, _>>()?;
+            Expression::AbstractLiteral(m, AbstractLiteral::Function(pairs))
+        }
+        "record_literal" => {
+            let pairs = node
+                .children_by_field_name("name_value_pair", &mut node.walk())
+                .map(|n| {
+                    Ok::<_, FatalParseError>(Field {
+                        name: parse_name(ctx, &field!(n, "name"))?,
+                        value: parse_expression(ctx, field!(n, "value"))?,
+                    })
+                })
+                .collect::<Result<_, _>>()?;
+            Expression::AbstractLiteral(m, AbstractLiteral::Record(pairs))
+        }
+        "variant_literal" => {
+            let nvp = field!(node, "name_value_pair");
+            let pair = Field {
+                name: parse_name(ctx, &field!(nvp, "name"))?,
+                value: parse_expression(ctx, field!(nvp, "value"))?,
+            };
+            Expression::AbstractLiteral(m, AbstractLiteral::Variant(Moo::new(pair)))
+        }
+        "relation_literal" => {
+            let relations = node
+                .children_by_field_name("tuple", &mut node.walk())
+                .map(|n| {
+                    n.children_by_field_name("element", &mut n.walk())
+                        .map(|c| parse_expression(ctx, c))
+                        .collect::<Result<_, _>>()
+                })
+                .collect::<Result<_, _>>()?;
+            Expression::AbstractLiteral(m, AbstractLiteral::Relation(relations))
+        }
+        "partition_literal" => {
+            let parts = node
+                .children_by_field_name("part", &mut node.walk())
+                .map(|n| {
+                    n.children_by_field_name("element", &mut n.walk())
+                        .map(|c| parse_expression(ctx, c))
+                        .collect::<Result<_, _>>()
+                })
+                .collect::<Result<_, _>>()?;
+            Expression::AbstractLiteral(m, AbstractLiteral::Partition(parts))
+        }
+        "permutation_literal" => {
+            let cycles = node
+                .children_by_field_name("cycle", &mut node.walk())
+                .map(|n| {
+                    n.children_by_field_name("element", &mut n.walk())
+                        .map(|c| parse_expression(ctx, c))
+                        .collect::<Result<_, _>>()
+                })
+                .collect::<Result<_, _>>()?;
+            Expression::AbstractLiteral(m, AbstractLiteral::Permutation(cycles))
+        }
+        // binary operations
+        "binary_expr" => parse_binary_expression(ctx, &node)?,
+        // unary operations
+        "not_expr" => {
+            let inner = parse_expression(ctx, field!(node, "expression"))?;
+            Expression::Not(m, Moo::new(inner))
+        }
+        "negative_expr" => {
+            let inner = parse_expression(ctx, field!(node, "expression"))?;
+            Expression::Neg(m, Moo::new(inner))
+        }
+        "abs_value_expr" => {
+            let inner = parse_expression(ctx, field!(node, "expression"))?;
+            Expression::Abs(m, Moo::new(inner))
+        }
+        "factorial_expr" => {
+            let inner = parse_expression(ctx, field!(node, "expression"))?;
+            Expression::Factorial(m, Moo::new(inner))
+        }
+        // other expressions
+        "apply_expr" => parse_function_application(ctx, node)?,
+        "index_or_slice" => {
+            let collection = parse_expression(ctx, field!(node, "collection"))?;
+            let indices = node
+                .children_by_field_name("indices", &mut node.walk())
+                .map(|n| {
+                    // TODO: null index
+                    parse_expression(ctx, field!(n, "index"))
+                })
+                .collect::<Result<_, _>>()?;
+
+            Expression::UnsafeIndex(m, Moo::new(collection), indices)
+        }
+        "from_solution" => {
+            let _variable = parse_name(ctx, &field!(node, "variable"))?;
+            // Some(Expression::FromSolution(m, Atom::Reference(variable))
+            todo!("unresolved refs")
+        }
+        "quantifier_expr" => {
+            let (_operator, _skip_operator): (fn(_, _) -> Expression, ACOperatorKind) =
+                match parse_ident(ctx, &field!(node, "operator")).as_ref() {
+                    "forAll" => (Expression::And, ACOperatorKind::And),
+                    "exists" => (Expression::Or, ACOperatorKind::Or),
+                    "sum" => (Expression::Sum, ACOperatorKind::Sum),
+                    "min" => (Expression::Min, ACOperatorKind::Min),
+                    "max" => (Expression::Max, ACOperatorKind::Max),
+                    _ => unreachable!(),
+                };
+
+            let _domain_node = node.child_by_field_name("domain");
+            let _collection_node = node.child_by_field_name("collection");
+            let _return_expression = parse_expression(ctx, field!(node, "expression"))?;
+
+            // let mut builder = ComprehensionBuilder::new(ctx.symbols.unwrap()); // TODO: symbol table
+
+            let _bindings = node
+                .children_by_field_name("variables", &mut node.walk())
+                .map(|n| parse_pattern_bindings(ctx, &n))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            // builder.expression_generator()
+            // for guard_node in node.children_by_field_name("guard", &mut node.walk()) {}
+            // let comprehension = builder.with_return_value(return_expression);
+
+            // let wrapped_comprehension =
+            //     Expression::Comprehension(Metadata::new(), comprehension.into());
+
+            // operator(m, Moo::new(wrapped_comprehension))
+            todo!()
+        }
+        "comprehension_expr" => {
+            // let return_expression = parse_expression(ctx, field!(node, "expression"))?;
+            // let cursor = &mut node.walk();
+            // let qualifiers = node.children_by_field_name("generator", cursor).map(|n| {
+            //     let variables = parse_pattern_bindings(ctx, &field!(n, "variable"))?;
+            //     if let Some(domain_node) = node.child_by_field_name("domain") {
+            //         let domain = parse_domain(ctx, domain_node)?;
+            //         // let decl = DeclarationPtr::new_domain_letting(domain)
+            //         // ComprehensionQualifier::Generator { ptr: domain }
+            //         todo!()
+            //     } else if let Some(collection_node) = node.child_by_field_name("collection") {
+            //         todo!()
+            //     } else {
+            //         unreachable!();
+            //     }
+            //     Ok::<_, FatalParseError>(())
+            // });
+            //
+            // Expression::Comprehension(
+            //     m,
+            //     Moo::new(Comprehension {
+            //         return_expression,
+            //         qualifiers: todo!(),
+            //         skip_operator: todo!(),
+            //         symbols: todo!(),
+            //     }),
+            // )
+            todo!()
         }
         _ => {
+            dbg!(node.kind());
             ctx.record_error(RecoverableParseError::new(
                 format!("Unexpected expression type: '{}'", node.kind()),
                 Some(node.range()),
             ));
-            Ok(None)
+            todo!()
         }
-    }
+    };
+    Ok(expr)
 }
 
-fn parse_arithmetic_expression(
+// fn bind_generator_pattern(
+//     ctx: &mut ParseContext,
+//     // builder: &mut ComprehensionBuilder,
+//     var_node: &Node,
+//     var_name: &Name,
+//     lettings: &mut Vec<(DeclarationPtr, Expression)>,
+// ) -> bool {
+//     let mut bindings = Vec::new();
+//     if !collect_pattern_bindings(ctx, var_node, &mut Vec::new(), &mut bindings) {
+//         return false;
+//     }
+//
+//     let symbols = builder.generator_symboltable();
+//     let Some(generator_decl) = symbols.read().lookup_local(var_name) else {
+//         ctx.record_error(RecoverableParseError::new(
+//             format!("Generator pattern variable {var_name} is not in scope"),
+//             Some(var_node.range()),
+//         ));
+//         return false;
+//     };
+//
+//     for (name, path) in bindings {
+//         let mut value = Expression::from(Reference::new(generator_decl.clone()));
+//         for index in path {
+//             value = Expression::SafeIndex(
+//                 Metadata::new(),
+//                 Moo::new(value),
+//                 vec![Expression::from(Literal::Int(index))],
+//             );
+//         }
+//         let decl = DeclarationPtr::new_value_letting(name, value.clone());
+//         symbols.write().insert(decl.clone());
+//         lettings.push((decl, value));
+//     }
+//
+//     true
+// }
+
+fn parse_pattern_bindings(
     ctx: &mut ParseContext,
     node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    ctx.typechecking_context = TypecheckingContext::Arithmetic;
-    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-    let Some(inner) = named_child!(recover, ctx, node) else {
-        return Ok(None);
-    };
-    match inner.kind() {
-        "atom" => parse_atom(ctx, &inner),
-        "negative_expr" | "abs_value" | "sub_arith_expr" | "factorial_expr" => {
-            parse_unary_expression(ctx, &inner)
-        }
-        "toInt_expr" => {
-            // add special handling for toInt, as it is arithmetic but takes a non-arithmetic operand
-            ctx.typechecking_context = TypecheckingContext::Unknown;
-            parse_unary_expression(ctx, &inner)
-        }
-        "catch_undef_expr" => parse_catch_undef_expression(ctx, &inner),
-        "exponent" | "product_expr" | "sum_expr" => parse_binary_expression(ctx, &inner),
-        "list_combining_expr_arith" => {
-            // list-combining arithmetic operators accept either set or matrix operands
-            ctx.typechecking_context = TypecheckingContext::SetOrMatrix;
-
-            // set inner context to arithmetic to ensure elements of list are arithmetic expressions
-            ctx.inner_typechecking_context = TypecheckingContext::Arithmetic;
-            parse_list_combining_expression(ctx, &inner)
-        }
-        "aggregate_expr" => {
-            ctx.inner_typechecking_context = TypecheckingContext::Arithmetic;
-            parse_quantifier_or_aggregate_expr(ctx, &inner)
-        }
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!("Expected arithmetic expression, found: {}", inner.kind()),
-                Some(inner.range()),
-            ));
-            Ok(None)
-        }
-    }
+) -> Result<Vec<(Name, Vec<i32>)>, FatalParseError> {
+    let mut bindings = vec![];
+    collect_pattern_bindings(ctx, node, vec![], &mut bindings)?;
+    Ok(bindings)
 }
-
-fn parse_comparison_expression(
+/// Collects the names a generator pattern binds, each with its index path into the generator
+/// variable: `(i, _)` binds `i` at path `[1]`, and `(i, (j, k))` binds `k` at path `[2, 2]`.
+///
+/// Patterns are written as tuples, so an element arrives wrapped in whatever expression nodes a
+/// tuple element goes through; only the identifiers at the bottom matter here.
+///
+/// Returns false for a pattern this cannot read, having recorded an error.
+fn collect_pattern_bindings(
     ctx: &mut ParseContext,
     node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    let Some(inner) = named_child!(recover, ctx, node) else {
-        return Ok(None);
-    };
-    match inner.kind() {
-        "arithmetic_comparison" => {
-            // <, <=, >, >= work on any orderable type (everything except unnamed types, which
-            // don't support ordering); typechecking of operands is handled within
-            // parse_binary_expression, same as equality.
-            ctx.typechecking_context = TypecheckingContext::Unknown;
-            parse_binary_expression(ctx, &inner)
-        }
-        "lex_comparison" => {
-            // <lex, <=lex, >lex, >=lex are specialised to matrices; other types use the plain
-            // ordering operators above instead.
-            ctx.typechecking_context = TypecheckingContext::Matrix;
-            parse_binary_expression(ctx, &inner)
-        }
-        "equality_comparison" => {
-            // Equality works on any type, typechecking of operands will be handled within parse_binary_expression
-            ctx.typechecking_context = TypecheckingContext::Unknown;
-            parse_binary_expression(ctx, &inner)
-        }
-        "set_comparison" => {
-            // Set comparisons require set operands (except 'in', which is hadled later)
-            ctx.typechecking_context = TypecheckingContext::Set;
-            parse_binary_expression(ctx, &inner)
-        }
-        "sequence_comparison" => {
-            // Sequence comparisons (substring/subsequence) require sequence operands
-            ctx.typechecking_context = TypecheckingContext::Sequence;
-            parse_binary_expression(ctx, &inner)
-        }
-        "all_diff_comparison" => {
-            ctx.typechecking_context = TypecheckingContext::Matrix;
-            parse_all_diff_comparison(ctx, &inner)
-        }
-        "all_different_except_comparison" => {
-            ctx.typechecking_context = TypecheckingContext::Matrix;
-            parse_all_different_except_comparison(ctx, &inner)
-        }
-        "global_cardinality_comparison" => parse_global_cardinality_comparison(ctx, &inner),
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!("Expected comparison expression, found '{}'", inner.kind()),
-                Some(inner.range()),
-            ));
-            Ok(None)
-        }
-    }
-}
-
-fn parse_boolean_expression(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    ctx.typechecking_context = TypecheckingContext::Boolean;
-    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-    let Some(inner) = named_child!(recover, ctx, node) else {
-        return Ok(None);
-    };
-    match inner.kind() {
-        "atom" | "table" | "negative_table" => parse_atom(ctx, &inner),
-        "active_expr" => parse_active_expression(ctx, &inner),
-        "not_expr" | "sub_bool_expr" => parse_unary_expression(ctx, &inner),
-        "and_expr" | "or_expr" | "implication" | "iff_expr" => parse_binary_expression(ctx, &inner),
-        "list_combining_expr_bool" => {
-            // list-combining boolean operators accept either set or matrix operands
-            ctx.typechecking_context = TypecheckingContext::SetOrMatrix;
-
-            // set inner context to boolean to ensure elements of list are boolean expressions
-            ctx.inner_typechecking_context = TypecheckingContext::Boolean;
-            parse_list_combining_expression(ctx, &inner)
-        }
-        "quantifier_expr" => parse_quantifier_or_aggregate_expr(ctx, &inner),
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!("Expected boolean expression, found '{}'", inner.kind()),
-                Some(inner.range()),
-            ));
-            Ok(None)
-        }
-    }
-}
-
-fn parse_active_expression(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    let Some(variant_node) = field!(recover, ctx, node, "variant") else {
-        return Ok(None);
-    };
-    let saved_context = ctx.typechecking_context;
-    ctx.typechecking_context = TypecheckingContext::Unknown;
-    let variant = parse_expression(ctx, variant_node)?;
-    ctx.typechecking_context = saved_context;
-    let Some(variant) = variant else {
-        return Ok(None);
-    };
-    let Some(name_node) = field!(recover, ctx, node, "name") else {
-        return Ok(None);
-    };
-    let name = conjure_cp_core::ast::Name::user(
-        &ctx.source_code[name_node.start_byte()..name_node.end_byte()],
-    );
-    let ReturnType::Variant(entries) = variant.return_type() else {
-        ctx.record_error(RecoverableParseError::new(
-            format!("active expects a variant, got {variant}"),
-            Some(node.range()),
-        ));
-        return Ok(None);
-    };
-    if !entries.iter().any(|entry| entry.name == name) {
-        ctx.record_error(RecoverableParseError::new(
-            format!("unknown variant field `{name}`"),
-            Some(name_node.range()),
-        ));
-        return Ok(None);
-    }
-    Ok(Some(Expression::Active(
-        Metadata::new(),
-        Moo::new(variant),
-        name,
-    )))
-}
-
-fn parse_list_combining_expression(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    let Some(operator_node) = field!(recover, ctx, node, "operator") else {
-        return Ok(None);
-    };
-    let operator_str = &ctx.source_code[operator_node.start_byte()..operator_node.end_byte()];
-
-    let Some(arg_node) = field!(recover, ctx, node, "arg") else {
-        return Ok(None);
-    };
-    // While parsing inner, the typechecking context is SetOrMatrix
-    // The inner context is either Boolean or Arithmetic so the elements of the set/matrix are typechecked correctly.
-    let Some(inner) = parse_expression(ctx, arg_node)? else {
-        return Ok(None);
-    };
-
-    let skip_operator = list_combining_skip_operator(operator_str);
-    let inner = set_comprehension_skip_operator(inner, skip_operator);
-
-    let expr = match operator_str {
-        "and" => Ok(Some(Expression::And(Metadata::new(), Moo::new(inner)))),
-        "or" => Ok(Some(Expression::Or(Metadata::new(), Moo::new(inner)))),
-        "sum" => Ok(Some(Expression::Sum(Metadata::new(), Moo::new(inner)))),
-        "product" => Ok(Some(Expression::Product(Metadata::new(), Moo::new(inner)))),
-        "min" => Ok(Some(Expression::Min(Metadata::new(), Moo::new(inner)))),
-        "max" => Ok(Some(Expression::Max(Metadata::new(), Moo::new(inner)))),
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!("Invalid operator: '{operator_str}'"),
-                Some(operator_node.range()),
-            ));
-            Ok(None)
-        }
-    };
-
-    if expr.is_ok() {
-        ctx.add_span_and_doc_hover(
-            &operator_node,
-            operator_str,
-            SymbolKind::Function,
-            None,
-            None,
-        );
-    }
-
-    expr
-}
-
-fn parse_all_diff_comparison(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    let Some(arg_node) = field!(recover, ctx, node, "arg") else {
-        return Ok(None);
-    };
-    let Some(inner) = parse_expression(ctx, arg_node)? else {
-        return Ok(None);
-    };
-
-    let operator_node = node
-        .child_by_field_name("operator")
-        .unwrap_or_else(|| node.child(0).unwrap());
-    let operator_str =
-        ctx.source_code[operator_node.start_byte()..operator_node.end_byte()].to_string();
-    if !is_all_different_operator(&operator_str) {
-        ctx.record_error(RecoverableParseError::new(
-            format!("Invalid operator: '{operator_str}'"),
-            Some(operator_node.range()),
-        ));
-        return Ok(None);
-    }
-
-    ctx.add_span_and_doc_hover(
-        &operator_node,
-        ALL_DIFFERENT,
-        SymbolKind::Function,
-        None,
-        None,
-    );
-    Ok(Some(Expression::AllDiff(Metadata::new(), Moo::new(inner))))
-}
-
-fn parse_all_different_except_comparison(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    let operator_node = node
-        .child_by_field_name("operator")
-        .unwrap_or_else(|| node.child(0).unwrap());
-    let operator_str =
-        ctx.source_code[operator_node.start_byte()..operator_node.end_byte()].to_string();
-    if !is_all_different_except_operator(&operator_str) {
-        ctx.record_error(RecoverableParseError::new(
-            format!("Invalid operator: '{operator_str}'"),
-            Some(operator_node.range()),
-        ));
-        return Ok(None);
-    }
-
-    let Some(matrix_node) = field!(recover, ctx, node, "matrix") else {
-        return Ok(None);
-    };
-    let Some(except_node) = field!(recover, ctx, node, "except") else {
-        return Ok(None);
-    };
-
-    let saved_context = ctx.typechecking_context;
-    ctx.typechecking_context = TypecheckingContext::Unknown;
-    let Some(matrix) = parse_table_operand(ctx, &matrix_node)? else {
-        ctx.typechecking_context = saved_context;
-        return Ok(None);
-    };
-    let Some(except) = parse_table_operand(ctx, &except_node)? else {
-        ctx.typechecking_context = saved_context;
-        return Ok(None);
-    };
-    ctx.typechecking_context = saved_context;
-
-    ctx.add_span_and_doc_hover(
-        &operator_node,
-        ALL_DIFFERENT_EXCEPT,
-        SymbolKind::Function,
-        None,
-        None,
-    );
-    Ok(Some(Expression::AllDifferentExcept(
-        Metadata::new(),
-        Moo::new(matrix),
-        Moo::new(except),
-    )))
-}
-
-fn parse_global_cardinality_comparison(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    let Some(operator_node) = field!(recover, ctx, node, "operator") else {
-        return Ok(None);
-    };
-    let operator_str =
-        ctx.source_code[operator_node.start_byte()..operator_node.end_byte()].to_string();
-
-    let Some(variables_node) = field!(recover, ctx, node, "variables") else {
-        return Ok(None);
-    };
-    let Some(arg2_node) = field!(recover, ctx, node, "arg2") else {
-        return Ok(None);
-    };
-    let Some(arg3_node) = field!(recover, ctx, node, "arg3") else {
-        return Ok(None);
-    };
-
-    let saved_context = ctx.typechecking_context;
-    ctx.typechecking_context = TypecheckingContext::Unknown;
-    let Some(variables) = parse_expression(ctx, variables_node)? else {
-        ctx.typechecking_context = saved_context;
-        return Ok(None);
-    };
-    let Some(arg2) = parse_expression(ctx, arg2_node)? else {
-        ctx.typechecking_context = saved_context;
-        return Ok(None);
-    };
-    let Some(arg3) = parse_expression(ctx, arg3_node)? else {
-        ctx.typechecking_context = saved_context;
-        return Ok(None);
-    };
-    ctx.typechecking_context = saved_context;
-
-    ctx.add_span_and_doc_hover(
-        &operator_node,
-        match operator_str.as_str() {
-            op if is_at_least_operator(op) => AT_LEAST,
-            op if is_at_most_operator(op) => AT_MOST,
-            _ => GLOBAL_CARDINALITY,
-        },
-        SymbolKind::Function,
-        None,
-        None,
-    );
-
-    match operator_str.as_str() {
-        op if is_at_least_operator(op) => Ok(Some(Expression::AtLeast(
-            Metadata::new(),
-            Moo::new(variables),
-            Moo::new(arg2),
-            Moo::new(arg3),
-        ))),
-        op if is_at_most_operator(op) => Ok(Some(Expression::AtMost(
-            Metadata::new(),
-            Moo::new(variables),
-            Moo::new(arg2),
-            Moo::new(arg3),
-        ))),
-        op if is_global_cardinality_operator(op) => Ok(Some(Expression::Gcc(
-            Metadata::new(),
-            Moo::new(variables),
-            Moo::new(arg2),
-            Moo::new(arg3),
-        ))),
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!("Invalid operator: '{operator_str}'"),
-                Some(operator_node.range()),
-            ));
-            Ok(None)
-        }
-    }
-}
-
-fn parse_unary_expression(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    let saved_context = ctx.typechecking_context;
-    if node.kind() == "abs_value" {
-        // Bars are overloaded for numeric absolute value and collection cardinality.
-        ctx.typechecking_context = TypecheckingContext::Unknown;
-    }
-    let Some(expr_node) = field!(recover, ctx, node, "expression") else {
-        ctx.typechecking_context = saved_context;
-        return Ok(None);
-    };
-    let Some(inner) = parse_expression(ctx, expr_node)? else {
-        ctx.typechecking_context = saved_context;
-        return Ok(None);
-    };
-    ctx.typechecking_context = saved_context;
-
-    match node.kind() {
-        "negative_expr" => {
-            if let Expression::Atomic(_, Atom::Literal(Literal::Int(value))) = inner {
-                Ok(Some(Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Int(-value)),
-                )))
-            } else {
-                Ok(Some(Expression::Neg(Metadata::new(), Moo::new(inner))))
+    path: Vec<i32>,
+    bindings: &mut Vec<(Name, Vec<i32>)>,
+) -> Result<(), FatalParseError> {
+    for (i, child) in node.named_children(&mut node.walk()).enumerate() {
+        match child.kind() {
+            "identifier" => bindings.push((parse_name(ctx, &child)?, path.clone())),
+            "placeholder" => {}
+            "tuple" => {
+                let mut new_path = path.clone();
+                new_path.push(i as i32);
+                collect_pattern_bindings(ctx, &child, new_path, bindings)?;
             }
-        }
-        "abs_value" => {
-            let constructor = match inner.return_type() {
-                ReturnType::Matrix(_)
-                | ReturnType::Set(_)
-                | ReturnType::MSet(_)
-                | ReturnType::Sequence(_)
-                | ReturnType::Function(_, _)
-                | ReturnType::Relation(_)
-                | ReturnType::Partition(_)
-                | ReturnType::Permutation(_) => Expression::Card,
-                _ => Expression::Abs,
-            };
-            Ok(Some(constructor(Metadata::new(), Moo::new(inner))))
-        }
-        "not_expr" => Ok(Some(Expression::Not(Metadata::new(), Moo::new(inner)))),
-        "toInt_expr" => {
-            let to_int_keyword_node = child!(node, 0, "toInt");
-            ctx.add_span_and_doc_hover(
-                &to_int_keyword_node,
-                "toInt",
-                SymbolKind::Function,
-                None,
-                None,
-            );
-            Ok(Some(Expression::ToInt(Metadata::new(), Moo::new(inner))))
-        }
-        "factorial_expr" => {
-            // looking for the operator node (either '!' at the end or 'factorial' at the start) to add hover info
-            if let Some(op_node) = (0..node.child_count())
-                .filter_map(|i| node.child(i))
-                .find(|c| matches!(c.kind(), "!" | "factorial"))
-            {
-                ctx.add_span_and_doc_hover(
-                    &op_node,
-                    "post_factorial",
-                    SymbolKind::Function,
-                    None,
-                    None,
-                );
-            }
-
-            Ok(Some(Expression::Factorial(
-                Metadata::new(),
-                Moo::new(inner),
-            )))
-        }
-        "sub_bool_expr" | "sub_arith_expr" => Ok(Some(inner)),
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!("Unrecognised unary operation: '{}'", node.kind()),
-                Some(node.range()),
-            ));
-            Ok(None)
+            _ => unreachable!(),
         }
     }
+
+    Ok(())
+}
+
+fn parse_function_application(
+    ctx: &mut ParseContext,
+    node: Node,
+) -> Result<Expression, FatalParseError> {
+    let args: Vec<Expression> = node
+        .children_by_field_name("argument", &mut node.walk())
+        .map(|n| parse_expression(ctx, n))
+        .collect::<Result<_, _>>()?;
+
+    let fn_node = field!(node, "function");
+
+    if fn_node.kind() == "builtin_function" {
+        let name = parse_ident(ctx, &fn_node);
+        dbg!(&name);
+        if let Some(builtin) = BUILTIN_TABLE.get(name.as_str()) {
+            return Ok(match builtin {
+                Builtin::Unary(f) => match <[_; 1]>::try_from(args) {
+                    Ok([a]) => f(a),
+                    Err(v) => todo!(),
+                },
+                Builtin::Binary(f) => match <[_; 2]>::try_from(args) {
+                    Ok([a, b]) => f(a, b),
+                    Err(v) => todo!(),
+                },
+                Builtin::Ternary(f) => match <[_; 3]>::try_from(args) {
+                    Ok([a, b, c]) => f(a, b, c),
+                    Err(v) => todo!(),
+                },
+                Builtin::Quaternary(f) => todo!(),
+                Builtin::OptBinary(f) => todo!(),
+            });
+        }
+    }
+
+    let function = parse_expression(ctx, fn_node)?;
+
+    let Ok([arg]) = <[_; 1]>::try_from(args) else {
+        todo!("error");
+    };
+
+    Ok(Expression::Image(
+        Metadata::new(),
+        Moo::new(function),
+        Moo::new(arg),
+    ))
 }
 
 pub fn parse_binary_expression(
     ctx: &mut ParseContext,
     node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    let Some(op_node) = field!(recover, ctx, node, "operator") else {
-        return Ok(None);
-    };
-    let op_str = &ctx.source_code[op_node.start_byte()..op_node.end_byte()];
+) -> Result<Expression, FatalParseError> {
+    let left_node = field!(node, "left");
+    let left = parse_expression(ctx, left_node)?;
 
-    let saved_ctx = ctx.typechecking_context;
+    let right_node = field!(node, "right");
+    let right = parse_expression(ctx, right_node)?;
 
-    // Special handling for 'in' operator, as the left operand doesn't have to be a set
-    if op_str == "in" {
-        ctx.typechecking_context = TypecheckingContext::Unknown
-    }
-
-    // Minus spells both arithmetic subtraction and set difference, so neither operand can be held
-    // to the arithmetic context until the operand types say which one this is.
-    if op_str == "-" {
-        ctx.typechecking_context = TypecheckingContext::Unknown;
-    }
-
-    // parse left operand
-    let Some(left_node) = field!(recover, ctx, node, "left") else {
-        return Ok(None);
-    };
-    let Some(left) = parse_expression(ctx, left_node)? else {
-        return Ok(None);
-    };
-
-    // reset context, if needed
-    ctx.typechecking_context = saved_ctx;
-
-    // Equality/inequality/ordering: enforce right operand to match left operand type when
-    // inferable. Ordering (<, <=, >, >=) works on any orderable type now, the same as equality,
-    // so it needs the same operand-matching check.
-    if matches!(op_str, "=" | "!=" | "<" | "<=" | ">" | ">=") {
-        ctx.typechecking_context = inferred_context_from_expression(&left);
-    }
-
-    // 'in's right operand is the container, which need not be a set (mset/sequence-via-toSet/
-    // relation/etc all support membership too); the grammar's "set_comparison" node kind sets
-    // `saved_ctx` to `Set` unconditionally, which only the left operand's override above escapes.
-    if op_str == "in" {
-        ctx.typechecking_context = TypecheckingContext::Unknown;
-    }
-
-    if op_str == "-" {
-        ctx.typechecking_context = TypecheckingContext::Unknown;
-    }
-
-    // parse right operand
-    let Some(right_node) = field!(recover, ctx, node, "right") else {
-        return Ok(None);
-    };
-    let Some(right) = parse_expression(ctx, right_node)? else {
-        return Ok(None);
-    };
-
-    // restore original contexts for parent expression parsing
-    ctx.typechecking_context = saved_ctx;
-
-    let mut doc_name = "";
-    let expr = match op_str {
-        // NB: We are deliberately setting the index domain to 1.., not 1..2.
-        // Semantically, this means "a list that can grow/shrink arbitrarily".
-        // This is expected by rules which will modify the terms of the sum expression
-        // (e.g. by partially evaluating them).
-        "+" => {
-            doc_name = "L_Plus";
-            Ok(Some(Expression::Sum(
-                Metadata::new(),
-                Moo::new(matrix_expr![left, right; domain_int!(1..)]),
-            )))
-        }
-        "-" => {
-            doc_name = "L_Minus";
-            if is_set_valued(&left) || is_set_valued(&right) {
-                Ok(Some(Expression::Difference(
-                    Metadata::new(),
-                    Moo::new(left),
-                    Moo::new(right),
-                )))
-            } else {
-                // Subtraction, so the operands do have to be integers. The arithmetic context
-                // could not be imposed while parsing them, since it would have rejected the set
-                // operands that make this a difference instead.
-                if !require_int_operand(ctx, &left_node, &left)
-                    || !require_int_operand(ctx, &right_node, &right)
-                {
-                    return Ok(None);
-                }
-                Ok(Some(Expression::Minus(
-                    Metadata::new(),
-                    Moo::new(left),
-                    Moo::new(right),
-                )))
-            }
-        }
-        "*" => {
-            doc_name = "L_Times";
-            Ok(Some(Expression::Product(
-                Metadata::new(),
-                Moo::new(matrix_expr![left, right; domain_int!(1..)]),
-            )))
-        }
-        "/\\" => {
-            doc_name = "and";
-            Ok(Some(Expression::And(
-                Metadata::new(),
-                Moo::new(matrix_expr![left, right; domain_int!(1..)]),
-            )))
-        }
-        "\\/" => {
-            // No documentation for or in Bits yet
-            doc_name = "or";
-            Ok(Some(Expression::Or(
-                Metadata::new(),
-                Moo::new(matrix_expr![left, right; domain_int!(1..)]),
-            )))
-        }
-        "**" => {
-            doc_name = "L_Pow";
-            Ok(Some(Expression::UnsafePow(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "/" => {
-            //TODO: add checks for if division is safe or not
-            doc_name = "L_Div";
-            Ok(Some(Expression::UnsafeDiv(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "%" => {
-            //TODO: add checks for if mod is safe or not
-            doc_name = "L_Mod";
-            Ok(Some(Expression::UnsafeMod(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-
-        "=" => {
-            doc_name = "L_Eq"; //no docs yet
-            Ok(Some(Expression::Eq(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "!=" => {
-            doc_name = "L_Neq"; //no docs yet
-            Ok(Some(Expression::Neq(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "<=" => {
-            doc_name = "L_Leq"; //no docs yet
-            Ok(Some(Expression::Leq(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        ">=" => {
-            doc_name = "L_Geq"; //no docs yet
-            Ok(Some(Expression::Geq(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "<" => {
-            doc_name = "L_Lt"; //no docs yet
-            Ok(Some(Expression::Lt(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        ">" => {
-            doc_name = "L_Gt"; //no docs yet
-            Ok(Some(Expression::Gt(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-
-        "->" => {
-            doc_name = "L_Imply"; //no docs yet
-            Ok(Some(Expression::Imply(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "<->" => {
-            doc_name = "L_Iff"; //no docs yet
-            Ok(Some(Expression::Iff(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "<lex" => {
-            doc_name = "L_LexLt"; //no docs yet
-            Ok(Some(Expression::LexLt(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        ">lex" => {
-            doc_name = "L_LexGt"; //no docs yet
-            Ok(Some(Expression::LexGt(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "<=lex" => {
-            doc_name = "L_LexLeq"; //no docs yet
-            Ok(Some(Expression::LexLeq(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        ">=lex" => {
-            doc_name = "L_LexGeq"; //no docs yet
-            Ok(Some(Expression::LexGeq(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "in" => {
-            doc_name = "L_in";
-            Ok(Some(Expression::In(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "subset" => {
-            doc_name = "L_subset";
-            Ok(Some(Expression::Subset(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "subsetEq" => {
-            doc_name = "L_subsetEq";
-            Ok(Some(Expression::SubsetEq(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "supset" => {
-            doc_name = "L_supset";
-            Ok(Some(Expression::Supset(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "supsetEq" => {
-            doc_name = "L_supsetEq";
-            Ok(Some(Expression::SupsetEq(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "substring" => {
-            doc_name = "L_substring";
-            Ok(Some(Expression::Substring(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "subsequence" => {
-            doc_name = "L_subsequence";
-            Ok(Some(Expression::Subsequence(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "union" => {
-            doc_name = "L_union";
-            Ok(Some(Expression::Union(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        "intersect" => {
-            doc_name = "L_intersect";
-            Ok(Some(Expression::Intersect(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
-        }
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!("Invalid operator: '{op_str}'"),
-                Some(op_node.range()),
-            ));
-            Ok(None)
-        }
-    };
-
-    if expr.is_ok() {
-        ctx.add_span_and_doc_hover(&op_node, doc_name, SymbolKind::Function, None, None);
-    }
-
-    expr
-}
-
-pub fn parse_annotation_expression(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    let annotation_node = if node.kind() == "annotation_expr" {
-        let Some(inner) = named_child!(recover, ctx, node) else {
-            return Ok(None);
-        };
-        inner
-    } else {
-        *node
-    };
-
-    let Some(left_node) = field!(recover, ctx, &annotation_node, "left") else {
-        return Ok(None);
-    };
-    let left_node = if left_node.kind() == "annotation_subject" {
-        let Some(inner) = named_child!(recover, ctx, &left_node) else {
-            return Ok(None);
-        };
-        inner
-    } else {
-        left_node
-    };
-    let left_node = match left_node.kind() {
-        "sub_arith_expr" | "sub_bool_expr" | "sub_atom_expr" => {
-            let Some(inner) = field!(recover, ctx, &left_node, "expression") else {
-                return Ok(None);
-            };
-            inner
-        }
-        _ => left_node,
-    };
-    let saved_context = ctx.typechecking_context;
-    ctx.typechecking_context = TypecheckingContext::Unknown;
-    let left = match left_node.kind() {
-        "constant" | "identifier" | "metavar" => parse_atom(ctx, &left_node)?,
-        _ => parse_expression(ctx, left_node)?,
-    };
-    let Some(left) = left else {
-        ctx.typechecking_context = saved_context;
-        return Ok(None);
-    };
-    ctx.typechecking_context = saved_context;
-
-    let Some(operator_node) = field!(recover, ctx, &annotation_node, "operator") else {
-        return Ok(None);
-    };
-    let operator_str = &ctx.source_code[operator_node.start_byte()..operator_node.end_byte()];
-
-    match annotation_node.kind() {
-        "type_annotation" => {
-            let Some(type_node) = field!(recover, ctx, &annotation_node, "type") else {
-                return Ok(None);
-            };
-            let Some(domain) = parse_domain(ctx, type_node)? else {
-                return Ok(None);
-            };
-            ctx.add_span_and_doc_hover(
-                &operator_node,
-                operator_str,
-                SymbolKind::Function,
-                None,
-                None,
-            );
-            Ok(Some(Expression::TypeAnnotation(
-                Metadata::new(),
-                Moo::new(left),
-                domain,
-            )))
-        }
-        "domain_annotation" => {
-            let Some(domain_node) = field!(recover, ctx, &annotation_node, "domain") else {
-                return Ok(None);
-            };
-            let Some(domain) = parse_domain(ctx, domain_node)? else {
-                return Ok(None);
-            };
-            ctx.add_span_and_doc_hover(
-                &operator_node,
-                operator_str,
-                SymbolKind::Function,
-                None,
-                None,
-            );
-            Ok(Some(Expression::DomainAnnotation(
-                Metadata::new(),
-                Moo::new(left),
-                domain,
-            )))
-        }
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Unrecognised annotation expression: '{}'",
-                    annotation_node.kind()
-                ),
-                Some(annotation_node.range()),
-            ));
-            Ok(None)
-        }
-    }
-}
-
-fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
-    // TODO: typechecking for index/slice expressions
-    if matches!(
-        expr,
-        Expression::UnsafeIndex(_, _, _) | Expression::UnsafeSlice(_, _, _)
-    ) {
-        return TypecheckingContext::Unknown;
-    }
-
-    let Some(domain) = expr.domain_of() else {
-        return TypecheckingContext::Unknown;
-    };
-    let Ok(ground) = domain.resolve() else {
-        return TypecheckingContext::Unknown;
-    };
-
-    match ground.as_ref() {
-        GroundDomain::Empty(_) => TypecheckingContext::Unknown,
-        GroundDomain::Bool => TypecheckingContext::Boolean,
-        GroundDomain::Int(_) => TypecheckingContext::Arithmetic,
-        GroundDomain::Tuple(_) => TypecheckingContext::Tuple,
-        GroundDomain::Record(_) => TypecheckingContext::Record,
-        GroundDomain::Variant(_) => TypecheckingContext::Unknown,
-        GroundDomain::Matrix(_, _) => TypecheckingContext::Matrix,
-        GroundDomain::Sequence(_, _) => TypecheckingContext::Sequence,
-        GroundDomain::Set(_, _) => TypecheckingContext::Set,
-        GroundDomain::MSet(_, _) => TypecheckingContext::MSet,
-        GroundDomain::Function(_, _, _) => TypecheckingContext::Function,
-        GroundDomain::Relation(_, _) => TypecheckingContext::Relation,
-        GroundDomain::Partition(_, _) => TypecheckingContext::Partition,
-        GroundDomain::Permutation(_, _) => TypecheckingContext::Permutation,
-    }
-}
-
-fn list_combining_skip_operator(operator_str: &str) -> Option<ACOperatorKind> {
-    match operator_str {
-        "and" => Some(ACOperatorKind::And),
-        "or" => Some(ACOperatorKind::Or),
-        "sum" => Some(ACOperatorKind::Sum),
-        "product" => Some(ACOperatorKind::Product),
-        // min/max are not true AC operators (no universal identity element), but still need
-        // their own skip-operator tag so a symbolic guard inside `min([... | ...])` lowers
-        // correctly (previously mapped to Sum, which silently substituted 0 for guarded-out
-        // elements -- wrong for anything but a min/max whose correct answer happens to be <=/>= 0).
-        "min" => Some(ACOperatorKind::Min),
-        "max" => Some(ACOperatorKind::Max),
-        _ => None,
-    }
-}
-
-fn set_comprehension_skip_operator(
-    inner: Expression,
-    skip_operator: Option<ACOperatorKind>,
-) -> Expression {
-    let Expression::Comprehension(meta, comprehension) = inner else {
-        return inner;
-    };
-    if let Some(skip_operator) = skip_operator {
-        let mut comprehension = Moo::unwrap_or_clone(comprehension);
-        comprehension.skip_operator = Some(skip_operator);
-        Expression::Comprehension(meta, Moo::new(comprehension))
-    } else {
-        Expression::Comprehension(meta, comprehension)
-    }
-}
-
-/// Parses `catchUndef(expression, default)`.
-fn parse_catch_undef_expression(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    ctx.typechecking_context = TypecheckingContext::Arithmetic;
-
-    let Some(expression_node) = field!(recover, ctx, node, "expression") else {
-        return Ok(None);
-    };
-    let Some(default_node) = field!(recover, ctx, node, "default") else {
-        return Ok(None);
-    };
-
-    let Some(expression) = parse_expression(ctx, expression_node)? else {
-        return Ok(None);
-    };
-    ctx.typechecking_context = TypecheckingContext::Arithmetic;
-    let Some(default) = parse_expression(ctx, default_node)? else {
-        return Ok(None);
-    };
-
-    Ok(Some(Expression::CatchUndef(
-        Metadata::new(),
-        Moo::new(expression),
-        Moo::new(default),
-    )))
-}
-
-/// Whether `expr` is known to be set-valued, used to read `-` as set difference.
-fn is_set_valued(expr: &Expression) -> bool {
-    matches!(expr.try_return_type(), Some(ReturnType::Set(_)))
-}
-
-/// Reports a type error when an arithmetic operand is not an integer.
-///
-/// Returns whether the operand is acceptable.
-fn require_int_operand(ctx: &mut ParseContext, node: &Node, expr: &Expression) -> bool {
-    // An operand whose type cannot be worked out yet gets the benefit of the doubt.
-    let Some(actual) = expr.try_return_type() else {
-        return true;
-    };
-    if matches!(actual, ReturnType::Int | ReturnType::Unknown) {
-        return true;
-    }
-
-    ctx.record_error(RecoverableParseError::new(
-        format!(
-            "Type error: {}\n\tExpected: int\n\tGot: {}",
-            ctx.source_code[node.start_byte()..node.end_byte()].trim(),
-            type_name(&actual)
-        ),
-        Some(node.range()),
-    ));
-    false
-}
-
-/// The bare name of a type, as type errors spell it: `partition`, not `partition of int`.
-fn type_name(return_type: &ReturnType) -> &'static str {
-    match return_type {
-        ReturnType::Unknown => "unknown",
-        ReturnType::Bool => "bool",
-        ReturnType::Int => "int",
-        ReturnType::Tuple(_) => "tuple",
-        ReturnType::Record(_) => "record",
-        ReturnType::Variant(_) => "variant",
-        ReturnType::Matrix(_) => "matrix",
-        ReturnType::Sequence(_) => "sequence",
-        ReturnType::Set(_) => "set",
-        ReturnType::MSet(_) => "mset",
-        ReturnType::Function(_, _) => "function",
-        ReturnType::Relation(_) => "relation",
-        ReturnType::Partition(_) => "partition",
-        ReturnType::Permutation(_) => "permutation",
-    }
+    let m = Metadata::new();
+    let op_token_node = field!(node, "operator");
+    let operator_token = &ctx.source_code[op_token_node.start_byte()..op_token_node.end_byte()];
+    Ok(match operator_token {
+        "+" => Expression::Sum(m, Moo::new(matrix_expr![left, right; domain_int!(1..)])),
+        "-" => Expression::Difference(m, Moo::new(left), Moo::new(right)),
+        "*" => Expression::Product(m, Moo::new(matrix_expr![left, right; domain_int!(1..)])),
+        "/" => Expression::UnsafeDiv(m, Moo::new(left), Moo::new(right)),
+        "%" => Expression::UnsafeMod(m, Moo::new(left), Moo::new(right)),
+        "**" => Expression::UnsafePow(m, Moo::new(left), Moo::new(right)),
+        "/\\" => Expression::And(m, Moo::new(matrix_expr![left, right; domain_int!(1..)])),
+        "\\/" => Expression::Or(m, Moo::new(matrix_expr![left, right; domain_int!(1..)])),
+        "->" => Expression::Imply(m, Moo::new(left), Moo::new(right)),
+        "<->" => Expression::Iff(m, Moo::new(left), Moo::new(right)),
+        "==" => Expression::Eq(m, Moo::new(left), Moo::new(right)),
+        "!=" => Expression::Neq(m, Moo::new(left), Moo::new(right)),
+        "<" => Expression::Lt(m, Moo::new(left), Moo::new(right)),
+        "<=" => Expression::Leq(m, Moo::new(left), Moo::new(right)),
+        ">" => Expression::Gt(m, Moo::new(left), Moo::new(right)),
+        ">=" => Expression::Geq(m, Moo::new(left), Moo::new(right)),
+        "<lex" => Expression::LexLt(m, Moo::new(left), Moo::new(right)),
+        "<=lex" => Expression::LexLeq(m, Moo::new(left), Moo::new(right)),
+        ">lex" => Expression::LexGt(m, Moo::new(left), Moo::new(right)),
+        ">=lex" => Expression::LexGeq(m, Moo::new(left), Moo::new(right)),
+        "in" => Expression::In(m, Moo::new(left), Moo::new(right)),
+        "subset" => Expression::Subset(m, Moo::new(left), Moo::new(right)),
+        "subsetEq" => Expression::SubsetEq(m, Moo::new(left), Moo::new(right)),
+        "supset" => Expression::Supset(m, Moo::new(left), Moo::new(right)),
+        "supsetEq" => Expression::SupsetEq(m, Moo::new(left), Moo::new(right)),
+        "substring" => Expression::Substring(m, Moo::new(left), Moo::new(right)),
+        "subsequence" => Expression::Subsequence(m, Moo::new(left), Moo::new(right)),
+        "union" => Expression::Union(m, Moo::new(left), Moo::new(right)),
+        "intersect" => Expression::Intersect(m, Moo::new(left), Moo::new(right)),
+        _ => todo!(),
+    })
 }

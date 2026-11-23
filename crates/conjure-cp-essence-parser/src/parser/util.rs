@@ -5,6 +5,7 @@ use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
 use super::traversal::WalkDFS;
+use crate::FatalParseError;
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, SourceMap, SpanId, span_with_hover};
 use crate::errors::RecoverableParseError;
@@ -121,51 +122,31 @@ pub enum TypecheckingContext {
 ///
 /// If successful, returns a tuple containing the syntax tree and the raw source code.
 /// If the source code is not valid Essence, returns None.
-pub fn get_tree(src: &str) -> Option<(Tree, String)> {
+pub fn get_tree(src: &str) -> Result<Tree, FatalParseError> {
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
-
-    parser.parse(src, None).and_then(|tree| {
-        let root = tree.root_node();
-        if root.is_error() {
-            return None;
-        }
-        Some((tree, src.to_string()))
-    })
+    parser
+        .parse(src, None)
+        .ok_or(FatalParseError::TreeSitterError("TODO".into()))
 }
 
-/// Parse an expression fragment, allowing a dummy prefix for error recovery.
-///
-/// NOTE: The new source code may be different from the original source code.
-///       See implementation for details.
-pub fn get_expr_tree(src: &str) -> Option<(Tree, String)> {
+/// Parse an expression fragment, using a dummy prefix.
+pub fn get_expr_tree(src: &str) -> Result<(Tree, String), FatalParseError> {
+    // HACK: Tree-sitter can only parse a complete program from top to bottom, not an individual bit of syntax.
+    // See: https://github.com/tree-sitter/tree-sitter/issues/711 and linked issues.
+    // However, we can use a dummy _FRAGMENT_EXPRESSION prefix (which we insert as necessary)
+    // to trick the parser into accepting an isolated expression.
+    // This way we can parse an isolated expression and it is only slightly cursed :)
+
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
 
-    parser.parse(src, None).and_then(|tree| {
-        let root = tree.root_node();
-        if root.is_error() {
-            return None;
-        }
+    let input = format!("_FRAGMENT_EXPRESSION {src}");
+    let tree = parser
+        .parse(&input, None)
+        .ok_or(FatalParseError::TreeSitterError("TODO".into()))?;
 
-        let children: Vec<_> = named_children(&root).collect();
-        let first_child = children.first()?;
-
-        // HACK: Tree-sitter can only parse a complete program from top to bottom, not an individual bit of syntax.
-        // See: https://github.com/tree-sitter/tree-sitter/issues/711 and linked issues.
-        // However, we can use a dummy _FRAGMENT_EXPRESSION prefix (which we insert as necessary)
-        // to trick the parser into accepting an isolated expression.
-        // This way we can parse an isolated expression and it is only slightly cursed :)
-        if first_child.is_error() {
-            if src.starts_with("_FRAGMENT_EXPRESSION") {
-                None
-            } else {
-                get_expr_tree(&format!("_FRAGMENT_EXPRESSION {src}"))
-            }
-        } else {
-            Some((tree, src.to_string()))
-        }
-    })
+    Ok((tree, input))
 }
 
 /// Get the named children of a node
@@ -175,10 +156,7 @@ pub fn named_children<'a>(node: &'a Node<'a>) -> impl Iterator<Item = Node<'a>> 
 }
 
 pub fn node_is_expression(node: &Node) -> bool {
-    matches!(
-        node.kind(),
-        "bool_expr" | "arithmetic_expr" | "comparison_expr" | "annotation_expr" | "atom"
-    )
+    node.kind() == "expression"
 }
 
 /// Get all top-level nodes that match the given predicate
@@ -242,7 +220,7 @@ mod test {
     #[test]
     fn test_get_metavars() {
         let src = "such that &x = y";
-        let (tree, _) = get_tree(src).unwrap();
+        let tree = get_tree(src).unwrap();
         let root = tree.root_node();
         let metavars = get_metavars(&root, src).collect::<Vec<_>>();
         assert_eq!(metavars, vec!["x"]);

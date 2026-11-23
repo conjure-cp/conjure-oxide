@@ -3,23 +3,38 @@ use std::sync::{Arc, RwLock};
 use std::{fs, vec};
 
 use conjure_cp_core::Model;
-use conjure_cp_core::ast::DeclarationPtr;
 use conjure_cp_core::ast::assertions::debug_assert_model_well_formed;
+use conjure_cp_core::ast::{DeclarationPtr, SymbolTablePtr};
 use conjure_cp_core::context::Context;
 #[allow(unused)]
 use uniplate::Uniplate;
 
 use super::ParseContext;
-use super::dominance::parse_dominance_relation;
-use super::find::{parse_find_statement, parse_given_statement};
-use super::letting::parse_letting_statement;
-use super::objective::parse_objective_statement;
-use super::util::{TypecheckingContext, get_tree};
+use super::util::get_tree;
 use crate::diagnostics::source_map::SourceMap;
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
-use crate::expression::parse_expression;
-use crate::syntax_errors::detect_syntactic_errors;
+use crate::statement::{self, Statement};
 use tree_sitter::Tree;
+
+pub fn parse_program(
+    src: &str,
+    symbols_ptr: SymbolTablePtr,
+) -> Result<Vec<Statement>, FatalParseError> {
+    let tree = get_tree(src)?;
+    let root = tree.root_node();
+    let mut source_map = SourceMap::default();
+    let mut decl_spans = BTreeMap::new();
+    let mut errors = Vec::new();
+    let mut ctx = ParseContext::new(
+        src,
+        &root,
+        Some(symbols_ptr),
+        &mut errors,
+        &mut source_map,
+        &mut decl_spans,
+    );
+    statement::parse_program(&mut ctx, &root)
+}
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -75,152 +90,149 @@ pub fn parse_essence_with_context(
     which will cause it to re-parse the source code and update the cache (Model = ast, SorceMap = map)
 */
 pub fn parse_essence_with_context_and_map(
-    src: &str,
-    context: Arc<RwLock<Context<'static>>>,
-    errors: &mut Vec<RecoverableParseError>,
-    tree: Option<&Tree>,
+    _src: &str,
+    _context: Arc<RwLock<Context<'static>>>,
+    _errors: &mut Vec<RecoverableParseError>,
+    _tree: Option<&Tree>,
 ) -> Result<(Option<Model>, SourceMap), FatalParseError> {
-    let (tree, source_code) = if let Some(tree) = tree {
-        (tree.clone(), src.to_string())
-    } else {
-        match get_tree(src) {
-            Some(tree) => tree,
-            None => {
-                return Err(FatalParseError::TreeSitterError(
-                    "Failed to parse source code".to_string(),
-                ));
-            }
-        }
-    };
-
-    let has_syntax_errors = tree.root_node().has_error();
-    if has_syntax_errors {
-        detect_syntactic_errors(src, &tree, errors);
-    }
-
-    // don't detect semantic errors if there are syntactic errors, but still parse for source map.
-    let mut suppressed_semantic_errors = Vec::new();
-    let semantic_errors: &mut Vec<RecoverableParseError> = if has_syntax_errors {
-        &mut suppressed_semantic_errors
-    } else {
-        errors
-    };
-
-    let mut model = Model::new(context);
-    let mut source_map = SourceMap::default();
-    let mut declaration_spans = BTreeMap::new();
-    let root_node = tree.root_node();
-
-    // Create a ParseContext
-    let mut ctx = ParseContext::new(
-        &source_code,
-        &root_node,
-        Some(model.symbols_ptr_unchecked().clone()),
-        semantic_errors,
-        &mut source_map,
-        &mut declaration_spans,
-    );
-
-    let mut cursor = root_node.walk();
-    for statement in root_node.children(&mut cursor) {
-        if !statement.is_named() || statement.is_error() || statement.kind() == "ERROR" {
-            continue;
-        }
-
-        ctx.typechecking_context = TypecheckingContext::Unknown;
-        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-
-        match statement.kind() {
-            "single_line_comment" => {}
-            "language_declaration" => {}
-            "find_statement" => {
-                let parsed = parse_find_statement(&mut ctx, statement)?;
-                for (name, domain) in parsed.declarations {
-                    let decl = if parsed.auxiliary {
-                        DeclarationPtr::new_find_auxiliary(name, domain)
-                    } else {
-                        DeclarationPtr::new_find(name, domain)
-                    };
-                    model.symbols_mut().insert(decl);
-                }
-            }
-            "given_statement" => {
-                let var_hashmap = parse_given_statement(&mut ctx, statement)?;
-                for (name, domain) in var_hashmap {
-                    model
-                        .symbols_mut()
-                        .insert(DeclarationPtr::new_given(name, domain));
-                }
-            }
-            // `arithmetic_expr` is not a valid constraint, but the grammar accepts it here so
-            // that the type checker can report "expected bool, got int" against the expression
-            // itself rather than the parser rejecting the whole line as malformed.
-            "bool_expr" | "atom" | "comparison_expr" | "arithmetic_expr" => {
-                ctx.typechecking_context = TypecheckingContext::Boolean;
-                let Some(expr) = parse_expression(&mut ctx, statement)? else {
-                    continue;
-                };
-                model.add_constraint(expr);
-            }
-            "where_statement" => {
-                ctx.typechecking_context = TypecheckingContext::Boolean;
-                let mut cursor = statement.walk();
-                for condition in statement.named_children(&mut cursor) {
-                    let Some(expr) = parse_expression(&mut ctx, condition)? else {
-                        continue;
-                    };
-                    model.add_instantiation_condition(expr);
-                }
-            }
-            "language_label" => {}
-            "letting_statement" => {
-                let Some(letting_vars) = parse_letting_statement(&mut ctx, statement)? else {
-                    continue;
-                };
-                model.symbols_mut().extend(letting_vars);
-            }
-            "dominance_relation" => {
-                let Some(dominance) = parse_dominance_relation(&mut ctx, &statement)? else {
-                    continue;
-                };
-                if model.dominance.is_some() {
-                    ctx.record_error(RecoverableParseError::new(
-                        "Duplicate dominance relation".to_string(),
-                        None,
-                    ));
-                    continue;
-                }
-                model.dominance = Some(dominance);
-            }
-            "objective_statement" => {
-                let Some(objective) = parse_objective_statement(&mut ctx, &statement)? else {
-                    continue;
-                };
-                if model.objective.is_some() {
-                    ctx.record_error(RecoverableParseError::new(
-                        "Duplicate objective statement".to_string(),
-                        None,
-                    ));
-                    continue;
-                }
-                model.objective = Some(objective);
-            }
-            _ => {
-                ctx.record_error(RecoverableParseError::new(
-                    format!("Unexpected top-level statement: {}", statement.kind()),
-                    Some(statement.range()),
-                ));
-                continue;
-            }
-        }
-    }
-
-    // Check if there were any recoverable errors
-    if !errors.is_empty() {
-        return Ok((None, source_map));
-    }
-    // otherwise return the model
-    Ok((Some(model), source_map))
+    todo!()
+    // let (tree, source_code) = if let Some(tree) = tree {
+    //     (tree.clone(), src.to_string())
+    // } else {
+    //     match get_tree(src) {
+    //         Some(tree) => tree,
+    //         None => {
+    //             return Err(FatalParseError::TreeSitterError(
+    //                 "Failed to parse source code".to_string(),
+    //             ));
+    //         }
+    //     }
+    // };
+    //
+    // let has_syntax_errors = tree.root_node().has_error();
+    // if has_syntax_errors {
+    //     detect_syntactic_errors(src, &tree, errors);
+    // }
+    //
+    // // don't detect semantic errors if there are syntactic errors, but still parse for source map.
+    // let mut suppressed_semantic_errors = Vec::new();
+    // let semantic_errors: &mut Vec<RecoverableParseError> = if has_syntax_errors {
+    //     &mut suppressed_semantic_errors
+    // } else {
+    //     errors
+    // };
+    //
+    // let mut model = Model::new(context);
+    // let mut source_map = SourceMap::default();
+    // let mut declaration_spans = BTreeMap::new();
+    // let root_node = tree.root_node();
+    //
+    // // Create a ParseContext
+    // let mut ctx = ParseContext::new(
+    //     &source_code,
+    //     &root_node,
+    //     Some(model.symbols_ptr_unchecked().clone()),
+    //     semantic_errors,
+    //     &mut source_map,
+    //     &mut declaration_spans,
+    // );
+    //
+    // let mut cursor = root_node.walk();
+    // for statement in root_node.children(&mut cursor) {
+    //     if !statement.is_named() || statement.is_error() || statement.kind() == "ERROR" {
+    //         continue;
+    //     }
+    //
+    //     ctx.typechecking_context = TypecheckingContext::Unknown;
+    //     ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+    //
+    //     match statement.kind() {
+    //         "single_line_comment" => {}
+    //         "language_declaration" => {}
+    //         "find_statement" => {
+    //             let parsed = parse_find_statement(&mut ctx, statement)?;
+    //             for (name, domain) in parsed.declarations {
+    //                 let decl = if parsed.auxiliary {
+    //                     DeclarationPtr::new_find_auxiliary(name, domain)
+    //                 } else {
+    //                     DeclarationPtr::new_find(name, domain)
+    //                 };
+    //                 model.symbols_mut().insert(decl);
+    //             }
+    //         }
+    //         "given_statement" => {
+    //             let var_hashmap = parse_given_statement(&mut ctx, statement)?;
+    //             for (name, domain) in var_hashmap {
+    //                 model
+    //                     .symbols_mut()
+    //                     .insert(DeclarationPtr::new_given(name, domain));
+    //             }
+    //         }
+    //         // `arithmetic_expr` is not a valid constraint, but the grammar accepts it here so
+    //         // that the type checker can report "expected bool, got int" against the expression
+    //         // itself rather than the parser rejecting the whole line as malformed.
+    //         "bool_expr" | "atom" | "comparison_expr" | "arithmetic_expr" => {
+    //             ctx.typechecking_context = TypecheckingContext::Boolean;
+    //             let expr = parse_expression(&mut ctx, statement)?;
+    //             model.add_constraint(expr);
+    //         }
+    //         "where_statement" => {
+    //             ctx.typechecking_context = TypecheckingContext::Boolean;
+    //             let mut cursor = statement.walk();
+    //             for condition in statement.named_children(&mut cursor) {
+    //                 let expr = parse_expression(&mut ctx, condition)?;
+    //                 model.add_instantiation_condition(expr);
+    //             }
+    //         }
+    //         "language_label" => {}
+    //         "letting_statement" => {
+    //             let Some(letting_vars) = parse_letting_statement(&mut ctx, statement)? else {
+    //                 continue;
+    //             };
+    //             model.symbols_mut().extend(letting_vars);
+    //         }
+    //         "dominance_relation" => {
+    //             let Some(dominance) = parse_dominance_relation(&mut ctx, &statement)? else {
+    //                 continue;
+    //             };
+    //             if model.dominance.is_some() {
+    //                 ctx.record_error(RecoverableParseError::new(
+    //                     "Duplicate dominance relation".to_string(),
+    //                     None,
+    //                 ));
+    //                 continue;
+    //             }
+    //             model.dominance = Some(dominance);
+    //         }
+    //         "objective_statement" => {
+    //             let Some(objective) = parse_objective_statement(&mut ctx, &statement)? else {
+    //                 continue;
+    //             };
+    //             if model.objective.is_some() {
+    //                 ctx.record_error(RecoverableParseError::new(
+    //                     "Duplicate objective statement".to_string(),
+    //                     None,
+    //                 ));
+    //                 continue;
+    //             }
+    //             model.objective = Some(objective);
+    //         }
+    //         _ => {
+    //             ctx.record_error(RecoverableParseError::new(
+    //                 format!("Unexpected top-level statement: {}", statement.kind()),
+    //                 Some(statement.range()),
+    //             ));
+    //             continue;
+    //         }
+    //     }
+    // }
+    //
+    // // Check if there were any recoverable errors
+    // if !errors.is_empty() {
+    //     return Ok((None, source_map));
+    // }
+    // // otherwise return the model
+    // Ok((Some(model), source_map))
 }
 
 pub fn parse_essence(src: &str) -> Result<(Model, SourceMap), Box<ParseErrorCollection>> {

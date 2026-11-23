@@ -1,13 +1,13 @@
 /// Get the i-th named child of a node, or return a syntax error with a message if it doesn't exist.
 #[macro_export]
 macro_rules! named_child {
-    ($node:ident) => {
+    ($node:expr) => {
         named_child!($node, 0, "Missing sub-expression")
     };
-    ($node:ident, $i:literal) => {
+    ($node:expr, $i:literal) => {
         named_child!($node, $i, format!("Missing sub-expression #{}", $i + 1))
     };
-    ($node:ident, $i:literal, $msg:expr) => {
+    ($node:expr, $i:literal, $msg:expr) => {
         $node
             .named_child($i)
             .ok_or(FatalParseError::internal_error(
@@ -101,7 +101,7 @@ macro_rules! child {
 /// Get the named field of a node, or return a syntax error with a message if it doesn't exist.
 #[macro_export]
 macro_rules! field {
-    ($node:ident, $name:expr) => {
+    ($node:expr, $name:expr) => {
         $node
             .child_by_field_name($name)
             .ok_or(FatalParseError::internal_error(

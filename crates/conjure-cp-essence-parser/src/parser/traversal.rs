@@ -97,7 +97,7 @@ mod test {
 
     #[test]
     pub fn test_bfs() {
-        let (tree, _) = get_tree("such that x, true").unwrap();
+        let tree = get_tree("such that x, true").unwrap();
         let root = tree.root_node();
         let mut iter = WalkBFS::new(&root).filter(|n| n.is_named());
         assert_eq!(iter.next().unwrap().kind(), "program"); // depth = 0
@@ -110,7 +110,7 @@ mod test {
 
     #[test]
     pub fn test_dfs() {
-        let (tree, _) = get_tree("such that x, true").unwrap();
+        let tree = get_tree("such that x, true").unwrap();
         let root = tree.root_node();
         let mut iter = WalkDFS::new(&root).filter(|n| n.is_named());
         assert_eq!(iter.next().unwrap().kind(), "program"); // top level

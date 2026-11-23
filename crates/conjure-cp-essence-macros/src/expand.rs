@@ -14,8 +14,12 @@ use tree_sitter::Node;
 
 pub fn expand_expr(essence: &TokenTree) -> Result<TokenStream> {
     let src = to_src(essence);
-    let (tree, source_code) =
-        get_expr_tree(&src).ok_or(Error::new(essence.span(), "Could not parse Essence AST"))?;
+    let (tree, source_code) = get_expr_tree(&src).map_err(|e| {
+        Error::new(
+            essence.span(),
+            format!("Could not parse Essence AST: {}", e),
+        )
+    })?;
     let root = tree.root_node();
 
     // Get top level expressions
@@ -43,8 +47,8 @@ pub fn expand_expr(essence: &TokenTree) -> Result<TokenStream> {
 pub fn expand_expr_vec(tt: &TokenTree) -> Result<TokenStream> {
     let mut ans: Vec<TokenStream> = Vec::new();
     let src = to_src(tt);
-    let (tree, source_code) =
-        get_expr_tree(&src).ok_or(Error::new(tt.span(), "Could not parse Essence AST"))?;
+    let (tree, source_code) = get_expr_tree(&src)
+        .map_err(|e| Error::new(tt.span(), format!("Could not parse Essence AST: {}", e)))?;
     let root = tree.root_node();
 
     let query = query_toplevel(&root, &node_is_expression);
@@ -69,16 +73,16 @@ fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenSt
         &mut decl_spans,
     );
     match parse_expression(&mut ctx, node) {
-        Ok(Some(expr)) => Ok(expr.ctor_tokens()),
-        Ok(None) => {
-            // Recoverable error occurred - get the error message from the errors vector
-            let error_message = if let Some(err) = ctx.errors.first() {
-                format!("Recoverable parse error: {}", err)
-            } else {
-                "Parse error: Unknown error occurred".to_string()
-            };
-            Err(Error::new(tt.span(), error_message))
-        }
+        Ok(expr) => Ok(expr.ctor_tokens()),
+        // Ok(None) => {
+        //     // Recoverable error occurred - get the error message from the errors vector
+        //     let error_message = if let Some(err) = ctx.errors.first() {
+        //         format!("Recoverable parse error: {}", err)
+        //     } else {
+        //         "Parse error: Unknown error occurred".to_string()
+        //     };
+        //     Err(Error::new(tt.span(), error_message))
+        // }
         Err(err) => Err(Error::new(tt.span(), err.to_string())),
     }
 }

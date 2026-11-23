@@ -1,45 +1,47 @@
 module.exports = grammar({
   name: "essence",
 
-  extras: ($) => [$.single_line_comment, /\s/, $.language_declaration],
+  extras: ($) => [$.single_line_comment, /\s/],
 
   word: ($) => $.identifier,
+
+  supertypes: ($) => [$.expression, $.domain],
 
   rules: {
     // Top-level statements
     program: ($) =>
-      repeat(
-        choice(
-          field("find_statement", $.find_statement),
-          field("given_statement", $.given_statement),
-          seq(field("such_that_keyword", "such that"), commaSep1($.expression)),
-          field("where_statement", $.where_statement),
-          field("letting_statement", $.letting_statement),
-          field("objective_statement", $.objective_statement),
-          field("dominance_relation", $.dominance_relation),
+      choice(
+        seq("_FRAGMENT_EXPRESSION", field("fragment", $.expression)), // HACK
+        repeat(
+          choice(
+            $.language_statement,
+            $.find_statement,
+            $.given_statement,
+            $.such_that_statement,
+            $.where_statement,
+            $.letting_statement,
+            $.objective_statement,
+            $.dominance_relation,
+          ),
         ),
       ),
 
     single_line_comment: ($) => token(seq("$", /.*/)),
 
-    language_declaration: ($) => token(seq("language", /.*/)),
+    language_statement: ($) => token(seq("language", field("language", /.*/))),
 
-    where_statement: ($) =>
-      seq(field("where_keyword", "where"), commaSep1($.expression)),
+    where_statement: ($) => seq("where", commaSep1($.expression)),
+
+    such_that_statement: ($) => seq("such that", commaSep1($.expression)),
 
     //general
-    constant: ($) =>
-      choice(
-        field("integer", $.integer),
-        field("true", $.TRUE),
-        field("false", $.FALSE),
-      ),
+    constant: ($) => choice($.integer, $.true, $.false),
 
     integer: ($) => /-?[0-9]+/,
 
-    TRUE: ($) => "true",
+    true: ($) => "true",
 
-    FALSE: ($) => "false",
+    false: ($) => "false",
 
     identifier: ($) => {
       const emoji =
@@ -60,7 +62,7 @@ module.exports = grammar({
     //given statements
     given_statement: ($) =>
       seq(
-        field("given_keyword", "given"),
+        "given",
         field("variable_declaration", commaSep1($.variable_declaration)),
       ),
 
@@ -68,12 +70,10 @@ module.exports = grammar({
 
     variable_declaration: ($) =>
       seq(
-        field("variables", $.variable_list),
-        field("colon", $.COLON),
-        field("domain", $.domain),
+        field("variables", commaSep1($.identifier)),
+        ":",
+        choice(field("domain", $.domain), field("enum", "new type enum")),
       ),
-
-    variable_list: ($) => commaSep1($.identifier),
 
     domain_attribute: ($) =>
       seq(
@@ -118,20 +118,20 @@ module.exports = grammar({
 
     domain: ($) =>
       choice(
-        field("bool_domain", $.bool_domain),
-        field("int_domain", $.int_domain),
-        field("variable_domain", $.identifier),
-        field("tuple_domain", $.tuple_domain),
-        field("matrix_domain", $.matrix_domain),
-        field("record_domain", $.record_domain),
-        field("variant_domain", $.variant_domain),
-        field("set_domain", $.set_domain),
-        field("mset_domain", $.mset_domain),
-        field("sequence_domain", $.sequence_domain),
-        field("function_domain", $.function_domain),
-        field("relation_domain", $.relation_domain),
-        field("partition_domain", $.partition_domain),
-        field("permutation_domain", $.permutation_domain),
+        $.identifier,
+        $.bool_domain,
+        $.int_domain,
+        $.tuple_domain,
+        $.matrix_domain,
+        $.record_domain,
+        $.variant_domain,
+        $.set_domain,
+        $.mset_domain,
+        $.sequence_domain,
+        $.function_domain,
+        $.relation_domain,
+        $.partition_domain,
+        $.permutation_domain,
       ),
 
     bool_domain: ($) => "bool",
@@ -142,7 +142,10 @@ module.exports = grammar({
         optional(seq("(", optional(field("ranges", $.range_list)), ")")),
       ),
 
-    range_list: ($) => prec(2, commaSep1(choice($.int_range, $.expression))),
+    range_list: ($) => prec(2, commaSep1($.range_or_value)),
+
+    range_or_value: ($) =>
+      choice(field("range", $.int_range), field("value", $.expression)),
 
     int_range: ($) =>
       seq(
@@ -165,37 +168,25 @@ module.exports = grammar({
         "indexed",
         "by",
         "[",
-        field("index_domain_list", $.index_domain_list),
+        field("index_domain_list", commaSep1($.domain)),
         "]",
         "of",
         field("value_domain", $.domain),
       ),
 
-    index_domain_list: ($) => commaSep1($.domain),
-
     name_domain_pair: ($) =>
       seq(field("name", $.identifier), ":", field("domain", $.domain)),
 
     record_domain: ($) =>
-      seq(
-        "record",
-        "{",
-        commaSep1(field("name_domain_pair", $.name_domain_pair)),
-        "}",
-      ),
+      seq("record", "{", commaSep1($.name_domain_pair), "}"),
 
     variant_domain: ($) =>
-      seq(
-        "variant",
-        "{",
-        commaSep1(field("name_domain_pair", $.name_domain_pair)),
-        "}",
-      ),
+      seq("variant", "{", commaSep1($.name_domain_pair), "}"),
 
     set_domain: ($) =>
       seq(
         "set",
-        optional($.domain_attribute_list),
+        field("attrs", optional($.domain_attribute_list)),
         "of",
         field("value_domain", $.domain),
       ),
@@ -203,7 +194,7 @@ module.exports = grammar({
     mset_domain: ($) =>
       seq(
         "mset",
-        optional($.domain_attribute_list),
+        field("attrs", optional($.domain_attribute_list)),
         "of",
         field("value_domain", $.domain),
       ),
@@ -215,7 +206,7 @@ module.exports = grammar({
     sequence_domain: ($) =>
       seq(
         "sequence",
-        optional($.domain_attribute_list),
+        field("attrs", optional($.domain_attribute_list)),
         "of",
         field("value_domain", $.domain),
       ),
@@ -227,7 +218,7 @@ module.exports = grammar({
     function_domain: ($) =>
       seq(
         "function",
-        optional($.domain_attribute_list),
+        field("attrs", optional($.domain_attribute_list)),
         field("domain_from", $.domain),
         "-->",
         field("domain_to", $.domain),
@@ -239,21 +230,21 @@ module.exports = grammar({
     relation_domain: ($) =>
       seq(
         "relation",
-        optional($.domain_attribute_list),
+        field("attrs", optional($.domain_attribute_list)),
         "of",
         "(",
-        field("relation_domain_list", $.relation_domain_list),
+        field("relation_domain_list", $._relation_domain_list),
         ")",
       ),
 
-    relation_domain_list: ($) => starSep1($.domain),
+    _relation_domain_list: ($) => starSep1($.domain),
 
     // e.g. partition from int(1..3), partition (regular) from int(1..4),
     // partition (numParts 2, partSize 3) from int(3..8).
     partition_domain: ($) =>
       seq(
         "partition",
-        optional($.domain_attribute_list),
+        field("attrs", optional($.domain_attribute_list)),
         "from",
         field("value_domain", $.domain),
       ),
@@ -265,38 +256,22 @@ module.exports = grammar({
     permutation_domain: ($) =>
       seq(
         "permutation",
-        optional($.domain_attribute_list),
+        field("attrs", optional($.domain_attribute_list)),
         "of",
         field("value_domain", $.domain),
       ),
 
-    set_literal: ($) =>
-      seq("{", field("element", commaSep1($.expression)), "}"),
+    set_literal: ($) => seq("{", commaSep1($.expression), "}"),
 
     mset_literal: ($) =>
-      seq(
-        "mset",
-        "(",
-        optional(field("element", commaSep1($.expression))),
-        ")",
-      ),
+      seq("mset", "(", optional(commaSep1($.expression)), ")"),
 
     sequence_literal: ($) =>
-      seq(
-        "sequence",
-        "(",
-        optional(field("element", commaSep1($.expression))),
-        ")",
-      ),
+      seq("sequence", "(", optional(commaSep1($.expression)), ")"),
 
     // e.g. function(), function(0-->1,1-->0), function(false --> 5, true --> x)
     function_literal: ($) =>
-      seq(
-        "function",
-        "(",
-        optional(field("pair", commaSep1($.function_literal_pair))),
-        ")",
-      ),
+      seq("function", "(", optional(commaSep1($.function_literal_pair)), ")"),
 
     function_literal_pair: ($) =>
       seq(field("key", $.expression), "-->", field("value", $.expression)),
@@ -337,13 +312,51 @@ module.exports = grammar({
     permutation_literal_cycle: ($) =>
       seq("(", field("element", commaSep1($.expression)), ")"),
 
+    builtin_function: ($) =>
+      choice(
+        "allDifferent",
+        "allDifferentExcept",
+        "and",
+        "apart",
+        "atLeast",
+        "atMost",
+        "catchUndef",
+        "compose",
+        "defined",
+        "factorial",
+        "flatten",
+        "gcc",
+        "image",
+        "imageSet",
+        "inverse",
+        "max",
+        "min",
+        "negativeTable",
+        "or",
+        "participants",
+        "parts",
+        "party",
+        "permInverse",
+        "preImage",
+        "product",
+        "range",
+        "restrict",
+        "sum",
+        "table",
+        "toInt",
+        "toMSet",
+        "toRelation",
+        "toSet",
+        "together",
+      ),
+
     // Function or sequence application, e.g. `f(1)` or `horizontalLocs[row](index)`. This is
     // sugar for `image(f, x)`, and is parsed into the same node. Several arguments make a tuple,
     // so `f(1, 2)` and `f((1, 2))` mean the same thing.
     apply_expr: ($) =>
       prec.left(
         seq(
-          field("function", $.expression),
+          field("function", choice($.expression, $.builtin_function)),
           "(",
           commaSep1(field("argument", $.expression)),
           ")",
@@ -353,7 +366,7 @@ module.exports = grammar({
     //letting statements
     letting_statement: ($) =>
       seq(
-        field("letting_keyword", "letting"),
+        "letting",
         field(
           "letting_variable_declaration",
           commaSep1($.letting_variable_declaration),
@@ -362,22 +375,20 @@ module.exports = grammar({
 
     letting_variable_declaration: ($) =>
       seq(
-        field("variable_list", $.variable_list),
-        field("be", "be"),
+        field("variables", commaSep1($.identifier)),
+        "be",
         choice(
-          field("expr_or_domain", $.expression),
-          seq(field("domain", "domain"), field("expr_or_domain", $.domain)),
+          field("expression", $.expression),
+          seq("domain", field("domain", $.domain)),
+          seq("new type enum", field("enum", $.enum_variants)),
+          seq("unnamed type of size", field("unnamed", $.expression)),
         ),
       ),
 
+    enum_variants: ($) => seq("{", commaSep1($.identifier), "}"),
+
     // Unary boolean operations (just not)
     not_expr: ($) => prec(20, seq("!", field("expression", $.expression))),
-
-    // Binary boolean operations
-    and_expr: ($) => binop($, "/\\", -1),
-    or_expr: ($) => binop($, "\\/", -2),
-    implication_expr: ($) => binop($, "->", -4),
-    iff_expr: ($) => binop($, "<->", -4),
 
     // Unary arithmetic operations
     negative_expr: ($) =>
@@ -389,14 +400,6 @@ module.exports = grammar({
     factorial_expr: ($) =>
       prec(19, seq(field("expression", $.expression), "!")),
 
-    // Binary arithmetic operations
-    exponent_expr: ($) => binop($, "**", 18, prec.right),
-    product_expr: ($) => binop($, "*", 10),
-    division_expr: ($) => binop($, "/", 10),
-    modulo_expr: ($) => binop($, "%", 10),
-    add_expr: ($) => binop($, "+", 1),
-    subtract_expr: ($) => binop($, "-", 1),
-
     // Destructuring pattern for a generator variable, e.g. `(i, j)` over a set of pairs or
     // `(index, _)` over a sequence. `_` discards that component.
     quantifier_expr: ($) =>
@@ -406,7 +409,7 @@ module.exports = grammar({
           field("operator", choice("forAll", "exists", "sum", "min", "max")),
           // A tuple here is a destructuring pattern, e.g. `forAll (i, j) in pairs`; `_` discards
           // that component.
-          field("variables", commaSep1(choice($.identifier, $.tuple_literal))),
+          field("variables", commaSep1($.tuple_destructuring)),
           choice(
             seq("in", field("collection", $.expression)),
             seq(":", field("domain", $.domain)),
@@ -418,34 +421,48 @@ module.exports = grammar({
         ),
       ),
 
+    tuple_destructuring: ($) =>
+      choice(
+        field("identifier", $.identifier),
+        field("placeholder", "_"),
+        seq("(", field("tuple", commaSep1($.tuple_destructuring)), ")"),
+      ),
+
+    binary_expr: ($) =>
+      choice(
+        // convert binary operators to binary expression grammar
+        ...[
+          ["+", 1],
+          ["-", 1],
+          ["*", 10],
+          ["/", 10],
+          ["%", 10],
+          ["/\\", -1], // and expr
+          ["\\/", -2], // or expr
+          ["->", -4], // implication expr
+          ["<->", -4], // iff expr
+          // Equality comparison
+          [choice("==", "!="), 10],
+          // Arithmetic comparison
+          [choice("<", "<=", ">", ">="), 10],
+          // Lexicographic comparison
+          [choice("<lex", "<=lex", ">lex", ">=lex"), 10],
+          // Set comparison
+          ["in", 25],
+          [choice("subset", "subsetEq", "supset", "supsetEq"), 25],
+          // Sequence comparisons
+          ["substring", 25],
+          ["subsequence", 25],
+          // Set operations
+          ["union", 25],
+          ["intersect", 25],
+        ].map(([op, prec]) => binop($, op, prec)),
+        // handle ** specially (right association)
+        binop($, "**", 10, prec.right),
+      ),
+
     from_solution: ($) =>
       seq("fromSolution", "(", field("variable", $.identifier), ")"),
-
-    // Arithmetic comparison
-    comparison_expr: ($) => binop($, choice("<", "<=", ">", ">="), 10),
-
-    // Lexicographic comparison (comparing collections)
-    lex_comparison_expr: ($) =>
-      binop($, choice("<lex", "<=lex", ">lex", ">=lex"), 10),
-
-    // General equality comparisons
-    equals_expr: ($) => binop($, "=", 10),
-    not_equals_expr: ($) => binop($, "!=", 10),
-
-    // Set comparisons
-    in_expr: ($) => binop($, "in", 25),
-    subset_expr: ($) => binop($, "subset", 25),
-    subsetEq_expr: ($) => binop($, "subsetEq", 25),
-    supset_expr: ($) => binop($, "supset", 25),
-    supsetEq_expr: ($) => binop($, "supsetEq", 25),
-
-    // Sequence comparisons: 's substring t' / 's subsequence t', return boolean
-    substring_expr: ($) => binop($, "substring", 25),
-    subsequence_expr: ($) => binop($, "subsequence", 25),
-
-    // TODO: add unary set operation support (powerSet)
-    union_expr: ($) => binop($, "union", 25),
-    intersect_expr: ($) => binop($, "intersect", 25),
 
     // A name bound for the rest of the comprehension, e.g.
     // `[ x[i] | i : int(1..3), letting j be i + 1, x[j] > 0 ]`. Pure sugar: the parser
@@ -465,7 +482,7 @@ module.exports = grammar({
           "[",
           field("expression", $.expression),
           "|",
-          field("generator", $.generator),
+          commaSep1(field("generator", $.generator)),
           optional(
             seq(
               ",",
@@ -482,18 +499,13 @@ module.exports = grammar({
     generator: ($) =>
       prec(
         30,
-        choice(
-          // i : int(1..5)
-          seq(
-            field("variable", choice($.identifier, $.tuple_literal)),
-            ":",
-            field("domain", $.domain),
-          ),
-          // i <- [1,2,3]
-          seq(
-            field("variable", choice($.identifier, $.tuple_literal)),
-            "<-",
-            field("collection", $.expression),
+        seq(
+          commaSep1(field("variable", $.tuple_destructuring)),
+          choice(
+            // i : int(1..5)
+            seq(":", field("domain", $.domain)),
+            // i <- [1,2,3]
+            seq("<-", field("collection", $.expression)),
           ),
         ),
       ),
@@ -521,7 +533,7 @@ module.exports = grammar({
       seq(
         "[",
         optional(field("elements", commaSep1($.expression))),
-        optional(seq(";", field("domain", $.expression))),
+        optional(seq(";", field("domain", $.domain))),
         "]",
       ),
 
@@ -621,40 +633,12 @@ module.exports = grammar({
         $.partition_literal,
         $.permutation_literal,
 
-        // comparison operations
-        $.comparison_expr,
-        $.lex_comparison_expr,
-        $.equals_expr,
-        $.not_equals_expr,
-
-        // set operations
-        $.in_expr,
-        $.subset_expr,
-        $.subsetEq_expr,
-        $.supset_expr,
-        $.supsetEq_expr,
-        $.substring_expr,
-        $.subsequence_expr,
-        $.union_expr,
-        $.intersect_expr,
-
-        // boolean operations
+        // operations
+        $.binary_expr,
         $.not_expr,
-        $.and_expr,
-        $.or_expr,
-        $.implication_expr,
-        $.iff_expr,
-
-        // arithmetic operations
         $.negative_expr,
         $.abs_value_expr,
         $.factorial_expr,
-        $.exponent_expr,
-        $.product_expr,
-        $.division_expr,
-        $.modulo_expr,
-        $.add_expr,
-        $.subtract_expr,
 
         // other expressions
         $.index_or_slice,

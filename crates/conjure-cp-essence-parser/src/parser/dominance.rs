@@ -35,9 +35,7 @@ pub fn parse_dominance_relation(
         return Ok(None);
     }
 
-    let Some(inner_node) = field!(recover, ctx, node, "expression") else {
-        return Ok(None);
-    };
+    let inner_node = field!(node, "expression");
 
     // Create a nested context so downstream parsing knows it is inside a dominance relation.
     let mut inner_ctx = ParseContext {
@@ -51,9 +49,7 @@ pub fn parse_dominance_relation(
         inner_typechecking_context: TypecheckingContext::Unknown,
     };
 
-    let Some(inner) = parse_expression(&mut inner_ctx, inner_node)? else {
-        return Ok(None);
-    };
+    let inner = parse_expression(&mut inner_ctx, inner_node)?;
 
     Ok(Some(Expression::DominanceRelation(
         Metadata::new(),
@@ -100,9 +96,7 @@ pub fn parse_pareto_expression(
         };
 
         let component_node = field!(item_node, "expression");
-        let Some(component_expr) = parse_pareto_component(ctx, &component_node)? else {
-            return Ok(None);
-        };
+        let component_expr = parse_expression(ctx, component_node)?;
         let Some((non_worse, strict)) =
             build_pareto_constraints(ctx, &component_node, component_expr, direction)
         else {
@@ -116,22 +110,6 @@ pub fn parse_pareto_expression(
     conjuncts.push(combine_with_and_or(strict_improvements, true));
 
     Ok(Some(combine_with_and_or(conjuncts, false)))
-}
-
-fn parse_pareto_component(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    let saved_context = ctx.typechecking_context;
-    let saved_inner_context = ctx.inner_typechecking_context;
-    ctx.typechecking_context = TypecheckingContext::Unknown;
-    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-
-    let parsed = parse_expression(ctx, *node);
-
-    ctx.typechecking_context = saved_context;
-    ctx.inner_typechecking_context = saved_inner_context;
-    parsed
 }
 
 fn build_pareto_constraints(

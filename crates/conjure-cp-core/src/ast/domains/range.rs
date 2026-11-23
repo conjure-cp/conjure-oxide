@@ -28,6 +28,22 @@ impl<A> Range<A> {
         }
     }
 
+    /// Whether the range is **lower-bounded**.
+    pub fn is_lower_bounded(&self) -> bool {
+        match &self {
+            Range::Single(_) | Range::Bounded(_, _) | Range::UnboundedR(_) => true,
+            Range::UnboundedL(_) | Range::Unbounded => false,
+        }
+    }
+
+    /// Whether the range is **upper-bounded**.
+    pub fn is_upper_bounded(&self) -> bool {
+        match &self {
+            Range::Single(_) | Range::Bounded(_, _) | Range::UnboundedL(_) => true,
+            Range::UnboundedR(_) | Range::Unbounded => false,
+        }
+    }
+
     /// Whether the range is **unbounded** on both sides.
     pub fn is_unbounded(&self) -> bool {
         !self.is_lower_or_upper_bounded()
@@ -74,25 +90,19 @@ impl<A: Ord> Range<A> {
     }
 }
 
-impl<A: Ord + Clone> Range<A> {
+impl<A> Range<A> {
     /// Create a new range with a lower and upper bound
     pub fn new(lo: Option<A>, hi: Option<A>) -> Range<A> {
         match (lo, hi) {
             (None, None) => Range::Unbounded,
             (Some(l), None) => Range::UnboundedR(l),
             (None, Some(r)) => Range::UnboundedL(r),
-            (Some(l), Some(r)) => {
-                if l == r {
-                    Range::Single(l)
-                } else {
-                    let min = Ord::min(&l, &r).clone();
-                    let max = Ord::max(l, r);
-                    Range::Bounded(min, max)
-                }
-            }
+            (Some(l), Some(r)) => Range::Bounded(l, r),
         }
     }
+}
 
+impl<A: Clone + Ord> Range<A> {
     /// Given a slice of ranges, create a single range that spans from the start
     /// of the leftmost range to the end of the rightmost range.
     /// An empty slice is considered equivalent to `Range::unbounded`.
