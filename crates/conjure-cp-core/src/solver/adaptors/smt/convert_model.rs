@@ -198,7 +198,7 @@ where
             |a: Int, b: Int| {
                 // Always keep the divisor positive so the Euclidean divison rounds down.
                 b.ge(0)
-                    .ite(&a.div(&b), &a.unary_minus().div(&b.unary_minus()))
+                    .ite(&a.div(&b), &a.unary_minus().div(b.unary_minus()))
             },
             bv_floor_div,
         ),
