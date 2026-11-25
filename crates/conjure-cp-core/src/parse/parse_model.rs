@@ -1424,11 +1424,8 @@ fn parse_comprehension(
                     .ok_or_else(|| fail("Generator.inner.iter().next"))?;
                 match name.as_str() {
                     "GenDomainNoRepr" => {
-                        let gen_names_array = gen_inner
-                            .pointer("/0")
-                            .and_then(Value::as_array)
-                            .ok_or_else(|| fail("gen_inner.pointer(/0).as_array"))?;
-                        let gen_names = gen_names_array.iter();
+                        let gen_names = generator_names(gen_inner)
+                            .ok_or_else(|| fail("gen_inner.pointer(/0).as_array_or_object"))?;
 
                         for gen_name in gen_names {
                             let name = gen_name
@@ -1458,11 +1455,8 @@ fn parse_comprehension(
                         comprehension
                     }
                     "GenInExpr" => {
-                        let gen_names_array = gen_inner
-                            .pointer("/0")
-                            .and_then(Value::as_array)
-                            .ok_or_else(|| fail("gen_inner.pointer(/0).as_array"))?;
-                        let gen_names = gen_names_array.iter();
+                        let gen_names = generator_names(gen_inner)
+                            .ok_or_else(|| fail("gen_inner.pointer(/0).as_array_or_object"))?;
 
                         for gen_name in gen_names {
                             let name = gen_name
@@ -1510,6 +1504,15 @@ fn parse_comprehension(
         Metadata::new(),
         Moo::new(comprehension.with_return_value(expr)),
     ))
+}
+
+fn generator_names(gen_inner: &Value) -> Option<&[Value]> {
+    let names = gen_inner.pointer("/0")?;
+    match names {
+        Value::Array(names) => Some(names),
+        Value::Object(_) => Some(std::slice::from_ref(names)),
+        _ => None,
+    }
 }
 
 fn unary_skip_operator(op_name: &str) -> Option<ACOperatorKind> {
@@ -2075,6 +2078,16 @@ mod tests {
     use crate::ast::HasDomain;
     use crate::{domain_int, range};
     use serde_json::json;
+
+    #[test]
+    fn normalizes_single_and_multiple_generator_names() {
+        let single = json!([{"Single": {"Name": "x"}}, {"DomainBool": []}]);
+        let multiple =
+            json!([[{"Single": {"Name": "x"}}, {"Single": {"Name": "y"}}], {"DomainBool": []}]);
+
+        assert_eq!(generator_names(&single).unwrap().len(), 1);
+        assert_eq!(generator_names(&multiple).unwrap().len(), 2);
+    }
 
     #[test]
     fn parses_record_index() {
