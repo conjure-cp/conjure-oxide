@@ -186,26 +186,32 @@ where
             a.ite(&Int::from(1), &Int::from(0))
         }),
 
-        // Essence division floors, which is what Z3's integer `div` and `mod` already do. The
-        // bit-vector theory offers truncating division instead (`bvsdiv` rounds toward zero, and
-        // `bvsrem` takes the dividend's sign), so the two theories would disagree on negative
-        // operands unless the floored forms are built explicitly.
+        // Essence division floors, whereas Z3's integer `div` and `mod` perform Euclidean
+        // division while bit-vector theory offers truncating division (`bvsdiv` rounds toward zero,
+        // and `bvsrem` takes the dividend's sign). So we build the floored forms explicitly as
+        // otherwise these theories would disagree on negative operands unless .
         Expression::SafeDiv(_, a, b) => int_binary_op(
             store,
             lettings,
             a,
             b,
-            |a: Int, b: Int| a.div(b),
+            |a: Int, b: Int| {
+                // Always keep the divisor positive so the Euclidean divison rounds down.
+                b.ge(0)
+                    .ite(&a.div(&b), &a.unary_minus().div(b.unary_minus()))
+            },
             bv_floor_div,
         ),
         Expression::SafeMod(_, a, b) => {
-            // `bvsmod` already takes the divisor's sign, which is the floored remainder.
             int_binary_op(
                 store,
                 lettings,
                 a,
                 b,
-                |a: Int, b: Int| a.modulo(b),
+                // SMT modulo will always produce a positive number so we must make it negative if
+                // the divisor is.
+                |a: Int, b: Int| b.ge(0).ite(&a.modulo(&b), &a.modulo(b).unary_minus()),
+                // `bvsmod` already takes the divisor's sign, which is the floored remainder.
                 |a: BV, b: BV| a.bvsmod(b),
             )
         }
