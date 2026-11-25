@@ -36,7 +36,7 @@ use uniplate::{
 /// calling a trait method on them. In particular, calling Uniplate methods may cause a
 /// clone-on-write to occur.
 ///
-/// **Note:** like Box` and `Rc`, methods on `Moo` are all associated functions, which means you
+/// **Note:** like `Box` and `Rc`, methods on `Moo` are all associated functions, which means you
 /// have to call them as, e.g. `Moo::make_mut(&value)` instead of `value.make_mut()`. This is so
 /// that there are no conflicts with the inner type `T`, which this type dereferences to.
 #[derive(PartialEq, Eq, Clone, Debug)]
