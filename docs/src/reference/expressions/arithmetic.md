@@ -1,19 +1,5 @@
 # Arithmetic Expressions
 
-```bnf
-<ArithmeticExpr> ::= <BinaryArithExpr>
-                    | <NegativeExpr>
-                    | <AbsValueExpr>
-                    | <FactorialExpr>
-
-
-<BinaryArithExpr> = ::= <Expression.Integer> ("+" | "-" | "*" | "/" | "%" | "**") <Expression.Integer>
-<NegativeExpr> ::= "-" <Expression.Integer>
-<AbsValueExpr> ::= "|" <Expression.Integer> "|"
-<FactorialExpr> ::= <Expression.Integer> "!"
-                 | "factorial" "(" <Expression.Integer> ")"
-```
-
 ## Addition
 
 `a + b` returns the sum of `a` and `b`.
@@ -55,3 +41,19 @@ TODO: what is supposed to happen with division by zero?
 ## Factorial
 
 `a!` or `factorial(a)` returns the factorial of `a` (i.e. the product of all integers from `1` to `a` inclusive).
+
+## BNF
+
+```bnf
+<ArithmeticExpr> ::= <BinaryArithExpr>
+                    | <NegativeExpr>
+                    | <AbsValueExpr>
+                    | <FactorialExpr>
+
+
+<BinaryArithExpr> = ::= <Expression.Integer> ("+" | "-" | "*" | "/" | "%" | "**") <Expression.Integer>
+<NegativeExpr> ::= "-" <Expression.Integer>
+<AbsValueExpr> ::= "|" <Expression.Integer> "|"
+<FactorialExpr> ::= <Expression.Integer> "!"
+                 | "factorial" "(" <Expression.Integer> ")"
+```

@@ -7,46 +7,18 @@ A relation is effectively a set of tuples which relate elements of different dom
 
 ## Relation Domains
 
-```bnf
-<RelationDomain> ::= "relation" ["(" list(<RelationAttribute>) ")"] "of" "(" <RelationDomainList> ")"
-<RelationDomainList> ::= <Domain> [{ "*" <Domain> }]
-```
+Relations are declared using the `relation` specifier.
 
 ```essence
 $ binary relations
-letting a be domain relation of (int * bool)
-letting b be domain relation (partialOrder) of (int(1..2) * int(1..2))"
+given a: relation of (int * bool)
+given b: relation (partialOrder) of (int(1..2) * int(1..2))"
 
 $ n-ary relation
-letting c be domain relation(int, int, int)
+given c: relation of (int * int * int)
 ```
 
-### Attributes
-
-```bnf
-<RelationAttribute> ::= "size" <Expression.Integer>
-                      | "minSize" <Expression.Integer>
-                      | "maxSize" <Expression.Integer>
-                      | "reflexive"
-                      | "irreflexive"
-                      | "coreflexive"
-                      | "symmetric"
-                      | "antiSymmetric"
-                      | "aSymmetric"
-                      | "transitive"
-                      | "total"
-                      | "connex"
-                      | "Euclidean"
-                      | "serial"
-                      | "equivalence"
-                      | "partialOrder"
-                      | "leftTotal"
-                      | "rightTotal"
-                      | "linearOrder"
-                      | "weakOrder"
-                      | "preOrder"
-                      | "strictPartialOrder"
-```
+### Relation Attributes
 
 _N.B.: in this section `A ~ B` denotes "`A` is related to `B`", and `A !~ B` denotes `!(A ~ B)`._
 
@@ -94,15 +66,46 @@ TODO binary and categorisation
 | `equivalence`  | `bool` | Equivalent to setting both `reflexive` and `symmetric`.                               |
 | `partialOrder` | `bool` | Equivalent to setting both `reflective` and `antiSymmetric`.                          |
 
-### Relation Literals
+## Relation Literals
 
-```bnf
-<RelationLiteral> ::= "relation" "(" [list(<RelationLiteralTuple>)] ")"
-<RelationLiteralTuple> ::= "(" list(<Expression>) ")"
-```
+A relation literal is written as a list of tuples, which relates elements in the same tuple together.
 
 ```essence
 $ binary relation domains
 letting a be relation ((1, 1, 0), (1, 0, 1), (0, 1, 1))
 letting b be relation ((true, false), (false, true))
+letting c be relation ((true, 3), (false, 5))
+```
+
+## BNF
+
+```bnf
+<RelationDomain> ::= "relation" ["(" list(<RelationAttribute>) ")"] "of" "(" <RelationDomainList> ")"
+<RelationDomainList> ::= <Domain> [{ "*" <Domain> }]
+
+<RelationAttribute> ::= "size" <Expression.Integer>
+                      | "minSize" <Expression.Integer>
+                      | "maxSize" <Expression.Integer>
+                      | "reflexive"
+                      | "irreflexive"
+                      | "coreflexive"
+                      | "symmetric"
+                      | "antiSymmetric"
+                      | "aSymmetric"
+                      | "transitive"
+                      | "total"
+                      | "connex"
+                      | "Euclidean"
+                      | "serial"
+                      | "equivalence"
+                      | "partialOrder"
+                      | "leftTotal"
+                      | "rightTotal"
+                      | "linearOrder"
+                      | "weakOrder"
+                      | "preOrder"
+                      | "strictPartialOrder"
+
+<RelationLiteral> ::= "relation" "(" [list(<RelationLiteralTuple>)] ")"
+<RelationLiteralTuple> ::= "(" list(<Expression>) ")"
 ```

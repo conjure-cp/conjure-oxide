@@ -1,21 +1,8 @@
 # Boolean Expressions
 
-```bnf
-<BoolExpr> ::= <NotExpr>
-| <AndExpr>
-| <OrExpr>
-| <ImplicationExpr>
-| <IffExpr>
-| <FunctionalAndExpr>
-| <FunctionalOrExpr>
-| <QuantifierExpr>
-```
-
 ## Not Expression
 
-```bnf
-<NotExpr> ::= "!" <Expression.Boolean>
-```
+`!a` is `true` iff `a` is `false`.
 
 | `a`     | `!a`    |
 | ------- | ------- |
@@ -24,11 +11,7 @@
 
 ## And Expression
 
-```bnf
-<AndExpr> ::= <Expression.Boolean> "/\" <Expression.Boolean>
-```
-
-`a /\ b` is `true` only if both `a` and `b` are true.
+`a /\ b` is `true` iff both `a` and `b` are `true`.
 
 | `a`     | `b`     | `a /\ b` |
 | ------- | ------- | -------- |
@@ -39,11 +22,7 @@
 
 ## Or Expression
 
-```bnf
-<OrExpr> ::= <Expression.Boolean> "\/" <Expression.Boolean>
-```
-
-`a \/ b` is `true` if `a` is `true` or `b` is `true`.
+`a \/ b` is `true` iff `a` is `true` or `b` is `true`.
 
 | `a`     | `b`     | `a \/ b` |
 | ------- | ------- | -------- |
@@ -54,11 +33,7 @@
 
 ## Implication Expression
 
-```bnf
-<ImplicationExpr> ::= <Expression.Boolean> "->" <Expression.Boolean>
-```
-
-`a -> b` is `true` if `a` is `false` or `b` is `true`.
+`a -> b` is `true` iff `a` is `false` or `b` is `true`.
 
 | `a`     | `b`     | `a -> b` |
 | ------- | ------- | -------- |
@@ -69,11 +44,7 @@
 
 ## Iff Expression
 
-```bnf
-<IffExpr> ::= <Expression.Boolean> "<->" <Expression.Boolean>
-```
-
-`a <-> b` is `true` if both `a` and `b` are `true`, or both `a` and `b` are `false`.
+`a <-> b` is `true` iff both `a` and `b` are `true`, or both `a` and `b` are `false`.
 
 `a <-> b` is logically equivalent to `a = b`, but can **only** be applied to boolean expressions.
 
@@ -83,3 +54,26 @@
 | `true`  | `false` | `false`   |
 | `false` | `true`  | `false`   |
 | `false` | `false` | `true`    |
+
+## BNF
+
+```bnf
+<BoolExpr> ::= <NotExpr>
+| <AndExpr>
+| <OrExpr>
+| <ImplicationExpr>
+| <IffExpr>
+| <FunctionalAndExpr>
+| <FunctionalOrExpr>
+| <QuantifierExpr>
+
+<NotExpr> ::= "!" <Expression.Boolean>
+
+<AndExpr> ::= <Expression.Boolean> "/\" <Expression.Boolean>
+
+<OrExpr> ::= <Expression.Boolean> "\/" <Expression.Boolean>
+
+<ImplicationExpr> ::= <Expression.Boolean> "->" <Expression.Boolean>
+
+<IffExpr> ::= <Expression.Boolean> "<->" <Expression.Boolean>
+```

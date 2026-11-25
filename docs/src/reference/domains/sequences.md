@@ -2,24 +2,18 @@
 
 A sequence is a datatype for storing a series of values, where values can occur multiple times and ordering is preserved.
 
-## Sequence Domains
-
-```bnf
-<SequenceDomain> ::= "sequence" ["(" list(<SequenceAttribute>) ")"] "of" <Domain>
-```
-
 Unlike [matrices](./matrices.md), sequences can have defined attributes; i.e. you can define a sequence to have varying lengths, and to restrict what values it can draw from it's inner domain.
 
-### Attributes
+## Sequence Domains
 
-```bnf
-<SequenceAttribute> ::= "size" <Expression.Integer>
-                      | "minSize" <Expression.Integer>
-                      | "maxSize" <Expression.Integer>
-                      | "injective"
-                      | "surjective"
-                      | "bijective"
+Sequences are declared using the `sequence` specifier.
+
+```essence
+given a: sequence (size 10) of int
+given b: sequence (minSize 3, surjective) of int(-5..5)
 ```
+
+### Sequence Attributes
 
 #### Cardinality
 
@@ -43,6 +37,40 @@ Using contradicting values for the attribute values may result in an empty domai
 
 ## Sequence Literals
 
+Sequence literals simply list their values in order.
+
+```essence
+letting a be sequence (2, 3, 5, 7, 11, 13, 17, 19)
+letting b be sequence (true, false, true, true, false, false)
+```
+
+## Sequence Operations
+
+### `substring`
+
+```essence
+TODO
+```
+
+### `subsequence`
+
+```essence
+TODO
+```
+
+## BNF
+
 ```bnf
+<SequenceDomain> ::= "sequence" ["(" list(<SequenceAttribute>) ")"] "of" <Domain>
+<SequenceAttribute> ::= "size" <Expression.Integer>
+                      | "minSize" <Expression.Integer>
+                      | "maxSize" <Expression.Integer>
+                      | "injective"
+                      | "surjective"
+                      | "bijective"
+
 <SequenceLiteral> ::= "sequence" "(" [list(<Expression>)] ")"
+
+<SequenceComparison> ::= <Expression.Sequence> ("substring"
+                                              | "subsequence") <Expression.Sequence>
 ```

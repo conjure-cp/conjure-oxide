@@ -1,20 +1,14 @@
 # Primitives
 
-## Booleans
+Essence supports two primitive domains: booleans and integers.
 
-```bnf
-<BoolDomain> ::= "bool"
-```
+## Booleans
 
 ```essence
 given a: bool
 ```
 
 The Boolean domain has values `false` and `true`, ordered as such.
-
-```bnf
-<BooleanLiteral> ::= "true" | "false"
-```
 
 ```essence
 letting a be true
@@ -26,9 +20,7 @@ letting b be false
 Integer domains span over the whole numbers, and can be bounded by a list of ranges.
 
 ```bnf
-<IntDomain> ::= "int" ["(" [list(<IntRange>)] ")"]
-<IntRange>  ::= <Expression.Integer>
-                | [<Expression.Integer>] ".." [<Expression.Integer>]
+
 ```
 
 A range is either a single integer, or a list of sequential integers with a given lower (inclusive) and upper (exclusive) bound.
@@ -48,7 +40,7 @@ given i: int(6,2,8..10) $ ranges can be out-of-order
 Integer domains are instantiated with values in their range.
 
 ```bnf
-<Integer> ::= `-?[0-9]+`
+
 ```
 
 ```essence
@@ -56,4 +48,16 @@ letting a be 100
 letting b be 32
 letting c be 4
 $ etc...
+```
+
+## BNF
+
+```bnf
+<BoolDomain> ::= "bool"
+<BooleanLiteral> ::= "true" | "false"
+
+<IntDomain> ::= "int" ["(" [list(<IntRange>)] ")"]
+<IntRange>  ::= <Expression.Integer>
+              | [<Expression.Integer>] ".." [<Expression.Integer>]
+<Integer> ::= `-?[0-9]+`
 ```

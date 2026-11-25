@@ -4,14 +4,12 @@ A multiset is a datatype for storing a set of objects where objects can occur mo
 
 ## Multiset Domains
 
-```bnf
-<MultiSetDomain> ::= "mset" ["(" list(<MultiSetAttribute>) ")"] "of" <Domain>
-<MultiSetAttribute> ::= "size" <Expression.Integer>
-                      | "minSize" <Expression.Integer>
-                      | "maxSize" <Expression.Integer>
-                      | "minOccur" <Expression.Integer>
-                      | "maxOccur" <Expression.Integer>
-                      | "representation" <Identifier>
+Multisets are declared using the `mset` specifier.
+
+```
+given a: mset of int(0..10)
+given b: mset (size 10) of int
+given c: mset (maxSize 20, minOccur 2) of int(10..20)
 ```
 
 ### Multiset Attributes
@@ -31,6 +29,21 @@ A range of sizes may be specified using `minSize x maxSize y`. Using contradicti
 
 ## Multiset Literals
 
+```essence
+letting a be mset (1, 2, 4, 1, 3, 5)
+letting b be mset (true, false, false, false, true)
+```
+
+## BNF
+
 ```bnf
+<MultiSetDomain> ::= "mset" ["(" list(<MultiSetAttribute>) ")"] "of" <Domain>
+<MultiSetAttribute> ::= "size" <Expression.Integer>
+                      | "minSize" <Expression.Integer>
+                      | "maxSize" <Expression.Integer>
+                      | "minOccur" <Expression.Integer>
+                      | "maxOccur" <Expression.Integer>
+                      | "representation" <Identifier>
+
 <MultiSetLiteral> ::= "mset" "(" [list(<Expression>)] ")"
 ```

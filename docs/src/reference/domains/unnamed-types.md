@@ -1,7 +1,17 @@
 # Unnamed Types
 
-Defines a new type of size `n`, but doesn't give the modeller a way of referring to any of those values by name.
+We can defines a new type of size `n`, but with no way of referring to any of those values by name.
 
-This means that different elements of this type cannot be distinguished, hence these values form a symmetry group.
+_This type is an active area of research and implementation; this page is therefore incomplete._
 
-TODO complete
+## Unnamed Type Declaration
+
+See [unnamed type declaration](../statements/letting.md#unnamed-type-declaration) in the `letting` reference.
+
+```essence
+letting direction be new type of size 5
+```
+
+## Unnamed Type Elements
+
+Different elements of an unnamed type cannot be distinguished, hence these values form a symmetry group.

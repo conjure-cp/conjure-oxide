@@ -36,7 +36,7 @@
   - [Dominance Relations](reference/statements/dominance-relations.md)
   - [Branching](reference/statements/branching.md)
 - [Domains](reference/domains/domains.md)
-  - [Primitive Domains](reference/domains/concrete.md)
+  - [Primitives](reference/domains/primitives.md)
   - [Sets](reference/domains/sets.md)
   - [Multisets](reference/domains/multisets.md)
   - [Tuples](reference/domains/tuples.md)
