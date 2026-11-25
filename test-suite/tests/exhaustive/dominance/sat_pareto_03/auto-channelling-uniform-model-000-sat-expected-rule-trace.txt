@@ -1,0 +1,159 @@
+Model before rewriting:
+
+find s1: bool
+find s2: bool
+find s3: bool
+find s4: bool
+find s5: bool
+find s6: bool
+
+such that
+
+or([s1,s2;int(1..)]),
+or([s2,s3;int(1..)]),
+or([s3,s4;int(1..)]),
+or([s4,s5;int(1..)]),
+or([s5,s6;int(1..)]),
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+
+--
+
+or([s1,s2;int(1..)]),
+or([s2,s3;int(1..)]),
+or([s3,s4;int(1..)]),
+or([s4,s5;int(1..)]),
+or([s5,s6;int(1..)]),
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([s2,s3;int(1..)]),
+or([s3,s4;int(1..)]),
+or([s4,s5;int(1..)]),
+or([s5,s6;int(1..)]),
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+new SAT encoding decisions:
+  assert(or([s1,s2;int(1..)])) using tseitin
+
+--
+
+or([s2,s3;int(1..)]),
+or([s3,s4;int(1..)]),
+or([s4,s5;int(1..)]),
+or([s5,s6;int(1..)]),
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([s3,s4;int(1..)]),
+or([s4,s5;int(1..)]),
+or([s5,s6;int(1..)]),
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+new SAT encoding decisions:
+  assert(or([s2,s3;int(1..)])) using tseitin
+
+--
+
+or([s3,s4;int(1..)]),
+or([s4,s5;int(1..)]),
+or([s5,s6;int(1..)]),
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([s4,s5;int(1..)]),
+or([s5,s6;int(1..)]),
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+new SAT encoding decisions:
+  assert(or([s3,s4;int(1..)])) using tseitin
+
+--
+
+or([s4,s5;int(1..)]),
+or([s5,s6;int(1..)]),
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+or([s5,s6;int(1..)]),
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+new SAT encoding decisions:
+  assert(or([s4,s5;int(1..)])) using tseitin
+
+--
+
+or([s5,s6;int(1..)]),
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+new SAT encoding decisions:
+  assert(or([s5,s6;int(1..)])) using tseitin
+
+--
+
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+new SAT encoding decisions:
+  assert(!(and([s1,s4;int(1..)]))) using tseitin
+
+--
+
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+!(and([s3,s6;int(1..)]))
+new SAT encoding decisions:
+  assert(!(and([s2,s5;int(1..)]))) using tseitin
+
+--
+
+!(and([s3,s6;int(1..)]))
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(!(and([s3,s6;int(1..)]))) using tseitin
+
+--
+
+Final model:
+
+find s1: bool
+find s2: bool
+find s3: bool
+find s4: bool
+find s5: bool
+find s6: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+assert(or([s1,s2;int(1..)])) using tseitin,
+assert(or([s2,s3;int(1..)])) using tseitin,
+assert(or([s3,s4;int(1..)])) using tseitin,
+assert(or([s4,s5;int(1..)])) using tseitin,
+assert(or([s5,s6;int(1..)])) using tseitin,
+assert(!(and([s1,s4;int(1..)]))) using tseitin,
+assert(!(and([s2,s5;int(1..)]))) using tseitin,
+assert(!(and([s3,s6;int(1..)]))) using tseitin
+

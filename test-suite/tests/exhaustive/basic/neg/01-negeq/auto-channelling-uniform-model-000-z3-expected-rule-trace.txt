@@ -1,0 +1,50 @@
+Model before rewriting:
+
+find x: int(1..2)
+find y: int(-1..1)
+
+such that
+
+x = -(y)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(1..2)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#bv_1: int(-1..1)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+Final model:
+
+find x: int(1..2)
+find y: int(-1..1)
+find x#bv_1: int(1..2)
+find y#bv_1: int(-1..1)
+
+such that
+
+x#bv_1 = -(y#bv_1)
+

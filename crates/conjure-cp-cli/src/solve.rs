@@ -1,38 +1,38 @@
 //! conjure_oxide solve sub-command
 #![allow(clippy::unwrap_used)]
-use std::time::Duration;
+use std::collections::{BTreeMap, BTreeSet};
+use std::time::Instant;
 use std::{
     fs::File,
-    io::Write as _,
-    path::PathBuf,
-    process::exit,
-    sync::{Arc, RwLock},
+    path::{Path, PathBuf},
 };
 
-use anyhow::anyhow;
 use clap::ValueHint;
-use conjure_cp::instantiate::instantiate_model;
-use conjure_cp::{
-    Model,
-    context::Context,
-    defaults::DEFAULT_RULE_SETS,
-    rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
-    settings::{
-        Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
-        set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
-        set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
-    },
-    solver::Solver,
+use conjure_cp::Model;
+use conjure_cp::ast::SatEncodingDecision;
+use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
+use conjure_cp::pipeline::Pipeline;
+use conjure_cp::solutions::SolutionOptions;
+use conjure_cp_cli::stats::{
+    RecordedRunConfig, RecordedRunStats, StatsFormat, replace_config_run_stats,
 };
-use conjure_cp::{
-    parse::conjure_json::model_from_json, rule_engine::get_rules, settings::SolverFamily,
+use conjure_cp_cli::utils::conjure::{solutions_to_essence, solutions_to_json};
+use conjure_cp_cli::utils::rule_trace::RuleApplicationCounter;
+use conjure_cp_cli::utils::simplified_json::{
+    domains_from_model, param_model_from_assignments, params_from_simplified_json_str,
+    solution_to_simplified_json, solutions_to_simplified_json_string,
 };
-use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
-use conjure_cp_cli::find_conjure::conjure_executable;
-use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
-use serde_json::to_string_pretty;
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, clap::ValueEnum)]
+pub enum OutputFormat {
+    /// Conjure-compatible Essence multi-solution / per-solution files
+    #[default]
+    Essence,
+    /// Conjure `--output-format=json` simplified JSON
+    Json,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NumberOfSolutions {
@@ -75,9 +75,10 @@ pub struct Args {
     #[arg(value_name = "PARAM_ESSENCE", value_hint = ValueHint::FilePath)]
     pub param_file: Option<PathBuf>,
 
-    /// Save execution info as JSON to the given filepath.
-    #[arg(long ,value_hint=ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
-    pub info_json_path: Option<PathBuf>,
+    /// Write execution statistics; the .toml or .json extension selects the format.
+    #[arg(long, value_name = "PATH", value_hint = ValueHint::FilePath,
+        value_parser = parse_stats_path, help_heading = LOGGING_HELP_HEADING)]
+    pub stats: Option<PathBuf>,
 
     /// Do not run the solver.
     ///
@@ -96,278 +97,411 @@ pub struct Args {
     )]
     pub number_of_solutions: NumberOfSolutions,
 
-    /// Save solutions to the given JSON file
+    /// Format for printed / saved solutions
+    #[arg(long, value_enum, default_value_t = OutputFormat::Essence, help_heading=LOGGING_HELP_HEADING)]
+    pub output_format: OutputFormat,
+
+    /// Write all solutions into a single file (default: true).
+    ///
+    /// Pass `--solutions-in-one-file=false` to emit one file (or stdout record) per solution.
+    #[arg(
+        long,
+        default_value_t = true,
+        action = clap::ArgAction::Set,
+        value_name = "BOOL",
+        help_heading = LOGGING_HELP_HEADING
+    )]
+    pub solutions_in_one_file: bool,
+
+    /// Save solutions to the given path (Essence `.solutions` / JSON `.solutions.json`, or a
+    /// filename stem when `--solutions-in-one-file=false`)
     #[arg(long, short = 'o', value_hint = ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
     pub output: Option<PathBuf>,
+
+    /// When optimising, retain every improving solution Minion reports instead of only the last
+    /// one.
+    #[arg(long, default_value_t = false)]
+    pub keep_intermediate_solutions: bool,
 }
 
-pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
+fn parse_stats_path(input: &str) -> Result<PathBuf, String> {
+    let path = PathBuf::from(input);
+    StatsFormat::from_path(&path).map_err(|err| err.to_string())?;
+    Ok(path)
+}
+
+pub fn run_solve_command(
+    global_args: GlobalArgs,
+    solve_args: Args,
+    rule_application_counts: &RuleApplicationCounter,
+) -> anyhow::Result<()> {
+    let pipeline = Pipeline::new(global_args.library_config())?;
+    pipeline
+        .with_settings(|| run_solve(&pipeline, global_args, solve_args, rule_application_counts))
+}
+
+fn run_solve(
+    pipeline: &Pipeline,
+    global_args: GlobalArgs,
+    solve_args: Args,
+    rule_application_counts: &RuleApplicationCounter,
+) -> anyhow::Result<()> {
     let essence_file = solve_args.essence_file.clone();
     let param_file = solve_args.param_file.clone();
 
-    // each step is in its own method so that similar commands
-    // (e.g. testsolve) can reuse some of these steps.
-
-    let context = init_context(&global_args, essence_file, param_file)?;
-
-    let ctx_lock = context.read().unwrap();
-    let essence_file_name = ctx_lock
-        .essence_file_name
-        .as_ref()
-        .expect("context should contain the problem input file");
-    let param_file_name = ctx_lock.param_file_name.as_ref();
-
-    // parse models
-    let problem_model = parse(&global_args, Arc::clone(&context), essence_file_name)?;
-
-    // unify models
-    let unified_model = match param_file_name {
-        Some(param_file_name) => {
-            let param_model = parse(&global_args, Arc::clone(&context), param_file_name)?;
-            instantiate_model(problem_model, param_model)?
-        }
-        None => problem_model,
-    };
-    drop(ctx_lock);
-
-    let rewritten_model = rewrite(unified_model, &global_args, Arc::clone(&context))?;
-
-    let solver = init_solver(&global_args);
-
-    if solve_args.no_run_solver {
-        println!("{}", &rewritten_model);
-
-        if let Some(path) = global_args.save_solver_input_file {
-            let solver = solver.load_model(rewritten_model)?;
-            eprintln!("Writing solver input file to {}", path.display());
-            let mut file: Box<dyn std::io::Write> = Box::new(File::create(path)?);
-            solver.write_solver_input_file(&mut file)?;
-        }
-    } else {
-        run_solver(solver, &global_args, &solve_args, rewritten_model)?
+    let context = pipeline.context();
+    {
+        let mut context = context.write().unwrap();
+        context.essence_file_name = Some(essence_file.to_string_lossy().into_owned());
+        context.param_file_name = param_file
+            .as_ref()
+            .map(|path| path.to_string_lossy().into_owned());
     }
 
-    // still do postamble even if we didn't run the solver
-    if let Some(ref path) = solve_args.info_json_path {
-        let context_obj = context.read().unwrap().clone();
-        let generated_json = &serde_json::to_value(context_obj)?;
-        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
-        File::create(path)?.write_all(pretty_json.as_bytes())?;
+    let translation_started_at = Instant::now();
+    let unified_model = pipeline.with_settings(|| -> anyhow::Result<Model> {
+        let problem_model = pipeline.parse_file(&essence_file)?;
+        match param_file {
+            Some(param_file) => {
+                let param_model = parse_param(pipeline, &param_file, &problem_model)?;
+                Ok(instantiate_model(problem_model, param_model)?)
+            }
+            None => {
+                let mut problem_model = problem_model;
+                validate_instantiation_conditions(&mut problem_model)?;
+                Ok(problem_model)
+            }
+        }
+    })?;
+    let rewritten_model = pipeline.rewrite(unified_model)?;
+
+    // Capture representations and SAT encoding choices
+    let mut model_choices = RecordedRunStats::default();
+
+    record_model_choices(&rewritten_model, &mut model_choices);
+
+    let translation_time = translation_started_at.elapsed().as_secs_f64();
+
+    let solver_started_at = Instant::now();
+
+    let measured = if solve_args.no_run_solver {
+        println!("{}", rewritten_model);
+
+        if let Some(ref path) = global_args.save_solver_input_file {
+            pipeline.with_settings(|| -> anyhow::Result<()> {
+                let solver = pipeline.solver()?.load_model(rewritten_model)?;
+                let mut file: Box<dyn std::io::Write> = Box::new(File::create(path)?);
+                solver.write_solver_input_file(&mut file)?;
+                Ok(())
+            })?;
+        }
+
+        None
+    } else {
+        Some(run_solver(
+            pipeline,
+            &global_args,
+            &solve_args,
+            rewritten_model,
+        )?)
+    };
+
+    let solve_time = measured
+        .as_ref()
+        .map(|_| solver_started_at.elapsed().as_secs_f64());
+
+    let backend_time = measured.as_ref().map(|t| t.0);
+    let search_time = measured.as_ref().map(|t| t.1);
+    let solution_processing_time = measured.as_ref().map(|t| t.2);
+
+    // Still write translation statistics when the solver was not run.
+    if let Some(ref path) = solve_args.stats {
+        let config = RecordedRunConfig {
+            rewriter: global_args.rewriter.to_string(),
+            comprehension_expander: global_args.comprehension_expander.to_string(),
+            heuristic: global_args.heuristic.to_string(),
+            channelling: global_args.channelling.to_string(),
+            seed: global_args.seed,
+            solver_seed: global_args.solver_seed,
+            solver: global_args.solver.as_str(),
+        };
+
+        let case_name = solve_args
+            .essence_file
+            .file_stem()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "input".to_owned());
+
+        let mut row = RecordedRunStats {
+            rewriter: config.rewriter.clone(),
+            comprehension_expander: config.comprehension_expander.clone(),
+            heuristic: config.heuristic.clone(),
+            channelling: config.channelling.clone(),
+            seed: config.seed,
+            solver_seed: config.solver_seed,
+            solver: config.solver.clone(),
+            minion_discrete_threshold: global_args.minion_discrete_threshold,
+
+            case_name,
+            model_index: 0,
+            status: "ok".to_owned(),
+
+            solution_limit: (!solve_args.no_run_solver)
+                .then(|| solve_args.number_of_solutions.as_solver_limit()),
+
+            translation_time: Some(translation_time),
+            solve_time,
+            backend_time,
+            search_time,
+            solution_processing_time,
+
+            ..Default::default()
+        };
+
+        row.representations = model_choices.representations;
+
+        row.sat_encoding_amo = model_choices.sat_encoding_amo;
+        row.sat_encoding_cardinality = model_choices.sat_encoding_cardinality;
+        row.sat_encoding_pb = model_choices.sat_encoding_pb;
+        row.sat_encoding_table = model_choices.sat_encoding_table;
+        row.sat_encoding_element = model_choices.sat_encoding_element;
+        row.sat_encoding_alldifferent = model_choices.sat_encoding_alldifferent;
+
+        // Read the same rewrite-attempt counters used by exhaustive testing.
+        let context_json = serde_json::to_value(context.read().unwrap().clone())?;
+
+        let attempt_counts: Vec<u64> = context_json
+            .get("stats")
+            .and_then(|stats| stats.get("rewriterRuns"))
+            .and_then(serde_json::Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(|run| {
+                run.get("rewriterRuleApplicationAttempts")
+                    .and_then(serde_json::Value::as_u64)
+            })
+            .collect();
+
+        if !attempt_counts.is_empty() {
+            row.rule_trace.total_rule_attempts = Some(attempt_counts.iter().sum());
+        }
+
+        let counts = rule_application_counts.snapshot();
+        row.rule_trace.total_rule_applications = Some(counts.values().copied().sum());
+        row.rule_trace.rules = counts;
+
+        // Write the completed statistics record only after all fields are populated.
+        replace_config_run_stats(path, &config, vec![row])?;
     }
     Ok(())
 }
-
-/// Returns a new Context and Solver for solving.
-pub(crate) fn init_context(
-    global_args: &GlobalArgs,
-    essence_file: PathBuf,
-    param_file: Option<PathBuf>,
-) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
-    let default_rule_trace_enabled = global_args.rule_trace.is_some();
-    let verbose_rule_trace_enabled = global_args.rule_trace_verbose.is_some();
-    let rule_trace_aggregates_enabled = global_args.rule_trace_aggregates.is_some();
-    let rule_trace_enabled =
-        default_rule_trace_enabled || verbose_rule_trace_enabled || rule_trace_aggregates_enabled;
-
-    set_current_parser(global_args.parser);
-    set_current_rewriter(global_args.rewriter);
-    set_comprehension_expander(global_args.comprehension_expander);
-    set_current_solver_family(global_args.solver);
-    set_minion_discrete_threshold(global_args.minion_discrete_threshold);
-    set_rule_trace_enabled(rule_trace_enabled);
-    set_default_rule_trace_enabled(default_rule_trace_enabled);
-    set_rule_trace_verbose_enabled(verbose_rule_trace_enabled);
-    set_rule_trace_aggregates_enabled(rule_trace_aggregates_enabled);
-
-    let target_family = global_args.solver;
-    let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
-    for rs in &global_args.extra_rule_sets {
-        extra_rule_sets.push(rs.as_str());
+fn record_model_choices(model: &Model, row: &mut RecordedRunStats) {
+    row.representations = model
+        .symbols()
+        .iter_local()
+        .flat_map(|(_, decl)| {
+            decl.reprs()
+                .iter()
+                .map(|(name, _)| name.to_owned())
+                .collect::<Vec<_>>()
+        })
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    let mut families: BTreeMap<&str, BTreeSet<String>> = BTreeMap::new();
+    macro_rules! record {
+        ($family:expr, $selection:expr) => {{
+            $selection.iter().for_each(|selection| {
+                families
+                    .entry($family)
+                    .or_default()
+                    .insert(selection.algorithm.to_string());
+            });
+        }};
     }
-
-    if let SolverFamily::Sat(sat_encoding) = target_family {
-        extra_rule_sets.push(sat_encoding.as_rule_set());
-    }
-
-    let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
-        Ok(rs) => rs,
-        Err(e) => {
-            tracing::error!("Error resolving rule sets: {}", e);
-            exit(1);
+    for decision in model.sat_decisions() {
+        match decision {
+            SatEncodingDecision::AtMostOne { encoding, .. } => {
+                record!("amo", encoding);
+            }
+            SatEncodingDecision::Cardinality { encoding, .. } => {
+                record!("cardinality", encoding);
+            }
+            SatEncodingDecision::CountRelation {
+                encoding,
+                amo_encoding,
+                ..
+            } => {
+                record!("cardinality", encoding);
+                record!("amo", amo_encoding);
+            }
+            SatEncodingDecision::PseudoBoolean { encoding, .. }
+            | SatEncodingDecision::IntegerRelation { encoding, .. }
+            | SatEncodingDecision::Objective { encoding, .. } => record!("pb", encoding),
+            SatEncodingDecision::AllDifferent {
+                encoding,
+                amo_encoding,
+                pb_encoding,
+                ..
+            } => {
+                record!("alldifferent", encoding);
+                record!("amo", amo_encoding);
+                record!("pb", pb_encoding);
+            }
+            SatEncodingDecision::Table {
+                encoding,
+                pb_encoding,
+                ..
+            } => {
+                record!("table", encoding);
+                record!("pb", pb_encoding);
+            }
+            SatEncodingDecision::Element {
+                encoding,
+                pb_encoding,
+                ..
+            } => {
+                record!("element", encoding);
+                record!("pb", pb_encoding);
+            }
+            _ => {}
         }
-    };
-
-    let pretty_rule_sets = rule_sets
-        .iter()
-        .map(|rule_set| rule_set.name)
-        .collect::<Vec<_>>()
-        .join(", ");
-
-    tracing::info!("Enabled rule sets: [{}]", pretty_rule_sets);
-    tracing::info!(
-        target: "file",
-        "Rule sets: {}",
-        pretty_rule_sets
-    );
-
-    let rules = get_rules(&rule_sets)?.into_iter().collect::<Vec<_>>();
-    tracing::info!(
-        target: "file",
-        "Rules: {}",
-        rules.iter().map(|rd| format!("{rd}")).collect::<Vec<_>>().join("\n")
-    );
-    let context = Context::new_ptr(
-        target_family,
-        extra_rule_sets.iter().map(|rs| rs.to_string()).collect(),
-        rules,
-        rule_sets.clone(),
-    );
-
-    context.write().unwrap().essence_file_name = Some(essence_file.to_str().expect("").into());
-    if let Some(param_file) = param_file {
-        context.write().unwrap().param_file_name = Some(param_file.to_str().expect("").into());
     }
-
-    Ok(context)
+    row.sat_encoding_amo = families
+        .remove("amo")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_cardinality = families
+        .remove("cardinality")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_pb = families
+        .remove("pb")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_table = families
+        .remove("table")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_element = families
+        .remove("element")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+    row.sat_encoding_alldifferent = families
+        .remove("alldifferent")
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
 }
-
-pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
-    let family = global_args.solver;
-    let timeout_ms = global_args
-        .solver_timeout
-        .map(|dur| Duration::from(dur).as_millis())
-        .map(|timeout_ms| u64::try_from(timeout_ms).expect("Timeout too large"));
-
-    match family {
-        SolverFamily::Minion => Solver::new(Minion::with_value_order(global_args.minion_valorder)),
-        SolverFamily::Sat(_) => Solver::new(Sat::default()),
-        SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(timeout_ms, theory_cfg)),
-    }
-}
-
-pub(crate) fn parse(
-    global_args: &GlobalArgs,
-    context: Arc<RwLock<Context<'static>>>,
-    file_path: &str,
+/// Parse an Essence or simplified-JSON parameter file.
+pub(crate) fn parse_param(
+    pipeline: &Pipeline,
+    file_path: &Path,
+    problem_model: &Model,
 ) -> anyhow::Result<Model> {
-    tracing::info!(target: "file", "Input file: {}", file_path);
-
-    match global_args.parser {
-        conjure_cp::settings::Parser::TreeSitter => {
-            parse_essence_file_native(file_path, context.clone()).map_err(|e| e.into())
-        }
-        conjure_cp::settings::Parser::ViaConjure => parse_with_conjure(file_path, context.clone()),
+    if file_path
+        .extension()
+        .is_some_and(|extension| extension == "json")
+    {
+        tracing::info!(target: "conjure::stage", path = %file_path.display(), "parsing parameter file");
+        let text = std::fs::read_to_string(file_path)?;
+        let given_domains = domains_from_model(problem_model);
+        let params = params_from_simplified_json_str(&text, &given_domains)?;
+        return Ok(param_model_from_assignments(
+            params,
+            &given_domains,
+            pipeline.context(),
+        ));
     }
-}
-
-pub(crate) fn parse_with_conjure(
-    input_file: &str,
-    context: Arc<RwLock<Context<'static>>>,
-) -> anyhow::Result<Model> {
-    conjure_executable().map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
-
-    let mut cmd = std::process::Command::new("conjure");
-    let output = cmd
-        .arg("pretty")
-        .arg("--output-format=astjson")
-        .arg(input_file)
-        .output()?;
-
-    if !output.status.success() {
-        println!("Parsing error: {}", String::from_utf8(output.stderr)?);
-    }
-
-    let astjson = String::from_utf8(output.stdout)?;
-
-    if cfg!(feature = "extra-rule-checks") {
-        tracing::info!("extra-rule-checks: enabled");
-    } else {
-        tracing::info!("extra-rule-checks: disabled");
-    }
-
-    model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
-}
-
-pub(crate) fn rewrite(
-    model: Model,
-    global_args: &GlobalArgs,
-    context: Arc<RwLock<Context<'static>>>,
-) -> anyhow::Result<Model> {
-    tracing::info!("Initial model: \n{}\n", model);
-
-    let rewriter = global_args.rewriter;
-    set_current_rewriter(rewriter);
-
-    let comprehension_expander = global_args.comprehension_expander;
-    set_comprehension_expander(comprehension_expander);
-    tracing::info!("Comprehension expander: {}", comprehension_expander);
-
-    let rule_sets = context.read().unwrap().rule_sets.clone();
-
-    let new_model = match rewriter {
-        Rewriter::Morph(config) => {
-            tracing::info!("Rewriting the model using the morph rewriter ({})", config);
-            rewrite_morph(
-                model,
-                &rule_sets,
-                global_args.check_equally_applicable_rules,
-                config,
-            )
-        }
-        Rewriter::Naive => {
-            tracing::info!("Rewriting the model using the default / naive rewriter");
-            rewrite_naive(
-                &model,
-                &rule_sets,
-                global_args.check_equally_applicable_rules,
-            )?
-        }
-    };
-
-    tracing::info!("Rewritten model: \n{}\n", new_model);
-    Ok(new_model)
+    pipeline.parse_file(file_path)
 }
 
 fn run_solver(
-    solver: Solver,
+    pipeline: &Pipeline,
     global_args: &GlobalArgs,
     cmd_args: &Args,
     model: Model,
-) -> anyhow::Result<()> {
-    let out_file: Option<File> = match &cmd_args.output {
-        None => None,
-        Some(pth) => Some(
-            File::options()
-                .create(true)
-                .truncate(true)
-                .write(true)
-                .open(pth)?,
-        ),
-    };
-
-    let solutions = get_solutions(
-        solver,
+) -> anyhow::Result<(f64, f64, f64)> {
+    let (solutions, measured) = pipeline.solve_with_timings(
         model,
-        cmd_args.number_of_solutions.as_solver_limit(),
-        &global_args.save_solver_input_file,
-        global_args.rule_trace_cdp,
+        &SolutionOptions {
+            number_of_solutions: cmd_args.number_of_solutions.as_solver_limit(),
+            keep_intermediate_solutions: cmd_args.keep_intermediate_solutions,
+            solver_input_file: global_args.save_solver_input_file.clone(),
+            rule_trace_cdp: global_args.rule_trace_cdp,
+        },
     )?;
-    tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
-    let solutions_json = solutions_to_json(&solutions);
-    let solutions_str = to_string_pretty(&solutions_json)?;
-    match out_file {
-        None => {
-            println!("Solutions:");
-            println!("{solutions_str}");
+    let output_started_at = Instant::now();
+
+    tracing::debug!(
+        solutions = %solutions_to_json(&solutions),
+        "solver solutions"
+    );
+
+    write_solutions(&solutions, cmd_args)?;
+
+    Ok((
+        measured.backend_time_s,
+        measured.search_time_s,
+        measured.solution_processing_time_s + output_started_at.elapsed().as_secs_f64(),
+    ))
+}
+
+fn write_solutions(
+    solutions: &[std::collections::BTreeMap<conjure_cp::ast::Name, conjure_cp::ast::Literal>],
+    cmd_args: &Args,
+) -> anyhow::Result<()> {
+    if cmd_args.solutions_in_one_file {
+        let body = match cmd_args.output_format {
+            OutputFormat::Essence => solutions_to_essence(solutions),
+            OutputFormat::Json => solutions_to_simplified_json_string(solutions)?,
+        };
+        match &cmd_args.output {
+            None => print!("{body}"),
+            Some(path) => {
+                std::fs::write(path, body.as_bytes())?;
+                println!("Solutions saved to {:?}", path.canonicalize()?);
+            }
         }
-        Some(mut outf) => {
-            outf.write_all(solutions_str.as_bytes())?;
-            println!(
-                "Solutions saved to {:?}",
-                &cmd_args.output.clone().unwrap().canonicalize()?
-            )
+        return Ok(());
+    }
+
+    // One file / record per solution.
+    for (index, solution) in solutions.iter().enumerate() {
+        let body = match cmd_args.output_format {
+            OutputFormat::Essence => solutions_to_essence(std::slice::from_ref(solution)),
+            OutputFormat::Json => {
+                let value = solution_to_simplified_json(solution)?;
+                format!("{}\n", serde_json::to_string_pretty(&value)?)
+            }
+        };
+        match &cmd_args.output {
+            None => print!("{body}"),
+            Some(path) => {
+                let file_path = per_solution_output_path(path, index + 1, cmd_args.output_format);
+                std::fs::write(&file_path, body.as_bytes())?;
+                println!("Solution saved to {:?}", file_path.canonicalize()?);
+            }
         }
     }
     Ok(())
+}
+
+fn per_solution_output_path(base: &Path, index: usize, format: OutputFormat) -> PathBuf {
+    let stem = base
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("solution");
+    let parent = base.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let extension = match format {
+        OutputFormat::Essence => "solution",
+        OutputFormat::Json => "solution.json",
+    };
+    parent.join(format!("{stem}-{index:06}.{extension}"))
 }

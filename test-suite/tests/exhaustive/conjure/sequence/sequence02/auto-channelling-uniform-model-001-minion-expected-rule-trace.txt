@@ -1,0 +1,23 @@
+Model before rewriting:
+
+find x: sequence (maxSize 2) of int(1..3)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#packed_1: int(0..26)
+
+--
+
+Final model:
+
+find x: sequence (maxSize 2) of int(1..3)
+find x#packed_1: int(0..26)
+
+such that
+
+true
+

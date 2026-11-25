@@ -1,0 +1,36 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+
+such that
+
+and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])
+
+--
+
+and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])
+   ~~> select_asserted_boolean ([("SAT", 18000)])
+
+new SAT encoding decisions:
+  assert(and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])) using tseitin
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+assert(and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])) using tseitin
+

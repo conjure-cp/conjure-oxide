@@ -26,7 +26,7 @@ A high level overview is:
 ### Doc Coverage
 **Text:** This prints a doc coverage table for all crates in the repo:
 ```sh
-RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspace --no-deps 
+RUSTDOCFLAGS='-Z unstable-options --coverage' cargo +nightly doc --workspace --no-deps
 ```
 
 
@@ -34,7 +34,7 @@ RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspac
 Although we don't use it yet, we can get doc coverage information as JSON. This will be useful for prettier and more useful output:
 
 ```sh
-RUSTDOCFLAGS='-Z unstable-options --show-coverage --output-format json' cargo +nightly doc --workspace --no-deps 
+RUSTDOCFLAGS='-Z unstable-options --coverage --output-format json' cargo +nightly doc --workspace --no-deps
 ```
 
 **Reading**

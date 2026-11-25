@@ -1,0 +1,57 @@
+Model before rewriting:
+
+find a: matrix indexed by [bool] of bool
+
+such that
+
+a[true] = !(a[false])
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#array_1: matrix indexed by [bool] of bool
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1[true]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1,[true])
+
+--
+
+a#array_1[false]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1,[false])
+
+--
+
+Final model:
+
+find a: matrix indexed by [bool] of bool
+find a#array_1: matrix indexed by [bool] of bool
+
+such that
+
+SafeIndex(a#array_1,[true]) = !(SafeIndex(a#array_1,[false]))
+

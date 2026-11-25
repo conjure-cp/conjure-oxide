@@ -1,0 +1,33 @@
+Model before rewriting:
+
+find x: int(1, 10, 20, 30, 40, 50)
+
+such that
+
+x > 10
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(1, 10, 20, 30, 40, 50)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+Final model:
+
+find x: int(1, 10, 20, 30, 40, 50)
+find x#bv_1: int(1, 10, 20, 30, 40, 50)
+
+such that
+
+x#bv_1 > 10
+

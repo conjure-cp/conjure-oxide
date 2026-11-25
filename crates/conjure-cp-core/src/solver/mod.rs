@@ -28,7 +28,7 @@
 //! use std::sync::{Arc,Mutex};
 //! use conjure_cp_core::parse::get_example_model;
 //! use conjure_cp_core::rule_engine::resolve_rule_sets;
-//! use conjure_cp_core::rule_engine::rewrite_naive;
+//! use conjure_cp_core::rule_engine::rewrite_model;
 //! use conjure_cp_core::solver::{adaptors, Solver, SolverAdaptor};
 //! use conjure_cp_core::solver::states::ModelLoaded;
 //! use conjure_cp_core::Model;
@@ -386,6 +386,10 @@ impl Solver<ExecutionSuccess> {
         self.state.stats.clone()
     }
 
+    pub fn search_status(&self) -> SearchStatus {
+        self.state.status
+    }
+
     // Saves this solvers stats to the global context as a "solver run"
     pub fn save_stats_to_context(&self) {
         #[allow(clippy::unwrap_used)]
@@ -439,6 +443,7 @@ pub struct SolveSuccess {
     status: SearchStatus,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SearchStatus {
     /// The search was complete (i.e. the solver found all possible solutions)
     Complete(SearchComplete),
@@ -447,6 +452,7 @@ pub enum SearchStatus {
 }
 
 #[non_exhaustive]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SearchIncomplete {
     Timeout,
     UserTerminated,
@@ -456,6 +462,7 @@ pub enum SearchIncomplete {
 }
 
 #[non_exhaustive]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SearchComplete {
     HasSolutions,
     NoSolutions,

@@ -1,11 +1,13 @@
 use std::borrow::Borrow;
 use uniplate::Uniplate;
 
+use crate::ast::enumerated::EnumVariant;
+
 use super::{
     AbstractLiteral, DeclarationPtr, DomainPtr, Expression, Literal, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
-    records::FieldValue,
+    records::Field,
 };
 use derivative::Derivative;
 use parking_lot::MappedRwLockReadGuard;
@@ -19,7 +21,7 @@ use serde::{Deserialize, Serialize};
 #[biplate(to=Literal)]
 #[biplate(to=Expression)]
 #[biplate(to=AbstractLiteral<Literal>)]
-#[biplate(to=FieldValue<Literal>)]
+#[biplate(to=Field<Literal>)]
 #[biplate(to=DeclarationPtr)]
 #[biplate(to=Name)]
 #[biplate(to=super::Reference)]
@@ -268,6 +270,32 @@ impl TryFrom<Atom> for bool {
 }
 
 impl TryFrom<&Atom> for bool {
+    type Error = &'static str;
+
+    fn try_from(value: &Atom) -> Result<Self, Self::Error> {
+        match value {
+            Atom::Literal(lit) => lit.try_into(),
+            Atom::Reference(reference) => {
+                let lit = reference
+                    .resolve_constant()
+                    .ok_or("Cannot convert non-constant reference atom to literal")?;
+                lit.try_into()
+                    .map_err(|_| "Cannot convert non-bool reference atom to bool")
+            }
+        }
+    }
+}
+
+impl TryFrom<Atom> for EnumVariant {
+    type Error = &'static str;
+
+    fn try_from(value: Atom) -> Result<Self, Self::Error> {
+        let lit: Literal = value.try_into()?;
+        lit.try_into()
+    }
+}
+
+impl TryFrom<&Atom> for EnumVariant {
     type Error = &'static str;
 
     fn try_from(value: &Atom) -> Result<Self, Self::Error> {

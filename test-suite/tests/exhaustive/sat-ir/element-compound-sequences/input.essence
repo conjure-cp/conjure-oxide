@@ -1,0 +1,9 @@
+language Essence 1.3
+find m : matrix indexed by [int(-2,3)] of sequence (maxSize 1) of bool
+find i : int(-2,3,4)
+find selected, masked, caught, exceptional : bool
+such that
+  selected <-> (m[i] = sequence(false)),
+  masked <-> (i = 4 \/ m[i] = sequence(false)),
+  caught <-> (catchUndef(m[i], sequence(false)) = sequence(false)),
+  exceptional <-> alldifferent_except([sequence(false),sequence(false)], m[i])

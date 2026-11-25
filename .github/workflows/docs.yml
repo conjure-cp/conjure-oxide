@@ -17,6 +17,9 @@ on:
     - .github/workflows/docs.yml
   workflow_dispatch:
 
+concurrency:
+  group: conjure-oxide-reports-deploy
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -30,17 +33,18 @@ jobs:
     steps:
     - name: Checkout PR
       if: ${{ github.event_name == 'pull_request_target' }}
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         # Avoid checkout's default auth header so deploy uses the app token.
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         ref: ${{ github.event.pull_request.head.sha }}
+        allow-unsafe-pr-checkout: true
         fetch-depth: 0
         persist-credentials: false
 
     - name: Checkout repository
       if: ${{ github.event_name != 'pull_request_target' }}
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         # Avoid checkout's default auth header so deploy uses the app token.
         fetch-depth: 0

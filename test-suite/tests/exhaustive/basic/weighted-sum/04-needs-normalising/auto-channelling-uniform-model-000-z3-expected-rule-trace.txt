@@ -1,0 +1,133 @@
+Model before rewriting:
+
+find x: int(2..5)
+find y: int(2..5)
+find z: int(2..5)
+
+such that
+
+sum([sum([sum([sum([product([5,x;int(1..)]),product([product([product([y,3;int(1..)]),1;int(1..)]),3;int(1..)]);int(1..)]),-(product([3,x;int(1..)]));int(1..)]),product([-1,y;int(1..)]);int(1..)]),product([y,-5;int(1..)]);int(1..)]) < 11
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#bv_1: int(2..5)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(2..5)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+sum([sum([sum([sum([product([5,x;int(1..)]),product([product([product([y,3;int(1..)]),1;int(1..)]),3;int(1..)]);int(1..)]),-(product([3,x;int(1..)]));int(1..)]),product([-1,y;int(1..)]);int(1..)]),product([y,-5;int(1..)]);int(1..)]) < 11
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+sum([sum([sum([sum([product([5,x;int(1..)]),product([product([product([y,3;int(1..)]),1;int(1..)]),3;int(1..)]);int(1..)]),-(product([3,x;int(1..)]));int(1..)]),product([-1,y;int(1..)]);int(1..)]),product([y,-5;int(1..)]);int(1..)]) < 11
+new variables:
+  find z#bv_1: int(2..5)
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+sum([sum([sum([sum([product([5,x#bv_1;int(1..)]),product([product([product([y#bv_1,3;int(1..)]),1;int(1..)]),3;int(1..)]);int(1..)]),-(product([3,x#bv_1;int(1..)]));int(1..)]),product([-1,y#bv_1;int(1..)]);int(1..)]),product([y#bv_1,-5;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([5,x#bv_1;int(1..)]),product([product([product([y#bv_1,3;int(1..)]),1;int(1..)]),3;int(1..)]),-(product([3,x#bv_1;int(1..)])),product([-1,y#bv_1;int(1..)]),product([y#bv_1,-5;int(1..)]);int(1..)])
+
+--
+
+product([product([product([y#bv_1,3;int(1..)]),1;int(1..)]),3;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([y#bv_1,3,1,3;int(1..)])
+
+--
+
+product([y#bv_1,9;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([9,y#bv_1;int(1..)])
+
+--
+
+product([y#bv_1,-5;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([-5,y#bv_1;int(1..)])
+
+--
+
+-(product([3,x#bv_1;int(1..)]))
+   ~~> simplify_negation_of_product ([("Base", 8400)])
+product([3,x#bv_1,-1;int(1..)])
+
+--
+
+product([x#bv_1,-3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([-3,x#bv_1;int(1..)])
+
+--
+
+Final model:
+
+find x: int(2..5)
+find y: int(2..5)
+find z: int(2..5)
+find y#bv_1: int(2..5)
+find x#bv_1: int(2..5)
+find z#bv_1: int(2..5)
+
+such that
+
+sum([product([5,x#bv_1;int(1..)]),product([9,y#bv_1;int(1..)]),product([-3,x#bv_1;int(1..)]),product([-1,y#bv_1;int(1..)]),product([-5,y#bv_1;int(1..)]);int(1..)]) < 11
+

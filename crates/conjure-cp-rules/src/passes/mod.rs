@@ -1,0 +1,13 @@
+mod attribute_as_constraint;
+mod attribute_as_constraint_fallback;
+mod base;
+mod bubble;
+mod catch_undef;
+pub(crate) mod comprehensions;
+mod element_id;
+mod lex;
+mod normalisers;
+pub(crate) mod representation;
+mod representation_cost;
+mod table;
+mod variables_in_domains;

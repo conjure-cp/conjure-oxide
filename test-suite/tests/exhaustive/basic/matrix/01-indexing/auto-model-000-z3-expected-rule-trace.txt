@@ -1,0 +1,137 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..5)] of bool
+
+such that
+
+a[1] = true,
+a[2] = true,
+a[3] = true,
+a[4] = true,
+a[5] = !(a[4])
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#array_1: matrix indexed by [int(1..5)] of bool
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1,[1])
+
+--
+
+a#array_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1,[2])
+
+--
+
+a#array_1[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1,[3])
+
+--
+
+a#array_1[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1,[4])
+
+--
+
+a#array_1[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1,[5])
+
+--
+
+a#array_1[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1,[4])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..5)] of bool
+find a#array_1: matrix indexed by [int(1..5)] of bool
+
+such that
+
+SafeIndex(a#array_1,[1]) = true,
+SafeIndex(a#array_1,[2]) = true,
+SafeIndex(a#array_1,[3]) = true,
+SafeIndex(a#array_1,[4]) = true,
+SafeIndex(a#array_1,[5]) = !(SafeIndex(a#array_1,[4]))
+

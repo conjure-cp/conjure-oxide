@@ -1,0 +1,1326 @@
+Model before rewriting:
+
+find x: int(0..1000)
+find y: int(7..8)
+find z: bool
+
+such that
+
+x = sum([ 1 | i : set (minSize 1, maxSize 2) of tuple (int(7..9), bool), (y,z) in i ])
+
+--
+
+[ 1 | i : set (minSize 1, maxSize 2) of tuple (int(7..9), bool), (y,z) in i ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt((y,z) in {(7,false)}),1;int(1..)]),product([toInt((y,z) in {(7,true)}),1;int(1..)]),product([toInt((y,z) in {(8,false)}),1;int(1..)]),product([toInt((y,z) in {(8,true)}),1;int(1..)]),product([toInt((y,z) in {(9,false)}),1;int(1..)]),product([toInt((y,z) in {(9,true)}),1;int(1..)]),product([toInt((y,z) in {(7,false),(7,true)}),1;int(1..)]),product([toInt((y,z) in {(7,false),(8,false)}),1;int(1..)]),product([toInt((y,z) in {(7,false),(8,true)}),1;int(1..)]),product([toInt((y,z) in {(7,false),(9,false)}),1;int(1..)]),product([toInt((y,z) in {(7,false),(9,true)}),1;int(1..)]),product([toInt((y,z) in {(7,true),(8,false)}),1;int(1..)]),product([toInt((y,z) in {(7,true),(8,true)}),1;int(1..)]),product([toInt((y,z) in {(7,true),(9,false)}),1;int(1..)]),product([toInt((y,z) in {(7,true),(9,true)}),1;int(1..)]),product([toInt((y,z) in {(8,false),(8,true)}),1;int(1..)]),product([toInt((y,z) in {(8,false),(9,false)}),1;int(1..)]),product([toInt((y,z) in {(8,false),(9,true)}),1;int(1..)]),product([toInt((y,z) in {(8,true),(9,false)}),1;int(1..)]),product([toInt((y,z) in {(8,true),(9,true)}),1;int(1..)]),product([toInt((y,z) in {(9,false),(9,true)}),1;int(1..)]);int(1..)]
+
+--
+
+product([toInt((y,z) in {(7,false)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(7,false)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(7,true)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(7,true)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(8,false)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(8,false)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(8,true)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(8,true)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(9,false)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(9,false)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(9,true)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(9,true)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(7,false),(7,true)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(7,false),(7,true)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(7,false),(8,false)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(7,false),(8,false)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(7,false),(8,true)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(7,false),(8,true)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(7,false),(9,false)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(7,false),(9,false)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(7,false),(9,true)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(7,false),(9,true)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(7,true),(8,false)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(7,true),(8,false)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(7,true),(8,true)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(7,true),(8,true)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(7,true),(9,false)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(7,true),(9,false)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(7,true),(9,true)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(7,true),(9,true)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(8,false),(8,true)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(8,false),(8,true)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(8,false),(9,false)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(8,false),(9,false)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(8,false),(9,true)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(8,false),(9,true)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(8,true),(9,false)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(8,true),(9,false)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(8,true),(9,true)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(8,true),(9,true)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(9,false),(9,true)}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt((y,z) in {(9,false),(9,true)});int(1..)])
+
+--
+
+product([toInt((y,z) in {(7,false)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(7,false)})
+
+--
+
+product([toInt((y,z) in {(7,true)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(7,true)})
+
+--
+
+product([toInt((y,z) in {(8,false)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(8,false)})
+
+--
+
+product([toInt((y,z) in {(8,true)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(8,true)})
+
+--
+
+product([toInt((y,z) in {(9,false)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(9,false)})
+
+--
+
+product([toInt((y,z) in {(9,true)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(9,true)})
+
+--
+
+product([toInt((y,z) in {(7,false),(7,true)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(7,false),(7,true)})
+
+--
+
+product([toInt((y,z) in {(7,false),(8,false)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(7,false),(8,false)})
+
+--
+
+product([toInt((y,z) in {(7,false),(8,true)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(7,false),(8,true)})
+
+--
+
+product([toInt((y,z) in {(7,false),(9,false)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(7,false),(9,false)})
+
+--
+
+product([toInt((y,z) in {(7,false),(9,true)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(7,false),(9,true)})
+
+--
+
+product([toInt((y,z) in {(7,true),(8,false)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(7,true),(8,false)})
+
+--
+
+product([toInt((y,z) in {(7,true),(8,true)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(7,true),(8,true)})
+
+--
+
+product([toInt((y,z) in {(7,true),(9,false)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(7,true),(9,false)})
+
+--
+
+product([toInt((y,z) in {(7,true),(9,true)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(7,true),(9,true)})
+
+--
+
+product([toInt((y,z) in {(8,false),(8,true)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(8,false),(8,true)})
+
+--
+
+product([toInt((y,z) in {(8,false),(9,false)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(8,false),(9,false)})
+
+--
+
+product([toInt((y,z) in {(8,false),(9,true)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(8,false),(9,true)})
+
+--
+
+product([toInt((y,z) in {(8,true),(9,false)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(8,true),(9,false)})
+
+--
+
+product([toInt((y,z) in {(8,true),(9,true)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(8,true),(9,true)})
+
+--
+
+product([toInt((y,z) in {(9,false),(9,true)});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt((y,z) in {(9,false),(9,true)})
+
+--
+
+(y,z) in {(7,true)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (7,true);int(1..)])
+
+--
+
+or([(y,z) = (7,true);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+(y,z) = (7,true)
+
+--
+
+(y,z) in {(8,true)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (8,true);int(1..)])
+
+--
+
+or([(y,z) = (8,true);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+(y,z) = (8,true)
+
+--
+
+(y,z) in {(9,true)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (9,true);int(1..)])
+
+--
+
+or([(y,z) = (9,true);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+(y,z) = (9,true)
+
+--
+
+(y,z) in {(7,false),(8,false)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (7,false),(y,z) = (8,false);int(1..)])
+
+--
+
+(y,z) in {(7,false),(8,true)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (7,false),(y,z) = (8,true);int(1..)])
+
+--
+
+(y,z) in {(7,false),(9,false)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (7,false),(y,z) = (9,false);int(1..)])
+
+--
+
+(y,z) in {(7,false),(9,true)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (7,false),(y,z) = (9,true);int(1..)])
+
+--
+
+(y,z) in {(7,true),(8,false)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (7,true),(y,z) = (8,false);int(1..)])
+
+--
+
+(y,z) in {(7,true),(8,true)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (7,true),(y,z) = (8,true);int(1..)])
+
+--
+
+(y,z) in {(7,true),(9,false)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (7,true),(y,z) = (9,false);int(1..)])
+
+--
+
+(y,z) in {(7,true),(9,true)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (7,true),(y,z) = (9,true);int(1..)])
+
+--
+
+(y,z) in {(8,false),(8,true)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (8,false),(y,z) = (8,true);int(1..)])
+
+--
+
+(y,z) in {(8,false),(9,false)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (8,false),(y,z) = (9,false);int(1..)])
+
+--
+
+(y,z) in {(8,false),(9,true)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (8,false),(y,z) = (9,true);int(1..)])
+
+--
+
+(y,z) in {(8,true),(9,false)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (8,true),(y,z) = (9,false);int(1..)])
+
+--
+
+(y,z) in {(8,true),(9,true)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (8,true),(y,z) = (9,true);int(1..)])
+
+--
+
+(y,z) in {(9,false),(9,true)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (9,false),(y,z) = (9,true);int(1..)])
+
+--
+
+(y,z) in {(7,false)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (7,false);int(1..)])
+
+--
+
+or([(y,z) = (7,false);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+(y,z) = (7,false)
+
+--
+
+(y,z) in {(8,false)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (8,false);int(1..)])
+
+--
+
+or([(y,z) = (8,false);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+(y,z) = (8,false)
+
+--
+
+(y,z) in {(9,false)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (9,false);int(1..)])
+
+--
+
+or([(y,z) = (9,false);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+(y,z) = (9,false)
+
+--
+
+(y,z) in {(7,false),(7,true)}
+   ~~> membership_in_set_literal ([("Base", 8700)])
+or([(y,z) = (7,false),(y,z) = (7,true);int(1..)])
+
+--
+
+(y,z) = (7,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 7,z = false;int(1..)])
+
+--
+
+(y,z) = (7,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 7,z = true;int(1..)])
+
+--
+
+(y,z) = (8,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 8,z = false;int(1..)])
+
+--
+
+(y,z) = (8,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 8,z = true;int(1..)])
+
+--
+
+(y,z) = (9,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 9,z = false;int(1..)])
+
+--
+
+(y,z) = (9,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 9,z = true;int(1..)])
+
+--
+
+(y,z) = (7,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 7,z = false;int(1..)])
+
+--
+
+(y,z) = (8,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 8,z = false;int(1..)])
+
+--
+
+(y,z) = (7,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 7,z = false;int(1..)])
+
+--
+
+(y,z) = (8,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 8,z = true;int(1..)])
+
+--
+
+(y,z) = (7,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 7,z = false;int(1..)])
+
+--
+
+(y,z) = (9,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 9,z = false;int(1..)])
+
+--
+
+(y,z) = (7,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 7,z = false;int(1..)])
+
+--
+
+(y,z) = (9,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 9,z = true;int(1..)])
+
+--
+
+(y,z) = (7,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 7,z = true;int(1..)])
+
+--
+
+(y,z) = (8,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 8,z = false;int(1..)])
+
+--
+
+(y,z) = (7,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 7,z = true;int(1..)])
+
+--
+
+(y,z) = (8,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 8,z = true;int(1..)])
+
+--
+
+(y,z) = (7,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 7,z = true;int(1..)])
+
+--
+
+(y,z) = (9,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 9,z = false;int(1..)])
+
+--
+
+(y,z) = (7,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 7,z = true;int(1..)])
+
+--
+
+(y,z) = (9,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 9,z = true;int(1..)])
+
+--
+
+(y,z) = (8,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 8,z = false;int(1..)])
+
+--
+
+(y,z) = (8,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 8,z = true;int(1..)])
+
+--
+
+(y,z) = (8,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 8,z = false;int(1..)])
+
+--
+
+(y,z) = (9,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 9,z = false;int(1..)])
+
+--
+
+(y,z) = (8,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 8,z = false;int(1..)])
+
+--
+
+(y,z) = (9,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 9,z = true;int(1..)])
+
+--
+
+(y,z) = (8,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 8,z = true;int(1..)])
+
+--
+
+(y,z) = (9,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 9,z = false;int(1..)])
+
+--
+
+(y,z) = (8,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 8,z = true;int(1..)])
+
+--
+
+(y,z) = (9,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 9,z = true;int(1..)])
+
+--
+
+(y,z) = (9,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 9,z = false;int(1..)])
+
+--
+
+(y,z) = (9,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 9,z = true;int(1..)])
+
+--
+
+(y,z) = (7,false)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 7,z = false;int(1..)])
+
+--
+
+(y,z) = (7,true)
+   ~~> tuple_literal_eq_literal ([("Base", 8700)])
+and([y = 7,z = true;int(1..)])
+
+--
+
+or([and([y = 7,z = false;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([y = 7,z = false;int(1..)])
+
+--
+
+or([and([y = 7,z = false;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([y = 7,z = false;int(1..)])
+
+--
+
+or([and([y = 7,z;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([y = 7,z;int(1..)])
+
+--
+
+or([and([y = 7,z;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([y = 7,z;int(1..)])
+
+--
+
+or([and([y = 8,z = false;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([y = 8,z = false;int(1..)])
+
+--
+
+or([and([y = 8,z = false;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([y = 8,z = false;int(1..)])
+
+--
+
+or([and([y = 8,z;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([y = 8,z;int(1..)])
+
+--
+
+or([and([y = 8,z;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([y = 8,z;int(1..)])
+
+--
+
+x = sum([toInt(and([y = 7,z = false;int(1..)])),toInt(and([y = 7,z;int(1..)])),toInt(and([y = 8,z = false;int(1..)])),toInt(and([y = 8,z;int(1..)])),toInt(or([and([y = 7,z = false;int(1..)]),and([y = 7,z;int(1..)]);int(1..)])),toInt(or([and([y = 7,z = false;int(1..)]),and([y = 8,z = false;int(1..)]);int(1..)])),toInt(or([and([y = 7,z = false;int(1..)]),and([y = 8,z;int(1..)]);int(1..)])),toInt(and([y = 7,z = false;int(1..)])),toInt(and([y = 7,z = false;int(1..)])),toInt(or([and([y = 7,z;int(1..)]),and([y = 8,z = false;int(1..)]);int(1..)])),toInt(or([and([y = 7,z;int(1..)]),and([y = 8,z;int(1..)]);int(1..)])),toInt(and([y = 7,z;int(1..)])),toInt(and([y = 7,z;int(1..)])),toInt(or([and([y = 8,z = false;int(1..)]),and([y = 8,z;int(1..)]);int(1..)])),toInt(and([y = 8,z = false;int(1..)])),toInt(and([y = 8,z = false;int(1..)])),toInt(and([y = 8,z;int(1..)])),toInt(and([y = 8,z;int(1..)]));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__0, __1, __10, __11, __12, __13, __14, __15, __16, __17, __2, __3, __4, __5, __6, __7, __8, __9], x),SumGeq([__0, __1, __10, __11, __12, __13, __14, __15, __16, __17, __2, __3, __4, __5, __6, __7, __8, __9], x);int(1..)])
+new variables:
+  findAux __0: int(0..1)
+  findAux __1: int(0..1)
+  findAux __2: int(0..1)
+  findAux __3: int(0..1)
+  findAux __4: int(0..1)
+  findAux __5: int(0..1)
+  findAux __6: int(0..1)
+  findAux __7: int(0..1)
+  findAux __8: int(0..1)
+  findAux __9: int(0..1)
+  findAux __10: int(0..1)
+  findAux __11: int(0..1)
+  findAux __12: int(0..1)
+  findAux __13: int(0..1)
+  findAux __14: int(0..1)
+  findAux __15: int(0..1)
+  findAux __16: int(0..1)
+  findAux __17: int(0..1)
+new constraints:
+  __0 =aux toInt(and([y = 7,z = false;int(1..)]))
+  __1 =aux toInt(and([y = 7,z;int(1..)]))
+  __2 =aux toInt(and([y = 8,z = false;int(1..)]))
+  __3 =aux toInt(and([y = 8,z;int(1..)]))
+  __4 =aux toInt(or([and([y = 7,z = false;int(1..)]),and([y = 7,z;int(1..)]);int(1..)]))
+  __5 =aux toInt(or([and([y = 7,z = false;int(1..)]),and([y = 8,z = false;int(1..)]);int(1..)]))
+  __6 =aux toInt(or([and([y = 7,z = false;int(1..)]),and([y = 8,z;int(1..)]);int(1..)]))
+  __7 =aux toInt(and([y = 7,z = false;int(1..)]))
+  __8 =aux toInt(and([y = 7,z = false;int(1..)]))
+  __9 =aux toInt(or([and([y = 7,z;int(1..)]),and([y = 8,z = false;int(1..)]);int(1..)]))
+  __10 =aux toInt(or([and([y = 7,z;int(1..)]),and([y = 8,z;int(1..)]);int(1..)]))
+  __11 =aux toInt(and([y = 7,z;int(1..)]))
+  __12 =aux toInt(and([y = 7,z;int(1..)]))
+  __13 =aux toInt(or([and([y = 8,z = false;int(1..)]),and([y = 8,z;int(1..)]);int(1..)]))
+  __14 =aux toInt(and([y = 8,z = false;int(1..)]))
+  __15 =aux toInt(and([y = 8,z = false;int(1..)]))
+  __16 =aux toInt(and([y = 8,z;int(1..)]))
+  __17 =aux toInt(and([y = 8,z;int(1..)]))
+
+--
+
+y = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,7)
+
+--
+
+y = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,8)
+
+--
+
+z = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,false)
+
+--
+
+y = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,8)
+
+--
+
+y = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,7)
+
+--
+
+z = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,false)
+
+--
+
+y = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,7)
+
+--
+
+z = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,false)
+
+--
+
+y = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,7)
+
+--
+
+y = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,7)
+
+--
+
+y = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,8)
+
+--
+
+z = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,false)
+
+--
+
+y = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,8)
+
+--
+
+z = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,false)
+
+--
+
+y = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,8)
+
+--
+
+y = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,8)
+
+--
+
+y = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,7)
+
+--
+
+z = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,false)
+
+--
+
+y = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,7)
+
+--
+
+z = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,false)
+
+--
+
+y = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,7)
+
+--
+
+y = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,7)
+
+--
+
+z = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,false)
+
+--
+
+y = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,8)
+
+--
+
+z = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,false)
+
+--
+
+y = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,7)
+
+--
+
+z = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,false)
+
+--
+
+y = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,8)
+
+--
+
+y = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,7)
+
+--
+
+y = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,8)
+
+--
+
+z = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,false)
+
+--
+
+y = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,7)
+
+--
+
+y = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,8)
+
+--
+
+y = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,8)
+
+--
+
+z = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,false)
+
+--
+
+y = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,8)
+
+--
+
+toInt(and([WatchedLiteral(y,7),z;int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__18)
+new variables:
+  findAux __18: bool
+new constraints:
+  __18 =aux and([WatchedLiteral(y,7),z;int(1..)])
+
+--
+
+__18 =aux and([WatchedLiteral(y,7),z;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([WatchedLiteral(y,7),z;int(1..)]), __18)
+
+--
+
+toInt(and([WatchedLiteral(y,8),z;int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__19)
+new variables:
+  findAux __19: bool
+new constraints:
+  __19 =aux and([WatchedLiteral(y,8),z;int(1..)])
+
+--
+
+__19 =aux and([WatchedLiteral(y,8),z;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([WatchedLiteral(y,8),z;int(1..)]), __19)
+
+--
+
+toInt(and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__20)
+new variables:
+  findAux __20: bool
+new constraints:
+  __20 =aux and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)])
+
+--
+
+__20 =aux and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]), __20)
+
+--
+
+toInt(and([WatchedLiteral(y,7),z;int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__21)
+new variables:
+  findAux __21: bool
+new constraints:
+  __21 =aux and([WatchedLiteral(y,7),z;int(1..)])
+
+--
+
+__21 =aux and([WatchedLiteral(y,7),z;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([WatchedLiteral(y,7),z;int(1..)]), __21)
+
+--
+
+toInt(and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__22)
+new variables:
+  findAux __22: bool
+new constraints:
+  __22 =aux and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)])
+
+--
+
+__22 =aux and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]), __22)
+
+--
+
+toInt(and([WatchedLiteral(y,8),z;int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__23)
+new variables:
+  findAux __23: bool
+new constraints:
+  __23 =aux and([WatchedLiteral(y,8),z;int(1..)])
+
+--
+
+__23 =aux and([WatchedLiteral(y,8),z;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([WatchedLiteral(y,8),z;int(1..)]), __23)
+
+--
+
+toInt(or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__24)
+new variables:
+  findAux __24: bool
+new constraints:
+  __24 =aux or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]);int(1..)])
+
+--
+
+__24 =aux or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]);int(1..)]), __24)
+
+--
+
+toInt(or([and([WatchedLiteral(y,7),z;int(1..)]),and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__25)
+new variables:
+  findAux __25: bool
+new constraints:
+  __25 =aux or([and([WatchedLiteral(y,7),z;int(1..)]),and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]);int(1..)])
+
+--
+
+__25 =aux or([and([WatchedLiteral(y,7),z;int(1..)]),and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([and([WatchedLiteral(y,7),z;int(1..)]),and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]);int(1..)]), __25)
+
+--
+
+toInt(or([and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__26)
+new variables:
+  findAux __26: bool
+new constraints:
+  __26 =aux or([and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)])
+
+--
+
+__26 =aux or([and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)]), __26)
+
+--
+
+toInt(and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__27)
+new variables:
+  findAux __27: bool
+new constraints:
+  __27 =aux and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)])
+
+--
+
+__27 =aux and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]), __27)
+
+--
+
+toInt(and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__28)
+new variables:
+  findAux __28: bool
+new constraints:
+  __28 =aux and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)])
+
+--
+
+__28 =aux and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]), __28)
+
+--
+
+toInt(and([WatchedLiteral(y,7),z;int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__29)
+new variables:
+  findAux __29: bool
+new constraints:
+  __29 =aux and([WatchedLiteral(y,7),z;int(1..)])
+
+--
+
+__29 =aux and([WatchedLiteral(y,7),z;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([WatchedLiteral(y,7),z;int(1..)]), __29)
+
+--
+
+toInt(and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__30)
+new variables:
+  findAux __30: bool
+new constraints:
+  __30 =aux and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)])
+
+--
+
+__30 =aux and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]), __30)
+
+--
+
+toInt(and([WatchedLiteral(y,8),z;int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__31)
+new variables:
+  findAux __31: bool
+new constraints:
+  __31 =aux and([WatchedLiteral(y,8),z;int(1..)])
+
+--
+
+__31 =aux and([WatchedLiteral(y,8),z;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([WatchedLiteral(y,8),z;int(1..)]), __31)
+
+--
+
+toInt(or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,7),z;int(1..)]);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__32)
+new variables:
+  findAux __32: bool
+new constraints:
+  __32 =aux or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,7),z;int(1..)]);int(1..)])
+
+--
+
+__32 =aux or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,7),z;int(1..)]);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,7),z;int(1..)]);int(1..)]), __32)
+
+--
+
+toInt(or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__33)
+new variables:
+  findAux __33: bool
+new constraints:
+  __33 =aux or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)])
+
+--
+
+__33 =aux or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)]), __33)
+
+--
+
+toInt(or([and([WatchedLiteral(y,7),z;int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__34)
+new variables:
+  findAux __34: bool
+new constraints:
+  __34 =aux or([and([WatchedLiteral(y,7),z;int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)])
+
+--
+
+__34 =aux or([and([WatchedLiteral(y,7),z;int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([and([WatchedLiteral(y,7),z;int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)]), __34)
+
+--
+
+toInt(and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__35)
+new variables:
+  findAux __35: bool
+new constraints:
+  __35 =aux and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)])
+
+--
+
+__35 =aux and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]), __35)
+
+--
+
+Final model:
+
+find x: int(0..1000)
+find y: int(7..8)
+find z: bool
+findAux __0: int(0..1)
+findAux __1: int(0..1)
+findAux __2: int(0..1)
+findAux __3: int(0..1)
+findAux __4: int(0..1)
+findAux __5: int(0..1)
+findAux __6: int(0..1)
+findAux __7: int(0..1)
+findAux __8: int(0..1)
+findAux __9: int(0..1)
+findAux __10: int(0..1)
+findAux __11: int(0..1)
+findAux __12: int(0..1)
+findAux __13: int(0..1)
+findAux __14: int(0..1)
+findAux __15: int(0..1)
+findAux __16: int(0..1)
+findAux __17: int(0..1)
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+
+such that
+
+and([SumLeq([__0, __1, __10, __11, __12, __13, __14, __15, __16, __17, __2, __3, __4, __5, __6, __7, __8, __9], x),SumGeq([__0, __1, __10, __11, __12, __13, __14, __15, __16, __17, __2, __3, __4, __5, __6, __7, __8, __9], x);int(1..)]),
+__0 =aux toInt(__35),
+__1 =aux toInt(__18),
+__2 =aux toInt(__27),
+__3 =aux toInt(__19),
+__4 =aux toInt(__32),
+__5 =aux toInt(__24),
+__6 =aux toInt(__33),
+__7 =aux toInt(__28),
+__8 =aux toInt(__20),
+__9 =aux toInt(__25),
+__10 =aux toInt(__34),
+__11 =aux toInt(__29),
+__12 =aux toInt(__21),
+__13 =aux toInt(__26),
+__14 =aux toInt(__30),
+__15 =aux toInt(__22),
+__16 =aux toInt(__31),
+__17 =aux toInt(__23),
+Reify(and([WatchedLiteral(y,7),z;int(1..)]), __18),
+Reify(and([WatchedLiteral(y,8),z;int(1..)]), __19),
+Reify(and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]), __20),
+Reify(and([WatchedLiteral(y,7),z;int(1..)]), __21),
+Reify(and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]), __22),
+Reify(and([WatchedLiteral(y,8),z;int(1..)]), __23),
+Reify(or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]);int(1..)]), __24),
+Reify(or([and([WatchedLiteral(y,7),z;int(1..)]),and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]);int(1..)]), __25),
+Reify(or([and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)]), __26),
+Reify(and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]), __27),
+Reify(and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]), __28),
+Reify(and([WatchedLiteral(y,7),z;int(1..)]), __29),
+Reify(and([WatchedLiteral(y,8),WatchedLiteral(z,false);int(1..)]), __30),
+Reify(and([WatchedLiteral(y,8),z;int(1..)]), __31),
+Reify(or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,7),z;int(1..)]);int(1..)]), __32),
+Reify(or([and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)]), __33),
+Reify(or([and([WatchedLiteral(y,7),z;int(1..)]),and([WatchedLiteral(y,8),z;int(1..)]);int(1..)]), __34),
+Reify(and([WatchedLiteral(y,7),WatchedLiteral(z,false);int(1..)]), __35)
+

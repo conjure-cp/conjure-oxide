@@ -1,0 +1,143 @@
+Model before rewriting:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find z: bool
+
+such that
+
+(z) <-> (m[sum([a,b;int(1..)])] = c)
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+new variables:
+  find c#bv_1: int(1..2)
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#array_1: matrix indexed by [int(1..2)] of int(1..2)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#bv_1: int(-1..2)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#bv_1: int(-1..2)
+
+--
+
+(z) <-> (m[sum([a,b;int(1..)])] = c)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+(z) <-> (m[sum([a,b;int(1..)])] = c)
+new variables:
+  find m#array_1#bv_1: matrix indexed by [int(1..2)] of int(1..2)
+
+--
+
+c
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+c#bv_1
+
+--
+
+m
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+m#array_1#bv_1
+
+--
+
+a
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#bv_1
+
+--
+
+b
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#bv_1
+
+--
+
+m#array_1#bv_1[sum([a#bv_1,b#bv_1;int(1..)])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m#array_1#bv_1,[sum([a#bv_1,b#bv_1;int(1..)])]) @ __inDomain(sum([a#bv_1,b#bv_1;int(1..)]),int(1..2))}
+
+--
+
+{SafeIndex(m#array_1#bv_1,[sum([a#bv_1,b#bv_1;int(1..)])]) @ __inDomain(sum([a#bv_1,b#bv_1;int(1..)]),int(1..2))} = c#bv_1
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex(m#array_1#bv_1,[sum([a#bv_1,b#bv_1;int(1..)])]) = c#bv_1 @ __inDomain(sum([a#bv_1,b#bv_1;int(1..)]),int(1..2))}
+
+--
+
+{SafeIndex(m#array_1#bv_1,[sum([a#bv_1,b#bv_1;int(1..)])]) = c#bv_1 @ __inDomain(sum([a#bv_1,b#bv_1;int(1..)]),int(1..2))}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(m#array_1#bv_1,[sum([a#bv_1,b#bv_1;int(1..)])]) = c#bv_1,__inDomain(sum([a#bv_1,b#bv_1;int(1..)]),int(1..2));int(1..)])
+
+--
+
+__inDomain(sum([a#bv_1,b#bv_1;int(1..)]),int(1..2))
+   ~~> flatten_indomain ([("Smt", 1000)])
+or([and([sum([a#bv_1,b#bv_1;int(1..)]) >= 1,sum([a#bv_1,b#bv_1;int(1..)]) <= 2;int(1..)]);int(1..)])
+
+--
+
+or([and([sum([a#bv_1,b#bv_1;int(1..)]) >= 1,sum([a#bv_1,b#bv_1;int(1..)]) <= 2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([sum([a#bv_1,b#bv_1;int(1..)]) >= 1,sum([a#bv_1,b#bv_1;int(1..)]) <= 2;int(1..)])
+
+--
+
+and([SafeIndex(m#array_1#bv_1,[sum([a#bv_1,b#bv_1;int(1..)])]) = c#bv_1,and([sum([a#bv_1,b#bv_1;int(1..)]) >= 1,sum([a#bv_1,b#bv_1;int(1..)]) <= 2;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SafeIndex(m#array_1#bv_1,[sum([a#bv_1,b#bv_1;int(1..)])]) = c#bv_1,sum([a#bv_1,b#bv_1;int(1..)]) >= 1,sum([a#bv_1,b#bv_1;int(1..)]) <= 2;int(1..)])
+
+--
+
+Final model:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find z: bool
+find c#bv_1: int(1..2)
+find m#array_1: matrix indexed by [int(1..2)] of int(1..2)
+find a#bv_1: int(-1..2)
+find b#bv_1: int(-1..2)
+find m#array_1#bv_1: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(z) <-> (and([SafeIndex(m#array_1#bv_1,[sum([a#bv_1,b#bv_1;int(1..)])]) = c#bv_1,sum([a#bv_1,b#bv_1;int(1..)]) >= 1,sum([a#bv_1,b#bv_1;int(1..)]) <= 2;int(1..)]))
+

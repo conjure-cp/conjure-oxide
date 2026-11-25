@@ -1,0 +1,88 @@
+Model before rewriting:
+
+find s: set of int(1..3)
+find x: int(0..4)
+find member: bool
+
+such that
+
+(member) <-> (x in s),
+!(member)
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+new variables:
+  find s#occurrence_1: bool
+  find s#occurrence_2: bool
+  find s#occurrence_3: bool
+new constraints:
+  and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) >= 0,sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3;int(1..)])
+
+--
+
+x in s
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+and([x >= 1,x <= 3,SafeIndex([s#occurrence_1,s#occurrence_2,s#occurrence_3;int(1..)],[x]);int(1..)])
+
+--
+
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([s#occurrence_1, s#occurrence_2, s#occurrence_3], 0)
+
+--
+
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2),toInt(s#occurrence_3);int(1..)]) <= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([s#occurrence_1, s#occurrence_2, s#occurrence_3], 3)
+
+--
+
+(member) <-> (and([x >= 1,x <= 3,SafeIndex([s#occurrence_1,s#occurrence_2,s#occurrence_3;int(1..)],[x]);int(1..)]))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(and([x >= 1,x <= 3,SafeIndex([s#occurrence_1,s#occurrence_2,s#occurrence_3;int(1..)],[x]);int(1..)]), member)
+
+--
+
+SafeIndex([s#occurrence_1,s#occurrence_2,s#occurrence_3;int(1..)],[x])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([s#occurrence_1,s#occurrence_2,s#occurrence_3],x,true)
+
+--
+
+!(member)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(member,false)
+
+--
+
+x >= 1
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(1, x, 0)
+
+--
+
+x <= 3
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x, 3, 0)
+
+--
+
+Final model:
+
+find s: set (representation occurrence) of int(1..3)
+find x: int(0..4)
+find member: bool
+find s#occurrence_1: bool
+find s#occurrence_2: bool
+find s#occurrence_3: bool
+
+such that
+
+Reify(and([Ineq(1, x, 0),Ineq(x, 3, 0),__minion_element_one([s#occurrence_1,s#occurrence_2,s#occurrence_3],x,true);int(1..)]), member),
+WatchedLiteral(member,false),
+and([SumGeq([s#occurrence_1, s#occurrence_2, s#occurrence_3], 0),SumLeq([s#occurrence_1, s#occurrence_2, s#occurrence_3], 3);int(1..)])
+

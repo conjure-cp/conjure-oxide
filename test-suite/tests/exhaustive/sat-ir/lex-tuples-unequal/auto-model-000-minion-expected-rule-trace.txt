@@ -1,0 +1,89 @@
+Model before rewriting:
+
+find p: matrix indexed by [int(1..2)] of tuple (int(1..2), bool)
+find q: matrix indexed by [int(1..1)] of tuple (int(1..2), bool)
+
+such that
+
+(p <=lex q)
+
+--
+
+p
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p
+new variables:
+  find p#components_1: tuple (int(1..2), bool)
+  find p#components_2: tuple (int(1..2), bool)
+
+--
+
+(p <=lex q)
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+(p <=lex q)
+new variables:
+  find q#components_1: tuple (int(1..2), bool)
+
+--
+
+(p <=lex q)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+(p <=lex q)
+new variables:
+  find p#components_1#components_1: int(1..2)
+  find p#components_1#components_2: bool
+  find p#components_2#components_1: int(1..2)
+  find p#components_2#components_2: bool
+  find q#components_1#components_1: int(1..2)
+  find q#components_1#components_2: bool
+
+--
+
+(p <=lex q)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+([p#components_1,p#components_2;int(1..2)] <=lex [q#components_1;int(1..1)])
+
+--
+
+p#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#components_1
+
+--
+
+p#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#components_2
+
+--
+
+q#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q#components_1
+
+--
+
+([p#components_1,p#components_2;int(1..2)] <=lex [q#components_1;int(1..1)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([p#components_1#components_1, p#components_1#components_2], [q#components_1#components_1, q#components_1#components_2])
+
+--
+
+Final model:
+
+find p: matrix indexed by [int(1..2)] of tuple (int(1..2), bool)
+find q: matrix indexed by [int(1..1)] of tuple (int(1..2), bool)
+find p#components_1: tuple (int(1..2), bool)
+find p#components_2: tuple (int(1..2), bool)
+find q#components_1: tuple (int(1..2), bool)
+find p#components_1#components_1: int(1..2)
+find p#components_1#components_2: bool
+find p#components_2#components_1: int(1..2)
+find p#components_2#components_2: bool
+find q#components_1#components_1: int(1..2)
+find q#components_1#components_2: bool
+
+such that
+
+FlatLexLt([p#components_1#components_1, p#components_1#components_2], [q#components_1#components_1, q#components_1#components_2])
+

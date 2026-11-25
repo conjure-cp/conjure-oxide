@@ -1,0 +1,82 @@
+Model before rewriting:
+
+find x: int(1..4)
+find y: int(1..4)
+
+such that
+
+x <= (y - 1),
+x <= sum([-1,y;int(1..)])
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(1..4)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#lia_1: int(1..4)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+(y#lia_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([y#lia_1,-(1);int(1..)])
+
+--
+
+Final model:
+
+find x: int(1..4)
+find y: int(1..4)
+find x#lia_1: int(1..4)
+find y#lia_1: int(1..4)
+
+such that
+
+x#lia_1 <= sum([y#lia_1,-1;int(1..)]),
+x#lia_1 <= sum([-1,y#lia_1;int(1..)])
+

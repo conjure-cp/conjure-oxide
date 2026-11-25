@@ -295,7 +295,7 @@ fn tseitin_and(expr: &Expression) -> Result<Expression, RuleApplicationError> {
 You can see this pipeline in action using logging:
 
 ```bash
-RUST_LOG=TRACE cargo run -- solve --solver sat my_problem.essence --verbose
+cargo run -- solve --solver sat -vvv my_problem.essence
 ```
 
 ---

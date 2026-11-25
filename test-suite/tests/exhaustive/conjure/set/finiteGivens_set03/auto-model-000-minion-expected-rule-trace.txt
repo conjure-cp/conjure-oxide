@@ -1,0 +1,64 @@
+Model before rewriting:
+
+letting a be {4,7,2}
+find t: int(0..100)
+find x: int(0..100)
+find y: int(0..100)
+find z: int(0..100)
+
+such that
+
+x = |a|,
+y = min(a),
+z = max(a),
+allDifferent([x,y,z,t;int(1..4)]),
+t in a
+
+--
+
+x = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x,3)
+
+--
+
+y = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,2)
+
+--
+
+z = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,7)
+
+--
+
+allDifferent([x,y,z,t;int(1..4)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([x, y, z, t])
+
+--
+
+t in {4,7,2}
+   ~~> in_set ([("Minion", 1)])
+__minion_w_inset(t,[4,7,2])
+
+--
+
+Final model:
+
+letting a be {4,7,2}
+find t: int(0..100)
+find x: int(0..100)
+find y: int(0..100)
+find z: int(0..100)
+
+such that
+
+WatchedLiteral(x,3),
+WatchedLiteral(y,2),
+WatchedLiteral(z,7),
+__flat_alldiff([x, y, z, t]),
+__minion_w_inset(t,[4,7,2])
+

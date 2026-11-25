@@ -1,0 +1,62 @@
+Model before rewriting:
+
+letting a be {2,3}
+letting b be {1,2}
+find c: set (size 1) of int(1..3)
+
+such that
+
+c = (a intersect b)
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+new variables:
+  find c#occurrence_1: bool
+  find c#occurrence_2: bool
+  find c#occurrence_3: bool
+new constraints:
+  sum([toInt(c#occurrence_1),toInt(c#occurrence_2),toInt(c#occurrence_3);int(1..)]) = 1
+
+--
+
+c = {2}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([c#occurrence_1 = false,c#occurrence_2 = true,c#occurrence_3 = false;int(1..)])
+
+--
+
+sum([toInt(c#occurrence_1),toInt(c#occurrence_2),toInt(c#occurrence_3);int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([c#occurrence_1, c#occurrence_2, c#occurrence_3], 1),SumGeq([c#occurrence_1, c#occurrence_2, c#occurrence_3], 1);int(1..)])
+
+--
+
+c#occurrence_1 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(c#occurrence_1,false)
+
+--
+
+c#occurrence_3 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(c#occurrence_3,false)
+
+--
+
+Final model:
+
+letting a be {2,3}
+letting b be {1,2}
+find c: set (representation occurrence, size 1) of int(1..3)
+find c#occurrence_1: bool
+find c#occurrence_2: bool
+find c#occurrence_3: bool
+
+such that
+
+and([WatchedLiteral(c#occurrence_1,false),c#occurrence_2,WatchedLiteral(c#occurrence_3,false);int(1..)]),
+and([SumLeq([c#occurrence_1, c#occurrence_2, c#occurrence_3], 1),SumGeq([c#occurrence_1, c#occurrence_2, c#occurrence_3], 1);int(1..)])
+

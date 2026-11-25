@@ -1,0 +1,271 @@
+use conjure_cp::ast::{Atom, Expression as Expr, Literal};
+use conjure_cp::ast::{SATIntEncoding, SymbolTable};
+use conjure_cp::rule_engine::ApplicationError;
+use conjure_cp::rule_engine::{
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
+};
+
+use conjure_cp::ast::Metadata;
+use conjure_cp::ast::Moo;
+use conjure_cp::into_matrix_expr;
+
+use crate::backends::sat::boolean::tseytin_or;
+
+use conjure_cp::ast::SatEncodingDecision;
+/// This function confirms that all of the input expressions are direct SATInts, and returns vectors for each input of their bits
+/// This function also normalizes direct SATInt operands to a common value range by zero-padding.
+pub fn validate_direct_int_operands(
+    exprs: Vec<Expr>,
+) -> Result<(Vec<Vec<Expr>>, i32, i32), ApplicationError> {
+    // TODO: In the future it may be possible to optimize operations between integers with different bit sizes
+    // Collect inner bit vectors from each SATInt
+
+    // Iterate over all inputs
+    // Check they are direct and calulate a lower and upper bound
+    let mut global_min: i32 = i32::MAX;
+    let mut global_max: i32 = i32::MIN;
+
+    for operand in &exprs {
+        let Expr::SATInt(_, SATIntEncoding::Direct, _, (local_min, local_max)) = operand else {
+            return Err(RuleNotApplicable);
+        };
+        global_min = global_min.min(*local_min);
+        global_max = global_max.max(*local_max);
+    }
+
+    // build out by iterating over each operand and expanding it to match the new bounds
+
+    let out: Vec<Vec<Expr>> = exprs
+        .into_iter()
+        .map(|expr| {
+            let Expr::SATInt(_, SATIntEncoding::Direct, inner, (local_min, local_max)) = expr
+            else {
+                return Err(RuleNotApplicable);
+            };
+
+            let Some(v) = inner.as_ref().clone().into_list() else {
+                return Err(RuleNotApplicable);
+            };
+
+            // calulcate how many zeroes to prepend/append
+            let prefix_len = (local_min - global_min) as usize;
+            let postfix_len = (global_max - local_max) as usize;
+
+            let mut bits = Vec::with_capacity(v.len() + prefix_len + postfix_len);
+
+            // add 0s to start
+            bits.extend(std::iter::repeat_n(
+                Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+                prefix_len,
+            ));
+
+            bits.extend(v);
+
+            // add 0s to end
+            bits.extend(std::iter::repeat_n(
+                Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+                postfix_len,
+            ));
+
+            Ok(bits)
+        })
+        .collect::<Result<_, _>>()?;
+
+    Ok((out, global_min, global_max))
+}
+
+/// Converts a - expression for a SATInt to a new SATInt
+///
+/// ```text
+/// -SATInt(a) ~> SATInt(b)
+///
+/// ```
+#[register_rule("SAT", 9100, [Neg])]
+fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Neg(_, value) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (binding, old_min, old_max) = validate_direct_int_operands(vec![value.as_ref().clone()])?;
+    let [val_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let new_min = -old_max;
+    let new_max = -old_min;
+
+    let mut out = val_bits.clone();
+    out.reverse();
+
+    Ok(RuleEffect::pure(Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Direct,
+        Moo::new(into_matrix_expr!(out)),
+        (new_min, new_max),
+    )))
+}
+
+use super::super::floor_div;
+
+/// Converts a / expression between two direct SATInts to a new direct SATInt
+/// using the "lookup table" method.
+///
+/// ```text
+/// SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
+///
+/// ```
+#[register_rule("SAT", 9100, [SafeDiv])]
+fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::SafeDiv(_, numer_expr, denom_expr) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::SATInt(_, SATIntEncoding::Direct, numer_inner, (numer_min, numer_max)) =
+        numer_expr.as_ref()
+    else {
+        return Err(RuleNotApplicable);
+    };
+    let Some(numer_bits) = numer_inner.as_ref().clone().into_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::SATInt(_, SATIntEncoding::Direct, denom_inner, (denom_min, denom_max)) =
+        denom_expr.as_ref()
+    else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(denom_bits) = denom_inner.as_ref().clone().into_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut quot_min = i32::MAX;
+    let mut quot_max = i32::MIN;
+
+    for i in *numer_min..=*numer_max {
+        for j in *denom_min..=*denom_max {
+            let k = if j == 0 {
+                0
+            } else {
+                floor_div(i, j).ok_or(RuleNotApplicable)?
+            };
+            quot_min = quot_min.min(k);
+            quot_max = quot_max.max(k);
+        }
+    }
+
+    let mut new_symbols = symbols.clone();
+    let mut quot_bits = Vec::new();
+
+    // generate boolean variables for all possible quotients
+    for _ in quot_min..=quot_max {
+        let decl = new_symbols.gen_find_auxiliary(&conjure_cp::ast::Domain::bool());
+        quot_bits.push(Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(conjure_cp::ast::Reference::new(decl)),
+        ));
+    }
+
+    let mut new_sat_decisions = vec![];
+
+    // Record lookup-table implications: (n_i AND d_j) => q_k
+    for i in *numer_min..=*numer_max {
+        let numer_bit = &numer_bits[(i - numer_min) as usize];
+        for j in *denom_min..=*denom_max {
+            let denom_bit = &denom_bits[(j - denom_min) as usize];
+
+            let k = if j == 0 {
+                0
+            } else {
+                floor_div(i, j).ok_or(RuleNotApplicable)?
+            };
+
+            let quot_bit = &quot_bits[(k - quot_min) as usize];
+
+            let premise = Expr::And(
+                Metadata::new(),
+                Moo::new(into_matrix_expr!(vec![
+                    numer_bit.clone(),
+                    denom_bit.clone()
+                ])),
+            );
+            new_sat_decisions.push(SatEncodingDecision::Assert(Expr::Imply(
+                Metadata::new(),
+                Moo::new(premise),
+                Moo::new(quot_bit.clone()),
+            )));
+        }
+    }
+
+    new_sat_decisions.push(SatEncodingDecision::AtMostOne {
+        inputs: quot_bits.clone(),
+        encoding: None,
+    });
+
+    let quot_int = Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Direct,
+        Moo::new(into_matrix_expr!(quot_bits)),
+        (quot_min, quot_max),
+    );
+
+    Ok(RuleEffect::sat(quot_int, new_sat_decisions, new_symbols))
+}
+
+/// Matches a `|SATInt|` with an absolute value operation and rewrites it to a direct-encoded absolute-value `SATInt` by grouping input indicator bits by `|value|` and OR-ing each group (named here as buckets) into the corresponding output bit.
+#[register_rule("SAT", 9100, [Abs])]
+fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Abs(_, value_expr) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (binding, old_min, old_max) =
+        validate_direct_int_operands(vec![value_expr.as_ref().clone()])?;
+
+    let [val_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    // The new range is from the minimum absolute value to the maximum absolute value. The minimum absolute value is either 0 if the old range includes 0, or the smaller of the absolute values of the old min and max if the old range does not include 0. The maximum absolute value is the larger of the absolute values of the old min and max.
+    let new_min = if old_min <= 0 && old_max >= 0 {
+        0
+    } else {
+        old_min.abs().min(old_max.abs())
+    };
+    let new_max = old_min.abs().max(old_max.abs());
+
+    let mut new_symbols = symbols.clone();
+    let mut new_sat_decisions = vec![];
+
+    let bucket_count = (new_max - new_min + 1) as usize;
+    let mut buckets: Vec<Vec<Expr>> = vec![Vec::new(); bucket_count];
+
+    // Iterates over all possible input values, calculate their absolute value, and place them in the corresponding bucket. Each bucket corresponds to a possible output value, and contains the disjunction of all input bits that could produce that output.
+    for value in old_min..=old_max {
+        let input_bit = val_bits[(value - old_min) as usize].clone();
+        let abs_value = value.abs();
+        let bucket_idx = (abs_value - new_min) as usize;
+        buckets[bucket_idx].push(input_bit);
+    }
+
+    // For each bucket, if it's empty then the output bit is false, if it contains one element then the output bit is that element, and if it contains multiple elements then the output bit is the OR of all elements in the bucket.
+    let mut abs_bits = Vec::with_capacity(bucket_count);
+    for bucket in buckets {
+        let out_bit = match bucket.len() {
+            0 => Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+            1 => bucket[0].clone(),
+            _ => tseytin_or(&bucket, &mut new_sat_decisions, &mut new_symbols),
+        };
+
+        abs_bits.push(out_bit);
+    }
+
+    let abs_int = Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Direct,
+        Moo::new(into_matrix_expr!(abs_bits)),
+        (new_min, new_max),
+    );
+
+    Ok(RuleEffect::sat(abs_int, new_sat_decisions, new_symbols))
+}

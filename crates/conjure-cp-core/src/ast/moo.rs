@@ -10,9 +10,13 @@
 //
 // ~niklasdewally 13/08/25
 
+use funcmap::{FuncMap, TryFuncMap};
 use polyquine::Quine;
 use proc_macro2::TokenStream;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_with::de::DeserializeAsWrap;
+use serde_with::ser::SerializeAsWrap;
+use serde_with::{DeserializeAs, SerializeAs};
 use std::hash::{Hash, Hasher};
 use std::ops::DerefMut;
 use std::{collections::VecDeque, fmt::Display, ops::Deref, sync::Arc};
@@ -177,6 +181,53 @@ where
             )
         }
     }
+
+    /// Counts children through the pointer, without cloning the pointee.
+    ///
+    /// The default implementation materialises `children_bi`, which goes via [`Biplate::biplate`]
+    /// and therefore clones the whole inner value. Payload syncs call this once per tree level, so
+    /// the default turns a single rewrite under a wide node (e.g. `or` over a large matrix) into
+    /// O(n) work, and a full rewrite pass into O(n^2).
+    fn children_bi_count(&self) -> usize {
+        if std::any::TypeId::of::<Self>() == std::any::TypeId::of::<To>() {
+            // Biplate<T> for T treats the value as its only child.
+            return 1;
+        }
+        <U as Biplate<To>>::children_bi_count(&**self)
+    }
+
+    /// Replaces a child through the pointer, cloning the pointee only when it is shared.
+    ///
+    /// Mirrors [`Biplate::children_bi_count`] above: the default implementation clones the inner
+    /// value twice (once to list children, once to rebuild) and structurally compares the old and
+    /// new trees.
+    fn try_replace_child_at_bi(&mut self, index: usize, child: To) -> bool {
+        if std::any::TypeId::of::<Self>() == std::any::TypeId::of::<To>() {
+            if index != 0 {
+                return false;
+            }
+            // SAFETY: TypeId equality means `Self` and `To` are the same type.
+            unsafe {
+                let child_as_self = std::mem::transmute_copy::<To, Self>(&child);
+                std::mem::forget(child);
+                *self = child_as_self;
+            }
+            return true;
+        }
+        if std::any::TypeId::of::<U>() == std::any::TypeId::of::<To>() {
+            if index != 0 {
+                return false;
+            }
+            // The child is the whole pointee, not a child inside it. Replace the pointer
+            // directly: make_mut would clone the old shared value only to discard it.
+            // SAFETY: TypeId equality means U and To are the same type.
+            let value = unsafe { std::mem::transmute_copy::<To, U>(&child) };
+            std::mem::forget(child);
+            *self = Moo::new(value);
+            return true;
+        }
+        <U as Biplate<To>>::try_replace_child_at_bi(Moo::make_mut(self), index, child)
+    }
 }
 
 impl<'de, T: Deserialize<'de>> Deserialize<'de> for Moo<T> {
@@ -212,5 +263,114 @@ impl<T: Hash> Hash for Moo<T> {
 impl<T> From<T> for Moo<T> {
     fn from(value: T) -> Self {
         Moo::new(value)
+    }
+}
+
+impl<A, B> FuncMap<A, B> for Moo<A>
+where
+    A: Clone,
+{
+    type Output = Moo<B>;
+
+    fn func_map<F>(self, mut f: F) -> Self::Output
+    where
+        F: FnMut(A) -> B,
+    {
+        let inner = Moo::unwrap_or_clone(self);
+        Moo::new(f(inner))
+    }
+}
+
+impl<A, B> TryFuncMap<A, B> for Moo<A>
+where
+    A: Clone,
+{
+    type Output = Moo<B>;
+
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
+    where
+        F: FnMut(A) -> Result<B, E>,
+    {
+        let inner = Moo::unwrap_or_clone(self);
+        let res = f(inner)?;
+        Ok(Moo::new(res))
+    }
+}
+
+impl<T, As> SerializeAs<Moo<T>> for Moo<As>
+where
+    As: SerializeAs<T>,
+{
+    fn serialize_as<S>(source: &Moo<T>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let wrap = SerializeAsWrap::<T, As>::new(&**source);
+        wrap.serialize(serializer)
+    }
+}
+
+impl<'de, T, As> DeserializeAs<'de, Moo<T>> for Moo<As>
+where
+    As: DeserializeAs<'de, T>,
+{
+    fn deserialize_as<D>(deserializer: D) -> Result<Moo<T>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let wrap = DeserializeAsWrap::<T, As>::deserialize(deserializer)?;
+        Ok(Moo::new(wrap.into_inner()))
+    }
+}
+
+#[cfg(test)]
+mod replacement_tests {
+    use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    static CLONES: AtomicUsize = AtomicUsize::new(0);
+
+    #[derive(Debug, PartialEq, Eq)]
+    struct CloneProbe(i32);
+
+    impl Clone for CloneProbe {
+        fn clone(&self) -> Self {
+            CLONES.fetch_add(1, Ordering::Relaxed);
+            Self(self.0)
+        }
+    }
+
+    impl Uniplate for CloneProbe {
+        fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
+            let value = self.0;
+            (Tree::Zero, Box::new(move |_| Self(value)))
+        }
+    }
+
+    impl Biplate<CloneProbe> for CloneProbe {
+        fn biplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
+            (
+                Tree::One(self.clone()),
+                Box::new(|tree| {
+                    let Tree::One(value) = tree else {
+                        panic!("expected one child")
+                    };
+                    value
+                }),
+            )
+        }
+    }
+
+    #[test]
+    fn replacing_shared_pointee_does_not_clone_the_discarded_value() {
+        let mut value = Moo::new(CloneProbe(1));
+        let shared = value.clone();
+        CLONES.store(0, Ordering::Relaxed);
+        assert!(!value.try_replace_child_at_bi(1, CloneProbe(2)));
+        assert_eq!(value.0, 1);
+        assert!(value.try_replace_child_at_bi(0, CloneProbe(2)));
+        assert_eq!(value.0, 2);
+        assert_eq!(shared.0, 1);
+        assert_eq!(CLONES.load(Ordering::Relaxed), 0);
     }
 }

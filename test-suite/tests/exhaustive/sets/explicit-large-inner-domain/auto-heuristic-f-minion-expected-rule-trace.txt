@@ -1,0 +1,121 @@
+Model before rewriting:
+
+find i: int(1..100)
+find s: set (representation explicit, size 2) of int(1..10000)
+
+such that
+
+i in s,
+|s| = 2
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+new variables:
+  find s#explicit_1: matrix indexed by [int(1..2)] of int(1..10000)
+new constraints:
+  or([2 < 2,([SafeIndex(s#explicit_1,[1]);int(1..)] <lex [SafeIndex(s#explicit_1,[2]);int(1..)]);int(1..)])
+  or([1 <= 2,SafeIndex(s#explicit_1,[1]) = 1;int(1..)])
+  or([2 <= 2,SafeIndex(s#explicit_1,[2]) = 1;int(1..)])
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+new variables:
+  find s#explicit_1#components_1: int(1..10000)
+  find s#explicit_1#components_2: int(1..10000)
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+i in s
+   ~~> in_explicit ([("ReprGeneral", 9500)])
+or([and([1 <= 2,SafeIndex(s#explicit_1,[1]) = i;int(1..)]),and([2 <= 2,SafeIndex(s#explicit_1,[2]) = i;int(1..)]);int(1..)])
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
+
+--
+
+or([([SafeIndex(s#explicit_1,[1]);int(1..)] <lex [SafeIndex(s#explicit_1,[2]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+([SafeIndex(s#explicit_1,[1]);int(1..)] <lex [SafeIndex(s#explicit_1,[2]);int(1..)])
+
+--
+
+and([SafeIndex(s#explicit_1,[1]) = i;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(s#explicit_1,[1]) = i
+
+--
+
+and([SafeIndex(s#explicit_1,[2]) = i;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(s#explicit_1,[2]) = i
+
+--
+
+SafeIndex(s#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_1
+
+--
+
+SafeIndex(s#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_2
+
+--
+
+SafeIndex(s#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_1
+
+--
+
+SafeIndex(s#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+s#explicit_1#components_2
+
+--
+
+([s#explicit_1#components_1;int(1..)] <lex [s#explicit_1#components_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([s#explicit_1#components_1], [s#explicit_1#components_2])
+
+--
+
+Final model:
+
+find i: int(1..100)
+find s: set (representation explicit, size 2) of int(1..10000)
+find s#explicit_1: matrix indexed by [int(1..2)] of int(1..10000)
+find s#explicit_1#components_1: int(1..10000)
+find s#explicit_1#components_2: int(1..10000)
+
+such that
+
+or([s#explicit_1#components_1 = i,s#explicit_1#components_2 = i;int(1..)]),
+true,
+FlatLexLt([s#explicit_1#components_1], [s#explicit_1#components_2]),
+true,
+true
+

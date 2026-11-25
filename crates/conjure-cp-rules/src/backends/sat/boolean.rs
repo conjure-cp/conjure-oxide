@@ -1,0 +1,413 @@
+use conjure_cp::ast::Metadata;
+use conjure_cp::ast::{Atom, Expression as Expr, Moo, SatEncodingDecision};
+use conjure_cp::rule_engine::{
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
+};
+
+use conjure_cp::ast::AbstractLiteral::Matrix;
+use conjure_cp::ast::{Domain, SymbolTable};
+
+// Atomic references can denote integers and compound values too. Those must reach their
+// representation's comparison rules rather than becoming Boolean gate inputs.
+fn is_literal(expr: &Expr) -> bool {
+    crate::shared::utils::is_literal(expr)
+        && expr.domain_of().is_some_and(|domain| domain.is_bool())
+}
+
+pub(super) fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
+    let name = symbols.gen_find_auxiliary(&Domain::bool());
+
+    symbols.insert(name.clone());
+
+    Expr::Atomic(
+        Metadata::new(),
+        Atom::Reference(conjure_cp::ast::Reference::new(name)),
+    )
+}
+
+/// Boolean order is false before true and shares the existing gate decisions.
+#[register_rule("SAT", 18500, [Lt, Gt, Leq, Geq])]
+fn boolean_order(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let (left, right, strict) = match expr {
+        Expr::Lt(_, left, right) => (left, right, true),
+        Expr::Gt(_, left, right) => (right, left, true),
+        Expr::Leq(_, left, right) => (left, right, false),
+        Expr::Geq(_, left, right) => (right, left, false),
+        _ => return Err(RuleNotApplicable),
+    };
+    if [left, right]
+        .iter()
+        .any(|operand| !operand.domain_of().is_some_and(|domain| domain.is_bool()))
+    {
+        return Err(RuleNotApplicable);
+    }
+    Ok(RuleEffect::pure(if strict {
+        Expr::And(
+            Metadata::new(),
+            Moo::new(conjure_cp::into_matrix_expr!(vec![
+                Expr::Not(Metadata::new(), left.clone()),
+                (**right).clone(),
+            ])),
+        )
+    } else {
+        Expr::Imply(Metadata::new(), left.clone(), right.clone())
+    }))
+}
+
+/// Record an AND gate without generating clauses.
+pub fn tseytin_and(
+    exprs: &[Expr],
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    gate(
+        Expr::And(
+            Metadata::new(),
+            Moo::new(conjure_cp::into_matrix_expr!(exprs.to_vec())),
+        ),
+        decisions,
+        symbols,
+    )
+}
+
+/// Record a NOT gate without generating clauses.
+pub fn tseytin_not(
+    x: Expr,
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    gate(Expr::Not(Metadata::new(), Moo::new(x)), decisions, symbols)
+}
+
+/// Record an OR gate without generating clauses.
+pub fn tseytin_or(
+    exprs: &[Expr],
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    gate(
+        Expr::Or(
+            Metadata::new(),
+            Moo::new(conjure_cp::into_matrix_expr!(exprs.to_vec())),
+        ),
+        decisions,
+        symbols,
+    )
+}
+
+/// Record a Boolean equivalence gate.
+pub fn tseytin_iff(
+    x: Expr,
+    y: Expr,
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    gate(
+        Expr::Iff(Metadata::new(), Moo::new(x), Moo::new(y)),
+        decisions,
+        symbols,
+    )
+}
+
+/// Record a Boolean implication gate.
+pub fn tseytin_imply(
+    x: Expr,
+    y: Expr,
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    gate(
+        Expr::Imply(Metadata::new(), Moo::new(x), Moo::new(y)),
+        decisions,
+        symbols,
+    )
+}
+
+/// Record a conditional Boolean choice.
+#[allow(dead_code)]
+pub fn tseytin_mux(
+    cond: Expr,
+    a: Expr,
+    b: Expr,
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    let when_true = Expr::And(
+        Metadata::new(),
+        Moo::new(conjure_cp::into_matrix_expr!(vec![cond.clone(), b])),
+    );
+    let when_false = Expr::And(
+        Metadata::new(),
+        Moo::new(conjure_cp::into_matrix_expr!(vec![
+            Expr::Not(Metadata::new(), Moo::new(cond)),
+            a
+        ])),
+    );
+    gate(
+        Expr::Or(
+            Metadata::new(),
+            Moo::new(conjure_cp::into_matrix_expr!(vec![when_true, when_false])),
+        ),
+        decisions,
+        symbols,
+    )
+}
+
+/// Record a Boolean exclusive-or gate.
+#[allow(dead_code)]
+pub fn tseytin_xor(
+    x: Expr,
+    y: Expr,
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    gate(
+        Expr::Not(
+            Metadata::new(),
+            Moo::new(Expr::Iff(Metadata::new(), Moo::new(x), Moo::new(y))),
+        ),
+        decisions,
+        symbols,
+    )
+}
+
+fn gate(
+    expression: Expr,
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    let output = create_bool_aux(symbols);
+    decisions.push(SatEncodingDecision::Boolean {
+        output: output.clone(),
+        expression,
+    });
+    output
+}
+
+/// Preserve ready assertions before the ordinary equivalence-gate rules consume them.
+#[register_rule("SAT", 18000, [Root])]
+fn select_asserted_boolean(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    super::asserted::select_asserted(expr, symbols, |child| {
+        (child != &true.into() && ready_boolean(child))
+            .then(|| SatEncodingDecision::Assert(child.clone()))
+    })
+}
+
+fn ready_boolean(expr: &Expr) -> bool {
+    match expr {
+        Expr::Atomic(..) => is_literal(expr),
+        Expr::Not(_, input) => ready_boolean(input),
+        Expr::And(_, inputs) | Expr::Or(_, inputs) => {
+            matches!(inputs.as_ref(), Expr::AbstractLiteral(_, Matrix(entries, _))
+                if entries.iter().all(ready_boolean))
+        }
+        Expr::Imply(_, left, right)
+        | Expr::Iff(_, left, right)
+        | Expr::Eq(_, left, right)
+        | Expr::Neq(_, left, right) => ready_boolean(left) && ready_boolean(right),
+        _ => false,
+    }
+}
+
+/// Lower the Boolean operation to a semantic SAT gate decision.
+#[register_rule("SAT", 8500, [And, Or])]
+fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let exprs = match expr {
+        Expr::And(_, exprs) | Expr::Or(_, exprs) => exprs,
+        _ => return Err(RuleNotApplicable),
+    };
+
+    let Expr::AbstractLiteral(_, Matrix(exprs_list, _)) = exprs.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    for x in exprs_list {
+        if !is_literal(x) {
+            return Err(RuleNotApplicable);
+        };
+    }
+
+    let new_expr;
+    let mut new_sat_decisions = vec![];
+    let mut new_symbols = symbols.clone();
+
+    match expr {
+        Expr::And(_, _) => {
+            new_expr = tseytin_and(exprs_list, &mut new_sat_decisions, &mut new_symbols);
+        }
+        Expr::Or(_, _) => {
+            new_expr = tseytin_or(exprs_list, &mut new_sat_decisions, &mut new_symbols);
+        }
+        _ => return Err(RuleNotApplicable),
+    };
+
+    Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
+}
+
+/// Lower the Boolean operation to a semantic SAT gate decision.
+#[register_rule("SAT", 9005, [Not])]
+fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Not(_, x) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Atomic(_, _) = x.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    if !is_literal(x.as_ref()) {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut new_sat_decisions = vec![];
+    let mut new_symbols = symbols.clone();
+
+    let new_expr = tseytin_not(x.as_ref().clone(), &mut new_sat_decisions, &mut new_symbols);
+
+    Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
+}
+
+/// Lower the Boolean operation to a semantic SAT gate decision.
+#[register_rule("SAT", 8500, [Iff, Eq])]
+fn apply_tseytin_iff_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // Check for iff or eq
+    let (x, y) = match expr {
+        Expr::Iff(_, x, y) | Expr::Eq(_, x, y) => (x, y),
+        _ => return Err(RuleNotApplicable),
+    };
+
+    if !is_literal(x.as_ref()) || !is_literal(y.as_ref()) {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut new_sat_decisions = vec![];
+    let mut new_symbols = symbols.clone();
+
+    let new_expr = tseytin_iff(
+        x.as_ref().clone(),
+        y.as_ref().clone(),
+        &mut new_sat_decisions,
+        &mut new_symbols,
+    );
+
+    Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
+}
+
+/// Lower the Boolean operation to a semantic SAT gate decision.
+#[register_rule("SAT", 8500, [Imply])]
+fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Imply(_, x, y) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    if !is_literal(x.as_ref()) || !is_literal(y.as_ref()) {
+        return Err(RuleNotApplicable);
+    };
+
+    let new_expr;
+    let mut new_sat_decisions = vec![];
+    let mut new_symbols = symbols.clone();
+
+    new_expr = tseytin_imply(
+        x.as_ref().clone(),
+        y.as_ref().clone(),
+        &mut new_sat_decisions,
+        &mut new_symbols,
+    );
+
+    Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
+}
+
+/// Lower the Boolean operation to a semantic SAT gate decision.
+#[register_rule("SAT", 8500, [Neq])]
+fn apply_tseytin_xor_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Neq(_, x, y) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    if !is_literal(x.as_ref()) || !is_literal(y.as_ref()) {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut new_sat_decisions = vec![];
+    let mut new_symbols = symbols.clone();
+
+    let new_expr = tseytin_xor(
+        x.as_ref().clone(),
+        y.as_ref().clone(),
+        &mut new_sat_decisions,
+        &mut new_symbols,
+    );
+
+    Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
+}
+
+/// Shared recognition keeps asserted Boolean counts in their own encoding family.
+pub(super) fn count_inputs(sum: &Expr) -> Option<Vec<Expr>> {
+    let Expr::AbstractLiteral(_, Matrix(terms, _)) = sum else {
+        return None;
+    };
+    terms
+        .iter()
+        .map(|term| match term {
+            Expr::ToInt(_, input)
+                if is_literal(input)
+                    && input.domain_of().is_some_and(|domain| domain.is_bool()) =>
+            {
+                Some(input.as_ref().clone())
+            }
+            Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(value)))
+                if *value == 0 || *value == 1 =>
+            {
+                Some((*value == 1).into())
+            }
+            _ => None,
+        })
+        .collect::<Option<Vec<_>>>()
+}
+
+/// Preserve asserted Boolean counts until a library encoder is selected.
+#[register_rule("SAT", 20000, [Root])]
+fn select_cardinality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    use conjure_cp::ast::sat_decision::CardinalityRelation;
+    super::asserted::select_asserted(expr, symbols, |child| {
+        let (left, right, mut relation) = match child {
+            Expr::Leq(_, left, right) => (left, right, CardinalityRelation::AtMost),
+            Expr::Geq(_, left, right) => (left, right, CardinalityRelation::AtLeast),
+            Expr::Eq(_, left, right) => (left, right, CardinalityRelation::Exactly),
+            _ => return None,
+        };
+        let (sum, bound) = match (left.as_ref(), right.as_ref()) {
+            (
+                Expr::Sum(_, terms),
+                Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(bound))),
+            ) => (terms, *bound),
+            (
+                Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(bound))),
+                Expr::Sum(_, terms),
+            ) => {
+                relation = match relation {
+                    CardinalityRelation::AtMost => CardinalityRelation::AtLeast,
+                    CardinalityRelation::AtLeast => CardinalityRelation::AtMost,
+                    other => other,
+                };
+                (terms, *bound)
+            }
+            _ => return None,
+        };
+        let inputs = count_inputs(sum)?;
+        Some(if relation == CardinalityRelation::AtMost && bound == 1 {
+            SatEncodingDecision::AtMostOne {
+                inputs,
+                encoding: None,
+            }
+        } else {
+            SatEncodingDecision::Cardinality {
+                inputs,
+                relation,
+                bound: i64::from(bound),
+                encoding: None,
+            }
+        })
+    })
+}

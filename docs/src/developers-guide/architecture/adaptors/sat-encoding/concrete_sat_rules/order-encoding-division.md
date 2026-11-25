@@ -1,0 +1,24 @@
+# Order Encoding Division
+
+## Overview
+
+Ongoing work in [#1775](https://github.com/conjure-cp/conjure-oxide/pull/1775/changes#diff-9bedf2e9d7c33b08fce00ef157ab3f72197bd811e0f482045aaa3efe7aaf4441R243-R358)
+
+```text
+SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
+```
+
+## What's new compared to Direct Encoding?
+
+Because order encoding represents values using a cascade of `true` bits (`N >= i`), we cannot isolate a specific value simply by checking one bit. We must ensure the boundary between `true` and `false` happens exactly where the integer value would be.
+
+This changes two main parts of the lookup table strategy:
+
+1. **Identifying exact input values:**
+   To identify if a numerator exactly equals `i`, we must assert `(N >= i) AND NOT (N >= i+1)`. When converted to CNF via De Morgan's laws for the implication condition (i.e. `NOT condition OR consequence`), the base condition for `numerator = i` and `denominator = j` becomes a chain of `OR`s:
+   `NOT (N_i) OR (N_{i+1}) OR NOT (D_j) OR (D_{j+1})`.
+
+2. **Building the output:**
+   When the division results in a quotient `k`, we must create a valid order-encoded bit-vector for `k`. Instead of turning on just one bit, we add a rule for every bit `m` in the output:
+   - Any bit `m` up to `k` is forced to `true`.
+   - Any bit `m` larger than `k` is forced to `false`.

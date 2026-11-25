@@ -57,9 +57,9 @@ The different cases are distinguished based on the position of the `ERROR` node 
 ## How To Test
 
 ```bash
-cargo test -p conjure-cp-essence-parser --test malformed_top_level
-cargo test -p conjure-cp-essence-parser --test missing_token
-cargo test -p conjure-cp-essence-parser --test unexpected_token
+cargo nextest run -p conjure-cp-essence-parser --test malformed_top_level
+cargo nextest run -p conjure-cp-essence-parser --test missing_token
+cargo nextest run -p conjure-cp-essence-parser --test unexpected_token
 ```
 
 ## Examples
@@ -68,7 +68,7 @@ cargo test -p conjure-cp-essence-parser --test unexpected_token
 
 **Input**
 
-```text
+```essence
 find x: int
 such that 5 =
 ```
@@ -86,7 +86,7 @@ Source: syntactic-error-detector
 
 **Input**
 
-```text
+```essence
 find x: int(1..3
 letting x be
 ```
@@ -112,7 +112,7 @@ Source: syntactic-error-detector
 
 **Input**
 
-```text
+```essence
 find x: int(1..3)
 such that x -> %9
 ```
@@ -130,7 +130,7 @@ Source: syntactic-error-detector
 
 **Input**
 
-```text
+```essence
 find x, a, b: int(1..3)+x
 ```
 
@@ -147,7 +147,7 @@ Source: syntactic-error-detector
 
 **Input**
 
-```text
+```essence
 find x: int(1..3)
 find x
 ```

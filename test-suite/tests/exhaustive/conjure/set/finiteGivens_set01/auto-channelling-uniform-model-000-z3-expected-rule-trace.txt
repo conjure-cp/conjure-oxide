@@ -1,0 +1,73 @@
+Model before rewriting:
+
+letting a be {4,7,2}
+find x: int(0..100)
+find y: int(0..100)
+find z: int(0..100)
+
+such that
+
+x = |a|,
+y = min(a),
+z = max(a)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(0..100)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#bv_1: int(0..100)
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#bv_1: int(0..100)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+z
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+z#bv_1
+
+--
+
+Final model:
+
+letting a be {4,7,2}
+find x: int(0..100)
+find y: int(0..100)
+find z: int(0..100)
+find x#bv_1: int(0..100)
+find y#bv_1: int(0..100)
+find z#bv_1: int(0..100)
+
+such that
+
+x#bv_1 = 3,
+y#bv_1 = 2,
+z#bv_1 = 7
+

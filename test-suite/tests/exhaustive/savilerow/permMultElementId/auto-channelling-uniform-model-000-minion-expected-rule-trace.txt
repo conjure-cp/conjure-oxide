@@ -1,0 +1,179 @@
+Model before rewriting:
+
+find x: matrix indexed by [int(2..3)] of int(2..3)
+
+such that
+
+and([ [4,3,2,1;int(1..4)][elementId(x, k)] = [4,2,3,1;int(1..4)][k] | k : int(1..4) ])
+
+--
+
+and([ [4,3,2,1;int(1..4)][elementId(x, k)] = [4,2,3,1;int(1..4)][k] | k : int(1..4) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ [4,3,2,1;int(1..4)][elementId(x, k)] = [4,2,3,1;int(1..4)][k] | k : int(1..4) ])
+new variables:
+  find x#components_1: int(2..3)
+  find x#components_2: int(2..3)
+
+--
+
+[ [4,3,2,1;int(1..4)][elementId(x, k)] = [4,2,3,1;int(1..4)][k] | k : int(1..4) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[[4,3,2,1;int(1..4)][elementId(x, 1)] = 4,[4,3,2,1;int(1..4)][elementId(x, 2)] = 2,[4,3,2,1;int(1..4)][elementId(x, 3)] = 3,[4,3,2,1;int(1..4)][elementId(x, 4)] = 1;int(1..)]
+
+--
+
+elementId(x, 1)
+   ~~> element_id_to_identity_lookup ([("Base", 19000)])
+catchUndef(x[1], 1)
+
+--
+
+elementId(x, 2)
+   ~~> element_id_to_identity_lookup ([("Base", 19000)])
+catchUndef(x[2], 2)
+
+--
+
+elementId(x, 3)
+   ~~> element_id_to_identity_lookup ([("Base", 19000)])
+catchUndef(x[3], 3)
+
+--
+
+elementId(x, 4)
+   ~~> element_id_to_identity_lookup ([("Base", 19000)])
+catchUndef(x[4], 4)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+x#components_1
+
+--
+
+x[3]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+x#components_2
+
+--
+
+catchUndef(x#components_1, 2)
+   ~~> catch_undef_total ([("Base", 8700)])
+x#components_1
+
+--
+
+catchUndef(x#components_2, 3)
+   ~~> catch_undef_total ([("Base", 8700)])
+x#components_2
+
+--
+
+[4,3,2,1;int(1..4)][catchUndef(x[1], 1)]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([4,3,2,1;int(1..4)],[catchUndef(x[1], 1)])
+
+--
+
+[4,3,2,1;int(1..4)][x#components_1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([4,3,2,1;int(1..4)],[x#components_1])
+
+--
+
+[4,3,2,1;int(1..4)][x#components_2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([4,3,2,1;int(1..4)],[x#components_2])
+
+--
+
+[4,3,2,1;int(1..4)][catchUndef(x[4], 4)]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([4,3,2,1;int(1..4)],[catchUndef(x[4], 4)])
+
+--
+
+x[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(x,[1]) @ false}
+
+--
+
+x[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(x,[4]) @ false}
+
+--
+
+catchUndef({SafeIndex(x,[1]) @ false}, 1)
+   ~~> catch_undef_bubble ([("Base", 8800)])
+[1,SafeIndex(x,[1]);int(0..1)][toInt(false)]
+
+--
+
+catchUndef({SafeIndex(x,[4]) @ false}, 4)
+   ~~> catch_undef_bubble ([("Base", 8800)])
+[4,SafeIndex(x,[4]);int(0..1)][toInt(false)]
+
+--
+
+[1,SafeIndex(x,[1]);int(0..1)][0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([1,SafeIndex(x,[1]);int(0..1)],[0])
+
+--
+
+[4,SafeIndex(x,[4]);int(0..1)][0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([4,SafeIndex(x,[4]);int(0..1)],[0])
+
+--
+
+SafeIndex([4,3,2,1;int(1..4)],[x#components_1]) = 2
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([4,3,2,1],x#components_1,2)
+
+--
+
+SafeIndex([4,3,2,1;int(1..4)],[x#components_2]) = 3
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([4,3,2,1],x#components_2,3)
+
+--
+
+Final model:
+
+find x: matrix indexed by [int(2..3)] of int(2..3)
+find x#components_1: int(2..3)
+find x#components_2: int(2..3)
+
+such that
+
+and([__minion_element_one([4,3,2,1],x#components_1,2),__minion_element_one([4,3,2,1],x#components_2,3);int(1..)])
+

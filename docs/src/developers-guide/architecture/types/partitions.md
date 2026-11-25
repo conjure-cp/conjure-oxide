@@ -8,7 +8,7 @@ A partition is a datatype that splits some domain into parts. A good example of 
 * Regularity (i.e. every part has the same cardinality): `regular`
 
 For example:
-```
+```essence
 find foo : partition (maxNumParts 3, partSize 1) from int(1..5) 
 $ ({1})                 i.e. 1 part of cardinality 1
 $ ... 

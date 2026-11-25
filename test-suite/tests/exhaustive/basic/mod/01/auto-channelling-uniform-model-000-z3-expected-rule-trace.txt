@@ -1,0 +1,68 @@
+Model before rewriting:
+
+find a: int(0..3)
+find b: int(0..3)
+
+such that
+
+a % b = 1
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#bv_1: int(0..3)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#bv_1: int(0..3)
+
+--
+
+a
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#bv_1
+
+--
+
+b
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#bv_1
+
+--
+
+a#bv_1 % b#bv_1
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(a#bv_1,b#bv_1) @ b#bv_1 != 0}
+
+--
+
+{SafeMod(a#bv_1,b#bv_1) @ b#bv_1 != 0} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeMod(a#bv_1,b#bv_1) = 1 @ b#bv_1 != 0}
+
+--
+
+{SafeMod(a#bv_1,b#bv_1) = 1 @ b#bv_1 != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeMod(a#bv_1,b#bv_1) = 1,b#bv_1 != 0;int(1..)])
+
+--
+
+Final model:
+
+find a: int(0..3)
+find b: int(0..3)
+find a#bv_1: int(0..3)
+find b#bv_1: int(0..3)
+
+such that
+
+and([SafeMod(a#bv_1,b#bv_1) = 1,b#bv_1 != 0;int(1..)])
+

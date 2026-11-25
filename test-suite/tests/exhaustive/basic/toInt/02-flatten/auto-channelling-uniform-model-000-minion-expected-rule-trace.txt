@@ -1,0 +1,44 @@
+Model before rewriting:
+
+find x: int(0..3)
+find y: int(0..3)
+
+such that
+
+x = toInt(y = 2)
+
+--
+
+y = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,2)
+
+--
+
+toInt(WatchedLiteral(y,2))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__0)
+new variables:
+  findAux __0: bool
+new constraints:
+  __0 =aux WatchedLiteral(y,2)
+
+--
+
+__0 =aux WatchedLiteral(y,2)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(y,2), __0)
+
+--
+
+Final model:
+
+find x: int(0..3)
+find y: int(0..3)
+findAux __0: bool
+
+such that
+
+x = toInt(__0),
+Reify(WatchedLiteral(y,2), __0)
+

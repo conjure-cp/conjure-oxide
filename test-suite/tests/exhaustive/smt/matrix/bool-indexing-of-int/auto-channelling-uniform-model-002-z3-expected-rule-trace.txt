@@ -1,0 +1,36 @@
+Model before rewriting:
+
+find a: matrix indexed by [bool] of int(1..3)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find a#components_1: int(1..3)
+  find a#components_2: int(1..3)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find a#components_1#bv_1: int(1..3)
+  find a#components_2#bv_1: int(1..3)
+
+--
+
+Final model:
+
+find a: matrix indexed by [bool] of int(1..3)
+find a#components_1: int(1..3)
+find a#components_2: int(1..3)
+find a#components_1#bv_1: int(1..3)
+find a#components_2#bv_1: int(1..3)
+
+such that
+
+true
+

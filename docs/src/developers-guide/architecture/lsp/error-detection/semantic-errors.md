@@ -41,8 +41,8 @@ Called at the end of `parse_model_with_context`. Performs this validation by tra
 ## How To Test
 
  ```bash
-cargo test -p conjure-cp-essence-parser --test semantic_test
-cargo test -p conjure-cp-essence-parser --test keyword_as_ident
+cargo nextest run -p conjure-cp-essence-parser --test semantic_test
+cargo nextest run -p conjure-cp-essence-parser --test keyword_as_ident
 
 ```
 
@@ -52,7 +52,7 @@ cargo test -p conjure-cp-essence-parser --test keyword_as_ident
 
 **Input**
 
-```text
+```essence
 find find,b,c: int(1..3)
 ```
 
@@ -69,7 +69,7 @@ Source: "semantic error detection"
 
 **Input**
 
-```text
+```essence
 find bool: bool
 ```
 
@@ -86,7 +86,7 @@ Source: "semantic error detection"
 
 **Input**
 
-```text
+```essence
 find x: int(1..10)
 such that x = y
 ```

@@ -1,0 +1,286 @@
+Model before rewriting:
+
+letting k be 3
+letting two_k be 6
+letting positionDomain be domain int(1..two_k)
+find position: matrix indexed by [positionDomain] of positionDomain
+
+such that
+
+and([ position[sum([i,k;int(1..)])] = sum([sum([position[i],i;int(1..)]),1;int(1..)]) | i : int(1..k) ]),
+allDifferent(position)
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+new variables:
+  find position#array_1: matrix indexed by [int(1..6)] of int(1..6)
+
+--
+
+and([ position[sum([i,k;int(1..)])] = sum([sum([position[i],i;int(1..)]),1;int(1..)]) | i : int(1..k) ]),
+allDifferent(position)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ position[sum([i,k;int(1..)])] = sum([sum([position[i],i;int(1..)]),1;int(1..)]) | i : int(1..k) ]),
+allDifferent(position)
+new variables:
+  find position#array_1#bv_1: matrix indexed by [int(1..6)] of int(1..6)
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+position#array_1#bv_1
+
+--
+
+allDifferent(position#array_1#bv_1)
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct(position#array_1#bv_1)
+
+--
+
+[ position[sum([i,k;int(1..)])] = sum([sum([position[i],i;int(1..)]),1;int(1..)]) | i : int(1..k) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[position[4] = sum([sum([position[1],1;int(1..)]),1;int(1..)]),position[5] = sum([sum([position[2],2;int(1..)]),1;int(1..)]),position[6] = sum([sum([position[3],3;int(1..)]),1;int(1..)]);int(1..)]
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+position#array_1#bv_1
+
+--
+
+position#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+position#array_1#bv_1
+
+--
+
+position#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+position#array_1#bv_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+position#array_1#bv_1
+
+--
+
+position#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+position#array_1#bv_1
+
+--
+
+position#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+position#array_1#bv_1
+
+--
+
+sum([sum([position#array_1#bv_1[1],1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#bv_1[1],1,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#bv_1[2],2;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#bv_1[2],2,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#bv_1[3],3;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#bv_1[3],3,1;int(1..)])
+
+--
+
+position#array_1#bv_1[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#bv_1,[4])
+
+--
+
+position#array_1#bv_1[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#bv_1,[5])
+
+--
+
+position#array_1#bv_1[6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#bv_1,[6])
+
+--
+
+position#array_1#bv_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#bv_1,[1])
+
+--
+
+position#array_1#bv_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#bv_1,[2])
+
+--
+
+position#array_1#bv_1[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#bv_1,[3])
+
+--
+
+smtDistinct(position#array_1#bv_1)
+   ~~> matrix_ref_to_slice ([("Smt", 999)])
+smtDistinct(SafeSlice(position#array_1#bv_1,[..]))
+
+--
+
+SafeSlice(position#array_1#bv_1,[..])
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(position#array_1#bv_1,[1]),SafeIndex(position#array_1#bv_1,[2]),SafeIndex(position#array_1#bv_1,[3]),SafeIndex(position#array_1#bv_1,[4]),SafeIndex(position#array_1#bv_1,[5]),SafeIndex(position#array_1#bv_1,[6]);int(1..)]
+
+--
+
+Final model:
+
+letting k be 3
+letting two_k be 6
+letting positionDomain be domain int(1..two_k)
+find position: matrix indexed by [positionDomain] of positionDomain
+find position#array_1: matrix indexed by [int(1..6)] of int(1..6)
+find position#array_1#bv_1: matrix indexed by [int(1..6)] of int(1..6)
+
+such that
+
+and([SafeIndex(position#array_1#bv_1,[4]) = sum([SafeIndex(position#array_1#bv_1,[1]),2;int(1..)]),SafeIndex(position#array_1#bv_1,[5]) = sum([SafeIndex(position#array_1#bv_1,[2]),3;int(1..)]),SafeIndex(position#array_1#bv_1,[6]) = sum([SafeIndex(position#array_1#bv_1,[3]),4;int(1..)]);int(1..)]),
+smtDistinct([SafeIndex(position#array_1#bv_1,[1]),SafeIndex(position#array_1#bv_1,[2]),SafeIndex(position#array_1#bv_1,[3]),SafeIndex(position#array_1#bv_1,[4]),SafeIndex(position#array_1#bv_1,[5]),SafeIndex(position#array_1#bv_1,[6]);int(1..)])
+

@@ -1,0 +1,47 @@
+Model before rewriting:
+
+find a: matrix indexed by [bool] of bool
+
+such that
+
+a[true] = !(a[false])
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#components_1: bool
+  find a#components_2: bool
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a[true]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_2
+
+--
+
+a[false]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_1
+
+--
+
+Final model:
+
+find a: matrix indexed by [bool] of bool
+find a#components_1: bool
+find a#components_2: bool
+
+such that
+
+a#components_2 = !(a#components_1)
+

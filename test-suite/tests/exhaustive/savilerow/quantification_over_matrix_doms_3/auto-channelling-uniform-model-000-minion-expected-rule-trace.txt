@@ -1,0 +1,175 @@
+Model before rewriting:
+
+letting a be 5
+letting b be 3
+letting c be 7
+find x: int(1..20)
+
+such that
+
+and([ (and([allDifferent(i),i[5] < i[4];int(1..)])) -> (x > (i[4] - i[5])) | i : matrix indexed by [int(b..a, c)] of int(0..9) ])
+
+--
+
+Model before rewriting:
+
+find i: matrix indexed by [int(b..a, c)] of int(0..9)
+findAux __0: int(1..20)
+findAux __1: bool
+
+such that
+
+true != (and([allDifferent(i),i[5] < i[4];int(1..)])) -> (__1)
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+new variables:
+  find i#components_1: int(0..9)
+  find i#components_2: int(0..9)
+  find i#components_3: int(0..9)
+  find i#components_4: int(0..9)
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+
+--
+
+i[5] < i[4]
+   ~~> lt_to_leq ([("Minion", 8400)])
+i[5] <= sum([i[4],-1;int(1..)])
+
+--
+
+i[5]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+i#components_3
+
+--
+
+i[4]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+i#components_2
+
+--
+
+i#components_3 <= sum([i#components_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, i#components_2], i#components_3)
+
+--
+
+true != (and([allDifferent(i),SumGeq([-1, i#components_2], i#components_3);int(1..)])) -> (__1)
+   ~~> flatten_generic ([("Minion", 4200)])
+true != __2
+new variables:
+  findAux __2: bool
+new constraints:
+  __2 =aux (and([allDifferent(i),SumGeq([-1, i#components_2], i#components_3);int(1..)])) -> (__1)
+
+--
+
+__2 =aux (and([allDifferent(i),SumGeq([-1, i#components_2], i#components_3);int(1..)])) -> (__1)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((and([allDifferent(i),SumGeq([-1, i#components_2], i#components_3);int(1..)])) -> (__1), __2)
+
+--
+
+(and([allDifferent(i),SumGeq([-1, i#components_2], i#components_3);int(1..)])) -> (__1)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__3) -> (__1)
+new variables:
+  findAux __3: bool
+new constraints:
+  __3 =aux and([allDifferent(i),SumGeq([-1, i#components_2], i#components_3);int(1..)])
+
+--
+
+__3 =aux and([allDifferent(i),SumGeq([-1, i#components_2], i#components_3);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([allDifferent(i),SumGeq([-1, i#components_2], i#components_3);int(1..)]), __3)
+
+--
+
+(__3) -> (__1)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__3, __1, 0)
+
+--
+
+allDifferent(i)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([i#components_1,i#components_2,i#components_3,i#components_4;int(3..5, 7)])
+
+--
+
+allDifferent([i#components_1,i#components_2,i#components_3,i#components_4;int(3..5, 7)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([i#components_1, i#components_2, i#components_3, i#components_4])
+
+--
+
+Final model:
+
+find i: matrix indexed by [int(b..a, c)] of int(0..9)
+findAux __0: int(1..20)
+findAux __1: bool
+find i#components_1: int(0..9)
+find i#components_2: int(0..9)
+find i#components_3: int(0..9)
+find i#components_4: int(0..9)
+findAux __2: bool
+findAux __3: bool
+
+such that
+
+true != __2,
+Reify(Ineq(__3, __1, 0), __2),
+Reify(and([__flat_alldiff([i#components_1, i#components_2, i#components_3, i#components_4]),SumGeq([-1, i#components_2], i#components_3);int(1..)]), __3)
+
+and([ (and([allDifferent(i),i[5] < i[4];int(1..)])) -> (x > (i[4] - i[5])) | i : matrix indexed by [int(b..a, c)] of int(0..9) ])
+   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+and([x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 9,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 8,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 7,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 6,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 5,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 4,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 3,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 2,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1,x > 1;int(1..)])
+
+--
+
+and([x > 9;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x > 9
+
+--
+
+x > 9
+   ~~> gt_to_geq ([("Minion", 8400)])
+sum([x,-1;int(1..)]) >= 9
+
+--
+
+sum([x,-1;int(1..)]) >= 9
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)])
+Ineq(9, x, -1)
+
+--
+
+Final model:
+
+letting a be 5
+letting b be 3
+letting c be 7
+find x: int(1..20)
+
+such that
+
+Ineq(9, x, -1)
+
