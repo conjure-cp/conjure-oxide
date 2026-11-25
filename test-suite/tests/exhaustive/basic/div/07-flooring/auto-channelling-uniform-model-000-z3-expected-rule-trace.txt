@@ -1,0 +1,99 @@
+Model before rewriting:
+
+find x: int(3..3)
+
+such that
+
+(x / 2) = 1,
+(x / -2) = -1,
+(-(x) / 2) = -1,
+(-(x) / -2) = 1
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(3..3)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+(x#bv_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#bv_1, 2) @ 2 != 0}
+
+--
+
+(x#bv_1 / -2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#bv_1, -2) @ -2 != 0}
+
+--
+
+(-(x#bv_1) / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(-(x#bv_1), 2) @ 2 != 0}
+
+--
+
+(-(x#bv_1) / -2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(-(x#bv_1), -2) @ -2 != 0}
+
+--
+
+Final model:
+
+find x: int(3..3)
+find x#bv_1: int(3..3)
+
+such that
+
+SafeDiv(x#bv_1, 2) = 1,
+SafeDiv(x#bv_1, -2) = -1,
+SafeDiv(-(x#bv_1), 2) = -1,
+SafeDiv(-(x#bv_1), -2) = 1
+

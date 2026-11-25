@@ -1,0 +1,108 @@
+Model before rewriting:
+
+find x: int(3..3)
+
+such that
+
+x % 2 = 1,
+x % -2 = -1,
+-(x) % 2 = 1,
+-(x) % -2 = -1
+
+--
+
+x % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x,2) @ 2 != 0}
+
+--
+
+x % -2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x,-2) @ -2 != 0}
+
+--
+
+-(x) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(-(x),2) @ 2 != 0}
+
+--
+
+-(x) % -2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(-(x),-2) @ -2 != 0}
+
+--
+
+SafeMod(x,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(x, 2, 1)
+
+--
+
+SafeMod(x,-2) = -1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(x, -2, -1)
+
+--
+
+SafeMod(-(x),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__0,2)
+new variables:
+  findAux __0: int(-3..-3)
+new constraints:
+  __0 =aux -(x)
+
+--
+
+__0 =aux -(x)
+   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
+MinusEq(__0,x)
+
+--
+
+SafeMod(__0,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__0, 2, 1)
+
+--
+
+SafeMod(-(x),-2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__1,-2)
+new variables:
+  findAux __1: int(-3..-3)
+new constraints:
+  __1 =aux -(x)
+
+--
+
+__1 =aux -(x)
+   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
+MinusEq(__1,x)
+
+--
+
+SafeMod(__1,-2) = -1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__1, -2, -1)
+
+--
+
+Final model:
+
+find x: int(3..3)
+findAux __0: int(-3..-3)
+findAux __1: int(-3..-3)
+
+such that
+
+ModEq(x, 2, 1),
+ModEq(x, -2, -1),
+ModEq(__0, 2, 1),
+ModEq(__1, -2, -1),
+MinusEq(__0,x),
+MinusEq(__1,x)
+
