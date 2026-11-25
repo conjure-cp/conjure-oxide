@@ -17,7 +17,7 @@ The structure of a roundtrip test is shown in the following diagram:
 The first phase tests that the parser is still performing as expected. As with the other tests in the suite, if the expected should have changed the suite can be run with `ACCEPT=true` to overwrite these expected files with whatever is generated.
 - The test parses a provided Essence or Essence' file.
 - If this parse is valid, it saves the generated AST model JSON and generated Essence representation and compare these to the expected versions.
-- Otherwise, if fails; it saves the generated error outputs and compares this to the expected version.
+- Otherwise, it saves the generated error outputs and compares this to the expected version.
 
 
 The second phase tests that the structure of the input does not change during parsing without applying any rules to it, ensuring validity.
