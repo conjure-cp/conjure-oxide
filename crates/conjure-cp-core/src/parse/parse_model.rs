@@ -1424,40 +1424,57 @@ fn parse_comprehension(
                     .ok_or_else(|| fail("Generator.inner.iter().next"))?;
                 match name.as_str() {
                     "GenDomainNoRepr" => {
-                        let name = gen_inner
-                            .pointer("/0/Single/Name")
-                            .and_then(Value::as_str)
-                            .ok_or_else(|| {
-                                fail("GenDomainNoRepr.pointer(/0/Single/Name).as_str")
-                            })?;
-                        let domain_obj = gen_inner
-                            .pointer("/1")
-                            .and_then(Value::as_object)
-                            .ok_or_else(|| fail("GenDomainNoRepr.pointer(/1).as_object"))?;
-                        let (domain_name, domain_value) = domain_obj
-                            .iter()
-                            .next()
-                            .ok_or_else(|| fail("GenDomainNoRepr.domain.iter().next"))?;
-                        let domain = parse_domain(
-                            domain_name,
-                            domain_value,
-                            &mut generator_symboltable.write(),
-                        )?;
-                        comprehension.generator(DeclarationPtr::new_find(name.into(), domain))
+                        let gen_names = generator_names(gen_inner)
+                            .ok_or_else(|| fail("gen_inner.pointer(/0).as_array_or_object"))?;
+
+                        for gen_name in gen_names {
+                            let name = gen_name
+                                .pointer("/Single/Name")
+                                .and_then(Value::as_str)
+                                .ok_or_else(|| {
+                                    fail("GenDomainNoRepr.pointer(/Single/Name).as_str")
+                                })?;
+                            let domain_obj = gen_inner
+                                .pointer("/1")
+                                .and_then(Value::as_object)
+                                .ok_or_else(|| fail("GenDomainNoRepr.pointer(/1).as_object"))?;
+                            let (domain_name, domain_value) = domain_obj
+                                .iter()
+                                .next()
+                                .ok_or_else(|| fail("GenDomainNoRepr.domain.iter().next"))?;
+                            let domain = parse_domain(
+                                domain_name,
+                                domain_value,
+                                &mut generator_symboltable.write(),
+                            )?;
+
+                            comprehension = comprehension
+                                .generator(DeclarationPtr::new_find(name.into(), domain))
+                        }
+
+                        comprehension
                     }
                     "GenInExpr" => {
-                        let name = gen_inner
-                            .pointer("/0/Single/Name")
-                            .and_then(Value::as_str)
-                            .ok_or_else(|| {
-                                fail("GenDomainNoRepr.pointer(/0/Single/Name).as_str")
-                            })?;
-                        let generator_expr = gen_inner
-                            .pointer("/1")
-                            .ok_or_else(|| fail("GenInExpr.pointer(/1)"))?;
-                        let expr = parse_expression(generator_expr, &scope)
-                            .map_err(|_| fail("GenInExpr.parse_expression"))?;
-                        comprehension.expression_generator(name.into(), expr)
+                        let gen_names = generator_names(gen_inner)
+                            .ok_or_else(|| fail("gen_inner.pointer(/0).as_array_or_object"))?;
+
+                        for gen_name in gen_names {
+                            let name = gen_name
+                                .pointer("/Single/Name")
+                                .and_then(Value::as_str)
+                                .ok_or_else(|| {
+                                    fail("GenDomainNoRepr.pointer(/Single/Name).as_str")
+                                })?;
+                            let generator_expr = gen_inner
+                                .pointer("/1")
+                                .ok_or_else(|| fail("GenInExpr.pointer(/1)"))?;
+                            let expr = parse_expression(generator_expr, &scope)
+                                .map_err(|_| fail("GenInExpr.parse_expression"))?;
+
+                            comprehension = comprehension.expression_generator(name.into(), expr)
+                        }
+
+                        comprehension
                     }
                     _ => {
                         bug!("unknown generator type inside comprehension {name}");
@@ -1487,6 +1504,15 @@ fn parse_comprehension(
         Metadata::new(),
         Moo::new(comprehension.with_return_value(expr)),
     ))
+}
+
+fn generator_names(gen_inner: &Value) -> Option<&[Value]> {
+    let names = gen_inner.pointer("/0")?;
+    match names {
+        Value::Array(names) => Some(names),
+        Value::Object(_) => Some(std::slice::from_ref(names)),
+        _ => None,
+    }
 }
 
 fn unary_skip_operator(op_name: &str) -> Option<ACOperatorKind> {
@@ -2052,6 +2078,16 @@ mod tests {
     use crate::ast::HasDomain;
     use crate::{domain_int, range};
     use serde_json::json;
+
+    #[test]
+    fn normalizes_single_and_multiple_generator_names() {
+        let single = json!([{"Single": {"Name": "x"}}, {"DomainBool": []}]);
+        let multiple =
+            json!([[{"Single": {"Name": "x"}}, {"Single": {"Name": "y"}}], {"DomainBool": []}]);
+
+        assert_eq!(generator_names(&single).unwrap().len(), 1);
+        assert_eq!(generator_names(&multiple).unwrap().len(), 2);
+    }
 
     #[test]
     fn parses_record_index() {
