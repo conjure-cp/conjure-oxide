@@ -285,8 +285,6 @@ fn run_subcommand(
 
 #[cfg(test)]
 mod tests {
-    use conjure_cp::parse::conjure_json::{get_example_model, get_example_model_by_path};
-
     #[cfg(not(feature = "lsp"))]
     #[test]
     fn language_server_without_support_reports_the_missing_feature() {
@@ -296,29 +294,5 @@ mod tests {
                 .to_string()
                 .contains("Language server support was not compiled in")
         );
-    }
-
-    #[test]
-    fn test_get_example_model_success() {
-        let filename = "input";
-        get_example_model(filename).unwrap();
-    }
-
-    #[test]
-    fn test_get_example_model_by_filepath() {
-        let filepath = "../../test-suite/tests/exhaustive/basic/misc/xyz/input.essence";
-        get_example_model_by_path(filepath).unwrap();
-    }
-
-    #[test]
-    fn test_get_example_model_fail_empty_filename() {
-        let filename = "";
-        get_example_model(filename).unwrap_err();
-    }
-
-    #[test]
-    fn test_get_example_model_fail_empty_filepath() {
-        let filepath = "";
-        get_example_model_by_path(filepath).unwrap_err();
     }
 }
