@@ -18,7 +18,6 @@ pub mod domain_tightening;
 pub mod error;
 pub mod instantiate;
 pub mod objective;
-pub mod parse;
 pub mod representation;
 pub mod rule_engine;
 pub mod settings;

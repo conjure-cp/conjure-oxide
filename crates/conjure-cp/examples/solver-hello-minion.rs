@@ -13,13 +13,23 @@ use std::collections::HashMap;
 
 #[allow(clippy::unwrap_used)]
 pub fn main() {
+    use conjure_cp::context::Context;
     use conjure_cp::settings::{RewriteConfig, SolverFamily};
     use conjure_cp::solver::{Solver, adaptors};
-    use conjure_cp::{parse::conjure_json::get_example_model, rule_engine::resolve_rule_sets};
+    use conjure_cp::{
+        parse::tree_sitter::parse_essence_file_native, rule_engine::resolve_rule_sets,
+    };
     use std::sync::{Arc, Mutex};
 
-    // Load an example model and rewrite it with conjure oxide.
-    let model = get_example_model("div-05").unwrap();
+    // Load an example model with the native parser and rewrite it with Conjure-Oxide.
+    let model = parse_essence_file_native(
+        concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../test-suite/tests/exhaustive/basic/div/05/div-05.essence"
+        ),
+        Context::<'static>::new_ptr_empty(SolverFamily::Minion),
+    )
+    .unwrap();
     println!("Input model: \n {model} \n",);
 
     // TODO: We will have a nicer way to do this in the future

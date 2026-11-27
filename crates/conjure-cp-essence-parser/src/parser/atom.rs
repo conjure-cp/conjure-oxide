@@ -649,8 +649,8 @@ fn parse_function_binary_operator(
 /// syntactically a domain rather than an expression. `Expression::Restrict` still stores it as
 /// an `Expression` though (its `domain_of()` is called directly on that operand): a bare domain
 /// name (e.g. `letting D be domain int(0,2)` used as `restrict(f, D)`) becomes a plain reference
-/// to that declaration, matching the shape the via-conjure/JSON import path produces. An inline
-/// domain literal (not just a name) is wrapped in a `DomainAnnotation` so `domain_of()` still
+/// to that declaration, while an inline domain literal (not just a name) is wrapped in a
+/// `DomainAnnotation` so `domain_of()` still
 /// resolves correctly, though it will not print back out identically (no exhaustive/roundtrip
 /// case in this codebase currently needs that form).
 fn parse_restrict_expr(
